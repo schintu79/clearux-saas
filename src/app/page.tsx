@@ -9,6 +9,37 @@ import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useUser } from '@/hooks/useUser';
 
+/* ── Animated counter ────────────────────────────────────── */
+function useCountUp(end: number, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = performance.now();
+          const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(eased * end));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+  return { count, ref };
+}
+
 /* ── Fade-in on scroll ───────────────────────────────────── */
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -26,16 +57,8 @@ function useScrollReveal() {
   return { ref, visible };
 }
 
-/* ── Rotating words ──────────────────────────────────────── */
-const HERO_WORDS = [
-  'Conversions',
-  'Usability',
-  'Engagement',
-  'Discoverability',
-  'Mobile UX',
-  'Trust',
-  'Accessibility',
-];
+/* ── Rotating words — fixed height, no layout shift ──────── */
+const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Discoverability', 'Mobile UX', 'Trust', 'Accessibility'];
 
 function RotatingWord() {
   const [idx, setIdx] = useState(0);
@@ -43,13 +66,15 @@ function RotatingWord() {
   useEffect(() => {
     const interval = setInterval(() => {
       setFade(false);
-      setTimeout(() => { setIdx((i) => (i + 1) % HERO_WORDS.length); setFade(true); }, 250);
+      setTimeout(() => { setIdx((i) => (i + 1) % HERO_WORDS.length); setFade(true); }, 200);
     }, 2800);
     return () => clearInterval(interval);
   }, []);
   return (
-    <span className={`inline-block transition-all duration-300 text-accent ${fade ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'}`}>
-      {HERO_WORDS[idx]}
+    <span className="inline-flex items-baseline min-w-[200px] sm:min-w-[280px]">
+      <span className={`transition-all duration-300 bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}>
+        {HERO_WORDS[idx]}
+      </span>
     </span>
   );
 }
@@ -58,6 +83,8 @@ export default function Home() {
   const router = useRouter();
   const { user } = useUser();
   const [heroUrl, setHeroUrl] = useState('');
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +93,11 @@ export default function Home() {
     const encoded = encodeURIComponent(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
     router.push(user ? `/dashboard/new-audit?url=${encoded}` : `/register?url=${encoded}`);
   };
+
+  // Animated counters
+  const c1 = useCountUp(48, 1800);
+  const c2 = useCountUp(12, 1400);
+  const c3 = useCountUp(6, 1200);
 
   const howRef = useScrollReveal();
   const catRef = useScrollReveal();
@@ -89,13 +121,13 @@ export default function Home() {
   ];
 
   const testimonials = [
-    { quote: "ClearUX identified critical issues we completely missed. The audit was thorough and actionable.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow" },
-    { quote: "Worth every penny. We implemented the recommendations and saw a 34% increase in conversions.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs" },
-    { quote: "The AI-powered analysis is impressive. It caught UX issues that our internal team had overlooked for months.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio" },
+    { quote: "ClearUX identified critical issues we completely missed. The audit was thorough and actionable.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
+    { quote: "Worth every penny. We implemented the recommendations and saw a 34% increase in conversions.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
+    { quote: "The AI-powered analysis is impressive. It caught UX issues our team had overlooked for months.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
   ];
 
   return (
-    <div className="bg-[#0A0A0F] text-white min-h-screen">
+    <div className="bg-surface text-text min-h-screen">
       <HomeJsonLd />
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
         Skip to content
@@ -104,26 +136,36 @@ export default function Home() {
       <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
-          HERO — minimal, dark, centered
+          HERO
           ═══════════════════════════════════════════════════════ */}
       <section className="relative pt-36 pb-32 px-4 md:px-6 lg:px-8 overflow-hidden">
-        {/* Subtle gradient glow behind hero */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-accent/[0.07] blur-[150px] pointer-events-none" />
-        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-purple-600/[0.04] blur-[120px] pointer-events-none" />
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
+        <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-[15%] w-[300px] h-[300px] rounded-full bg-accent/[0.03] blur-[100px] pointer-events-none" />
+
+        {/* Subtle grid */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
         <div className="max-w-3xl mx-auto text-center relative">
-          <h1 className="animate-fade-up font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
+          {/* Badge */}
+          <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-8">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-xs font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
+          </div>
+
+          <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
             Find &amp; fix UX issues{' '}
             <br className="hidden sm:block" />
             impacting <RotatingWord />
           </h1>
 
-          <p className="animate-fade-up delay-200 text-lg md:text-xl text-[#8B8B9E] mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            AI-powered audits across 48 checkpoints. Professional report with prioritised fixes — delivered in minutes.
+          <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
+            48 checkpoints. 12 categories. Professional report with prioritised fixes — delivered in minutes.
           </p>
 
           {/* URL Input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-6">
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -134,7 +176,7 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="https://yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-xl bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-[#4A4A5E] focus:outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
                 />
               </div>
               <button
@@ -147,73 +189,44 @@ export default function Home() {
             </div>
           </form>
 
-          <p className="animate-fade-up delay-400 text-sm text-[#5A5A6E]">
-            From $29 per audit · No subscription · Results in minutes
-          </p>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          STATS BAR — simple, quiet
-          ═══════════════════════════════════════════════════════ */}
-      <section className="border-t border-b border-white/[0.06] py-12 px-4 md:px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { value: '48', label: 'UX Checkpoints' },
-            { value: '12', label: 'Audit Categories' },
-            { value: '6', label: 'Languages' },
-            { value: '<10 min', label: 'Delivery Time' },
-          ].map((stat, idx) => (
-            <div key={idx}>
-              <p className="font-manrope text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</p>
-              <p className="text-sm text-[#6B6B80]">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          HOW IT WORKS — 3 steps
-          ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-28 px-4 md:px-6 lg:px-8">
-        <div
-          ref={howRef.ref}
-          className={`max-w-5xl mx-auto transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <div className="text-center mb-16">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">How it works</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white">
-              Three steps. That&apos;s it.
-            </h2>
+          {/* Social proof mini */}
+          <div className="animate-fade-up delay-400 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted">
+            <span>From $29 per audit</span>
+            <span className="hidden sm:inline text-border">·</span>
+            <span>No subscription</span>
+            <span className="hidden sm:inline text-border">·</span>
+            <span>Results in minutes</span>
           </div>
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { step: '1', icon: Target, title: 'Paste your URL', desc: 'Just the link — we automatically detect your industry, audience, and tech stack.' },
-              { step: '2', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories.' },
-              { step: '3', icon: FileCheck, title: 'Get your report', desc: 'A detailed PDF + Word report with scores, issues, and actionable recommendations.' },
-            ].map((item, idx) => {
-              const Icon = item.icon;
+      {/* ═══════════════════════════════════════════════════════
+          TRUST NUMBERS — big, animated, purple gradient
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-20 px-4 md:px-6 overflow-hidden">
+        {/* Background depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/[0.03] to-transparent pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.05] blur-[120px] pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto relative">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {([
+              { counter: c1, suffix: '', label: 'UX Checkpoints' },
+              { counter: c2, suffix: '', label: 'Audit Categories' },
+              { counter: c3, suffix: '', label: 'Languages' },
+              { value: '<10', suffix: ' min', label: 'Delivery Time' },
+            ] as const).map((stat, idx) => {
+              const hasCounter = 'counter' in stat && stat.counter != null;
+              const counter = hasCounter ? (stat as { counter: typeof c1 }).counter : null;
               return (
-                <div
-                  key={item.step}
-                  className="relative group"
-                  style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
-                >
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 h-full hover:border-accent/20 hover:bg-white/[0.04] transition-all duration-300">
-                    <div className="flex items-center justify-center mb-6">
-                      <div className="relative">
-                        <div className="w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center">
-                          <Icon size={24} className="text-accent" />
-                        </div>
-                        <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-manrope font-bold text-[11px]">
-                          {item.step}
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="font-manrope text-lg font-bold text-white mb-2 text-center">{item.title}</h3>
-                    <p className="text-[#6B6B80] text-sm leading-relaxed text-center">{item.desc}</p>
-                  </div>
+                <div key={idx} ref={counter?.ref}>
+                  <p className="font-manrope text-5xl md:text-6xl font-extrabold mb-2 bg-gradient-to-r from-accent via-purple-400 to-violet-400 bg-clip-text text-transparent" suppressHydrationWarning>
+                    {counter
+                      ? (mounted ? `${counter.count}${stat.suffix}` : '\u00A0')
+                      : `${'value' in stat ? stat.value : ''}${stat.suffix}`
+                    }
+                  </p>
+                  <p className="text-sm text-muted font-medium">{stat.label}</p>
                 </div>
               );
             })}
@@ -222,19 +235,111 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          WHAT WE AUDIT — 12 categories grid
+          SOCIAL PROOF — mini testimonial strip
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="py-28 px-4 md:px-6 lg:px-8 border-t border-white/[0.06]">
+      <section className="py-16 px-4 md:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
+            {/* Avatar stack */}
+            <div className="flex items-center">
+              <div className="flex -space-x-3">
+                {[
+                  { bg: '#8B5CF6', initials: 'SC' },
+                  { bg: '#A78BFA', initials: 'MW' },
+                  { bg: '#7C3AED', initials: 'ER' },
+                  { bg: '#6D28D9', initials: 'JK' },
+                  { bg: '#C4B5FD', initials: 'DT' },
+                ].map((p, i) => (
+                  <div
+                    key={i}
+                    className="w-10 h-10 rounded-full border-2 border-surface flex items-center justify-center text-white text-xs font-bold"
+                    style={{ backgroundColor: p.bg, zIndex: 5 - i }}
+                  >
+                    {p.initials}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-0.5 ml-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-accent text-accent" />
+                ))}
+              </div>
+            </div>
+            <p className="text-muted text-sm text-center md:text-left">
+              <span className="text-text font-semibold">&ldquo;Identified issues we completely missed.&rdquo;</span>
+              <br className="hidden md:block" />
+              <span className="text-xs">Trusted by product teams &amp; agencies worldwide</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          HOW IT WORKS — horizontal flow
+          ═══════════════════════════════════════════════════════ */}
+      <section id="how-it-works" className="py-28 px-4 md:px-6 lg:px-8">
+        <div
+          ref={howRef.ref}
+          className={`max-w-5xl mx-auto transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-16">
+            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">How it works</p>
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
+              Three simple steps
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-0 relative">
+            {/* Connecting line (desktop) */}
+            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+
+            {[
+              { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically.' },
+              { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories.' },
+              { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, and actionable fixes.' },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.step}
+                  className="relative text-center px-6 py-8"
+                  style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
+                >
+                  {/* Step circle */}
+                  <div className="relative inline-flex items-center justify-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
+                      <Icon size={24} className="text-accent" />
+                    </div>
+                    <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-accent/30">
+                      {idx + 1}
+                    </span>
+                  </div>
+                  <h3 className="font-manrope text-lg font-bold text-text mb-2">{item.title}</h3>
+                  <p className="text-muted text-sm leading-relaxed max-w-[260px] mx-auto">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          WHAT WE AUDIT
+          ═══════════════════════════════════════════════════════ */}
+      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8">
+        {/* Subtle bg */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
+
         <div
           ref={catRef.ref}
-          className={`max-w-6xl mx-auto transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className={`max-w-6xl mx-auto relative transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-16">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">What we audit</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
               12 categories. 48 checkpoints.
             </h2>
-            <p className="text-[#6B6B80] text-lg max-w-xl mx-auto">
+            <p className="text-muted text-lg max-w-xl mx-auto">
               Every audit covers the full spectrum of user experience.
             </p>
           </div>
@@ -248,18 +353,18 @@ export default function Home() {
                   className={`rounded-xl p-5 border transition-all duration-300 group ${
                     isFeatured
                       ? 'bg-accent/[0.06] border-accent/20 hover:border-accent/40'
-                      : 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04]'
+                      : 'bg-card border-border hover:border-accent/20'
                   }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      isFeatured ? 'bg-accent/15' : 'bg-white/[0.06]'
+                      isFeatured ? 'bg-accent/15' : 'bg-accent/10'
                     }`}>
                       <Icon size={18} className="text-accent" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white text-sm mb-1">{cat.title}</h3>
-                      <p className="text-[#6B6B80] text-xs leading-relaxed">{cat.desc}</p>
+                      <h3 className="font-semibold text-text text-sm mb-1">{cat.title}</h3>
+                      <p className="text-muted text-xs leading-relaxed">{cat.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -272,17 +377,19 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="py-28 px-4 md:px-6 lg:px-8 border-t border-white/[0.06]">
+      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
+
         <div
           ref={priceRef.ref}
-          className={`max-w-5xl mx-auto transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-14">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Pricing</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
               Simple credit-based pricing
             </h2>
-            <p className="text-[#6B6B80] text-lg max-w-xl mx-auto">
+            <p className="text-muted text-lg max-w-xl mx-auto">
               1 credit = 1 full audit. No tiers. No feature limits.
             </p>
           </div>
@@ -298,21 +405,21 @@ export default function Home() {
                 key={idx}
                 className={`relative rounded-2xl p-6 flex flex-col transition-all duration-300 ${
                   tier.popular
-                    ? 'bg-accent/[0.08] border-2 border-accent/30 hover:border-accent/50'
-                    : 'bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12]'
+                    ? 'bg-accent/[0.06] border-2 border-accent/30 hover:border-accent/50 shadow-lg shadow-accent/10'
+                    : 'bg-card border border-border hover:border-accent/20'
                 }`}
               >
                 {tier.popular && (
-                  <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                  <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md shadow-accent/30">
                     Most Popular
                   </span>
                 )}
 
-                <h3 className="font-manrope font-bold text-lg text-white mb-1">{tier.name}</h3>
+                <h3 className="font-manrope font-bold text-lg text-text mb-1">{tier.name}</h3>
                 <div className="mb-1">
-                  <span className="font-manrope text-3xl font-bold text-white">${tier.price}</span>
+                  <span className="font-manrope text-3xl font-bold text-text">${tier.price}</span>
                 </div>
-                <p className="text-xs text-[#6B6B80] mb-4">
+                <p className="text-xs text-muted mb-4">
                   {tier.credits} credit{tier.credits !== 1 ? 's' : ''} · {tier.per}/audit
                 </p>
 
@@ -324,15 +431,10 @@ export default function Home() {
                 {!tier.save && <div className="mb-4" />}
 
                 <div className="space-y-2.5 mb-6 flex-1">
-                  {[
-                    '48-point deep analysis',
-                    '12 UX categories',
-                    'AI discoverability audit',
-                    'PDF + DOCX reports',
-                  ].map((f, i) => (
+                  {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
-                      <span className="text-xs text-[#8B8B9E]">{f}</span>
+                      <span className="text-xs text-muted">{f}</span>
                     </div>
                   ))}
                 </div>
@@ -342,7 +444,7 @@ export default function Home() {
                   className={`block text-center text-sm font-bold rounded-lg py-2.5 transition-all ${
                     tier.popular
                       ? 'bg-accent text-white hover:bg-accent-dk shadow-lg shadow-accent/20'
-                      : 'bg-white/[0.06] text-white hover:bg-white/[0.1] border border-white/[0.08]'
+                      : 'bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20'
                   }`}
                 >
                   {tier.cta}
@@ -351,7 +453,7 @@ export default function Home() {
             ))}
           </div>
 
-          <p className="text-center text-[#5A5A6E] text-xs mt-8">
+          <p className="text-center text-muted text-xs mt-8">
             Credits never expire · Secure payment via Stripe
           </p>
         </div>
@@ -360,14 +462,14 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TESTIMONIALS
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-28 px-4 md:px-6 lg:px-8 border-t border-white/[0.06]">
+      <section className="py-28 px-4 md:px-6 lg:px-8">
         <div
           ref={testRef.ref}
           className={`max-w-5xl mx-auto transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-16">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Testimonials</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white">
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
               Loved by product teams
             </h2>
           </div>
@@ -375,17 +477,22 @@ export default function Home() {
             {testimonials.map((t, idx) => (
               <div
                 key={idx}
-                className="rounded-xl p-6 border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] transition-all duration-300"
+                className="rounded-xl p-6 border border-border bg-card hover:border-accent/20 transition-all duration-300"
               >
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
                   ))}
                 </div>
-                <p className="text-[#C0C0D0] text-sm mb-6 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                <div className="pt-4 border-t border-white/[0.06]">
-                  <p className="font-semibold text-white text-sm">{t.author}</p>
-                  <p className="text-xs text-[#6B6B80]">{t.title}, {t.company}</p>
+                <p className="text-text/80 text-sm mb-6 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <div className="pt-4 border-t border-border flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-text text-sm">{t.author}</p>
+                    <p className="text-xs text-muted">{t.title}, {t.company}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -396,14 +503,14 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FAQ
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="py-28 px-4 md:px-6 lg:px-8 border-t border-white/[0.06]">
+      <section id="faq" className="py-28 px-4 md:px-6 lg:px-8">
         <div
           ref={faqRef.ref}
           className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-14">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">FAQ</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white">
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
               Frequently asked questions
             </h2>
           </div>
@@ -411,20 +518,20 @@ export default function Home() {
             {[
               { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints, and generates a full professional report.' },
               { q: 'What does the audit cover?', a: 'We evaluate 12 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
-              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations. No feature tiers.' },
-              { q: 'What format is the report?', a: 'You get both a professional PDF and a Word document with overall scores, category breakdowns, detailed findings with severity levels, and actionable recommendations.' },
+              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
               { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle JavaScript-rendered sites, SPAs, and multi-page websites.' },
-              { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed securely via Stripe. We do not store or share your website data beyond generating your report.' },
+              { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
               { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
             ].map((item, idx) => (
-              <details key={idx} className="group rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-                <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-white/[0.03] transition-colors">
-                  <h3 className="font-medium text-white text-sm pr-4">{item.q}</h3>
-                  <ArrowRight size={14} className="text-[#6B6B80] flex-shrink-0 transform group-open:rotate-90 transition-transform" />
+              <details key={idx} className="group rounded-xl border border-border bg-card overflow-hidden">
+                <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
+                  <h3 className="font-medium text-text text-sm pr-4">{item.q}</h3>
+                  <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
                 </summary>
                 <div className="px-5 pb-5">
-                  <p className="text-[#8B8B9E] text-sm leading-relaxed">{item.a}</p>
+                  <p className="text-muted text-sm leading-relaxed">{item.a}</p>
                 </div>
               </details>
             ))}
@@ -435,12 +542,15 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-28 px-4 md:px-6 lg:px-8 border-t border-white/[0.06]">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white mb-4">
+      <section className="relative py-28 px-4 md:px-6 lg:px-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-accent/[0.04] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.06] blur-[120px] pointer-events-none" />
+
+        <div className="max-w-2xl mx-auto text-center relative">
+          <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
             Ready to improve your UX?
           </h2>
-          <p className="text-[#6B6B80] text-lg mb-8">
+          <p className="text-muted text-lg mb-8">
             Get your comprehensive audit report in minutes.
           </p>
           <Link
@@ -450,7 +560,7 @@ export default function Home() {
             Audit My Site Now
             <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
-          <p className="text-[#4A4A5E] text-sm mt-4">No subscription required.</p>
+          <p className="text-muted/60 text-sm mt-4">No subscription required.</p>
         </div>
       </section>
 
