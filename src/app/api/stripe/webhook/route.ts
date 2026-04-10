@@ -177,10 +177,20 @@ export async function POST(request: NextRequest) {
         }
 
         // Trigger audit processing via Inngest (background job)
-        await inngest.send({
-          name: 'audit/process',
-          data: { auditId },
-        })
+        try {
+          console.log(`[webhook] Sending Inngest event for audit ${auditId}`)
+          const sendResult = await inngest.send({
+            name: 'audit/process',
+            data: { auditId },
+          })
+          console.log(`[webhook] Inngest event sent:`, JSON.stringify(sendResult))
+        } catch (inngestErr) {
+          console.error(`[webhook] Inngest send FAILED for audit ${auditId}:`, inngestErr)
+          const { processAudit } = await import('@/lib/audit-engine')
+          processAudit(auditId).catch((err) => {
+            console.error(`[webhook] Fallback processAudit failed:`, err)
+          })
+        }
 
         console.log(`Payment processed for audit ${auditId}`)
         return NextResponse.json({ received: true }, { status: 200 })

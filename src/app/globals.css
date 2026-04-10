@@ -301,5 +301,5 @@ body {
 @media (max-width: 768px) {
   .auth-page { grid-template-columns: 1fr; }
   .auth-left  { display: none; }
-  .auth-right { padding: 1.5rem 1rem; align-items: flex-start; padding-top: 2.5rem; }
+  .auth-right { padding: 2rem 1.5rem; align-items: center; justify-content: flex-start; padding-top: 2rem; }
 }

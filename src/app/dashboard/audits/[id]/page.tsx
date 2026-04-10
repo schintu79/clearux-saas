@@ -795,26 +795,28 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         <>
           {/* Overall score hero */}
           <Card className="mb-6">
-            <div className="flex items-center gap-6">
-              <div className="relative flex-shrink-0">
-                <ScoreRing score={report.overall_score ?? 0} size={100} strokeWidth={6} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+              <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                <div className="relative flex-shrink-0">
+                  <ScoreRing score={report.overall_score ?? 0} size={100} strokeWidth={6} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted mb-0.5">Overall Score</p>
+                  <p className="text-lg font-bold text-text">{scoreLabel(report.overall_score ?? 0)}</p>
+                  {report.executive_summary && (
+                    <p className="text-xs text-muted mt-1 line-clamp-2">{report.executive_summary}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-muted mb-0.5">Overall Score</p>
-                <p className="text-lg font-bold text-text">{scoreLabel(report.overall_score ?? 0)}</p>
-                {report.executive_summary && (
-                  <p className="text-xs text-muted mt-1 line-clamp-2">{report.executive_summary}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer">
-                  <button className="flex items-center gap-2 bg-accent text-white text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-accent-dk transition-colors">
+              <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
+                <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
+                  <button className="w-full flex items-center justify-center gap-2 bg-accent text-white text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-accent-dk transition-colors">
                     <Download size={14} />
                     PDF
                   </button>
                 </a>
-                <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer">
-                  <button className="flex items-center gap-2 bg-navy text-white dark:bg-card dark:border dark:border-border text-xs font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity">
+                <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
+                  <button className="w-full flex items-center justify-center gap-2 bg-navy text-white dark:bg-card dark:border dark:border-border text-xs font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity">
                     <Download size={14} />
                     Word
                   </button>
@@ -833,7 +835,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
             return categoryScores.length > 0 ? (
               <div className="mb-6">
-                <h2 className="text-sm font-semibold text-text mb-3">Audit Categories</h2>
+                <h2 className="text-base font-semibold text-text mb-3">Audit Categories</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {categoryScores.map((cat, idx) => {
                     const Icon = getCategoryIcon(cat.name, idx);
@@ -848,7 +850,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <p className="text-xs font-semibold text-text truncate pr-2">{cat.name}</p>
+                              <p className="text-sm font-semibold text-text truncate pr-2">{cat.name}</p>
                               <span className={`text-sm font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>
                                 {cat.score}
                               </span>
@@ -860,7 +862,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               />
                             </div>
                             {cat.summary && (
-                              <p className="text-[10px] text-muted leading-snug line-clamp-2">{cat.summary}</p>
+                              <p className="text-[11px] text-muted leading-snug line-clamp-2">{cat.summary}</p>
                             )}
                           </div>
                         </div>
@@ -894,8 +896,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* Executive Summary */}
           {report.executive_summary && (
             <Card className="mb-6">
-              <h2 className="text-sm font-semibold text-text mb-2">Executive Summary</h2>
-              <p className="text-muted text-xs leading-relaxed whitespace-pre-line">
+              <h2 className="text-base font-semibold text-text mb-2">Executive Summary</h2>
+              <p className="text-muted text-sm leading-relaxed whitespace-pre-line">
                 {report.executive_summary}
               </p>
               {(report.raw_json as any)?.keyRecommendation && (
@@ -903,8 +905,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex gap-2">
                     <Zap size={13} className="text-accent flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] font-semibold text-text mb-0.5">Top Recommendation</p>
-                      <p className="text-xs text-muted">{(report.raw_json as any).keyRecommendation}</p>
+                      <p className="text-[11px] font-semibold text-text mb-0.5">Top Recommendation</p>
+                      <p className="text-sm text-muted">{(report.raw_json as any).keyRecommendation}</p>
                     </div>
                   </div>
                 </div>
@@ -915,24 +917,24 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* Issue summary bar */}
           {report.total_issues > 0 && (
             <div className="flex items-center gap-3 mb-4 px-1">
-              <span className="text-xs font-semibold text-text">
+              <span className="text-sm font-semibold text-text">
                 {report.total_issues} issues found
               </span>
               {report.critical_count > 0 && (
-                <span className="text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
+                <span className="text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
                   {report.critical_count} critical
                 </span>
               )}
               {report.high_count > 0 && (
-                <span className="text-[10px] font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">
+                <span className="text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">
                   {report.high_count} high
                 </span>
               )}
               {report.medium_count > 0 && (
-                <span className="text-[10px] text-muted bg-off px-1.5 py-0.5 rounded">{report.medium_count} medium</span>
+                <span className="text-[11px] text-muted bg-off px-1.5 py-0.5 rounded">{report.medium_count} medium</span>
               )}
               {report.low_count > 0 && (
-                <span className="text-[10px] text-muted bg-off px-1.5 py-0.5 rounded">{report.low_count} low</span>
+                <span className="text-[11px] text-muted bg-off px-1.5 py-0.5 rounded">{report.low_count} low</span>
               )}
             </div>
           )}
@@ -951,7 +953,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       <Badge variant={config.badge}>
                         {severity.charAt(0).toUpperCase() + severity.slice(1)}
                       </Badge>
-                      <span className="text-[10px] text-muted">
+                      <span className="text-[11px] text-muted">
                         {items.length} issue{items.length !== 1 ? 's' : ''}
                       </span>
                     </div>
@@ -959,10 +961,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="space-y-2">
                       {items.map((finding) => (
                         <Card key={finding.id} className={`border ${config.bg}`}>
-                          <h3 className="font-semibold text-text text-xs">
+                          <h3 className="font-semibold text-text text-sm">
                             {finding.title}
                           </h3>
-                          <p className="text-muted text-[11px] mt-1 leading-relaxed">
+                          <p className="text-muted text-xs mt-1 leading-relaxed">
                             {finding.description}
                           </p>
 
@@ -971,10 +973,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               <div className="flex gap-2">
                                 <Zap size={12} className="text-accent flex-shrink-0 mt-0.5" />
                                 <div>
-                                  <p className="text-[10px] font-semibold text-text mb-0.5">
+                                  <p className="text-[11px] font-semibold text-text mb-0.5">
                                     Recommendation
                                   </p>
-                                  <p className="text-[11px] text-muted leading-relaxed">
+                                  <p className="text-xs text-muted leading-relaxed">
                                     {finding.recommendation}
                                   </p>
                                 </div>
@@ -987,7 +989,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               href={finding.page_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[10px] text-accent hover:underline mt-2 block truncate"
+                              className="text-[11px] text-accent hover:underline mt-2 block truncate"
                             >
                               {finding.page_url}
                             </a>

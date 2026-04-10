@@ -177,12 +177,12 @@ const Navbar: React.FC = () => {
             <ThemeToggle variant="icon" />
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-1.5 rounded-md hover:bg-off transition-colors"
+              className="p-2.5 rounded-md hover:bg-off transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               {isOpen ? (
-                <X size={20} className="text-text" />
+                <X size={24} className="text-text" />
               ) : (
-                <Menu size={20} className="text-text" />
+                <Menu size={24} className="text-text" />
               )}
             </button>
           </div>
@@ -190,34 +190,34 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden pb-3 border-t border-border">
+          <div className="md:hidden pb-4 border-t border-border">
             <div className="flex flex-col gap-1 pt-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-xs text-muted hover:text-text transition-colors px-2 py-1.5"
+                  className="text-sm text-muted hover:text-text transition-colors px-3 py-3 min-h-[44px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-1 pt-2 border-t border-border mt-1">
+              <div className="flex flex-col gap-1 pt-3 border-t border-border mt-2">
                 {isLoggedIn ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-xs font-medium text-text px-2 py-1.5">
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Dashboard
                     </Link>
-                    <button onClick={handleSignOut} className="text-xs text-red-600 dark:text-red-400 px-2 py-1.5 text-left">
+                    <button onClick={handleSignOut} className="text-sm text-red-600 dark:text-red-400 px-3 py-3 min-h-[44px] text-left">
                       Sign out
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-xs font-medium text-text px-2 py-1.5">
+                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-xs font-medium bg-accent text-white rounded-md px-3 py-1.5 text-center">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium bg-accent text-white rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
                       Sign Up
                     </Link>
                   </>

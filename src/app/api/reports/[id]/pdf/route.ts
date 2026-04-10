@@ -1,6 +1,6 @@
 // ============================================================
 // ClearUX API — GET /api/reports/:id/pdf
-// Professional branded UX audit report — matches DOCX exactly
+// Professional UX audit report — white background, print-friendly
 // ============================================================
 
 export const runtime = 'nodejs'
@@ -11,13 +11,11 @@ import PDFDocument from 'pdfkit'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { getReportLabels, getLocale } from '@/lib/languages'
 
-/* ── Brand palette — matches DOCX constants ─────────────── */
+/* ── Brand palette — light/print-friendly ──────────────────── */
 const C = {
   accent:     '#3ECF8E',
   accentDk:   '#2BA56E',
   navy:       '#0F172A',
-  navyMid:    '#1E293B',
-  navyLight:  '#334155',
   text:       '#0F172A',
   textSub:    '#334155',
   muted:      '#64748B',
@@ -28,7 +26,6 @@ const C = {
   bgPage:     '#F8FAFC',
   white:      '#FFFFFF',
   recBg:      '#F0FDF4',
-  recBorder:  '#ECFDF5',
 }
 
 const SEV: Record<string, { hex: string; label: string }> = {
@@ -58,8 +55,8 @@ const MR = 545          // right edge
 const PW = MR - ML      // printable width
 const PAGE_W = 595
 const PAGE_H = 842
-const CONTENT_TOP = 70
-const CONTENT_BOTTOM = 785
+const CONTENT_TOP = 60
+const CONTENT_BOTTOM = 790
 const FOOTER_Y = PAGE_H - 28
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -75,19 +72,19 @@ function measure(doc: PDFKit.PDFDocument, text: string, font: string, size: numb
   return h
 }
 
-/** Section header with accent left bar — matches DOCX sectionHeading */
+/** Section header with accent left bar */
 function sectionHeader(doc: PDFKit.PDFDocument, y: number, title: string, subtitle?: string): number {
-  doc.rect(ML, y, 4, 22).fill(C.accent)
-  doc.font('Helvetica-Bold').fontSize(16).fillColor(C.navy)
+  doc.rect(ML, y, 4, 20).fill(C.accent)
+  doc.font('Helvetica-Bold').fontSize(14).fillColor(C.navy)
   doc.text(title, ML + 14, y + 2, { lineBreak: false })
-  y += 28
+  y += 24
   if (subtitle) {
     doc.font('Helvetica').fontSize(8.5).fillColor(C.muted)
     doc.text(subtitle, ML, y, { lineBreak: false })
-    y += 14
+    y += 12
   }
   drawLine(doc, y, C.borderLight, 0.5)
-  y += 14
+  y += 10
   return y
 }
 
@@ -180,63 +177,63 @@ export async function GET(
     try { hostname = new URL(a.product_url).hostname.replace(/^www\./, '') } catch {}
 
     // ════════════════════════════════════════════════════════
-    //  COVER PAGE — matches DOCX: dark header block + score + issues
+    //  COVER PAGE — white background, compact layout
     // ════════════════════════════════════════════════════════
     addPage()
 
-    // Dark header block with grid (matches DOCX navy header table)
-    doc.rect(0, 0, PAGE_W, 180).fill(C.navy)
+    // Top accent bar
+    doc.rect(0, 0, PAGE_W, 4).fill(C.accent)
 
-    doc.save()
-    doc.strokeColor(C.navyMid).lineWidth(0.3)
-    for (let gx = 0; gx < PAGE_W; gx += 40) doc.moveTo(gx, 0).lineTo(gx, 180).stroke()
-    for (let gy = 0; gy < 180; gy += 40) doc.moveTo(0, gy).lineTo(PAGE_W, gy).stroke()
-    doc.restore()
-
-    // Accent bar (matches DOCX accent divider table)
-    doc.rect(0, 180, PAGE_W, 4).fill(C.accent)
-
-    // Logo in header
-    doc.font('Helvetica-Bold').fontSize(28).fillColor(C.white)
+    // Logo
+    doc.font('Helvetica-Bold').fontSize(28).fillColor(C.navy)
     doc.text('Clear', ML, 40, { continued: true, lineBreak: false })
     doc.fillColor(C.accent).text('UX', { lineBreak: false })
 
     // Subtitle
-    doc.font('Helvetica').fontSize(11).fillColor(C.mutedLight)
-    doc.text('Deep AI-Powered UX Audit Report', ML, 76, { lineBreak: false })
+    doc.font('Helvetica').fontSize(11).fillColor(C.muted)
+    doc.text('Deep AI-Powered UX Audit Report', ML, 74, { lineBreak: false })
 
-    // Date + Audit ID (right aligned, matching DOCX)
-    doc.font('Helvetica').fontSize(8).fillColor(C.mutedLight)
+    // Thin separator
+    drawLine(doc, 95, C.borderLight, 0.5)
+
+    // Date + Audit ID (right aligned)
+    doc.font('Helvetica').fontSize(8).fillColor(C.muted)
     doc.text(dateStr, 0, 44, { width: MR, align: 'right', lineBreak: false })
-    doc.text(`Audit ID: ${auditId.substring(0, 8)}...`, 0, 58, { width: MR, align: 'right', lineBreak: false })
+    doc.text(`Audit ID: ${auditId.substring(0, 8)}...`, 0, 56, { width: MR, align: 'right', lineBreak: false })
 
-    // Score — centered (matches DOCX large score + label)
+    // Score — centered
     const cx = PAGE_W / 2
-    const cy = 320
+    const cy = 200
 
-    doc.font('Helvetica-Bold').fontSize(56).fillColor(scoreHex(overall))
+    // Score circle outline
+    const circleR = 50
+    doc.save()
+    doc.circle(cx, cy, circleR).lineWidth(4).strokeColor(scoreHex(overall)).stroke()
+    doc.restore()
+
+    doc.font('Helvetica-Bold').fontSize(42).fillColor(scoreHex(overall))
     const scoreStr = `${overall}`
     const scoreW = doc.widthOfString(scoreStr)
-    doc.text(scoreStr, cx - scoreW / 2, cy - 20, { lineBreak: false })
+    doc.text(scoreStr, cx - scoreW / 2, cy - 18, { lineBreak: false })
 
-    doc.font('Helvetica').fontSize(11).fillColor(C.muted)
-    doc.text('/ 100', 0, cy + 36, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.font('Helvetica').fontSize(10).fillColor(C.muted)
+    doc.text('/ 100', 0, cy + 32, { align: 'center', width: PAGE_W, lineBreak: false })
 
-    doc.font('Helvetica-Bold').fontSize(15).fillColor(C.navy)
-    doc.text(scoreLabel(overall), 0, cy + 56, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.font('Helvetica-Bold').fontSize(14).fillColor(C.navy)
+    doc.text(scoreLabel(overall), 0, cy + 50, { align: 'center', width: PAGE_W, lineBreak: false })
 
-    // URL (matches DOCX accent URL)
+    // URL
     doc.font('Helvetica-Bold').fontSize(12).fillColor(C.accent)
-    doc.text(a.product_url, 0, cy + 86, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.text(a.product_url, 0, cy + 74, { align: 'center', width: PAGE_W, lineBreak: false })
 
-    // Issue summary — dark pill (matches DOCX navy issue card)
-    const chipY = cy + 120
-    const chipW = 400
+    // Issue summary — light card instead of dark pill
+    const chipY = cy + 104
+    const chipW = 380
     const chipX = (PAGE_W - chipW) / 2
 
-    doc.roundedRect(chipX, chipY, chipW, 50, 6).fill(C.navy)
+    doc.roundedRect(chipX, chipY, chipW, 44, 6).lineWidth(1).strokeColor(C.border).stroke()
 
-    doc.font('Helvetica-Bold').fontSize(12).fillColor(C.white)
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(C.navy)
     doc.text(`${total} ${L.issuesIdentified}`, 0, chipY + 8, { align: 'center', width: PAGE_W, lineBreak: false })
 
     const chipParts: string[] = []
@@ -245,8 +242,65 @@ export async function GET(
     if (medium > 0) chipParts.push(`${medium} Medium`)
     if (low > 0) chipParts.push(`${low} Low`)
     if (chipParts.length) {
-      doc.font('Helvetica').fontSize(9).fillColor(C.mutedLight)
-      doc.text(chipParts.join('  |  '), 0, chipY + 30, { align: 'center', width: PAGE_W, lineBreak: false })
+      doc.font('Helvetica').fontSize(9).fillColor(C.muted)
+      doc.text(chipParts.join('  |  '), 0, chipY + 26, { align: 'center', width: PAGE_W, lineBreak: false })
+    }
+
+    // ── Category scores directly on cover page (saves a page) ──
+    let y = chipY + 64
+
+    if (catScores.length > 0) {
+      drawLine(doc, y, C.borderLight, 0.5)
+      y += 12
+
+      doc.rect(ML, y - 2, 4, 18).fill(C.accent)
+      doc.font('Helvetica-Bold').fontSize(13).fillColor(C.navy)
+      doc.text(L.scoreBreakdown, ML + 14, y, { lineBreak: false })
+      y += 24
+
+      // Table header — light gray background (print-friendly)
+      const colName = ML
+      const colScore = ML + 260
+      const colSummary = ML + 310
+
+      doc.rect(ML, y - 4, PW, 18).fill(C.bgCard)
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(C.navy)
+      doc.text(L.category, colName + 8, y, { lineBreak: false })
+      doc.text(L.score, colScore + 4, y, { lineBreak: false })
+      doc.text(L.summary, colSummary + 8, y, { lineBreak: false })
+      y += 18
+
+      for (let i = 0; i < catScores.length; i++) {
+        const cat = catScores[i]
+        const val = cat.score ?? 0
+        const summary = cat.summary || ''
+        const summaryH = summary ? measure(doc, summary, 'Helvetica', 7.5, PW - colSummary + ML - 16, 2) : 0
+        const rowH = Math.max(18, summaryH + 8)
+
+        y = ensureSpace(y, rowH + 2)
+
+        // Alternating row — very light gray
+        if (i % 2 === 1) {
+          doc.rect(ML, y - 2, PW, rowH + 2).fill(C.bgPage)
+        }
+
+        // Category name
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.navy)
+        doc.text(cat.name, colName + 8, y + 1, { width: 240, lineBreak: false })
+
+        // Score
+        doc.font('Helvetica-Bold').fontSize(11).fillColor(scoreHex(val))
+        doc.text(`${val}`, colScore + 4, y, { lineBreak: false })
+
+        // Summary
+        if (summary) {
+          doc.font('Helvetica').fontSize(7.5).fillColor(C.textSub)
+          doc.text(summary, colSummary + 8, y + 1, { width: PW - (colSummary - ML) - 16, lineGap: 2, lineBreak: true })
+        }
+
+        y += rowH + 2
+      }
+      drawLine(doc, y, C.borderLight, 0.3)
     }
 
     // Confidential footer on cover
@@ -256,140 +310,58 @@ export async function GET(
     })
 
     // ════════════════════════════════════════════════════════
-    //  SCORE BREAKDOWN — matches DOCX table with navy header
-    // ════════════════════════════════════════════════════════
-    let y = addPage()
-
-    y = sectionHeader(doc, y, L.scoreBreakdown, L.scoreSubtitle)
-
-    if (catScores.length > 0) {
-      // Table header row — navy background (matches DOCX)
-      const colName = ML
-      const colScore = ML + 260
-      const colSummary = ML + 310
-
-      doc.rect(ML, y - 4, PW, 20).fill(C.navy)
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.white)
-      doc.text(L.category, colName + 8, y, { lineBreak: false })
-      doc.text(L.score, colScore + 4, y, { lineBreak: false })
-      doc.text(L.summary, colSummary + 8, y, { lineBreak: false })
-      y += 20
-
-      for (let i = 0; i < catScores.length; i++) {
-        const cat = catScores[i]
-        const val = cat.score ?? 0
-        const summary = cat.summary || ''
-        const summaryH = summary ? measure(doc, summary, 'Helvetica', 8, PW - colSummary + ML - 16, 2) : 0
-        const rowH = Math.max(22, summaryH + 10)
-
-        y = ensureSpace(y, rowH + 2)
-
-        // Alternating row background (matches DOCX)
-        const rowBg = i % 2 === 0 ? C.white : C.bgCard
-        doc.rect(ML, y - 2, PW, rowH + 4).fill(rowBg)
-
-        // Thin borders
-        drawLine(doc, y - 2, C.borderLight, 0.3)
-
-        // Category name — bold navy (matches DOCX)
-        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(C.navy)
-        doc.text(cat.name, colName + 8, y + 2, { width: 240, lineBreak: false })
-
-        // Score — colored (matches DOCX)
-        doc.font('Helvetica-Bold').fontSize(12).fillColor(scoreHex(val))
-        doc.text(`${val}`, colScore + 4, y + 1, { lineBreak: false })
-
-        // Summary — muted text (matches DOCX)
-        if (summary) {
-          doc.font('Helvetica').fontSize(8).fillColor(C.textSub)
-          doc.text(summary, colSummary + 8, y + 2, { width: PW - (colSummary - ML) - 16, lineGap: 2, lineBreak: true })
-        }
-
-        y += rowH + 4
-      }
-      drawLine(doc, y - 2, C.borderLight, 0.3)
-    } else {
-      // Fallback: individual score rows
-      const scores = [
-        { label: 'Overall Score', v: r.overall_score },
-        { label: 'User Experience', v: r.ux_score },
-        { label: 'Conversion', v: r.conversion_score },
-        { label: 'Mobile Experience', v: r.mobile_score },
-        { label: 'AI Discoverability', v: r.ai_discoverability_score },
-        { label: 'Content Quality', v: r.content_score },
-      ]
-      for (let i = 0; i < scores.length; i++) {
-        const val = scores[i].v ?? 0
-        y = ensureSpace(y, 28)
-
-        const rowBg = i % 2 === 0 ? C.white : C.bgCard
-        doc.rect(ML, y - 2, PW, 24).fill(rowBg)
-
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(C.navy)
-        doc.text(scores[i].label, ML + 8, y + 4, { lineBreak: false })
-        doc.font('Helvetica-Bold').fontSize(14).fillColor(scoreHex(val))
-        doc.text(`${val}`, 0, y + 2, { width: MR - 8, align: 'right', lineBreak: false })
-        y += 26
-      }
-    }
-
-    // ════════════════════════════════════════════════════════
-    //  EXECUTIVE SUMMARY — matches DOCX
+    //  EXECUTIVE SUMMARY
     // ════════════════════════════════════════════════════════
     const summaryText = r.executive_summary || 'No summary available.'
-    const recH = r.key_recommendation ? measure(doc, r.key_recommendation, 'Helvetica', 9, PW - 30, 3) + 44 : 0
 
-    if (y + 120 > CONTENT_BOTTOM) {
-      y = addPage()
-    } else {
-      y += 20
-    }
+    y = addPage()
 
     y = sectionHeader(doc, y, L.executiveSummary)
 
-    // Summary paragraphs (matches DOCX paragraph layout)
+    // Summary paragraphs
     const summaryParagraphs = summaryText.split(/\n+/).filter((p: string) => p.trim())
     for (const para of summaryParagraphs) {
-      const paraH = measure(doc, para.trim(), 'Helvetica', 10, PW, 4)
-      y = ensureSpace(y, paraH + 8)
+      const paraH = measure(doc, para.trim(), 'Helvetica', 10, PW, 3)
+      y = ensureSpace(y, paraH + 6)
       doc.font('Helvetica').fontSize(10).fillColor(C.textSub)
-      doc.text(para.trim(), ML, y, { width: PW, lineGap: 4, lineBreak: true })
-      y = doc.y + 8
+      doc.text(para.trim(), ML, y, { width: PW, lineGap: 3, lineBreak: true })
+      y = doc.y + 6
     }
 
-    // Key Recommendation — dark card with accent left border (matches DOCX)
+    // Key Recommendation — light accent card (NOT dark navy)
     if (r.key_recommendation) {
       const recText = r.key_recommendation as string
       const thisRecH = measure(doc, recText, 'Helvetica', 9.5, PW - 34, 3)
-      const boxH = 40 + thisRecH
+      const boxH = 36 + thisRecH
 
-      y = ensureSpace(y, boxH + 12)
+      y = ensureSpace(y, boxH + 10)
       y += 4
 
-      // Navy background (matches DOCX navy shading)
-      doc.roundedRect(ML, y, PW, boxH, 4).fill(C.navy)
-      // Accent left bar (matches DOCX left border accent)
+      // Light green background with border (print-friendly)
+      doc.roundedRect(ML, y, PW, boxH, 4).fill(C.recBg)
+      doc.roundedRect(ML, y, PW, boxH, 4).lineWidth(0.5).strokeColor(C.accent).stroke()
+      // Accent left bar
       doc.rect(ML, y, 4, boxH).fill(C.accent)
 
-      // Label (matches DOCX "Key Recommendation" text)
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(C.accent)
+      // Label
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(C.accentDk)
       doc.text(L.keyRecommendation, ML + 18, y + 10, { lineBreak: false })
 
-      // Recommendation text (matches DOCX light grey on navy)
-      doc.font('Helvetica').fontSize(9.5).fillColor('#CBD5E1')
-      doc.text(recText, ML + 18, y + 28, { width: PW - 34, lineGap: 3, lineBreak: true })
+      // Recommendation text — dark text on light background
+      doc.font('Helvetica').fontSize(9.5).fillColor(C.textSub)
+      doc.text(recText, ML + 18, y + 26, { width: PW - 34, lineGap: 3, lineBreak: true })
 
-      y = y + boxH + 14
+      y = y + boxH + 10
     }
 
     // ════════════════════════════════════════════════════════
-    //  DETAILED FINDINGS — matches DOCX finding layout exactly
+    //  DETAILED FINDINGS
     // ════════════════════════════════════════════════════════
     if (findings.length > 0) {
-      if (y + 140 > CONTENT_BOTTOM) {
+      if (y + 80 > CONTENT_BOTTOM) {
         y = addPage()
       } else {
-        y += 20
+        y += 14
       }
 
       y = sectionHeader(doc, y, L.detailedFindings, `${total} ${L.issuesIdentified}`)
@@ -401,181 +373,173 @@ export async function GET(
         const descText = fi.description || ''
         const recText = fi.recommendation || ''
 
-        const titleH = measure(doc, titleText, 'Helvetica-Bold', 10.5, PW - 90)
-        const descH = descText ? measure(doc, descText, 'Helvetica', 9.5, PW - 8, 3) : 0
-        const findRecH = recText ? measure(doc, recText, 'Helvetica', 9, PW - 30, 2) + 28 : 0
-        const findingH = Math.max(titleH, 16) + 8 + descH + 8 + findRecH + 16
+        const titleH = measure(doc, titleText, 'Helvetica-Bold', 10, PW - 80)
+        const descH = descText ? measure(doc, descText, 'Helvetica', 9, PW - 8, 2) : 0
+        const findRecH = recText ? measure(doc, recText, 'Helvetica', 8.5, PW - 28, 2) + 22 : 0
+        const findingH = Math.max(titleH, 14) + 6 + descH + 6 + findRecH + 10
 
-        y = ensureSpace(y, Math.min(findingH, 200))
+        y = ensureSpace(y, Math.min(findingH, 180))
 
-        // Finding header line: #N  [SEVERITY]  Title  (matches DOCX layout)
+        // Finding header: #N  [SEVERITY]  Title
         doc.font('Helvetica').fontSize(8).fillColor(C.mutedLight)
-        doc.text(`#${i + 1}`, ML, y + 3, { lineBreak: false })
+        doc.text(`#${i + 1}`, ML, y + 2, { lineBreak: false })
 
-        const numW = doc.widthOfString(`#${i + 1}`) + 8
+        const numW = doc.widthOfString(`#${i + 1}`) + 6
 
         // Severity badge
         doc.font('Helvetica-Bold').fontSize(8).fillColor(sev.hex)
-        doc.text(`[${sev.label}]`, ML + numW, y + 3, { lineBreak: false })
-        const sevW = doc.widthOfString(`[${sev.label}]`) + 8
+        doc.text(`[${sev.label}]`, ML + numW, y + 2, { lineBreak: false })
+        const sevW = doc.widthOfString(`[${sev.label}]`) + 6
 
         // Title
         const titleX = ML + numW + sevW
-        doc.font('Helvetica-Bold').fontSize(10.5).fillColor(C.navy)
-        doc.text(titleText, titleX, y + 1, { width: MR - titleX, lineBreak: true })
-        y = Math.max(y + 20, doc.y) + 4
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(C.navy)
+        doc.text(titleText, titleX, y, { width: MR - titleX, lineBreak: true })
+        y = Math.max(y + 16, doc.y) + 3
 
-        // Description (matches DOCX description paragraph)
+        // Description
         if (descText) {
-          y = ensureSpace(y, 24)
-          doc.font('Helvetica').fontSize(9.5).fillColor(C.textSub)
-          doc.text(descText, ML + 4, y, { width: PW - 8, lineGap: 3, lineBreak: true })
+          y = ensureSpace(y, 20)
+          doc.font('Helvetica').fontSize(9).fillColor(C.textSub)
+          doc.text(descText, ML + 4, y, { width: PW - 8, lineGap: 2, lineBreak: true })
+          y = doc.y + 4
+        }
+
+        // Recommendation block — light green bg + accent left bar
+        if (recText) {
+          const thisRecH = measure(doc, recText, 'Helvetica', 8.5, PW - 28, 2) + 20
+          y = ensureSpace(y, thisRecH + 4)
+
+          doc.roundedRect(ML, y - 2, PW, thisRecH + 2, 3).fill(C.recBg)
+          doc.rect(ML, y - 2, 3, thisRecH + 2).fill(C.accent)
+
+          // Label
+          doc.font('Helvetica-Bold').fontSize(8).fillColor(C.accentDk)
+          doc.text(L.recommendation, ML + 12, y + 1, { lineBreak: false })
+
+          // Text
+          doc.font('Helvetica').fontSize(8.5).fillColor(C.textSub)
+          doc.text(recText, ML + 12, y + 13, { width: PW - 28, lineGap: 2, lineBreak: true })
           y = doc.y + 6
         }
 
-        // Recommendation block — light green bg + accent left bar (matches DOCX)
-        if (recText) {
-          const thisRecH = measure(doc, recText, 'Helvetica', 9, PW - 30, 2) + 24
-          y = ensureSpace(y, thisRecH + 4)
-
-          // Light green background (matches DOCX F0FDF4 shading)
-          doc.roundedRect(ML, y - 2, PW, thisRecH + 4, 4).fill(C.recBg)
-          // Accent left bar (matches DOCX accent left border)
-          doc.rect(ML, y - 2, 3, thisRecH + 4).fill(C.accent)
-
-          // Label
-          doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.accent)
-          doc.text(L.recommendation, ML + 14, y + 2, { lineBreak: false })
-
-          // Text
-          doc.font('Helvetica').fontSize(9).fillColor(C.textSub)
-          doc.text(recText, ML + 14, y + 16, { width: PW - 30, lineGap: 2, lineBreak: true })
-          y = doc.y + 8
-        }
-
-        // Separator between findings (matches DOCX border-bottom)
-        y += 4
+        // Separator between findings
+        y += 2
         if (i < findings.length - 1) {
           drawLine(doc, y, C.borderLight, 0.3)
-          y += 12
+          y += 8
         }
       }
     }
 
     // ════════════════════════════════════════════════════════
-    //  PAGES ANALYSED — table matching DOCX exactly
+    //  PAGES ANALYSED
     // ════════════════════════════════════════════════════════
     if (pages.length > 0) {
-      if (y + 100 > CONTENT_BOTTOM) {
+      if (y + 60 > CONTENT_BOTTOM) {
         y = addPage()
       } else {
-        y += 20
+        y += 14
       }
 
       y = sectionHeader(doc, y, L.pagesAnalysed, L.pagesSubtitle)
 
-      // Table header (matches DOCX navy header row)
+      // Table header — light gray (print-friendly)
       const colIdx = ML
-      const colUrl = ML + 30
+      const colUrl = ML + 28
       const colStatus = ML + 390
       const colTime = ML + 440
 
-      doc.rect(ML, y - 4, PW, 20).fill(C.navy)
-      doc.font('Helvetica-Bold').fontSize(8).fillColor(C.white)
+      doc.rect(ML, y - 4, PW, 18).fill(C.bgCard)
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(C.navy)
       doc.text('#', colIdx + 6, y, { lineBreak: false })
       doc.text('Page URL', colUrl + 4, y, { lineBreak: false })
       doc.text('Status', colStatus, y, { lineBreak: false })
       doc.text('Load', colTime, y, { lineBreak: false })
-      y += 20
+      y += 18
 
       for (let i = 0; i < pages.length; i++) {
         const pg = pages[i]
         const pgUrl = pg.url || ''
         const pgTitle = pg.title || ''
-        const rowH = pgTitle ? 26 : 18
+        const rowH = pgTitle ? 24 : 16
 
         y = ensureSpace(y, rowH + 4)
 
-        // Alternating row background (matches DOCX)
-        const rowBg = i % 2 === 0 ? C.white : C.bgCard
-        doc.rect(ML, y - 2, PW, rowH + 4).fill(rowBg)
+        // Alternating subtle background
+        if (i % 2 === 1) {
+          doc.rect(ML, y - 2, PW, rowH + 2).fill(C.bgPage)
+        }
 
         // Row number
         doc.font('Helvetica').fontSize(7.5).fillColor(C.mutedLight)
         doc.text(`${i + 1}`, colIdx + 6, y + 2, { lineBreak: false })
 
-        // Title + URL (matches DOCX: title bold navy, URL accent)
+        // Title + URL
         if (pgTitle) {
-          doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.navy)
+          doc.font('Helvetica-Bold').fontSize(8).fillColor(C.navy)
           doc.text(pgTitle, colUrl + 4, y, { width: 340, lineBreak: false })
-          doc.font('Helvetica').fontSize(7.5).fillColor(C.accent)
-          doc.text(pgUrl, colUrl + 4, y + 12, { width: 340, lineBreak: false })
+          doc.font('Helvetica').fontSize(7).fillColor(C.accent)
+          doc.text(pgUrl, colUrl + 4, y + 11, { width: 340, lineBreak: false })
         } else {
-          doc.font('Helvetica').fontSize(8.5).fillColor(C.accent)
+          doc.font('Helvetica').fontSize(8).fillColor(C.accent)
           doc.text(pgUrl, colUrl + 4, y + 2, { width: 340, lineBreak: false })
         }
 
-        // Status code (matches DOCX colored status)
+        // Status code
         const statusCode = pg.status_code || 0
         const statusColor = statusCode >= 200 && statusCode < 300 ? '#16A34A' : statusCode >= 400 ? '#DC2626' : C.muted
-        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(statusColor)
+        doc.font('Helvetica-Bold').fontSize(8).fillColor(statusColor)
         doc.text(statusCode ? `${statusCode}` : '—', colStatus, y + 2, { lineBreak: false })
 
         // Load time
-        doc.font('Helvetica').fontSize(8).fillColor(C.textSub)
+        doc.font('Helvetica').fontSize(7.5).fillColor(C.textSub)
         doc.text(pg.load_time_ms ? `${pg.load_time_ms}ms` : '—', colTime, y + 2, { lineBreak: false })
 
-        y += rowH + 4
+        y += rowH + 2
       }
     }
 
     // ════════════════════════════════════════════════════════
-    //  BACK COVER — dark branded (matches DOCX back page)
+    //  BACK COVER — light, print-friendly
     // ════════════════════════════════════════════════════════
     y = addPage()
 
-    // Full dark background
-    doc.rect(0, 0, PAGE_W, PAGE_H).fill(C.navy)
+    // Top accent bar
+    doc.rect(0, 0, PAGE_W, 4).fill(C.accent)
 
-    // Subtle grid
-    doc.save()
-    doc.strokeColor(C.navyMid).lineWidth(0.3)
-    for (let gx = 0; gx < PAGE_W; gx += 50) doc.moveTo(gx, 0).lineTo(gx, PAGE_H).stroke()
-    for (let gy = 0; gy < PAGE_H; gy += 50) doc.moveTo(0, gy).lineTo(PAGE_W, gy).stroke()
-    doc.restore()
-
-    // Centered content (matches DOCX back page layout)
+    // Centered content
     const backY = 300
 
-    doc.font('Helvetica-Bold').fontSize(28).fillColor(C.white)
+    doc.font('Helvetica-Bold').fontSize(24).fillColor(C.navy)
     doc.text('Ready to improve', 0, backY, { align: 'center', width: PAGE_W, lineBreak: false })
-    doc.text('your user experience?', 0, backY + 38, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.text('your user experience?', 0, backY + 34, { align: 'center', width: PAGE_W, lineBreak: false })
 
     // Accent divider
-    doc.rect((PAGE_W - 60) / 2, backY + 82, 60, 3).fill(C.accent)
+    doc.rect((PAGE_W - 60) / 2, backY + 76, 60, 3).fill(C.accent)
 
-    doc.font('Helvetica').fontSize(10).fillColor(C.mutedLight)
-    doc.text('This report was generated by ClearUX — Deep AI-Powered UX Audits.', 0, backY + 102, {
+    doc.font('Helvetica').fontSize(10).fillColor(C.muted)
+    doc.text('This report was generated by ClearUX — Deep AI-Powered UX Audits.', 0, backY + 96, {
       align: 'center', width: PAGE_W, lineBreak: false,
     })
-    doc.text('Use these findings to prioritize improvements and boost conversions.', 0, backY + 118, {
+    doc.text('Use these findings to prioritize improvements and boost conversions.', 0, backY + 112, {
       align: 'center', width: PAGE_W, lineBreak: false,
     })
 
-    // CTA button
+    // CTA button — accent with white text
     const btnW = 180
     const btnX = (PAGE_W - btnW) / 2
-    const btnY = backY + 152
-    doc.roundedRect(btnX, btnY, btnW, 40, 8).fill(C.accent)
+    const btnY = backY + 146
+    doc.roundedRect(btnX, btnY, btnW, 36, 8).fill(C.accent)
     doc.font('Helvetica-Bold').fontSize(13).fillColor(C.white)
-    doc.text('clearux.net', 0, btnY + 11, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.text('clearux.net', 0, btnY + 10, { align: 'center', width: PAGE_W, lineBreak: false })
 
     // Logo at bottom
-    doc.font('Helvetica-Bold').fontSize(20).fillColor(C.white)
+    doc.font('Helvetica-Bold').fontSize(20).fillColor(C.navy)
     doc.text('Clear', (PAGE_W / 2) - 36, PAGE_H - 90, { continued: true, lineBreak: false })
     doc.fillColor(C.accent).text('UX', { lineBreak: false })
 
-    doc.font('Helvetica').fontSize(7).fillColor('#475569')
+    doc.font('Helvetica').fontSize(7).fillColor(C.mutedLight)
     doc.text(`Report ID: ${auditId}`, 0, PAGE_H - 55, { align: 'center', width: PAGE_W, lineBreak: false })
     doc.text(`Generated ${dateStr}`, 0, PAGE_H - 43, { align: 'center', width: PAGE_W, lineBreak: false })
 
