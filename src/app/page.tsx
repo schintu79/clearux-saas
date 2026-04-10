@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, Layers, Accessibility, FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -123,6 +123,26 @@ function RotatingReview({ reviews }: { reviews: { quote: string; author: string;
   );
 }
 
+/* ── Scroll-to-top button ───────────────────────────────── */
+function ScrollToTop() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (!show) return null;
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Back to top"
+      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-accent text-white shadow-lg shadow-accent/30 flex items-center justify-center hover:bg-accent-dk transition-all hover:scale-105"
+    >
+      <ArrowUp size={18} />
+    </button>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const { user } = useUser();
@@ -218,7 +238,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-28 pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-16 pb-14 sm:pt-28 sm:pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
         {/* Ambient glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
         <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
@@ -245,7 +265,7 @@ export default function Home() {
             <RotatingWord />
           </h1>
 
-          <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
+          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
             48 checkpoints. 12 categories. Professional report with prioritised fixes — delivered in minutes.
           </p>
 
@@ -348,14 +368,11 @@ export default function Home() {
                   className="relative text-center p-8 rounded-2xl bg-card border border-border hover:border-accent/20 transition-all duration-300"
                   style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
                 >
-                  {/* Step circle */}
-                  <div className="relative inline-flex items-center justify-center mb-6">
+                  {/* Step icon */}
+                  <div className="inline-flex items-center justify-center mb-6">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
                       <Icon size={24} className="text-accent" />
                     </div>
-                    <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-accent/30">
-                      {idx + 1}
-                    </span>
                   </div>
                   <h3 className="font-manrope text-lg font-bold text-text mb-2">{item.title}</h3>
                   <p className="text-muted text-sm leading-relaxed max-w-[260px] mx-auto">{item.desc}</p>
@@ -590,6 +607,7 @@ export default function Home() {
 
       </main>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 }

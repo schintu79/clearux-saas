@@ -54,8 +54,7 @@ const Navbar: React.FC = () => {
 
   const handleSignOut = async () => {
     setMenuOpen(false);
-    await signOut();
-    router.push('/');
+    await signOut(); // signOut() does window.location.replace('/') — hard redirect
   };
 
   const navLinks = [

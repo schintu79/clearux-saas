@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
@@ -21,6 +21,8 @@ const kspItems = [
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -76,8 +78,9 @@ export default function LoginPage() {
       }
 
       setSuccess('Logging in...')
-      router.push('/dashboard')
-      router.refresh()
+      // Hard redirect ensures cookies are fully set before the dashboard loads.
+      // This prevents the "flash of unauthenticated" state.
+      window.location.replace(redirectTo)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
       setLoading(false)
@@ -123,15 +126,19 @@ export default function LoginPage() {
           {/* Stat badges */}
           <div className="flex gap-4 mt-8">
             <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">800+</p>
-              <p className="text-[10px] text-white/50 uppercase tracking-wide">Audits completed</p>
+              <p className="text-lg font-bold text-white">48</p>
+              <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
             </div>
             <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
               <p className="text-lg font-bold text-white">48</p>
               <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
             </div>
             <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">&lt; 5 min</p>
+              <p className="text-lg font-bold text-white">12</p>
+              <p className="text-[10px] text-white/50 uppercase tracking-wide">Categories</p>
+            </div>
+            <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+              <p className="text-lg font-bold text-white">&lt; 10 min</p>
               <p className="text-[10px] text-white/50 uppercase tracking-wide">Per audit</p>
             </div>
           </div>

@@ -132,15 +132,20 @@ export function useUser(): UseUserReturn {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch (err) {
-      console.warn('[useUser] signOut error:', err)
-    }
+    // Clear local state immediately so the UI updates
     setUser(null)
     setProfile(null)
-    // Hard redirect to ensure cookies are fully cleared
-    window.location.href = '/'
+
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) console.error('[useUser] signOut API error:', error)
+    } catch (err) {
+      console.warn('[useUser] signOut exception:', err)
+    }
+
+    // Hard redirect to fully clear cookies + server state.
+    // Use replace so the user can't navigate back to a stale page.
+    window.location.replace('/')
   }
 
   return { user, profile, loading, signOut, refreshProfile }
