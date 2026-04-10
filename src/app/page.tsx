@@ -300,7 +300,6 @@ export default function Home() {
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
-            <p className="text-xs text-muted mt-2">Start with 1 audit for $29 &mdash; no subscription required.</p>
             {/* Language availability — left-aligned under input */}
             <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted">
               <span>Now in</span>
@@ -318,7 +317,15 @@ export default function Home() {
             </div>
           </form>
 
-          <div className="animate-fade-up delay-500 flex justify-center mb-10">
+          {/* Pricing pill badge */}
+          <div className="animate-fade-up delay-500 flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/10 border border-accent/20">
+              <CheckCircle size={14} className="text-accent" />
+              <span className="text-sm font-semibold text-accent">Start with 1 audit for $29 &mdash; No subscription required</span>
+            </div>
+          </div>
+
+          <div className="animate-fade-up delay-600 flex justify-center mb-10">
             <a
               href="#how-it-works"
               className="inline-flex items-center justify-center px-8 py-3 text-base font-semibold text-accent hover:text-accent-dk transition-colors"
