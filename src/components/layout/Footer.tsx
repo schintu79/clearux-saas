@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
       { label: 'FAQ', href: '/#faq' },
     ],
     Support: [
-      { label: 'Contact Us', href: 'mailto:support@clearux.ai' },
+      { label: 'Contact Us', href: '/contact' },
       { label: 'support@clearux.ai', href: 'mailto:support@clearux.ai' },
     ],
     Legal: [
@@ -51,7 +51,7 @@ const Footer: React.FC = () => {
           ))}
         </div>
 
-        <div className="border-t border-border pt-8">
+        <div className="pt-8">
           <p className="font-inter text-xs text-muted/60 text-center">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>

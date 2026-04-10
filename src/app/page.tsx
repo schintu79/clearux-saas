@@ -229,21 +229,20 @@ export default function Home() {
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Badge */}
-          <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-8">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
+          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-sm font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
           </div>
 
           {/*
-            Force the H1 to always be exactly 2 lines:
-            Line 1: "Find & fix UX issues"
-            Line 2: "impacting [word]"
-            We use a block break after "issues" so the rotating word is always on line 2.
+            Force the H1 to always be exactly 2 lines.
+            Line 1: "Find & fix UX issues impacting"
+            Line 2: the rotating word (centered, on its own line)
           */}
           <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
-            Find &amp; fix UX issues
+            Find &amp; fix UX issues impacting
             <br />
-            impacting <RotatingWord />
+            <RotatingWord />
           </h1>
 
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
@@ -257,10 +256,10 @@ export default function Home() {
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="hero-url-input"
-                  type="url"
+                  type="text"
                   value={heroUrl}
                   onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder="https://yourwebsite.com"
+                  placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
                   className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
                 />
@@ -275,12 +274,12 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Pricing highlights — bold, primary colors */}
-          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-text">
+          {/* Pricing highlights — bold, accent color */}
+          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-accent">
             <span>From $29 per audit</span>
-            <span className="text-accent">·</span>
+            <span className="opacity-40">·</span>
             <span>No subscription</span>
-            <span className="text-accent">·</span>
+            <span className="opacity-40">·</span>
             <span>Results in minutes</span>
           </div>
         </div>
@@ -289,7 +288,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TRUST NUMBERS — full-width purple gradient strip
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 30%, #A78BFA 70%, #7C3AED 100%)' }}>
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 30%, #8B5CF6 70%, #6D28D9 100%)' }}>
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -397,7 +396,7 @@ export default function Home() {
                   key={idx}
                   className={`rounded-xl p-5 border transition-all duration-300 group ${
                     isFeatured
-                      ? 'bg-accent/[0.06] border-accent/20 hover:border-accent/40'
+                      ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.04] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
                       : 'bg-card border-border hover:border-accent/20'
                   }`}
                 >

@@ -4,11 +4,11 @@
 
 /* ── Light palette (default) ──────────────────────────────── */
 :root {
-  --blue:        #8B5CF6;
-  --blue-dk:     #7C3AED;
+  --blue:        #7C3AED;
+  --blue-dk:     #6D28D9;
   --blue-lt:     #EDE9FE;
-  --accent:      #8B5CF6;
-  --accent-dk:   #7C3AED;
+  --accent:      #7C3AED;
+  --accent-dk:   #6D28D9;
   --accent-lt:   #EDE9FE;
   --navy:        #0A0A0F;
   --off:         #F5F3FF;
@@ -82,8 +82,8 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(139,92,246,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139,92,246,.06) 1px, transparent 1px);
+    linear-gradient(rgba(124,58,237,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,.06) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -94,7 +94,7 @@ body {
   width: 480px;
   height: 480px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139,92,246,.18) 0%, rgba(139,92,246,.04) 60%, transparent 75%);
+  background: radial-gradient(circle, rgba(124,58,237,.18) 0%, rgba(124,58,237,.04) 60%, transparent 75%);
   pointer-events: none;
 }
 
@@ -128,7 +128,7 @@ body {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(139,92,246,.15);
+  box-shadow: 0 0 0 2px rgba(124,58,237,.15);
 }
 
 .input::placeholder {
@@ -160,7 +160,7 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-dk);
-  box-shadow: 0 4px 12px rgba(139,92,246,.25);
+  box-shadow: 0 4px 12px rgba(124,58,237,.25);
 }
 
 .btn-primary:disabled {

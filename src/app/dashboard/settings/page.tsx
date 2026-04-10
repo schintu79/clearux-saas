@@ -446,9 +446,10 @@ const SettingsPage: React.FC = () => {
       <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-red-900 dark:text-red-300">Danger Zone</h2>
-          <p className="text-sm text-red-800 dark:text-red-400 mb-2">
+          <p className="text-sm text-red-800 dark:text-red-400">
             Once you delete your account, there is no going back. Please be certain.
           </p>
+          <div className="pt-2" />
           <a
             href="https://app.supabase.com"
             target="_blank"
