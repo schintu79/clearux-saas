@@ -296,7 +296,7 @@ export default function Home() {
 
           {/* Pricing highlights — bold, accent color */}
           <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-accent">
-            <span>From $29 per audit</span>
+            <span>From $99 per audit</span>
             <span className="opacity-40">·</span>
             <span>No subscription</span>
             <span className="opacity-40">·</span>
@@ -455,10 +455,10 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { name: 'Starter', credits: 1, price: 29, per: '$29', save: null, cta: 'Start Auditing', popular: false },
-              { name: 'Growth', credits: 5, price: 99, per: '$19.80', save: 'Save 32%', cta: 'Get 5 Audits', popular: true },
-              { name: 'Agency', credits: 15, price: 249, per: '$16.60', save: 'Save 43%', cta: 'Get 15 Audits', popular: false },
-              { name: 'Scale', credits: 50, price: 599, per: '$11.98', save: 'Save 59%', cta: 'Get 50 Audits', popular: false },
+              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, cta: 'Start Auditing', popular: false },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 'Save 19%', cta: 'Get 5 Audits', popular: true },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 'Save 33%', cta: 'Get 15 Audits', popular: false },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 'Save 50%', cta: 'Get 50 Audits', popular: false },
             ].map((tier, idx) => (
               <div
                 key={idx}
@@ -476,7 +476,7 @@ export default function Home() {
 
                 <h3 className="font-manrope font-bold text-lg text-text mb-1">{tier.name}</h3>
                 <div className="mb-1">
-                  <span className="font-manrope text-3xl font-bold text-text">${tier.price}</span>
+                  <span className="font-manrope text-3xl font-bold text-text">${tier.price.toLocaleString()}</span>
                 </div>
                 <p className="text-xs text-muted mb-4">
                   {tier.credits} credit{tier.credits !== 1 ? 's' : ''} · {tier.per}/audit

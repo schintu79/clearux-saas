@@ -284,7 +284,7 @@ const NewAuditInner: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-text">No credits remaining</p>
-              <p className="text-xs text-muted">This audit costs $29 or buy a credit pack to save.</p>
+              <p className="text-xs text-muted">This audit costs $99 or buy a credit pack to save.</p>
             </div>
             <Link
               href="/dashboard/buy-credits"
@@ -324,7 +324,7 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : (
           <>
-            Start Audit — $29
+            Start Audit — $99
             <ArrowRight size={20} />
           </>
         )}

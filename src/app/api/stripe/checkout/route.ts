@@ -1,7 +1,7 @@
 // ============================================================
 // ClearUX API — POST /api/stripe/checkout
 // Creates Stripe checkout sessions for:
-//   1. Single audit purchase ($29)
+//   1. Single audit purchase ($99)
 //   2. Credit pack purchases (5, 15, 50 credits)
 // ============================================================
 
@@ -20,10 +20,10 @@ const creditPackSchema = z.object({
 
 // ── Credit packs ────────────────────────────────────────────
 const CREDIT_PACKS = {
-  starter: { credits: 1,  amount: 2900,  name: 'ClearUX Starter',  desc: '1 audit credit' },
-  growth:  { credits: 5,  amount: 9900,  name: 'ClearUX Growth',   desc: '5 audit credits — $19.80/audit' },
-  agency:  { credits: 15, amount: 24900, name: 'ClearUX Agency',   desc: '15 audit credits — $16.60/audit' },
-  scale:   { credits: 50, amount: 59900, name: 'ClearUX Scale',    desc: '50 audit credits — $11.98/audit' },
+  starter: { credits: 1,  amount: 9900,   name: 'ClearUX Starter',  desc: '1 audit credit' },
+  growth:  { credits: 5,  amount: 39900,  name: 'ClearUX Growth',   desc: '5 audit credits — $79.80/audit' },
+  agency:  { credits: 15, amount: 99900,  name: 'ClearUX Agency',   desc: '15 audit credits — $66.60/audit' },
+  scale:   { credits: 50, amount: 249900, name: 'ClearUX Scale',    desc: '50 audit credits — $49.98/audit' },
 } as const
 
 export async function POST(request: NextRequest) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url })
     }
 
-    // ── Single audit purchase ($29) ─────────────────────────
+    // ── Single audit purchase ($99) ─────────────────────────
     const parsed = singleAuditSchema.safeParse(body)
     if (!parsed.success)
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
             name: 'ClearUX Full Audit',
             description: `Deep AI-powered UX audit — ${(audit as any).product_url}`,
           },
-          unit_amount: 2900,
+          unit_amount: 9900,
         },
         quantity: 1,
       }],

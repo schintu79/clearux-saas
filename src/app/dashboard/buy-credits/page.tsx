@@ -6,10 +6,10 @@ import { ArrowLeft, Coins, CheckCircle, Zap, ArrowRight } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 
 const PACKS = [
-  { id: 'starter', credits: 1, price: 29, per: '$29.00', save: null, popular: false },
-  { id: 'growth', credits: 5, price: 99, per: '$19.80', save: '32%', popular: true },
-  { id: 'agency', credits: 15, price: 249, per: '$16.60', save: '43%', popular: false },
-  { id: 'scale', credits: 50, price: 599, per: '$11.98', save: '59%', popular: false },
+  { id: 'starter', credits: 1, price: 99, per: '$99', save: null, popular: false },
+  { id: 'growth', credits: 5, price: 399, per: '$79.80', save: '19%', popular: true },
+  { id: 'agency', credits: 15, price: 999, per: '$66.60', save: '33%', popular: false },
+  { id: 'scale', credits: 50, price: 2499, per: '$49.98', save: '50%', popular: false },
 ] as const;
 
 export default function BuyCreditsPage() {
@@ -115,7 +115,7 @@ export default function BuyCreditsPage() {
             </div>
 
             <div className="mb-4">
-              <span className="font-manrope text-3xl font-bold text-text">${pack.price}</span>
+              <span className="font-manrope text-3xl font-bold text-text">${pack.price.toLocaleString()}</span>
             </div>
 
             <div className="space-y-1.5 mb-5">
