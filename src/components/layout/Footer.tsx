@@ -22,67 +22,37 @@ const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-sidebar text-sidebar-text py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+    <footer className="border-t border-white/[0.06] bg-[#08080C] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-1">
-            <h3 className="font-manrope font-bold text-2xl mb-2">Clear<span className="text-accent">UX</span></h3>
-            <p className="font-inter text-sm text-sidebar-text/70">
-              Audit your UX, understand your users, improve your product.
+            <h3 className="font-manrope font-bold text-xl mb-2 text-white">Clear<span className="text-accent">UX</span></h3>
+            <p className="font-inter text-sm text-[#6B6B80]">
+              AI-powered UX audits.<br />Professional reports in minutes.
             </p>
           </div>
 
-          <div>
-            <h4 className="font-inter font-semibold text-sm mb-4">Product</h4>
-            <ul className="space-y-2">
-              {footerLinks.Product.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="font-inter text-sm text-sidebar-text/70 hover:text-sidebar-text transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-inter font-semibold text-sm mb-4">Support</h4>
-            <ul className="space-y-2">
-              {footerLinks.Support.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="font-inter text-sm text-sidebar-text/70 hover:text-sidebar-text transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-inter font-semibold text-sm mb-4">Legal</h4>
-            <ul className="space-y-2">
-              {footerLinks.Legal.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="font-inter text-sm text-sidebar-text/70 hover:text-sidebar-text transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {Object.entries(footerLinks).map(([section, links]) => (
+            <div key={section}>
+              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-[#6B6B80] mb-4">{section}</h4>
+              <ul className="space-y-2.5">
+                {links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="font-inter text-sm text-[#8B8B9E] hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-sidebar-text/10 pt-8">
-          <p className="font-inter text-sm text-sidebar-text/50 text-center">
+        <div className="border-t border-white/[0.06] pt-8">
+          <p className="font-inter text-xs text-[#4A4A5E] text-center">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>
         </div>
