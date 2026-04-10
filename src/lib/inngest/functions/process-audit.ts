@@ -79,7 +79,7 @@ export const processAuditFn = inngest.createFunction(
     id: 'process-audit',
     retries: 1,
     concurrency: {
-      limit: 15, // Max 15 audits processing simultaneously
+      limit: 5, // Max 5 audits processing simultaneously (Inngest free plan limit)
     },
     triggers: [{ event: 'audit/process' as const }],
   },
