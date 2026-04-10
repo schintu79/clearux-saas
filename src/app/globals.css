@@ -144,13 +144,13 @@ body {
 .btn-primary {
   display: block;
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 1.25rem;
   background: var(--accent);
   color: #FFFFFF;
   border: none;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
   font-family: var(--font-inter), sans-serif;
   cursor: pointer;
   transition: all 0.15s;
