@@ -298,7 +298,7 @@ body {
 .delay-800 { animation-delay: 800ms; }
 
 /* ── Responsive ───────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .auth-page { grid-template-columns: 1fr; }
   .auth-left  { display: none; }
   .auth-right { padding: 2rem 1.5rem; align-items: center; justify-content: flex-start; padding-top: 2rem; }

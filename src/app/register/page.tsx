@@ -233,7 +233,7 @@ export default function RegisterPage() {
           <ThemeToggle variant="icon" />
         </div>
         {/* Mobile logo */}
-        <div className="md:hidden w-full mb-6">
+        <div className="lg:hidden w-full mb-6">
           <Link href="/">
             <span className="text-2xl font-manrope font-bold text-text">Clear<span className="text-accent">UX</span></span>
           </Link>
@@ -406,7 +406,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Mobile back to home */}
-          <div className="md:hidden mt-4 text-center">
+          <div className="lg:hidden mt-4 text-center">
             <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-text transition-colors">
               <ArrowLeft size={13} /> Back to home
             </Link>
