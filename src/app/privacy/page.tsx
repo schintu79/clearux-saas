@@ -60,7 +60,7 @@ export default function PrivacyPage() {
               <p>
                 You can access, update, or delete your account data at any time from your dashboard settings.
                 If you wish to delete your entire account and all associated data, contact us at{' '}
-                <a href="mailto:support@clearux.net" className="text-accent hover:underline">support@clearux.net</a>.
+                <a href="mailto:support@clearux.ai" className="text-accent hover:underline">support@clearux.ai</a>.
                 We will process deletion requests within 30 days.
               </p>
             </section>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
               <h2 className="font-semibold text-lg text-text mb-2">8. Contact</h2>
               <p>
                 For privacy-related questions, contact us at{' '}
-                <a href="mailto:support@clearux.net" className="text-accent hover:underline">support@clearux.net</a>.
+                <a href="mailto:support@clearux.ai" className="text-accent hover:underline">support@clearux.ai</a>.
               </p>
             </section>
           </div>

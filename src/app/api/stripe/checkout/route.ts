@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://clearux.net'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://clearux.ai'
 
     // Get user email
     const { data: profile } = await supabase

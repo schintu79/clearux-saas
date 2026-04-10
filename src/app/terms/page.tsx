@@ -93,7 +93,7 @@ export default function TermsPage() {
               <h2 className="font-semibold text-lg text-text mb-2">9. Contact</h2>
               <p>
                 Questions about these terms? Contact us at{' '}
-                <a href="mailto:support@clearux.net" className="text-accent hover:underline">support@clearux.net</a>.
+                <a href="mailto:support@clearux.ai" className="text-accent hover:underline">support@clearux.ai</a>.
               </p>
             </section>
           </div>

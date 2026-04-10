@@ -647,7 +647,7 @@ export async function GET(
                     alignment: AlignmentType.CENTER,
                     spacing: { after: 400 },
                     children: [
-                      new TextRun({ text: 'clearux.net', font: 'Arial', size: 28, bold: true, color: B.accent }),
+                      new TextRun({ text: 'clearux.ai', font: 'Arial', size: 28, bold: true, color: B.accent }),
                     ],
                   }),
                   new Paragraph({
@@ -713,7 +713,7 @@ export async function GET(
               new Paragraph({
                 border: { top: { style: BorderStyle.SINGLE, size: 1, color: B.borderLt, space: 4 } },
                 children: [
-                  new TextRun({ text: 'Confidential  |  clearux.net  |  Page ', font: 'Arial', size: 14, color: B.muted }),
+                  new TextRun({ text: 'Confidential  |  clearux.ai  |  Page ', font: 'Arial', size: 14, color: B.muted }),
                   new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 14, color: B.muted }),
                 ],
               }),

@@ -6,18 +6,18 @@ const Footer: React.FC = () => {
 
   const footerLinks = {
     Product: [
-      { label: 'Audit', href: '/#audit' },
-      { label: 'Features', href: '/#features' },
+      { label: 'How It Works', href: '/#how-it-works' },
       { label: 'Pricing', href: '/#pricing' },
+      { label: 'FAQ', href: '/#faq' },
     ],
-    Company: [
-      { label: 'About', href: '/about' },
-      { label: 'Contact', href: '/contact' },
+    Support: [
+      { label: 'Contact Us', href: 'mailto:support@clearux.ai' },
+      { label: 'support@clearux.ai', href: 'mailto:support@clearux.ai' },
     ],
     Legal: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
-      { label: 'Cookies', href: '/cookies' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Service', href: '/terms' },
+      { label: 'Cookie Policy', href: '/cookies' },
     ],
   };
 
@@ -49,9 +49,9 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-inter font-semibold text-sm mb-4">Company</h4>
+            <h4 className="font-inter font-semibold text-sm mb-4">Support</h4>
             <ul className="space-y-2">
-              {footerLinks.Company.map((link) => (
+              {footerLinks.Support.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}

@@ -85,7 +85,7 @@ export default function ContactPage() {
           )}
 
           <div className="mt-12 pt-8 border-t border-border text-sm text-muted">
-            <p>You can also reach us at <a href="mailto:support@clearux.net" className="text-accent hover:underline">support@clearux.net</a></p>
+            <p>You can also reach us at <a href="mailto:support@clearux.ai" className="text-accent hover:underline">support@clearux.ai</a></p>
           </div>
         </div>
       </main>

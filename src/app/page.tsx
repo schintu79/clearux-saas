@@ -160,11 +160,11 @@ export default function Home() {
     router.push(user ? `/dashboard/new-audit?url=${encoded}` : `/register?url=${encoded}`);
   };
 
-  // Counters
-  const c1 = useCountUp(500, 2200);
-  const c2 = useCountUp(800, 2000);
+  // Counters — keep numbers honest and verifiable
+  const c1 = useCountUp(48, 1600);
+  const c2 = useCountUp(12, 1400);
   const c3 = useCountUp(100, 1800);
-  const c4 = useCountUp(48, 1600);
+  const c4 = useCountUp(6, 1200);
 
   // Scroll reveals
   const howRef = useScrollReveal();
@@ -256,16 +256,15 @@ export default function Home() {
           </div>
 
           <h1 className="animate-fade-up delay-100 font-manrope text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 pb-1 text-text" style={{ lineHeight: '1.2' }}>
-            Is your website ready for<br className="hidden md:block" />{' '}
-            <RotatingDimension />
-            <span className="text-text">?</span>
+            Find &amp; Fix Hidden UX Issues<br className="hidden md:block" />{' '}
+            Killing Your <RotatingDimension />
           </h1>
 
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-3 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
-            Your site is losing customers to UX issues you can&rsquo;t see.
+            Your site is losing customers to UX issues you can&rsquo;t see &mdash; slow load times, confusing navigation, weak CTAs, and poor mobile experience.
           </p>
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-text font-semibold mb-10 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
-            We audit <span className="text-accent font-bold">48 checkpoints</span> across <span className="text-accent font-bold">12 critical categories</span> and deliver a professional action plan in minutes.
+            Our AI audits <span className="text-accent font-bold">48 checkpoints</span> across <span className="text-accent font-bold">12 categories</span> and delivers a prioritised action plan in minutes &mdash; not weeks.
           </p>
 
           {/* Social proof — above form */}
@@ -273,7 +272,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <AvatarStack />
               <p className="text-sm text-muted">
-                Trusted by <span className="font-bold text-text">500+</span> happy customers
+                Trusted by product teams &amp; agencies worldwide
               </p>
             </div>
           </div>
@@ -282,11 +281,14 @@ export default function Home() {
           <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-2xl mx-auto mb-10">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
+                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
-                  type="text"
+                  id="hero-url-input"
+                  type="url"
                   value={heroUrl}
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="Enter your website URL..."
+                  aria-label="Website URL to audit"
                   className="w-full px-5 py-4 text-base border-2 border-border rounded-xl bg-card text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgba(62,207,142,0.1)] transition-all"
                 />
               </div>
@@ -294,10 +296,11 @@ export default function Home() {
                 type="submit"
                 className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-xl font-semibold hover:bg-accent-dk transition-all shadow-lg hover:shadow-xl hover:shadow-accent/20 flex-shrink-0"
               >
-                Get Your UX Audit
+                Audit My Site Now
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
+            <p className="text-xs text-muted mt-2">Start with 1 audit for $29 &mdash; no subscription required.</p>
             {/* Language availability — left-aligned under input */}
             <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted">
               <span>Now in</span>
@@ -347,10 +350,10 @@ export default function Home() {
         <div className="max-w-5xl mx-auto relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-6">
             {[
-              { counter: c1, suffix: '+', label: 'Happy Customers', icon: Users },
-              { counter: c2, suffix: '+', label: 'Completed Audits', icon: FileCheck },
+              { counter: c1, suffix: '', label: 'Deep UX Checkpoints', icon: BarChart3 },
+              { counter: c2, suffix: '', label: 'Audit Categories', icon: Layers },
               { counter: c3, suffix: '%', label: 'AI Powered', icon: Cpu },
-              { counter: c4, suffix: '', label: 'Deep AI Checkpoints', icon: BarChart3 },
+              { counter: c4, suffix: '', label: 'Languages Supported', icon: Users },
             ].map((stat, idx) => {
               const Icon = stat.icon;
               return (
@@ -363,7 +366,7 @@ export default function Home() {
                     <Icon size={32} className="text-accent" />
                   </div>
                   <p className="font-manrope text-4xl md:text-5xl font-extrabold mb-1 tabular-nums tracking-tight text-white" suppressHydrationWarning>
-                    {mounted ? (idx === 0 ? c1.count.toLocaleString() : idx === 1 ? c2.count.toLocaleString() : idx === 2 ? c3.count : c4.count) : '\u00A0'}
+                    {mounted ? stat.counter.count : '\u00A0'}
                     {mounted ? stat.suffix : ''}
                   </p>
                   <p className="text-white/60 text-sm font-medium">{stat.label}</p>
@@ -437,7 +440,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           WHAT WE AUDIT
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 md:px-6 lg:px-8 bg-off">
+      <section id="features" className="py-24 px-4 md:px-6 lg:px-8 bg-off">
         <div
           ref={catRef.ref}
           className={`max-w-6xl mx-auto transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
@@ -580,10 +583,10 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { name: 'Starter', credits: 1, price: 29, per: '$29', save: null, cta: 'Get Started', popular: false },
-              { name: 'Growth', credits: 5, price: 99, per: '$19.80', save: 'Save 32%', cta: 'Buy 5 Credits', popular: true },
-              { name: 'Agency', credits: 15, price: 249, per: '$16.60', save: 'Save 43%', cta: 'Buy 15 Credits', popular: false },
-              { name: 'Scale', credits: 50, price: 599, per: '$11.98', save: 'Save 59%', cta: 'Buy 50 Credits', popular: false },
+              { name: 'Starter', credits: 1, price: 29, per: '$29', save: null, cta: 'Start Auditing', popular: false },
+              { name: 'Growth', credits: 5, price: 99, per: '$19.80', save: 'Save 32%', cta: 'Get 5 Audits', popular: true },
+              { name: 'Agency', credits: 15, price: 249, per: '$16.60', save: 'Save 43%', cta: 'Get 15 Audits', popular: false },
+              { name: 'Scale', credits: 50, price: 599, per: '$11.98', save: 'Save 59%', cta: 'Get 50 Audits', popular: false },
             ].map((tier, idx) => (
               <div
                 key={idx}
@@ -719,6 +722,42 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          FAQ
+          ═══════════════════════════════════════════════════════ */}
+      <section id="faq" className="py-24 px-4 md:px-6 lg:px-8 bg-off">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-manrope text-4xl font-bold text-center text-text mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-center text-muted text-lg mb-12 max-w-2xl mx-auto">
+            Everything you need to know about ClearUX audits.
+          </p>
+          <div className="space-y-4">
+            {[
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints across 12 UX categories, and generates a full professional report with prioritised recommendations.' },
+              { q: 'What does the audit cover?', a: 'We evaluate 12 critical UX categories: First Impression & Visual Design, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
+              { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits \u2014 every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, category breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
+              { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
+              { q: 'Is my data secure?', a: 'Absolutely. We only analyse publicly visible content on your website. Payments are processed securely via Stripe. We do not store or share your website data beyond generating your audit report.' },
+              { q: 'What languages are supported?', a: 'Audit reports are available in 6 languages: English, Spanish, French, German, Italian, and Portuguese. The AI generates findings and recommendations natively in your chosen language.' },
+              { q: 'Can I get a refund?', a: 'If you are unsatisfied with an audit result, contact us at support@clearux.ai and we will work with you to resolve the issue or provide a credit for a new audit.' },
+            ].map((item, idx) => (
+              <details key={idx} className="group bg-card border border-border rounded-xl overflow-hidden">
+                <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-off/50 transition-colors">
+                  <h3 className="font-semibold text-text text-sm pr-4">{item.q}</h3>
+                  <ArrowRight size={16} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
+                </summary>
+                <div className="px-5 pb-5">
+                  <p className="text-muted text-sm leading-relaxed">{item.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 px-4 md:px-6 lg:px-8 bg-navy overflow-hidden">
@@ -739,11 +778,12 @@ export default function Home() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-lg font-semibold hover:bg-accent-dk transition-all duration-200 shadow-lg shadow-accent/20"
+            className="group inline-flex items-center justify-center gap-2 px-10 py-5 bg-accent text-white rounded-xl text-lg font-bold hover:bg-accent-dk transition-all duration-200 shadow-lg shadow-accent/20"
           >
-            Get Your UX Audit
-            <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+            Audit My Site Now
+            <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
+          <p className="text-white/40 text-sm mt-4">No subscription required. Results in minutes.</p>
         </div>
       </section>
 

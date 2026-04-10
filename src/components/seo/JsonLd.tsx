@@ -1,3 +1,16 @@
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
+
+const FAQ_ITEMS = [
+  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints across 12 UX categories, and generates a full professional report with prioritised recommendations.' },
+  { q: 'What does the audit cover?', a: 'We evaluate 12 critical UX categories: First Impression & Visual Design, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
+  { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+  { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, category breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
+  { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
+  { q: 'Is my data secure?', a: 'Absolutely. We only analyse publicly visible content on your website. Payments are processed securely via Stripe. We do not store or share your website data beyond generating your audit report.' },
+  { q: 'What languages are supported?', a: 'Audit reports are available in 6 languages: English, Spanish, French, German, Italian, and Portuguese. The AI generates findings and recommendations natively in your chosen language.' },
+  { q: 'Can I get a refund?', a: 'If you are unsatisfied with an audit result, contact us at support@clearux.ai and we will work with you to resolve the issue or provide a credit for a new audit.' },
+]
+
 export function HomeJsonLd() {
   const data = {
     '@context': 'https://schema.org',
@@ -5,38 +18,83 @@ export function HomeJsonLd() {
       {
         '@type': 'WebSite',
         name: 'ClearUX',
-        url: 'https://clearux.net',
-        description: 'Deep AI-powered UX audits across 48 checkpoints. Professional reports in minutes.',
+        url: siteUrl,
+        description: 'AI-powered UX audits across 48 checkpoints in 12 categories. Professional reports in minutes.',
         potentialAction: {
           '@type': 'SearchAction',
-          target: 'https://clearux.net/dashboard/new-audit?url={search_term_string}',
+          target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
           'query-input': 'required name=search_term_string',
         },
+      },
+      {
+        '@type': 'Organization',
+        name: 'ClearUX',
+        url: siteUrl,
+        logo: `${siteUrl}/logo.png`,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          email: 'support@clearux.ai',
+          contactType: 'customer support',
+          availableLanguage: ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese'],
+        },
+        sameAs: [],
       },
       {
         '@type': 'SoftwareApplication',
         name: 'ClearUX',
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        offers: {
-          '@type': 'AggregateOffer',
-          lowPrice: '29',
-          highPrice: '449',
-          priceCurrency: 'USD',
-        },
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: '4.9',
-          ratingCount: '1500',
-          bestRating: '5',
-        },
+        description: 'Deep AI-powered UX audit tool that analyses websites across 48 checkpoints in 12 categories and delivers professional reports with actionable recommendations.',
+        featureList: [
+          '48-point UX analysis',
+          '12 audit categories',
+          'AI-powered crawling',
+          'PDF and Word reports',
+          'Multi-language support (6 languages)',
+          'Prioritised recommendations',
+          'Severity-based issue classification',
+        ],
+        offers: [
+          {
+            '@type': 'Offer',
+            name: 'Starter',
+            price: '29',
+            priceCurrency: 'USD',
+            description: '1 full UX audit credit',
+          },
+          {
+            '@type': 'Offer',
+            name: 'Growth',
+            price: '99',
+            priceCurrency: 'USD',
+            description: '5 full UX audit credits',
+          },
+          {
+            '@type': 'Offer',
+            name: 'Agency',
+            price: '249',
+            priceCurrency: 'USD',
+            description: '15 full UX audit credits',
+          },
+          {
+            '@type': 'Offer',
+            name: 'Scale',
+            price: '599',
+            priceCurrency: 'USD',
+            description: '50 full UX audit credits',
+          },
+        ],
       },
       {
-        '@type': 'Organization',
-        name: 'ClearUX',
-        url: 'https://clearux.net',
-        logo: 'https://clearux.net/logo.png',
-        sameAs: [],
+        '@type': 'FAQPage',
+        mainEntity: FAQ_ITEMS.map(item => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.a,
+          },
+        })),
       },
     ],
   }

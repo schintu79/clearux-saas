@@ -15,13 +15,13 @@ const manrope = Manrope({
   weight: ['400', '500', '600', '700', '800'],
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.net'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — Deep AI-Powered UX Audits & Discoverability Reports',
+    default:  'ClearUX — AI-Powered UX Audits in Minutes',
   },
   description: 'Get a comprehensive, AI-powered UX audit of your website across 48 checkpoints in 12 categories. Actionable professional report with prioritised fixes delivered in minutes.',
   keywords: [

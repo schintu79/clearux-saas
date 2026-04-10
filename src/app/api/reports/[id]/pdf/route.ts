@@ -123,7 +123,7 @@ export async function GET(
       autoFirstPage: false,
       info: {
         Title: `UX Audit Report — ${a.product_url}`,
-        Author: 'ClearUX (clearux.net)',
+        Author: 'ClearUX (clearux.ai)',
         Subject: 'UX Audit Report',
       },
     })
@@ -147,7 +147,7 @@ export async function GET(
       doc.save()
       drawLine(doc, FOOTER_Y - 6, C.borderLight, 0.3)
       doc.font('Helvetica').fontSize(7).fillColor(C.mutedLight)
-      doc.text('Confidential  |  clearux.net', ML, FOOTER_Y, { lineBreak: false })
+      doc.text('Confidential  |  clearux.ai', ML, FOOTER_Y, { lineBreak: false })
       doc.text(`Page ${pageNum}`, 0, FOOTER_Y, { width: MR, align: 'right', lineBreak: false })
       doc.restore()
     }
@@ -532,7 +532,7 @@ export async function GET(
     const btnY = backY + 146
     doc.roundedRect(btnX, btnY, btnW, 36, 8).fill(C.accent)
     doc.font('Helvetica-Bold').fontSize(13).fillColor(C.white)
-    doc.text('clearux.net', 0, btnY + 10, { align: 'center', width: PAGE_W, lineBreak: false })
+    doc.text('clearux.ai', 0, btnY + 10, { align: 'center', width: PAGE_W, lineBreak: false })
 
     // Logo at bottom
     doc.font('Helvetica-Bold').fontSize(20).fillColor(C.navy)

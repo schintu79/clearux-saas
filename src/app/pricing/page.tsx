@@ -103,7 +103,7 @@ export default function PricingPage() {
     {
       question: 'Is there a refund policy?',
       answer:
-        'One-time audits come with a 7-day satisfaction guarantee. If you\'re not happy with the results, contact support@clearux.net for a full refund. Agency subscriptions can be cancelled anytime — no questions asked.',
+        'One-time audits come with a 7-day satisfaction guarantee. If you\'re not happy with the results, contact support@clearux.ai for a full refund. Agency subscriptions can be cancelled anytime — no questions asked.',
     },
   ];
 
