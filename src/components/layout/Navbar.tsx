@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, Settings, LogOut, LayoutDashboard, Coins } from 'lucide-react';
+import { Settings, LogOut, LayoutDashboard, Coins } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useUser } from '@/hooks/useUser';
 
@@ -177,13 +177,21 @@ const Navbar: React.FC = () => {
             <ThemeToggle variant="icon" />
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2.5 rounded-md hover:bg-off transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label={isOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isOpen}
+              className="relative w-[44px] h-[44px] rounded-md hover:bg-off transition-colors flex items-center justify-center"
             >
-              {isOpen ? (
-                <X size={24} className="text-text" />
-              ) : (
-                <Menu size={24} className="text-text" />
-              )}
+              {/* Animated 2-line → X toggle */}
+              <div className="w-5 h-3.5 flex flex-col justify-between">
+                <span
+                  className="block h-[2px] w-full bg-text rounded-full transition-all duration-300 origin-center"
+                  style={isOpen ? { transform: 'translateY(5px) rotate(45deg)' } : {}}
+                />
+                <span
+                  className="block h-[2px] w-full bg-text rounded-full transition-all duration-300 origin-center"
+                  style={isOpen ? { transform: 'translateY(-5px) rotate(-45deg)' } : {}}
+                />
+              </div>
             </button>
           </div>
         </div>
