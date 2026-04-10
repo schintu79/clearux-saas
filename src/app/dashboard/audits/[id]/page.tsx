@@ -1029,20 +1029,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </a>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      {pg.status_code && (
-                        <span
-                          className={clsx(
-                            'text-[10px] font-bold',
-                            pg.status_code >= 200 && pg.status_code < 300
-                              ? 'text-green-600 dark:text-green-400'
-                              : pg.status_code >= 400
-                                ? 'text-red-600 dark:text-red-400'
-                                : 'text-muted',
-                          )}
-                        >
-                          {pg.status_code}
-                        </span>
-                      )}
                       {pg.load_time_ms != null && (
                         <span className="text-[10px] text-muted">{pg.load_time_ms}ms</span>
                       )}
