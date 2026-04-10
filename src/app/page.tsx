@@ -257,7 +257,7 @@ export default function Home() {
 
           <h1 className="animate-fade-up delay-100 font-manrope text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 pb-1 text-text" style={{ lineHeight: '1.2' }}>
             Find &amp; Fix Hidden UX Issues<br className="hidden md:block" />{' '}
-            Killing Your <RotatingDimension />
+            Impacting <RotatingDimension />
           </h1>
 
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-3 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
