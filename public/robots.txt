@@ -1,0 +1,7 @@
+# ClearUX — https://clearux.net
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+Sitemap: https://clearux.net/sitemap.xml

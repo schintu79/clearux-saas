@@ -1,0 +1,60 @@
+'use client'
+
+import React from 'react'
+import { Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/context/ThemeContext'
+import clsx from 'clsx'
+
+interface ThemeToggleProps {
+  /** 'pill' for navbar, 'icon' for a minimal button */
+  variant?: 'pill' | 'icon'
+  className?: string
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'icon', className }) => {
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
+
+  if (variant === 'pill') {
+    return (
+      <button
+        onClick={toggleTheme}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        className={clsx(
+          'relative flex items-center w-14 h-7 rounded-full p-0.5 transition-colors duration-300',
+          isDark ? 'bg-white/15 border border-white/20' : 'bg-gray-100 border border-gray-300',
+          className
+        )}
+      >
+        <span
+          className={clsx(
+            'flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 shadow-sm',
+            isDark
+              ? 'translate-x-7 bg-indigo-500 text-white shadow-md'
+              : 'translate-x-0 bg-white text-amber-600 shadow-md'
+          )}
+        >
+          {isDark ? <Moon size={13} /> : <Sun size={13} />}
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={clsx(
+        'p-2 rounded-lg transition-colors duration-200',
+        isDark
+          ? 'text-yellow-400 hover:bg-white/10'
+          : 'text-muted hover:bg-off',
+        className
+      )}
+    >
+      {isDark ? <Sun size={20} /> : <Moon size={20} />}
+    </button>
+  )
+}
+
+export default ThemeToggle

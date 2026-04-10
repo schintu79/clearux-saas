@@ -1,0 +1,3 @@
+-- This migration has been superseded by 002_missing_columns.sql
+-- See that file for the complete set of missing columns
+-- (language, plan, credits, payments.audit_id nullable)
