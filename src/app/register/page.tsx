@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
+import Navbar from '@/components/layout/Navbar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { z } from 'zod'
 
@@ -60,7 +61,7 @@ const valueProps = [
   {
     icon: Zap,
     title: 'Results in Minutes',
-    desc: 'What takes consultants weeks, our AI delivers in under 5 minutes with professional-grade depth.',
+    desc: 'What takes consultants weeks, our AI delivers in under 10 minutes with professional-grade depth.',
   },
   {
     icon: BarChart3,
@@ -154,265 +155,266 @@ export default function RegisterPage() {
     }
   }
 
-  return (
-    <div className="auth-page">
-      {/* Left Panel — Value Props + Rotating Reviews */}
-      <div className="auth-left relative z-0">
-        <div className="auth-glow" />
-        <div className="relative z-10 flex flex-col h-full">
-          {/* Logo */}
-          <div className="mb-10">
-            <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-manrope font-bold text-white">
-                Clear<span className="text-accent">UX</span>
-              </h1>
-            </Link>
-          </div>
-
-          {/* Value Propositions */}
-          <div className="space-y-6 mb-auto">
-            <h2 className="text-xl font-manrope font-semibold text-white">
-              Everything you need to ship better UX
-            </h2>
-
-            <div className="grid grid-cols-1 gap-5">
-              {valueProps.map((prop) => (
-                <div key={prop.title} className="flex gap-4 items-start">
-                  <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <prop.icon size={22} className="text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-base font-bold text-white">{prop.title}</p>
-                    <p className="text-sm text-white/65 leading-relaxed mt-0.5">{prop.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rotating Testimonials */}
-          <div className="mt-8">
-            <div className="bg-white/8 border border-white/10 rounded-xl p-5 backdrop-blur-sm min-h-[140px] transition-all duration-500">
-              <div className="flex gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="text-yellow-400 text-sm">&#9733;</div>
-                ))}
-              </div>
-              <p className="text-sm text-white/90 mb-3 leading-relaxed">
-                &ldquo;{testimonials[activeTestimonial].text}&rdquo;
-              </p>
-              <p className="text-xs text-white/55">
-                {testimonials[activeTestimonial].name}, {testimonials[activeTestimonial].role}
-              </p>
-            </div>
-
-            {/* Dots */}
-            <div className="flex justify-center gap-2 mt-3">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveTestimonial(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                    i === activeTestimonial ? 'bg-accent w-4' : 'bg-white/30'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Back to Home */}
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
-            <ArrowLeft size={16} /> Back to home
-          </Link>
-        </div>
+  /* ── Shared form JSX ─────────────────────────────────────── */
+  const formContent = (
+    <div className="w-full max-w-[380px]">
+      <div className="mb-8">
+        <h2 className="text-2xl font-manrope font-bold text-text mb-2">
+          Create account
+        </h2>
+        <p className="text-sm text-muted">
+          Join ClearUX to start auditing your UX
+        </p>
       </div>
 
-      {/* Right Panel — Form */}
-      <div className="auth-right">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle variant="icon" />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="alert-error flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="alert-success flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Full Name */}
+        <div>
+          <label htmlFor="fullName" className="label">Full Name</label>
+          <input
+            id="fullName"
+            type="text"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            placeholder="Sarah Chen"
+            className={`input ${errors.fullName ? 'input-error' : ''}`}
+            disabled={loading}
+          />
+          {errors.fullName && <p className="text-xs text-red-600 mt-1.5">{errors.fullName}</p>}
         </div>
-        {/* Mobile logo */}
-        <div className="lg:hidden w-full mb-6">
-          <Link href="/">
-            <span className="text-2xl font-manrope font-bold text-text">Clear<span className="text-accent">UX</span></span>
-          </Link>
+
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+            className={`input ${errors.email ? 'input-error' : ''}`}
+            disabled={loading}
+          />
+          {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
         </div>
-        <div className="auth-form-wrap">
-          <div className="mb-8">
-            <h2 className="text-2xl font-manrope font-bold text-text mb-2">
-              Create account
-            </h2>
-            <p className="text-sm text-muted">
-              Join ClearUX to start auditing your UX
-            </p>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a strong password"
+              className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+              disabled={loading}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="alert-error flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="alert-success flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            {/* Full Name */}
-            <div>
-              <label htmlFor="fullName" className="label">Full Name</label>
-              <input
-                id="fullName"
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Sarah Chen"
-                className={`input ${errors.fullName ? 'input-error' : ''}`}
-                disabled={loading}
-              />
-              {errors.fullName && <p className="text-xs text-red-600 mt-1.5">{errors.fullName}</p>}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="label">Email</label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                className={`input ${errors.email ? 'input-error' : ''}`}
-                disabled={loading}
-              />
-              {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="label">Password</label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Create a strong password"
-                  className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
-                  disabled={loading}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* Password Strength Signifiers */}
-              {formData.password.length > 0 && (
-                <div className="mt-2.5 space-y-1.5">
-                  {passwordChecks.map((check) => (
-                    <div key={check.label} className="flex items-center gap-2">
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                        check.met ? 'bg-accent' : 'bg-border'
-                      }`}>
-                        {check.met && (
-                          <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        )}
-                      </div>
-                      <span className={`text-xs transition-colors ${check.met ? 'text-accent' : 'text-muted'}`}>
-                        {check.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="label">Confirm Password</label>
-              <div className="relative">
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Repeat your password"
-                  className={`input pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
-                  disabled={loading}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {/* Match indicator */}
-              {formData.confirmPassword.length > 0 && (
-                <div className="flex items-center gap-2 mt-1.5">
+          {/* Password Strength Signifiers */}
+          {formData.password.length > 0 && (
+            <div className="mt-2.5 space-y-1.5">
+              {passwordChecks.map((check) => (
+                <div key={check.label} className="flex items-center gap-2">
                   <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    formData.password === formData.confirmPassword ? 'bg-accent' : 'bg-border'
+                    check.met ? 'bg-accent' : 'bg-border'
                   }`}>
-                    {formData.password === formData.confirmPassword && (
+                    {check.met && (
                       <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     )}
                   </div>
-                  <span className={`text-xs transition-colors ${
-                    formData.password === formData.confirmPassword ? 'text-accent' : 'text-muted'
-                  }`}>
-                    {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                  <span className={`text-xs transition-colors ${check.met ? 'text-accent' : 'text-muted'}`}>
+                    {check.label}
                   </span>
                 </div>
-              )}
-              {errors.confirmPassword && <p className="text-xs text-red-600 mt-1.5">{errors.confirmPassword}</p>}
+              ))}
             </div>
+          )}
 
-            {/* Submit */}
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="spinner" />
-                  Creating account...
-                </span>
-              ) : (
-                'Create account'
-              )}
+          {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
+        </div>
+
+        {/* Confirm Password */}
+        <div>
+          <label htmlFor="confirmPassword" className="label">Confirm Password</label>
+          <div className="relative">
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Repeat your password"
+              className={`input pr-10 ${errors.confirmPassword ? 'input-error' : ''}`}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+              disabled={loading}
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
-          </form>
+          </div>
+          {formData.confirmPassword.length > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                formData.password === formData.confirmPassword ? 'bg-accent' : 'bg-border'
+              }`}>
+                {formData.password === formData.confirmPassword && (
+                  <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </div>
+              <span className={`text-xs transition-colors ${
+                formData.password === formData.confirmPassword ? 'text-accent' : 'text-muted'
+              }`}>
+                {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+              </span>
+            </div>
+          )}
+          {errors.confirmPassword && <p className="text-xs text-red-600 mt-1.5">{errors.confirmPassword}</p>}
+        </div>
 
-          <div className="mt-6 text-center text-sm text-muted">
-            Already have an account?{' '}
-            <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">
-              Sign in
-            </Link>
+        {/* Submit */}
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="spinner" />
+              Creating account...
+            </span>
+          ) : (
+            'Create account'
+          )}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center text-sm text-muted">
+        Already have an account?{' '}
+        <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">
+          Sign in
+        </Link>
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
+      <div className="lg:hidden min-h-screen bg-surface flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4 py-10">
+          {formContent}
+        </div>
+      </div>
+
+      {/* ── DESKTOP: classic 2-panel layout ──────────────────── */}
+      <div className="hidden lg:block">
+        <div className="auth-page">
+          {/* Left Panel — Value Props + Rotating Reviews */}
+          <div className="auth-left relative z-0">
+            <div className="auth-glow" />
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="mb-10">
+                <Link href="/" className="inline-block">
+                  <h1 className="text-3xl font-manrope font-bold text-white">
+                    Clear<span className="text-accent">UX</span>
+                  </h1>
+                </Link>
+              </div>
+
+              <div className="space-y-6 mb-auto">
+                <h2 className="text-xl font-manrope font-semibold text-white">
+                  Everything you need to ship better UX
+                </h2>
+
+                <div className="grid grid-cols-1 gap-5">
+                  {valueProps.map((prop) => (
+                    <div key={prop.title} className="flex gap-4 items-start">
+                      <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <prop.icon size={22} className="text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-white">{prop.title}</p>
+                        <p className="text-sm text-white/65 leading-relaxed mt-0.5">{prop.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <div className="bg-white/8 border border-white/10 rounded-xl p-5 backdrop-blur-sm min-h-[140px] transition-all duration-500">
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="text-yellow-400 text-sm">&#9733;</div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-white/90 mb-3 leading-relaxed">
+                    &ldquo;{testimonials[activeTestimonial].text}&rdquo;
+                  </p>
+                  <p className="text-xs text-white/55">
+                    {testimonials[activeTestimonial].name}, {testimonials[activeTestimonial].role}
+                  </p>
+                </div>
+
+                <div className="flex justify-center gap-2 mt-3">
+                  {testimonials.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveTestimonial(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                        i === activeTestimonial ? 'bg-accent w-4' : 'bg-white/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
+                <ArrowLeft size={16} /> Back to home
+              </Link>
+            </div>
           </div>
 
-          {/* Mobile back to home */}
-          <div className="lg:hidden mt-4 text-center">
-            <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-text transition-colors">
-              <ArrowLeft size={13} /> Back to home
-            </Link>
+          {/* Right Panel — Form */}
+          <div className="auth-right">
+            <div className="absolute top-4 right-4">
+              <ThemeToggle variant="icon" />
+            </div>
+            <div className="auth-form-wrap">
+              {formContent}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

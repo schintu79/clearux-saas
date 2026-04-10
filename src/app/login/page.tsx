@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
+import Navbar from '@/components/layout/Navbar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { z } from 'zod'
 
@@ -78,8 +79,6 @@ export default function LoginPage() {
       }
 
       setSuccess('Logging in...')
-      // Hard redirect ensures cookies are fully set before the dashboard loads.
-      // This prevents the "flash of unauthenticated" state.
       window.location.replace(redirectTo)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
@@ -87,182 +86,181 @@ export default function LoginPage() {
     }
   }
 
-  return (
-    <div className="auth-page">
-      {/* Left Panel — Welcome Back */}
-      <div className="auth-left relative z-0">
-        <div className="auth-glow" />
-        <div className="relative z-10 flex flex-col h-full">
-          {/* Logo */}
-          <div className="mb-10">
-            <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-manrope font-bold text-white">
-                Clear<span className="text-accent">UX</span>
-              </h1>
-            </Link>
-          </div>
-
-          {/* Welcome */}
-          <div className="mb-auto">
-            <h2 className="text-2xl font-manrope font-bold text-white mb-2">
-              Welcome back
-            </h2>
-            <p className="text-sm text-white/70 leading-relaxed max-w-[320px]">
-              Pick up right where you left off. Your UX insights are ready and waiting.
-            </p>
-
-            <div className="mt-8 space-y-5">
-              {kspItems.map((item) => (
-                <div key={item.text} className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
-                    <item.icon size={22} className="text-accent" />
-                  </div>
-                  <p className="text-base font-semibold text-white/85">{item.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Stat badges */}
-          <div className="flex gap-4 mt-8">
-            <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">48</p>
-              <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
-            </div>
-            <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">48</p>
-              <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
-            </div>
-            <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">12</p>
-              <p className="text-[10px] text-white/50 uppercase tracking-wide">Categories</p>
-            </div>
-            <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-              <p className="text-lg font-bold text-white">&lt; 10 min</p>
-              <p className="text-[10px] text-white/50 uppercase tracking-wide">Per audit</p>
-            </div>
-          </div>
-
-          {/* Back to Home */}
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
-            <ArrowLeft size={16} /> Back to home
-          </Link>
-        </div>
+  /* ── Shared form JSX ─────────────────────────────────────── */
+  const formContent = (
+    <div className="w-full max-w-[380px]">
+      <div className="mb-8">
+        <h2 className="text-2xl font-manrope font-bold text-text mb-2">
+          Sign in
+        </h2>
+        <p className="text-sm text-muted">
+          Enter your credentials to access your dashboard
+        </p>
       </div>
 
-      {/* Right Panel — Form */}
-      <div className="auth-right">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle variant="icon" />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="alert-error flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="alert-success flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+            className={`input ${errors.email ? 'input-error' : ''}`}
+            disabled={loading}
+          />
+          {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
         </div>
-        {/* Mobile / tablet logo (shown when left panel is hidden) */}
-        <div className="lg:hidden w-full mb-6">
-          <Link href="/">
-            <span className="text-2xl font-manrope font-bold text-text">Clear<span className="text-accent">UX</span></span>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+              disabled={loading}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
+        </div>
+
+        {/* Forgot Password */}
+        <div className="text-right">
+          <Link href="/forgot-password" className="btn-ghost text-xs">
+            Forgot password?
           </Link>
         </div>
-        <div className="auth-form-wrap">
-          <div className="mb-8">
-            <h2 className="text-2xl font-manrope font-bold text-text mb-2">
-              Sign in
-            </h2>
-            <p className="text-sm text-muted">
-              Enter your credentials to access your dashboard
-            </p>
-          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="alert-error flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+        {/* Submit */}
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="spinner" />
+              Signing in...
+            </span>
+          ) : (
+            'Sign in'
+          )}
+        </button>
+      </form>
 
-            {success && (
-              <div className="alert-success flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="label">Email</label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                className={`input ${errors.email ? 'input-error' : ''}`}
-                disabled={loading}
-              />
-              {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="label">Password</label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
-                  disabled={loading}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
-            </div>
-
-            {/* Forgot Password */}
-            <div className="text-right">
-              <Link href="/forgot-password" className="btn-ghost text-xs">
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Submit */}
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="spinner" />
-                  Signing in...
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-muted">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-accent font-semibold hover:underline transition-colors">
-              Sign up
-            </Link>
-          </div>
-
-          {/* Mobile/tablet back to home */}
-          <div className="lg:hidden mt-4 text-center">
-            <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-text transition-colors">
-              <ArrowLeft size={13} /> Back to home
-            </Link>
-          </div>
-        </div>
+      <div className="mt-6 text-center text-sm text-muted">
+        Don&apos;t have an account?{' '}
+        <Link href="/register" className="text-accent font-semibold hover:underline transition-colors">
+          Sign up
+        </Link>
       </div>
     </div>
+  )
+
+  return (
+    <>
+      {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
+      <div className="lg:hidden min-h-screen bg-surface flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4 py-10">
+          {formContent}
+        </div>
+      </div>
+
+      {/* ── DESKTOP: classic 2-panel layout ──────────────────── */}
+      <div className="hidden lg:block">
+        <div className="auth-page">
+          {/* Left Panel — Welcome Back */}
+          <div className="auth-left relative z-0">
+            <div className="auth-glow" />
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="mb-10">
+                <Link href="/" className="inline-block">
+                  <h1 className="text-3xl font-manrope font-bold text-white">
+                    Clear<span className="text-accent">UX</span>
+                  </h1>
+                </Link>
+              </div>
+
+              <div className="mb-auto">
+                <h2 className="text-2xl font-manrope font-bold text-white mb-2">
+                  Welcome back
+                </h2>
+                <p className="text-sm text-white/70 leading-relaxed max-w-[320px]">
+                  Pick up right where you left off. Your UX insights are ready and waiting.
+                </p>
+
+                <div className="mt-8 space-y-5">
+                  {kspItems.map((item) => (
+                    <div key={item.text} className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
+                        <item.icon size={22} className="text-accent" />
+                      </div>
+                      <p className="text-base font-semibold text-white/85">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-8">
+                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">48</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
+                </div>
+                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">12</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Categories</p>
+                </div>
+                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">&lt; 10 min</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Per audit</p>
+                </div>
+              </div>
+
+              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
+                <ArrowLeft size={16} /> Back to home
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Panel — Form */}
+          <div className="auth-right">
+            <div className="absolute top-4 right-4">
+              <ThemeToggle variant="icon" />
+            </div>
+            <div className="auth-form-wrap">
+              {formContent}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
