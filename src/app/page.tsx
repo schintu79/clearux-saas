@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, Layers, Accessibility, FileCheck } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, Layers, Accessibility, FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -57,8 +57,8 @@ function useScrollReveal() {
   return { ref, visible };
 }
 
-/* ── Rotating words — fixed height, no layout shift ──────── */
-const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Discoverability', 'Mobile UX', 'Trust', 'Accessibility'];
+/* ── Rotating words — fixed to always keep 2-line headline ── */
+const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust'];
 
 function RotatingWord() {
   const [idx, setIdx] = useState(0);
@@ -71,11 +71,55 @@ function RotatingWord() {
     return () => clearInterval(interval);
   }, []);
   return (
-    <span className="inline-flex items-baseline min-w-[200px] sm:min-w-[280px]">
-      <span className={`transition-all duration-300 bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}>
-        {HERO_WORDS[idx]}
-      </span>
+    <span
+      className={`transition-opacity duration-300 bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}
+    >
+      {HERO_WORDS[idx]}
     </span>
+  );
+}
+
+/* ── Rotating testimonials ──────────────────────────────── */
+function RotatingReview({ reviews }: { reviews: { quote: string; author: string; title: string; company: string; initials: string }[] }) {
+  const [idx, setIdx] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  const next = () => { setFade(false); setTimeout(() => { setIdx((i) => (i + 1) % reviews.length); setFade(true); }, 250); };
+  const prev = () => { setFade(false); setTimeout(() => { setIdx((i) => (i - 1 + reviews.length) % reviews.length); setFade(true); }, 250); };
+
+  useEffect(() => {
+    const interval = setInterval(next, 5000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const r = reviews[idx];
+  return (
+    <div className="relative max-w-2xl mx-auto text-center">
+      <div className={`transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+        <p className="text-text text-base md:text-lg font-medium mb-4 leading-relaxed">&ldquo;{r.quote}&rdquo;</p>
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">{r.initials}</div>
+          <div className="text-left">
+            <p className="text-text text-sm font-semibold">{r.author}</p>
+            <p className="text-muted text-xs">{r.title}, {r.company}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-5">
+        <button onClick={prev} aria-label="Previous review" className="w-8 h-8 rounded-full border border-border bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+          <ChevronLeft size={14} className="text-muted" />
+        </button>
+        <div className="flex gap-1.5">
+          {reviews.map((_, i) => (
+            <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-accent w-4' : 'bg-border'}`} />
+          ))}
+        </div>
+        <button onClick={next} aria-label="Next review" className="w-8 h-8 rounded-full border border-border bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+          <ChevronRight size={14} className="text-muted" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -98,6 +142,7 @@ export default function Home() {
   const c1 = useCountUp(48, 1800);
   const c2 = useCountUp(12, 1400);
   const c3 = useCountUp(6, 1200);
+  const c4 = useCountUp(10, 1000);
 
   const howRef = useScrollReveal();
   const catRef = useScrollReveal();
@@ -124,6 +169,8 @@ export default function Home() {
     { quote: "ClearUX identified critical issues we completely missed. The audit was thorough and actionable.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
     { quote: "Worth every penny. We implemented the recommendations and saw a 34% increase in conversions.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
     { quote: "The AI-powered analysis is impressive. It caught UX issues our team had overlooked for months.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
+    { quote: "The report was incredibly detailed — the prioritised recommendations saved us weeks of guesswork.", author: "James Kim", title: "CTO", company: "LaunchPad", initials: "JK" },
+    { quote: "As an agency, we now include ClearUX audits in every client proposal. It's a game-changer.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", initials: "DT" },
   ];
 
   return (
@@ -136,9 +183,42 @@ export default function Home() {
       <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
+          SOCIAL PROOF — rotating reviews above hero
+          ═══════════════════════════════════════════════════════ */}
+      <section className="bg-surface-alt border-b border-border py-6 px-4">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {[
+                { bg: '#8B5CF6', initials: 'SC' },
+                { bg: '#A78BFA', initials: 'MW' },
+                { bg: '#7C3AED', initials: 'ER' },
+                { bg: '#6D28D9', initials: 'JK' },
+                { bg: '#C4B5FD', initials: 'DT' },
+              ].map((p, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-full border-2 border-surface-alt flex items-center justify-center text-white text-[10px] font-bold"
+                  style={{ backgroundColor: p.bg, zIndex: 5 - i }}
+                >
+                  {p.initials}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
+              ))}
+            </div>
+            <span className="text-muted text-xs">Trusted by product teams worldwide</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-36 pb-32 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-28 pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
         {/* Ambient glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
         <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
@@ -154,9 +234,15 @@ export default function Home() {
             <span className="text-xs font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
           </div>
 
+          {/*
+            Force the H1 to always be exactly 2 lines:
+            Line 1: "Find & fix UX issues"
+            Line 2: "impacting [word]"
+            We use a block break after "issues" so the rotating word is always on line 2.
+          */}
           <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
-            Find &amp; fix UX issues{' '}
-            <br className="hidden sm:block" />
+            Find &amp; fix UX issues
+            <br />
             impacting <RotatingWord />
           </h1>
 
@@ -189,44 +275,42 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Social proof mini */}
-          <div className="animate-fade-up delay-400 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted">
+          {/* Pricing highlights — bold, primary colors */}
+          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-text">
             <span>From $29 per audit</span>
-            <span className="hidden sm:inline text-border">·</span>
+            <span className="text-accent">·</span>
             <span>No subscription</span>
-            <span className="hidden sm:inline text-border">·</span>
+            <span className="text-accent">·</span>
             <span>Results in minutes</span>
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TRUST NUMBERS — big, animated, purple gradient
+          TRUST NUMBERS — full-width purple gradient strip
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-20 px-4 md:px-6 overflow-hidden">
-        {/* Background depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-accent/[0.03] to-transparent pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.05] blur-[120px] pointer-events-none" />
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 30%, #A78BFA 70%, #7C3AED 100%)' }}>
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
-        <div className="max-w-4xl mx-auto relative">
+        <div className="relative max-w-5xl mx-auto py-14 px-4 md:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {([
-              { counter: c1, suffix: '', label: 'UX Checkpoints' },
+              { counter: c1, suffix: '+', label: 'UX Checkpoints' },
               { counter: c2, suffix: '', label: 'Audit Categories' },
               { counter: c3, suffix: '', label: 'Languages' },
-              { value: '<10', suffix: ' min', label: 'Delivery Time' },
+              { counter: c4, suffix: '', label: 'Minutes to Report', prefix: '<' },
             ] as const).map((stat, idx) => {
-              const hasCounter = 'counter' in stat && stat.counter != null;
-              const counter = hasCounter ? (stat as { counter: typeof c1 }).counter : null;
+              const counter = (stat as { counter: typeof c1 }).counter;
               return (
-                <div key={idx} ref={counter?.ref}>
-                  <p className="font-manrope text-5xl md:text-6xl font-extrabold mb-2 bg-gradient-to-r from-accent via-purple-400 to-violet-400 bg-clip-text text-transparent" suppressHydrationWarning>
-                    {counter
-                      ? (mounted ? `${counter.count}${stat.suffix}` : '\u00A0')
-                      : `${'value' in stat ? stat.value : ''}${stat.suffix}`
+                <div key={idx} ref={counter.ref}>
+                  <p className="font-manrope text-5xl md:text-6xl font-extrabold mb-1 text-white" suppressHydrationWarning>
+                    {mounted
+                      ? `${'prefix' in stat ? stat.prefix : ''}${counter.count}${stat.suffix}`
+                      : '\u00A0'
                     }
                   </p>
-                  <p className="text-sm text-muted font-medium">{stat.label}</p>
+                  <p className="text-sm text-white/70 font-medium tracking-wide">{stat.label}</p>
                 </div>
               );
             })}
@@ -235,49 +319,9 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SOCIAL PROOF — mini testimonial strip
+          HOW IT WORKS
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-16 px-4 md:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
-            {/* Avatar stack */}
-            <div className="flex items-center">
-              <div className="flex -space-x-3">
-                {[
-                  { bg: '#8B5CF6', initials: 'SC' },
-                  { bg: '#A78BFA', initials: 'MW' },
-                  { bg: '#7C3AED', initials: 'ER' },
-                  { bg: '#6D28D9', initials: 'JK' },
-                  { bg: '#C4B5FD', initials: 'DT' },
-                ].map((p, i) => (
-                  <div
-                    key={i}
-                    className="w-10 h-10 rounded-full border-2 border-surface flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: p.bg, zIndex: 5 - i }}
-                  >
-                    {p.initials}
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-0.5 ml-3">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-accent text-accent" />
-                ))}
-              </div>
-            </div>
-            <p className="text-muted text-sm text-center md:text-left">
-              <span className="text-text font-semibold">&ldquo;Identified issues we completely missed.&rdquo;</span>
-              <br className="hidden md:block" />
-              <span className="text-xs">Trusted by product teams &amp; agencies worldwide</span>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          HOW IT WORKS — horizontal flow
-          ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-28 px-4 md:px-6 lg:px-8">
+      <section id="how-it-works" className="bg-surface py-28 px-4 md:px-6 lg:px-8">
         <div
           ref={howRef.ref}
           className={`max-w-5xl mx-auto transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
@@ -289,7 +333,7 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-0 relative">
+          <div className="grid md:grid-cols-3 gap-6 relative">
             {/* Connecting line (desktop) */}
             <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
 
@@ -302,7 +346,7 @@ export default function Home() {
               return (
                 <div
                   key={item.step}
-                  className="relative text-center px-6 py-8"
+                  className="relative text-center p-8 rounded-2xl bg-card border border-border hover:border-accent/20 transition-all duration-300"
                   style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
                 >
                   {/* Step circle */}
@@ -324,11 +368,12 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          WHAT WE AUDIT
+          WHAT WE AUDIT — alternating bg
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8">
-        {/* Subtle bg */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
+      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt">
+        {/* Subtle top/bottom gradient edges */}
+        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-surface to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface to-transparent pointer-events-none" />
 
         <div
           ref={catRef.ref}
@@ -377,9 +422,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" />
-
+      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface">
         <div
           ref={priceRef.ref}
           className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
@@ -460,50 +503,32 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TESTIMONIALS
+          TESTIMONIALS — rotating, alternating bg
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-28 px-4 md:px-6 lg:px-8">
+      <section className="py-28 px-4 md:px-6 lg:px-8 bg-surface-alt">
         <div
           ref={testRef.ref}
           className={`max-w-5xl mx-auto transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Testimonials</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-2">
               Loved by product teams
             </h2>
+            <div className="flex justify-center gap-0.5 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-accent text-accent" />
+              ))}
+            </div>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className="rounded-xl p-6 border border-border bg-card hover:border-accent/20 transition-all duration-300"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
-                  ))}
-                </div>
-                <p className="text-text/80 text-sm mb-6 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                <div className="pt-4 border-t border-border flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text text-sm">{t.author}</p>
-                    <p className="text-xs text-muted">{t.title}, {t.company}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <RotatingReview reviews={testimonials} />
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           FAQ
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="py-28 px-4 md:px-6 lg:px-8">
+      <section id="faq" className="py-28 px-4 md:px-6 lg:px-8 bg-surface">
         <div
           ref={faqRef.ref}
           className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
@@ -542,7 +567,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative py-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-surface-alt">
         <div className="absolute inset-0 bg-gradient-to-t from-accent/[0.04] to-transparent pointer-events-none" />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.06] blur-[120px] pointer-events-none" />
 
