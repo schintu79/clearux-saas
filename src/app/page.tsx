@@ -547,7 +547,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface">
+      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-gradient-to-b from-[#faf9fe] via-[#f7f5fc] to-[#faf9fe] dark:from-[#0d0d14] dark:via-[#10101a] dark:to-[#0d0d14]">
         <div
           ref={priceRef.ref}
           className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
