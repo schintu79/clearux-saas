@@ -699,15 +699,15 @@ export default function Home() {
               </div>
 
               {/* Center: Trust signals */}
-              <div className="flex items-center gap-4 text-xs text-white/50 font-medium">
+              <div className="flex items-center gap-4 text-xs text-white/80 font-medium">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   SSL encrypted
                 </span>
-                <span className="text-white/20">|</span>
+                <span className="text-white/30">|</span>
                 <span>Credits never expire</span>
-                <span className="text-white/20">|</span>
-                <span>Cancel anytime</span>
+                <span className="text-white/30">|</span>
+                <span>No subscription</span>
               </div>
 
               {/* Right: Card brand icons */}
