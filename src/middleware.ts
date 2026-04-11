@@ -40,7 +40,6 @@ setInterval(() => {
 
 // ── Route protection config ──
 const PROTECTED_PATHS = ['/dashboard']
-const AUTH_PATHS = ['/login', '/register']
 const RATE_LIMITED_API_PATHS = ['/api/audits', '/api/credits', '/api/stripe']
 
 // ── Helper: create Supabase client in middleware context ──
@@ -99,32 +98,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── Auth guard for protected & auth routes ──
+  // ── Auth guard for protected routes ──
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
-  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p))
 
-  if (isProtected || isAuthPage) {
+  if (isProtected) {
     const response = NextResponse.next()
     const supabase = createMiddlewareClient(request, response)
 
-    // getUser() verifies the JWT with Supabase — not just reads cookie
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    if (isProtected && !user) {
-      // Not logged in → redirect to login with return URL
+      if (!user) {
+        // Not logged in → redirect to login with return URL
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirectTo', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+
+      return response
+    } catch {
+      // If Supabase call fails, redirect to login as a safety net
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(loginUrl)
     }
-
-    if (isAuthPage && user) {
-      // Already logged in → redirect to dashboard
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    // User is authenticated and on a protected route, or
-    // user is unauthenticated and on an auth page — proceed
-    return response
   }
 
   return NextResponse.next()
@@ -134,7 +131,5 @@ export const config = {
   matcher: [
     '/api/:path*',
     '/dashboard/:path*',
-    '/login',
-    '/register',
   ],
 }
