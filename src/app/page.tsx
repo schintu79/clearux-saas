@@ -376,7 +376,7 @@ export default function Home() {
             {/* Left: Statement */}
             <div>
               <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
-              <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text leading-tight mb-6">
+              <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
                 <span className="text-text">Audit with confidence.</span>{' '}
                 <span className="text-muted">Deep analysis across 12 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
               </h2>
@@ -486,50 +486,57 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          WHAT WE AUDIT — alternating bg
+          WHAT WE AUDIT — visual break with surface bg
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt">
-        {/* Subtle top/bottom gradient edges */}
-        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-surface to-transparent pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface to-transparent pointer-events-none" />
+      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+        {/* Decorative accent glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.03] blur-[120px] pointer-events-none" />
 
         <div
           ref={catRef.ref}
           className={`max-w-6xl mx-auto relative transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <div className="text-center mb-16">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">What we audit</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
-              12 categories. 48 checkpoints.
-            </h2>
-            <p className="text-muted text-lg max-w-xl mx-auto">
-              Every audit covers the full spectrum of user experience.
+          {/* Header — left-aligned Stripe style */}
+          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-10 lg:gap-20 items-end mb-14">
+            <div>
+              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">What we audit</p>
+              <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
+                12 categories.<br />48 checkpoints.
+              </h2>
+            </div>
+            <p className="text-muted text-base md:text-lg leading-relaxed lg:pb-1">
+              Every audit covers the full spectrum of user experience — from first impression and visual design to AI discoverability and accessibility. No blind spots.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {/* Accent divider */}
+          <div className="h-px bg-gradient-to-r from-accent/40 via-accent/20 to-transparent mb-12" />
+
+          {/* Category grid — 4 columns on desktop, elegant minimal cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {auditCategories.map((cat, idx) => {
               const Icon = cat.icon;
               const isFeatured = 'featured' in cat && cat.featured;
               return (
                 <div
                   key={idx}
-                  className={`rounded-xl p-5 border transition-all duration-300 group ${
+                  className={`group relative rounded-xl p-4 border transition-all duration-300 ${
                     isFeatured
-                      ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.04] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
-                      : 'bg-card border-border hover:border-accent/20'
+                      ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
+                      : 'bg-card/50 border-border/50 hover:border-accent/25 hover:bg-card'
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      isFeatured ? 'bg-accent/15' : 'bg-accent/10'
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isFeatured
+                        ? 'bg-accent/20 group-hover:bg-accent/25'
+                        : 'bg-accent/10 group-hover:bg-accent/15'
                     }`}>
-                      <Icon size={18} className="text-accent" />
+                      <Icon size={15} className="text-accent" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-text text-sm mb-1">{cat.title}</h3>
-                      <p className="text-muted text-xs leading-relaxed">{cat.desc}</p>
-                    </div>
+                    <h3 className="font-semibold text-text text-sm">{cat.title}</h3>
                   </div>
+                  <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
                 </div>
               );
             })}
@@ -678,9 +685,50 @@ export default function Home() {
             ))}
           </div>
 
-          <p className="text-center text-muted text-xs mt-8">
-            Credits never expire · Secure payment via Stripe
-          </p>
+          {/* ── Trust & Security bar ── */}
+          <div className="mt-12 rounded-xl border border-border/50 bg-card/30 px-6 py-5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Left: Stripe badge */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border/60">
+                  <Shield className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-xs font-semibold text-text">Powered by</span>
+                  {/* Stripe wordmark */}
+                  <svg className="h-5 w-auto" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 10.2c0-.7.6-1 1.5-1 1.4 0 3 .4 4.4 1.2V6.3C9.4 5.7 7.9 5.4 6.5 5.4 2.6 5.4 0 7.4 0 10.5c0 4.8 6.6 4 6.6 6.1 0 .8-.7 1.1-1.7 1.1-1.5 0-3.3-.6-4.8-1.5v4.2c1.6.7 3.3 1 4.8 1 4 0 6.8-2 6.8-5.1C11.7 11.2 5 12.1 5 10.2zM15.8 5.7l-2.4.5v3.5h-1.6V13h1.6v5c0 3.6 1.7 4.8 4.8 4.8.7 0 1.5-.1 2-.3V19c-.3.1-1.2.1-1.6.1-1 0-1.8-.4-1.8-1.7V13h3.4V9.7h-3.4V5.7zM24.9 8c-1 0-1.6.5-2 1l-.1-1h-2.7V22.5h3V13.4c.7-1 1.9-1.5 3.2-1.5V8.8c-.1 0-.3 0-.4 0zM28.7 5.3c1 0 1.8-.8 1.8-1.8s-.8-1.8-1.8-1.8-1.8.8-1.8 1.8.8 1.8 1.8 1.8zM27.2 22.5h3V9.7h-3v12.8zM37.2 8c-1.4 0-2.5.5-3 1.2l-.2-1h-2.7V27l3-.6V21c.5.3 1.3.5 2 .5 3 0 5.7-2.4 5.7-7.6C42 10 40.4 8 37.2 8zm-.8 10.5c-.6 0-1-.2-1.3-.5v-5.8c.3-.4.8-.6 1.3-.6 1.5 0 2.5 1.7 2.5 3.5 0 1.8-1 3.4-2.5 3.4zM51.3 8c-3.4 0-5.6 2.9-5.6 7.3 0 4.8 2.5 7.2 6.1 7.2 1.8 0 3.1-.4 4.2-1.1v-3c-1 .5-2.1.8-3.5.8s-2.6-.8-2.7-2.8H56c0-.2 0-1.1 0-1.5C56 10.5 54.3 8 51.3 8zm-2.5 5.8c0-2 1.2-2.8 2.3-2.8 1.1 0 2.2.8 2.2 2.8h-4.5z" fill="currentColor" className="text-muted"/>
+                  </svg>
+                </div>
+              </div>
+
+              {/* Center: Trust text */}
+              <div className="flex items-center gap-4 text-xs text-muted">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  SSL encrypted
+                </span>
+                <span className="text-border">|</span>
+                <span>Credits never expire</span>
+                <span className="text-border">|</span>
+                <span>Cancel anytime</span>
+              </div>
+
+              {/* Right: Card brand icons */}
+              <div className="flex items-center gap-2">
+                {/* Visa */}
+                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
+                  <svg viewBox="0 0 48 32" className="w-7 h-4"><path d="M19.5 24.5h-3.8L18 8h3.8l-2.3 16.5zM33 8.4c-.8-.3-2-.6-3.5-.6-3.8 0-6.5 2-6.5 4.9 0 2.1 1.9 3.3 3.4 4 1.5.7 2 1.2 2 1.9 0 1-.8 1.5-2.5 1.5-1.7 0-2.6-.2-4-.8l-.5-.3-.6 3.6c1 .5 2.8.8 4.7.8 4 0 6.7-2 6.7-5 0-1.7-1-3-3.2-4-1.3-.7-2.2-1.2-2.2-1.9 0-.6.7-1.3 2.2-1.3 1.3 0 2.2.3 2.9.6l.4.2.6-3.6zM40.5 8H37.8c-.8 0-1.5.2-1.8 1.1L30.5 24.5h4l.8-2.2h4.9l.5 2.2h3.5L40.5 8zm-4.3 11l1.5-4.1.5-1.5.3 1.4.9 4.2h-3.2zM15.3 8l-3.6 11.3-.4-2c-.7-2.3-2.8-4.8-5.2-6l3.4 13.1h4L19.4 8h-4.1z" fill="#1434CB"/><path d="M8.7 8H3.1l-.1.3c4.8 1.2 8 4.2 9.3 7.7L11 9.2C10.7 8.3 10 8 8.7 8z" fill="#F7A600"/></svg>
+                </div>
+                {/* Mastercard */}
+                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
+                  <svg viewBox="0 0 48 32" className="w-7 h-5"><circle cx="18" cy="16" r="10" fill="#EB001B"/><circle cx="30" cy="16" r="10" fill="#F79E1B"/><path d="M24 8.7A10 10 0 0 0 20.1 16 10 10 0 0 0 24 23.3 10 10 0 0 0 27.9 16 10 10 0 0 0 24 8.7z" fill="#FF5F00"/></svg>
+                </div>
+                {/* Amex */}
+                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
+                  <svg viewBox="0 0 48 32" className="w-7 h-4"><rect width="48" height="32" rx="4" fill="#016FD0"/><text x="24" y="19" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold" fontFamily="Arial">AMEX</text></svg>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
