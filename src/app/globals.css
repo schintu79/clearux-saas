@@ -33,19 +33,19 @@
   --accent:      #A78BFA;
   --accent-dk:   #C4B5FD;
   --accent-lt:   #1E1533;
-  --navy:        #F0F0F0;
+  --navy:        #E8E8EE;
   --off:         #0D0D14;
-  --muted:       #8B8B9E;
-  --border:      #1E1E2E;
-  --text:        #F0F0F0;
-  --surface:     #0A0A0F;
-  --surface-alt: #111118;
-  --card:        #13131D;
-  --card-hover:  #1A1A28;
-  --input-bg:    #13131D;
-  --placeholder: #4A4A5E;
-  --sidebar:     #08080C;
-  --sidebar-text:#F0F0F0;
+  --muted:       #9494A8;
+  --border:      #232334;
+  --text:        #EAEAF0;
+  --surface:     #0C0C13;
+  --surface-alt: #111119;
+  --card:        #151520;
+  --card-hover:  #1C1C2C;
+  --input-bg:    #151520;
+  --placeholder: #52526A;
+  --sidebar:     #09090E;
+  --sidebar-text:#E8E8EE;
 }
 
 html { scroll-behavior: smooth; }
@@ -124,6 +124,14 @@ body {
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
   font-family: inherit;
+}
+
+.dark .input {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .input:focus {
+  border-color: var(--accent);
 }
 
 .input:focus {
