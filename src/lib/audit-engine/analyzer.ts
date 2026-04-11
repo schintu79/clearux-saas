@@ -33,6 +33,7 @@ export interface AnalysisFinding {
   description: string
   recommendation: string
   estimatedImpact?: string
+  targetElement?: string | null
 }
 
 export interface CategoryScore {
@@ -217,7 +218,8 @@ Return a JSON array. For each issue:
   "title": "Clear, specific title",
   "description": "Detailed explanation referencing actual content from the site. Be specific — mention what you see (or don't see) on the page.",
   "recommendation": "Concrete, actionable fix with specific suggestions. Not vague advice.",
-  "estimatedImpact": "Expected impact on UX, conversions, or engagement"
+  "estimatedImpact": "Expected impact on UX, conversions, or engagement",
+  "targetElement": "A CSS selector or descriptive text to locate the problematic element on the page (e.g. 'nav', 'h1', '.hero-section', 'button.cta', 'footer', 'form', or a short text string found in the element). Use the most specific selector you can infer from the content. If the issue is page-wide or not tied to a single element, set to null."
 }
 
 Rules:
@@ -256,7 +258,9 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
     }
 
     const findings: AnalysisFinding[] = JSON.parse(jsonMatch[0])
-    return findings.filter((f) => f.severity && f.title && f.description && f.recommendation)
+    return findings
+      .filter((f) => f.severity && f.title && f.description && f.recommendation)
+      .map((f) => ({ ...f, targetElement: f.targetElement || null }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
     return []

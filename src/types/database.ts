@@ -111,6 +111,7 @@ export interface AuditPage {
   load_time_ms:        number | null
   is_mobile_friendly:  boolean | null
   viewport_meta:       string | null
+  screenshot_url:      string | null
   crawled_at:          string
 }
 
@@ -125,6 +126,8 @@ export interface AuditFinding {
   page_url:          string | null
   recommendation:    string
   estimated_impact:  string | null
+  target_element:    string | null
+  screenshot_url:    string | null
   sort_order:        number
   created_at:        string
 }

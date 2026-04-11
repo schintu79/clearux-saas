@@ -13,6 +13,7 @@ import {
   Packer,
   Paragraph,
   TextRun,
+  ImageRun,
   Table,
   TableRow,
   TableCell,
@@ -27,6 +28,18 @@ import {
   PageNumber,
 } from 'docx'
 import { createServiceSupabase } from '@/lib/supabase-server'
+
+/** Fetch a screenshot from URL and return as Buffer, or null on failure */
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    if (!res.ok) return null
+    const arrayBuf = await res.arrayBuffer()
+    return Buffer.from(arrayBuf)
+  } catch {
+    return null
+  }
+}
 
 /* ── Brand colors — technical / dark-accented ───────────── */
 const B = {
@@ -113,9 +126,9 @@ export async function GET(
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([
       db.from('audits').select('*').eq('id', auditId).single(),
       db.from('reports').select('*').eq('audit_id', auditId).single(),
-      db.from('audit_findings').select('*').eq('audit_id', auditId)
+      db.from('audit_findings').select('*, screenshot_url, target_element').eq('audit_id', auditId)
         .order('severity', { ascending: true }).order('sort_order', { ascending: true }),
-      db.from('audit_pages').select('url, title, status_code, load_time_ms')
+      db.from('audit_pages').select('url, title, status_code, load_time_ms, screenshot_url')
         .eq('audit_id', auditId).order('crawled_at', { ascending: true }),
     ])
 
@@ -407,6 +420,47 @@ export async function GET(
       )
     }
 
+    // ── Pre-fetch screenshot buffers for findings ──────
+    const screenshotBuffers = new Map<number, Buffer>()
+    const screenshotPromises = f.map(async (fi: any, idx: number) => {
+      if (fi.screenshot_url) {
+        const buf = await fetchImageBuffer(fi.screenshot_url)
+        if (buf) screenshotBuffers.set(idx, buf)
+      }
+    })
+    await Promise.all(screenshotPromises)
+
+    // Also fetch page overview screenshot
+    let pageOverviewBuffer: Buffer | null = null
+    const pageWithScreenshot = pages.find((p: any) => p.screenshot_url)
+    if (pageWithScreenshot?.screenshot_url) {
+      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url)
+    }
+
+    // ── PAGE OVERVIEW SCREENSHOT ──────────────────────
+    if (pageOverviewBuffer) {
+      children.push(new Paragraph({ children: [new PageBreak()] }))
+      children.push(...sectionHeading('Page Overview'))
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 60 },
+          children: [
+            new ImageRun({
+              data: pageOverviewBuffer,
+              transformation: { width: 580, height: Math.round(580 * (900 / 1280)) },
+              type: 'png',
+            }),
+          ],
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 120 },
+          children: [new TextRun({ text: 'Captured during audit — viewport 1280×900', font: 'Arial', size: 15, color: B.muted })],
+        }),
+      )
+    }
+
     // ── DETAILED FINDINGS ──────────────────────────────
     if (f.length > 0) {
       children.push(new Paragraph({ children: [new PageBreak()] }))
@@ -470,6 +524,28 @@ export async function GET(
                       ],
                     }),
                   ],
+                }),
+              ],
+            }),
+          )
+        }
+
+        // Screenshot for this finding (if available)
+        const screenshotBuf = screenshotBuffers.get(i)
+        if (screenshotBuf) {
+          children.push(
+            new Paragraph({
+              spacing: { before: 80, after: 20 },
+              children: [new TextRun({ text: 'Screenshot — highlighted area of concern', font: 'Arial', size: 15, bold: true, color: B.muted })],
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 60 },
+              children: [
+                new ImageRun({
+                  data: screenshotBuf,
+                  transformation: { width: 540, height: Math.round(540 * (900 / 1280)) },
+                  type: 'png',
                 }),
               ],
             }),

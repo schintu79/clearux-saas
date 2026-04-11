@@ -49,6 +49,18 @@ function scoreLabel(s: number): string {
   return 'Poor'
 }
 
+/** Fetch a screenshot from URL and return as Buffer, or null on failure */
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+    if (!res.ok) return null
+    const arrayBuf = await res.arrayBuffer()
+    return Buffer.from(arrayBuf)
+  } catch {
+    return null
+  }
+}
+
 /* ── Page constants ──────────────────────────────────────── */
 const ML = 50           // left margin
 const MR = 545          // right edge
@@ -101,9 +113,9 @@ export async function GET(
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([
       db.from('audits').select('*').eq('id', auditId).single(),
       db.from('reports').select('*').eq('audit_id', auditId).single(),
-      db.from('audit_findings').select('*').eq('audit_id', auditId)
+      db.from('audit_findings').select('*, screenshot_url, target_element').eq('audit_id', auditId)
         .order('severity', { ascending: true }).order('sort_order', { ascending: true }),
-      db.from('audit_pages').select('url, title, status_code, load_time_ms')
+      db.from('audit_pages').select('url, title, status_code, load_time_ms, screenshot_url')
         .eq('audit_id', auditId).order('crawled_at', { ascending: true }),
     ])
 
@@ -355,6 +367,52 @@ export async function GET(
     }
 
     // ════════════════════════════════════════════════════════
+    //  Pre-fetch screenshot buffers for findings
+    // ════════════════════════════════════════════════════════
+    const screenshotBuffers = new Map<number, Buffer>()
+    const screenshotPromises = findings.map(async (fi: any, idx: number) => {
+      if (fi.screenshot_url) {
+        const buf = await fetchImageBuffer(fi.screenshot_url)
+        if (buf) screenshotBuffers.set(idx, buf)
+      }
+    })
+    await Promise.all(screenshotPromises)
+
+    // Also fetch page overview screenshot
+    let pageOverviewBuffer: Buffer | null = null
+    const pageWithScreenshot = pages.find((p: any) => p.screenshot_url)
+    if (pageWithScreenshot?.screenshot_url) {
+      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url)
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  PAGE OVERVIEW SCREENSHOT
+    // ════════════════════════════════════════════════════════
+    if (pageOverviewBuffer) {
+      if (y + 280 > CONTENT_BOTTOM) {
+        y = addPage()
+      } else {
+        y += 10
+      }
+
+      y = sectionHeader(doc, y, 'Page Overview')
+
+      // Render screenshot, scaled to fit width
+      const imgW = PW - 20
+      const imgH = imgW * (900 / 1280) // maintain 1280x900 aspect ratio
+      y = ensureSpace(y, imgH + 10)
+
+      // Border around screenshot
+      doc.roundedRect(ML + 10, y, imgW, imgH, 3).lineWidth(0.5).strokeColor(C.border).stroke()
+      doc.image(pageOverviewBuffer, ML + 10, y, { width: imgW, height: imgH })
+      y += imgH + 6
+
+      doc.font('Helvetica').fontSize(7).fillColor(C.muted)
+      doc.text('Captured during audit — viewport 1280×900', ML, y, { width: PW, align: 'center', lineBreak: false })
+      y += 14
+    }
+
+    // ════════════════════════════════════════════════════════
     //  DETAILED FINDINGS
     // ════════════════════════════════════════════════════════
     if (findings.length > 0) {
@@ -421,6 +479,24 @@ export async function GET(
           doc.font('Helvetica').fontSize(8.5).fillColor(C.textSub)
           doc.text(recText, ML + 12, y + 13, { width: PW - 28, lineGap: 2, lineBreak: true })
           y = doc.y + 6
+        }
+
+        // Screenshot for this finding (if available)
+        const screenshotBuf = screenshotBuffers.get(i)
+        if (screenshotBuf) {
+          const screenshotW = PW - 40
+          const screenshotH = screenshotW * (900 / 1280) // maintain aspect ratio
+          y = ensureSpace(y, screenshotH + 24)
+
+          y += 4
+          doc.font('Helvetica-Bold').fontSize(7).fillColor(C.muted)
+          doc.text('Screenshot — highlighted area of concern', ML + 20, y, { lineBreak: false })
+          y += 12
+
+          doc.roundedRect(ML + 20, y, screenshotW, screenshotH, 2)
+            .lineWidth(0.5).strokeColor(C.border).stroke()
+          doc.image(screenshotBuf, ML + 20, y, { width: screenshotW, height: screenshotH })
+          y += screenshotH + 6
         }
 
         // Separator between findings
