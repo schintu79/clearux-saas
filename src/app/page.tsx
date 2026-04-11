@@ -360,79 +360,127 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TRUST NUMBERS — full-width purple gradient strip
+          VALUE PROPOSITION + STATS + HOW IT WORKS
+          Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 30%, #8B5CF6 70%, #6D28D9 100%)' }}>
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <section id="how-it-works" className="relative overflow-hidden bg-surface-alt">
+        {/* Background grid — subtle */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
+        }} />
 
-        <div className="relative max-w-5xl mx-auto py-14 px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {([
-              { counter: c1, suffix: '+', label: 'UX Checkpoints' },
-              { counter: c2, suffix: '', label: 'Audit Categories' },
-              { counter: c3, suffix: '', label: 'Languages' },
-              { counter: c4, suffix: '', label: 'Minutes to Report', prefix: '<' },
-            ] as const).map((stat, idx) => {
-              const counter = (stat as { counter: typeof c1 }).counter;
-              return (
-                <div key={idx} ref={counter.ref}>
-                  <p className="font-manrope text-5xl md:text-6xl font-extrabold mb-1 text-white" suppressHydrationWarning>
-                    {mounted
-                      ? `${'prefix' in stat ? stat.prefix : ''}${counter.count}${stat.suffix}`
-                      : '\u00A0'
-                    }
-                  </p>
-                  <p className="text-sm text-white/70 font-medium tracking-wide">{stat.label}</p>
-                </div>
-              );
-            })}
+        {/* ── TOP: Bold statement + Stats ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-20">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-start">
+            {/* Left: Statement */}
+            <div>
+              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
+              <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text leading-tight mb-6">
+                <span className="text-text">Audit with confidence.</span>{' '}
+                <span className="text-muted">Deep analysis across 12 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
+              </h2>
+              <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
+                Every audit evaluates 48 professional checkpoints — from first impression and navigation to mobile experience and AI discoverability.
+              </p>
+            </div>
+
+            {/* Right: Stats grid */}
+            <div className="grid grid-cols-2 gap-6 lg:pt-4">
+              {([
+                { counter: c1, suffix: '+', label: 'UX checkpoints', desc: 'Professional evaluation criteria', prefix: '' },
+                { counter: c2, suffix: '', label: 'Audit categories', desc: 'Full-spectrum UX coverage', prefix: '' },
+                { counter: c3, suffix: '', label: 'Languages', desc: 'Localised report output', prefix: '' },
+                { counter: c4, suffix: '', label: 'Min to report', desc: 'From URL to full analysis', prefix: '<' },
+              ] as const).map((stat, idx) => {
+                const counter = (stat as { counter: typeof c1 }).counter;
+                const gradients = [
+                  'from-accent to-purple-400',
+                  'from-purple-400 to-pink-400',
+                  'from-pink-400 to-orange-400',
+                  'from-accent to-emerald-400',
+                ];
+                return (
+                  <div
+                    key={idx}
+                    ref={counter.ref}
+                    className="relative p-5 rounded-2xl bg-card/50 border border-border/50 hover:border-accent/20 transition-all duration-300"
+                  >
+                    <p className={`font-manrope text-4xl md:text-5xl font-extrabold mb-1 bg-gradient-to-r ${gradients[idx]} bg-clip-text text-transparent`} suppressHydrationWarning>
+                      {mounted
+                        ? `${stat.prefix}${counter.count}${stat.suffix}`
+                        : '\u00A0'
+                      }
+                    </p>
+                    <p className="text-sm font-semibold text-text mb-0.5">{stat.label}</p>
+                    <p className="text-xs text-muted">{stat.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          HOW IT WORKS
-          ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="bg-surface py-28 px-4 md:px-6 lg:px-8">
-        <div
-          ref={howRef.ref}
-          className={`max-w-5xl mx-auto transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <div className="text-center mb-16">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">How it works</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
-              Three simple steps
-            </h2>
-          </div>
+        {/* ── Accent divider line ── */}
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        </div>
 
-          <div className="grid md:grid-cols-3 gap-6 relative">
-            {/* Connecting line (desktop) */}
-            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        {/* ── BOTTOM: How it works — 3 steps ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-20 pb-28">
+          <div
+            ref={howRef.ref}
+            className={`transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          >
+            <div className="grid lg:grid-cols-[1fr_2fr] gap-16 lg:gap-20 items-start">
+              {/* Left: Section intro */}
+              <div>
+                <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">How it works</p>
+                <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-tight mb-4">
+                  Three steps to better UX.
+                </h2>
+                <p className="text-muted text-base leading-relaxed">
+                  No setup, no integration, no waiting. Just paste your URL and get a professional audit report.
+                </p>
+              </div>
 
-            {[
-              { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically.' },
-              { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories.' },
-              { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, and actionable fixes.' },
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.step}
-                  className="relative text-center p-8 rounded-2xl bg-card border border-border hover:border-accent/20 transition-all duration-300"
-                  style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
-                >
-                  {/* Step icon */}
-                  <div className="inline-flex items-center justify-center mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
-                      <Icon size={24} className="text-accent" />
+              {/* Right: Steps */}
+              <div className="space-y-0">
+                {[
+                  { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically. Works with any publicly accessible website.' },
+                  { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories with AI-powered precision.' },
+                  { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, screenshots, and actionable fixes — ready in minutes.' },
+                ].map((item, idx) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.step}
+                      className="group relative flex gap-5 py-7"
+                      style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
+                    >
+                      {/* Step number + icon */}
+                      <div className="flex-shrink-0 relative">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/20 flex items-center justify-center group-hover:border-accent/40 transition-colors">
+                          <Icon size={22} className="text-accent" />
+                        </div>
+                        {/* Vertical connector */}
+                        {idx < 2 && (
+                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-accent/20 to-transparent" />
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="pt-1">
+                        <div className="flex items-center gap-3 mb-1.5">
+                          <span className="text-[10px] font-bold text-accent/50 tracking-widest">{item.step}</span>
+                          <h3 className="font-manrope text-lg font-bold text-text">{item.title}</h3>
+                        </div>
+                        <p className="text-muted text-sm leading-relaxed max-w-md">{item.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="font-manrope text-lg font-bold text-text mb-2">{item.title}</h3>
-                  <p className="text-muted text-sm leading-relaxed max-w-[260px] mx-auto">{item.desc}</p>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </section>
