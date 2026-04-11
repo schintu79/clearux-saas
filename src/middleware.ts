@@ -1,12 +1,12 @@
 // ============================================================
 // ClearUX — Edge Middleware
-// Rate limiting + route protection
+// Rate limiting + route protection (auth guard)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 // ── Simple in-memory rate limiter (resets per cold start) ──
-// For production at scale, switch to Vercel KV or Upstash Redis.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function rateLimit(
@@ -39,17 +39,41 @@ setInterval(() => {
 }, 60_000)
 
 // ── Route protection config ──
-const PROTECTED_PATHS = ['/dashboard', '/api/audits', '/api/credits']
+const PROTECTED_PATHS = ['/dashboard']
 const AUTH_PATHS = ['/login', '/register']
 const RATE_LIMITED_API_PATHS = ['/api/audits', '/api/credits', '/api/stripe']
 
-export function middleware(request: NextRequest) {
+// ── Helper: create Supabase client in middleware context ──
+function createMiddlewareClient(request: NextRequest, response: NextResponse) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          // Set cookie on the request so subsequent middleware reads get it
+          request.cookies.set({ name, value, ...options })
+          // Set cookie on the response so it reaches the browser
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options })
+          response.cookies.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
 
   // ── Rate limit API routes ──
   if (RATE_LIMITED_API_PATHS.some((p) => pathname.startsWith(p))) {
-    // 30 requests per minute per IP for API routes
     const { allowed, remaining } = rateLimit(ip, 30, 60_000)
 
     if (!allowed) {
@@ -65,7 +89,6 @@ export function middleware(request: NextRequest) {
       )
     }
 
-    // Add rate limit headers to response
     const response = NextResponse.next()
     response.headers.set('X-RateLimit-Remaining', String(remaining))
     return response
@@ -76,13 +99,42 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // ── Auth guard for protected & auth routes ──
+  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
+  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p))
+
+  if (isProtected || isAuthPage) {
+    const response = NextResponse.next()
+    const supabase = createMiddlewareClient(request, response)
+
+    // getUser() verifies the JWT with Supabase — not just reads cookie
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (isProtected && !user) {
+      // Not logged in → redirect to login with return URL
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    if (isAuthPage && user) {
+      // Already logged in → redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // User is authenticated and on a protected route, or
+    // user is unauthenticated and on an auth page — proceed
+    return response
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  // Match API routes and dashboard pages
   matcher: [
     '/api/:path*',
     '/dashboard/:path*',
+    '/login',
+    '/register',
   ],
 }
