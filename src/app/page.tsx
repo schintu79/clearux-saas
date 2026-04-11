@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileCheck, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -166,6 +166,7 @@ export default function Home() {
 
   const howRef = useScrollReveal();
   const catRef = useScrollReveal();
+  const previewRef = useScrollReveal();
   const priceRef = useScrollReveal();
   const testRef = useScrollReveal();
   const faqRef = useScrollReveal();
@@ -540,6 +541,179 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          AUDIT PREVIEW — simulated screens
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
+        {/* Subtle grid bg */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
+
+        <div
+          ref={previewRef.ref}
+          className={`max-w-6xl mx-auto relative transition-all duration-700 ${previewRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-16">
+            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">See it in action</p>
+            <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
+              From URL to actionable insights
+            </h2>
+            <p className="text-muted text-base md:text-lg mt-4 max-w-2xl mx-auto">
+              A complete UX audit delivered as a professional report — scores, findings, and prioritised recommendations.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+
+            {/* ── Card 1: Score Overview ── */}
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/50 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">Audit Score</span>
+              </div>
+              <div className="p-6 flex flex-col items-center">
+                {/* Score ring */}
+                <div className="relative w-32 h-32 mb-5">
+                  <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" className="text-border/40" strokeWidth="8" />
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#scoreGrad)" strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray={`${0.73 * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
+                    />
+                    <defs>
+                      <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="var(--accent)" />
+                        <stop offset="100%" stopColor="#a855f7" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-extrabold font-manrope text-text">73</span>
+                    <span className="text-[10px] text-muted font-medium uppercase tracking-wide">/ 100</span>
+                  </div>
+                </div>
+                {/* Mini category scores */}
+                <div className="w-full space-y-2.5">
+                  {[
+                    { name: 'First Impression', score: 82, color: 'bg-emerald-500' },
+                    { name: 'Navigation', score: 68, color: 'bg-accent' },
+                    { name: 'Mobile Experience', score: 55, color: 'bg-amber-500' },
+                    { name: 'AI Discoverability', score: 41, color: 'bg-red-500' },
+                  ].map((item) => (
+                    <div key={item.name}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted">{item.name}</span>
+                        <span className="text-xs font-semibold text-text">{item.score}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-border/40 overflow-hidden">
+                        <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.score}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Card 2: Findings List ── */}
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/50 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">Key Findings</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {[
+                  { severity: 'Critical', color: 'bg-red-500', title: 'No mobile-responsive navigation', category: 'Mobile Experience' },
+                  { severity: 'High', color: 'bg-orange-500', title: 'CTA buttons below the fold on landing', category: 'Conversion & CTAs' },
+                  { severity: 'High', color: 'bg-orange-500', title: 'Missing structured data for AI indexing', category: 'AI Discoverability' },
+                  { severity: 'Medium', color: 'bg-amber-500', title: 'Inconsistent heading hierarchy', category: 'Visual Hierarchy' },
+                  { severity: 'Medium', color: 'bg-amber-500', title: 'No loading states on async actions', category: 'Onboarding' },
+                  { severity: 'Low', color: 'bg-blue-500', title: 'Alt text missing on 3 hero images', category: 'Accessibility' },
+                ].map((finding, i) => (
+                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-surface/60 border border-border/30">
+                    <span className={`mt-0.5 flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase tracking-wider ${finding.color}`}>
+                      {finding.severity}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-text leading-snug">{finding.title}</p>
+                      <p className="text-[10px] text-muted mt-0.5">{finding.category}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Card 3: Report Preview ── */}
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/50 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">PDF Report</span>
+              </div>
+              <div className="p-5">
+                {/* Mock report page */}
+                <div className="bg-white dark:bg-white/[0.03] rounded-lg border border-border/40 p-5 shadow-inner">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                      <FileText size={12} className="text-accent" />
+                    </div>
+                    <span className="text-xs font-bold text-text dark:text-white/80">ClearUX Audit Report</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="h-2 w-24 rounded bg-accent/30 mb-2" />
+                      <div className="space-y-1.5">
+                        <div className="h-1.5 w-full rounded bg-border/40" />
+                        <div className="h-1.5 w-5/6 rounded bg-border/40" />
+                        <div className="h-1.5 w-4/6 rounded bg-border/40" />
+                      </div>
+                    </div>
+                    <div className="h-px bg-border/30" />
+                    <div>
+                      <div className="h-2 w-20 rounded bg-accent/30 mb-2" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
+                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
+                      </div>
+                    </div>
+                    <div className="h-px bg-border/30" />
+                    <div>
+                      <div className="h-2 w-28 rounded bg-orange-400/30 mb-2" />
+                      <div className="space-y-1.5">
+                        <div className="h-1.5 w-full rounded bg-border/40" />
+                        <div className="h-1.5 w-3/4 rounded bg-border/40" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Download buttons */}
+                <div className="flex gap-2 mt-4">
+                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
+                    <FileText size={12} className="text-accent" />
+                    <span className="text-[11px] font-semibold text-accent">PDF</span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
+                    <FileText size={12} className="text-accent" />
+                    <span className="text-[11px] font-semibold text-accent">DOCX</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
