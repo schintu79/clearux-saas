@@ -443,7 +443,7 @@ export default function Home() {
           ref={priceRef.ref}
           className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <div className="text-center mb-14">
+          <div className="text-center mb-6">
             <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Pricing</p>
             <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
               Simple credit-based pricing
@@ -453,61 +453,100 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ── Every audit includes — shared benefits strip ── */}
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/50">
+            {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
+                <span className="text-xs text-muted font-medium">{f}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, cta: 'Start Auditing', popular: false },
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 'Save 19%', cta: 'Get 5 Audits', popular: true },
-              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 'Save 33%', cta: 'Get 15 Audits', popular: false },
-              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 'Save 50%', cta: 'Get 50 Audits', popular: false },
+              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, savePercent: 0, cta: 'Start Auditing', popular: false },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 'Save 19%', savePercent: 19, cta: 'Get 5 Audits', popular: true },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 'Save 33%', savePercent: 33, cta: 'Get 15 Audits', popular: false },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 'Save 50%', savePercent: 50, cta: 'Get 50 Audits', popular: false },
             ].map((tier, idx) => (
               <div
                 key={idx}
-                className={`relative rounded-2xl p-6 flex flex-col transition-all duration-300 ${
+                className={`group relative rounded-2xl flex flex-col transition-all duration-300 overflow-hidden ${
                   tier.popular
-                    ? 'bg-accent/[0.06] border-2 border-accent/30 hover:border-accent/50 shadow-lg shadow-accent/10'
-                    : 'bg-card border border-border hover:border-accent/20'
+                    ? 'border-2 border-accent/40 hover:border-accent/60 shadow-xl shadow-accent/10 scale-[1.02]'
+                    : 'border border-border hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5'
                 }`}
               >
+                {/* Top accent gradient bar */}
+                <div className={`h-1 w-full ${
+                  tier.popular
+                    ? 'bg-gradient-to-r from-accent via-purple-400 to-accent'
+                    : 'bg-gradient-to-r from-transparent via-accent/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'
+                }`} />
+
                 {tier.popular && (
-                  <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md shadow-accent/30">
+                  <span className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-accent text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md shadow-accent/30 z-10">
                     Most Popular
                   </span>
                 )}
 
-                <h3 className="font-manrope font-bold text-lg text-text mb-1">{tier.name}</h3>
-                <div className="mb-1">
-                  <span className="font-manrope text-3xl font-bold text-text">${tier.price.toLocaleString()}</span>
-                </div>
-                <p className="text-xs text-muted mb-4">
-                  {tier.credits} credit{tier.credits !== 1 ? 's' : ''} · {tier.per}/audit
-                </p>
-
-                {tier.save && (
-                  <div className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mb-4 bg-accent/15 text-accent w-fit">
-                    {tier.save}
+                <div className={`p-6 flex flex-col flex-1 ${tier.popular ? 'bg-accent/[0.04]' : 'bg-card'}`}>
+                  {/* Plan name + credit count */}
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h3 className="font-manrope font-bold text-lg text-text">{tier.name}</h3>
+                    <span className="text-xs text-muted font-medium">
+                      {tier.credits} credit{tier.credits !== 1 ? 's' : ''}
+                    </span>
                   </div>
-                )}
-                {!tier.save && <div className="mb-4" />}
 
-                <div className="space-y-2.5 mb-6 flex-1">
-                  {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
-                      <span className="text-xs text-muted">{f}</span>
+                  {/* Price */}
+                  <div className="mb-1">
+                    <span className="font-manrope text-4xl font-extrabold text-text">${tier.price.toLocaleString()}</span>
+                  </div>
+
+                  {/* Per-audit cost */}
+                  <p className="text-sm text-muted mb-5">
+                    {tier.per}<span className="text-muted/60"> / audit</span>
+                  </p>
+
+                  {/* Savings indicator */}
+                  {tier.save ? (
+                    <div className="mb-6">
+                      {/* Visual savings bar */}
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div className="flex-1 h-1.5 rounded-full bg-border/40 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400"
+                            style={{ width: `${tier.savePercent}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-accent whitespace-nowrap">{tier.save}</span>
+                      </div>
+                      <p className="text-[10px] text-muted/70">
+                        vs buying {tier.credits} individual audits
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="mb-6">
+                      <p className="text-xs text-muted/60">Perfect for trying ClearUX</p>
+                    </div>
+                  )}
 
-                <Link
-                  href="/register"
-                  className={`block text-center text-sm font-bold rounded-lg py-2.5 transition-all ${
-                    tier.popular
-                      ? 'bg-accent text-white hover:bg-accent-dk shadow-lg shadow-accent/20'
-                      : 'bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20'
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
+                  {/* CTA — pushed to bottom */}
+                  <div className="mt-auto">
+                    <Link
+                      href="/register"
+                      className={`block text-center text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
+                        tier.popular
+                          ? 'bg-accent text-white hover:brightness-110 shadow-lg shadow-accent/25'
+                          : 'bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20'
+                      }`}
+                    >
+                      {tier.cta}
+                    </Link>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
