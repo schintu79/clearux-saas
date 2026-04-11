@@ -486,7 +486,7 @@ export default function Home() {
                 }`} />
 
                 {tier.popular && (
-                  <span className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-accent text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md shadow-accent/30 z-10">
+                  <span className="absolute top-3 right-4 bg-accent text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md shadow-accent/30 z-10">
                     Most Popular
                   </span>
                 )}

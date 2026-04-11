@@ -213,7 +213,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
                 title: finding.title,
                 description: finding.description,
                 evidence: null,
-                page_url: crawledPages[0]?.url || null,
+                page_url: finding.pageUrl || crawledPages[0]?.url || null,
                 recommendation: finding.recommendation,
                 estimated_impact: finding.estimatedImpact || null,
                 target_element: finding.targetElement || null,

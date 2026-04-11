@@ -24,6 +24,7 @@ import {
   Type,
   Gauge,
   Brain,
+  ExternalLink,
 } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -989,9 +990,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               href={finding.page_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[11px] text-accent hover:underline mt-2 block truncate"
+                              className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline mt-2 truncate max-w-full"
                             >
-                              {finding.page_url}
+                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                              {(() => {
+                                try {
+                                  const u = new URL(finding.page_url);
+                                  return u.pathname === '/' ? u.hostname : u.hostname + u.pathname;
+                                } catch { return finding.page_url; }
+                              })()}
                             </a>
                           )}
                         </Card>

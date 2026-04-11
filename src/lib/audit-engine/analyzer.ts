@@ -34,6 +34,7 @@ export interface AnalysisFinding {
   recommendation: string
   estimatedImpact?: string
   targetElement?: string | null
+  pageUrl?: string | null
 }
 
 export interface CategoryScore {
@@ -219,7 +220,8 @@ Return a JSON array. For each issue:
   "description": "Detailed explanation referencing actual content from the site. Be specific — mention what you see (or don't see) on the page.",
   "recommendation": "Concrete, actionable fix with specific suggestions. Not vague advice.",
   "estimatedImpact": "Expected impact on UX, conversions, or engagement",
-  "targetElement": "A CSS selector or descriptive text to locate the problematic element on the page (e.g. 'nav', 'h1', '.hero-section', 'button.cta', 'footer', 'form', or a short text string found in the element). Use the most specific selector you can infer from the content. If the issue is page-wide or not tied to a single element, set to null."
+  "targetElement": "A CSS selector or descriptive text to locate the problematic element on the page (e.g. 'nav', 'h1', '.hero-section', 'button.cta', 'footer', 'form', or a short text string found in the element). Use the most specific selector you can infer from the content. If the issue is page-wide or not tied to a single element, set to null.",
+  "pageUrl": "The exact URL of the page where this issue was found (copy it from the 'URL:' lines in the content above). If the issue applies to all pages or you cannot determine the specific page, set to null."
 }
 
 Rules:
@@ -260,7 +262,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
     const findings: AnalysisFinding[] = JSON.parse(jsonMatch[0])
     return findings
       .filter((f) => f.severity && f.title && f.description && f.recommendation)
-      .map((f) => ({ ...f, targetElement: f.targetElement || null }))
+      .map((f) => ({ ...f, targetElement: f.targetElement || null, pageUrl: f.pageUrl || null }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
     return []

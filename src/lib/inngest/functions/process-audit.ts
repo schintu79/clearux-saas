@@ -231,7 +231,7 @@ export const processAuditFn = inngest.createFunction(
               title: finding.title,
               description: finding.description,
               evidence: null,
-              page_url: crawlResult.firstPageUrl,
+              page_url: finding.pageUrl || crawlResult.firstPageUrl,
               recommendation: finding.recommendation,
               estimated_impact: finding.estimatedImpact || null,
               target_element: finding.targetElement || null,
