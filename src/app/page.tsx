@@ -239,13 +239,67 @@ export default function Home() {
           HERO
           ═══════════════════════════════════════════════════════ */}
       <section className="relative pt-16 pb-14 sm:pt-28 sm:pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
+        {/* ── Animated grid background ── */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Grid lines */}
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, currentColor 1px, transparent 1px),
+                linear-gradient(to bottom, currentColor 1px, transparent 1px)
+              `,
+              backgroundSize: '60px 60px',
+            }}
+          />
+
+          {/* Animated vertical accent line — sweeps left to right */}
+          <div
+            className="absolute top-0 bottom-0 w-px opacity-20"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, var(--accent), transparent)',
+              animation: 'gridSweepX 8s ease-in-out infinite',
+            }}
+          />
+          {/* Second vertical line — offset timing */}
+          <div
+            className="absolute top-0 bottom-0 w-px opacity-10"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, var(--accent), transparent)',
+              animation: 'gridSweepX 8s ease-in-out 4s infinite',
+            }}
+          />
+
+          {/* Animated horizontal accent line — sweeps top to bottom */}
+          <div
+            className="absolute left-0 right-0 h-px opacity-20"
+            style={{
+              background: 'linear-gradient(to right, transparent, var(--accent), transparent)',
+              animation: 'gridSweepY 10s ease-in-out infinite',
+            }}
+          />
+          {/* Second horizontal line */}
+          <div
+            className="absolute left-0 right-0 h-px opacity-10"
+            style={{
+              background: 'linear-gradient(to right, transparent, var(--accent), transparent)',
+              animation: 'gridSweepY 10s ease-in-out 5s infinite',
+            }}
+          />
+
+          {/* Glowing intersection dots — subtle pulsing */}
+          <div className="absolute top-[30%] left-[25%] w-1.5 h-1.5 rounded-full bg-accent/30 animate-pulse" />
+          <div className="absolute top-[60%] left-[70%] w-1 h-1 rounded-full bg-accent/20 animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-[20%] left-[55%] w-1 h-1 rounded-full bg-purple-400/25 animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[75%] left-[35%] w-1 h-1 rounded-full bg-accent/15 animate-pulse" style={{ animationDelay: '3s' }} />
+
+          {/* Radial fade — fades grid out at edges */}
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 40%, transparent 30%, var(--surface) 100%)' }} />
+        </div>
+
         {/* Ambient glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
         <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-[15%] w-[300px] h-[300px] rounded-full bg-accent/[0.03] blur-[100px] pointer-events-none" />
-
-        {/* Subtle grid */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Badge */}
@@ -465,85 +519,110 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, savePercent: 0, cta: 'Start Auditing', popular: false },
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 'Save 19%', savePercent: 19, cta: 'Get 5 Audits', popular: true },
-              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 'Save 33%', savePercent: 33, cta: 'Get 15 Audits', popular: false },
-              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 'Save 50%', savePercent: 50, cta: 'Get 50 Audits', popular: false },
+              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, savePercent: 0, cta: 'Start Auditing', popular: false, desc: 'Try your first audit' },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: '19%', savePercent: 19, cta: 'Get 5 Audits', popular: true, desc: 'Best for growing teams' },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: '33%', savePercent: 33, cta: 'Get 15 Audits', popular: false, desc: 'For agencies & studios' },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: '50%', savePercent: 50, cta: 'Get 50 Audits', popular: false, desc: 'Enterprise volume' },
             ].map((tier, idx) => (
               <div
                 key={idx}
                 className={`group relative rounded-2xl flex flex-col transition-all duration-300 overflow-hidden ${
                   tier.popular
-                    ? 'border-2 border-accent/40 hover:border-accent/60 shadow-xl shadow-accent/10 scale-[1.02]'
-                    : 'border border-border hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5'
+                    ? 'border-2 border-accent/50 hover:border-accent/70 shadow-xl shadow-accent/15 lg:scale-[1.03]'
+                    : 'border border-border/60 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5'
                 }`}
               >
-                {/* Top accent gradient bar */}
-                <div className={`h-1 w-full ${
+                {/* Top gradient bar */}
+                <div className={`h-1.5 w-full ${
                   tier.popular
                     ? 'bg-gradient-to-r from-accent via-purple-400 to-accent'
-                    : 'bg-gradient-to-r from-transparent via-accent/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'
+                    : 'bg-gradient-to-r from-accent/20 via-accent/40 to-accent/20'
                 }`} />
 
                 {tier.popular && (
-                  <span className="absolute top-3 right-4 bg-accent text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md shadow-accent/30 z-10">
+                  <span className="absolute top-4 right-4 bg-gradient-to-r from-accent to-purple-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-accent/30 z-10">
                     Most Popular
                   </span>
                 )}
 
-                <div className={`p-6 flex flex-col flex-1 ${tier.popular ? 'bg-accent/[0.04]' : 'bg-card'}`}>
-                  {/* Plan name + credit count */}
-                  <div className="flex items-baseline justify-between mb-3">
-                    <h3 className="font-manrope font-bold text-lg text-text">{tier.name}</h3>
-                    <span className="text-xs text-muted font-medium">
-                      {tier.credits} credit{tier.credits !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+                <div className={`p-6 pb-5 flex flex-col flex-1 ${
+                  tier.popular
+                    ? 'bg-gradient-to-b from-accent/[0.06] to-transparent'
+                    : 'bg-card'
+                }`}>
+                  {/* Plan name */}
+                  <h3 className="font-manrope font-bold text-lg text-text mb-0.5">{tier.name}</h3>
+                  <p className="text-xs text-muted mb-4">{tier.desc}</p>
 
                   {/* Price */}
-                  <div className="mb-1">
+                  <div className="mb-0.5">
                     <span className="font-manrope text-4xl font-extrabold text-text">${tier.price.toLocaleString()}</span>
                   </div>
 
                   {/* Per-audit cost */}
                   <p className="text-sm text-muted mb-5">
-                    {tier.per}<span className="text-muted/60"> / audit</span>
+                    {tier.per}<span className="text-muted/50"> / audit</span>
                   </p>
 
-                  {/* Savings indicator */}
+                  {/* Credit count — visual pill with icon */}
+                  <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 mb-4 ${
+                    tier.popular
+                      ? 'bg-accent/10 border border-accent/20'
+                      : 'bg-surface-alt border border-border/40'
+                  }`}>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                      tier.popular
+                        ? 'bg-accent/20'
+                        : 'bg-accent/10'
+                    }`}>
+                      <Zap className="w-4 h-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-text leading-tight">
+                        {tier.credits} credit{tier.credits !== 1 ? 's' : ''}
+                      </p>
+                      <p className="text-[10px] text-muted leading-tight">
+                        {tier.credits} full audit{tier.credits !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    {tier.save && (
+                      <span className="ml-auto text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-md">
+                        -{tier.save}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Savings detail */}
                   {tier.save ? (
-                    <div className="mb-6">
-                      {/* Visual savings bar */}
-                      <div className="flex items-center gap-2.5 mb-1.5">
-                        <div className="flex-1 h-1.5 rounded-full bg-border/40 overflow-hidden">
+                    <div className="mb-5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 h-1 rounded-full bg-border/30 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400"
-                            style={{ width: `${tier.savePercent}%` }}
+                            className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400 transition-all duration-500"
+                            style={{ width: `${tier.savePercent * 2}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-accent whitespace-nowrap">{tier.save}</span>
                       </div>
-                      <p className="text-[10px] text-muted/70">
-                        vs buying {tier.credits} individual audits
+                      <p className="text-[10px] text-muted/60">
+                        Save ${(tier.credits * 99 - tier.price).toLocaleString()} vs individual pricing
                       </p>
                     </div>
                   ) : (
-                    <div className="mb-6">
-                      <p className="text-xs text-muted/60">Perfect for trying ClearUX</p>
-                    </div>
+                    <div className="mb-5" />
                   )}
 
                   {/* CTA — pushed to bottom */}
                   <div className="mt-auto">
                     <Link
                       href="/register"
-                      className={`block text-center text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
+                      className={`flex items-center justify-center gap-2 text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
                         tier.popular
-                          ? 'bg-accent text-white hover:brightness-110 shadow-lg shadow-accent/25'
+                          ? 'bg-gradient-to-r from-accent to-purple-500 text-white hover:brightness-110 shadow-lg shadow-accent/25'
                           : 'bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20'
                       }`}
                     >
                       {tier.cta}
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
