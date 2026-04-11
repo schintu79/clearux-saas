@@ -19,6 +19,16 @@ interface UseUserReturn {
   refreshProfile: () => Promise<void>
 }
 
+// Helper: race a promise against a timeout
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Auth request timed out')), ms)
+    ),
+  ])
+}
+
 export function useUser(): UseUserReturn {
   const [user,    setUser]    = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -50,67 +60,75 @@ export function useUser(): UseUserReturn {
   useEffect(() => {
     let cancelled = false
 
-    // Primary auth strategy: getSession() reads from cookies (fast, no
-    // network call), then getUser() verifies with the Supabase server.
     const init = async () => {
       try {
-        // Step 1 — fast read from cookies
+        // Step 1 — fast read from cookies (no network call)
         const { data: { session } } = await supabase.auth.getSession()
-        console.log('[useUser] getSession →', session ? 'has session' : 'no session')
 
         if (cancelled) return
 
         if (session?.user) {
+          // We have a session — trust it immediately, mark loaded
           setUser(session.user)
           fetchProfile(session.user.id)
-          // We have a session from cookies — mark loaded NOW so the
-          // dashboard can start fetching data immediately.
           setLoading(false)
 
-          // Step 2 — server verification in the background (refreshes
-          // token if expired). Non-blocking — UI is already interactive.
-          supabase.auth.getUser().then(({ data: { user: verifiedUser }, error }) => {
-            if (cancelled) return
-            console.log('[useUser] getUser →', verifiedUser ? verifiedUser.email : 'null', error?.message ?? '')
-            if (verifiedUser) {
+          // Background verification (non-blocking, with timeout)
+          withTimeout(supabase.auth.getUser(), 5000)
+            .then(({ data: { user: verifiedUser } }) => {
+              if (cancelled || !verifiedUser) return
               setUser(verifiedUser)
-              if (verifiedUser.id !== session?.user?.id) {
-                fetchProfile(verifiedUser.id)
-              }
-            }
-          })
-          return // skip finally — loading already set false
+            })
+            .catch(() => {
+              // Timeout or error — session user is still valid
+            })
+          return
         }
 
-        // No session from cookies — try server verification
-        const { data: { user: verifiedUser }, error } = await supabase.auth.getUser()
-        console.log('[useUser] getUser →', verifiedUser ? verifiedUser.email : 'null', error?.message ?? '')
+        // No session — try getUser() with a timeout
+        try {
+          const { data: { user: verifiedUser } } = await withTimeout(
+            supabase.auth.getUser(),
+            5000
+          )
 
-        if (cancelled) return
+          if (cancelled) return
 
-        if (verifiedUser) {
-          setUser(verifiedUser)
-          fetchProfile(verifiedUser.id)
-        } else {
-          setUser(null)
-          setProfile(null)
+          if (verifiedUser) {
+            setUser(verifiedUser)
+            fetchProfile(verifiedUser.id)
+          } else {
+            setUser(null)
+            setProfile(null)
+          }
+        } catch {
+          // Timed out or failed — no user
+          if (!cancelled) {
+            setUser(null)
+            setProfile(null)
+          }
         }
       } catch (err) {
         console.error('[useUser] init error:', err)
       } finally {
-        // Always set loading false — even if cancelled, the component
-        // may still be mounted (React strict mode re-mount)
         if (!cancelled) setLoading(false)
       }
     }
 
     init()
 
+    // Safety valve: if loading is STILL true after 6 seconds, force it off.
+    // This prevents infinite loading if Supabase is unreachable.
+    const safetyTimeout = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) console.warn('[useUser] safety timeout — forcing loading=false')
+        return false
+      })
+    }, 6000)
+
     // Listen for SUBSEQUENT auth events (sign-in, sign-out, token refresh).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[useUser] onAuthStateChange →', event, session?.user?.email ?? 'no user')
-
         // Skip INITIAL_SESSION — we handle it above with getSession()+getUser()
         if (event === 'INITIAL_SESSION') return
 
@@ -127,6 +145,7 @@ export function useUser(): UseUserReturn {
 
     return () => {
       cancelled = true
+      clearTimeout(safetyTimeout)
       subscription.unsubscribe()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -144,7 +163,6 @@ export function useUser(): UseUserReturn {
     }
 
     // Hard redirect to fully clear cookies + server state.
-    // Use replace so the user can't navigate back to a stale page.
     window.location.replace('/')
   }
 
