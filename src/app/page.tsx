@@ -534,7 +534,7 @@ export default function Home() {
                     }`}>
                       <Icon size={15} className="text-accent" />
                     </div>
-                    <h3 className="font-semibold text-text text-sm">{cat.title}</h3>
+                    <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
                   </div>
                   <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
                 </div>
@@ -686,46 +686,40 @@ export default function Home() {
           </div>
 
           {/* ── Trust & Security bar ── */}
-          <div className="mt-12 rounded-xl border border-border/50 bg-card/30 px-6 py-5">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="mt-12 rounded-2xl bg-gradient-to-r from-[#1a1136] via-[#1e1542] to-[#1a1136] border border-accent/20 px-6 sm:px-8 py-6 shadow-lg shadow-accent/5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
               {/* Left: Stripe badge */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface border border-border/60">
-                  <Shield className="w-3.5 h-3.5 text-accent" />
-                  <span className="text-xs font-semibold text-text">Powered by</span>
-                  {/* Stripe wordmark */}
-                  <svg className="h-5 w-auto" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 10.2c0-.7.6-1 1.5-1 1.4 0 3 .4 4.4 1.2V6.3C9.4 5.7 7.9 5.4 6.5 5.4 2.6 5.4 0 7.4 0 10.5c0 4.8 6.6 4 6.6 6.1 0 .8-.7 1.1-1.7 1.1-1.5 0-3.3-.6-4.8-1.5v4.2c1.6.7 3.3 1 4.8 1 4 0 6.8-2 6.8-5.1C11.7 11.2 5 12.1 5 10.2zM15.8 5.7l-2.4.5v3.5h-1.6V13h1.6v5c0 3.6 1.7 4.8 4.8 4.8.7 0 1.5-.1 2-.3V19c-.3.1-1.2.1-1.6.1-1 0-1.8-.4-1.8-1.7V13h3.4V9.7h-3.4V5.7zM24.9 8c-1 0-1.6.5-2 1l-.1-1h-2.7V22.5h3V13.4c.7-1 1.9-1.5 3.2-1.5V8.8c-.1 0-.3 0-.4 0zM28.7 5.3c1 0 1.8-.8 1.8-1.8s-.8-1.8-1.8-1.8-1.8.8-1.8 1.8.8 1.8 1.8 1.8zM27.2 22.5h3V9.7h-3v12.8zM37.2 8c-1.4 0-2.5.5-3 1.2l-.2-1h-2.7V27l3-.6V21c.5.3 1.3.5 2 .5 3 0 5.7-2.4 5.7-7.6C42 10 40.4 8 37.2 8zm-.8 10.5c-.6 0-1-.2-1.3-.5v-5.8c.3-.4.8-.6 1.3-.6 1.5 0 2.5 1.7 2.5 3.5 0 1.8-1 3.4-2.5 3.4zM51.3 8c-3.4 0-5.6 2.9-5.6 7.3 0 4.8 2.5 7.2 6.1 7.2 1.8 0 3.1-.4 4.2-1.1v-3c-1 .5-2.1.8-3.5.8s-2.6-.8-2.7-2.8H56c0-.2 0-1.1 0-1.5C56 10.5 54.3 8 51.3 8zm-2.5 5.8c0-2 1.2-2.8 2.3-2.8 1.1 0 2.2.8 2.2 2.8h-4.5z" fill="currentColor" className="text-muted"/>
-                  </svg>
+                <Shield className="w-5 h-5 text-accent" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white/90">Secure payments via</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/stripe.svg" alt="Stripe" className="h-7" />
                 </div>
               </div>
 
-              {/* Center: Trust text */}
-              <div className="flex items-center gap-4 text-xs text-muted">
+              {/* Center: Trust signals */}
+              <div className="flex items-center gap-4 text-xs text-white/50 font-medium">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   SSL encrypted
                 </span>
-                <span className="text-border">|</span>
+                <span className="text-white/20">|</span>
                 <span>Credits never expire</span>
-                <span className="text-border">|</span>
+                <span className="text-white/20">|</span>
                 <span>Cancel anytime</span>
               </div>
 
               {/* Right: Card brand icons */}
-              <div className="flex items-center gap-2">
-                {/* Visa */}
-                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
-                  <svg viewBox="0 0 48 32" className="w-7 h-4"><path d="M19.5 24.5h-3.8L18 8h3.8l-2.3 16.5zM33 8.4c-.8-.3-2-.6-3.5-.6-3.8 0-6.5 2-6.5 4.9 0 2.1 1.9 3.3 3.4 4 1.5.7 2 1.2 2 1.9 0 1-.8 1.5-2.5 1.5-1.7 0-2.6-.2-4-.8l-.5-.3-.6 3.6c1 .5 2.8.8 4.7.8 4 0 6.7-2 6.7-5 0-1.7-1-3-3.2-4-1.3-.7-2.2-1.2-2.2-1.9 0-.6.7-1.3 2.2-1.3 1.3 0 2.2.3 2.9.6l.4.2.6-3.6zM40.5 8H37.8c-.8 0-1.5.2-1.8 1.1L30.5 24.5h4l.8-2.2h4.9l.5 2.2h3.5L40.5 8zm-4.3 11l1.5-4.1.5-1.5.3 1.4.9 4.2h-3.2zM15.3 8l-3.6 11.3-.4-2c-.7-2.3-2.8-4.8-5.2-6l3.4 13.1h4L19.4 8h-4.1z" fill="#1434CB"/><path d="M8.7 8H3.1l-.1.3c4.8 1.2 8 4.2 9.3 7.7L11 9.2C10.7 8.3 10 8 8.7 8z" fill="#F7A600"/></svg>
-                </div>
-                {/* Mastercard */}
-                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
-                  <svg viewBox="0 0 48 32" className="w-7 h-5"><circle cx="18" cy="16" r="10" fill="#EB001B"/><circle cx="30" cy="16" r="10" fill="#F79E1B"/><path d="M24 8.7A10 10 0 0 0 20.1 16 10 10 0 0 0 24 23.3 10 10 0 0 0 27.9 16 10 10 0 0 0 24 8.7z" fill="#FF5F00"/></svg>
-                </div>
-                {/* Amex */}
-                <div className="w-10 h-6 rounded bg-surface border border-border/60 flex items-center justify-center">
-                  <svg viewBox="0 0 48 32" className="w-7 h-4"><rect width="48" height="32" rx="4" fill="#016FD0"/><text x="24" y="19" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold" fontFamily="Arial">AMEX</text></svg>
-                </div>
+              <div className="flex items-center gap-2.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/visa.svg" alt="Visa" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/applepay.svg" alt="Apple Pay" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/gpay.svg" alt="Google Pay" className="h-6 rounded" />
               </div>
             </div>
           </div>
