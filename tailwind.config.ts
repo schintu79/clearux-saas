@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      borderColor: {
+        DEFAULT: "var(--border)",
+      },
       colors: {
         blue:       "var(--blue)",
         "blue-dk":  "var(--blue-dk)",

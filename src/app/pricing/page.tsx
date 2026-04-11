@@ -159,7 +159,7 @@ export default function PricingPage() {
                     className={`block text-center text-sm font-bold rounded-lg py-2.5 transition-all ${
                       plan.popular
                         ? 'bg-accent text-white hover:bg-accent-dk shadow-lg shadow-accent/20'
-                        : 'bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20'
+                        : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
                     }`}
                   >
                     {plan.cta}

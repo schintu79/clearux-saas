@@ -847,7 +847,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
                         tier.popular
                           ? 'bg-gradient-to-r from-accent to-purple-500 text-white hover:brightness-110 shadow-lg shadow-accent/25'
-                          : 'bg-accent/[0.08] dark:bg-accent/[0.12] text-accent hover:bg-accent/15 dark:hover:bg-accent/[0.18] border border-accent/15 dark:border-transparent'
+                          : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
                       }`}
                     >
                       {tier.cta}

@@ -138,7 +138,7 @@ export default function BuyCreditsPage() {
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
                 pack.popular
                   ? 'bg-accent text-white hover:bg-accent-dk shadow-md shadow-accent/20'
-                  : 'bg-off text-text hover:bg-accent/10 hover:text-accent border border-border'
+                  : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
               }`}
             >
               {purchasing === pack.id ? (

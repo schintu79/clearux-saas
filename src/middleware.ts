@@ -106,10 +106,12 @@ export async function middleware(request: NextRequest) {
     const supabase = createMiddlewareClient(request, response)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      // Use getSession() — reads from cookie, no network call.
+      // This prevents timeouts and race conditions after login.
+      // The dashboard layout does a full getUser() verification client-side.
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (!user) {
-        // Not logged in → redirect to login with return URL
+      if (!session) {
         const loginUrl = new URL('/login', request.url)
         loginUrl.searchParams.set('redirectTo', pathname)
         return NextResponse.redirect(loginUrl)
@@ -117,10 +119,9 @@ export async function middleware(request: NextRequest) {
 
       return response
     } catch {
-      // If Supabase call fails, redirect to login as a safety net
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(loginUrl)
+      // If cookie parsing fails, let the page load —
+      // the client-side auth guard will handle the redirect
+      return NextResponse.next()
     }
   }
 
