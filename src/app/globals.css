@@ -36,7 +36,7 @@
   --navy:        #E8E8EE;
   --off:         #0D0D14;
   --muted:       #9494A8;
-  --border:      #232334;
+  --border:      #1c1c2a;
   --text:        #EAEAF0;
   --surface:     #0C0C13;
   --surface-alt: #111119;
@@ -127,7 +127,7 @@ body {
 }
 
 .dark .input {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.04);
 }
 
 .dark .input:focus {

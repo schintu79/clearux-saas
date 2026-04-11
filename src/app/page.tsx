@@ -107,7 +107,7 @@ function RotatingReview({ reviews }: { reviews: { quote: string; author: string;
         </div>
       </div>
       <div className="flex items-center justify-center gap-3 mt-5">
-        <button onClick={prev} aria-label="Previous review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.08] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+        <button onClick={prev} aria-label="Previous review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
           <ChevronLeft size={14} className="text-muted" />
         </button>
         <div className="flex gap-1.5">
@@ -115,7 +115,7 @@ function RotatingReview({ reviews }: { reviews: { quote: string; author: string;
             <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-accent w-4' : 'bg-border'}`} />
           ))}
         </div>
-        <button onClick={next} aria-label="Next review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.08] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+        <button onClick={next} aria-label="Next review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
           <ChevronRight size={14} className="text-muted" />
         </button>
       </div>
@@ -206,7 +206,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SOCIAL PROOF — rotating reviews above hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.06] py-6 px-4">
+      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-6 px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
@@ -336,7 +336,7 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border/50 dark:border-white/[0.08] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border/50 dark:border-white/[0.04] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
                 />
               </div>
               <button
@@ -405,7 +405,7 @@ export default function Home() {
                   <div
                     key={idx}
                     ref={counter.ref}
-                    className="relative p-5 rounded-2xl bg-card/50 border border-border/30 dark:border-white/[0.06] hover:border-accent/20 transition-all duration-300"
+                    className="relative p-5 rounded-2xl bg-card/50 border border-border/30 dark:border-white/[0.03] hover:border-accent/20 transition-all duration-300"
                   >
                     <p className={`font-manrope text-4xl md:text-5xl font-extrabold mb-1 bg-gradient-to-r ${gradients[idx]} bg-clip-text text-transparent`} suppressHydrationWarning>
                       {mounted
@@ -524,7 +524,7 @@ export default function Home() {
                   className={`group relative rounded-xl p-4 border transition-all duration-300 ${
                     isFeatured
                       ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
-                      : 'bg-card/50 border-border/30 dark:border-white/[0.06] hover:border-accent/25 hover:bg-card'
+                      : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -572,8 +572,8 @@ export default function Home() {
           <div className="grid lg:grid-cols-3 gap-6">
 
             {/* ── Card 1: Score Overview ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.05] flex items-center gap-2">
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
@@ -624,8 +624,8 @@ export default function Home() {
             </div>
 
             {/* ── Card 2: Findings List ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.05] flex items-center gap-2">
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
@@ -656,8 +656,8 @@ export default function Home() {
             </div>
 
             {/* ── Card 3: Report Preview ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.05] flex items-center gap-2">
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
@@ -667,7 +667,7 @@ export default function Home() {
               </div>
               <div className="p-5">
                 {/* Mock report page */}
-                <div className="bg-white dark:bg-white/[0.02] rounded-lg border border-border/30 dark:border-white/[0.05] p-5">
+                <div className="bg-white dark:bg-white/[0.02] rounded-lg border border-border/30 dark:border-white/[0.03] p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
                       <FileText size={12} className="text-accent" />
@@ -737,7 +737,7 @@ export default function Home() {
           </div>
 
           {/* ── Every audit includes — shared benefits strip ── */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.06]">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
             {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
@@ -757,15 +757,15 @@ export default function Home() {
                 key={idx}
                 className={`group relative rounded-2xl flex flex-col transition-all duration-300 overflow-hidden ${
                   tier.popular
-                    ? 'border border-accent/40 dark:border-accent/30 hover:border-accent/60 shadow-xl shadow-accent/10 dark:shadow-accent/5 lg:scale-[1.03]'
-                    : 'border border-border/50 dark:border-white/[0.06] hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5'
+                    ? 'border border-accent/40 dark:border-accent/20 hover:border-accent/60 shadow-xl shadow-accent/10 dark:shadow-accent/5 lg:scale-[1.03]'
+                    : 'border border-border/50 dark:border-transparent hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5 dark:bg-[#161622] dark:hover:bg-[#1a1a2a]'
                 }`}
               >
                 {/* Top gradient bar */}
                 <div className={`h-1 w-full ${
                   tier.popular
                     ? 'bg-gradient-to-r from-accent via-purple-400 to-accent'
-                    : 'bg-gradient-to-r from-transparent via-accent/20 to-transparent'
+                    : 'bg-gradient-to-r from-transparent via-accent/15 dark:via-accent/[0.08] to-transparent'
                 }`} />
 
                 {tier.popular && (
@@ -796,8 +796,8 @@ export default function Home() {
                   {/* Credit count — visual pill with icon */}
                   <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 mb-4 ${
                     tier.popular
-                      ? 'bg-accent/10 border border-accent/15'
-                      : 'bg-surface-alt/50 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.05]'
+                      ? 'bg-accent/10 dark:bg-accent/[0.08] border border-accent/15 dark:border-transparent'
+                      : 'bg-surface-alt/50 dark:bg-white/[0.04] border border-border/30 dark:border-transparent'
                   }`}>
                     <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
                       tier.popular
@@ -825,7 +825,7 @@ export default function Home() {
                   {tier.save ? (
                     <div className="mb-5">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="flex-1 h-1 rounded-full bg-border/30 overflow-hidden">
+                        <div className="flex-1 h-1 rounded-full bg-border/30 dark:bg-white/[0.06] overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400 transition-all duration-500"
                             style={{ width: `${tier.savePercent * 2}%` }}
@@ -847,7 +847,7 @@ export default function Home() {
                       className={`flex items-center justify-center gap-2 text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
                         tier.popular
                           ? 'bg-gradient-to-r from-accent to-purple-500 text-white hover:brightness-110 shadow-lg shadow-accent/25'
-                          : 'bg-accent/[0.08] text-accent hover:bg-accent/15 border border-accent/15 dark:border-accent/10'
+                          : 'bg-accent/[0.08] dark:bg-accent/[0.12] text-accent hover:bg-accent/15 dark:hover:bg-accent/[0.18] border border-accent/15 dark:border-transparent'
                       }`}
                     >
                       {tier.cta}
@@ -948,7 +948,7 @@ export default function Home() {
               { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
             ].map((item, idx) => (
-              <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
+              <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
                 <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                   <h3 className="font-medium text-text text-sm pr-4">{item.q}</h3>
                   <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
