@@ -279,82 +279,174 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         <div className="hidden lg:block">
           <div className="sticky top-24">
             <div className="relative">
-              {/* Visual card — changes with active pillar */}
-              <div className={`rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 p-8 transition-all duration-500`}>
+              <div className={`rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden transition-all duration-500`}>
 
-                {/* Pillar visual — animated score mockup */}
-                <div className="aspect-[4/3] rounded-2xl bg-surface-alt flex flex-col items-center justify-center relative overflow-hidden">
-
-                  {/* Decorative gradient orb */}
-                  <div className={`absolute w-48 h-48 rounded-full bg-gradient-to-br ${active.color} opacity-10 blur-3xl transition-all duration-700`}
-                    style={{ top: '20%', left: '30%' }}
-                  />
-
-                  {/* Central score ring */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className={`w-28 h-28 rounded-full border-4 flex items-center justify-center mb-4 transition-all duration-500 ${active.colorBorder}`}
-                      style={{ borderColor: `var(--tw-gradient-from, currentColor)` }}
-                    >
-                      <svg className="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="52" fill="none" strokeWidth="6" className="stroke-border/20" />
-                        <circle
-                          cx="60" cy="60" r="52" fill="none" strokeWidth="6"
-                          strokeLinecap="round"
-                          className={`transition-all duration-700`}
-                          style={{
-                            stroke: 'currentColor',
-                            strokeDasharray: `${2 * Math.PI * 52}`,
-                            strokeDashoffset: `${2 * Math.PI * 52 * (1 - [0.78, 0.72, 0.85, 0.65][activeIdx])}`,
-                          }}
-                        />
-                      </svg>
-                      <span className="absolute font-manrope text-2xl font-bold text-text">
-                        {[78, 72, 85, 65][activeIdx]}
-                      </span>
+                {/* ── FOUNDATION: Score dashboard mockup ── */}
+                <div className={`transition-all duration-500 ${activeIdx === 0 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
+                  <div className="p-6 pb-0">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
+                        <span className="text-xs font-semibold text-text">Audit Overview</span>
+                      </div>
+                      <span className="text-[10px] text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
                     </div>
-                    <p className={`text-sm font-semibold ${active.colorText} transition-colors duration-500`}>
-                      {active.label} Score
-                    </p>
-                  </div>
-
-                  {/* Category score bars */}
-                  <div className="relative z-10 w-full max-w-xs mt-6 space-y-2.5 px-4">
-                    {categories
-                      .filter((c) => c.pillar === pillarNames[activeIdx])
-                      .slice(0, 4)
-                      .map((cat, i) => {
-                        const scores = [
-                          [82, 75, 70, 88, 78, 74],
-                          [68, 72, 65, 58, 70, 62],
-                          [90, 82, 78, 86],
-                          [55, 48, 62],
-                        ];
-                        const score = scores[activeIdx]?.[i] ?? 70;
-                        return (
-                          <div key={i} className="flex items-center gap-3">
-                            <span className="text-[11px] text-muted w-24 truncate">{cat.title.split('&')[0].trim()}</span>
-                            <div className="flex-1 h-1.5 rounded-full bg-border/20 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full bg-gradient-to-r ${active.color} transition-all duration-700`}
-                                style={{ width: `${score}%` }}
-                              />
+                    {/* Score ring */}
+                    <div className="flex items-center gap-6 mb-6">
+                      <div className="relative">
+                        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" className="stroke-border/15" />
+                          <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" strokeLinecap="round" className="stroke-violet-500 transition-all duration-700" style={{ strokeDasharray: `${2*Math.PI*42}`, strokeDashoffset: `${2*Math.PI*42*(1-0.78)}` }} />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center font-manrope text-xl font-bold text-text">78</span>
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <p className="text-xs font-semibold text-text">Overall Score</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
+                            <div key={d.l} className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted w-14">{d.l}</span>
+                              <div className="flex-1 h-1 rounded-full bg-border/15"><div className="h-full rounded-full bg-violet-400 transition-all duration-700" style={{width:`${d.s}%`}} /></div>
+                              <span className="text-[10px] font-bold text-text w-5 text-right">{d.s}</span>
                             </div>
-                            <span className="text-[11px] font-semibold text-text w-7 text-right">{score}</span>
-                          </div>
-                        );
-                      })}
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Finding cards */}
+                  <div className="px-6 pb-6 space-y-2.5">
+                    {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'},{sev:'MEDIUM',c:'bg-yellow-400',t:'Navigation lacks clear visual hierarchy',imp:'Reduced bounce rate'}].map((f,i)=>(
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt border border-border/20">
+                        <span className={`${f.c} text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-text leading-snug">{f.t}</p>
+                          <p className="text-[10px] text-accent mt-0.5">{f.imp}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Bottom label */}
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-muted">Sample audit visualization</p>
+                {/* ── HUMAN EXPERIENCE: Dark patterns scan ── */}
+                <div className={`transition-all duration-500 ${activeIdx === 1 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
+                        <span className="text-xs font-semibold text-text">Human Experience Scan</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
+                    </div>
+                    {/* Scan results */}
+                    <div className="space-y-3">
+                      {[
+                        {icon:'⚠️',t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
+                        {icon:'⏰',t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
+                        {icon:'✓',t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
+                        {icon:'⚠️',t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
+                        {icon:'✓',t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
+                        {icon:'⚠️',t:'Anxiety-inducing language',d:'"You\'ll lose everything!" on downgrade page creates unnecessary fear',pass:false},
+                      ].map((item,i)=>(
+                        <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
+                          <span className="text-sm mt-0.5 flex-shrink-0">{item.icon}</span>
+                          <div className="min-w-0">
+                            <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
+                            <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{item.d}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── TECHNICAL EXCELLENCE: Performance dashboard ── */}
+                <div className={`transition-all duration-500 ${activeIdx === 2 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
+                        <span className="text-xs font-semibold text-text">Technical Audit</span>
+                      </div>
+                    </div>
+                    {/* Metric cards */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      {[{l:'Performance',s:92,c:'text-emerald-500',icon:'⚡'},{l:'Mobile',s:78,c:'text-amber-500',icon:'📱'},{l:'Accessibility',s:64,c:'text-orange-500',icon:'♿'},{l:'SEO',s:86,c:'text-emerald-500',icon:'🔍'}].map(m=>(
+                        <div key={m.l} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm">{m.icon}</span>
+                            <span className={`font-manrope text-lg font-bold ${m.c}`}>{m.s}</span>
+                          </div>
+                          <p className="text-[10px] font-semibold text-text">{m.l}</p>
+                          <div className="mt-1.5 h-1 rounded-full bg-border/15">
+                            <div className={`h-full rounded-full transition-all duration-700 ${m.s>=80?'bg-emerald-400':m.s>=60?'bg-amber-400':'bg-orange-400'}`} style={{width:`${m.s}%`}} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Checklist */}
+                    <div className="space-y-2">
+                      {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
+                        <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-alt/50">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-100 dark:bg-emerald-900/30':'bg-orange-100 dark:bg-orange-900/30'}`}>
+                            <span className="text-[8px]">{c.p?'✓':'✗'}</span>
+                          </div>
+                          <span className="text-[11px] text-text">{c.t}</span>
+                          <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-600 dark:text-emerald-400':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── FUTURE READINESS: AI readiness checker ── */}
+                <div className={`transition-all duration-500 ${activeIdx === 3 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
+                        <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
+                    </div>
+                    {/* AI readiness cards */}
+                    <div className="space-y-3 mb-5">
+                      {[
+                        {t:'LLM Discoverability',s:72,d:'Content is mostly parseable but key features are trapped in images'},
+                        {t:'AI Agent Navigation',s:48,d:'Forms lack proper labels — AI agents cannot complete checkout flow'},
+                        {t:'Cultural Readiness',s:62,d:'No RTL support, hardcoded date formats, USD-only pricing'},
+                      ].map((item,i)=>(
+                        <div key={i} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-semibold text-text">{item.t}</span>
+                            <span className={`text-xs font-bold ${item.s>=70?'text-emerald-500':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-border/15 mb-2">
+                            <div className={`h-full rounded-full transition-all duration-700 ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
+                          </div>
+                          <p className="text-[10px] text-muted leading-relaxed">{item.d}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Simulated AI query */}
+                    <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
+                      <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
+                      <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/20">
+                        <p className="text-[10px] text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom nav dots */}
+                <div className="px-6 py-3 border-t border-border/15 flex items-center justify-between">
+                  <p className="text-[10px] text-muted">{active.label} audit preview</p>
                   <div className="flex gap-1.5">
-                    {PILLAR_DATA.map((_, i) => (
+                    {PILLAR_DATA.map((p, i) => (
                       <div
                         key={i}
-                        className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                          i === activeIdx ? 'bg-accent w-4' : 'bg-border/40'
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i === activeIdx ? `w-5 bg-gradient-to-r ${p.color}` : 'w-1.5 bg-border/30'
                         }`}
                       />
                     ))}
@@ -484,10 +576,10 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SOCIAL PROOF — rotating reviews above hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-6 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2">
+      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-5 px-4">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-2.5">
               {[
                 { bg: '#8B5CF6', initials: 'SC' },
                 { bg: '#A78BFA', initials: 'MW' },
@@ -497,19 +589,21 @@ export default function Home() {
               ].map((p, i) => (
                 <div
                   key={i}
-                  className="w-8 h-8 rounded-full border-2 border-surface-alt flex items-center justify-center text-white text-[10px] font-bold"
+                  className="w-10 h-10 rounded-full border-2 border-surface-alt flex items-center justify-center text-white text-[11px] font-bold"
                   style={{ backgroundColor: p.bg, zIndex: 5 - i }}
                 >
                   {p.initials}
                 </div>
               ))}
             </div>
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
-              ))}
+            <div>
+              <div className="flex gap-0.5 mb-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-accent text-accent" />
+                ))}
+              </div>
+              <span className="text-text text-sm font-semibold">Trusted by product teams worldwide</span>
             </div>
-            <span className="text-muted text-xs">Trusted by product teams worldwide</span>
           </div>
         </div>
       </section>
@@ -584,7 +678,7 @@ export default function Home() {
           {/* Badge */}
           <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8">
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span className="text-sm font-semibold text-accent tracking-wide">Human-Centered Digital Audits</span>
+            <span className="text-sm font-semibold text-accent tracking-wide">Human-Centered, AI-Powered Digital Audits</span>
           </div>
 
           {/*
@@ -1065,25 +1159,59 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-surface-alt">
-        <div className="absolute inset-0 bg-gradient-to-t from-accent/[0.04] to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.06] blur-[120px] pointer-events-none" />
+      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden">
+        {/* Full-width warm gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/60 via-orange-50/30 to-rose-50/40 dark:from-accent/[0.06] dark:via-purple-900/[0.04] dark:to-transparent pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.05] blur-[150px] pointer-events-none" />
 
-        <div className="max-w-2xl mx-auto text-center relative">
-          <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
-            Ready to see what you&apos;re missing?
+        <div className="max-w-3xl mx-auto text-center relative">
+          {/* Small label */}
+          <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">Start your audit today</p>
+
+          {/* Big headline */}
+          <h2 className="font-manrope text-4xl sm:text-5xl md:text-6xl font-bold text-text mb-6" style={{ lineHeight: '1.1' }}>
+            Ready to see what<br className="hidden sm:block" />
+            you&apos;re missing?
           </h2>
-          <p className="text-muted text-lg mb-8">
-            Get a professional UX audit report in minutes — 95 checkpoints, 19 categories, actionable fixes.
+
+          {/* Subtitle */}
+          <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+            95 checkpoints. 19 categories. Real findings your team can act on — delivered in minutes, not weeks.
           </p>
-          <Link
-            href="/register"
-            className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-xl text-base font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20"
-          >
-            Get My UX Report
-            <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-          <p className="text-muted/60 text-sm mt-4">From $99 · No subscription · Credits never expire</p>
+
+          {/* URL input — mirrors the hero */}
+          <form onSubmit={handleHeroSubmit} className="max-w-lg mx-auto mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
+                <input
+                  id="cta-url-input"
+                  type="text"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder="yourwebsite.com"
+                  aria-label="Website URL to audit"
+                  className="w-full px-5 py-4 text-base rounded-2xl bg-white dark:bg-card border border-border/40 dark:border-white/[0.06] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(124,58,237,0.08)] transition-all shadow-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-text dark:bg-white text-white dark:text-text rounded-2xl font-semibold hover:opacity-90 transition-all shadow-lg flex-shrink-0"
+              >
+                Get My UX Report
+                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </form>
+
+          {/* Trust line */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-muted">
+            <span>From $99</span>
+            <span className="opacity-30">·</span>
+            <span>No subscription</span>
+            <span className="opacity-30">·</span>
+            <span>Credits never expire</span>
+          </div>
         </div>
       </section>
 

@@ -833,7 +833,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </button>
                 </a>
                 <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
-                  <button className="w-full flex items-center justify-center gap-2 bg-navy text-white dark:bg-card dark:border dark:border-border text-xs font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity">
+                  <button className="w-full flex items-center justify-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-surface-alt transition-colors">
                     <Download size={14} />
                     Word
                   </button>
@@ -1116,19 +1116,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               href={`/api/reports/${auditId}/pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-accent text-white text-xs font-semibold px-6 py-3 rounded-lg hover:bg-accent-dk transition-colors"
+              className="inline-flex items-center gap-2 bg-accent text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-accent-dk transition-colors"
             >
               <Download size={14} />
-              Download PDF Report
+              Download PDF
             </a>
             <a
               href={`/api/reports/${auditId}/docx`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-navy text-white dark:bg-card dark:border dark:border-border text-xs font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 bg-card border border-border text-text text-sm font-semibold px-6 py-3 rounded-xl hover:bg-surface-alt transition-colors"
             >
               <Download size={14} />
-              Download Word Report
+              Download Word
             </a>
           </div>
         </>
