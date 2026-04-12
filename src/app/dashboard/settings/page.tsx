@@ -46,6 +46,9 @@ const SettingsPage: React.FC = () => {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
   const [profileChanged, setProfileChanged] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Initialize form with profile data
   useEffect(() => {
@@ -70,12 +73,12 @@ const SettingsPage: React.FC = () => {
   }
 
   if (!user) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/login?redirectTo=/dashboard/settings');
-    }
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="text-center py-20">
+        <p className="text-muted mb-4">Please sign in to manage settings</p>
+        <a href="/login" className="inline-flex items-center gap-2 bg-accent text-white font-medium px-6 py-3 rounded-lg hover:bg-accent-dk transition-colors">
+          Sign In
+        </a>
       </div>
     );
   }
@@ -447,21 +450,50 @@ const SettingsPage: React.FC = () => {
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-red-900 dark:text-red-300">Danger Zone</h2>
           <p className="text-sm text-red-800 dark:text-red-400">
-            Once you delete your account, there is no going back. Please be certain.
+            Once you delete your account, there is no going back. All your audits, reports, and data will be permanently removed.
           </p>
-          <div className="pt-2" />
-          <a
-            href="https://app.supabase.com"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          {deleteError && (
+            <div className="p-3 rounded-md bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700">
+              <p className="text-xs text-red-700 dark:text-red-300">{deleteError}</p>
+            </div>
+          )}
+
+          <div className="pt-1">
+            <label className="block text-xs font-medium text-red-800 dark:text-red-400 mb-1.5">
+              Type <span className="font-bold">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md border border-red-300 dark:border-red-700 bg-white dark:bg-red-900/30 text-text placeholder:text-red-300 dark:placeholder:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+
+          <Button
+            variant="danger"
+            size="md"
+            disabled={deleteConfirm !== 'DELETE' || deletingAccount}
+            onClick={async () => {
+              if (deleteConfirm !== 'DELETE') return;
+              setDeletingAccount(true);
+              setDeleteError(null);
+              try {
+                const res = await fetch('/api/account/delete', { method: 'DELETE' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Deletion failed');
+                // Account deleted — redirect to homepage
+                window.location.replace('/');
+              } catch (err) {
+                setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+                setDeletingAccount(false);
+              }
+            }}
           >
-            <Button variant="danger" size="md">
-              Delete Account
-            </Button>
-          </a>
-          <p className="text-xs text-red-700 dark:text-red-400 mt-2">
-            To delete your account, please visit your Supabase account settings.
-          </p>
+            {deletingAccount ? 'Deleting...' : 'Permanently Delete Account'}
+          </Button>
         </div>
       </Card>
     </div>

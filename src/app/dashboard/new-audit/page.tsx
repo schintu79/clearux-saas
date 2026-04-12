@@ -53,12 +53,12 @@ const NewAuditInner: React.FC = () => {
   }
 
   if (!user) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/login?redirectTo=/dashboard/new-audit');
-    }
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      <div className="text-center py-20">
+        <p className="text-muted mb-4">Please sign in to create an audit</p>
+        <a href="/login" className="inline-flex items-center gap-2 bg-accent text-white font-medium px-6 py-3 rounded-lg hover:bg-accent-dk transition-colors">
+          Sign In
+        </a>
       </div>
     );
   }

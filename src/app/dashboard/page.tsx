@@ -176,19 +176,7 @@ function DashboardInner() {
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 
-  /* ── Redirect unauthenticated users to login ────────── */
-  if (!authLoading && !user) {
-    if (typeof window !== 'undefined') {
-      window.location.replace('/login?redirectTo=/dashboard');
-    }
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  /* ── Skeleton ─────────────────────────────────────────── */
+  /* ── Skeleton (includes auth loading + data loading) ─── */
   if (authLoading || (loading && user)) {
     return (
       <div className="max-w-2xl mx-auto py-6 space-y-4">
