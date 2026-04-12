@@ -57,7 +57,7 @@ const testimonials = [
 const valueProps = [
   {
     icon: Search,
-    title: '48 UX Checkpoints',
+    title: '56 UX Checkpoints',
     desc: 'Deep analysis across usability, conversion, accessibility, mobile, content and AI discoverability.',
   },
   {

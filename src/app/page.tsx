@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileCheck, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -159,12 +159,11 @@ export default function Home() {
   };
 
   // Animated counters
-  const c1 = useCountUp(48, 1800);
-  const c2 = useCountUp(12, 1400);
+  const c1 = useCountUp(56, 1800);
+  const c2 = useCountUp(13, 1400);
   const c3 = useCountUp(6, 1200);
   const c4 = useCountUp(10, 1000);
 
-  const howRef = useScrollReveal();
   const catRef = useScrollReveal();
   const previewRef = useScrollReveal();
   const priceRef = useScrollReveal();
@@ -184,6 +183,7 @@ export default function Home() {
     { icon: Gauge, title: "Performance", desc: "Speed, load times, and responsiveness" },
     { icon: Layers, title: "Visual Hierarchy", desc: "Layout flow, spacing, and element prioritisation" },
     { icon: Accessibility, title: "Accessibility", desc: "Inclusive design for all users and assistive tech" },
+    { icon: Lightbulb, title: "Cognitive Accessibility", desc: "Optimised for ADHD, dyslexia, and neurodivergent users" },
   ];
 
   const testimonials = [
@@ -321,7 +321,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            56 checkpoints. 13 categories. Professional report with prioritised fixes — delivered in minutes.
+            Your website has UX issues you can&apos;t see. Get a professional audit across 56 checkpoints in minutes — not weeks.
           </p>
 
           {/* URL Input */}
@@ -343,7 +343,7 @@ export default function Home() {
                 type="submit"
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-accent text-white rounded-xl font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20 hover:shadow-accent/30 flex-shrink-0"
               >
-                Audit My Site
+                Get My UX Report
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -357,6 +357,13 @@ export default function Home() {
             <span className="opacity-40">·</span>
             <span>Results in minutes</span>
           </div>
+
+          {/* Sample report link */}
+          <div className="animate-fade-up delay-400 mt-4">
+            <a href="#see-it-in-action" className="text-sm text-muted hover:text-accent transition-colors underline underline-offset-2 decoration-border hover:decoration-accent">
+              See a sample report
+            </a>
+          </div>
         </div>
       </section>
 
@@ -364,7 +371,7 @@ export default function Home() {
           VALUE PROPOSITION + STATS + HOW IT WORKS
           Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative overflow-hidden bg-surface-alt">
+      <section id="features" className="relative overflow-hidden bg-surface-alt">
         {/* Background grid — subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -378,11 +385,11 @@ export default function Home() {
             <div>
               <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
               <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
-                <span className="text-text">Audit with confidence.</span>{' '}
-                <span className="text-muted">Deep analysis across 13 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
+                <span className="text-text">Stop losing conversions to UX issues you can&apos;t see.</span>{' '}
+                <span className="text-muted">Professional-grade audits at a fraction of the cost of agencies — delivered in minutes, not weeks.</span>
               </h2>
               <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
-                Every audit evaluates 48 professional checkpoints — from first impression and navigation to mobile experience and AI discoverability.
+                Every audit evaluates 56 professional checkpoints — from first impression and navigation to mobile experience, AI discoverability, and cognitive accessibility.
               </p>
             </div>
 
@@ -427,120 +434,43 @@ export default function Home() {
           <div className="h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
         </div>
 
-        {/* ── BOTTOM: How it works — 3 steps ── */}
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-20 pb-28">
+        {/* ── BOTTOM: What we audit — 13 categories ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-16 pb-28">
           <div
-            ref={howRef.ref}
-            className={`transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            ref={catRef.ref}
+            className={`transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
           >
-            <div className="grid lg:grid-cols-[1fr_2fr] gap-16 lg:gap-20 items-start">
-              {/* Left: Section intro */}
-              <div>
-                <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">How it works</p>
-                <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-tight mb-4">
-                  Three steps to better UX.
-                </h2>
-                <p className="text-muted text-base leading-relaxed">
-                  No setup, no integration, no waiting. Just paste your URL and get a professional audit report.
-                </p>
-              </div>
+            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">What we audit</p>
 
-              {/* Right: Steps */}
-              <div className="space-y-0">
-                {[
-                  { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically. Works with any publicly accessible website.' },
-                  { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 56 checkpoints across 13 UX categories with AI-powered precision.' },
-                  { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, screenshots, and actionable fixes — ready in minutes.' },
-                ].map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.step}
-                      className="group relative flex gap-5 py-7"
-                      style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
-                    >
-                      {/* Step number + icon */}
-                      <div className="flex-shrink-0 relative">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/20 flex items-center justify-center group-hover:border-accent/40 transition-colors">
-                          <Icon size={22} className="text-accent" />
-                        </div>
-                        {/* Vertical connector */}
-                        {idx < 2 && (
-                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-accent/20 to-transparent" />
-                        )}
-                      </div>
-                      {/* Content */}
-                      <div className="pt-1">
-                        <div className="flex items-center gap-3 mb-1.5">
-                          <span className="text-[10px] font-bold text-accent/50 tracking-widest">{item.step}</span>
-                          <h3 className="font-manrope text-lg font-bold text-text">{item.title}</h3>
-                        </div>
-                        <p className="text-muted text-sm leading-relaxed max-w-md">{item.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          WHAT WE AUDIT — visual break with surface bg
-          ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        {/* Decorative accent glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.03] blur-[120px] pointer-events-none" />
-
-        <div
-          ref={catRef.ref}
-          className={`max-w-6xl mx-auto relative transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          {/* Header — left-aligned Stripe style */}
-          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-10 lg:gap-20 items-end mb-14">
-            <div>
-              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">What we audit</p>
-              <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
-                13 categories.<br />56 checkpoints.
-              </h2>
-            </div>
-            <p className="text-muted text-base md:text-lg leading-relaxed lg:pb-1">
-              Every audit covers the full spectrum of user experience — from first impression and visual design to AI discoverability and accessibility. No blind spots.
-            </p>
-          </div>
-
-          {/* Accent divider */}
-          <div className="h-px bg-gradient-to-r from-accent/40 via-accent/20 to-transparent mb-12" />
-
-          {/* Category grid — 4 columns on desktop, elegant minimal cards */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {auditCategories.map((cat, idx) => {
-              const Icon = cat.icon;
-              const isFeatured = 'featured' in cat && cat.featured;
-              return (
-                <div
-                  key={idx}
-                  className={`group relative rounded-xl p-4 border transition-all duration-300 ${
-                    isFeatured
-                      ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
-                      : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+            {/* Category grid — compact cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {auditCategories.map((cat, idx) => {
+                const Icon = cat.icon;
+                const isFeatured = 'featured' in cat && cat.featured;
+                return (
+                  <div
+                    key={idx}
+                    className={`group relative rounded-xl p-4 border transition-all duration-300 ${
                       isFeatured
-                        ? 'bg-accent/20 group-hover:bg-accent/25'
-                        : 'bg-accent/10 group-hover:bg-accent/15'
-                    }`}>
-                      <Icon size={15} className="text-accent" />
+                        ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
+                        : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isFeatured
+                          ? 'bg-accent/20 group-hover:bg-accent/25'
+                          : 'bg-accent/10 group-hover:bg-accent/15'
+                      }`}>
+                        <Icon size={15} className="text-accent" />
+                      </div>
+                      <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
                     </div>
-                    <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
+                    <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
                   </div>
-                  <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -548,7 +478,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           AUDIT PREVIEW — simulated screens
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
+      <section id="see-it-in-action" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden scroll-mt-20">
         {/* Subtle grid bg */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -738,7 +668,7 @@ export default function Home() {
 
           {/* ── Every audit includes — shared benefits strip ── */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
-            {['48-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
+            {['56-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
                 <span className="text-xs text-muted font-medium">{f}</span>
@@ -939,7 +869,7 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {[
-              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 56 checkpoints, and generates a full professional report.' },
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 56 checkpoints across 13 categories, and generates a full professional report.' },
               { q: 'What does the audit cover?', a: 'We evaluate 13 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, Accessibility, and Cognitive Accessibility & Neurodiversity — ensuring your site works well for users with ADHD, dyslexia, and autism.' },
               { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 56 checkpoints, PDF & Word reports, and prioritised recommendations.' },
               { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
@@ -971,19 +901,19 @@ export default function Home() {
 
         <div className="max-w-2xl mx-auto text-center relative">
           <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
-            Ready to improve your UX?
+            Ready to see what you&apos;re missing?
           </h2>
           <p className="text-muted text-lg mb-8">
-            Get your comprehensive audit report in minutes.
+            Get a professional UX audit report in minutes — 56 checkpoints, 13 categories, actionable fixes.
           </p>
           <Link
             href="/register"
             className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-xl text-base font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20"
           >
-            Audit My Site Now
+            Get My UX Report
             <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
-          <p className="text-muted/60 text-sm mt-4">No subscription required.</p>
+          <p className="text-muted/60 text-sm mt-4">From $99 · No subscription · Credits never expire</p>
         </div>
       </section>
 

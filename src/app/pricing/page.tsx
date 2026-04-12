@@ -146,7 +146,7 @@ export default function PricingPage() {
                   )}
 
                   <div className="space-y-2.5 mb-6 flex-1">
-                    {['48-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
+                    {['56-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
                         <span className="text-xs text-muted">{f}</span>

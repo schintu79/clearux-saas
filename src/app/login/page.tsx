@@ -302,11 +302,11 @@ export default function LoginPage() {
 
               <div className="flex gap-4 mt-8">
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">48</p>
+                  <p className="text-lg font-bold text-white">56</p>
                   <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">12</p>
+                  <p className="text-lg font-bold text-white">13</p>
                   <p className="text-[10px] text-white/50 uppercase tracking-wide">Categories</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">

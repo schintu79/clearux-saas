@@ -212,13 +212,14 @@ ${focusBlock}
 CHECKLIST:
 ${itemsToCheck}
 
-WEBSITE CONTENT (text extracted from the live page):
+WEBSITE CONTENT (text extracted from MULTIPLE PAGES of the website — each page starts with "URL:" followed by the page address):
 ---
 ${pageContent.substring(0, 15000)}
 ---
 
 INSTRUCTIONS:
 Carefully evaluate the website against EACH checklist item. Be specific, detailed, and actionable. Reference actual content from the website (quote specific text, mention specific elements). Do NOT be generic.
+IMPORTANT: The content above includes MULTIPLE pages, each starting with "URL:". When you find an issue, set "pageUrl" to the SPECIFIC page URL where that issue exists — NOT the homepage URL for every finding. Different findings will often be on different pages.
 
 For each issue you find, assign a severity:
 - "critical": Fundamentally broken or severely harming conversions/usability

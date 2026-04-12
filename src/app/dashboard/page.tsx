@@ -13,7 +13,6 @@ import {
   Zap,
   FileSearch,
   ExternalLink,
-  Trash2,
   Coins,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -248,7 +247,7 @@ function DashboardInner() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
-            Create your first audit to see how your website scores across 48 UX checkpoints.
+            Create your first audit to see how your website scores across 56 UX checkpoints.
           </p>
           <Link
             href="/dashboard/new-audit"
@@ -272,8 +271,8 @@ function DashboardInner() {
               const done = audit.status === 'completed';
 
               return (
-                <div key={audit.id} className="bg-card border border-border rounded-lg hover:border-accent/30 transition-colors group">
-                  <Link href={`/dashboard/audits/${audit.id}`} className="block px-4 py-3">
+                <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
+                  <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-accent/30 transition-colors cursor-pointer group">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
@@ -306,28 +305,8 @@ function DashboardInner() {
                         <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
                       )}
                     </div>
-                  </Link>
-                  {/* Delete */}
-                  <div className="border-t border-border px-4 py-2 flex justify-end">
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (!confirm('Delete this audit permanently? This action cannot be undone.')) return;
-                        try {
-                          const supabase = createBrowserSupabase();
-                          await supabase.from('audits').delete().eq('id', audit.id);
-                          setAudits((prev) => prev.filter((a) => a.id !== audit.id));
-                        } catch {
-                          alert('Failed to delete audit');
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-[10px] text-muted hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={11} />
-                      Delete permanently
-                    </button>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
