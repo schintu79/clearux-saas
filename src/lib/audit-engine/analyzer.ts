@@ -555,10 +555,10 @@ ${categoryExamples}
     const message = await withTimeout(
       anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 8192,
         messages: [{ role: 'user', content: prompt }],
       }),
-      90_000,
+      120_000,
       'generateReport',
     )
 
@@ -567,13 +567,47 @@ ${categoryExamples}
       .map((block) => block.text)
       .join('')
 
+    // Try to extract JSON — the response should be a single JSON object
+    // First try the full match, then try progressively shorter matches if parse fails
     const jsonMatch = responseText.match(/\{[\s\S]*\}/m)
     if (!jsonMatch) {
-      console.error('[generateReport] No JSON in response:', responseText.substring(0, 300))
+      console.error('[generateReport] No JSON in response:', responseText.substring(0, 500))
+      console.error('[generateReport] Response length:', responseText.length, '| stop_reason:', message.stop_reason)
       return getDefaultReport()
     }
 
-    const report: ReportData = JSON.parse(jsonMatch[0])
+    let report: ReportData
+    try {
+      report = JSON.parse(jsonMatch[0])
+    } catch (parseErr) {
+      // JSON was likely truncated — try to repair by finding the last complete categoryScores entry
+      console.error('[generateReport] JSON parse failed, attempting repair. stop_reason:', message.stop_reason)
+      let raw = jsonMatch[0]
+
+      // If truncated inside categoryScores array, close it off
+      const catStart = raw.indexOf('"categoryScores"')
+      if (catStart !== -1) {
+        // Find the last complete object (ends with })
+        const lastBrace = raw.lastIndexOf('}')
+        const lastBracket = raw.lastIndexOf(']')
+
+        if (lastBracket > catStart && lastBracket > lastBrace) {
+          // Array was closed but outer object wasn't
+          raw = raw.substring(0, lastBracket + 1) + '}'
+        } else if (lastBrace > catStart) {
+          // Find the last complete }, then close array and object
+          raw = raw.substring(0, lastBrace + 1) + ']}'
+        }
+      }
+
+      try {
+        report = JSON.parse(raw)
+        console.log('[generateReport] JSON repair succeeded')
+      } catch {
+        console.error('[generateReport] JSON repair also failed. Raw start:', raw.substring(0, 300))
+        return getDefaultReport()
+      }
+    }
 
     // Validate
     return {

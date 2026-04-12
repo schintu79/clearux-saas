@@ -123,6 +123,272 @@ function RotatingReview({ reviews }: { reviews: { quote: string; author: string;
   );
 }
 
+/* ── Apple-style pillar scroll reveal ──────────────────── */
+const PILLAR_DATA = [
+  {
+    key: 'foundation',
+    label: 'Foundation',
+    color: 'from-violet-500 to-purple-600',
+    colorBg: 'bg-violet-500/10',
+    colorText: 'text-violet-600 dark:text-violet-400',
+    colorBorder: 'border-violet-500/20',
+    headline: 'Get the basics right.',
+    subhead: 'First impressions, clear messaging, and friction-free navigation.',
+    body: 'We evaluate visual design, value proposition clarity, information architecture, layout hierarchy, content quality, and conversion paths. These are the fundamentals that make or break user trust in the first 5 seconds.',
+  },
+  {
+    key: 'human',
+    label: 'Human Experience',
+    color: 'from-pink-500 to-rose-600',
+    colorBg: 'bg-pink-500/10',
+    colorText: 'text-pink-600 dark:text-pink-400',
+    colorBorder: 'border-pink-500/20',
+    headline: 'Design for humans, not metrics.',
+    subhead: 'Ethical patterns, emotional safety, and inclusive experiences.',
+    body: 'We detect dark patterns, evaluate psychological safety, test for cognitive accessibility and neurodiversity support, assess digital wellbeing practices, and check age inclusivity. Because your users are people first.',
+  },
+  {
+    key: 'technical',
+    label: 'Technical Excellence',
+    color: 'from-amber-500 to-orange-600',
+    colorBg: 'bg-amber-500/10',
+    colorText: 'text-amber-600 dark:text-amber-400',
+    colorBorder: 'border-amber-500/20',
+    headline: 'Performance that users can feel.',
+    subhead: 'Speed, mobile experience, accessibility, and SEO.',
+    body: 'We audit page speed, mobile responsiveness, WCAG accessibility compliance, keyboard navigation, screen reader support, structured data, and technical SEO. The invisible infrastructure that powers great experiences.',
+  },
+  {
+    key: 'future',
+    label: 'Future Readiness',
+    color: 'from-emerald-500 to-teal-600',
+    colorBg: 'bg-emerald-500/10',
+    colorText: 'text-emerald-600 dark:text-emerald-400',
+    colorBorder: 'border-emerald-500/20',
+    headline: 'Ready for what comes next.',
+    subhead: 'AI discoverability, agent readiness, and global reach.',
+    body: 'We evaluate how LLMs and AI agents understand your site, whether your content is structured for the AI era, and how well your design translates across cultures, languages, and regulations worldwide.',
+  },
+];
+
+function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string; icon: React.ElementType; title: string; desc: string; featured?: boolean }> }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+
+    sectionRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveIdx(idx);
+        },
+        { rootMargin: '-40% 0px -40% 0px', threshold: 0.1 },
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
+  const pillarNames = ['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'];
+  const active = PILLAR_DATA[activeIdx];
+
+  return (
+    <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-20">
+      {/* Pillar nav dots — desktop only */}
+      <div className="hidden lg:flex items-center justify-center gap-3 mb-12">
+        {PILLAR_DATA.map((p, i) => (
+          <button
+            key={p.key}
+            onClick={() => sectionRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${
+              activeIdx === i
+                ? `${p.colorBg} ${p.colorText} ${p.colorBorder}`
+                : 'bg-transparent text-muted border-border/30 hover:border-border/60'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Scrollable layout */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-start">
+        {/* LEFT — Scroll sections */}
+        <div className="space-y-0">
+          {PILLAR_DATA.map((pillar, idx) => {
+            const pillarCats = categories.filter((c) => c.pillar === pillarNames[idx]);
+            const isActive = activeIdx === idx;
+
+            return (
+              <div
+                key={pillar.key}
+                ref={(el) => { sectionRefs.current[idx] = el; }}
+                className="min-h-[60vh] lg:min-h-[70vh] flex flex-col justify-center py-12 lg:py-16"
+              >
+                <div className={`transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-2 lg:opacity-30'}`}>
+                  {/* Pillar label */}
+                  <p className={`text-sm font-semibold tracking-wide uppercase mb-3 ${pillar.colorText}`}>
+                    {pillar.label}
+                  </p>
+
+                  {/* Main headline */}
+                  <h3 className="font-manrope text-2xl sm:text-3xl md:text-[2.25rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
+                    {pillar.headline}
+                  </h3>
+
+                  {/* Subhead */}
+                  <p className="text-muted text-lg md:text-xl mb-4 font-medium">
+                    {pillar.subhead}
+                  </p>
+
+                  {/* Body */}
+                  <p className="text-muted text-base leading-relaxed mb-8 max-w-md">
+                    {pillar.body}
+                  </p>
+
+                  {/* Category pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {pillarCats.map((cat, cIdx) => {
+                      const Icon = cat.icon;
+                      return (
+                        <span
+                          key={cIdx}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 ${
+                            isActive
+                              ? `${pillar.colorBg} ${pillar.colorText} ${pillar.colorBorder}`
+                              : 'bg-card text-muted border-border/30'
+                          }`}
+                        >
+                          <Icon size={12} />
+                          {cat.title}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* RIGHT — Sticky visual panel */}
+        <div className="hidden lg:block">
+          <div className="sticky top-24">
+            <div className="relative">
+              {/* Visual card — changes with active pillar */}
+              <div className={`rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 p-8 transition-all duration-500`}>
+
+                {/* Pillar visual — animated score mockup */}
+                <div className="aspect-[4/3] rounded-2xl bg-surface-alt flex flex-col items-center justify-center relative overflow-hidden">
+
+                  {/* Decorative gradient orb */}
+                  <div className={`absolute w-48 h-48 rounded-full bg-gradient-to-br ${active.color} opacity-10 blur-3xl transition-all duration-700`}
+                    style={{ top: '20%', left: '30%' }}
+                  />
+
+                  {/* Central score ring */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className={`w-28 h-28 rounded-full border-4 flex items-center justify-center mb-4 transition-all duration-500 ${active.colorBorder}`}
+                      style={{ borderColor: `var(--tw-gradient-from, currentColor)` }}
+                    >
+                      <svg className="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" strokeWidth="6" className="stroke-border/20" />
+                        <circle
+                          cx="60" cy="60" r="52" fill="none" strokeWidth="6"
+                          strokeLinecap="round"
+                          className={`transition-all duration-700`}
+                          style={{
+                            stroke: 'currentColor',
+                            strokeDasharray: `${2 * Math.PI * 52}`,
+                            strokeDashoffset: `${2 * Math.PI * 52 * (1 - [0.78, 0.72, 0.85, 0.65][activeIdx])}`,
+                          }}
+                        />
+                      </svg>
+                      <span className="absolute font-manrope text-2xl font-bold text-text">
+                        {[78, 72, 85, 65][activeIdx]}
+                      </span>
+                    </div>
+                    <p className={`text-sm font-semibold ${active.colorText} transition-colors duration-500`}>
+                      {active.label} Score
+                    </p>
+                  </div>
+
+                  {/* Category score bars */}
+                  <div className="relative z-10 w-full max-w-xs mt-6 space-y-2.5 px-4">
+                    {categories
+                      .filter((c) => c.pillar === pillarNames[activeIdx])
+                      .slice(0, 4)
+                      .map((cat, i) => {
+                        const scores = [
+                          [82, 75, 70, 88, 78, 74],
+                          [68, 72, 65, 58, 70, 62],
+                          [90, 82, 78, 86],
+                          [55, 48, 62],
+                        ];
+                        const score = scores[activeIdx]?.[i] ?? 70;
+                        return (
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="text-[11px] text-muted w-24 truncate">{cat.title.split('&')[0].trim()}</span>
+                            <div className="flex-1 h-1.5 rounded-full bg-border/20 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full bg-gradient-to-r ${active.color} transition-all duration-700`}
+                                style={{ width: `${score}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] font-semibold text-text w-7 text-right">{score}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                {/* Bottom label */}
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-muted">Sample audit visualization</p>
+                  <div className="flex gap-1.5">
+                    {PILLAR_DATA.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                          i === activeIdx ? 'bg-accent w-4' : 'bg-border/40'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile: category grid (visible only on smaller screens) */}
+      <div className="lg:hidden mt-8">
+        <div className="grid grid-cols-2 gap-3">
+          {categories.map((cat, idx) => {
+            const Icon = cat.icon;
+            const pillarIdx = pillarNames.indexOf(cat.pillar);
+            const p = PILLAR_DATA[pillarIdx] || PILLAR_DATA[0];
+            return (
+              <div key={idx} className={`rounded-xl p-3.5 border ${p.colorBorder} ${p.colorBg} transition-all`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon size={13} className={p.colorText} />
+                  <span className="text-xs font-semibold text-text truncate">{cat.title}</span>
+                </div>
+                <p className="text-[11px] text-muted leading-relaxed">{cat.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Scroll-to-top button ───────────────────────────────── */
 function ScrollToTop() {
   const [show, setShow] = useState(false);
@@ -164,7 +430,6 @@ export default function Home() {
   const c3 = useCountUp(6, 1200);
   const c4 = useCountUp(10, 1000);
 
-  const catRef = useScrollReveal();
   const previewRef = useScrollReveal();
   const priceRef = useScrollReveal();
   const testRef = useScrollReveal();
@@ -391,110 +656,42 @@ export default function Home() {
           backgroundSize: '80px 80px',
         }} />
 
-        {/* ── TOP: Bold statement + Stats ── */}
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-20">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-start">
-            {/* Left: Statement */}
-            <div>
-              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
-              <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
-                <span className="text-text">Your website impacts real people. We audit what others miss.</span>{' '}
-                <span className="text-muted">The first audit that goes beyond usability — evaluating ethical design, emotional safety, digital wellbeing, and AI readiness across 95 checkpoints.</span>
-              </h2>
-              <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
-                Every audit evaluates 95 professional checkpoints across 19 categories — from first impression and navigation to mobile experience, AI discoverability, cognitive accessibility, digital wellbeing, and cultural sensitivity.
-              </p>
-            </div>
-
-            {/* Right: Stats grid */}
-            <div className="grid grid-cols-2 gap-6 lg:pt-4">
-              {([
-                { counter: c1, suffix: '+', label: 'UX checkpoints', desc: 'Professional evaluation criteria', prefix: '' },
-                { counter: c2, suffix: '', label: 'Audit categories', desc: 'Full-spectrum UX coverage', prefix: '' },
-                { counter: c3, suffix: '', label: 'Languages', desc: 'Localised report output', prefix: '' },
-                { counter: c4, suffix: '', label: 'Min to report', desc: 'From URL to full analysis', prefix: '<' },
-              ] as const).map((stat, idx) => {
-                const counter = (stat as { counter: typeof c1 }).counter;
-                const gradients = [
-                  'from-accent to-purple-400',
-                  'from-purple-400 to-pink-400',
-                  'from-pink-400 to-orange-400',
-                  'from-accent to-emerald-400',
-                ];
-                return (
-                  <div
-                    key={idx}
-                    ref={counter.ref}
-                    className="relative p-6 rounded-2xl bg-card border border-border/30 dark:border-white/[0.04] shadow-sm hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    <p className={`font-manrope text-4xl md:text-5xl font-extrabold mb-1 bg-gradient-to-r ${gradients[idx]} bg-clip-text text-transparent`} suppressHydrationWarning>
-                      {mounted
-                        ? `${stat.prefix}${counter.count}${stat.suffix}`
-                        : '\u00A0'
-                      }
-                    </p>
-                    <p className="text-sm font-semibold text-text mb-0.5">{stat.label}</p>
-                    <p className="text-xs text-muted">{stat.desc}</p>
-                  </div>
-                );
-              })}
-            </div>
+        {/* ── TOP: Section intro + Stats ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-16">
+          <div className="text-center max-w-3xl mx-auto">
+            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
+            <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>
+              Your website impacts real people.<br className="hidden sm:block" />
+              <span className="text-muted">We audit what others miss.</span>
+            </h2>
+            <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+              95 professional checkpoints across 19 categories. Four pillars that cover everything from first impressions to AI readiness.
+            </p>
           </div>
-        </div>
 
-        {/* ── Accent divider line ── */}
-        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
-        </div>
-
-        {/* ── BOTTOM: What we audit — 19 categories, 4 pillars ── */}
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-16 pb-28">
-          <div
-            ref={catRef.ref}
-            className={`transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          >
-            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">What we audit — 19 categories, 4 pillars</p>
-
-            {/* Group categories by pillar */}
-            {(['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'] as const).map((pillarName) => {
-              const pillarCats = auditCategories.filter((cat) => cat.pillar === pillarName);
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-14 max-w-3xl mx-auto">
+            {([
+              { counter: c1, suffix: '+', label: 'UX checkpoints', prefix: '' },
+              { counter: c2, suffix: '', label: 'Categories', prefix: '' },
+              { counter: c3, suffix: '', label: 'Languages', prefix: '' },
+              { counter: c4, suffix: '', label: 'Min to report', prefix: '<' },
+            ] as const).map((stat, idx) => {
+              const counter = (stat as { counter: typeof c1 }).counter;
               return (
-                <div key={pillarName} className="mb-14">
-                  <p className="text-muted text-xs font-semibold tracking-widest uppercase mb-5">{pillarName}</p>
-                  {/* Category grid — Sketch-style cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {pillarCats.map((cat, idx) => {
-                      const Icon = cat.icon;
-                      const isFeatured = 'featured' in cat && cat.featured;
-                      return (
-                        <div
-                          key={idx}
-                          className={`group relative rounded-2xl p-5 transition-all duration-300 ${
-                            isFeatured
-                              ? 'bg-gradient-to-br from-accent/8 via-purple-500/[0.04] to-violet-500/[0.02] border border-accent/20 hover:border-accent/40 shadow-sm hover:shadow-md hover:shadow-accent/5'
-                              : 'bg-card border border-border/30 dark:border-white/[0.04] hover:border-border/60 shadow-sm hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 mb-2.5">
-                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                              isFeatured
-                                ? 'bg-accent/15 group-hover:bg-accent/20'
-                                : 'bg-accent/8 group-hover:bg-accent/12'
-                            }`}>
-                              <Icon size={16} className="text-accent" />
-                            </div>
-                            <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
-                          </div>
-                          <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <div key={idx} ref={counter.ref} className="text-center">
+                  <p className="font-manrope text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent" suppressHydrationWarning>
+                    {mounted ? `${stat.prefix}${counter.count}${stat.suffix}` : '\u00A0'}
+                  </p>
+                  <p className="text-xs text-muted mt-1 font-medium">{stat.label}</p>
                 </div>
               );
             })}
           </div>
         </div>
+
+        {/* ── APPLE-STYLE SCROLL REVEAL — 4 Pillars ── */}
+        <PillarScrollReveal categories={auditCategories} />
       </section>
 
       {/* ═══════════════════════════════════════════════════════
@@ -673,180 +870,131 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-gradient-to-b from-[#faf9fe] via-[#f7f5fc] to-[#faf9fe] dark:from-[#0e0e16] dark:via-[#12121c] dark:to-[#0e0e16]">
+      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface">
         <div
           ref={priceRef.ref}
-          className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className={`max-w-4xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          <div className="text-center mb-6">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Pricing</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
-              Simple credit-based pricing
+          {/* ── Header ── */}
+          <div className="mb-16">
+            <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
+              Pricing
             </h2>
-            <p className="text-muted text-lg max-w-xl mx-auto">
-              1 credit = 1 full audit. No tiers. No feature limits.
+            <p className="text-muted text-base md:text-lg max-w-lg">
+              Pay per audit. No subscription, no feature gates.<br />
+              Every audit gets the full 95-point analysis.
             </p>
           </div>
 
-          {/* ── Every audit includes — shared benefits strip ── */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
-            {['95-point deep analysis', '19 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
-                <span className="text-xs text-muted font-medium">{f}</span>
+          {/* ── Hero card: Single Audit ── */}
+          <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
+            {/* Subtle warm gradient like Sketch */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-accent/[0.03] dark:via-transparent dark:to-transparent pointer-events-none" />
+
+            <div className="relative grid sm:grid-cols-2 gap-8 items-center">
+              {/* Left: Price */}
+              <div>
+                <h3 className="font-manrope text-2xl font-bold text-text mb-1">Single Audit</h3>
+                <p className="text-muted text-sm mb-6">For individuals and small teams</p>
+
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-muted text-lg">$</span>
+                  <span className="font-manrope text-6xl sm:text-7xl font-extrabold text-text tracking-tight">99</span>
+                </div>
+                <p className="text-muted text-sm mb-8">One-time payment per audit</p>
+
+                <Link
+                  href="/register"
+                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                >
+                  Start an audit
+                </Link>
               </div>
-            ))}
+
+              {/* Right: What's included */}
+              <div className="space-y-3.5">
+                {[
+                  '95-point deep analysis across 19 categories',
+                  'AI-powered findings with severity scoring',
+                  'Executive summary & prioritised recommendations',
+                  'PDF & Word report downloads',
+                  'Issue screenshots with element highlighting',
+                  '6 languages supported',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-text">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* ── Divider with "Need more?" ── */}
+          <div className="flex items-center gap-4 my-10">
+            <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+            <span className="text-xs text-muted font-medium tracking-wide uppercase">Need more audits? Save with packs</span>
+            <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+          </div>
+
+          {/* ── Credit packs — 3 cards ── */}
+          <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, savePercent: 0, cta: 'Start Auditing', popular: false, desc: 'Try your first audit' },
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: '19%', savePercent: 19, cta: 'Get 5 Audits', popular: true, desc: 'Best for growing teams' },
-              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: '33%', savePercent: 33, cta: 'Get 15 Audits', popular: false, desc: 'For agencies & studios' },
-              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: '50%', savePercent: 50, cta: 'Get 50 Audits', popular: false, desc: 'Enterprise volume' },
-            ].map((tier, idx) => (
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams' },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios' },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume' },
+            ].map((pack, idx) => (
               <div
                 key={idx}
-                className={`group relative rounded-2xl flex flex-col transition-all duration-300 overflow-hidden ${
-                  tier.popular
-                    ? 'border border-accent/40 dark:border-accent/20 hover:border-accent/60 shadow-xl shadow-accent/10 dark:shadow-accent/5 lg:scale-[1.03]'
-                    : 'border border-border/50 dark:border-transparent hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5 dark:bg-[#161622] dark:hover:bg-[#1a1a2a]'
-                }`}
+                className="group rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-6 hover:border-border/70 dark:hover:border-white/[0.1] hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300"
               >
-                {/* Top gradient bar */}
-                <div className={`h-1 w-full ${
-                  tier.popular
-                    ? 'bg-gradient-to-r from-accent via-purple-400 to-accent'
-                    : 'bg-gradient-to-r from-transparent via-accent/15 dark:via-accent/[0.08] to-transparent'
-                }`} />
-
-                {tier.popular && (
-                  <span className="absolute top-4 right-4 bg-gradient-to-r from-accent to-purple-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-accent/30 z-10">
-                    Most Popular
+                {/* Pack name + badge */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
+                  <span className="text-xs font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                    Save {pack.save}%
                   </span>
-                )}
-
-                <div className={`p-6 pb-5 flex flex-col flex-1 ${
-                  tier.popular
-                    ? 'bg-gradient-to-b from-accent/[0.06] to-transparent'
-                    : 'bg-card'
-                }`}>
-                  {/* Plan name */}
-                  <h3 className="font-manrope font-bold text-lg text-text mb-0.5">{tier.name}</h3>
-                  <p className="text-xs text-muted mb-4">{tier.desc}</p>
-
-                  {/* Price */}
-                  <div className="mb-0.5">
-                    <span className="font-manrope text-4xl font-extrabold text-text">${tier.price.toLocaleString()}</span>
-                  </div>
-
-                  {/* Per-audit cost */}
-                  <p className="text-sm text-muted mb-5">
-                    {tier.per}<span className="text-muted/50"> / audit</span>
-                  </p>
-
-                  {/* Credit count — visual pill with icon */}
-                  <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 mb-4 ${
-                    tier.popular
-                      ? 'bg-accent/10 dark:bg-accent/[0.08] border border-accent/15 dark:border-transparent'
-                      : 'bg-surface-alt/50 dark:bg-white/[0.04] border border-border/30 dark:border-transparent'
-                  }`}>
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                      tier.popular
-                        ? 'bg-accent/20'
-                        : 'bg-accent/10'
-                    }`}>
-                      <Zap className="w-4 h-4 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-text leading-tight">
-                        {tier.credits} credit{tier.credits !== 1 ? 's' : ''}
-                      </p>
-                      <p className="text-[10px] text-muted leading-tight">
-                        {tier.credits} full audit{tier.credits !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    {tier.save && (
-                      <span className="ml-auto text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-md">
-                        -{tier.save}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Savings detail */}
-                  {tier.save ? (
-                    <div className="mb-5">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="flex-1 h-1 rounded-full bg-border/30 dark:bg-white/[0.06] overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400 transition-all duration-500"
-                            style={{ width: `${tier.savePercent * 2}%` }}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-muted/60">
-                        Save ${(tier.credits * 99 - tier.price).toLocaleString()} vs individual pricing
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mb-5" />
-                  )}
-
-                  {/* CTA — pushed to bottom */}
-                  <div className="mt-auto">
-                    <Link
-                      href="/register"
-                      className={`flex items-center justify-center gap-2 text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
-                        tier.popular
-                          ? 'bg-gradient-to-r from-accent to-purple-500 text-white hover:brightness-110 shadow-lg shadow-accent/25'
-                          : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
-                      }`}
-                    >
-                      {tier.cta}
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
                 </div>
+
+                {/* Price */}
+                <div className="flex items-baseline gap-1 mb-0.5">
+                  <span className="text-muted text-sm">$</span>
+                  <span className="font-manrope text-4xl font-extrabold text-text">{pack.price.toLocaleString()}</span>
+                </div>
+                <p className="text-muted text-sm mb-5">
+                  {pack.per} per audit <span className="text-muted/50">·</span> {pack.credits} audits
+                </p>
+
+                {/* Desc */}
+                <p className="text-xs text-muted mb-5">{pack.desc}</p>
+
+                {/* CTA */}
+                <Link
+                  href="/register"
+                  className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 border border-text/15 dark:border-white/15 text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
+                >
+                  Get {pack.credits} audits
+                </Link>
               </div>
             ))}
           </div>
 
-          {/* ── Trust & Security bar ── */}
-          <div className="mt-12 rounded-2xl bg-gradient-to-r from-[#1a1136] via-[#1e1542] to-[#1a1136] border border-accent/10 px-6 sm:px-8 py-6 shadow-lg shadow-accent/5">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-              {/* Left: Stripe badge */}
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-accent" />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white/90">Secure payments via</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/stripe.svg" alt="Stripe" className="h-7" />
+          {/* ── All audits include — footer strip ── */}
+          <div className="mt-14 pt-10 border-t border-border/30 dark:border-white/[0.04]">
+            <div className="grid sm:grid-cols-4 gap-6 sm:gap-8">
+              <div>
+                <p className="font-manrope text-lg font-bold text-text mb-1 leading-snug">All audits<br />include</p>
+              </div>
+              {[
+                { title: 'Full 95-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
+                { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
+              ].map((item, i) => (
+                <div key={i}>
+                  <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
+                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
                 </div>
-              </div>
-
-              {/* Center: Trust signals */}
-              <div className="flex items-center gap-4 text-xs text-white/80 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  SSL encrypted
-                </span>
-                <span className="text-white/30">|</span>
-                <span>Credits never expire</span>
-                <span className="text-white/30">|</span>
-                <span>No subscription</span>
-              </div>
-
-              {/* Right: Card brand icons */}
-              <div className="flex items-center gap-2.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/visa.svg" alt="Visa" className="h-6 rounded" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6 rounded" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/applepay.svg" alt="Apple Pay" className="h-6 rounded" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/gpay.svg" alt="Google Pay" className="h-6 rounded" />
-              </div>
+              ))}
             </div>
           </div>
         </div>

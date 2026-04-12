@@ -1,4 +1,4 @@
-import { Check, CheckCircle, Zap } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -9,56 +9,6 @@ export const metadata = {
 };
 
 export default function PricingPage() {
-  const plans = [
-    {
-      name: 'Starter',
-      credits: 1,
-      price: 99,
-      per: '$99',
-      save: null,
-      cta: 'Start Auditing',
-      popular: false,
-    },
-    {
-      name: 'Growth',
-      credits: 5,
-      price: 399,
-      per: '$79.80',
-      save: 'Save 19%',
-      cta: 'Get 5 Audits',
-      popular: true,
-    },
-    {
-      name: 'Agency',
-      credits: 15,
-      price: 999,
-      per: '$66.60',
-      save: 'Save 33%',
-      cta: 'Get 15 Audits',
-      popular: false,
-    },
-    {
-      name: 'Scale',
-      credits: 50,
-      price: 2499,
-      per: '$49.98',
-      save: 'Save 50%',
-      cta: 'Get 50 Audits',
-      popular: false,
-    },
-  ];
-
-  const features = [
-    '95-point deep UX analysis',
-    '19 audit categories',
-    'AI discoverability review',
-    'Conversion & mobile analysis',
-    'PDF + Word reports',
-    'Prioritised recommendations',
-    'Credits never expire',
-    'Secure payment via Stripe',
-  ];
-
   const faqs = [
     {
       question: 'How do credits work?',
@@ -92,109 +42,145 @@ export default function PricingPage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-4">
-              Simple credit-based pricing
+        {/* ── Header ── */}
+        <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-3" style={{ lineHeight: '1.1' }}>
+              Pricing
             </h1>
-            <p className="font-inter text-lg text-muted max-w-2xl mx-auto mb-3">
-              1 credit = 1 full audit. No tiers. No feature limits. No subscriptions.
+            <p className="text-muted text-base md:text-lg max-w-lg">
+              Pay per audit. No subscription, no feature gates.
+              Every audit gets the full 95-point analysis.
             </p>
-            <div className="flex items-center justify-center gap-2 text-accent text-sm font-medium">
-              <Zap size={16} />
-              Results delivered in minutes — not weeks
+          </div>
+        </section>
+
+        {/* ── Hero card: Single Audit ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 relative overflow-hidden">
+              {/* Subtle warm gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-accent/[0.03] dark:via-transparent dark:to-transparent pointer-events-none" />
+
+              <div className="relative grid sm:grid-cols-2 gap-8 items-center">
+                {/* Left: Price */}
+                <div>
+                  <h2 className="font-manrope text-2xl font-bold text-text mb-1">Single Audit</h2>
+                  <p className="text-muted text-sm mb-6">For individuals and small teams</p>
+
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-muted text-lg">$</span>
+                    <span className="font-manrope text-6xl sm:text-7xl font-extrabold text-text tracking-tight">99</span>
+                  </div>
+                  <p className="text-muted text-sm mb-8">One-time payment per audit</p>
+
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                  >
+                    Start an audit
+                  </Link>
+                  <p className="text-xs text-muted mt-3">No account needed to preview</p>
+                </div>
+
+                {/* Right: What's included */}
+                <div className="space-y-3.5">
+                  {[
+                    '95-point deep analysis across 19 categories',
+                    'AI-powered findings with severity scoring',
+                    'Executive summary & prioritised recommendations',
+                    'PDF & Word report downloads',
+                    'Issue screenshots with element highlighting',
+                    '6 languages supported',
+                    'Results in under 10 minutes',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-text">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Pricing Cards */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-surface-alt">
-          <div className="max-w-5xl mx-auto">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative bg-card rounded-2xl p-6 flex flex-col ${
-                    plan.popular
-                      ? 'border-2 border-accent shadow-lg shadow-accent/10'
-                      : 'border border-border'
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md shadow-accent/30">
-                      Most Popular
-                    </span>
-                  )}
+        {/* ── Divider ── */}
+        <section className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
+            <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+            <span className="text-xs text-muted font-medium tracking-wide uppercase">Need more audits? Save with packs</span>
+            <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+          </div>
+        </section>
 
-                  <h2 className="font-manrope font-bold text-lg text-text mb-1">{plan.name}</h2>
-                  <div className="mb-1">
-                    <span className="font-manrope font-bold text-3xl text-text">
-                      ${plan.price.toLocaleString()}
+        {/* ── Credit packs ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', cta: 'Get 5 audits' },
+                { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios', cta: 'Get 15 audits' },
+                { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume', cta: 'Get 50 audits' },
+              ].map((pack) => (
+                <div
+                  key={pack.name}
+                  className="group rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-6 hover:border-border/70 dark:hover:border-white/[0.1] hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                      Save {pack.save}%
                     </span>
                   </div>
-                  <p className="text-xs text-muted mb-4">
-                    {plan.credits} credit{plan.credits !== 1 ? 's' : ''} · {plan.per}/audit
+
+                  <div className="flex items-baseline gap-1 mb-0.5">
+                    <span className="text-muted text-sm">$</span>
+                    <span className="font-manrope text-4xl font-extrabold text-text">{pack.price.toLocaleString()}</span>
+                  </div>
+                  <p className="text-muted text-sm mb-5">
+                    {pack.per} per audit <span className="text-muted/50">·</span> {pack.credits} audits
                   </p>
 
-                  {plan.save ? (
-                    <div className="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full mb-4 bg-accent/15 text-accent w-fit">
-                      {plan.save}
-                    </div>
-                  ) : (
-                    <div className="mb-4" />
-                  )}
-
-                  <div className="space-y-2.5 mb-6 flex-1">
-                    {['95-point deep analysis', '19 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
-                        <span className="text-xs text-muted">{f}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-muted mb-5">{pack.desc}</p>
 
                   <Link
                     href="/register"
-                    className={`block text-center text-sm font-bold rounded-lg py-2.5 transition-all ${
-                      plan.popular
-                        ? 'bg-accent text-white hover:bg-accent-dk shadow-lg shadow-accent/20'
-                        : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
-                    }`}
+                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 border border-text/15 dark:border-white/15 text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
                   >
-                    {plan.cta}
+                    {pack.cta}
                   </Link>
                 </div>
               ))}
             </div>
-
-            <p className="text-center text-muted text-xs mt-8">
-              Credits never expire · Secure payment via Stripe
-            </p>
           </div>
         </section>
 
-        {/* What's included */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-manrope font-bold text-3xl text-text mb-8">
-              Every audit includes
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-4 text-left">
-              {features.map((f, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border">
-                  <Check size={16} className="text-accent flex-shrink-0" />
-                  <span className="text-sm text-text">{f}</span>
+        {/* ── All audits include strip ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="max-w-4xl mx-auto pt-10 border-t border-border/30 dark:border-white/[0.04]">
+            <div className="grid sm:grid-cols-4 gap-6 sm:gap-8">
+              <div>
+                <p className="font-manrope text-lg font-bold text-text mb-1 leading-snug">All audits<br />include</p>
+              </div>
+              {[
+                { title: 'Full 95-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
+                { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
+              ].map((item, i) => (
+                <div key={i}>
+                  <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
+                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
+        {/* ── FAQ ── */}
         <section className="py-16 px-4 sm:px-6 lg:px-8 bg-surface-alt">
           <div className="max-w-3xl mx-auto">
-            <h2 className="font-manrope font-bold text-3xl text-text text-center mb-10">
+            <h2 className="font-manrope font-bold text-3xl text-text mb-10">
               Frequently asked questions
             </h2>
 
@@ -202,7 +188,7 @@ export default function PricingPage() {
               {faqs.map((faq, i) => (
                 <details
                   key={i}
-                  className="group bg-card border border-border rounded-xl overflow-hidden"
+                  className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden"
                 >
                   <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                     <h3 className="font-medium text-text text-sm pr-4">{faq.question}</h3>

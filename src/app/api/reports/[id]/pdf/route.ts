@@ -465,41 +465,50 @@ export async function GET(
     // ════════════════════════════════════════════════════════
     //  PAGE 2: EXECUTIVE DASHBOARD — radar + bars + donut
     // ════════════════════════════════════════════════════════
-    addPage()
+    let y2 = addPage()
+    y2 = sectionHeader(doc, y2, 'Executive Dashboard', 'Pillar performance, score breakdown & issue distribution')
 
     // Radar chart (top, centered)
     const radarCx = PAGE_W / 2
-    const radarCy = 100
-    const radarRadius = 80
+    const radarCy = y2 + 80
+    const radarRadius = 70
 
     // Calculate pillar averages from category scores
-    const pillarScores = PILLAR_DEFS.map(pillar => {
-      const catIndices = pillar.categories.map((cat, idx) => {
-        // Find index in catScores array
+    // If catScores is empty (fallback), use the top-level report scores to approximate
+    const pillarScores = PILLAR_DEFS.map((pillar, pIdx) => {
+      const catIndices = pillar.categories.map((cat) => {
         return catScores.findIndex(cs => cs.name === cat)
       }).filter(idx => idx !== -1)
 
       const scores = catIndices.map(idx => catScores[idx]?.score ?? 0)
-      const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+      let avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+
+      // Fallback: if no category scores matched, use report-level scores
+      if (avgScore === 0 && catScores.length === 0) {
+        const fallbacks = [r.ux_score, r.conversion_score, r.mobile_score, r.ai_discoverability_score]
+        avgScore = fallbacks[pIdx] ?? overall
+      }
+
       return { name: pillar.name, score: avgScore, color: pillar.color }
     })
 
     drawRadarChart(doc, radarCx, radarCy, radarRadius, pillarScores)
 
-    // Sub-scores bars (bottom left)
+    // Sub-scores bars (bottom left) — use report-level scores, NOT category indices
     const subScores = [
-      { label: 'UX & Design', score: catScores[0]?.score ?? 0 },
-      { label: 'Conversion', score: catScores[1]?.score ?? 0 },
-      { label: 'Mobile', score: catScores[2]?.score ?? 0 },
-      { label: 'AI Discoverability', score: catScores[5]?.score ?? 0 },
-      { label: 'Content Quality', score: catScores[4]?.score ?? 0 },
+      { label: 'UX & Design', score: r.ux_score ?? overall },
+      { label: 'Conversion', score: r.conversion_score ?? overall },
+      { label: 'Mobile', score: r.mobile_score ?? overall },
+      { label: 'AI Discoverability', score: r.ai_discoverability_score ?? overall },
+      { label: 'Content Quality', score: r.content_score ?? overall },
     ]
 
-    drawSubScoreBars(doc, ML, 420, subScores)
+    const barsY = radarCy + radarRadius + 90
+    drawSubScoreBars(doc, ML, barsY, subScores)
 
     // Severity donut (bottom right)
     const donutCx = MR - 80
-    const donutCy = 465
+    const donutCy = barsY + 45
     const donutSegments = [
       { count: critical, color: C.sevCritical, label: 'Critical' },
       { count: high, color: C.sevHigh, label: 'High' },
@@ -661,41 +670,34 @@ export async function GET(
     //  PAGES 6+: FINDINGS BY PILLAR
     // ════════════════════════════════════════════════════════
     if (findings.length > 0) {
-      // Group findings by pillar
-      const findingsByPillar: Record<string, any[]> = {}
-      for (const pillar of PILLAR_DEFS) {
-        findingsByPillar[pillar.name] = []
+      // Group findings by severity (most impactful first)
+      const sevOrder = ['critical', 'high', 'medium', 'low']
+      const sevGroups: Array<{ key: string; label: string; color: string; findings: any[] }> = []
+
+      for (const sKey of sevOrder) {
+        const grouped = findings.filter((f: any) => f.severity === sKey)
+        if (grouped.length === 0) continue
+        const sevInfo = SEV[sKey] || SEV.medium
+        sevGroups.push({ key: sKey, label: sevInfo.label, color: sevInfo.hex, findings: grouped })
       }
 
-      for (const finding of findings) {
-        const catName = finding.category || ''
-        const pillarInfo = PILLAR_MAP[catName]
-        if (pillarInfo) {
-          if (!findingsByPillar[pillarInfo.pillar]) {
-            findingsByPillar[pillarInfo.pillar] = []
-          }
-          findingsByPillar[pillarInfo.pillar].push(finding)
-        }
-      }
-
-      // Render findings grouped by pillar
-      for (const pillar of PILLAR_DEFS) {
-        const pillarFindings = findingsByPillar[pillar.name] || []
-        if (pillarFindings.length === 0) continue
-
+      // Render findings grouped by severity
+      for (const group of sevGroups) {
         y = addPage()
 
-        // Pillar header with color accent bar
-        doc.rect(ML, y, 4, 20).fill(pillar.color)
+        // Severity header with color accent bar
+        doc.rect(ML, y, 4, 20).fill(group.color)
         doc.font('Helvetica-Bold').fontSize(14).fillColor(C.text)
-        doc.text(pillar.name, ML + 14, y + 2, { lineBreak: false })
+        doc.text(`${group.label} Issues`, ML + 14, y + 2, { lineBreak: false })
+        doc.font('Helvetica').fontSize(9).fillColor(C.textTert)
+        doc.text(`${group.findings.length} finding${group.findings.length !== 1 ? 's' : ''}`, ML + 14 + doc.widthOfString(`${group.label} Issues  `) + 10, y + 4, { lineBreak: false })
         y += 24
         drawLine(doc, y, C.borderLight, 0.5)
         y += 10
 
-        // Render each finding in this pillar
-        for (let i = 0; i < pillarFindings.length; i++) {
-          const fi = pillarFindings[i]
+        // Render each finding in this severity group
+        for (let i = 0; i < group.findings.length; i++) {
+          const fi = group.findings[i]
           const sev = SEV[fi.severity] || SEV.medium
           const titleText = fi.title || 'Untitled'
           const descText = fi.description || ''
@@ -773,7 +775,7 @@ export async function GET(
 
           // Separator
           y += 2
-          if (i < pillarFindings.length - 1) {
+          if (i < group.findings.length - 1) {
             drawLine(doc, y, C.borderLight, 0.3)
             y += 8
           }
