@@ -172,31 +172,31 @@ export default function Home() {
 
   const auditCategories = [
     // Foundation (1-6)
-    { pillar: "Foundation", icon: Eye, title: "First Impression &amp; Visual Design", desc: "How users perceive your site at first glance" },
-    { pillar: "Foundation", icon: Target, title: "Value Proposition &amp; Messaging", desc: "Clear communication of your unique value" },
-    { pillar: "Foundation", icon: Map, title: "Navigation &amp; Information Architecture", desc: "Intuitive structure and findability" },
-    { pillar: "Foundation", icon: Layers, title: "Visual Hierarchy &amp; Layout", desc: "Layout flow, spacing, and element prioritisation" },
-    { pillar: "Foundation", icon: Type, title: "Content Quality &amp; Readability", desc: "Clear, compelling, well-structured messaging" },
-    { pillar: "Foundation", icon: MousePointerClick, title: "Calls-to-Action &amp; Conversion", desc: "Effective CTAs and conversion paths" },
+    { pillar: "Foundation", icon: Eye, title: "First Impression & Visual Design", desc: "How users perceive your site at first glance" },
+    { pillar: "Foundation", icon: Target, title: "Value Proposition & Messaging", desc: "Clear communication of your unique value" },
+    { pillar: "Foundation", icon: Map, title: "Navigation & Information Architecture", desc: "Intuitive structure and findability" },
+    { pillar: "Foundation", icon: Layers, title: "Visual Hierarchy & Layout", desc: "Layout flow, spacing, and element prioritisation" },
+    { pillar: "Foundation", icon: Type, title: "Content Quality & Readability", desc: "Clear, compelling, well-structured messaging" },
+    { pillar: "Foundation", icon: MousePointerClick, title: "Calls-to-Action & Conversion", desc: "Effective CTAs and conversion paths" },
 
     // Human Experience (7-12)
-    { pillar: "Human Experience", icon: Shield, title: "Trust &amp; Credibility", desc: "Security and trustworthiness signals" },
-    { pillar: "Human Experience", icon: Scale, title: "Ethical UX &amp; Dark Pattern Detection", desc: "Ethical design practices and avoiding manipulation" },
-    { pillar: "Human Experience", icon: Heart, title: "Emotional Intelligence &amp; Psychological Safety", desc: "Supportive, non-judgmental user experience" },
-    { pillar: "Human Experience", icon: Brain, title: "Cognitive Accessibility &amp; Neurodiversity", desc: "Optimised for ADHD, dyslexia, and autism spectrum" },
-    { pillar: "Human Experience", icon: Sparkles, title: "Digital Wellbeing &amp; Responsible Design", desc: "Reducing user anxiety and addictive patterns" },
-    { pillar: "Human Experience", icon: Users, title: "Age Inclusivity &amp; Digital Literacy", desc: "Accessible to users of all ages and tech fluency" },
+    { pillar: "Human Experience", icon: Shield, title: "Trust & Credibility", desc: "Security and trustworthiness signals" },
+    { pillar: "Human Experience", icon: Scale, title: "Ethical UX & Dark Pattern Detection", desc: "Ethical design practices and avoiding manipulation" },
+    { pillar: "Human Experience", icon: Heart, title: "Emotional Intelligence & Psychological Safety", desc: "Supportive, non-judgmental user experience" },
+    { pillar: "Human Experience", icon: Brain, title: "Cognitive Accessibility & Neurodiversity", desc: "Optimised for ADHD, dyslexia, and autism spectrum" },
+    { pillar: "Human Experience", icon: Sparkles, title: "Digital Wellbeing & Responsible Design", desc: "Reducing user anxiety and addictive patterns" },
+    { pillar: "Human Experience", icon: Users, title: "Age Inclusivity & Digital Literacy", desc: "Accessible to users of all ages and tech fluency" },
 
     // Technical Excellence (13-16)
-    { pillar: "Technical Excellence", icon: Gauge, title: "Performance &amp; Page Speed", desc: "Speed, load times, and responsiveness" },
+    { pillar: "Technical Excellence", icon: Gauge, title: "Performance & Page Speed", desc: "Speed, load times, and responsiveness" },
     { pillar: "Technical Excellence", icon: Smartphone, title: "Mobile Experience", desc: "Responsive and optimized mobile design" },
-    { pillar: "Technical Excellence", icon: Accessibility, title: "Accessibility &amp; Inclusive Design", desc: "WCAG compliance and assistive tech support", featured: true },
-    { pillar: "Technical Excellence", icon: FileText, title: "Technical SEO &amp; Accessibility", desc: "Search engine and AI crawlability" },
+    { pillar: "Technical Excellence", icon: Accessibility, title: "Accessibility & Inclusive Design", desc: "WCAG compliance and assistive tech support", featured: true },
+    { pillar: "Technical Excellence", icon: FileText, title: "Technical SEO & Accessibility", desc: "Search engine and AI crawlability" },
 
     // Future Readiness (17-19)
-    { pillar: "Future Readiness", icon: Brain, title: "AI Discoverability &amp; LLM Readiness", desc: "Optimisation for AI model indexing", featured: true },
+    { pillar: "Future Readiness", icon: Brain, title: "AI Discoverability & LLM Readiness", desc: "Optimisation for AI model indexing", featured: true },
     { pillar: "Future Readiness", icon: Zap, title: "AI Agent Readiness", desc: "Structured data and agent interaction support" },
-    { pillar: "Future Readiness", icon: Globe2, title: "Cultural Sensitivity &amp; Global Readiness", desc: "Inclusive design for diverse global audiences" },
+    { pillar: "Future Readiness", icon: Globe2, title: "Cultural Sensitivity & Global Readiness", desc: "Inclusive design for diverse global audiences" },
   ];
 
   const testimonials = [
@@ -328,7 +328,7 @@ export default function Home() {
             Line 2: the rotating word (centered, on its own line)
           */}
           <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
-            Find &amp; fix UX issues impacting
+            Find & fix UX issues impacting
             <br />
             <RotatingWord />
           </h1>
@@ -349,12 +349,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border/50 dark:border-white/[0.04] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-2xl bg-card border border-border/40 dark:border-white/[0.04] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(124,58,237,0.08)] transition-all shadow-sm"
                 />
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-accent text-white rounded-xl font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20 hover:shadow-accent/30 flex-shrink-0"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-accent text-white rounded-2xl font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20 hover:shadow-accent/30 hover:-translate-y-0.5 flex-shrink-0"
               >
                 Get My UX Report
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -425,7 +425,7 @@ export default function Home() {
                   <div
                     key={idx}
                     ref={counter.ref}
-                    className="relative p-5 rounded-2xl bg-card/50 border border-border/30 dark:border-white/[0.03] hover:border-accent/20 transition-all duration-300"
+                    className="relative p-6 rounded-2xl bg-card border border-border/30 dark:border-white/[0.04] shadow-sm hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5 transition-all duration-300"
                   >
                     <p className={`font-manrope text-4xl md:text-5xl font-extrabold mb-1 bg-gradient-to-r ${gradients[idx]} bg-clip-text text-transparent`} suppressHydrationWarning>
                       {mounted
@@ -459,29 +459,29 @@ export default function Home() {
             {(['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'] as const).map((pillarName) => {
               const pillarCats = auditCategories.filter((cat) => cat.pillar === pillarName);
               return (
-                <div key={pillarName} className="mb-12">
-                  <p className="text-muted text-xs font-semibold tracking-wide uppercase mb-4 text-accent/70">{pillarName}</p>
-                  {/* Category grid — compact cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div key={pillarName} className="mb-14">
+                  <p className="text-muted text-xs font-semibold tracking-widest uppercase mb-5">{pillarName}</p>
+                  {/* Category grid — Sketch-style cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {pillarCats.map((cat, idx) => {
                       const Icon = cat.icon;
                       const isFeatured = 'featured' in cat && cat.featured;
                       return (
                         <div
                           key={idx}
-                          className={`group relative rounded-xl p-4 border transition-all duration-300 ${
+                          className={`group relative rounded-2xl p-5 transition-all duration-300 ${
                             isFeatured
-                              ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
-                              : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
+                              ? 'bg-gradient-to-br from-accent/8 via-purple-500/[0.04] to-violet-500/[0.02] border border-accent/20 hover:border-accent/40 shadow-sm hover:shadow-md hover:shadow-accent/5'
+                              : 'bg-card border border-border/30 dark:border-white/[0.04] hover:border-border/60 shadow-sm hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5'
                           }`}
                         >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                          <div className="flex items-center gap-3 mb-2.5">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
                               isFeatured
-                                ? 'bg-accent/20 group-hover:bg-accent/25'
-                                : 'bg-accent/10 group-hover:bg-accent/15'
+                                ? 'bg-accent/15 group-hover:bg-accent/20'
+                                : 'bg-accent/8 group-hover:bg-accent/12'
                             }`}>
-                              <Icon size={15} className="text-accent" />
+                              <Icon size={16} className="text-accent" />
                             </div>
                             <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
                           </div>

@@ -66,9 +66,9 @@ const Navbar: React.FC = () => {
   const isLoggedIn = !loading && !!user;
 
   return (
-    <nav className="sticky top-0 z-50 bg-surface/95 backdrop-blur-md border-b border-border">
+    <nav className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-12">
+        <div className="flex justify-between items-center h-14">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <span className="font-inter font-semibold text-2xl text-text">
@@ -120,7 +120,7 @@ const Navbar: React.FC = () => {
                 </button>
 
                 {menuOpen && (
-                  <div role="menu" className="absolute right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+                  <div role="menu" className="absolute right-0 mt-2 w-48 bg-card border border-border/60 rounded-xl shadow-xl shadow-black/8 py-1.5 z-50">
                     <Link
                       href="/dashboard"
                       role="menuitem"
@@ -163,7 +163,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-medium bg-accent text-white hover:bg-accent-dk rounded-md px-4 py-1.5 transition-colors"
+                  className="text-sm font-medium bg-accent text-white hover:bg-accent-dk rounded-full px-5 py-1.5 transition-all hover:shadow-lg hover:shadow-accent/20"
                 >
                   Sign Up
                 </Link>

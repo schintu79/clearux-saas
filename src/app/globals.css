@@ -2,50 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light palette (default) ──────────────────────────────── */
+/* ── Light palette (default) — Sketch-inspired warm minimal ── */
 :root {
   --blue:        #7C3AED;
   --blue-dk:     #6D28D9;
-  --blue-lt:     #EDE9FE;
+  --blue-lt:     #F3EFFE;
   --accent:      #7C3AED;
   --accent-dk:   #6D28D9;
-  --accent-lt:   #EDE9FE;
-  --navy:        #0A0A0F;
-  --off:         #F5F3FF;
-  --muted:       #6B7280;
-  --border:      #E5E7EB;
-  --text:        #111111;
+  --accent-lt:   #F3EFFE;
+  --navy:        #1D1D1F;
+  --off:         #F5F5F7;
+  --muted:       #86868B;
+  --border:      #E8E8ED;
+  --text:        #1D1D1F;
   --surface:     #FFFFFF;
-  --surface-alt: #FAFAFE;
+  --surface-alt: #F5F5F7;
   --card:        #FFFFFF;
-  --card-hover:  #F9FAFB;
+  --card-hover:  #FAFAFA;
   --input-bg:    #FFFFFF;
-  --placeholder: #9CA3AF;
-  --sidebar:     #0A0A0F;
-  --sidebar-text:#F0F0F0;
+  --placeholder: #AEAEB2;
+  --sidebar:     #1D1D1F;
+  --sidebar-text:#F5F5F7;
 }
 
 /* ── Dark palette ─────────────────────────────────────────── */
 .dark {
   --blue:        #A78BFA;
   --blue-dk:     #C4B5FD;
-  --blue-lt:     #1E1533;
+  --blue-lt:     #1A1525;
   --accent:      #A78BFA;
   --accent-dk:   #C4B5FD;
-  --accent-lt:   #1E1533;
-  --navy:        #E8E8EE;
-  --off:         #0D0D14;
-  --muted:       #9494A8;
-  --border:      #1c1c2a;
-  --text:        #EAEAF0;
-  --surface:     #0C0C13;
-  --surface-alt: #111119;
-  --card:        #151520;
-  --card-hover:  #1C1C2C;
-  --input-bg:    #151520;
-  --placeholder: #52526A;
-  --sidebar:     #09090E;
-  --sidebar-text:#E8E8EE;
+  --accent-lt:   #1A1525;
+  --navy:        #F5F5F7;
+  --off:         #0D0D0F;
+  --muted:       #98989D;
+  --border:      #2C2C2E;
+  --text:        #F5F5F7;
+  --surface:     #000000;
+  --surface-alt: #1C1C1E;
+  --card:        #1C1C1E;
+  --card-hover:  #2C2C2E;
+  --input-bg:    #1C1C1E;
+  --placeholder: #636366;
+  --sidebar:     #0A0A0A;
+  --sidebar-text:#F5F5F7;
 }
 
 html { scroll-behavior: smooth; }
@@ -55,9 +55,11 @@ body {
   color: var(--text);
   background: var(--surface);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.15s ease, color 0.15s ease;
-  font-size: 14px;
-  line-height: 1.5;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
 }
 
 /* ── Auth pages ───────────────────────────────────────────── */
@@ -82,19 +84,19 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(124,58,237,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124,58,237,.06) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(124,58,237,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,.04) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
 .auth-glow {
   position: absolute;
   top: -120px;
   left: -60px;
-  width: 480px;
-  height: 480px;
+  width: 520px;
+  height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(124,58,237,.18) 0%, rgba(124,58,237,.04) 60%, transparent 75%);
+  background: radial-gradient(circle, rgba(124,58,237,.14) 0%, rgba(124,58,237,.03) 60%, transparent 75%);
   pointer-events: none;
 }
 
@@ -115,19 +117,19 @@ body {
 /* ── Form inputs ──────────────────────────────────────────── */
 .input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.8125rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
   color: var(--text);
   background: var(--input-bg);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
   font-family: inherit;
 }
 
 .dark .input {
-  border-color: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
 }
 
 .dark .input:focus {
@@ -136,7 +138,7 @@ body {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(124,58,237,.15);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
 }
 
 .input::placeholder {
@@ -144,35 +146,41 @@ body {
 }
 
 .input-error {
-  border-color: #E53E3E !important;
-  box-shadow: 0 0 0 2px rgba(229,62,62,.1) !important;
+  border-color: #FF3B30 !important;
+  box-shadow: 0 0 0 3px rgba(255,59,48,.1) !important;
 }
 
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn-primary {
   display: block;
   width: 100%;
-  padding: 0.7rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   background: var(--accent);
   color: #FFFFFF;
   border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
   font-weight: 600;
   font-family: var(--font-inter), sans-serif;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   text-align: center;
   text-decoration: none;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-dk);
-  box-shadow: 0 4px 12px rgba(124,58,237,.25);
+  box-shadow: 0 6px 20px rgba(124,58,237,.2);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(124,58,237,.2);
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -201,9 +209,9 @@ body {
 .alert-error {
   background: #FFF5F5;
   border: 1px solid #FED7D7;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
   color: #C53030;
 }
 
@@ -216,9 +224,9 @@ body {
 .alert-success {
   background: #F0FFF4;
   border: 1px solid #C6F6D5;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
   color: #276749;
 }
 

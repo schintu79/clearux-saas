@@ -26,8 +26,8 @@ const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizeStyles = {
-    sm: 'px-2 py-1 text-xs font-medium rounded',
-    default: 'px-3 py-1.5 text-sm font-medium rounded-md',
+    sm: 'px-2.5 py-1 text-xs font-medium rounded-lg',
+    default: 'px-3 py-1.5 text-sm font-medium rounded-lg',
   };
 
   return (
