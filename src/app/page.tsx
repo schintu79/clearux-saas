@@ -769,7 +769,7 @@ export default function Home() {
 
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
                 >
                   Buy 1 audit
                 </Link>
