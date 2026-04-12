@@ -221,13 +221,14 @@ Return a JSON array. For each issue:
   "recommendation": "Concrete, actionable fix with specific suggestions. Not vague advice.",
   "estimatedImpact": "Expected impact on UX, conversions, or engagement",
   "targetElement": "A CSS selector or descriptive text to locate the problematic element on the page (e.g. 'nav', 'h1', '.hero-section', 'button.cta', 'footer', 'form', or a short text string found in the element). Use the most specific selector you can infer from the content. If the issue is page-wide or not tied to a single element, set to null.",
-  "pageUrl": "The exact URL of the page where this issue was found (copy it from the 'URL:' lines in the content above). If the issue applies to all pages or you cannot determine the specific page, set to null."
+  "pageUrl": "REQUIRED — The exact URL of the specific page where this issue was found. Copy it verbatim from the 'URL:' lines in the content above. Every finding MUST have a pageUrl — never set this to null. If the issue appears on multiple pages, use the most relevant one."
 }
 
 Rules:
 - Be brutally honest. This is a paid audit — the user wants real insights, not flattery.
 - Reference specific elements from the website content.
 - Each finding must be actionable with a clear fix.
+- CRITICAL: Every finding MUST include "pageUrl" with the exact URL from the content above where the issue was found. Do NOT set pageUrl to null. If the same issue appears across pages, pick the most illustrative page URL.
 - Include 2-6 findings per category. More for categories with serious issues, fewer if the site does well.
 - If the site does something well in this category, you can still find areas to improve.
 

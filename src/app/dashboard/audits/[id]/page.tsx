@@ -297,7 +297,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
-  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null }>>([]);
+  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -355,7 +355,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               .order('sort_order', { ascending: true }),
             supabase
               .from('audit_pages')
-              .select('url, title, status_code, load_time_ms')
+              .select('url, title, status_code, load_time_ms, screenshot_url')
               .eq('audit_id', auditId)
               .order('crawled_at', { ascending: true }),
           ]);
@@ -965,6 +965,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           <h3 className="font-semibold text-text text-sm">
                             {finding.title}
                           </h3>
+                          {finding.page_url && (
+                            <a
+                              href={finding.page_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline mt-1 truncate max-w-full"
+                            >
+                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                              {(() => {
+                                try {
+                                  const u = new URL(finding.page_url);
+                                  return u.pathname === '/' ? u.hostname : u.hostname + u.pathname;
+                                } catch { return finding.page_url; }
+                              })()}
+                            </a>
+                          )}
                           <p className="text-muted text-xs mt-1 leading-relaxed">
                             {finding.description}
                           </p>
@@ -985,22 +1001,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             </div>
                           )}
 
-                          {finding.page_url && (
-                            <a
-                              href={finding.page_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline mt-2 truncate max-w-full"
-                            >
-                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                              {(() => {
-                                try {
-                                  const u = new URL(finding.page_url);
-                                  return u.pathname === '/' ? u.hostname : u.hostname + u.pathname;
-                                } catch { return finding.page_url; }
-                              })()}
-                            </a>
+                          {finding.screenshot_url && (
+                            <div className="mt-3 rounded-lg overflow-hidden border border-border/40 dark:border-white/[0.04]">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={finding.screenshot_url}
+                                alt={`Screenshot: ${finding.title}`}
+                                className="w-full h-auto max-h-72 object-cover object-top"
+                                loading="lazy"
+                              />
+                              <div className="px-3 py-1.5 bg-surface-alt/50 border-t border-border/30 dark:border-white/[0.03]">
+                                <p className="text-[10px] text-muted">Highlighted area of concern</p>
+                              </div>
+                            </div>
                           )}
+
                         </Card>
                       ))}
                     </div>
@@ -1017,6 +1032,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <p className="text-[10px] text-muted mb-3">
                 {auditPages.length} page{auditPages.length !== 1 ? 's' : ''} crawled during this audit
               </p>
+              {/* Page overview screenshot */}
+              {auditPages[0]?.screenshot_url && (
+                <div className="mb-4 rounded-lg overflow-hidden border border-border/40 dark:border-white/[0.04]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={auditPages[0].screenshot_url}
+                    alt="Website overview"
+                    className="w-full h-auto max-h-80 object-cover object-top"
+                    loading="lazy"
+                  />
+                  <div className="px-3 py-1.5 bg-surface-alt/50 border-t border-border/30 dark:border-white/[0.03]">
+                    <p className="text-[10px] text-muted">Homepage captured at audit time</p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-card border border-border rounded-lg overflow-hidden divide-y divide-border">
                 {auditPages.map((pg, idx) => (
                   <div key={idx} className="flex items-center gap-3 px-4 py-2.5 hover:bg-off/50 transition-colors">
