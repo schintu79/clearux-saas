@@ -1020,11 +1020,11 @@ export default function Home() {
           </form>
 
           {/* Trust line */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-muted font-medium">
-            <span>From $99</span>
-            <span className="opacity-30">·</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+            <span>From $99 per audit</span>
+            <span className="opacity-40">·</span>
             <span>No subscription</span>
-            <span className="opacity-30">·</span>
+            <span className="opacity-40">·</span>
             <span>Credits never expire</span>
           </div>
         </div>

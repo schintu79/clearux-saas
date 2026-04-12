@@ -86,8 +86,8 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-white font-semibold text-sm transition-all hover:-translate-y-0.5 disabled:opacity-60"
-                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 6px 20px rgba(124,58,237,.15), 0 4px 12px rgba(236,72,153,.08)' }}
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-white font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-lg"
+                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
                 >
                   {loading ? (
                     <>
