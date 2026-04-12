@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard, AlertTriangle, Search } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -108,16 +108,16 @@ function RotatingReview({ reviews }: { reviews: { quote: string; author: string;
         </div>
       </div>
       <div className="flex items-center justify-center gap-3 mt-5">
-        <button onClick={prev} aria-label="Previous review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
-          <ChevronLeft size={14} className="text-muted" />
+        <button onClick={prev} aria-label="Previous review" className="w-11 h-11 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-violet-400/40 flex items-center justify-center transition-colors">
+          <ChevronLeft size={16} className="text-muted" />
         </button>
         <div className="flex gap-1.5">
           {reviews.map((_, i) => (
             <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-accent w-4' : 'bg-border'}`} />
           ))}
         </div>
-        <button onClick={next} aria-label="Next review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
-          <ChevronRight size={14} className="text-muted" />
+        <button onClick={next} aria-label="Next review" className="w-11 h-11 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-violet-400/40 flex items-center justify-center transition-colors">
+          <ChevronRight size={16} className="text-muted" />
         </button>
       </div>
     </div>
@@ -185,7 +185,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
             <span className="text-xs font-semibold text-text">Audit Overview</span>
           </div>
-          <span className="text-[10px] text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
+          <span className="text-xs text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
         </div>
         <div className="flex items-center gap-6 mb-6">
           <div className="relative">
@@ -200,9 +200,9 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div className="grid grid-cols-2 gap-2">
               {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
                 <div key={d.l} className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted w-14">{d.l}</span>
+                  <span className="text-xs text-muted w-14">{d.l}</span>
                   <div className="flex-1 h-1 rounded-full bg-border/15"><div className="h-full rounded-full bg-violet-400" style={{width:`${d.s}%`}} /></div>
-                  <span className="text-[10px] font-bold text-text w-5 text-right">{d.s}</span>
+                  <span className="text-xs font-bold text-text w-5 text-right">{d.s}</span>
                 </div>
               ))}
             </div>
@@ -212,17 +212,17 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
       <div className="px-6 pb-4 space-y-2.5">
         {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'}].map((f,i)=>(
           <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt border border-border/20">
-            <span className={`${f.c} text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
+            <span className={`${f.c} text-white text-[11px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
             <div className="min-w-0">
               <p className="text-xs font-medium text-text leading-snug">{f.t}</p>
-              <p className="text-[10px] text-accent mt-0.5">{f.imp}</p>
+              <p className="text-xs text-accent mt-0.5">{f.imp}</p>
             </div>
           </div>
         ))}
       </div>
       <div className="mx-6 mb-6 p-3 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/40 dark:border-violet-800/20">
-        <p className="text-[10px] font-bold text-violet-700 dark:text-violet-400 mb-1">Recommendation</p>
-        <p className="text-[10px] text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
+        <p className="text-xs font-bold text-violet-700 dark:text-violet-400 mb-1">Recommendation</p>
+        <p className="text-xs text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
       </div>
     </div>,
 
@@ -234,28 +234,28 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
             <span className="text-xs font-semibold text-text">Human Experience Scan</span>
           </div>
-          <span className="text-[10px] font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
+          <span className="text-xs font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
         </div>
         <div className="space-y-3">
           {[
-            {icon:'⚠️',t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
-            {icon:'⏰',t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
-            {icon:'✓',t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
-            {icon:'⚠️',t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
-            {icon:'✓',t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
+            {Icon:AlertTriangle,t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
+            {Icon:Clock,t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
+            {Icon:CheckCircle,t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
+            {Icon:AlertTriangle,t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
+            {Icon:CheckCircle,t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
           ].map((item,i)=>(
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
-              <span className="text-sm mt-0.5 flex-shrink-0">{item.icon}</span>
+              <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-emerald-500' : 'text-pink-500'}`} />
               <div className="min-w-0">
                 <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
-                <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{item.d}</p>
+                <p className="text-xs text-muted mt-0.5 leading-relaxed">{item.d}</p>
               </div>
             </div>
           ))}
         </div>
         <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
-          <p className="text-[10px] font-bold text-pink-700 dark:text-pink-400 mb-1">Recommendation</p>
-          <p className="text-[10px] text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust.</p>
+          <p className="text-xs font-bold text-pink-700 dark:text-pink-400 mb-1">Recommendation</p>
+          <p className="text-xs text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust.</p>
         </div>
       </div>
     </div>,
@@ -270,13 +270,13 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-5">
-          {[{l:'Performance',s:92,c:'text-emerald-500',icon:'⚡'},{l:'Mobile',s:78,c:'text-amber-500',icon:'📱'},{l:'Accessibility',s:64,c:'text-orange-500',icon:'♿'},{l:'SEO',s:86,c:'text-emerald-500',icon:'🔍'}].map(m=>(
+          {[{l:'Performance',s:92,c:'text-emerald-500',Icon:Zap},{l:'Mobile',s:78,c:'text-amber-500',Icon:Smartphone},{l:'Accessibility',s:64,c:'text-orange-500',Icon:Accessibility},{l:'SEO',s:86,c:'text-emerald-500',Icon:Search}].map(m=>(
             <div key={m.l} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">{m.icon}</span>
+                <m.Icon size={14} className="text-muted" />
                 <span className={`font-manrope text-lg font-bold ${m.c}`}>{m.s}</span>
               </div>
-              <p className="text-[10px] font-semibold text-text">{m.l}</p>
+              <p className="text-xs font-semibold text-text">{m.l}</p>
               <div className="mt-1.5 h-1 rounded-full bg-border/15">
                 <div className={`h-full rounded-full ${m.s>=80?'bg-emerald-400':m.s>=60?'bg-amber-400':'bg-orange-400'}`} style={{width:`${m.s}%`}} />
               </div>
@@ -287,7 +287,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
             <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-alt/50">
               <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-100 dark:bg-emerald-900/30':'bg-orange-100 dark:bg-orange-900/30'}`}>
-                <span className="text-[8px]">{c.p?'✓':'✗'}</span>
+                <span className="text-[11px]">{c.p?'✓':'✗'}</span>
               </div>
               <span className="text-[11px] text-text">{c.t}</span>
               <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-600 dark:text-emerald-400':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
@@ -295,8 +295,8 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           ))}
         </div>
         <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-800/20">
-          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1">Recommendation</p>
-          <p className="text-[10px] text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
+          <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">Recommendation</p>
+          <p className="text-xs text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
         </div>
       </div>
     </div>,
@@ -309,7 +309,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
             <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
           </div>
-          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
         </div>
         <div className="space-y-3 mb-5">
           {[
@@ -325,19 +325,19 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
               <div className="h-1.5 rounded-full bg-border/15 mb-2">
                 <div className={`h-full rounded-full ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
               </div>
-              <p className="text-[10px] text-muted leading-relaxed">{item.d}</p>
+              <p className="text-xs text-muted leading-relaxed">{item.d}</p>
             </div>
           ))}
         </div>
         <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-          <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
+          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
           <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/20">
-            <p className="text-[10px] text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
+            <p className="text-xs text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
           </div>
         </div>
         <div className="mt-4 p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-          <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">Recommendation</p>
-          <p className="text-[10px] text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
+          <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-1">Recommendation</p>
+          <p className="text-xs text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
         </div>
       </div>
     </div>,
@@ -950,7 +950,7 @@ export default function Home() {
               { q: 'What does the audit cover?', a: 'We evaluate 19 categories across 4 pillars: Foundation (First Impression, Value Proposition, Navigation, Visual Hierarchy, Content Quality, CTAs), Human Experience (Trust, Ethical UX, Emotional Intelligence, Cognitive Accessibility, Digital Wellbeing, Age Inclusivity), Technical Excellence (Performance, Mobile, Accessibility, SEO), and Future Readiness (AI Discoverability, AI Agent Readiness, Cultural Sensitivity).' },
               { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 95 checkpoints across 19 categories, PDF & Word reports, and prioritised recommendations.' },
               { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
-              { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle JavaScript-rendered sites, SPAs, and multi-page websites.' },
+              { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle all types of websites including dynamic apps, single-page applications, and traditional multi-page sites.' },
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
               { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
@@ -960,8 +960,8 @@ export default function Home() {
                   <h3 className="font-medium text-text text-sm pr-4">{item.q}</h3>
                   <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
                 </summary>
-                <div className="px-5 pb-5">
-                  <p className="text-muted text-sm leading-relaxed">{item.a}</p>
+                <div className="mx-5 pb-5 pt-1 border-t border-border/20 dark:border-white/[0.04]">
+                  <p className="text-muted text-sm leading-relaxed pt-4">{item.a}</p>
                 </div>
               </details>
             ))}

@@ -84,7 +84,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-2 overflow-y-auto">
+        <nav aria-label="Dashboard navigation" className="flex-1 px-2 py-2 overflow-y-auto">
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;

@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
   const isLoggedIn = !loading && !!user;
 
   return (
-    <nav className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border/60">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           {/* Logo */}

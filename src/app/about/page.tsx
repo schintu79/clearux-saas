@@ -62,7 +62,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-16 relative">
             <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>About ClearUX</p>
             <h1 className="font-manrope font-bold text-3xl sm:text-4xl md:text-5xl text-text mb-6" style={{ lineHeight: '1.15' }}>
-              We believe great UX<br className="hidden sm:block" />
+              We believe great UX<br className="hidden sm:block" />{' '}
               <span className="text-muted">starts with honesty.</span>
             </h1>
             <p className="text-text/80 text-lg leading-relaxed max-w-2xl">
@@ -168,7 +168,7 @@ export default function AboutPage() {
                 Contact us
               </Link>
             </div>
-            <p className="text-sm text-white/60 mt-6">
+            <p className="text-sm text-white/70 mt-6">
               Questions? Reach us at{' '}
               <a href="mailto:support@clearux.ai" className="text-white hover:underline">support@clearux.ai</a>
             </p>

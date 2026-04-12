@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="border-t border-border bg-sidebar py-12 px-4 sm:px-6 lg:px-8">
+    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-sidebar py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-1">
@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="pt-8">
-          <p className="font-inter text-xs text-muted/60 text-center">
+          <p className="font-inter text-xs text-muted/80 text-center">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>
         </div>

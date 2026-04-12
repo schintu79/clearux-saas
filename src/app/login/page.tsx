@@ -142,14 +142,14 @@ export default function LoginPage() {
       </div>
 
       {error && (
-        <div className="alert-error flex items-start gap-3 mb-4">
+        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-4">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="alert-success flex items-start gap-3 mb-4">
+        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-4">
           <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{success}</span>
         </div>
@@ -305,19 +305,19 @@ export default function LoginPage() {
               <div className="flex gap-4 mt-8">
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">56</p>
-                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Checkpoints</p>
+                  <p className="text-xs text-white/70 uppercase tracking-wide">Checkpoints</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">13</p>
-                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Categories</p>
+                  <p className="text-xs text-white/70 uppercase tracking-wide">Categories</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">&lt; 10 min</p>
-                  <p className="text-[10px] text-white/50 uppercase tracking-wide">Per audit</p>
+                  <p className="text-xs text-white/70 uppercase tracking-wide">Per audit</p>
                 </div>
               </div>
 
-              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
+              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors mt-6">
                 <ArrowLeft size={16} /> Back to home
               </Link>
             </div>

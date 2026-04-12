@@ -217,14 +217,14 @@ export default function RegisterPage() {
       </div>
 
       {error && (
-        <div className="alert-error flex items-start gap-3 mb-4">
+        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-4">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="alert-success flex items-start gap-3 mb-4">
+        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-4">
           <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{success}</span>
         </div>
@@ -478,7 +478,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/60 hover:text-white transition-colors mt-6">
+              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors mt-6">
                 <ArrowLeft size={16} /> Back to home
               </Link>
             </div>

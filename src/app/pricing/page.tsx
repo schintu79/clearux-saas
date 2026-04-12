@@ -76,7 +76,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
                   >
                     Buy 1 audit
                   </Link>
@@ -195,8 +195,8 @@ export default function PricingPage() {
                     <h3 className="font-medium text-text text-sm pr-4">{faq.question}</h3>
                     <span className="text-muted text-xs flex-shrink-0 group-open:rotate-90 transition-transform">&#9654;</span>
                   </summary>
-                  <div className="px-5 pb-5">
-                    <p className="text-muted text-sm leading-relaxed">{faq.answer}</p>
+                  <div className="mx-5 pb-5 pt-1 border-t border-border/20 dark:border-white/[0.04]">
+                    <p className="text-muted text-sm leading-relaxed pt-4">{faq.answer}</p>
                   </div>
                 </details>
               ))}
