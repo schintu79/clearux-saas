@@ -25,6 +25,8 @@ import {
   Gauge,
   Brain,
   ExternalLink,
+  Heart,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -80,20 +82,27 @@ const severityConfig = {
 };
 
 /* ── Category display config ─────────────────────────────── */
-// Index-based icons matching the 12 UX categories (works with translated names)
+// Index-based icons matching the 19 UX categories (works with translated names)
 const CATEGORY_ICONS_BY_INDEX: React.ElementType[] = [
   Eye,               // 0: First Impression & Visual Design
   Target,            // 1: Value Proposition & Messaging
   Map,               // 2: Navigation & Information Architecture
-  MousePointerClick, // 3: Calls-to-Action & Conversion
-  Gauge,             // 4: Performance & Page Speed
-  Smartphone,        // 5: Mobile Experience
+  Eye,               // 3: Visual Hierarchy & Layout
+  Type,              // 4: Content Quality & Readability
+  MousePointerClick, // 5: Calls-to-Action & Conversion
   Shield,            // 6: Trust & Credibility
-  Type,              // 7: Content Quality & Readability
-  FileSearch,        // 8: Technical SEO & Accessibility
-  Brain,             // 9: AI Discoverability & LLM Readiness
-  Eye,               // 10: Visual Hierarchy & Layout
-  FileSearch,        // 11: Accessibility & Inclusive Design
+  AlertTriangle,     // 7: Ethical UX & Dark Pattern Detection
+  Heart,             // 8: Emotional Intelligence & Psychological Safety
+  Brain,             // 9: Cognitive Accessibility & Neurodiversity
+  Sparkles,          // 10: Digital Wellbeing & Responsible Design
+  Users,             // 11: Age Inclusivity & Digital Literacy
+  Gauge,             // 12: Performance & Page Speed
+  Smartphone,        // 13: Mobile Experience
+  FileSearch,        // 14: Accessibility & Inclusive Design
+  FileSearch,        // 15: Technical SEO & Accessibility
+  Brain,             // 16: AI Discoverability & LLM Readiness
+  Zap,               // 17: AI Agent Readiness
+  Globe,             // 18: Cultural Sensitivity & Global Readiness
 ];
 
 // Keyword fallback for icon matching (handles edge cases)
@@ -110,6 +119,13 @@ const CATEGORY_ICON_KEYWORDS: Record<string, React.ElementType> = {
   'ai': Brain, 'ia': Brain, 'llm': Brain, 'ki': Brain,
   'hierarchy': Eye, 'jerarquía': Eye, 'hiérarchie': Eye, 'hierarchie': Eye, 'gerarchia': Eye, 'hierarquia': Eye,
   'accessibility': FileSearch, 'accesibilidad': FileSearch, 'accessibilité': FileSearch, 'barrierefreiheit': FileSearch, 'accessibilità': FileSearch, 'acessibilidade': FileSearch,
+  'ethical': AlertTriangle, 'ético': AlertTriangle, 'éthique': AlertTriangle, 'ethisch': AlertTriangle, 'etico': AlertTriangle,
+  'dark pattern': AlertTriangle, 'patrón oscuro': AlertTriangle, 'dark patterns': AlertTriangle,
+  'emotional': Heart, 'emocional': Heart, 'émotionnelle': Heart, 'emotionale': Heart, 'emotiva': Heart,
+  'wellbeing': Sparkles, 'bienestar': Sparkles, 'bien-être': Sparkles, 'wohlbefinden': Sparkles, 'benessere': Sparkles, 'bem-estar': Sparkles,
+  'age': Users, 'edad': Users, 'âge': Users, 'alter': Users, 'età': Users, 'etária': Users,
+  'agent': Zap,
+  'cultural': Globe, 'sensibilidad cultural': Globe, 'sensibilité culturelle': Globe, 'kulturelle': Globe, 'sensibilità culturale': Globe,
 };
 
 function getCategoryIcon(name: string, index?: number): React.ElementType {
@@ -171,7 +187,7 @@ const statusMeta: Record<
     label: 'Analysing UX',
     color: 'active',
     icon: Sparkles,
-    description: 'Running 56-point UX analysis across 13 categories...',
+    description: 'Running 95-point UX analysis across 19 categories...',
   },
   generating_report: {
     label: 'Generating Report',
@@ -834,38 +850,57 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 ? rawJson.categoryScores
                 : [];
 
+            const pillars = [
+              { name: 'Foundation', range: [0, 6] },
+              { name: 'Human Experience', range: [6, 12] },
+              { name: 'Technical Excellence', range: [12, 16] },
+              { name: 'Future Readiness', range: [16, 19] },
+            ];
+
             return categoryScores.length > 0 ? (
               <div className="mb-6">
-                <h2 className="text-base font-semibold text-text mb-3">Audit Categories</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {categoryScores.map((cat, idx) => {
-                    const Icon = getCategoryIcon(cat.name, idx);
+                <h2 className="text-base font-semibold text-text mb-4">Audit Categories</h2>
+                <div className="space-y-5">
+                  {pillars.map((pillar) => {
+                    const pillarCategories = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                    if (pillarCategories.length === 0) return null;
                     return (
-                      <div
-                        key={idx}
-                        className="bg-card border border-border rounded-lg p-3.5 hover:border-accent/30 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-md bg-accent-lt flex items-center justify-center flex-shrink-0">
-                            <Icon size={15} className="text-accent" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-sm font-semibold text-text truncate pr-2">{cat.name}</p>
-                              <span className={`text-sm font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>
-                                {cat.score}
-                              </span>
-                            </div>
-                            <div className="w-full bg-off rounded-full h-1.5 mb-1.5">
+                      <div key={pillar.name}>
+                        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-2.5">{pillar.name}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {pillarCategories.map((cat, relIdx) => {
+                            const idx = categoryScores.indexOf(cat);
+                            const Icon = getCategoryIcon(cat.name, idx);
+                            return (
                               <div
-                                className={`h-full rounded-full transition-all duration-500 ${scoreBg(cat.score)}`}
-                                style={{ width: `${cat.score}%` }}
-                              />
-                            </div>
-                            {cat.summary && (
-                              <p className="text-[11px] text-muted leading-snug line-clamp-2">{cat.summary}</p>
-                            )}
-                          </div>
+                                key={idx}
+                                className="bg-card border border-border rounded-lg p-3.5 hover:border-accent/30 transition-colors"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-md bg-accent-lt flex items-center justify-center flex-shrink-0">
+                                    <Icon size={15} className="text-accent" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="text-sm font-semibold text-text truncate pr-2">{cat.name}</p>
+                                      <span className={`text-sm font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>
+                                        {cat.score}
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-off rounded-full h-1.5 mb-1.5">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-500 ${scoreBg(cat.score)}`}
+                                        style={{ width: `${cat.score}%` }}
+                                      />
+                                    </div>
+                                    {cat.summary && (
+                                      <p className="text-[11px] text-muted leading-snug line-clamp-2">{cat.summary}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -970,14 +1005,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               href={finding.page_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline mt-1 truncate max-w-full"
+                              className="inline-flex items-center gap-1 text-[10px] text-muted hover:text-accent transition-colors mt-1"
                             >
-                              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                              <ExternalLink size={10} className="flex-shrink-0" />
                               {(() => {
                                 try {
-                                  const u = new URL(finding.page_url);
-                                  return u.pathname === '/' ? u.hostname : u.hostname + u.pathname;
-                                } catch { return finding.page_url; }
+                                  return new URL(finding.page_url).pathname || '/';
+                                } catch {
+                                  return finding.page_url;
+                                }
                               })()}
                             </a>
                           )}
@@ -1002,17 +1038,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           )}
 
                           {finding.screenshot_url && (
-                            <div className="mt-3 rounded-lg overflow-hidden border border-border/40 dark:border-white/[0.04]">
+                            <div className="mt-2">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={finding.screenshot_url}
-                                alt={`Screenshot: ${finding.title}`}
-                                className="w-full h-auto max-h-72 object-cover object-top"
+                                alt={finding.title}
+                                className="rounded-lg border border-border/30 max-w-full max-h-48 object-contain"
                                 loading="lazy"
                               />
-                              <div className="px-3 py-1.5 bg-surface-alt/50 border-t border-border/30 dark:border-white/[0.03]">
-                                <p className="text-[10px] text-muted">Highlighted area of concern</p>
-                              </div>
                             </div>
                           )}
 

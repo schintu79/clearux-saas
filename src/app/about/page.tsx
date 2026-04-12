@@ -22,7 +22,7 @@ export default function AboutPage() {
             <p>
               ClearUX is an AI-powered UX audit platform that helps product teams, designers, and marketers
               understand what&rsquo;s working on their website — and what isn&rsquo;t. We analyse your site across
-              56 checkpoints spanning usability, conversion, accessibility, mobile experience, content quality,
+              95 checkpoints spanning usability, conversion, accessibility, mobile experience, content quality,
               and AI discoverability.
             </p>
 

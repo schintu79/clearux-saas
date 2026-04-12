@@ -55,10 +55,17 @@ export interface ReportData {
   categoryScores: CategoryScore[]
 }
 
-// ── The 13 UX categories we evaluate ─────────────────────────
+// ── The 19 UX categories we evaluate ─────────────────────────
+// Grouped into 4 pillars for report structure:
+//   FOUNDATION (1-6): Core UX quality
+//   HUMAN EXPERIENCE (7-12): How the site treats people
+//   TECHNICAL EXCELLENCE (13-16): Performance & compliance
+//   FUTURE READINESS (17-19): AI age preparedness
 const UX_CATEGORIES = [
+  // ═══ PILLAR 1: FOUNDATION ═══════════════════════════════════
   {
     name: 'First Impression & Visual Design',
+    pillar: 'Foundation',
     items: [
       'Above-the-fold content clarity and impact',
       'Visual hierarchy — are the most important elements prominent?',
@@ -68,6 +75,7 @@ const UX_CATEGORIES = [
   },
   {
     name: 'Value Proposition & Messaging',
+    pillar: 'Foundation',
     items: [
       'Is the value proposition immediately clear?',
       'Does the headline communicate what the product does and for whom?',
@@ -77,6 +85,7 @@ const UX_CATEGORIES = [
   },
   {
     name: 'Navigation & Information Architecture',
+    pillar: 'Foundation',
     items: [
       'Primary navigation — is it intuitive and well-organized?',
       'Can users find key pages within 2 clicks?',
@@ -85,70 +94,8 @@ const UX_CATEGORIES = [
     ],
   },
   {
-    name: 'Calls-to-Action & Conversion',
-    items: [
-      'Primary CTA — is it visible, compelling, and above the fold?',
-      'CTA button copy — action-oriented vs generic ("Get Started" vs "Submit")',
-      'Is there urgency or social proof near CTAs?',
-      'Is the conversion path clear with minimal friction?',
-    ],
-  },
-  {
-    name: 'Performance & Page Speed',
-    items: [
-      'Does the page feel fast? (inferred from content weight)',
-      'Are images optimized or do they appear heavy?',
-      'Are there large scripts or heavy third-party embeds?',
-      'Lazy loading for below-the-fold content',
-    ],
-  },
-  {
-    name: 'Mobile Experience',
-    items: [
-      'Is there a viewport meta tag?',
-      'Does content appear mobile-friendly from markup?',
-      'Touch targets — are buttons large enough for mobile?',
-      'Does navigation work for mobile (hamburger, bottom nav)?',
-    ],
-  },
-  {
-    name: 'Trust & Credibility',
-    items: [
-      'Are there testimonials, reviews, or case studies?',
-      'Social proof — user count, logos, ratings?',
-      'Privacy policy, terms, and security indicators',
-      'Contact information or support options visible',
-    ],
-  },
-  {
-    name: 'Content Quality & Readability',
-    items: [
-      'Is text scannable with proper headings and short paragraphs?',
-      'Is the language clear, jargon-free, and user-focused?',
-      'Are there grammar or spelling issues?',
-      'Do images have alt text?',
-    ],
-  },
-  {
-    name: 'Technical SEO & Accessibility',
-    items: [
-      'Title tag present and descriptive (50-60 chars)?',
-      'Meta description present (150-160 chars)?',
-      'Heading structure (H1 present, logical H2-H6)?',
-      'Structured data / schema markup?',
-    ],
-  },
-  {
-    name: 'AI Discoverability & LLM Readiness',
-    items: [
-      'Is content structured in a way LLMs can parse?',
-      'Are key facts and features stated clearly (not only in images)?',
-      'Is there FAQ or knowledge-base content that LLMs can index?',
-      'Does the site provide enough textual context about what it does?',
-    ],
-  },
-  {
     name: 'Visual Hierarchy & Layout',
+    pillar: 'Foundation',
     items: [
       'Is there a clear visual flow guiding the eye from top to bottom?',
       'Are spacing and whitespace used effectively to group related content?',
@@ -157,16 +104,63 @@ const UX_CATEGORIES = [
     ],
   },
   {
-    name: 'Accessibility & Inclusive Design',
+    name: 'Content Quality & Readability',
+    pillar: 'Foundation',
     items: [
-      'Sufficient colour contrast between text and background (WCAG AA)?',
-      'Can all interactive elements be reached via keyboard navigation?',
-      'Are form inputs properly labelled with associated labels?',
-      'Are ARIA roles and landmarks used to aid screen readers?',
+      'Is text scannable with proper headings and short paragraphs?',
+      'Is the language clear, jargon-free, and user-focused?',
+      'Are there grammar or spelling issues?',
+      'Do images have alt text?',
+    ],
+  },
+  {
+    name: 'Calls-to-Action & Conversion',
+    pillar: 'Foundation',
+    items: [
+      'Primary CTA — is it visible, compelling, and above the fold?',
+      'CTA button copy — action-oriented vs generic ("Get Started" vs "Submit")',
+      'Is there urgency or social proof near CTAs?',
+      'Is the conversion path clear with minimal friction?',
+    ],
+  },
+
+  // ═══ PILLAR 2: HUMAN EXPERIENCE ═════════════════════════════
+  {
+    name: 'Trust & Credibility',
+    pillar: 'Human Experience',
+    items: [
+      'Are there testimonials, reviews, or case studies?',
+      'Social proof — user count, logos, ratings?',
+      'Privacy policy, terms, and security indicators',
+      'Contact information or support options visible',
+    ],
+  },
+  {
+    name: 'Ethical UX & Dark Pattern Detection',
+    pillar: 'Human Experience',
+    items: [
+      'Are there confirmshaming patterns — manipulative language to guilt users into a choice (e.g., "No thanks, I don\'t want to save money")?',
+      'Are there fake urgency or scarcity tactics — countdown timers, "only X left" badges, or "limited time" messaging without genuine limits?',
+      'Is the cancellation or unsubscribe flow easy to find and complete — or is it deliberately buried or multi-step to prevent users from leaving?',
+      'Are there hidden costs that only appear at checkout — drip pricing, unexpected fees, or mandatory add-ons not disclosed upfront?',
+      'Is cookie consent implemented fairly — with equal visual weight for "Accept" and "Reject", no pre-checked boxes, and no dark patterns in consent flows?',
+      'Are privacy-hostile defaults present — opt-in vs opt-out for marketing, data sharing, or tracking set to benefit the company rather than the user?',
+    ],
+  },
+  {
+    name: 'Emotional Intelligence & Psychological Safety',
+    pillar: 'Human Experience',
+    items: [
+      'Does the site create unnecessary anxiety — through countdown timers, loss aversion messaging, alarming language, or pressure tactics?',
+      'When users make errors (wrong input, failed payment, 404), does the site respond with compassion and guidance — or with blame, punishment, or vague messages?',
+      'Is the overall tone respectful, empowering, and human — rather than robotic, condescending, or manipulative?',
+      'Does the checkout or signup process feel safe and transparent — with clear expectations, no surprises, and easy ability to go back or cancel?',
+      'Are empty states and loading states designed to reduce frustration — with helpful messaging, suggestions, or reassurance rather than blank screens?',
     ],
   },
   {
     name: 'Cognitive Accessibility & Neurodiversity',
+    pillar: 'Human Experience',
     items: [
       'Is the page layout clean and uncluttered, with clear visual grouping — reducing cognitive load for users with ADHD or attention differences?',
       'Are fonts readable for users with dyslexia (sans-serif, adequate size ≥16px, line-height ≥1.5, line length 50-75 characters, no justified text)?',
@@ -176,6 +170,104 @@ const UX_CATEGORIES = [
       'Are error messages specific, non-alarming, and constructive — clearly explaining what went wrong and how to fix it, rather than using vague or anxiety-inducing language?',
       'Are multi-step processes (forms, checkouts) broken into manageable chunks with visible progress indicators — rather than presenting one long overwhelming page?',
       'Is important information communicated through multiple channels (text + icons + colour) rather than relying on a single modality — supporting diverse processing styles?',
+    ],
+  },
+  {
+    name: 'Digital Wellbeing & Responsible Design',
+    pillar: 'Human Experience',
+    items: [
+      'Does the site use addictive design patterns — infinite scroll without endpoints, notification manipulation, or engagement loops designed to keep users longer than they intend?',
+      'Does the site respect users\' time — with honest time estimates, clear exit paths, and no unnecessary steps or friction added to increase time-on-site metrics?',
+      'Is cognitive load managed responsibly — or does the site overwhelm users with excessive choices, information overload, or attention-competing elements?',
+      'Are there manipulative engagement tactics — forced account creation to view content, artificial paywalls, or features deliberately withheld to drive upgrades?',
+      'Does the site support healthy usage patterns — clear session boundaries, no guilt-based re-engagement, respectful notification practices?',
+    ],
+  },
+  {
+    name: 'Age Inclusivity & Digital Literacy',
+    pillar: 'Human Experience',
+    items: [
+      'Is the font size large enough for older users (minimum 16px body text), with sufficient line-height and comfortable reading widths?',
+      'Are interactive elements (buttons, links, form fields) large enough and spaced well for users with reduced motor precision — meeting or exceeding 44x44px touch targets?',
+      'Does the site avoid assuming technical literacy — are instructions explicit, jargon-free, and do UI patterns follow common conventions that all age groups understand?',
+      'Is the interface forgiving of mistakes — with clear undo options, confirmation steps for destructive actions, and helpful guidance instead of dead ends?',
+      'Are essential functions accessible without requiring advanced digital skills — no drag-and-drop as the only option, no gesture-only interactions, no hidden navigation?',
+    ],
+  },
+
+  // ═══ PILLAR 3: TECHNICAL EXCELLENCE ═════════════════════════
+  {
+    name: 'Performance & Page Speed',
+    pillar: 'Technical Excellence',
+    items: [
+      'Does the page feel fast? (inferred from content weight)',
+      'Are images optimized or do they appear heavy?',
+      'Are there large scripts or heavy third-party embeds?',
+      'Lazy loading for below-the-fold content',
+    ],
+  },
+  {
+    name: 'Mobile Experience',
+    pillar: 'Technical Excellence',
+    items: [
+      'Is there a viewport meta tag?',
+      'Does content appear mobile-friendly from markup?',
+      'Touch targets — are buttons large enough for mobile?',
+      'Does navigation work for mobile (hamburger, bottom nav)?',
+    ],
+  },
+  {
+    name: 'Accessibility & Inclusive Design',
+    pillar: 'Technical Excellence',
+    items: [
+      'Sufficient colour contrast between text and background (WCAG AA)?',
+      'Can all interactive elements be reached via keyboard navigation?',
+      'Are form inputs properly labelled with associated labels?',
+      'Are ARIA roles and landmarks used to aid screen readers?',
+    ],
+  },
+  {
+    name: 'Technical SEO & Accessibility',
+    pillar: 'Technical Excellence',
+    items: [
+      'Title tag present and descriptive (50-60 chars)?',
+      'Meta description present (150-160 chars)?',
+      'Heading structure (H1 present, logical H2-H6)?',
+      'Structured data / schema markup?',
+    ],
+  },
+
+  // ═══ PILLAR 4: FUTURE READINESS ═════════════════════════════
+  {
+    name: 'AI Discoverability & LLM Readiness',
+    pillar: 'Future Readiness',
+    items: [
+      'Is content structured in a way LLMs can parse?',
+      'Are key facts and features stated clearly (not only in images)?',
+      'Is there FAQ or knowledge-base content that LLMs can index?',
+      'Does the site provide enough textual context about what it does?',
+    ],
+  },
+  {
+    name: 'AI Agent Readiness',
+    pillar: 'Future Readiness',
+    items: [
+      'Can an AI agent (like ChatGPT, Claude, or a shopping assistant) navigate this site and extract key information (pricing, features, contact) from the HTML alone?',
+      'Is pricing, availability, and product/service information structured in semantic HTML or schema markup that AI agents can reliably parse — not trapped in images, PDFs, or JavaScript-rendered widgets?',
+      'Are forms, checkout flows, and interactive elements built with standard HTML elements and proper labels — allowing AI agents to fill forms and complete transactions on behalf of users?',
+      'Does the site have a clear sitemap.xml, robots.txt, and well-structured URLs that AI crawlers can follow — or is critical content gated behind login walls, CAPTCHAs, or JavaScript rendering that blocks automated access?',
+      'Is there sufficient metadata (Open Graph, schema.org, structured data) that allows AI assistants to accurately describe this business, its offerings, and its unique value when asked by users?',
+    ],
+  },
+  {
+    name: 'Cultural Sensitivity & Global Readiness',
+    pillar: 'Future Readiness',
+    items: [
+      'Does the site handle internationalisation basics — proper date formats, currency symbols, number formatting, and measurement units for global audiences?',
+      'Are colours, symbols, and imagery culturally neutral or appropriately adapted — avoiding colours or icons that carry negative meanings in major cultures (e.g., red for danger vs prosperity)?',
+      'Is the content written in plain, translatable language — avoiding idioms, cultural references, humour, or slang that may not translate or may offend across cultures?',
+      'Does the site support or prepare for right-to-left (RTL) languages and non-Latin scripts — or is the layout hardcoded for English-only presentation?',
+      'Are legal and compliance elements (privacy policy, cookie consent, data handling) adapted for international regulations — GDPR, CCPA, and region-specific requirements?',
     ],
   },
 ]
@@ -205,46 +297,71 @@ export async function analyzeCategory(
 
   const languageInstruction = getLanguagePromptInstruction(language)
 
-  const prompt = `You are a world-class UX auditor at a top design consultancy. You are evaluating a real website as part of a professional paid UX audit.
+  const prompt = `You are a senior UX strategist at a world-class design consultancy (think IDEO, Pentagram, or Nielsen Norman Group). You are conducting a deep, human-centered UX audit for a paying client. This is NOT a basic checklist scan — it is the kind of audit that agencies charge $5,000–$15,000 for.
 ${languageInstruction}
 CATEGORY: ${category}
 ${focusBlock}
-CHECKLIST:
+EVALUATION CRITERIA:
 ${itemsToCheck}
 
-WEBSITE CONTENT (text extracted from MULTIPLE PAGES of the website — each page starts with "URL:" followed by the page address):
+WEBSITE CONTENT (text extracted from MULTIPLE PAGES — each page starts with "URL:" followed by the page address):
 ---
 ${pageContent.substring(0, 15000)}
 ---
 
-INSTRUCTIONS:
-Carefully evaluate the website against EACH checklist item. Be specific, detailed, and actionable. Reference actual content from the website (quote specific text, mention specific elements). Do NOT be generic.
-IMPORTANT: The content above includes MULTIPLE pages, each starting with "URL:". When you find an issue, set "pageUrl" to the SPECIFIC page URL where that issue exists — NOT the homepage URL for every finding. Different findings will often be on different pages.
+YOUR APPROACH — DEEP ANALYSIS, NOT SURFACE SCANNING:
+You must think like a senior consultant, not an automated checker. Your job is to find REAL issues that actually impact users, conversions, and business outcomes. The kind of insights that make a client say "I never thought of that."
 
-For each issue you find, assign a severity:
-- "critical": Fundamentally broken or severely harming conversions/usability
-- "high": Significant problem that most users would notice
-- "medium": Improvement opportunity that would meaningfully help
-- "low": Nice-to-have polish item
+DO NOT flag these common false positives:
+- Generic "missing meta description" or "missing alt text" unless it's truly egregious
+- Minor HTML structure issues that don't affect the user experience
+- Things that are industry-standard or acceptable for the site's context (e.g., a SaaS startup doesn't need the same trust signals as a bank)
+- Theoretical issues you can't actually verify from the content provided
+- Things that "could be better" but work perfectly fine as-is
+- Issues that every website in the world has — focus on what THIS specific site is doing wrong
 
-Return a JSON array. For each issue:
+DO flag these high-value findings:
+- Real friction points in the user journey that lose conversions
+- Messaging problems — unclear value proposition, confusing copy, mixed signals
+- Dark patterns or manipulative design that erodes trust
+- Emotional disconnects — where the tone doesn't match the audience
+- Critical accessibility barriers that exclude real user groups
+- Mobile-specific problems that break the experience
+- AI/LLM readiness gaps that will matter in 12-24 months
+- Cultural insensitivity or assumptions that alienate global users
+- Psychological safety issues — content that creates anxiety, pressure, or confusion
+- Performance bottlenecks that directly harm user retention
+
+QUALITY STANDARDS FOR EACH FINDING:
+1. SPECIFIC — Reference actual text, elements, or patterns you observe. Quote the website.
+2. IMPACTFUL — Explain WHY this matters in business terms (lost conversions, user drop-off, trust erosion).
+3. FIXABLE — Give a concrete, implementable recommendation. Not "improve your CTA" but "Change the CTA from 'Submit' to 'Get My Free Report' — action-oriented language increases click-through by 20-30%."
+4. DEEP — Go beyond what a basic tool would catch. Show the insight of a $200/hour consultant.
+
+IMPORTANT: The content above includes MULTIPLE pages, each starting with "URL:". Set "pageUrl" to the SPECIFIC page URL where each issue exists — NOT the homepage for every finding.
+
+For each issue, assign severity honestly:
+- "critical": Actively losing significant revenue, users, or trust. Must fix immediately.
+- "high": Noticeably hurting the experience. Users are confused or frustrated by this.
+- "medium": Real improvement opportunity that would meaningfully move the needle.
+- "low": Refinement that separates good from great. Still worth doing.
+
+Return a JSON array. Each issue:
 {
   "severity": "critical" | "high" | "medium" | "low",
-  "title": "Clear, specific title",
-  "description": "Detailed explanation referencing actual content from the site. Be specific — mention what you see (or don't see) on the page.",
-  "recommendation": "Concrete, actionable fix with specific suggestions. Not vague advice.",
-  "estimatedImpact": "Expected impact on UX, conversions, or engagement",
-  "targetElement": "A CSS selector or descriptive text to locate the problematic element on the page (e.g. 'nav', 'h1', '.hero-section', 'button.cta', 'footer', 'form', or a short text string found in the element). Use the most specific selector you can infer from the content. If the issue is page-wide or not tied to a single element, set to null.",
-  "pageUrl": "REQUIRED — The exact URL of the specific page where this issue was found. Copy it verbatim from the 'URL:' lines in the content above. Every finding MUST have a pageUrl — never set this to null. If the issue appears on multiple pages, use the most relevant one."
+  "title": "Clear, specific title (not generic)",
+  "description": "Deep analysis referencing actual content. Quote specific text. Explain the psychological or business impact on real users. This should read like a senior consultant's insight, not an automated scan result.",
+  "recommendation": "Concrete, implementable fix with specific details. Include the 'why' — what improvement the client should expect. Reference best practices or data where relevant.",
+  "estimatedImpact": "Specific expected improvement (e.g., '15-25% increase in CTA clicks', 'Reduces bounce rate for mobile users', 'Eliminates trust barrier for first-time visitors')",
+  "targetElement": "CSS selector or descriptive text to locate the element (e.g., 'nav', '.hero-section', 'button.cta'). Set to null if page-wide.",
+  "pageUrl": "REQUIRED — The exact URL from the 'URL:' lines above where this issue exists. Never null."
 }
 
-Rules:
-- Be brutally honest. This is a paid audit — the user wants real insights, not flattery.
-- Reference specific elements from the website content.
-- Each finding must be actionable with a clear fix.
-- CRITICAL: Every finding MUST include "pageUrl" with the exact URL from the content above where the issue was found. Do NOT set pageUrl to null. If the same issue appears across pages, pick the most illustrative page URL.
-- Include 2-6 findings per category. More for categories with serious issues, fewer if the site does well.
-- If the site does something well in this category, you can still find areas to improve.
+QUANTITY GUIDELINES:
+- Include 2-5 findings per category. Fewer, better findings beat many shallow ones.
+- It's OK to report only 1-2 findings if the site genuinely excels in this category.
+- Every finding must be genuinely worth the client's attention and effort to fix.
+- If you can't find real issues, report fewer findings rather than inventing problems.
 
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
@@ -285,7 +402,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 }
 
 /**
- * Run full analysis across all 13 UX categories in parallel batches.
+ * Run full analysis across all 19 UX categories in parallel batches.
  * This is used when the checklist_categories table is empty (not seeded).
  * Runs 3 categories concurrently to balance speed vs rate limits.
  */
@@ -361,11 +478,11 @@ export async function generateReport(
 
   const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
   const categoryExamples = translatedNames.map((name, i) => {
-    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 52, 70, 48, 65]
-    return `    { "name": "${name}", "score": ${scores[i]}, "summary": "..." }`
+    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 52, 62, 48, 65, 58, 72, 66, 45, 40, 55]
+    return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "..." }`
   }).join(',\n')
 
-  const prompt = `You are a senior UX strategist writing the executive summary for a professional paid UX audit report.
+  const prompt = `You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.
 ${reportLanguageInstruction}
 WEBSITE: ${auditData.product_url}
 ${focusBlock}
@@ -382,16 +499,17 @@ DETAILED FINDINGS:
 ${findingsDetail}
 
 INSTRUCTIONS:
-Write a comprehensive, professional executive summary and score the website.
+Write a comprehensive, insightful executive summary and score the website. This is a Human-Centered Digital Audit — go beyond basic UX and address how the site treats its users as human beings.
 
 For the EXECUTIVE SUMMARY:
-- Write 3-4 paragraphs (not bullet points)
-- Start with what the website does and who it's for (infer from content)
-- Describe the overall UX quality — what works well and what doesn't
-- Highlight the most impactful issues discovered
-- End with a prioritized action plan: what to fix first for maximum impact
-- Be specific — reference actual content and issues from the findings
-- Write like a consultant delivering a report to a client who paid good money for it
+- Write 4-5 well-crafted paragraphs (not bullet points)
+- Start with what the website does, who it serves, and the overall impression it creates
+- Discuss what works well — be genuine about strengths (this builds credibility for the critique)
+- Address the most impactful issues with depth: explain the human impact, not just the technical problem. How does this issue make real users FEEL? What does it cost the business?
+- Cover findings across all 4 audit pillars (Foundation, Human Experience, Technical Excellence, Future Readiness) — show the breadth of the analysis
+- End with a clear, prioritized action plan: what to fix first for maximum ROI
+- Write with authority and empathy. This should feel like advice from a trusted consultant, not a scan report
+- Reference specific content from the site — quote actual copy, describe actual design decisions
 
 For SCORES (0-100, be precise — NOT all 50s):
 - overallScore: Weighted average reflecting overall quality
@@ -410,7 +528,7 @@ Score guidelines:
 - 0-19: Severely broken
 
 For CATEGORY SCORES:
-Provide a score (0-100) and a one-sentence summary for each of these 13 categories.
+Provide a score (0-100) and a one-sentence summary for each of these 19 categories.
 IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
 ${categoryList}
 

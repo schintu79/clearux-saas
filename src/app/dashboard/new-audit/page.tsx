@@ -9,8 +9,8 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
 
 const AUDIT_FEATURES = [
-  '56-point deep analysis',
-  '13 UX categories audited',
+  '95-point deep analysis',
+  '19 UX categories audited',
   'AI discoverability check',
   'PDF + DOCX professional reports',
   'Prioritised findings & recommendations',
@@ -166,7 +166,7 @@ const NewAuditInner: React.FC = () => {
           New Audit
         </h1>
         <p className="text-muted">
-          Paste your URL and our AI does a deep analysis across all 56 checkpoints.
+          Paste your URL and our AI does a deep analysis across all 95 checkpoints.
         </p>
       </div>
 

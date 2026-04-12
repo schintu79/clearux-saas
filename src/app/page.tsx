@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -58,7 +58,7 @@ function useScrollReveal() {
 }
 
 /* ── Rotating words — fixed to always keep 2-line headline ── */
-const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust'];
+const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust', 'Digital Wellbeing', 'Inclusivity'];
 
 function RotatingWord() {
   const [idx, setIdx] = useState(0);
@@ -159,8 +159,8 @@ export default function Home() {
   };
 
   // Animated counters
-  const c1 = useCountUp(56, 1800);
-  const c2 = useCountUp(13, 1400);
+  const c1 = useCountUp(95, 1800);
+  const c2 = useCountUp(19, 1400);
   const c3 = useCountUp(6, 1200);
   const c4 = useCountUp(10, 1000);
 
@@ -171,19 +171,32 @@ export default function Home() {
   const faqRef = useScrollReveal();
 
   const auditCategories = [
-    { icon: Eye, title: "First Impression", desc: "How users perceive your product at first glance" },
-    { icon: Brain, title: "AI Discoverability", desc: "SEO and AI model indexing optimisation", featured: true },
-    { icon: Target, title: "Value Proposition", desc: "Clear communication of your unique value" },
-    { icon: Map, title: "Navigation", desc: "Intuitive structure and findability" },
-    { icon: MousePointerClick, title: "Conversion & CTAs", desc: "Effective call-to-actions and conversion paths" },
-    { icon: Zap, title: "Onboarding", desc: "Seamless user onboarding experience" },
-    { icon: Smartphone, title: "Mobile Experience", desc: "Responsive and optimized mobile design" },
-    { icon: Shield, title: "Trust & Credibility", desc: "Security and trustworthiness signals" },
-    { icon: Type, title: "Content & Copy", desc: "Clear, compelling, well-structured messaging" },
-    { icon: Gauge, title: "Performance", desc: "Speed, load times, and responsiveness" },
-    { icon: Layers, title: "Visual Hierarchy", desc: "Layout flow, spacing, and element prioritisation" },
-    { icon: Accessibility, title: "Accessibility", desc: "Inclusive design for all users and assistive tech" },
-    { icon: Lightbulb, title: "Cognitive Accessibility", desc: "Optimised for ADHD, dyslexia, and neurodivergent users" },
+    // Foundation (1-6)
+    { pillar: "Foundation", icon: Eye, title: "First Impression &amp; Visual Design", desc: "How users perceive your site at first glance" },
+    { pillar: "Foundation", icon: Target, title: "Value Proposition &amp; Messaging", desc: "Clear communication of your unique value" },
+    { pillar: "Foundation", icon: Map, title: "Navigation &amp; Information Architecture", desc: "Intuitive structure and findability" },
+    { pillar: "Foundation", icon: Layers, title: "Visual Hierarchy &amp; Layout", desc: "Layout flow, spacing, and element prioritisation" },
+    { pillar: "Foundation", icon: Type, title: "Content Quality &amp; Readability", desc: "Clear, compelling, well-structured messaging" },
+    { pillar: "Foundation", icon: MousePointerClick, title: "Calls-to-Action &amp; Conversion", desc: "Effective CTAs and conversion paths" },
+
+    // Human Experience (7-12)
+    { pillar: "Human Experience", icon: Shield, title: "Trust &amp; Credibility", desc: "Security and trustworthiness signals" },
+    { pillar: "Human Experience", icon: Scale, title: "Ethical UX &amp; Dark Pattern Detection", desc: "Ethical design practices and avoiding manipulation" },
+    { pillar: "Human Experience", icon: Heart, title: "Emotional Intelligence &amp; Psychological Safety", desc: "Supportive, non-judgmental user experience" },
+    { pillar: "Human Experience", icon: Brain, title: "Cognitive Accessibility &amp; Neurodiversity", desc: "Optimised for ADHD, dyslexia, and autism spectrum" },
+    { pillar: "Human Experience", icon: Sparkles, title: "Digital Wellbeing &amp; Responsible Design", desc: "Reducing user anxiety and addictive patterns" },
+    { pillar: "Human Experience", icon: Users, title: "Age Inclusivity &amp; Digital Literacy", desc: "Accessible to users of all ages and tech fluency" },
+
+    // Technical Excellence (13-16)
+    { pillar: "Technical Excellence", icon: Gauge, title: "Performance &amp; Page Speed", desc: "Speed, load times, and responsiveness" },
+    { pillar: "Technical Excellence", icon: Smartphone, title: "Mobile Experience", desc: "Responsive and optimized mobile design" },
+    { pillar: "Technical Excellence", icon: Accessibility, title: "Accessibility &amp; Inclusive Design", desc: "WCAG compliance and assistive tech support", featured: true },
+    { pillar: "Technical Excellence", icon: FileText, title: "Technical SEO &amp; Accessibility", desc: "Search engine and AI crawlability" },
+
+    // Future Readiness (17-19)
+    { pillar: "Future Readiness", icon: Brain, title: "AI Discoverability &amp; LLM Readiness", desc: "Optimisation for AI model indexing", featured: true },
+    { pillar: "Future Readiness", icon: Zap, title: "AI Agent Readiness", desc: "Structured data and agent interaction support" },
+    { pillar: "Future Readiness", icon: Globe2, title: "Cultural Sensitivity &amp; Global Readiness", desc: "Inclusive design for diverse global audiences" },
   ];
 
   const testimonials = [
@@ -306,7 +319,7 @@ export default function Home() {
           {/* Badge */}
           <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8">
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span className="text-sm font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
+            <span className="text-sm font-semibold text-accent tracking-wide">Human-Centered Digital Audits</span>
           </div>
 
           {/*
@@ -321,7 +334,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            Your website has UX issues you can&apos;t see. Get a professional audit across 56 checkpoints in minutes — not weeks.
+            Your website has UX issues you can&apos;t see. Get a professional audit across 95 checkpoints in 19 categories — in minutes, not weeks.
           </p>
 
           {/* URL Input */}
@@ -385,11 +398,11 @@ export default function Home() {
             <div>
               <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
               <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
-                <span className="text-text">Stop losing conversions to UX issues you can&apos;t see.</span>{' '}
-                <span className="text-muted">Professional-grade audits at a fraction of the cost of agencies — delivered in minutes, not weeks.</span>
+                <span className="text-text">Your website impacts real people. We audit what others miss.</span>{' '}
+                <span className="text-muted">The first audit that goes beyond usability — evaluating ethical design, emotional safety, digital wellbeing, and AI readiness across 95 checkpoints.</span>
               </h2>
               <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
-                Every audit evaluates 56 professional checkpoints — from first impression and navigation to mobile experience, AI discoverability, and cognitive accessibility.
+                Every audit evaluates 95 professional checkpoints across 19 categories — from first impression and navigation to mobile experience, AI discoverability, cognitive accessibility, digital wellbeing, and cultural sensitivity.
               </p>
             </div>
 
@@ -434,43 +447,52 @@ export default function Home() {
           <div className="h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
         </div>
 
-        {/* ── BOTTOM: What we audit — 13 categories ── */}
+        {/* ── BOTTOM: What we audit — 19 categories, 4 pillars ── */}
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-16 pb-28">
           <div
             ref={catRef.ref}
             className={`transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
           >
-            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">What we audit</p>
+            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">What we audit — 19 categories, 4 pillars</p>
 
-            {/* Category grid — compact cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {auditCategories.map((cat, idx) => {
-                const Icon = cat.icon;
-                const isFeatured = 'featured' in cat && cat.featured;
-                return (
-                  <div
-                    key={idx}
-                    className={`group relative rounded-xl p-4 border transition-all duration-300 ${
-                      isFeatured
-                        ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
-                        : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                        isFeatured
-                          ? 'bg-accent/20 group-hover:bg-accent/25'
-                          : 'bg-accent/10 group-hover:bg-accent/15'
-                      }`}>
-                        <Icon size={15} className="text-accent" />
-                      </div>
-                      <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
-                    </div>
-                    <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
+            {/* Group categories by pillar */}
+            {(['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'] as const).map((pillarName) => {
+              const pillarCats = auditCategories.filter((cat) => cat.pillar === pillarName);
+              return (
+                <div key={pillarName} className="mb-12">
+                  <p className="text-muted text-xs font-semibold tracking-wide uppercase mb-4 text-accent/70">{pillarName}</p>
+                  {/* Category grid — compact cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {pillarCats.map((cat, idx) => {
+                      const Icon = cat.icon;
+                      const isFeatured = 'featured' in cat && cat.featured;
+                      return (
+                        <div
+                          key={idx}
+                          className={`group relative rounded-xl p-4 border transition-all duration-300 ${
+                            isFeatured
+                              ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
+                              : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                              isFeatured
+                                ? 'bg-accent/20 group-hover:bg-accent/25'
+                                : 'bg-accent/10 group-hover:bg-accent/15'
+                            }`}>
+                              <Icon size={15} className="text-accent" />
+                            </div>
+                            <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
+                          </div>
+                          <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -668,7 +690,7 @@ export default function Home() {
 
           {/* ── Every audit includes — shared benefits strip ── */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
-            {['56-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
+            {['95-point deep analysis', '19 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
                 <span className="text-xs text-muted font-medium">{f}</span>
@@ -869,9 +891,9 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {[
-              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 56 checkpoints across 13 categories, and generates a full professional report.' },
-              { q: 'What does the audit cover?', a: 'We evaluate 13 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, Accessibility, and Cognitive Accessibility & Neurodiversity — ensuring your site works well for users with ADHD, dyslexia, and autism.' },
-              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 56 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 95 checkpoints across 19 categories, and generates a full professional report.' },
+              { q: 'What does the audit cover?', a: 'We evaluate 19 categories across 4 pillars: Foundation (First Impression, Value Proposition, Navigation, Visual Hierarchy, Content Quality, CTAs), Human Experience (Trust, Ethical UX, Emotional Intelligence, Cognitive Accessibility, Digital Wellbeing, Age Inclusivity), Technical Excellence (Performance, Mobile, Accessibility, SEO), and Future Readiness (AI Discoverability, AI Agent Readiness, Cultural Sensitivity).' },
+              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 95 checkpoints across 19 categories, PDF & Word reports, and prioritised recommendations.' },
               { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
               { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle JavaScript-rendered sites, SPAs, and multi-page websites.' },
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
@@ -904,7 +926,7 @@ export default function Home() {
             Ready to see what you&apos;re missing?
           </h2>
           <p className="text-muted text-lg mb-8">
-            Get a professional UX audit report in minutes — 56 checkpoints, 13 categories, actionable fixes.
+            Get a professional UX audit report in minutes — 95 checkpoints, 19 categories, actionable fixes.
           </p>
           <Link
             href="/register"

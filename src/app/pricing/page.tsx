@@ -49,8 +49,8 @@ export default function PricingPage() {
   ];
 
   const features = [
-    '56-point deep UX analysis',
-    '13 audit categories',
+    '95-point deep UX analysis',
+    '19 audit categories',
     'AI discoverability review',
     'Conversion & mobile analysis',
     'PDF + Word reports',
@@ -63,7 +63,7 @@ export default function PricingPage() {
     {
       question: 'How do credits work?',
       answer:
-        'One credit = one full audit. Credits never expire. Every audit includes all 56 checkpoints, PDF & Word reports, and prioritised recommendations.',
+        'One credit = one full audit. Credits never expire. Every audit includes all 95 checkpoints, PDF & Word reports, and prioritised recommendations.',
     },
     {
       question: 'How fast is the audit delivered?',
@@ -73,7 +73,7 @@ export default function PricingPage() {
     {
       question: 'What does every audit include?',
       answer:
-        'Every audit — regardless of which pack you buy — includes the full 56-point analysis across 13 UX categories, AI discoverability review, severity-ranked findings, and downloadable PDF + Word reports.',
+        'Every audit — regardless of which pack you buy — includes the full 95-point analysis across 19 UX categories, AI discoverability review, severity-ranked findings, and downloadable PDF + Word reports.',
     },
     {
       question: 'Can I buy more credits later?',
@@ -146,7 +146,7 @@ export default function PricingPage() {
                   )}
 
                   <div className="space-y-2.5 mb-6 flex-1">
-                    {['56-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
+                    {['95-point deep analysis', '19 UX categories', 'AI discoverability audit', 'PDF + DOCX reports'].map((f, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
                         <span className="text-xs text-muted">{f}</span>
