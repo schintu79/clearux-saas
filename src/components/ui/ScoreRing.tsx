@@ -42,7 +42,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
     circumference - (animatedScore / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="relative flex flex-col items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
         {/* Background circle */}
         <circle
@@ -68,7 +68,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
         />
       </svg>
       {/* Score text in center */}
-      <div className="absolute flex items-center justify-center" style={{ width: size, height: size }}>
+      <div className="absolute inset-0 flex items-center justify-center">
         <span
           className="font-inter font-bold text-center"
           style={{
