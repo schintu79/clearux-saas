@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
 
@@ -19,7 +19,7 @@ const AUDIT_FEATURES = [
 const NewAuditInner: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
 
   const [url, setUrl] = useState(searchParams.get('url') || '');
@@ -53,15 +53,12 @@ const NewAuditInner: React.FC = () => {
   }
 
   if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/login?redirectTo=/dashboard/new-audit');
+    }
     return (
-      <div className="text-center py-20">
-        <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <Link
-          href="/login"
-          className="inline-flex items-center gap-2 bg-accent text-white font-medium px-6 py-3 rounded-lg hover:bg-accent-dk transition-colors"
-        >
-          Sign In
-        </Link>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

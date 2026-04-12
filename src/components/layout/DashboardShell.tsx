@@ -14,7 +14,7 @@ import {
   Coins,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface DashboardShellProps {
@@ -23,7 +23,7 @@ interface DashboardShellProps {
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user, profile, signOut, loading } = useUser();
+  const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
 
@@ -53,8 +53,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const handleSignOut = async () => {
-    await signOut(); // signOut() does window.location.href = '/'
+  const handleSignOut = () => {
+    signOut(); // signOut() does window.location.replace('/')
   };
 
   return (

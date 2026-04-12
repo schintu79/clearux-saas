@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Coins, CheckCircle, Zap, ArrowRight } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 
 const PACKS = [
   { id: 'starter', credits: 1, price: 99, per: '$99', save: null, popular: false },
@@ -13,7 +13,7 @@ const PACKS = [
 ] as const;
 
 export default function BuyCreditsPage() {
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useAuth();
   const [credits, setCredits] = useState<number | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 

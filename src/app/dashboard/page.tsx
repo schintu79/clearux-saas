@@ -16,7 +16,7 @@ import {
   Trash2,
   Coins,
 } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
 import type { Audit, Report } from '@/types/database';
@@ -61,7 +61,7 @@ function scoreBg(s: number) {
 
 function DashboardInner() {
   const searchParams = useSearchParams();
-  const { user, profile, loading: authLoading } = useUser();
+  const { user, profile, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +175,18 @@ function DashboardInner() {
     const iv = setInterval(() => fetchAudits(user.id), 8000);
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
+
+  /* ── Redirect unauthenticated users to login ────────── */
+  if (!authLoading && !user) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/login?redirectTo=/dashboard');
+    }
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   /* ── Skeleton ─────────────────────────────────────────── */
   if (authLoading || (loading && user)) {

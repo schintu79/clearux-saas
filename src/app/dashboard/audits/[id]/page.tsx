@@ -26,7 +26,7 @@ import {
   Brain,
   ExternalLink,
 } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -293,7 +293,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id: auditId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useAuth();
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);

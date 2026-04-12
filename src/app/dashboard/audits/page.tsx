@@ -12,7 +12,7 @@ import {
   FileSearch,
   ExternalLink,
 } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
 import type { Audit, Report } from '@/types/database';
@@ -56,7 +56,7 @@ function scoreBg(s: number) {
 /* ── Component ─────────────────────────────────────────────── */
 
 export default function AuditsPage() {
-  const { user, loading: authLoading } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

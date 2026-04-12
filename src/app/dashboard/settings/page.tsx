@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Lock } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -31,7 +31,7 @@ interface Messages {
 }
 
 const SettingsPage: React.FC = () => {
-  const { user, profile, loading: userLoading, refreshProfile } = useUser();
+  const { user, profile, loading: userLoading, refreshProfile } = useAuth();
   const [formState, setFormState] = useState<FormState>({
     profile: {
       full_name: '',
@@ -70,12 +70,12 @@ const SettingsPage: React.FC = () => {
   }
 
   if (!user) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/login?redirectTo=/dashboard/settings');
+    }
     return (
-      <div className="text-center py-12">
-        <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <Link href="/login">
-          <Button variant="primary">Sign In</Button>
-        </Link>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
