@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -426,7 +426,8 @@ function ScrollToTop() {
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
-      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-accent text-white shadow-lg shadow-accent/30 flex items-center justify-center hover:bg-accent-dk transition-all hover:scale-105"
+      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full text-white shadow-lg flex items-center justify-center transition-all hover:scale-105 hover:brightness-110"
+      style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.2)' }}
     >
       <ArrowUp size={18} />
     </button>
@@ -580,8 +581,7 @@ export default function Home() {
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Badge — kaleidoscope gradient border */}
-          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8 relative" style={{ background: 'var(--gradient-brand-subtle)' }}>
-            <div className="absolute inset-0 rounded-full border border-transparent" style={{ borderImage: 'var(--gradient-brand) 1', borderImageSlice: 1 }} />
+          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--gradient-brand)' }} />
             <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Human-Centered, AI-Powered Digital Audits</span>
           </div>
@@ -628,7 +628,7 @@ export default function Home() {
           </form>
 
           {/* Pricing highlights — bold, accent color */}
-          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-accent">
+          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
             <span>From $99 per audit</span>
             <span className="opacity-40">·</span>
             <span>No subscription</span>
@@ -636,10 +636,11 @@ export default function Home() {
             <span>Results in minutes</span>
           </div>
 
-          {/* Sample report link */}
-          <div className="animate-fade-up delay-400 mt-4">
-            <a href="#pricing" className="text-sm text-muted hover:text-accent transition-colors underline underline-offset-2 decoration-border hover:decoration-accent">
+          {/* See pricing link */}
+          <div className="animate-fade-up delay-400 mt-8">
+            <a href="#pricing" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-text transition-colors group">
               See pricing
+              <ArrowDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
             </a>
           </div>
         </div>
@@ -814,7 +815,7 @@ export default function Home() {
                 {/* Pack name + badge */}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                  <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>
+                  <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
                   </span>
                 </div>
@@ -866,23 +867,66 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TESTIMONIALS — rotating, alternating bg
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-28 px-4 md:px-6 lg:px-8 bg-surface-alt">
+      <section className="py-28 px-4 md:px-6 lg:px-8 relative overflow-hidden" style={{ background: 'var(--gradient-brand)' }}>
+        {/* Overlay for text legibility */}
+        <div className="absolute inset-0 bg-black/[0.06] pointer-events-none" />
         <div
           ref={testRef.ref}
-          className={`max-w-5xl mx-auto transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className={`max-w-5xl mx-auto relative transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Testimonials</p>
-            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-2">
+            <p className="text-white/80 text-sm font-semibold tracking-wide uppercase mb-3">Testimonials</p>
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-white mb-3">
               Loved by product teams
             </h2>
             <div className="flex justify-center gap-0.5 mb-2">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <Star key={i} className="w-5 h-5 fill-white text-white" />
               ))}
             </div>
           </div>
-          <RotatingReview reviews={testimonials} />
+
+          {/* Testimonial cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {testimonials.slice(0, 3).map((t, i) => (
+              <div key={i} className="bg-white/[0.12] backdrop-blur-sm rounded-2xl p-6 border border-white/[0.1]">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-3.5 h-3.5 fill-white text-white" />
+                  ))}
+                </div>
+                <p className="text-white text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">{t.initials}</div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">{t.author}</p>
+                    <p className="text-white/60 text-xs">{t.title}, {t.company}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom row — 2 cards centered */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl mx-auto mt-5">
+            {testimonials.slice(3, 5).map((t, i) => (
+              <div key={i} className="bg-white/[0.12] backdrop-blur-sm rounded-2xl p-6 border border-white/[0.1]">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-3.5 h-3.5 fill-white text-white" />
+                  ))}
+                </div>
+                <p className="text-white text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">{t.initials}</div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">{t.author}</p>
+                    <p className="text-white/60 text-xs">{t.title}, {t.company}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

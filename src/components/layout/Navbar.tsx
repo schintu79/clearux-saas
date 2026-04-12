@@ -13,7 +13,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
     : email ? email[0].toUpperCase() : '?';
 
   return (
-    <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-medium select-none">
+    <div className="w-7 h-7 rounded-full text-white flex items-center justify-center text-xs font-medium select-none" style={{ background: 'var(--gradient-brand)' }}>
       {initials}
     </div>
   );
@@ -60,6 +60,7 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { label: 'Features', href: '/#features' },
     { label: 'Pricing', href: '/#pricing' },
+    { label: 'About', href: '/about' },
     { label: 'FAQ', href: '/#faq' },
   ];
 
@@ -99,10 +100,10 @@ const Navbar: React.FC = () => {
               {credits !== null && (
                 <Link
                   href="/dashboard/buy-credits"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 border border-accent/20 hover:bg-accent/15 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-colors"
                 >
-                  <Coins size={13} className="text-accent" />
-                  <span className="text-xs font-bold text-accent">{credits}</span>
+                  <Coins size={13} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{credits}</span>
                 </Link>
               )}
 

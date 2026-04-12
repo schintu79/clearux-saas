@@ -10,7 +10,8 @@ const Footer: React.FC = () => {
       { label: 'Pricing', href: '/#pricing' },
       { label: 'FAQ', href: '/#faq' },
     ],
-    Support: [
+    Company: [
+      { label: 'About Us', href: '/about' },
       { label: 'Contact Us', href: '/contact' },
       { label: 'support@clearux.ai', href: 'mailto:support@clearux.ai' },
     ],

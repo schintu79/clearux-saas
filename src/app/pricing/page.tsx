@@ -129,7 +129,7 @@ export default function PricingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                    <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>
+                    <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                       Save {pack.save}%
                     </span>
                   </div>

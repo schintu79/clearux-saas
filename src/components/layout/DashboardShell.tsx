@@ -78,7 +78,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         <div className="px-4 py-4 border-b border-white/10">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="font-inter font-bold text-xl text-white">
-              Clear<span className="text-accent">UX</span>
+              Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
         </div>
@@ -117,10 +117,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             <div className="bg-white/5 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Coins size={14} className="text-accent" />
+                  <Coins size={14} className="text-emerald-400" />
                   <span className="text-xs font-semibold text-sidebar-text">Credits</span>
                 </div>
-                <span className="text-lg font-bold text-accent">{credits}</span>
+                <span className="text-lg font-bold text-emerald-400">{credits}</span>
               </div>
               <p className="text-[10px] text-sidebar-text/40 mb-2">
                 {credits === 0
@@ -129,7 +129,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               </p>
               <Link
                 href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-semibold bg-accent text-white rounded-md py-1.5 hover:bg-accent/90 transition-colors"
+                className="block text-center text-[11px] font-semibold text-white rounded-md py-1.5 transition-all hover:brightness-110"
+                style={{ background: 'var(--gradient-brand)' }}
               >
                 {credits === 0 ? 'Buy Credits' : 'Buy More'}
               </Link>
@@ -190,7 +191,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3 font-inter font-bold text-xl text-text">
-            Clear<span className="text-accent">UX</span>
+            Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
           </span>
         </div>
 

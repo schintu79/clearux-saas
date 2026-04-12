@@ -250,7 +250,7 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
-        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="text-accent font-semibold hover:underline transition-colors">
+        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold hover:underline transition-colors bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
           Sign up
         </Link>
       </div>
@@ -277,7 +277,7 @@ export default function LoginPage() {
               <div className="mb-10">
                 <Link href="/" className="inline-block">
                   <h1 className="text-3xl font-manrope font-bold text-white">
-                    Clear<span className="text-accent">UX</span>
+                    Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
                   </h1>
                 </Link>
               </div>
@@ -293,8 +293,8 @@ export default function LoginPage() {
                 <div className="mt-8 space-y-5">
                   {kspItems.map((item) => (
                     <div key={item.text} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
-                        <item.icon size={22} className="text-accent" />
+                      <div className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <item.icon size={22} className="text-white/80" />
                       </div>
                       <p className="text-base font-semibold text-white/85">{item.text}</p>
                     </div>

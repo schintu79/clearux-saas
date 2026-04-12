@@ -323,13 +323,13 @@ export default function RegisterPage() {
               {passwordChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
                   <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    check.met ? 'bg-accent' : 'bg-border'
+                    check.met ? 'bg-emerald-500' : 'bg-border'
                   }`}>
                     {check.met && (
                       <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     )}
                   </div>
-                  <span className={`text-xs transition-colors ${check.met ? 'text-accent' : 'text-muted'}`}>
+                  <span className={`text-xs transition-colors ${check.met ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'}`}>
                     {check.label}
                   </span>
                 </div>
@@ -367,14 +367,14 @@ export default function RegisterPage() {
           {formData.confirmPassword.length > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
               <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                formData.password === formData.confirmPassword ? 'bg-accent' : 'bg-border'
+                formData.password === formData.confirmPassword ? 'bg-emerald-500' : 'bg-border'
               }`}>
                 {formData.password === formData.confirmPassword && (
                   <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 )}
               </div>
               <span className={`text-xs transition-colors ${
-                formData.password === formData.confirmPassword ? 'text-accent' : 'text-muted'
+                formData.password === formData.confirmPassword ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'
               }`}>
                 {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
               </span>
@@ -398,7 +398,7 @@ export default function RegisterPage() {
 
       <div className="mt-6 text-center text-sm text-muted">
         Already have an account?{' '}
-        <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="text-accent font-semibold hover:underline transition-colors">
+        <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-semibold hover:underline transition-colors bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
           Sign in
         </Link>
       </div>
@@ -425,7 +425,7 @@ export default function RegisterPage() {
               <div className="mb-10">
                 <Link href="/" className="inline-block">
                   <h1 className="text-3xl font-manrope font-bold text-white">
-                    Clear<span className="text-accent">UX</span>
+                    Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
                   </h1>
                 </Link>
               </div>
@@ -438,8 +438,8 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-1 gap-5">
                   {valueProps.map((prop) => (
                     <div key={prop.title} className="flex gap-4 items-start">
-                      <div className="w-11 h-11 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <prop.icon size={22} className="text-accent" />
+                      <div className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <prop.icon size={22} className="text-white/80" />
                       </div>
                       <div>
                         <p className="text-base font-bold text-white">{prop.title}</p>
@@ -471,7 +471,7 @@ export default function RegisterPage() {
                       key={i}
                       onClick={() => setActiveTestimonial(i)}
                       className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                        i === activeTestimonial ? 'bg-accent w-4' : 'bg-white/30'
+                        i === activeTestimonial ? 'bg-white w-4' : 'bg-white/30'
                       }`}
                     />
                   ))}
