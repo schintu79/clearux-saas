@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: '%s | ClearUX',
     default:  'ClearUX — AI-Powered UX Audits in Minutes',
   },
-  description: 'Get a comprehensive, AI-powered UX audit of your website across 48 checkpoints in 12 categories. Actionable professional report with prioritised fixes delivered in minutes.',
+  description: 'Get a comprehensive, AI-powered UX audit of your website across 56 checkpoints in 13 categories. Actionable professional report with prioritised fixes delivered in minutes.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: 'ClearUX',
     title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Our AI audits your entire website across 48 checkpoints. Get a professional report in minutes.',
+    description: 'Paste your URL. Our AI audits your entire website across 56 checkpoints. Get a professional report in minutes.',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'ClearUX — Deep AI-Powered UX Audits' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Get a comprehensive UX audit with 48 checkpoints across 12 categories. Professional report in minutes.',
+    description: 'Paste your URL. Get a comprehensive UX audit with 56 checkpoints across 13 categories. Professional report in minutes.',
     images: ['/og-image.png'],
   },
   icons: {

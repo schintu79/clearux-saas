@@ -321,7 +321,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            48 checkpoints. 12 categories. Professional report with prioritised fixes — delivered in minutes.
+            56 checkpoints. 13 categories. Professional report with prioritised fixes — delivered in minutes.
           </p>
 
           {/* URL Input */}
@@ -379,7 +379,7 @@ export default function Home() {
               <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
               <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
                 <span className="text-text">Audit with confidence.</span>{' '}
-                <span className="text-muted">Deep analysis across 12 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
+                <span className="text-muted">Deep analysis across 13 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
               </h2>
               <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
                 Every audit evaluates 48 professional checkpoints — from first impression and navigation to mobile experience and AI discoverability.
@@ -449,7 +449,7 @@ export default function Home() {
               <div className="space-y-0">
                 {[
                   { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically. Works with any publicly accessible website.' },
-                  { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories with AI-powered precision.' },
+                  { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 56 checkpoints across 13 UX categories with AI-powered precision.' },
                   { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, screenshots, and actionable fixes — ready in minutes.' },
                 ].map((item, idx) => {
                   const Icon = item.icon;
@@ -502,7 +502,7 @@ export default function Home() {
             <div>
               <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">What we audit</p>
               <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
-                12 categories.<br />48 checkpoints.
+                13 categories.<br />56 checkpoints.
               </h2>
             </div>
             <p className="text-muted text-base md:text-lg leading-relaxed lg:pb-1">
@@ -738,7 +738,7 @@ export default function Home() {
 
           {/* ── Every audit includes — shared benefits strip ── */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
-            {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
+            {['48-point deep analysis', '13 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
                 <span className="text-xs text-muted font-medium">{f}</span>
@@ -939,9 +939,9 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {[
-              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints, and generates a full professional report.' },
-              { q: 'What does the audit cover?', a: 'We evaluate 12 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
-              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 56 checkpoints, and generates a full professional report.' },
+              { q: 'What does the audit cover?', a: 'We evaluate 13 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, Accessibility, and Cognitive Accessibility & Neurodiversity — ensuring your site works well for users with ADHD, dyslexia, and autism.' },
+              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 56 checkpoints, PDF & Word reports, and prioritised recommendations.' },
               { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
               { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle JavaScript-rendered sites, SPAs, and multi-page websites.' },
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },

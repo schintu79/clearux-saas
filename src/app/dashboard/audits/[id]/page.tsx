@@ -171,7 +171,7 @@ const statusMeta: Record<
     label: 'Analysing UX',
     color: 'active',
     icon: Sparkles,
-    description: 'Running 48-point UX analysis across 12 categories...',
+    description: 'Running 56-point UX analysis across 13 categories...',
   },
   generating_report: {
     label: 'Generating Report',
@@ -202,7 +202,7 @@ const progressSteps = [
   { key: 'completed', label: 'Done' },
 ];
 
-/* ── 48 checkpoint labels for rotating display ────────────── */
+/* ── 56 checkpoint labels for rotating display ────────────── */
 const auditCheckpoints = [
   'Checking navigation clarity & structure',
   'Evaluating page load performance',

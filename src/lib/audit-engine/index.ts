@@ -237,7 +237,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         }
       }
     } else {
-      // No DB categories — use built-in 12-category analysis
+      // No DB categories — use built-in 13-category analysis
       console.log('[audit-engine] No DB categories found, using built-in analysis')
 
       const findings = await runFullAnalysis(pageContent, audit as any, userFocus, language)

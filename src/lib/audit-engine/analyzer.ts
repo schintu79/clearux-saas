@@ -55,7 +55,7 @@ export interface ReportData {
   categoryScores: CategoryScore[]
 }
 
-// ── The 12 UX categories we evaluate ─────────────────────────
+// ── The 13 UX categories we evaluate ─────────────────────────
 const UX_CATEGORIES = [
   {
     name: 'First Impression & Visual Design',
@@ -165,6 +165,19 @@ const UX_CATEGORIES = [
       'Are ARIA roles and landmarks used to aid screen readers?',
     ],
   },
+  {
+    name: 'Cognitive Accessibility & Neurodiversity',
+    items: [
+      'Is the page layout clean and uncluttered, with clear visual grouping — reducing cognitive load for users with ADHD or attention differences?',
+      'Are fonts readable for users with dyslexia (sans-serif, adequate size ≥16px, line-height ≥1.5, line length 50-75 characters, no justified text)?',
+      'Is the language plain, literal, and unambiguous — avoiding idioms, sarcasm, or vague instructions that may be harder for autistic users to interpret?',
+      'Are there distracting elements (auto-playing media, flashing animations, carousels, popups) that cannot be paused or dismissed — which can overwhelm users with sensory sensitivities?',
+      'Is navigation predictable and consistent across pages — with clear labels, logical structure, and no unexpected layout shifts that disrupt cognitive flow?',
+      'Are error messages specific, non-alarming, and constructive — clearly explaining what went wrong and how to fix it, rather than using vague or anxiety-inducing language?',
+      'Are multi-step processes (forms, checkouts) broken into manageable chunks with visible progress indicators — rather than presenting one long overwhelming page?',
+      'Is important information communicated through multiple channels (text + icons + colour) rather than relying on a single modality — supporting diverse processing styles?',
+    ],
+  },
 ]
 
 /**
@@ -271,7 +284,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 }
 
 /**
- * Run full analysis across all 12 UX categories in parallel batches.
+ * Run full analysis across all 13 UX categories in parallel batches.
  * This is used when the checklist_categories table is empty (not seeded).
  * Runs 3 categories concurrently to balance speed vs rate limits.
  */
@@ -347,7 +360,7 @@ export async function generateReport(
 
   const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
   const categoryExamples = translatedNames.map((name, i) => {
-    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 52, 70, 48]
+    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 52, 70, 48, 65]
     return `    { "name": "${name}", "score": ${scores[i]}, "summary": "..." }`
   }).join(',\n')
 
@@ -396,7 +409,7 @@ Score guidelines:
 - 0-19: Severely broken
 
 For CATEGORY SCORES:
-Provide a score (0-100) and a one-sentence summary for each of these 12 categories.
+Provide a score (0-100) and a one-sentence summary for each of these 13 categories.
 IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
 ${categoryList}
 

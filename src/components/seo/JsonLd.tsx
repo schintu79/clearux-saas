@@ -1,9 +1,9 @@
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
 
 const FAQ_ITEMS = [
-  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints across 12 UX categories, and generates a full professional report with prioritised recommendations.' },
-  { q: 'What does the audit cover?', a: 'We evaluate 12 critical UX categories: First Impression & Visual Design, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
-  { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 56 checkpoints across 13 UX categories, and generates a full professional report with prioritised recommendations.' },
+  { q: 'What does the audit cover?', a: 'We evaluate 13 critical UX categories: First Impression & Visual Design, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, Accessibility, and Cognitive Accessibility & Neurodiversity.' },
+  { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all 56 checkpoints, PDF & Word reports, and prioritised recommendations.' },
   { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, category breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
   { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
   { q: 'Is my data secure?', a: 'Absolutely. We only analyse publicly visible content on your website. Payments are processed securely via Stripe. We do not store or share your website data beyond generating your audit report.' },
@@ -19,7 +19,7 @@ export function HomeJsonLd() {
         '@type': 'WebSite',
         name: 'ClearUX',
         url: siteUrl,
-        description: 'AI-powered UX audits across 48 checkpoints in 12 categories. Professional reports in minutes.',
+        description: 'AI-powered UX audits across 56 checkpoints in 13 categories. Professional reports in minutes.',
         potentialAction: {
           '@type': 'SearchAction',
           target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
@@ -44,10 +44,10 @@ export function HomeJsonLd() {
         name: 'ClearUX',
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        description: 'Deep AI-powered UX audit tool that analyses websites across 48 checkpoints in 12 categories and delivers professional reports with actionable recommendations.',
+        description: 'Deep AI-powered UX audit tool that analyses websites across 56 checkpoints in 13 categories and delivers professional reports with actionable recommendations.',
         featureList: [
-          '48-point UX analysis',
-          '12 audit categories',
+          '56-point UX analysis',
+          '13 audit categories',
           'AI-powered crawling',
           'PDF and Word reports',
           'Multi-language support (6 languages)',
