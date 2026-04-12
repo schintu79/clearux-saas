@@ -184,7 +184,7 @@ export default function LoginPage() {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5" aria-label="Sign in form">
         {/* Email */}
         <div>
           <label htmlFor="email" className="label">Email</label>
@@ -192,6 +192,8 @@ export default function LoginPage() {
             id="email"
             type="email"
             name="email"
+            autoComplete="email"
+            aria-required="true"
             value={formData.email}
             onChange={handleChange}
             placeholder="you@example.com"
@@ -209,6 +211,8 @@ export default function LoginPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               name="password"
+              autoComplete="current-password"
+              aria-required="true"
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter your password"

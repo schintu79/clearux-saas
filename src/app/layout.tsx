@@ -3,6 +3,7 @@ import { Inter, Manrope } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
+import CookieConsent from '@/components/ui/CookieConsent'
 import './globals.css'
 
 const inter = Inter({
@@ -59,6 +60,13 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: siteUrl,
+    languages: {
+      'en': siteUrl,
+      'x-default': siteUrl,
+    },
+  },
+  other: {
+    'content-language': 'en',
   },
 }
 
@@ -72,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
+      dir="ltr"
       suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
@@ -109,6 +118,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider initialTheme={initialTheme}>
           <AuthProvider>
             {children}
+            <CookieConsent />
           </AuthProvider>
         </ThemeProvider>
       </body>

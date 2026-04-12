@@ -51,7 +51,7 @@ export default function AboutPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[70vh] bg-surface">
+      <main id="main-content" className="min-h-[70vh] bg-surface">
         {/* ── Hero ── */}
         <section className="relative overflow-hidden">
           {/* Subtle kaleidoscope glow */}

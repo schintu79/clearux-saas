@@ -21,7 +21,7 @@ export default function ContactPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[70vh] bg-surface">
+      <main id="main-content" className="min-h-[70vh] bg-surface">
         {/* Hero area with subtle kaleidoscope glow */}
         <section className="relative overflow-hidden">
           <div className="absolute top-[-10%] left-[20%] w-[400px] h-[350px] rounded-full bg-violet-500/[0.04] blur-[120px] pointer-events-none" />
@@ -46,13 +46,15 @@ export default function ContactPage() {
                 <p className="text-text/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5" aria-label="Contact form">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-text mb-1.5">Name</label>
                   <input
                     id="name"
                     name="name"
                     type="text"
+                    autoComplete="name"
+                    aria-required="true"
                     required
                     className="input"
                     placeholder="Your name"
@@ -65,6 +67,8 @@ export default function ContactPage() {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
+                    aria-required="true"
                     required
                     className="input"
                     placeholder="you@example.com"
@@ -77,6 +81,7 @@ export default function ContactPage() {
                     id="message"
                     name="message"
                     rows={5}
+                    aria-required="true"
                     required
                     className="input resize-y"
                     placeholder="How can we help?"

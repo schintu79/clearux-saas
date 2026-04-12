@@ -172,14 +172,19 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── URL Input ──────────────────────────────────────── */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-text mb-2">
+        <label htmlFor="audit-url" className="block text-sm font-semibold text-text mb-2">
           <Globe size={14} className="inline mr-1.5 -mt-0.5" />
           Website URL
         </label>
         <div className="relative">
           <input
             ref={urlInputRef}
-            type="text"
+            id="audit-url"
+            type="url"
+            name="url"
+            autoComplete="url"
+            aria-required="true"
+            aria-describedby={urlError ? 'url-error' : undefined}
             value={url}
             onChange={(e) => {
               setUrl(e.target.value);
@@ -205,18 +210,20 @@ const NewAuditInner: React.FC = () => {
           )}
         </div>
         {urlError && (
-          <p className="text-red-500 dark:text-red-400 text-sm mt-2">{urlError}</p>
+          <p id="url-error" className="text-red-500 dark:text-red-400 text-sm mt-2" role="alert">{urlError}</p>
         )}
       </div>
 
       {/* ── Report Language ───────────────────────────────── */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-text mb-2">
+        <label htmlFor="audit-language" className="block text-sm font-semibold text-text mb-2">
           <Languages size={14} className="inline mr-1.5 -mt-0.5" />
           Report Language
         </label>
         <div className="relative">
           <select
+            id="audit-language"
+            name="language"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             className="w-full px-4 py-3 border-2 border-border rounded-xl font-inter text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-violet-500 appearance-none cursor-pointer"

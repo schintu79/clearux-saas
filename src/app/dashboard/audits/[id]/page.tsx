@@ -174,37 +174,37 @@ const severityConfig = {
   critical: {
     badge: 'danger' as const,
     label: 'Critical',
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    border: 'border-red-200/60 dark:border-red-800/30',
+    bg: 'bg-white dark:bg-card',
+    border: 'border-border/40 dark:border-white/[0.06]',
     dot: 'bg-red-500',
-    text: 'text-red-700 dark:text-red-400',
+    text: 'text-red-600 dark:text-red-400',
     impactBg: 'bg-red-50 dark:bg-red-950/20',
   },
   high: {
     badge: 'failed' as const,
     label: 'High',
-    bg: 'bg-orange-50 dark:bg-orange-950/30',
-    border: 'border-orange-200/60 dark:border-orange-800/30',
+    bg: 'bg-white dark:bg-card',
+    border: 'border-border/40 dark:border-white/[0.06]',
     dot: 'bg-orange-500',
-    text: 'text-orange-700 dark:text-orange-400',
+    text: 'text-orange-600 dark:text-orange-400',
     impactBg: 'bg-orange-50 dark:bg-orange-950/20',
   },
   medium: {
     badge: 'pending' as const,
     label: 'Medium',
-    bg: 'bg-yellow-50 dark:bg-yellow-950/30',
-    border: 'border-yellow-200/60 dark:border-yellow-800/30',
+    bg: 'bg-white dark:bg-card',
+    border: 'border-border/40 dark:border-white/[0.06]',
     dot: 'bg-yellow-500',
-    text: 'text-yellow-700 dark:text-yellow-400',
+    text: 'text-yellow-600 dark:text-yellow-500',
     impactBg: 'bg-yellow-50 dark:bg-yellow-950/20',
   },
   low: {
     badge: 'active' as const,
     label: 'Low',
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-200/60 dark:border-blue-800/30',
+    bg: 'bg-white dark:bg-card',
+    border: 'border-border/40 dark:border-white/[0.06]',
     dot: 'bg-blue-500',
-    text: 'text-blue-700 dark:text-blue-400',
+    text: 'text-blue-600 dark:text-blue-400',
     impactBg: 'bg-blue-50 dark:bg-blue-950/20',
   },
 };
@@ -386,7 +386,7 @@ function FindingCard({ finding, pillarColor }: { finding: AuditFinding; pillarCo
   const sev = severityConfig[finding.severity] || severityConfig.medium;
 
   return (
-    <div className={`rounded-xl border ${sev.border} ${sev.bg} overflow-hidden transition-all`}>
+    <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(!open)}
@@ -1102,16 +1102,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             {/* Gradient top accent */}
             <div className="h-1.5" style={{ background: 'var(--gradient-brand)' }} />
 
-            <div className="p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="p-5 sm:p-6">
+              {/* Mobile: centered stack — Desktop: horizontal row */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 {/* Score ring */}
                 <div className="flex-shrink-0">
                   <ScoreRing score={report.overall_score ?? 0} size={110} strokeWidth={7} />
                 </div>
 
                 {/* Score details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 min-w-0 text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
                     <h2 className="text-xl font-bold font-manrope text-text">Overall Score</h2>
                     <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
                       (report.overall_score ?? 0) >= 70
@@ -1124,8 +1125,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </span>
                   </div>
 
-                  {/* Pillar mini-scores */}
-                  <div className="flex flex-wrap gap-3 mt-3">
+                  {/* Pillar mini-scores — 2-column grid on mobile, inline on desktop */}
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
                     {PILLAR_CONFIG.map((pillar) => {
                       const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
                       const avg = pillarCats.length > 0
@@ -1140,35 +1141,35 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       );
                     })}
                   </div>
-                </div>
 
-                {/* Download buttons */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer">
-                    <button
-                      className="flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-xl transition-all hover:brightness-110 shadow-sm"
-                      style={{ background: 'var(--gradient-brand)' }}
-                    >
-                      <Download size={14} />
-                      PDF
-                    </button>
-                  </a>
-                  <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer">
-                    <button className="flex items-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors">
-                      <Download size={14} />
-                      Word
-                    </button>
-                  </a>
+                  {/* Download buttons — below pillar scores on mobile, stays in row on desktop */}
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-4">
+                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer">
+                      <button
+                        className="flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-xl transition-all hover:brightness-110 shadow-sm"
+                        style={{ background: 'var(--gradient-brand)' }}
+                      >
+                        <Download size={14} />
+                        PDF
+                      </button>
+                    </a>
+                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer">
+                      <button className="flex items-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors">
+                        <Download size={14} />
+                        Word
+                      </button>
+                    </a>
+                  </div>
                 </div>
               </div>
 
               {/* Issue summary strip */}
               {report.total_issues > 0 && (
-                <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
                   <span className="text-sm font-semibold text-text">
                     {report.total_issues} issues found
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     {severityCounts.critical > 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -1359,13 +1360,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         {pg.url}
                       </a>
                     </div>
-                    {pg.status_code && (
-                      <span className={clsx(
-                        'text-xs font-mono px-1.5 py-0.5 rounded',
-                        pg.status_code === 200
-                          ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
-                          : 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
-                      )}>
+                    {pg.status_code && pg.status_code !== 200 && (
+                      <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20">
                         {pg.status_code}
                       </span>
                     )}

@@ -23,11 +23,16 @@ export interface CrawledPage {
 
 function extractTextContent(html: string): string {
   let text = html
+    // Remove non-content elements
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
     .replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, '')
     .replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, '')
+    // Remove demo/example/illustrative content — these are display examples,
+    // not actual features or patterns on the site being audited
+    .replace(/<(?:aside|div|section|article)\b[^>]*data-demo=["']true["'][^>]*>[\s\S]*?<\/(?:aside|div|section|article)>/gi, '')
+    .replace(/<(?:aside|div|section|article)\b[^>]*role=["']presentation["'][^>]*aria-label=["'][^"']*(?:example|demo|illustrative)[^"']*["'][^>]*>[\s\S]*?<\/(?:aside|div|section|article)>/gi, '')
 
   text = text
     .replace(/<[^>]*>/g, ' ')

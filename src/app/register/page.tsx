@@ -259,7 +259,7 @@ export default function RegisterPage() {
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" aria-label="Create account form">
         {/* Full Name */}
         <div>
           <label htmlFor="fullName" className="label">Full Name</label>
@@ -267,6 +267,8 @@ export default function RegisterPage() {
             id="fullName"
             type="text"
             name="fullName"
+            autoComplete="name"
+            aria-required="true"
             value={formData.fullName}
             onChange={handleChange}
             placeholder="Sarah Chen"
@@ -283,6 +285,8 @@ export default function RegisterPage() {
             id="email"
             type="email"
             name="email"
+            autoComplete="email"
+            aria-required="true"
             value={formData.email}
             onChange={handleChange}
             placeholder="you@example.com"
@@ -300,6 +304,8 @@ export default function RegisterPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               name="password"
+              autoComplete="new-password"
+              aria-required="true"
               value={formData.password}
               onChange={handleChange}
               placeholder="Create a strong password"
@@ -348,6 +354,8 @@ export default function RegisterPage() {
               id="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
               name="confirmPassword"
+              autoComplete="new-password"
+              aria-required="true"
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="Repeat your password"

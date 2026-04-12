@@ -312,6 +312,14 @@ ${pageContent.substring(0, 15000)}
 YOUR APPROACH — DEEP ANALYSIS, NOT SURFACE SCANNING:
 You must think like a senior consultant, not an automated checker. Your job is to find REAL issues that actually impact users, conversions, and business outcomes. The kind of insights that make a client say "I never thought of that."
 
+CRITICAL — DEMO & ILLUSTRATIVE CONTENT EXCLUSION:
+Many websites display example/demo content to showcase their product's capabilities (e.g., a UX audit tool showing sample findings, a design tool showing example designs, a security scanner showing sample vulnerabilities). You MUST recognize and EXCLUDE this type of content from your analysis:
+- Content inside elements marked with data-demo="true", role="presentation", or aria-label containing "example", "demo", or "illustrative"
+- Content explicitly labeled as "Example", "Demo", "Sample", "Preview", or "Illustration"
+- Product showcase sections that display what the tool DETECTS on other sites (not issues on THIS site)
+- Mock-ups, wireframes, or UI previews shown as product demonstrations
+If you find text like "Confirmshaming detected" or "Dark pattern found" inside a demo/example panel on a UX audit tool's own website, that is the tool demonstrating its capabilities — NOT an actual dark pattern on the site. Never flag demo content as real findings.
+
 DO NOT flag these common false positives:
 - Generic "missing meta description" or "missing alt text" unless it's truly egregious
 - Minor HTML structure issues that don't affect the user experience
@@ -319,6 +327,7 @@ DO NOT flag these common false positives:
 - Theoretical issues you can't actually verify from the content provided
 - Things that "could be better" but work perfectly fine as-is
 - Issues that every website in the world has — focus on what THIS specific site is doing wrong
+- Demo or illustrative content used to showcase the product's features (see DEMO EXCLUSION rule above)
 
 DO flag these high-value findings:
 - Real friction points in the user journey that lose conversions

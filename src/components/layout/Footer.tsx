@@ -6,6 +6,7 @@ const Footer: React.FC = () => {
 
   const footerLinks = {
     Product: [
+      { label: 'Features', href: '/#features' },
       { label: 'How It Works', href: '/#how-it-works' },
       { label: 'Pricing', href: '/#pricing' },
       { label: 'FAQ', href: '/#faq' },
@@ -19,6 +20,11 @@ const Footer: React.FC = () => {
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
       { label: 'Cookie Policy', href: '/cookies' },
+    ],
+    Resources: [
+      { label: 'Login', href: '/login' },
+      { label: 'Sign Up', href: '/register' },
+      { label: 'Dashboard', href: '/dashboard' },
     ],
   };
 

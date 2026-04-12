@@ -67,6 +67,14 @@ const Navbar: React.FC = () => {
   const isLoggedIn = !loading && !!user;
 
   return (
+    <>
+    {/* Skip navigation link for keyboard / screen-reader users */}
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-violet-700 focus:shadow-lg focus:text-sm focus:font-semibold"
+    >
+      Skip to main content
+    </a>
     <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
@@ -237,6 +245,7 @@ const Navbar: React.FC = () => {
         )}
       </div>
     </nav>
+    </>
   );
 };
 

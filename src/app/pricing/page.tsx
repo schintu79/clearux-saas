@@ -41,7 +41,7 @@ export default function PricingPage() {
     <div className="flex flex-col min-h-screen bg-surface">
       <Navbar />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* ── Header ── */}
         <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">

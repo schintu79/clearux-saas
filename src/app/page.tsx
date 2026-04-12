@@ -176,14 +176,18 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   const pillarNames = ['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'];
 
   /* ── Visual panels for each pillar ── */
+  /* NOTE: These are ILLUSTRATIVE EXAMPLES of audit output, not findings about this website.
+     data-demo="true" and aria-label attributes signal to crawlers/auditors that
+     this content is demonstrative, not indicative of issues on clearux.ai itself. */
   const visuals = [
     /* FOUNDATION — Score dashboard */
-    <div key="v0" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+    <aside key="v0" aria-label="Example audit output — illustrative demo, not a real finding" data-demo="true" role="presentation" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
       <div className="p-6 pb-0">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
             <span className="text-xs font-semibold text-text">Audit Overview</span>
+            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
           </div>
           <span className="text-xs text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
         </div>
@@ -224,25 +228,26 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         <p className="text-xs font-bold text-violet-700 dark:text-violet-400 mb-1">Recommendation</p>
         <p className="text-xs text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
       </div>
-    </div>,
+    </aside>,
 
     /* HUMAN EXPERIENCE — Dark patterns scan */
-    <div key="v1" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection, not a real finding on this site" data-demo="true" role="presentation" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
             <span className="text-xs font-semibold text-text">Human Experience Scan</span>
+            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
           </div>
           <span className="text-xs font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
         </div>
         <div className="space-y-3">
           {[
-            {Icon:AlertTriangle,t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
-            {Icon:Clock,t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
-            {Icon:CheckCircle,t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
-            {Icon:AlertTriangle,t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
-            {Icon:CheckCircle,t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
+            {Icon:AlertTriangle,t:'Confirmshaming detected (example)',d:'Example: "No thanks, I don\'t want to save money" — manipulative opt-out copy found on audited site',pass:false},
+            {Icon:Clock,t:'Fake urgency pattern (example)',d:'Example: Countdown timer resets on page refresh — not a genuine deadline on audited site',pass:false},
+            {Icon:CheckCircle,t:'Cookie consent is fair (example)',d:'Example: Equal visual weight for Accept and Reject options on audited site',pass:true},
+            {Icon:AlertTriangle,t:'Cancellation flow buried (example)',d:'Example: 4-step process to unsubscribe vs 1-click to sign up on audited site',pass:false},
+            {Icon:CheckCircle,t:'No hidden costs (example)',d:'Example: All fees disclosed upfront before payment on audited site',pass:true},
           ].map((item,i)=>(
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
               <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-emerald-500' : 'text-pink-500'}`} />
@@ -258,15 +263,16 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <p className="text-xs text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust.</p>
         </div>
       </div>
-    </div>,
+    </aside>,
 
     /* TECHNICAL EXCELLENCE — Performance dashboard */
-    <div key="v2" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+    <aside key="v2" aria-label="Example audit output — illustrative demo of technical audit, not a real finding" data-demo="true" role="presentation" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
             <span className="text-xs font-semibold text-text">Technical Audit</span>
+            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -299,15 +305,16 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <p className="text-xs text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
         </div>
       </div>
-    </div>,
+    </aside>,
 
     /* FUTURE READINESS — AI readiness checker */
-    <div key="v3" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+    <aside key="v3" aria-label="Example audit output — illustrative demo of AI readiness check, not a real finding" data-demo="true" role="presentation" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
             <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
+            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
           </div>
           <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
         </div>
@@ -340,7 +347,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <p className="text-xs text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
         </div>
       </div>
-    </div>,
+    </aside>,
   ];
 
   return (
@@ -452,8 +459,8 @@ export default function Home() {
   // Animated counters
   const c1 = useCountUp(95, 1800);
   const c2 = useCountUp(19, 1400);
-  const c3 = useCountUp(6, 1200);
-  const c4 = useCountUp(10, 1000);
+  const c3 = useCountUp(4, 1200);
+  const c4 = useCountUp(40, 1000);
 
 
   const priceRef = useScrollReveal();
@@ -500,9 +507,6 @@ export default function Home() {
   return (
     <div className="bg-surface text-text min-h-screen">
       <HomeJsonLd />
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
-        Skip to content
-      </a>
       <Navbar />
       <main id="main-content">
 
@@ -608,7 +612,9 @@ export default function Home() {
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="hero-url-input"
-                  type="text"
+                  type="url"
+                  name="url"
+                  autoComplete="url"
                   value={heroUrl}
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
@@ -706,8 +712,8 @@ export default function Home() {
             {([
               { counter: c1, suffix: '+', label: 'UX checkpoints', prefix: '' },
               { counter: c2, suffix: '', label: 'Categories', prefix: '' },
-              { counter: c3, suffix: '', label: 'Languages', prefix: '' },
-              { counter: c4, suffix: '', label: 'Min to report', prefix: '<' },
+              { counter: c3, suffix: '', label: 'Audit pillars', prefix: '' },
+              { counter: c4, suffix: '+', label: 'Pages crawled', prefix: '' },
             ] as const).map((stat, idx) => {
               const counter = (stat as { counter: typeof c1 }).counter;
               return (
@@ -954,6 +960,9 @@ export default function Home() {
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
               { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
+              { q: 'How accurate are the AI-generated findings?', a: 'Our AI models are tuned for precision over recall — we\u2019d rather miss an edge case than flag a false positive. Each finding includes a confidence level and specific evidence (screenshot, element selector, or metric). That said, AI audits complement but don\u2019t replace human expert review for nuanced brand or strategy questions.' },
+              { q: 'What are the limitations of an AI audit?', a: 'ClearUX analyses publicly visible pages only — we can\u2019t audit gated content (login-required areas, admin panels). We don\u2019t test with real users, so behavioural insights like A/B test results or heatmaps aren\u2019t included. For complex flows like multi-step checkouts, findings may be limited to the accessible steps.' },
+              { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 95 checkpoints across 19 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
             ].map((item, idx) => (
               <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
                 <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
@@ -1000,7 +1009,9 @@ export default function Home() {
                 <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="cta-url-input"
-                  type="text"
+                  type="url"
+                  name="url"
+                  autoComplete="url"
                   value={heroUrl}
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
