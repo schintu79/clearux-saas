@@ -29,14 +29,54 @@ import {
 } from 'docx'
 import { createServiceSupabase } from '@/lib/supabase-server'
 
-/** Fetch a screenshot from URL and return as Buffer, or null on failure */
-async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+/** Fetch a screenshot from URL and return as Buffer, or null on failure.
+ *  If the public URL fails, tries signed URL and direct download via Supabase. */
+async function fetchImageBuffer(url: string, db?: ReturnType<typeof createServiceSupabase>): Promise<Buffer | null> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-    if (!res.ok) return null
+    console.log('[DOCX] Fetching screenshot:', url)
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
+    if (!res.ok) {
+      console.warn('[DOCX] Public URL failed:', res.status, res.statusText, url)
+      // Try signed URL fallback via Supabase storage
+      if (db && url.includes('/audit-screenshots/')) {
+        const path = url.split('/audit-screenshots/').pop()
+        if (path) {
+          console.log('[DOCX] Trying signed URL for:', path)
+          const { data: signedData, error: signErr } = await db.storage
+            .from('audit-screenshots')
+            .createSignedUrl(decodeURIComponent(path), 120)
+          if (!signErr && signedData?.signedUrl) {
+            const sRes = await fetch(signedData.signedUrl, { signal: AbortSignal.timeout(30_000) })
+            if (sRes.ok) {
+              const buf = await sRes.arrayBuffer()
+              console.log('[DOCX] Signed URL worked:', path, `(${buf.byteLength} bytes)`)
+              return Buffer.from(buf)
+            }
+          }
+        }
+      }
+      // Try direct download as last resort
+      if (db && url.includes('/audit-screenshots/')) {
+        const path = url.split('/audit-screenshots/').pop()
+        if (path) {
+          console.log('[DOCX] Trying direct download for:', path)
+          const { data: dlData, error: dlErr } = await db.storage
+            .from('audit-screenshots')
+            .download(decodeURIComponent(path))
+          if (!dlErr && dlData) {
+            const buf = await dlData.arrayBuffer()
+            console.log('[DOCX] Direct download worked:', path, `(${buf.byteLength} bytes)`)
+            return Buffer.from(buf)
+          }
+        }
+      }
+      return null
+    }
     const arrayBuf = await res.arrayBuffer()
+    console.log('[DOCX] Screenshot fetched OK:', url, `(${arrayBuf.byteLength} bytes)`)
     return Buffer.from(arrayBuf)
-  } catch {
+  } catch (err) {
+    console.error('[DOCX] Screenshot fetch error:', url, err instanceof Error ? err.message : err)
     return null
   }
 }
@@ -768,7 +808,7 @@ export async function GET(
     const screenshotBuffers = new Map<number, Buffer>()
     const screenshotPromises = f.map(async (fi: any, idx: number) => {
       if (fi.screenshot_url) {
-        const buf = await fetchImageBuffer(fi.screenshot_url)
+        const buf = await fetchImageBuffer(fi.screenshot_url, db)
         if (buf) screenshotBuffers.set(idx, buf)
       }
     })
@@ -778,7 +818,7 @@ export async function GET(
     let pageOverviewBuffer: Buffer | null = null
     const pageWithScreenshot = pages.find((p: any) => p.screenshot_url)
     if (pageWithScreenshot?.screenshot_url) {
-      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url)
+      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url, db)
     }
 
     // ── PAGE OVERVIEW SCREENSHOT ──────────────────────
@@ -1098,32 +1138,16 @@ export async function GET(
           }),
           new TableCell({
             borders,
-            width: { size: 6360, type: WidthType.DXA },
+            width: { size: 8760, type: WidthType.DXA },
             shading: { fill: B.text, type: ShadingType.CLEAR },
             margins: cellPad,
             children: [new Paragraph({ children: [new TextRun({ text: 'Page URL', font: 'Arial', size: 17, bold: true, color: B.white })] })],
-          }),
-          new TableCell({
-            borders,
-            width: { size: 1200, type: WidthType.DXA },
-            shading: { fill: B.text, type: ShadingType.CLEAR },
-            margins: cellPad,
-            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: L.status, font: 'Arial', size: 17, bold: true, color: B.white })] })],
-          }),
-          new TableCell({
-            borders,
-            width: { size: 1200, type: WidthType.DXA },
-            shading: { fill: B.text, type: ShadingType.CLEAR },
-            margins: cellPad,
-            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Load', font: 'Arial', size: 17, bold: true, color: B.white })] })],
           }),
         ],
       })
 
       const pgDataRows = pages.map((pg: any, i: number) => {
         const rowBg = i % 2 === 0 ? B.white : B.bg
-        const statusCode = pg.status_code || 0
-        const statusColor = statusCode >= 200 && statusCode < 300 ? B.scoreGreen : statusCode >= 400 ? B.scoreRed : B.textTert
         const urlChildren: Paragraph[] = []
 
         if (pg.title) {
@@ -1151,24 +1175,10 @@ export async function GET(
             }),
             new TableCell({
               borders,
-              width: { size: 6360, type: WidthType.DXA },
+              width: { size: 8760, type: WidthType.DXA },
               shading: { fill: rowBg, type: ShadingType.CLEAR },
               margins: cellPad,
               children: urlChildren,
-            }),
-            new TableCell({
-              borders,
-              width: { size: 1200, type: WidthType.DXA },
-              shading: { fill: rowBg, type: ShadingType.CLEAR },
-              margins: cellPad,
-              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: statusCode ? `${statusCode}` : '—', font: 'Arial', size: 18, bold: true, color: statusColor })] })],
-            }),
-            new TableCell({
-              borders,
-              width: { size: 1200, type: WidthType.DXA },
-              shading: { fill: rowBg, type: ShadingType.CLEAR },
-              margins: cellPad,
-              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: pg.load_time_ms ? `${pg.load_time_ms}ms` : '—', font: 'Arial', size: 17, color: B.textSec })] })],
             }),
           ],
         })
@@ -1177,7 +1187,7 @@ export async function GET(
       children.push(
         new Table({
           width: { size: 9360, type: WidthType.DXA },
-          columnWidths: [600, 6360, 1200, 1200],
+          columnWidths: [600, 8760],
           rows: [pgHeaderRow, ...pgDataRows],
         }),
       )

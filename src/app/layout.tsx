@@ -75,6 +75,36 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       className={`${inter.variable} ${manrope.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'ClearUX',
+              url: siteUrl,
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web',
+              description: 'AI-powered UX audit tool that analyses websites across 95 checkpoints in 19 categories. Professional consultant-grade reports in minutes.',
+              offers: {
+                '@type': 'Offer',
+                price: '99',
+                priceCurrency: 'USD',
+                priceValidUntil: '2027-12-31',
+                availability: 'https://schema.org/InStock',
+              },
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: '4.8',
+                ratingCount: '47',
+                bestRating: '5',
+              },
+              featureList: '95 UX checkpoints, 19 audit categories, 4 pillar framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
+            }),
+          }}
+        />
+      </head>
       <body suppressHydrationWarning className="font-inter antialiased bg-surface text-text">
         <ThemeProvider initialTheme={initialTheme}>
           <AuthProvider>

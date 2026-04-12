@@ -68,14 +68,54 @@ function scoreLabel(s: number): string {
   return 'Poor'
 }
 
-/** Fetch a screenshot from URL and return as Buffer, or null on failure */
-async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+/** Fetch a screenshot from URL and return as Buffer, or null on failure.
+ *  If the public URL fails, tries to download directly via Supabase Storage API. */
+async function fetchImageBuffer(url: string, db?: ReturnType<typeof createServiceSupabase>): Promise<Buffer | null> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-    if (!res.ok) return null
+    console.log('[PDF] Fetching screenshot:', url)
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
+    if (!res.ok) {
+      console.warn('[PDF] Public URL failed:', res.status, res.statusText, url)
+      // Try signed URL fallback via Supabase storage
+      if (db && url.includes('/audit-screenshots/')) {
+        const path = url.split('/audit-screenshots/').pop()
+        if (path) {
+          console.log('[PDF] Trying signed URL for:', path)
+          const { data: signedData, error: signErr } = await db.storage
+            .from('audit-screenshots')
+            .createSignedUrl(decodeURIComponent(path), 120)
+          if (!signErr && signedData?.signedUrl) {
+            const sRes = await fetch(signedData.signedUrl, { signal: AbortSignal.timeout(30_000) })
+            if (sRes.ok) {
+              const buf = await sRes.arrayBuffer()
+              console.log('[PDF] Signed URL worked:', path, `(${buf.byteLength} bytes)`)
+              return Buffer.from(buf)
+            }
+          }
+        }
+      }
+      // Try direct download as last resort
+      if (db && url.includes('/audit-screenshots/')) {
+        const path = url.split('/audit-screenshots/').pop()
+        if (path) {
+          console.log('[PDF] Trying direct download for:', path)
+          const { data: dlData, error: dlErr } = await db.storage
+            .from('audit-screenshots')
+            .download(decodeURIComponent(path))
+          if (!dlErr && dlData) {
+            const buf = await dlData.arrayBuffer()
+            console.log('[PDF] Direct download worked:', path, `(${buf.byteLength} bytes)`)
+            return Buffer.from(buf)
+          }
+        }
+      }
+      return null
+    }
     const arrayBuf = await res.arrayBuffer()
+    console.log('[PDF] Screenshot fetched OK:', url, `(${arrayBuf.byteLength} bytes)`)
     return Buffer.from(arrayBuf)
-  } catch {
+  } catch (err) {
+    console.error('[PDF] Screenshot fetch error:', url, err instanceof Error ? err.message : err)
     return null
   }
 }
@@ -630,7 +670,7 @@ export async function GET(
     const screenshotBuffers = new Map<number, Buffer>()
     const screenshotPromises = findings.map(async (fi: any, idx: number) => {
       if (fi.screenshot_url) {
-        const buf = await fetchImageBuffer(fi.screenshot_url)
+        const buf = await fetchImageBuffer(fi.screenshot_url, db)
         if (buf) screenshotBuffers.set(idx, buf)
       }
     })
@@ -640,7 +680,7 @@ export async function GET(
     let pageOverviewBuffer: Buffer | null = null
     const pageWithScreenshot = pages.find((p: any) => p.screenshot_url)
     if (pageWithScreenshot?.screenshot_url) {
-      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url)
+      pageOverviewBuffer = await fetchImageBuffer(pageWithScreenshot.screenshot_url, db)
     }
 
     // ════════════════════════════════════════════════════════
@@ -793,8 +833,6 @@ export async function GET(
       // Table header
       const colIdx = ML
       const colUrl = ML + 28
-      const colStatus = ML + 390
-      const colTime = ML + 440
 
       doc.save()
       doc.rect(ML, y - 4, PW, 18).fill(C.bg)
@@ -803,8 +841,6 @@ export async function GET(
       doc.font('Helvetica-Bold').fontSize(8).fillColor(C.text)
       doc.text('#', colIdx + 6, y, { lineBreak: false })
       doc.text('Page URL', colUrl + 4, y, { lineBreak: false })
-      doc.text('Status', colStatus, y, { lineBreak: false })
-      doc.text('Load', colTime, y, { lineBreak: false })
       y += 18
 
       for (let i = 0; i < pages.length; i++) {
@@ -829,23 +865,13 @@ export async function GET(
         // Title + URL
         if (pgTitle) {
           doc.font('Helvetica-Bold').fontSize(8).fillColor(C.text)
-          doc.text(pgTitle, colUrl + 4, y, { width: 340, lineBreak: false })
+          doc.text(pgTitle, colUrl + 4, y, { width: PW - 32, lineBreak: false })
           doc.font('Helvetica').fontSize(7).fillColor(C.accent)
-          doc.text(pgUrl, colUrl + 4, y + 11, { width: 340, lineBreak: false })
+          doc.text(pgUrl, colUrl + 4, y + 11, { width: PW - 32, lineBreak: false })
         } else {
           doc.font('Helvetica').fontSize(8).fillColor(C.accent)
-          doc.text(pgUrl, colUrl + 4, y + 2, { width: 340, lineBreak: false })
+          doc.text(pgUrl, colUrl + 4, y + 2, { width: PW - 32, lineBreak: false })
         }
-
-        // Status code
-        const statusCode = pg.status_code || 0
-        const statusColor = statusCode >= 200 && statusCode < 300 ? C.scoreGreen : statusCode >= 400 ? C.scoreRed : C.textTert
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(statusColor)
-        doc.text(statusCode ? `${statusCode}` : '—', colStatus, y + 2, { lineBreak: false })
-
-        // Load time
-        doc.font('Helvetica').fontSize(7.5).fillColor(C.textSec)
-        doc.text(pg.load_time_ms ? `${pg.load_time_ms}ms` : '—', colTime, y + 2, { lineBreak: false })
 
         y += rowH + 2
       }

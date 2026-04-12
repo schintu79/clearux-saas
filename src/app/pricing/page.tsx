@@ -78,7 +78,7 @@ export default function PricingPage() {
                     href="/register"
                     className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
                   >
-                    Start an audit
+                    Buy 1 audit
                   </Link>
                   <p className="text-xs text-muted mt-3">No account needed to preview</p>
                 </div>
@@ -119,9 +119,9 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="grid sm:grid-cols-3 gap-4">
               {[
-                { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', cta: 'Get 5 audits' },
-                { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios', cta: 'Get 15 audits' },
-                { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume', cta: 'Get 50 audits' },
+                { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', cta: 'Buy 5 audits' },
+                { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios', cta: 'Buy 15 audits' },
+                { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume', cta: 'Buy 50 audits' },
               ].map((pack) => (
                 <div
                   key={pack.name}

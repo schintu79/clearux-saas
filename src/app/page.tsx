@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock } from "lucide-react";
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
@@ -172,330 +172,241 @@ const PILLAR_DATA = [
 ];
 
 function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string; icon: React.ElementType; title: string; desc: string; featured?: boolean }> }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-
-    sectionRefs.current.forEach((el, idx) => {
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setActiveIdx(idx);
-        },
-        { rootMargin: '-40% 0px -40% 0px', threshold: 0.1 },
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
-
   const pillarNames = ['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'];
-  const active = PILLAR_DATA[activeIdx];
 
-  return (
-    <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-12">
-      {/* Pillar nav dots — desktop only */}
-      <div className="hidden lg:flex items-center justify-center gap-3 mb-12">
-        {PILLAR_DATA.map((p, i) => (
-          <button
-            key={p.key}
-            onClick={() => sectionRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${
-              activeIdx === i
-                ? `${p.colorBg} ${p.colorText} ${p.colorBorder}`
-                : 'bg-transparent text-muted border-border/30 hover:border-border/60'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Scrollable layout */}
-      <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-start">
-        {/* LEFT — Scroll sections */}
-        <div className="space-y-0">
-          {PILLAR_DATA.map((pillar, idx) => {
-            const pillarCats = categories.filter((c) => c.pillar === pillarNames[idx]);
-            const isActive = activeIdx === idx;
-
-            return (
-              <div
-                key={pillar.key}
-                ref={(el) => { sectionRefs.current[idx] = el; }}
-                className="min-h-[50vh] lg:min-h-[55vh] flex flex-col justify-center py-8 lg:py-10"
-              >
-                <div className={`transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-2 lg:opacity-30'}`}>
-                  {/* Pillar label */}
-                  <p className={`text-sm font-semibold tracking-wide uppercase mb-3 ${pillar.colorText}`}>
-                    {pillar.label}
-                  </p>
-
-                  {/* Main headline */}
-                  <h3 className="font-manrope text-2xl sm:text-3xl md:text-[2.25rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
-                    {pillar.headline}
-                  </h3>
-
-                  {/* Subhead */}
-                  <p className="text-muted text-lg md:text-xl mb-4 font-medium">
-                    {pillar.subhead}
-                  </p>
-
-                  {/* Body */}
-                  <p className="text-muted text-base leading-relaxed mb-8 max-w-md">
-                    {pillar.body}
-                  </p>
-
-                  {/* Category pills */}
-                  <div className="flex flex-wrap gap-2">
-                    {pillarCats.map((cat, cIdx) => {
-                      const Icon = cat.icon;
-                      return (
-                        <span
-                          key={cIdx}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 ${
-                            isActive
-                              ? `${pillar.colorBg} ${pillar.colorText} ${pillar.colorBorder}`
-                              : 'bg-card text-muted border-border/30'
-                          }`}
-                        >
-                          <Icon size={12} />
-                          {cat.title}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+  /* ── Visual panels for each pillar ── */
+  const visuals = [
+    /* FOUNDATION — Score dashboard */
+    <div key="v0" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+      <div className="p-6 pb-0">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
+            <span className="text-xs font-semibold text-text">Audit Overview</span>
+          </div>
+          <span className="text-[10px] text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
         </div>
-
-        {/* RIGHT — Sticky visual panel */}
-        <div className="hidden lg:block">
-          <div className="sticky top-[12vh]">
-            <div className="relative">
-              <div className={`rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden transition-all duration-500`}>
-
-                {/* ── FOUNDATION: Score dashboard mockup ── */}
-                <div className={`transition-all duration-500 ${activeIdx === 0 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
-                  <div className="p-6 pb-0">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
-                        <span className="text-xs font-semibold text-text">Audit Overview</span>
-                      </div>
-                      <span className="text-[10px] text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
-                    </div>
-                    {/* Score ring */}
-                    <div className="flex items-center gap-6 mb-6">
-                      <div className="relative">
-                        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                          <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" className="stroke-border/15" />
-                          <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" strokeLinecap="round" className="stroke-violet-500 transition-all duration-700" style={{ strokeDasharray: `${2*Math.PI*42}`, strokeDashoffset: `${2*Math.PI*42*(1-0.78)}` }} />
-                        </svg>
-                        <span className="absolute inset-0 flex items-center justify-center font-manrope text-xl font-bold text-text">78</span>
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <p className="text-xs font-semibold text-text">Overall Score</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
-                            <div key={d.l} className="flex items-center gap-2">
-                              <span className="text-[10px] text-muted w-14">{d.l}</span>
-                              <div className="flex-1 h-1 rounded-full bg-border/15"><div className="h-full rounded-full bg-violet-400 transition-all duration-700" style={{width:`${d.s}%`}} /></div>
-                              <span className="text-[10px] font-bold text-text w-5 text-right">{d.s}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Finding cards */}
-                  <div className="px-6 pb-4 space-y-2.5">
-                    {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'}].map((f,i)=>(
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt border border-border/20">
-                        <span className={`${f.c} text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-text leading-snug">{f.t}</p>
-                          <p className="text-[10px] text-accent mt-0.5">{f.imp}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Recommendation */}
-                  <div className="mx-6 mb-6 p-3 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/40 dark:border-violet-800/20">
-                    <p className="text-[10px] font-bold text-violet-700 dark:text-violet-400 mb-1">💡 Recommendation</p>
-                    <p className="text-[10px] text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
-                  </div>
+        <div className="flex items-center gap-6 mb-6">
+          <div className="relative">
+            <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" className="stroke-border/15" />
+              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="6" strokeLinecap="round" className="stroke-violet-500" style={{ strokeDasharray: `${2*Math.PI*42}`, strokeDashoffset: `${2*Math.PI*42*(1-0.78)}` }} />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center font-manrope text-xl font-bold text-text">78</span>
+          </div>
+          <div className="flex-1 space-y-2">
+            <p className="text-xs font-semibold text-text">Overall Score</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
+                <div key={d.l} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted w-14">{d.l}</span>
+                  <div className="flex-1 h-1 rounded-full bg-border/15"><div className="h-full rounded-full bg-violet-400" style={{width:`${d.s}%`}} /></div>
+                  <span className="text-[10px] font-bold text-text w-5 text-right">{d.s}</span>
                 </div>
-
-                {/* ── HUMAN EXPERIENCE: Dark patterns scan ── */}
-                <div className={`transition-all duration-500 ${activeIdx === 1 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
-                        <span className="text-xs font-semibold text-text">Human Experience Scan</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
-                    </div>
-                    {/* Scan results */}
-                    <div className="space-y-3">
-                      {[
-                        {icon:'⚠️',t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
-                        {icon:'⏰',t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
-                        {icon:'✓',t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
-                        {icon:'⚠️',t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
-                        {icon:'✓',t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
-                        {icon:'⚠️',t:'Anxiety-inducing language',d:'"You\'ll lose everything!" on downgrade page creates unnecessary fear',pass:false},
-                      ].map((item,i)=>(
-                        <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
-                          <span className="text-sm mt-0.5 flex-shrink-0">{item.icon}</span>
-                          <div className="min-w-0">
-                            <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
-                            <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{item.d}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Recommendation */}
-                    <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
-                      <p className="text-[10px] font-bold text-pink-700 dark:text-pink-400 mb-1">💡 Recommendation</p>
-                      <p className="text-[10px] text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust and reduces churn.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── TECHNICAL EXCELLENCE: Performance dashboard ── */}
-                <div className={`transition-all duration-500 ${activeIdx === 2 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
-                        <span className="text-xs font-semibold text-text">Technical Audit</span>
-                      </div>
-                    </div>
-                    {/* Metric cards */}
-                    <div className="grid grid-cols-2 gap-3 mb-5">
-                      {[{l:'Performance',s:92,c:'text-emerald-500',icon:'⚡'},{l:'Mobile',s:78,c:'text-amber-500',icon:'📱'},{l:'Accessibility',s:64,c:'text-orange-500',icon:'♿'},{l:'SEO',s:86,c:'text-emerald-500',icon:'🔍'}].map(m=>(
-                        <div key={m.l} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm">{m.icon}</span>
-                            <span className={`font-manrope text-lg font-bold ${m.c}`}>{m.s}</span>
-                          </div>
-                          <p className="text-[10px] font-semibold text-text">{m.l}</p>
-                          <div className="mt-1.5 h-1 rounded-full bg-border/15">
-                            <div className={`h-full rounded-full transition-all duration-700 ${m.s>=80?'bg-emerald-400':m.s>=60?'bg-amber-400':'bg-orange-400'}`} style={{width:`${m.s}%`}} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Checklist */}
-                    <div className="space-y-2">
-                      {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
-                        <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-alt/50">
-                          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-100 dark:bg-emerald-900/30':'bg-orange-100 dark:bg-orange-900/30'}`}>
-                            <span className="text-[8px]">{c.p?'✓':'✗'}</span>
-                          </div>
-                          <span className="text-[11px] text-text">{c.t}</span>
-                          <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-600 dark:text-emerald-400':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Recommendation */}
-                    <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-800/20">
-                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1">💡 Recommendation</p>
-                      <p className="text-[10px] text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── FUTURE READINESS: AI readiness checker ── */}
-                <div className={`transition-all duration-500 ${activeIdx === 3 ? 'opacity-100 h-auto' : 'opacity-0 h-0 overflow-hidden absolute inset-0'}`}>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
-                        <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
-                    </div>
-                    {/* AI readiness cards */}
-                    <div className="space-y-3 mb-5">
-                      {[
-                        {t:'LLM Discoverability',s:72,d:'Content is mostly parseable but key features are trapped in images'},
-                        {t:'AI Agent Navigation',s:48,d:'Forms lack proper labels — AI agents cannot complete checkout flow'},
-                        {t:'Cultural Readiness',s:62,d:'No RTL support, hardcoded date formats, USD-only pricing'},
-                      ].map((item,i)=>(
-                        <div key={i} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-xs font-semibold text-text">{item.t}</span>
-                            <span className={`text-xs font-bold ${item.s>=70?'text-emerald-500':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
-                          </div>
-                          <div className="h-1.5 rounded-full bg-border/15 mb-2">
-                            <div className={`h-full rounded-full transition-all duration-700 ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
-                          </div>
-                          <p className="text-[10px] text-muted leading-relaxed">{item.d}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Simulated AI query */}
-                    <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-                      <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
-                      <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/20">
-                        <p className="text-[10px] text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
-                      </div>
-                    </div>
-                    {/* Recommendation */}
-                    <div className="mt-4 p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">💡 Recommendation</p>
-                      <p className="text-[10px] text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom nav dots */}
-                <div className="px-6 py-3 border-t border-border/15 flex items-center justify-between">
-                  <p className="text-[10px] text-muted">{active.label} audit preview</p>
-                  <div className="flex gap-1.5">
-                    {PILLAR_DATA.map((p, i) => (
-                      <div
-                        key={i}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          i === activeIdx ? `w-5 bg-gradient-to-r ${p.color}` : 'w-1.5 bg-border/30'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
+      <div className="px-6 pb-4 space-y-2.5">
+        {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'}].map((f,i)=>(
+          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt border border-border/20">
+            <span className={`${f.c} text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-text leading-snug">{f.t}</p>
+              <p className="text-[10px] text-accent mt-0.5">{f.imp}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mx-6 mb-6 p-3 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/40 dark:border-violet-800/20">
+        <p className="text-[10px] font-bold text-violet-700 dark:text-violet-400 mb-1">Recommendation</p>
+        <p className="text-[10px] text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
+      </div>
+    </div>,
 
-      {/* Mobile: category grid (visible only on smaller screens) */}
-      <div className="lg:hidden mt-8">
-        <div className="grid grid-cols-2 gap-3">
-          {categories.map((cat, idx) => {
-            const Icon = cat.icon;
-            const pillarIdx = pillarNames.indexOf(cat.pillar);
-            const p = PILLAR_DATA[pillarIdx] || PILLAR_DATA[0];
-            return (
-              <div key={idx} className={`rounded-xl p-3.5 border ${p.colorBorder} ${p.colorBg} transition-all`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon size={13} className={p.colorText} />
-                  <span className="text-xs font-semibold text-text truncate">{cat.title}</span>
-                </div>
-                <p className="text-[11px] text-muted leading-relaxed">{cat.desc}</p>
-              </div>
-            );
-          })}
+    /* HUMAN EXPERIENCE — Dark patterns scan */
+    <div key="v1" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
+            <span className="text-xs font-semibold text-text">Human Experience Scan</span>
+          </div>
+          <span className="text-[10px] font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
         </div>
+        <div className="space-y-3">
+          {[
+            {icon:'⚠️',t:'Confirmshaming detected',d:'"No thanks, I don\'t want to save money" — manipulative opt-out copy',pass:false},
+            {icon:'⏰',t:'Fake urgency pattern',d:'Countdown timer resets on page refresh — not a genuine deadline',pass:false},
+            {icon:'✓',t:'Cookie consent is fair',d:'Equal visual weight for Accept and Reject options',pass:true},
+            {icon:'⚠️',t:'Cancellation flow buried',d:'4-step process to unsubscribe vs 1-click to sign up',pass:false},
+            {icon:'✓',t:'No hidden costs at checkout',d:'All fees disclosed upfront before payment',pass:true},
+          ].map((item,i)=>(
+            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
+              <span className="text-sm mt-0.5 flex-shrink-0">{item.icon}</span>
+              <div className="min-w-0">
+                <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
+                <p className="text-[10px] text-muted mt-0.5 leading-relaxed">{item.d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
+          <p className="text-[10px] font-bold text-pink-700 dark:text-pink-400 mb-1">Recommendation</p>
+          <p className="text-[10px] text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust.</p>
+        </div>
+      </div>
+    </div>,
+
+    /* TECHNICAL EXCELLENCE — Performance dashboard */
+    <div key="v2" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
+            <span className="text-xs font-semibold text-text">Technical Audit</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {[{l:'Performance',s:92,c:'text-emerald-500',icon:'⚡'},{l:'Mobile',s:78,c:'text-amber-500',icon:'📱'},{l:'Accessibility',s:64,c:'text-orange-500',icon:'♿'},{l:'SEO',s:86,c:'text-emerald-500',icon:'🔍'}].map(m=>(
+            <div key={m.l} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">{m.icon}</span>
+                <span className={`font-manrope text-lg font-bold ${m.c}`}>{m.s}</span>
+              </div>
+              <p className="text-[10px] font-semibold text-text">{m.l}</p>
+              <div className="mt-1.5 h-1 rounded-full bg-border/15">
+                <div className={`h-full rounded-full ${m.s>=80?'bg-emerald-400':m.s>=60?'bg-amber-400':'bg-orange-400'}`} style={{width:`${m.s}%`}} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
+            <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-alt/50">
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-100 dark:bg-emerald-900/30':'bg-orange-100 dark:bg-orange-900/30'}`}>
+                <span className="text-[8px]">{c.p?'✓':'✗'}</span>
+              </div>
+              <span className="text-[11px] text-text">{c.t}</span>
+              <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-600 dark:text-emerald-400':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-800/20">
+          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1">Recommendation</p>
+          <p className="text-[10px] text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
+        </div>
+      </div>
+    </div>,
+
+    /* FUTURE READINESS — AI readiness checker */
+    <div key="v3" className="rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
+            <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
+          </div>
+          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
+        </div>
+        <div className="space-y-3 mb-5">
+          {[
+            {t:'LLM Discoverability',s:72,d:'Content is mostly parseable but key features are trapped in images'},
+            {t:'AI Agent Navigation',s:48,d:'Forms lack proper labels — AI agents cannot complete checkout flow'},
+            {t:'Cultural Readiness',s:62,d:'No RTL support, hardcoded date formats, USD-only pricing'},
+          ].map((item,i)=>(
+            <div key={i} className="p-3.5 rounded-xl bg-surface-alt border border-border/20">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-text">{item.t}</span>
+                <span className={`text-xs font-bold ${item.s>=70?'text-emerald-500':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-border/15 mb-2">
+                <div className={`h-full rounded-full ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
+              </div>
+              <p className="text-[10px] text-muted leading-relaxed">{item.d}</p>
+            </div>
+          ))}
+        </div>
+        <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
+          <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
+          <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/20">
+            <p className="text-[10px] text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
+          </div>
+        </div>
+        <div className="mt-4 p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
+          <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">Recommendation</p>
+          <p className="text-[10px] text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
+        </div>
+      </div>
+    </div>,
+  ];
+
+  return (
+    <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+      {/* ── Alternating pillar blocks ── */}
+      <div className="space-y-16 lg:space-y-24">
+        {PILLAR_DATA.map((pillar, idx) => {
+          const pillarCats = categories.filter((c) => c.pillar === pillarNames[idx]);
+          const isEven = idx % 2 === 0; // even = text-left visual-right, odd = visual-left text-right
+
+          const textBlock = (
+            <div className="flex flex-col justify-center">
+              {/* Pillar label */}
+              <p className={`text-sm font-semibold tracking-wide uppercase mb-3 ${pillar.colorText}`}>
+                {pillar.label}
+              </p>
+              <h3 className="font-manrope text-2xl sm:text-3xl md:text-[2.25rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
+                {pillar.headline}
+              </h3>
+              <p className="text-muted text-lg md:text-xl mb-4 font-medium">
+                {pillar.subhead}
+              </p>
+              <p className="text-muted text-base leading-relaxed mb-8 max-w-md">
+                {pillar.body}
+              </p>
+              {/* Category pills */}
+              <div className="flex flex-wrap gap-2">
+                {pillarCats.map((cat, cIdx) => {
+                  const Icon = cat.icon;
+                  return (
+                    <span
+                      key={cIdx}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${pillar.colorBg} ${pillar.colorText} ${pillar.colorBorder}`}
+                    >
+                      <Icon size={12} />
+                      {cat.title}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+
+          const visualBlock = (
+            <div className="flex items-center justify-center">
+              {visuals[idx]}
+            </div>
+          );
+
+          return (
+            <div key={pillar.key} className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+              {isEven ? (
+                <>
+                  {textBlock}
+                  <div className="hidden lg:block">{visualBlock}</div>
+                </>
+              ) : (
+                <>
+                  <div className="hidden lg:block">{visualBlock}</div>
+                  {textBlock}
+                </>
+              )}
+              {/* Mobile: visual always below text */}
+              <div className="lg:hidden">{visualBlock}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -542,7 +453,7 @@ export default function Home() {
   const c3 = useCountUp(6, 1200);
   const c4 = useCountUp(10, 1000);
 
-  const previewRef = useScrollReveal();
+
   const priceRef = useScrollReveal();
   const testRef = useScrollReveal();
   const faqRef = useScrollReveal();
@@ -597,8 +508,8 @@ export default function Home() {
           SOCIAL PROOF — rotating reviews above hero
           ═══════════════════════════════════════════════════════ */}
       <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-5 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-2">
-          <div className="flex items-center gap-4">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+          <div className="flex items-center gap-3">
             <div className="flex -space-x-2.5">
               {[
                 { bg: '#8B5CF6', initials: 'SC' },
@@ -622,8 +533,13 @@ export default function Home() {
                   <Star key={i} className="w-4 h-4 fill-accent text-accent" />
                 ))}
               </div>
-              <span className="text-text text-sm font-semibold">Trusted by product teams worldwide</span>
+              <span className="text-text text-sm font-semibold">Used by product teams &amp; agencies</span>
             </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-6 text-xs text-muted font-medium">
+            <span className="flex items-center gap-1.5"><Shield size={13} className="text-accent" /> SSL encrypted</span>
+            <span className="flex items-center gap-1.5"><Lock size={13} className="text-accent" /> GDPR compliant</span>
+            <span className="flex items-center gap-1.5"><CreditCard size={13} className="text-accent" /> Secure payments via Stripe</span>
           </div>
         </div>
       </section>
@@ -713,7 +629,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            Your website has UX issues you can&apos;t see. Get a professional audit across 95 checkpoints in 19 categories — in minutes, not weeks.
+            For product teams, founders, and agencies who need consultant-grade UX audits without the $10k price tag. 95 checkpoints, 19 categories — results in minutes.
           </p>
 
           {/* URL Input */}
@@ -752,8 +668,8 @@ export default function Home() {
 
           {/* Sample report link */}
           <div className="animate-fade-up delay-400 mt-4">
-            <a href="#see-it-in-action" className="text-sm text-muted hover:text-accent transition-colors underline underline-offset-2 decoration-border hover:decoration-accent">
-              See a sample report
+            <a href="#pricing" className="text-sm text-muted hover:text-accent transition-colors underline underline-offset-2 decoration-border hover:decoration-accent">
+              See pricing
             </a>
           </div>
         </div>
@@ -814,179 +730,6 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          AUDIT PREVIEW — simulated screens
-          ═══════════════════════════════════════════════════════ */}
-      <section id="see-it-in-action" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden scroll-mt-20">
-        {/* Subtle grid bg */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{
-          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }} />
-
-        <div
-          ref={previewRef.ref}
-          className={`max-w-6xl mx-auto relative transition-all duration-700 ${previewRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <div className="text-center mb-16">
-            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">See it in action</p>
-            <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
-              From URL to actionable insights
-            </h2>
-            <p className="text-muted text-base md:text-lg mt-4 max-w-2xl mx-auto">
-              A complete UX audit delivered as a professional report — scores, findings, and prioritised recommendations.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-
-            {/* ── Card 1: Score Overview ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                </div>
-                <span className="text-[11px] text-muted ml-1 font-medium">Audit Score</span>
-              </div>
-              <div className="p-6 flex flex-col items-center">
-                {/* Score ring */}
-                <div className="relative w-32 h-32 mb-5">
-                  <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" className="text-border/40" strokeWidth="8" />
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#scoreGrad)" strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray={`${0.73 * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
-                    />
-                    <defs>
-                      <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="var(--accent)" />
-                        <stop offset="100%" stopColor="#a855f7" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-extrabold font-manrope text-text">73</span>
-                    <span className="text-[10px] text-muted font-medium uppercase tracking-wide">/ 100</span>
-                  </div>
-                </div>
-                {/* Mini category scores */}
-                <div className="w-full space-y-2.5">
-                  {[
-                    { name: 'First Impression', score: 82, color: 'bg-emerald-500' },
-                    { name: 'Navigation', score: 68, color: 'bg-accent' },
-                    { name: 'Mobile Experience', score: 55, color: 'bg-amber-500' },
-                    { name: 'AI Discoverability', score: 41, color: 'bg-red-500' },
-                  ].map((item) => (
-                    <div key={item.name}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-muted">{item.name}</span>
-                        <span className="text-xs font-semibold text-text">{item.score}</span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-border/40 overflow-hidden">
-                        <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.score}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Card 2: Findings List ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                </div>
-                <span className="text-[11px] text-muted ml-1 font-medium">Key Findings</span>
-              </div>
-              <div className="p-4 space-y-3">
-                {[
-                  { severity: 'Critical', color: 'bg-red-500', title: 'No mobile-responsive navigation', category: 'Mobile Experience' },
-                  { severity: 'High', color: 'bg-orange-500', title: 'CTA buttons below the fold on landing', category: 'Conversion & CTAs' },
-                  { severity: 'High', color: 'bg-orange-500', title: 'Missing structured data for AI indexing', category: 'AI Discoverability' },
-                  { severity: 'Medium', color: 'bg-amber-500', title: 'Inconsistent heading hierarchy', category: 'Visual Hierarchy' },
-                  { severity: 'Medium', color: 'bg-amber-500', title: 'No loading states on async actions', category: 'Onboarding' },
-                  { severity: 'Low', color: 'bg-blue-500', title: 'Alt text missing on 3 hero images', category: 'Accessibility' },
-                ].map((finding, i) => (
-                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-surface/60 dark:bg-white/[0.02] border border-border/20 dark:border-white/[0.04]">
-                    <span className={`mt-0.5 flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase tracking-wider ${finding.color}`}>
-                      {finding.severity}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-text leading-snug">{finding.title}</p>
-                      <p className="text-[10px] text-muted mt-0.5">{finding.category}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Card 3: Report Preview ── */}
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                </div>
-                <span className="text-[11px] text-muted ml-1 font-medium">PDF Report</span>
-              </div>
-              <div className="p-5">
-                {/* Mock report page */}
-                <div className="bg-white dark:bg-white/[0.02] rounded-lg border border-border/30 dark:border-white/[0.03] p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
-                      <FileText size={12} className="text-accent" />
-                    </div>
-                    <span className="text-xs font-bold text-text dark:text-white/80">ClearUX Audit Report</span>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="h-2 w-24 rounded bg-accent/30 mb-2" />
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 w-full rounded bg-border/40" />
-                        <div className="h-1.5 w-5/6 rounded bg-border/40" />
-                        <div className="h-1.5 w-4/6 rounded bg-border/40" />
-                      </div>
-                    </div>
-                    <div className="h-px bg-border/30" />
-                    <div>
-                      <div className="h-2 w-20 rounded bg-accent/30 mb-2" />
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
-                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
-                      </div>
-                    </div>
-                    <div className="h-px bg-border/30" />
-                    <div>
-                      <div className="h-2 w-28 rounded bg-orange-400/30 mb-2" />
-                      <div className="space-y-1.5">
-                        <div className="h-1.5 w-full rounded bg-border/40" />
-                        <div className="h-1.5 w-3/4 rounded bg-border/40" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Download buttons */}
-                <div className="flex gap-2 mt-4">
-                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <FileText size={12} className="text-accent" />
-                    <span className="text-[11px] font-semibold text-accent">PDF</span>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <FileText size={12} className="text-accent" />
-                    <span className="text-[11px] font-semibold text-accent">DOCX</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
           PRICING
           ═══════════════════════════════════════════════════════ */}
       <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface">
@@ -1026,7 +769,7 @@ export default function Home() {
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-text font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
                 >
-                  Start an audit
+                  Buy 1 audit
                 </Link>
               </div>
 
@@ -1092,7 +835,7 @@ export default function Home() {
                   href="/register"
                   className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 border border-text/15 dark:border-white/15 text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
                 >
-                  Get {pack.credits} audits
+                  Buy {pack.credits} audits
                 </Link>
               </div>
             ))}
