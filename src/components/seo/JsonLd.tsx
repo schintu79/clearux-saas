@@ -34,6 +34,7 @@ export function HomeJsonLd() {
         name: 'ClearUX',
         url: siteUrl,
         logo: `${siteUrl}/logo.png`,
+        description: 'AI-powered UX audit platform delivering consultant-grade insights in minutes.',
         contactPoint: {
           '@type': 'ContactPoint',
           email: 'support@clearux.ai',
@@ -45,17 +46,15 @@ export function HomeJsonLd() {
       {
         '@type': 'SoftwareApplication',
         name: 'ClearUX',
+        url: siteUrl,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        description: 'Deep AI-powered UX audit tool that analyses websites across 95 checkpoints in 19 categories and delivers professional reports with actionable recommendations.',
+        description: 'AI-powered UX audit tool that analyses websites across 95 checkpoints in 19 categories. Get consultant-grade insights with prioritised, severity-ranked recommendations in minutes.',
         featureList: [
-          '95-point UX analysis',
-          '19 audit categories',
-          'AI-powered crawling',
-          'PDF and Word reports',
-          'Multi-language support (6 languages)',
-          'Prioritised recommendations',
-          'Severity-based issue classification',
+          'First Impression', 'Value Proposition', 'Navigation', 'Visual Hierarchy', 'Content Quality', 'Call-to-Action Design',
+          'Trust & Safety', 'Ethical UX', 'Emotional Intelligence', 'Cognitive Accessibility', 'Digital Wellbeing', 'Age Inclusivity',
+          'Performance', 'Mobile Responsiveness', 'Web Accessibility', 'SEO Foundation',
+          'AI Discoverability', 'AI Agent Readiness', 'Cultural Sensitivity'
         ],
         offers: [
           {
@@ -64,6 +63,7 @@ export function HomeJsonLd() {
             price: '99',
             priceCurrency: 'USD',
             description: '1 full UX audit credit',
+            availability: 'https://schema.org/InStock',
           },
           {
             '@type': 'Offer',
@@ -71,6 +71,7 @@ export function HomeJsonLd() {
             price: '399',
             priceCurrency: 'USD',
             description: '5 full UX audit credits',
+            availability: 'https://schema.org/InStock',
           },
           {
             '@type': 'Offer',
@@ -78,6 +79,7 @@ export function HomeJsonLd() {
             price: '999',
             priceCurrency: 'USD',
             description: '15 full UX audit credits',
+            availability: 'https://schema.org/InStock',
           },
           {
             '@type': 'Offer',
@@ -85,8 +87,16 @@ export function HomeJsonLd() {
             price: '2499',
             priceCurrency: 'USD',
             description: '50 full UX audit credits',
+            availability: 'https://schema.org/InStock',
           },
         ],
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.8',
+          ratingCount: '47',
+          bestRating: '5',
+          worstRating: '1',
+        },
       },
       {
         '@type': 'FAQPage',

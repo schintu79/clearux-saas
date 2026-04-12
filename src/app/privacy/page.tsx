@@ -3,8 +3,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'ClearUX privacy policy — how we collect, use, and protect your data.',
+  title: 'Privacy Policy — ClearUX',
+  description: 'How ClearUX handles your data. We only analyse publicly visible content and never store or share your website data.',
 }
 
 export default function PrivacyPage() {

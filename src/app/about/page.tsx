@@ -5,8 +5,8 @@ import Footer from '@/components/layout/Footer'
 import { Heart, Shield, Brain, Eye, ArrowRight, Sparkles, Users, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'About',
-  description: 'ClearUX is a human-centered, AI-powered UX audit platform. We believe ethical design is good business.',
+  title: 'About ClearUX — Human-Centered AI Audit Platform',
+  description: 'ClearUX combines AI precision with human-centered design principles. 19 audit categories across 4 pillars — Foundation, Human Experience, Technical Excellence, Future Readiness.',
 }
 
 const DIFFERENTIATORS = [

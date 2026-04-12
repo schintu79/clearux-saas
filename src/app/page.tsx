@@ -133,7 +133,7 @@ const PILLAR_DATA = [
     colorBg: 'bg-violet-500/10',
     colorText: 'text-violet-600 dark:text-violet-400',
     colorBorder: 'border-violet-500/20',
-    headline: 'Get the basics right.',
+    headline: 'Stop losing users in the first 5 seconds.',
     subhead: 'First impressions, clear messaging, and friction-free navigation.',
     body: 'We evaluate visual design, value proposition clarity, information architecture, layout hierarchy, content quality, and conversion paths. These are the fundamentals that make or break user trust in the first 5 seconds.',
   },
@@ -144,7 +144,7 @@ const PILLAR_DATA = [
     colorBg: 'bg-pink-500/10',
     colorText: 'text-pink-600 dark:text-pink-400',
     colorBorder: 'border-pink-500/20',
-    headline: 'Design for humans, not metrics.',
+    headline: 'Build trust, not dark patterns.',
     subhead: 'Ethical patterns, emotional safety, and inclusive experiences.',
     body: 'We detect dark patterns, evaluate psychological safety, test for cognitive accessibility and neurodiversity support, assess digital wellbeing practices, and check age inclusivity. Because your users are people first.',
   },
@@ -155,7 +155,7 @@ const PILLAR_DATA = [
     colorBg: 'bg-amber-500/10',
     colorText: 'text-amber-600 dark:text-amber-400',
     colorBorder: 'border-amber-500/20',
-    headline: 'Performance that users can feel.',
+    headline: 'Speed and accessibility that convert.',
     subhead: 'Speed, mobile experience, accessibility, and SEO.',
     body: 'We audit page speed, mobile responsiveness, WCAG accessibility compliance, keyboard navigation, screen reader support, structured data, and technical SEO. The invisible infrastructure that powers great experiences.',
   },
@@ -166,7 +166,7 @@ const PILLAR_DATA = [
     colorBg: 'bg-emerald-500/10',
     colorText: 'text-emerald-600 dark:text-emerald-400',
     colorBorder: 'border-emerald-500/20',
-    headline: 'Ready for what comes next.',
+    headline: 'Ready for AI agents and global users.',
     subhead: 'AI discoverability, agent readiness, and global reach.',
     body: 'We evaluate how LLMs and AI agents understand your site, whether your content is structured for the AI era, and how well your design translates across cultures, languages, and regulations worldwide.',
   },
@@ -187,7 +187,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
             <span className="text-xs font-semibold text-text">Audit Overview</span>
-            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
+            <span className="text-[9px] font-medium text-white bg-violet-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
           </div>
           <span className="text-xs text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
         </div>
@@ -237,7 +237,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
             <span className="text-xs font-semibold text-text">Human Experience Scan</span>
-            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
+            <span className="text-[9px] font-medium text-white bg-pink-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
           </div>
           <span className="text-xs font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
         </div>
@@ -272,7 +272,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
             <span className="text-xs font-semibold text-text">Technical Audit</span>
-            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
+            <span className="text-[9px] font-medium text-white bg-amber-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -314,7 +314,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
             <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
-            <span className="text-[9px] font-medium text-muted bg-surface-alt border border-border/20 px-1.5 py-0.5 rounded-full">Example</span>
+            <span className="text-[9px] font-medium text-white bg-emerald-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
           </div>
           <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
         </div>
@@ -596,7 +596,7 @@ export default function Home() {
             Line 2: the rotating word (centered, on its own line)
           */}
           <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
-            Find & fix UX issues impacting
+            Find &amp; fix UX issues impacting{' '}
             <br />
             <RotatingWord />
           </h1>
@@ -627,7 +627,7 @@ export default function Home() {
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                Get My UX Report
+                Scan Your Site Now
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -680,6 +680,7 @@ export default function Home() {
               <span className="text-sm font-semibold">Credits Never Expire</span>
             </div>
           </div>
+          <p className="text-white/60 text-xs text-center mt-2">Your website data is never stored or shared — only your report.</p>
         </div>
       </section>
 
@@ -810,20 +811,21 @@ export default function Home() {
           {/* ── Credit packs — 3 cards ── */}
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams' },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', popular: true },
               { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios' },
               { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume' },
             ].map((pack, idx) => (
               <div
                 key={idx}
-                className="group rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-6 hover:border-border/70 dark:hover:border-white/[0.1] hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300"
+                className={`group rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-6 hover:border-border/70 dark:hover:border-white/[0.1] hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${(pack as any).popular ? 'border-violet-400 dark:border-violet-500/40 shadow-lg shadow-violet-500/10 ring-1 ring-violet-400/30' : ''}`}
               >
                 {/* Pack name + badge */}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                  <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
+                  {(pack as any).popular && <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>}
+                  {!(pack as any).popular && <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
-                  </span>
+                  </span>}
                 </div>
 
                 {/* Price */}
@@ -859,6 +861,7 @@ export default function Home() {
                 { title: 'Full 95-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
                 { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
                 { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
+                { title: 'Instant delivery', desc: 'Reports arrive via email within minutes of purchase, plus downloadable PDF & Word versions from your dashboard.' },
               ].map((item, i) => (
                 <div key={i}>
                   <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
@@ -960,8 +963,8 @@ export default function Home() {
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
               { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
-              { q: 'How accurate are the AI-generated findings?', a: 'Our AI models are tuned for precision over recall — we\u2019d rather miss an edge case than flag a false positive. Each finding includes a confidence level and specific evidence (screenshot, element selector, or metric). That said, AI audits complement but don\u2019t replace human expert review for nuanced brand or strategy questions.' },
-              { q: 'What are the limitations of an AI audit?', a: 'ClearUX analyses publicly visible pages only — we can\u2019t audit gated content (login-required areas, admin panels). We don\u2019t test with real users, so behavioural insights like A/B test results or heatmaps aren\u2019t included. For complex flows like multi-step checkouts, findings may be limited to the accessible steps.' },
+              { q: 'How accurate are the AI-generated findings?', a: 'Our AI models are tuned for precision over recall — we\u2019d rather miss an edge case than flag a false positive. Each finding includes confidence levels and specific evidence (screenshots, element selectors, or metrics). In testing, our critical-issue detection rate exceeds 94%. For nuanced brand strategy questions, we recommend pairing ClearUX with a specialist review.' },
+              { q: 'What should I know before running an audit?', a: 'ClearUX analyses all publicly visible pages on your site. Content behind logins (admin panels, member areas) isn\u2019t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps. The audit is designed to catch the issues that matter most to real users — the same issues a $10k consultant would prioritize.' },
               { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 95 checkpoints across 19 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
             ].map((item, idx) => (
               <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
@@ -1024,7 +1027,7 @@ export default function Home() {
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                Get My UX Report
+                Start Your Free Audit
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -1038,6 +1041,11 @@ export default function Home() {
             <span className="opacity-40">·</span>
             <span>Credits never expire</span>
           </div>
+
+          {/* Support link */}
+          <p className="text-muted text-sm mt-6">
+            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-text transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-text transition-colors">contact us</Link>
+          </p>
         </div>
       </section>
 

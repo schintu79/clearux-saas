@@ -23,9 +23,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — AI-Powered UX Audits in Minutes',
+    default:  'ClearUX — AI-Powered UX Audits | 95 Checkpoints in Minutes',
   },
-  description: 'Get a comprehensive, AI-powered UX audit of your website across 95 checkpoints in 19 categories. Actionable professional report with prioritised fixes delivered in minutes.',
+  description: 'Get consultant-grade UX audits powered by AI. 95 checkpoints across 19 categories. Actionable findings with prioritised fixes — from $99 per audit.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
