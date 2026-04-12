@@ -17,7 +17,7 @@ import { crawlPages } from '@/lib/audit-engine/crawler'
 import { analyzeCategory, runFullAnalysis, generateReport } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
-import { captureAuditScreenshots, uploadScreenshot } from '@/lib/audit-engine/screenshots'
+import { capturePageScreenshot, uploadScreenshot } from '@/lib/audit-engine/screenshots'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -253,40 +253,21 @@ export const processAuditFn = inngest.createFunction(
     }
 
     // ──────────────────────────────────────────────────────────
-    // STEP 8: Capture screenshots for top findings
+    // STEP 8: Capture page overview screenshot (via PageSpeed API)
+    // Finding-specific visuals are rendered client-side via FindingVisual.
     // ──────────────────────────────────────────────────────────
     await step.run('capture-screenshots', async () => {
       const db = getDb()
 
-      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing screenshots for top findings')
-
-      // Fetch findings with target_element
-      const { data: findingsWithTargets } = await db
-        .from('audit_findings')
-        .select('id, title, severity, target_element, page_url')
-        .eq('audit_id', auditId)
-        .not('target_element', 'is', null)
-        .order('sort_order', { ascending: true })
-
-      const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
-        id: f.id as string,
-        title: f.title as string,
-        severity: f.severity as string,
-        targetElement: f.target_element as string | null,
-      }))
+      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing page overview screenshot via PageSpeed API')
 
       try {
-        const { pageScreenshot, findingScreenshots } = await captureAuditScreenshots(
-          crawlResult.firstPageUrl || auditDetails.productUrl,
-          findingsToCapture,
-          6, // max 6 finding screenshots
-        )
+        const pageUrl = crawlResult.firstPageUrl || auditDetails.productUrl
+        const pageScreenshot = await capturePageScreenshot(pageUrl)
 
-        // Upload page screenshot
         if (pageScreenshot) {
           const pageScreenshotUrl = await uploadScreenshot(auditId, 'page-overview.png', pageScreenshot)
 
-          // Update first audit_page with screenshot
           if (pageScreenshotUrl) {
             const { data: firstPage } = await db
               .from('audit_pages')
@@ -303,29 +284,15 @@ export const processAuditFn = inngest.createFunction(
                 .eq('id', (firstPage as any).id)
             }
           }
-        }
 
-        // Upload finding screenshots
-        let uploadedCount = 0
-        for (const [findingId, buffer] of findingScreenshots) {
-          const url = await uploadScreenshot(auditId, `finding-${findingId}.png`, buffer)
-          if (url) {
-            await db
-              .from('audit_findings')
-              .update({ screenshot_url: url } as any)
-              .eq('id', findingId)
-            uploadedCount++
-          }
+          await auditLog(auditId, 'screenshots_completed', 'success', 'Page overview screenshot captured successfully')
+        } else {
+          await auditLog(auditId, 'screenshots_skipped', 'warning', 'PageSpeed API did not return a screenshot — finding visuals will be shown client-side')
         }
-
-        await auditLog(auditId, 'screenshots_completed', 'success', `Captured ${uploadedCount} finding screenshot(s) + page overview`, {
-          finding_screenshots: uploadedCount,
-          has_page_screenshot: !!pageScreenshot,
-        })
       } catch (err) {
         // Screenshots are non-fatal — audit can complete without them
         console.error('[inngest] Screenshot capture error (non-fatal):', err)
-        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — report will be generated without screenshots')
+        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — finding visuals will be shown client-side')
       }
     })
 

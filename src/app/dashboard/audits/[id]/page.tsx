@@ -39,6 +39,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ScoreRing from '@/components/ui/ScoreRing';
+import FindingVisual from '@/components/ui/FindingVisual';
 import type {
   AuditWithReport,
   AuditFinding,
@@ -381,7 +382,7 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
-function FindingCard({ finding, pillarColor }: { finding: AuditFinding; pillarColor: string }) {
+function FindingCard({ finding, pillarColor, categoryName }: { finding: AuditFinding; pillarColor: string; categoryName?: string }) {
   const [open, setOpen] = useState(false);
   const sev = severityConfig[finding.severity] || severityConfig.medium;
 
@@ -455,7 +456,16 @@ function FindingCard({ finding, pillarColor }: { finding: AuditFinding; pillarCo
             </div>
           )}
 
-          {/* Screenshot */}
+          {/* Visual evidence card */}
+          <FindingVisual
+            title={finding.title}
+            severity={finding.severity}
+            categoryName={categoryName || ''}
+            targetElement={finding.target_element}
+            pageUrl={finding.page_url}
+          />
+
+          {/* Uploaded screenshot (if available from API capture) */}
           {finding.screenshot_url && (
             <div className="rounded-lg overflow-hidden border border-border/30 dark:border-white/[0.04]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -590,7 +600,7 @@ function PillarSection({
             </div>
             <div className="space-y-2">
               {sorted.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} />
+                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} />
               ))}
             </div>
           </div>
