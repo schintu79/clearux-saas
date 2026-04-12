@@ -743,7 +743,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-dk transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-accent text-white px-4 py-2.5 rounded-xl hover:bg-accent-dk transition-colors disabled:opacity-60"
               >
                 {restarting ? (
                   <>
@@ -776,7 +776,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleRetry}
                   disabled={retrying}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-dk transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold bg-accent text-white px-4 py-2.5 rounded-xl hover:bg-accent-dk transition-colors disabled:opacity-60"
                 >
                   {retrying ? (
                     <>
@@ -793,7 +793,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-red-600 dark:hover:text-red-400 px-3 py-2 rounded-lg border border-border hover:border-red-300 dark:hover:border-red-700 transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-red-600 dark:hover:text-red-400 px-3 py-2.5 rounded-xl border border-border hover:border-red-300 dark:hover:border-red-700 transition-colors disabled:opacity-60"
                 >
                   <Trash2 size={13} />
                   {deleting ? 'Deleting...' : 'Delete (keep credit)'}
@@ -827,13 +827,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-shrink-0">
                 <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
-                  <button className="w-full flex items-center justify-center gap-2 bg-accent text-white text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-accent-dk transition-colors">
+                  <button className="w-full flex items-center justify-center gap-2 bg-accent text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-accent-dk transition-colors">
                     <Download size={14} />
                     PDF
                   </button>
                 </a>
                 <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
-                  <button className="w-full flex items-center justify-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-surface-alt transition-colors">
+                  <button className="w-full flex items-center justify-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors">
                     <Download size={14} />
                     Word
                   </button>

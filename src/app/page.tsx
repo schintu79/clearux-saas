@@ -763,8 +763,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-14 max-w-3xl mx-auto">
+          {/* Stats row — big, bold numbers */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-16 max-w-4xl mx-auto">
             {([
               { counter: c1, suffix: '+', label: 'UX checkpoints', prefix: '' },
               { counter: c2, suffix: '', label: 'Categories', prefix: '' },
@@ -774,10 +774,10 @@ export default function Home() {
               const counter = (stat as { counter: typeof c1 }).counter;
               return (
                 <div key={idx} ref={counter.ref} className="text-center">
-                  <p className="font-manrope text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent" suppressHydrationWarning>
+                  <p className="font-manrope text-5xl sm:text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent leading-none" suppressHydrationWarning>
                     {mounted ? `${stat.prefix}${counter.count}${stat.suffix}` : '\u00A0'}
                   </p>
-                  <p className="text-xs text-muted mt-1 font-medium">{stat.label}</p>
+                  <p className="text-sm text-muted mt-2 font-medium">{stat.label}</p>
                 </div>
               );
             })}
@@ -1159,10 +1159,9 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden">
-        {/* Full-width warm gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/60 via-orange-50/30 to-rose-50/40 dark:from-accent/[0.06] dark:via-purple-900/[0.04] dark:to-transparent pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.05] blur-[150px] pointer-events-none" />
+      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ backgroundColor: 'var(--accent-lt)' }}>
+        {/* Subtle radial glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.06] blur-[150px] pointer-events-none" />
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Small label */}

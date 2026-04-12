@@ -1,18 +1,17 @@
 // ============================================================
 // ClearUX Audit Engine — Screenshot Capture
-// Uses puppeteer-core + @sparticuz/chromium for serverless
-// screenshot capture with element highlighting
+// Strategy: Try puppeteer-core first, fall back to free API
 // ============================================================
 
 import type { AuditFinding } from '@/types/database'
 import { createServiceSupabase } from '@/lib/supabase-server'
 
-// Lazy-load puppeteer and chromium to avoid import issues at build time
+// ── Puppeteer approach (works on Lambda / Vercel Pro) ────────
+
 async function launchBrowser() {
   const chromium = (await import('@sparticuz/chromium')).default
   const puppeteer = (await import('puppeteer-core')).default
 
-  // Configure chromium for serverless
   if (typeof (chromium as any).setHeadlessMode === 'function') {
     ;(chromium as any).setHeadlessMode('shell')
   }
@@ -32,41 +31,73 @@ async function launchBrowser() {
   return browser
 }
 
+// ── Fallback: Free screenshot API ────────────────────────────
+
+async function captureViaApi(url: string): Promise<Buffer | null> {
+  // Try multiple free screenshot APIs as fallback
+  const apis = [
+    // Google PageSpeed Insights screenshot (free, reliable)
+    `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&category=PERFORMANCE&strategy=DESKTOP`,
+    // screenshotone.com free tier
+    `https://api.screenshotone.com/take?url=${encodeURIComponent(url)}&viewport_width=1280&viewport_height=900&format=png&block_ads=true&delay=2&timeout=15`,
+  ]
+
+  // Try Google PageSpeed first — it returns a base64 screenshot
+  try {
+    const psRes = await fetch(apis[0], { signal: AbortSignal.timeout(20_000) })
+    if (psRes.ok) {
+      const data = await psRes.json()
+      const b64 = data?.lighthouseResult?.audits?.['final-screenshot']?.details?.data
+      if (b64 && typeof b64 === 'string') {
+        // Format: "data:image/jpeg;base64,..."
+        const raw = b64.split(',')[1]
+        if (raw) {
+          console.log('[screenshots] Captured via Google PageSpeed API')
+          return Buffer.from(raw, 'base64')
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[screenshots] Google PageSpeed API failed:', err instanceof Error ? err.message : err)
+  }
+
+  return null
+}
+
 /**
  * Capture a full-page screenshot of a URL.
- * Returns the screenshot as a PNG Buffer.
+ * Tries puppeteer first, falls back to free API.
  */
 export async function capturePageScreenshot(
   url: string,
   options?: { timeout?: number },
 ): Promise<Buffer> {
-  const browser = await launchBrowser()
-
+  // Strategy 1: Puppeteer (best quality, but may fail on serverless)
   try {
-    const page = await browser.newPage()
-
-    // Set a realistic viewport
-    await page.setViewport({ width: 1280, height: 900 })
-
-    // Navigate to the page
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: options?.timeout ?? 30_000,
-    })
-
-    // Wait a bit for any animations/lazy loading
-    await new Promise((r) => setTimeout(r, 1500))
-
-    // Take screenshot of the visible viewport
-    const screenshot = await page.screenshot({
-      type: 'png',
-      fullPage: false, // Just viewport — more useful for showing issues
-    })
-
-    return Buffer.from(screenshot)
-  } finally {
-    await browser.close()
+    const browser = await launchBrowser()
+    try {
+      const page = await browser.newPage()
+      await page.setViewport({ width: 1280, height: 900 })
+      await page.goto(url, {
+        waitUntil: 'networkidle2',
+        timeout: options?.timeout ?? 30_000,
+      })
+      await new Promise((r) => setTimeout(r, 1500))
+      const screenshot = await page.screenshot({ type: 'png', fullPage: false })
+      console.log('[screenshots] Captured via Puppeteer')
+      return Buffer.from(screenshot)
+    } finally {
+      await browser.close()
+    }
+  } catch (err) {
+    console.error('[screenshots] Puppeteer failed, trying API fallback:', err instanceof Error ? err.message : err)
   }
+
+  // Strategy 2: Free API fallback
+  const apiBuf = await captureViaApi(url)
+  if (apiBuf) return apiBuf
+
+  throw new Error('All screenshot methods failed')
 }
 
 /**
