@@ -205,8 +205,8 @@ function DashboardInner() {
 
       {/* Credits purchased banner */}
       {creditsBanner && (
-        <div className="mb-5 p-4 rounded-lg bg-accent/10 border border-accent/20 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+        <div className="mb-5 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
             <Coins size={16} className="text-white" />
           </div>
           <div>
@@ -218,7 +218,7 @@ function DashboardInner() {
 
       {/* New Audit CTA */}
       <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="relative overflow-hidden rounded-xl bg-accent p-5 text-white hover:bg-accent-dk transition-colors group">
+        <div className="relative overflow-hidden rounded-xl p-5 text-white transition-all hover:brightness-110 group" style={{ background: 'var(--gradient-brand)' }}>
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -251,7 +251,8 @@ function DashboardInner() {
           </p>
           <Link
             href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 bg-accent text-white text-xs font-medium px-4 py-2 rounded-md hover:bg-accent-dk transition-colors"
+            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2 rounded-md transition-all hover:brightness-110"
+            style={{ background: 'var(--gradient-brand)' }}
           >
             <Sparkles size={13} />
             Start Audit
@@ -272,7 +273,7 @@ function DashboardInner() {
 
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
-                  <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-accent/30 transition-colors cursor-pointer group">
+                  <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-violet-400/30 transition-colors cursor-pointer group">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">

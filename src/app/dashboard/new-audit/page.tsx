@@ -47,7 +47,7 @@ const NewAuditInner: React.FC = () => {
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -56,7 +56,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-accent text-white font-medium px-6 py-3 rounded-lg hover:bg-accent-dk transition-colors">
+        <a href="/login" className="inline-flex items-center gap-2 text-white font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
           Sign In
         </a>
       </div>
@@ -159,8 +159,8 @@ const NewAuditInner: React.FC = () => {
 
       {/* Hero */}
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-          <Sparkles size={28} className="text-accent" />
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
+          <Sparkles size={28} className="text-violet-500" />
         </div>
         <h1 className="text-3xl font-bold font-manrope text-text mb-2">
           New Audit
@@ -193,7 +193,7 @@ const NewAuditInner: React.FC = () => {
             className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-inter bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
               urlError
                 ? 'border-red-400 dark:border-red-500 focus:border-red-500'
-                : 'border-border focus:border-accent'
+                : 'border-border focus:border-violet-500'
             }`}
           />
           {url && !urlError && (
@@ -219,7 +219,7 @@ const NewAuditInner: React.FC = () => {
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-border rounded-xl font-inter text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-accent appearance-none cursor-pointer"
+            className="w-full px-4 py-3 border-2 border-border rounded-xl font-inter text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-violet-500 appearance-none cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -243,13 +243,13 @@ const NewAuditInner: React.FC = () => {
       {/* ── What's included ────────────────────────────────── */}
       <div className="mb-6 p-4 rounded-xl bg-off border border-border">
         <div className="flex items-center gap-2 mb-3">
-          <Zap size={14} className="text-accent" />
+          <Zap size={14} className="text-violet-500" />
           <span className="text-sm font-bold text-text">Full Deep Audit</span>
         </div>
         <div className="grid grid-cols-1 gap-1.5">
           {AUDIT_FEATURES.map((f, i) => (
             <div key={i} className="flex items-center gap-2">
-              <CheckCircle size={13} className="text-accent flex-shrink-0" />
+              <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" />
               <span className="text-xs text-muted">{f}</span>
             </div>
           ))}
@@ -258,9 +258,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Credits banner ────────────────────────────────── */}
       {credits !== null && hasCredits && (
-        <div className="mb-6 p-4 rounded-xl bg-accent/5 border border-accent/20">
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
               <Coins size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -271,7 +271,7 @@ const NewAuditInner: React.FC = () => {
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-bold text-accent">{credits}</span>
+            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{credits}</span>
           </div>
         </div>
       )}
@@ -285,7 +285,8 @@ const NewAuditInner: React.FC = () => {
             </div>
             <Link
               href="/dashboard/buy-credits"
-              className="text-xs font-semibold text-accent hover:text-accent-dk transition-colors whitespace-nowrap ml-3"
+              className="text-xs font-semibold bg-clip-text text-transparent hover:underline transition-colors whitespace-nowrap ml-3"
+              style={{ backgroundImage: 'var(--gradient-brand-text)' }}
             >
               Buy Credits &rarr;
             </Link>
@@ -304,7 +305,8 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-accent text-white font-manrope font-bold text-lg py-4 px-8 rounded-xl hover:bg-accent-dk active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2.5 text-white font-manrope font-bold text-lg py-4 px-8 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ background: 'var(--gradient-brand)' }}
       >
         {loading ? (
           <>

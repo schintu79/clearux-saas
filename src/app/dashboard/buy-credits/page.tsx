@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Coins, CheckCircle, Zap, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Coins, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const PACKS = [
@@ -48,7 +48,7 @@ export default function BuyCreditsPage() {
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -64,8 +64,8 @@ export default function BuyCreditsPage() {
       </Link>
 
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-          <Coins size={28} className="text-accent" />
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
+          <Coins size={28} className="text-emerald-500" />
         </div>
         <h1 className="text-3xl font-bold font-manrope text-text mb-2">
           Buy Audit Credits
@@ -74,10 +74,10 @@ export default function BuyCreditsPage() {
           Every credit = one full deep audit across all 95 checkpoints. Buy more, save more.
         </p>
         {credits !== null && (
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
-            <Coins size={14} className="text-accent" />
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <Coins size={14} className="text-emerald-500" />
             <span className="text-sm font-semibold text-text">
-              Current balance: <span className="text-accent">{credits} credit{credits !== 1 ? 's' : ''}</span>
+              Current balance: <span className="text-emerald-600 dark:text-emerald-400">{credits} credit{credits !== 1 ? 's' : ''}</span>
             </span>
           </div>
         )}
@@ -90,12 +90,12 @@ export default function BuyCreditsPage() {
             key={pack.id}
             className={`relative rounded-2xl p-6 transition-all duration-200 ${
               pack.popular
-                ? 'bg-card border-2 border-accent shadow-lg shadow-accent/10'
-                : 'bg-card border border-border hover:shadow-lg hover:border-accent/30'
+                ? 'bg-card border-2 border-violet-500 shadow-lg shadow-violet-500/10'
+                : 'bg-card border border-border hover:shadow-lg hover:border-violet-400/30'
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md">
+              <span className="absolute -top-2.5 right-4 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md" style={{ background: 'var(--gradient-brand)' }}>
                 Customers Favourite
               </span>
             )}
@@ -108,7 +108,7 @@ export default function BuyCreditsPage() {
                 <p className="text-xs text-muted">{pack.per} per audit</p>
               </div>
               {pack.save && (
-                <span className="inline-flex items-center bg-accent/10 text-accent text-xs font-bold px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                   Save {pack.save}
                 </span>
               )}
@@ -126,7 +126,7 @@ export default function BuyCreditsPage() {
                 'Credits never expire',
               ].map((f, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <CheckCircle size={13} className="text-accent flex-shrink-0" />
+                  <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" />
                   <span className="text-xs text-muted">{f}</span>
                 </div>
               ))}
@@ -137,9 +137,10 @@ export default function BuyCreditsPage() {
               disabled={purchasing !== null}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
                 pack.popular
-                  ? 'bg-accent text-white hover:bg-accent-dk shadow-md shadow-accent/20'
-                  : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
+                  ? 'text-white hover:brightness-110 shadow-md'
+                  : 'bg-violet-500/[0.1] text-violet-600 dark:text-violet-400 hover:bg-violet-500/[0.18]'
               }`}
+              style={pack.popular ? { background: 'var(--gradient-brand)', boxShadow: '0 4px 12px rgba(124,58,237,.15)' } : undefined}
             >
               {purchasing === pack.id ? (
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">

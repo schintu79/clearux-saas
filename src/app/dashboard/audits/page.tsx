@@ -139,7 +139,8 @@ export default function AuditsPage() {
         </div>
         <Link
           href="/dashboard/new-audit"
-          className="inline-flex items-center gap-1.5 bg-accent text-white text-xs font-medium px-3.5 py-2 rounded-md hover:bg-accent-dk transition-colors"
+          className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-3.5 py-2 rounded-md transition-all hover:brightness-110"
+          style={{ background: 'var(--gradient-brand)' }}
         >
           <Sparkles size={13} />
           New Audit
@@ -163,7 +164,8 @@ export default function AuditsPage() {
           </p>
           <Link
             href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 bg-accent text-white text-xs font-medium px-4 py-2 rounded-md hover:bg-accent-dk transition-colors"
+            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2 rounded-md transition-all hover:brightness-110"
+            style={{ background: 'var(--gradient-brand)' }}
           >
             <Sparkles size={13} />
             Start Audit
@@ -181,7 +183,7 @@ export default function AuditsPage() {
             const done = audit.status === 'completed';
 
             return (
-              <div key={audit.id} className="bg-card border border-border rounded-lg hover:border-accent/30 transition-colors group">
+              <div key={audit.id} className="bg-card border border-border rounded-lg hover:border-violet-400/30 transition-colors group">
                 <Link href={`/dashboard/audits/${audit.id}`} className="block px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">

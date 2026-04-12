@@ -29,11 +29,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        'bg-blue text-white hover:bg-blue-dk focus:ring-blue/50 active:scale-95',
+        'text-white hover:brightness-110 focus:ring-violet-500/50 active:scale-95',
       secondary:
-        'bg-transparent border-2 border-blue text-blue hover:bg-blue-lt focus:ring-blue/50 active:scale-95',
+        'bg-transparent border-2 border-violet-500 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:ring-violet-500/50 active:scale-95',
       ghost:
-        'bg-transparent text-text hover:bg-off focus:ring-blue/50 active:scale-95',
+        'bg-transparent text-text hover:bg-off focus:ring-violet-500/50 active:scale-95',
       danger:
         'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500/50 active:scale-95',
     };
@@ -54,6 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           sizeStyles[size],
           className
         )}
+        style={variant === 'primary' ? { background: 'var(--gradient-brand)' } : undefined}
         {...props}
       >
         {loading && (
