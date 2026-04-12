@@ -56,17 +56,30 @@ export function useUser(): UseUserReturn {
         if (cancelled) return
 
         if (session?.user) {
+          // Optimistic: show user immediately from cookie
           setUser(session.user)
           fetchProfile(session.user.id)
           setLoading(false)
 
-          // Background server verification (non-blocking)
+          // Verify with server — if session is stale/expired, clear user
           supabase.auth.getUser()
-            .then(({ data: { user: verified } }) => {
-              if (cancelled || !verified) return
-              setUser(verified)
+            .then(({ data: { user: verified }, error }) => {
+              if (cancelled) return
+              if (verified) {
+                setUser(verified)
+              } else {
+                // Session cookie is stale — user is not actually logged in
+                console.warn('[useUser] stale session detected, clearing user')
+                setUser(null)
+                setProfile(null)
+                // Clear the stale cookie
+                supabase.auth.signOut().catch(() => {})
+              }
             })
-            .catch(() => {})
+            .catch(() => {
+              if (cancelled) return
+              // Network error — keep optimistic user, don't break the experience
+            })
           return
         }
 
