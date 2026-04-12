@@ -197,7 +197,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   const active = PILLAR_DATA[activeIdx];
 
   return (
-    <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-20">
+    <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pb-12">
       {/* Pillar nav dots — desktop only */}
       <div className="hidden lg:flex items-center justify-center gap-3 mb-12">
         {PILLAR_DATA.map((p, i) => (
@@ -227,7 +227,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
               <div
                 key={pillar.key}
                 ref={(el) => { sectionRefs.current[idx] = el; }}
-                className="min-h-[60vh] lg:min-h-[70vh] flex flex-col justify-center py-12 lg:py-16"
+                className="min-h-[50vh] lg:min-h-[55vh] flex flex-col justify-center py-8 lg:py-10"
               >
                 <div className={`transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-2 lg:opacity-30'}`}>
                   {/* Pillar label */}
@@ -277,7 +277,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
 
         {/* RIGHT — Sticky visual panel */}
         <div className="hidden lg:block">
-          <div className="sticky top-24">
+          <div className="sticky top-[12vh]">
             <div className="relative">
               <div className={`rounded-3xl border border-border/30 dark:border-white/[0.06] bg-card shadow-xl shadow-black/5 overflow-hidden transition-all duration-500`}>
 
@@ -315,8 +315,8 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
                     </div>
                   </div>
                   {/* Finding cards */}
-                  <div className="px-6 pb-6 space-y-2.5">
-                    {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'},{sev:'MEDIUM',c:'bg-yellow-400',t:'Navigation lacks clear visual hierarchy',imp:'Reduced bounce rate'}].map((f,i)=>(
+                  <div className="px-6 pb-4 space-y-2.5">
+                    {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'}].map((f,i)=>(
                       <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt border border-border/20">
                         <span className={`${f.c} text-white text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
                         <div className="min-w-0">
@@ -325,6 +325,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
                         </div>
                       </div>
                     ))}
+                  </div>
+                  {/* Recommendation */}
+                  <div className="mx-6 mb-6 p-3 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/40 dark:border-violet-800/20">
+                    <p className="text-[10px] font-bold text-violet-700 dark:text-violet-400 mb-1">💡 Recommendation</p>
+                    <p className="text-[10px] text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
                   </div>
                 </div>
 
@@ -356,6 +361,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
                           </div>
                         </div>
                       ))}
+                    </div>
+                    {/* Recommendation */}
+                    <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
+                      <p className="text-[10px] font-bold text-pink-700 dark:text-pink-400 mb-1">💡 Recommendation</p>
+                      <p className="text-[10px] text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust and reduces churn.</p>
                     </div>
                   </div>
                 </div>
@@ -396,6 +406,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
                         </div>
                       ))}
                     </div>
+                    {/* Recommendation */}
+                    <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-800/20">
+                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1">💡 Recommendation</p>
+                      <p className="text-[10px] text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
+                    </div>
                   </div>
                 </div>
 
@@ -434,6 +449,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
                       <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/20">
                         <p className="text-[10px] text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
                       </div>
+                    </div>
+                    {/* Recommendation */}
+                    <div className="mt-4 p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
+                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">💡 Recommendation</p>
+                      <p className="text-[10px] text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
                     </div>
                   </div>
                 </div>
@@ -784,7 +804,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── APPLE-STYLE SCROLL REVEAL — 4 Pillars ── */}
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          PILLAR SCROLL REVEAL — own section (no overflow-hidden so sticky works)
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative bg-surface-alt py-12">
         <PillarScrollReveal categories={auditCategories} />
       </section>
 

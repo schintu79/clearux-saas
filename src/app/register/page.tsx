@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
@@ -79,6 +79,12 @@ const valueProps = [
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pendingUrl = searchParams.get('url')
+  // Where to go after successful auth — if user came with a URL, go straight to new-audit
+  const postAuthRedirect = pendingUrl
+    ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}`
+    : '/dashboard'
   const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     fullName: '',
@@ -104,7 +110,7 @@ export default function RegisterPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${appUrl}/auth/callback?next=/dashboard`,
+          redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
         },
       })
       if (oauthError) {
@@ -164,7 +170,7 @@ export default function RegisterPage() {
         password: formData.password,
         options: {
           data: { full_name: formData.fullName },
-          emailRedirectTo: `${appUrl}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
         },
       })
 
@@ -182,12 +188,12 @@ export default function RegisterPage() {
     }
   }
 
-  // If already logged in, redirect to dashboard
+  // If already logged in, redirect to post-auth destination
   useEffect(() => {
     if (!authLoading && authUser) {
-      router.replace('/dashboard')
+      router.replace(postAuthRedirect)
     }
-  }, [authLoading, authUser, router])
+  }, [authLoading, authUser, postAuthRedirect, router])
 
   // Show loading while checking auth state
   if (authLoading || authUser) {
@@ -392,7 +398,7 @@ export default function RegisterPage() {
 
       <div className="mt-6 text-center text-sm text-muted">
         Already have an account?{' '}
-        <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">
+        <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="text-accent font-semibold hover:underline transition-colors">
           Sign in
         </Link>
       </div>

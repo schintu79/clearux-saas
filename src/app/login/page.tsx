@@ -24,7 +24,9 @@ const kspItems = [
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  const pendingUrl = searchParams.get('url')
+  const redirectTo = searchParams.get('redirectTo')
+    || (pendingUrl ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}` : '/dashboard')
   const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -248,7 +250,7 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-accent font-semibold hover:underline transition-colors">
+        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="text-accent font-semibold hover:underline transition-colors">
           Sign up
         </Link>
       </div>
