@@ -7,7 +7,7 @@ import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Sma
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 
 /* ── Animated counter ────────────────────────────────────── */
 function useCountUp(end: number, duration = 2000) {
@@ -145,7 +145,7 @@ function ScrollToTop() {
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [heroUrl, setHeroUrl] = useState('');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

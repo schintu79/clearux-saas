@@ -146,16 +146,24 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             <ThemeToggle variant="pill" />
           </div>
 
-          {!loading && user && (
-            <div className="px-3 py-2 bg-white/5 rounded-md">
-              <p className="text-xs font-medium text-sidebar-text truncate">
-                {profile?.full_name || user.email}
-              </p>
-              <p className="text-[10px] text-sidebar-text/40 truncate">
-                {user.email}
-              </p>
-            </div>
-          )}
+          {!loading && user && (() => {
+            const displayName = profile?.full_name
+              || user.user_metadata?.full_name
+              || user.user_metadata?.name
+              || null;
+            return (
+              <div className="px-3 py-2 bg-white/5 rounded-md">
+                {displayName && (
+                  <p className="text-xs font-medium text-sidebar-text truncate">
+                    {displayName}
+                  </p>
+                )}
+                <p className={`text-sidebar-text truncate ${displayName ? 'text-[10px] text-sidebar-text/40' : 'text-xs font-medium'}`}>
+                  {user.email}
+                </p>
+              </div>
+            );
+          })()}
 
           <button
             onClick={handleSignOut}

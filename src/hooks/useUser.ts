@@ -1,7 +1,8 @@
 // ============================================================
 // ClearUX — useUser Hook
 // Provides reactive auth state (user + profile) in client
-// components. Listens to Supabase auth state changes.
+// components. ONLY used inside AuthProvider — all components
+// should call useAuth() from AuthContext instead.
 // ============================================================
 
 'use client'
@@ -24,6 +25,7 @@ export function useUser(): UseUserReturn {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const signingOut = useRef(false)
+  const mounted = useRef(true)
 
   const supabase = createBrowserSupabase()
 
@@ -35,7 +37,7 @@ export function useUser(): UseUserReturn {
         .eq('id', userId)
         .single()
       if (error) console.warn('[useUser] fetchProfile error:', error.message)
-      setProfile(data)
+      if (mounted.current) setProfile(data)
     } catch (err) {
       console.error('[useUser] fetchProfile exception:', err)
     }
@@ -46,69 +48,77 @@ export function useUser(): UseUserReturn {
   }, [user, fetchProfile])
 
   useEffect(() => {
-    let cancelled = false
+    mounted.current = true
 
     const init = async () => {
       try {
-        // Fast read from cookies — no network call
+        // Step 1: Quick check — is there even a session cookie?
         const { data: { session } } = await supabase.auth.getSession()
 
-        if (cancelled) return
-
-        if (session?.user) {
-          // Optimistic: show user immediately from cookie
-          setUser(session.user)
-          fetchProfile(session.user.id)
-          setLoading(false)
-
-          // Verify with server — if session is stale/expired, clear user
-          supabase.auth.getUser()
-            .then(({ data: { user: verified }, error }) => {
-              if (cancelled) return
-              if (verified) {
-                setUser(verified)
-              } else {
-                // Session cookie is stale — user is not actually logged in
-                console.warn('[useUser] stale session detected, clearing user')
-                setUser(null)
-                setProfile(null)
-                // Clear the stale cookie
-                supabase.auth.signOut().catch(() => {})
-              }
-            })
-            .catch(() => {
-              if (cancelled) return
-              // Network error — keep optimistic user, don't break the experience
-            })
+        if (!session?.user) {
+          // No session cookie at all — definitely not logged in
+          if (mounted.current) {
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
+          }
           return
         }
 
-        // No session — mark as not authenticated
-        setUser(null)
-        setProfile(null)
+        // Step 2: Session cookie exists — verify it's still valid with the server.
+        // This is the ONLY place we set user state. No optimistic stale state.
+        const { data: { user: verified }, error } = await supabase.auth.getUser()
+
+        if (!mounted.current) return
+
+        if (verified) {
+          // Valid session — set user and fetch profile
+          setUser(verified)
+          fetchProfile(verified.id)
+        } else {
+          // Stale session cookie — clear everything
+          console.warn('[useUser] stale session detected, clearing')
+          setUser(null)
+          setProfile(null)
+          // Clean up the stale cookie silently
+          supabase.auth.signOut().catch(() => {})
+        }
       } catch (err) {
         console.error('[useUser] init error:', err)
+        if (mounted.current) {
+          setUser(null)
+          setProfile(null)
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (mounted.current) setLoading(false)
       }
     }
 
     init()
 
-    // Safety: force loading=false after 4 seconds no matter what
+    // Safety: force loading=false after 5 seconds (network issues, etc.)
     const safety = setTimeout(() => {
-      setLoading(prev => {
-        if (prev) console.warn('[useUser] safety timeout')
-        return false
-      })
-    }, 4000)
+      if (mounted.current) {
+        setLoading(prev => {
+          if (prev) console.warn('[useUser] safety timeout — forcing loading=false')
+          return false
+        })
+      }
+    }, 5000)
 
     // Listen for auth changes (sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'INITIAL_SESSION') return
-        // Ignore auth changes during sign-out (we handle redirect ourselves)
         if (signingOut.current) return
+        if (!mounted.current) return
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+          return
+        }
 
         const newUser = session?.user ?? null
         setUser(newUser)
@@ -122,21 +132,29 @@ export function useUser(): UseUserReturn {
     )
 
     return () => {
-      cancelled = true
+      mounted.current = false
       clearTimeout(safety)
       subscription.unsubscribe()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const signOut = () => {
+  const signOut = async () => {
     // Mark as signing out so onAuthStateChange doesn't interfere
     signingOut.current = true
 
-    // Redirect IMMEDIATELY — don't wait for Supabase
-    window.location.replace('/')
+    // Clear state immediately for instant UI feedback
+    setUser(null)
+    setProfile(null)
 
-    // Fire-and-forget the actual sign-out
-    supabase.auth.signOut().catch(() => {})
+    try {
+      // Wait for Supabase to clear the session cookie on the server
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.warn('[useUser] signOut error:', err)
+    }
+
+    // Only redirect AFTER the session is fully cleared
+    window.location.replace('/')
   }
 
   return { user, profile, loading, signOut, refreshProfile }

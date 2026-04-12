@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
+import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { z } from 'zod'
@@ -76,6 +78,8 @@ const valueProps = [
 ]
 
 export default function RegisterPage() {
+  const router = useRouter()
+  const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -176,6 +180,22 @@ export default function RegisterPage() {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
       setLoading(false)
     }
+  }
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      router.replace('/dashboard')
+    }
+  }, [authLoading, authUser, router])
+
+  // Show loading while checking auth state
+  if (authLoading || authUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   /* ── Shared form JSX ─────────────────────────────────────── */

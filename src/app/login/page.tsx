@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
+import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { z } from 'zod'
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -107,6 +109,22 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
       setLoading(false)
     }
+  }
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      router.replace(redirectTo)
+    }
+  }, [authLoading, authUser, redirectTo, router])
+
+  // Show loading while checking auth state
+  if (authLoading || authUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   /* ── Shared form JSX ─────────────────────────────────────── */

@@ -44,11 +44,46 @@ export async function GET(request: NextRequest) {
     }
   )
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
     console.error('[auth/callback] code exchange failed:', error.message)
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+  }
+
+  // For OAuth sign-ins, populate profile from provider metadata if needed
+  const user = sessionData?.session?.user
+  if (user) {
+    try {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      // If profile has no name, populate from OAuth provider metadata
+      if (!existingProfile?.full_name) {
+        const fullName = user.user_metadata?.full_name
+          || user.user_metadata?.name
+          || null
+        const avatarUrl = user.user_metadata?.avatar_url
+          || user.user_metadata?.picture
+          || null
+
+        if (fullName || avatarUrl) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              ...(fullName ? { full_name: fullName } : {}),
+              ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+            }, { onConflict: 'id' })
+        }
+      }
+    } catch (err) {
+      // Non-critical — don't block the redirect
+      console.warn('[auth/callback] profile update failed:', err)
+    }
   }
 
   // For password reset, send to the reset-password page
@@ -56,6 +91,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/reset-password`)
   }
 
-  // For email confirmation, send to dashboard (the user is now logged in)
+  // For email confirmation or OAuth, send to dashboard (the user is now logged in)
   return response
 }

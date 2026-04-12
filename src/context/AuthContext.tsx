@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: User | null
   profile: Profile | null
   loading: boolean
-  signOut: () => void
+  signOut: () => void | Promise<void>
   refreshProfile: () => Promise<void>
 }
 

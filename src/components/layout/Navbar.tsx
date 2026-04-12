@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Settings, LogOut, LayoutDashboard, Coins } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   const initials = name
@@ -21,7 +21,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
 
 const Navbar: React.FC = () => {
   const router = useRouter();
-  const { user, profile, loading, signOut } = useUser();
+  const { user, profile, loading, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
@@ -114,9 +114,9 @@ const Navbar: React.FC = () => {
                   aria-haspopup="true"
                   className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-off transition-colors"
                 >
-                  <UserAvatar name={profile?.full_name} email={user?.email} />
+                  <UserAvatar name={profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name} email={user?.email} />
                   <span className="text-sm text-text font-medium max-w-[120px] truncate">
-                    {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
+                    {(profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name)?.split(' ')[0] || user?.email?.split('@')[0]}
                   </span>
                 </button>
 

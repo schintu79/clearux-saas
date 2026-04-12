@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Manrope } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
 
 const inter = Inter({
@@ -76,7 +77,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body suppressHydrationWarning className="font-inter antialiased bg-surface text-text">
         <ThemeProvider initialTheme={initialTheme}>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
