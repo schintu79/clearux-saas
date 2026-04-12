@@ -2,14 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light palette (default) — Sketch-inspired warm minimal ── */
+/* ── Light palette (default) — Kaleidoscope: 4-pillar color system ── */
 :root {
+  /* Pillar colors — the core kaleidoscope */
+  --color-foundation:  #7C3AED;  /* violet */
+  --color-human:       #EC4899;  /* rose/pink */
+  --color-tech:        #F59E0B;  /* amber */
+  --color-future:      #10B981;  /* emerald */
+  --color-trust:       #3B82F6;  /* blue — 5th accent for trust signals */
+
+  /* Primary accent — kept as violet for backward compat, but gradients use all 4 */
   --blue:        #7C3AED;
   --blue-dk:     #6D28D9;
   --blue-lt:     #F3EFFE;
   --accent:      #7C3AED;
   --accent-dk:   #6D28D9;
   --accent-lt:   #F3EFFE;
+
+  /* Kaleidoscope gradient — used for hero, CTAs, badges */
+  --gradient-brand: linear-gradient(135deg, #7C3AED 0%, #EC4899 35%, #F59E0B 65%, #10B981 100%);
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(124,58,237,.08) 0%, rgba(236,72,153,.06) 35%, rgba(245,158,11,.06) 65%, rgba(16,185,129,.08) 100%);
+  --gradient-brand-text: linear-gradient(135deg, #7C3AED 0%, #EC4899 40%, #F59E0B 70%, #10B981 100%);
+
   --navy:        #1D1D1F;
   --off:         #F5F5F7;
   --muted:       #86868B;
@@ -27,12 +41,23 @@
 
 /* ── Dark palette ─────────────────────────────────────────── */
 .dark {
+  --color-foundation:  #A78BFA;
+  --color-human:       #F472B6;
+  --color-tech:        #FBBF24;
+  --color-future:      #34D399;
+  --color-trust:       #60A5FA;
+
   --blue:        #A78BFA;
   --blue-dk:     #C4B5FD;
   --blue-lt:     #1A1525;
   --accent:      #A78BFA;
   --accent-dk:   #C4B5FD;
   --accent-lt:   #1A1525;
+
+  --gradient-brand: linear-gradient(135deg, #A78BFA 0%, #F472B6 35%, #FBBF24 65%, #34D399 100%);
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(167,139,250,.1) 0%, rgba(244,114,182,.08) 35%, rgba(251,191,36,.08) 65%, rgba(52,211,153,.1) 100%);
+  --gradient-brand-text: linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%);
+
   --navy:        #F5F5F7;
   --off:         #0D0D0F;
   --muted:       #98989D;
@@ -84,8 +109,8 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(124,58,237,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124,58,237,.04) 1px, transparent 1px);
+    linear-gradient(rgba(124,58,237,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(236,72,153,.03) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
@@ -96,7 +121,7 @@ body {
   width: 520px;
   height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(124,58,237,.14) 0%, rgba(124,58,237,.03) 60%, transparent 75%);
+  background: radial-gradient(circle, rgba(124,58,237,.12) 0%, rgba(236,72,153,.06) 40%, rgba(16,185,129,.03) 70%, transparent 85%);
   pointer-events: none;
 }
 
@@ -138,7 +163,7 @@ body {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.08), 0 0 0 6px rgba(236,72,153,.04);
 }
 
 .input::placeholder {
@@ -170,13 +195,13 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-dk);
-  box-shadow: 0 6px 20px rgba(124,58,237,.2);
+  box-shadow: 0 6px 20px rgba(124,58,237,.15), 0 4px 12px rgba(236,72,153,.1);
   transform: translateY(-1px);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(124,58,237,.2);
+  box-shadow: 0 2px 8px rgba(124,58,237,.15);
 }
 
 .btn-primary:disabled {

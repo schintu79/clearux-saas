@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <span className="font-inter font-semibold text-2xl text-text">
-              Clear<span className="text-accent">UX</span>
+              Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
 
@@ -163,7 +163,8 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-medium bg-accent text-white hover:bg-accent-dk rounded-full px-5 py-1.5 transition-all hover:shadow-lg hover:shadow-accent/20"
+                  className="text-sm font-medium text-white rounded-full px-5 py-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5"
+                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 12px rgba(124,58,237,.15), 0 2px 6px rgba(236,72,153,.08)' }}
                 >
                   Sign Up
                 </Link>
@@ -224,7 +225,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium bg-accent text-white rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1" style={{ background: 'var(--gradient-brand)' }}>
                       Sign Up
                     </Link>
                   </>

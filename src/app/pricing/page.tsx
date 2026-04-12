@@ -95,7 +95,7 @@ export default function PricingPage() {
                     'Results in under 10 minutes',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
@@ -129,7 +129,7 @@ export default function PricingPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>
                       Save {pack.save}%
                     </span>
                   </div>
@@ -146,7 +146,8 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 border border-text/15 dark:border-white/15 text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
+                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 text-white transition-all duration-200 hover:-translate-y-0.5"
+                    style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.15), 0 2px 8px rgba(236,72,153,.08)' }}
                   >
                     {pack.cta}
                   </Link>

@@ -72,7 +72,8 @@ function RotatingWord() {
   }, []);
   return (
     <span
-      className={`transition-opacity duration-300 bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}
+      className={`transition-opacity duration-300 bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}
+      style={{ backgroundImage: 'var(--gradient-brand-text)' }}
     >
       {HERO_WORDS[idx]}
     </span>
@@ -507,42 +508,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SOCIAL PROOF — rotating reviews above hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-5 px-4">
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2.5">
-              {[
-                { bg: '#8B5CF6', initials: 'SC' },
-                { bg: '#A78BFA', initials: 'MW' },
-                { bg: '#7C3AED', initials: 'ER' },
-                { bg: '#6D28D9', initials: 'JK' },
-                { bg: '#C4B5FD', initials: 'DT' },
-              ].map((p, i) => (
-                <div
-                  key={i}
-                  className="w-10 h-10 rounded-full border-2 border-surface-alt flex items-center justify-center text-white text-[11px] font-bold"
-                  style={{ backgroundColor: p.bg, zIndex: 5 - i }}
-                >
-                  {p.initials}
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="flex gap-0.5 mb-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-accent text-accent" />
-                ))}
-              </div>
-              <span className="text-text text-sm font-semibold">Used by product teams &amp; agencies</span>
-            </div>
-          </div>
-          <div className="hidden sm:flex items-center gap-6 text-xs text-muted font-medium">
-            <span className="flex items-center gap-1.5"><Shield size={13} className="text-accent" /> SSL encrypted</span>
-            <span className="flex items-center gap-1.5"><Lock size={13} className="text-accent" /> GDPR compliant</span>
-            <span className="flex items-center gap-1.5"><CreditCard size={13} className="text-accent" /> Secure payments via Stripe</span>
-          </div>
-        </div>
-      </section>
+      {/* Social proof strip moved below hero — see after hero section */}
 
       {/* ═══════════════════════════════════════════════════════
           HERO
@@ -606,15 +572,18 @@ export default function Home() {
           <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 40%, transparent 30%, var(--surface) 100%)' }} />
         </div>
 
-        {/* Ambient glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
-        <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
+        {/* Kaleidoscope ambient glows — 4 pillar colors */}
+        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[500px] rounded-full bg-violet-500/[0.06] blur-[160px] pointer-events-none" />
+        <div className="absolute top-[10%] right-[15%] w-[400px] h-[400px] rounded-full bg-pink-500/[0.05] blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-[5%] left-[10%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[15%] right-[25%] w-[300px] h-[300px] rounded-full bg-amber-500/[0.04] blur-[100px] pointer-events-none" />
 
         <div className="max-w-3xl mx-auto text-center relative">
-          {/* Badge */}
-          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span className="text-sm font-semibold text-accent tracking-wide">Human-Centered, AI-Powered Digital Audits</span>
+          {/* Badge — kaleidoscope gradient border */}
+          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8 relative" style={{ background: 'var(--gradient-brand-subtle)' }}>
+            <div className="absolute inset-0 rounded-full border border-transparent" style={{ borderImage: 'var(--gradient-brand) 1', borderImageSlice: 1 }} />
+            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--gradient-brand)' }} />
+            <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Human-Centered, AI-Powered Digital Audits</span>
           </div>
 
           {/*
@@ -649,7 +618,8 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-accent text-white rounded-2xl font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20 hover:shadow-accent/30 hover:-translate-y-0.5 flex-shrink-0"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
                 Get My UX Report
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -676,6 +646,37 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          TRUST STRIP — prominent, below hero
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-5 overflow-hidden" style={{ background: 'var(--gradient-brand)' }}>
+        {/* Subtle overlay for legibility */}
+        <div className="absolute inset-0 bg-black/[0.08] pointer-events-none" />
+        <div className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-white">
+            <div className="flex items-center gap-2">
+              <Lock size={16} className="opacity-90" />
+              <span className="text-sm font-semibold">SSL Encrypted</span>
+            </div>
+            <div className="w-px h-4 bg-white/20 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <Shield size={16} className="opacity-90" />
+              <span className="text-sm font-semibold">GDPR Compliant</span>
+            </div>
+            <div className="w-px h-4 bg-white/20 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <CreditCard size={16} className="opacity-90" />
+              <span className="text-sm font-semibold">Secure Payments via Stripe</span>
+            </div>
+            <div className="w-px h-4 bg-white/20 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="opacity-90" />
+              <span className="text-sm font-semibold">Credits Never Expire</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           VALUE PROPOSITION + STATS + HOW IT WORKS
           Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
@@ -689,7 +690,7 @@ export default function Home() {
         {/* ── TOP: Section intro + Stats ── */}
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-16">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product teams</p>
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>
               Your website impacts real people.<br className="hidden sm:block" />
               <span className="text-muted">We audit what others miss.</span>
@@ -710,7 +711,7 @@ export default function Home() {
               const counter = (stat as { counter: typeof c1 }).counter;
               return (
                 <div key={idx} ref={counter.ref} className="text-center">
-                  <p className="font-manrope text-5xl sm:text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent leading-none" suppressHydrationWarning>
+                  <p className="font-manrope text-5xl sm:text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent leading-none" style={{ backgroundImage: 'var(--gradient-brand-text)' }} suppressHydrationWarning>
                     {mounted ? `${stat.prefix}${counter.count}${stat.suffix}` : '\u00A0'}
                   </p>
                   <p className="text-sm text-muted mt-2 font-medium">{stat.label}</p>
@@ -784,7 +785,7 @@ export default function Home() {
                   '6 languages supported',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-text">{item}</span>
                   </div>
                 ))}
@@ -813,7 +814,7 @@ export default function Home() {
                 {/* Pack name + badge */}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                  <span className="text-xs font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                  <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>
                     Save {pack.save}%
                   </span>
                 </div>
@@ -871,13 +872,13 @@ export default function Home() {
           className={`max-w-5xl mx-auto transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-14">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Testimonials</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Testimonials</p>
             <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-2">
               Loved by product teams
             </h2>
             <div className="flex justify-center gap-0.5 mb-2">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-accent text-accent" />
+                <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
               ))}
             </div>
           </div>
@@ -894,7 +895,7 @@ export default function Home() {
           className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
           <div className="text-center mb-14">
-            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">FAQ</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>FAQ</p>
             <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
               Frequently asked questions
             </h2>
@@ -927,13 +928,15 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ backgroundColor: 'var(--accent-lt)' }}>
-        {/* Subtle radial glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.06] blur-[150px] pointer-events-none" />
+      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+        {/* Kaleidoscope ambient glows */}
+        <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] rounded-full bg-violet-500/[0.06] blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.05] blur-[120px] pointer-events-none" />
+        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-pink-500/[0.04] blur-[140px] pointer-events-none" />
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Small label */}
-          <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-6">Start your audit today</p>
+          <p className="text-sm font-semibold tracking-wide uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
 
           {/* Big headline */}
           <h2 className="font-manrope text-4xl sm:text-5xl md:text-6xl font-bold text-text mb-6" style={{ lineHeight: '1.1' }}>
@@ -963,7 +966,8 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-text dark:bg-white text-white dark:text-text rounded-2xl font-semibold hover:opacity-90 transition-all shadow-lg flex-shrink-0"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
+                style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
                 Get My UX Report
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -972,7 +976,7 @@ export default function Home() {
           </form>
 
           {/* Trust line */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-muted">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-muted font-medium">
             <span>From $99</span>
             <span className="opacity-30">·</span>
             <span>No subscription</span>

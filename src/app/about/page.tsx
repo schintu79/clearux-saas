@@ -16,7 +16,7 @@ export default function AboutPage() {
       <main className="min-h-[70vh] bg-surface">
         {/* ── Hero ── */}
         <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-16">
-          <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">About ClearUX</p>
+          <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>About ClearUX</p>
           <h1 className="font-manrope font-bold text-3xl sm:text-4xl md:text-5xl text-text mb-6" style={{ lineHeight: '1.15' }}>
             We believe great UX<br className="hidden sm:block" />
             <span className="text-muted">starts with honesty.</span>

@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-1">
-            <h3 className="font-manrope font-bold text-xl mb-2 text-sidebar-text">Clear<span className="text-accent">UX</span></h3>
+            <h3 className="font-manrope font-bold text-xl mb-2 text-sidebar-text">Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span></h3>
             <p className="font-inter text-sm text-muted">
               AI-powered UX audits.<br />Professional reports in minutes.
             </p>
