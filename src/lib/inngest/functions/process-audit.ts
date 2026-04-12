@@ -17,7 +17,7 @@ import { crawlPages } from '@/lib/audit-engine/crawler'
 import { analyzeCategory, runFullAnalysis, generateReport } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
-import { capturePageScreenshot, uploadScreenshot } from '@/lib/audit-engine/screenshots'
+import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -253,46 +253,76 @@ export const processAuditFn = inngest.createFunction(
     }
 
     // ──────────────────────────────────────────────────────────
-    // STEP 8: Capture page overview screenshot (via PageSpeed API)
-    // Finding-specific visuals are rendered client-side via FindingVisual.
+    // STEP 8: Capture screenshots — page overviews + highlighted findings
+    // Uses /api/screenshot endpoint so each capture gets its own
+    // serverless invocation with dedicated memory and timeout.
     // ──────────────────────────────────────────────────────────
     await step.run('capture-screenshots', async () => {
       const db = getDb()
 
-      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing page overview screenshot via PageSpeed API')
+      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing screenshots for pages and findings')
 
       try {
-        const pageUrl = crawlResult.firstPageUrl || auditDetails.productUrl
-        const pageScreenshot = await capturePageScreenshot(pageUrl)
+        // Fetch all findings with target_element and page_url
+        const { data: findingsWithTargets } = await db
+          .from('audit_findings')
+          .select('id, title, severity, target_element, page_url')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
 
-        if (pageScreenshot) {
-          const pageScreenshotUrl = await uploadScreenshot(auditId, 'page-overview.png', pageScreenshot)
+        const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
+          id: f.id as string,
+          title: f.title as string,
+          severity: f.severity as string,
+          targetElement: f.target_element as string | null,
+          pageUrl: f.page_url as string | null,
+        }))
 
-          if (pageScreenshotUrl) {
-            const { data: firstPage } = await db
+        const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl
+
+        const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
+          findingsToCapture,
+          mainUrl,
+          auditId,
+          10, // capture up to 10 finding screenshots
+        )
+
+        // Update audit_pages with their page-level screenshots
+        for (const [url, screenshotUrl] of pageScreenshots) {
+          const { data: pages } = await db
+            .from('audit_pages')
+            .select('id')
+            .eq('audit_id', auditId)
+            .eq('url', url)
+            .limit(1)
+
+          if (pages && pages.length > 0) {
+            await db
               .from('audit_pages')
-              .select('id')
-              .eq('audit_id', auditId)
-              .order('crawled_at', { ascending: true })
-              .limit(1)
-              .single()
-
-            if (firstPage) {
-              await db
-                .from('audit_pages')
-                .update({ screenshot_url: pageScreenshotUrl } as any)
-                .eq('id', (firstPage as any).id)
-            }
+              .update({ screenshot_url: screenshotUrl } as any)
+              .eq('id', (pages[0] as any).id)
           }
-
-          await auditLog(auditId, 'screenshots_completed', 'success', 'Page overview screenshot captured successfully')
-        } else {
-          await auditLog(auditId, 'screenshots_skipped', 'warning', 'PageSpeed API did not return a screenshot — finding visuals will be shown client-side')
         }
+
+        // Update findings with their highlighted screenshots
+        let uploadedCount = 0
+        for (const [findingId, screenshotUrl] of findingScreenshots) {
+          await db
+            .from('audit_findings')
+            .update({ screenshot_url: screenshotUrl } as any)
+            .eq('id', findingId)
+          uploadedCount++
+        }
+
+        await auditLog(auditId, 'screenshots_completed', 'success',
+          `Captured ${pageScreenshots.size} page + ${uploadedCount} finding screenshots`, {
+            page_screenshots: pageScreenshots.size,
+            finding_screenshots: uploadedCount,
+          })
       } catch (err) {
         // Screenshots are non-fatal — audit can complete without them
         console.error('[inngest] Screenshot capture error (non-fatal):', err)
-        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — finding visuals will be shown client-side')
+        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — audit will complete without screenshots')
       }
     })
 

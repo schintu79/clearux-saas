@@ -39,7 +39,6 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ScoreRing from '@/components/ui/ScoreRing';
-import FindingVisual from '@/components/ui/FindingVisual';
 import type {
   AuditWithReport,
   AuditFinding,
@@ -406,12 +405,16 @@ function FindingCard({ finding, pillarColor, categoryName }: { finding: AuditFin
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-violet-500 transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-violet-500 transition-colors max-w-[260px] truncate"
+                title={finding.page_url}
               >
                 <ExternalLink size={10} className="flex-shrink-0" />
                 {(() => {
-                  try { return new URL(finding.page_url).pathname || '/'; }
-                  catch { return finding.page_url; }
+                  try {
+                    const u = new URL(finding.page_url);
+                    const path = u.pathname + u.search;
+                    return u.hostname + (path === '/' ? '' : path);
+                  } catch { return finding.page_url; }
                 })()}
               </a>
             )}
@@ -456,23 +459,23 @@ function FindingCard({ finding, pillarColor, categoryName }: { finding: AuditFin
             </div>
           )}
 
-          {/* Visual evidence card */}
-          <FindingVisual
-            title={finding.title}
-            severity={finding.severity}
-            categoryName={categoryName || ''}
-            targetElement={finding.target_element}
-            pageUrl={finding.page_url}
-          />
-
-          {/* Uploaded screenshot (if available from API capture) */}
+          {/* Screenshot with highlighted element */}
           {finding.screenshot_url && (
             <div className="rounded-lg overflow-hidden border border-border/30 dark:border-white/[0.04]">
+              <div className="px-3 py-2 bg-surface-alt/60 dark:bg-white/[0.03] border-b border-border/20 dark:border-white/[0.04] flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
+                <span className="text-[11px] font-semibold text-text">Visual Evidence</span>
+                {finding.page_url && (
+                  <span className="text-[10px] text-muted ml-auto font-mono truncate max-w-[200px]">
+                    {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
+                  </span>
+                )}
+              </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={finding.screenshot_url}
-                alt={finding.title}
-                className="w-full max-h-64 object-contain bg-white dark:bg-gray-900"
+                alt={`Screenshot showing: ${finding.title}`}
+                className="w-full max-h-80 object-contain bg-white dark:bg-gray-900"
                 loading="lazy"
               />
             </div>

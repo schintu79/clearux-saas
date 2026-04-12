@@ -58,7 +58,7 @@ function useScrollReveal() {
 }
 
 /* ── Rotating words — fixed to always keep 2-line headline ── */
-const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust', 'Digital Wellbeing', 'Inclusivity'];
+const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust', 'Digital Wellbeing', 'Inclusivity', 'AI Discoverability', 'Cultural Sensitivity', 'Visual Design', 'Value Proposition', 'Content Quality', 'Readability'];
 
 function RotatingWord() {
   const [idx, setIdx] = useState(0);
