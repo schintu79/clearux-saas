@@ -242,32 +242,32 @@ const UX_CATEGORIES = [
     name: 'AI Discoverability & LLM Readiness',
     pillar: 'Future Readiness',
     items: [
-      'Is content structured in a way LLMs can parse?',
-      'Are key facts and features stated clearly (not only in images)?',
-      'Is there FAQ or knowledge-base content that LLMs can index?',
-      'Does the site provide enough textual context about what it does?',
+      'OUTCOME TEST: If someone asked an LLM "What is [this website/product]?" — could the LLM give an accurate, comprehensive answer based purely on the HTML content? Evaluate whether the site\'s purpose, audience, value proposition, and key differentiators are clearly stated in text (not trapped in images, videos, or JS-only widgets). A site with clean semantic HTML and clear textual content that tells its story well should score HIGH — it does not need an FAQ page or knowledge base to be AI-discoverable.',
+      'Is the site\'s content structured with semantic HTML that LLMs can parse into coherent understanding? Check heading hierarchy (H1-H6), semantic elements (<article>, <section>, <nav>, <main>, <aside>), and logical information architecture. SCORING: If the HTML structure is clean and content follows a logical hierarchy, score high. Minor imperfections in semantic markup are LOW severity, not critical.',
+      'Does the site surface its key factual information as accessible text? CONTEXT-AWARE: Evaluate based on what\'s relevant for THIS type of website — a SaaS product should have features and pricing in text; a portfolio should have work samples described; a blog should have articles accessible. Do NOT penalize a site for missing content types that don\'t apply to its business model (e.g., don\'t dock a developer tool for not having "product availability" info).',
+      'Does the site have structured data (JSON-LD, schema.org, Open Graph) that helps AI systems categorize and describe it? Check for OG tags (og:title, og:description, og:image, og:type), meta description, and JSON-LD markup. SCORING: Good OG tags + meta description alone = decent score (60-70). Add JSON-LD with correct entity type (Organization, SoftwareApplication, Product, etc.) = high score (75-90). Having all three well-implemented = excellent (90+). Missing everything = low (30-40). Having only a basic meta description = medium (45-55).',
     ],
   },
   {
     name: 'AI Agent Readiness',
     pillar: 'Future Readiness',
     items: [
-      'Can an AI agent (like ChatGPT, Claude, or a shopping assistant) navigate this site and extract key information (pricing, features, contact) from the HTML alone?',
-      'Is pricing, availability, and product/service information structured in semantic HTML or schema markup that AI agents can reliably parse — not trapped in images, PDFs, or JavaScript-rendered widgets?',
-      'Are forms, checkout flows, and interactive elements built with standard HTML elements and proper labels — allowing AI agents to fill forms and complete transactions on behalf of users?',
-      'Does the site have a clear sitemap.xml, robots.txt, and well-structured URLs that AI crawlers can follow — or is critical content gated behind login walls, CAPTCHAs, or JavaScript rendering that blocks automated access?',
-      'Is there sufficient metadata (Open Graph, schema.org, structured data) that allows AI assistants to accurately describe this business, its offerings, and its unique value when asked by users?',
+      'Can an AI agent navigate this site\'s information architecture by following HTML alone — reading navigation links, understanding page hierarchy, and finding key pages? Check that navigation uses semantic HTML (<nav>, descriptive <a> tags), pages have clear titles and headings, and the site structure is logically crawlable. IMPORTANT: A site does not need to be an e-commerce store to be agent-ready. A clearly navigable, content-rich site with good link structure IS agent-ready. Score based on navigability, not on whether it has a shopping cart.',
+      'For whatever interactive elements exist on the site (forms, buttons, inputs, modals) — are they built with standard, accessible HTML? Check for proper <label> associations, descriptive button text, appropriate input types, and autocomplete attributes. CRITICAL SCORING RULE: If a site has few or no forms (e.g., it\'s a content site or SaaS with OAuth login), that is NOT a failure — score it on the interactive elements it DOES have. A site with 1 well-built form scores higher than a site with 10 poorly-labeled forms.',
+      'Does the site have proper crawl infrastructure? Check for: (a) robots.txt that doesn\'t block AI crawlers, (b) sitemap.xml presence, (c) clean URL structure with descriptive slugs, (d) content that\'s server-rendered or pre-rendered (not hidden behind JS-only rendering). SCORING: Having robots.txt + sitemap.xml + clean URLs = high score. Missing sitemap but having everything else = medium. Actively blocking AI crawlers = critical issue.',
+      'Does the site expose sufficient metadata for AI assistants to accurately represent this business when users ask about it? Check Open Graph tags, schema.org markup, and whether the site\'s identity/offerings are machine-readable. BONUS: Check for llms.txt or .well-known/ai-plugin.json — these are forward-looking signals. Having them is a bonus (boost score), not having them is NOT a penalty (most sites don\'t have them yet, so absence is neutral).',
+      'REAL-WORLD AGENT TEST: Could an AI assistant (like ChatGPT, Claude, Perplexity) give a user accurate, helpful information about this site\'s product/service, pricing model, and how to get started — based on what\'s in the HTML? This is the ultimate test. If yes, the site is fundamentally agent-ready regardless of technical details. If the AI would struggle to answer basic questions about the business, that\'s a real gap.',
     ],
   },
   {
     name: 'Cultural Sensitivity & Global Readiness',
     pillar: 'Future Readiness',
     items: [
-      'Does the site handle internationalisation basics — proper date formats, currency symbols, number formatting, and measurement units for global audiences?',
-      'Are colours, symbols, and imagery culturally neutral or appropriately adapted — avoiding colours or icons that carry negative meanings in major cultures (e.g., red for danger vs prosperity)?',
-      'Is the content written in plain, translatable language — avoiding idioms, cultural references, humour, or slang that may not translate or may offend across cultures?',
-      'Does the site support or prepare for right-to-left (RTL) languages and non-Latin scripts — or is the layout hardcoded for English-only presentation?',
-      'Are legal and compliance elements (privacy policy, cookie consent, data handling) adapted for international regulations — GDPR, CCPA, and region-specific requirements?',
+      'Is the content written in clear, plain language that non-native speakers can understand and translation tools can process accurately? Check for idioms, slang, culture-specific humor, or references that wouldn\'t translate well. IMPORTANT: Technical jargon is acceptable on products aimed at technical audiences — evaluate based on the target audience, not a universal plain-language standard. A developer docs site using "API endpoints" is fine; a consumer product using "synergize your workflow" is not.',
+      'Does the site declare its language properly (html lang="...") and is the text direction handled correctly? For sites clearly targeting a single-language market (e.g., English-only SaaS), not having RTL support is a LOW severity observation at most — only flag RTL as high severity if the site explicitly targets multilingual or global audiences (e.g., has a language switcher, mentions global users, or operates in regions with RTL languages).',
+      'Are visual design choices and imagery reasonably neutral across major cultural contexts? PRACTICAL STANDARD: Standard web design conventions (blue for links, red for errors/warnings, green for success) are universally understood and should NEVER be flagged. Only flag genuinely problematic choices — culturally offensive imagery, inappropriate symbols, or stereotypical representations. If the design is clean and uses standard web conventions, score HIGH.',
+      'If the site displays prices, dates, or numbers — are they formatted appropriately for the target audience? SCORING: This only applies if the site shows these elements. A blog with no pricing doesn\'t need currency localization — score it neutrally (70+). A site selling internationally with USD-only pricing and US date format has a real gap. A site selling to one market with correct local formatting scores high.',
+      'Does the site have appropriate legal/privacy infrastructure for its target markets? Check for privacy policy, cookie consent (if applicable), and data handling disclosures. SCORING: A US-focused site with a solid privacy policy = good score. A site clearly targeting EU users without GDPR compliance = real gap. Don\'t penalize a small US startup for not having a CCPA-specific page unless it targets California users explicitly.',
     ],
   },
 ]
@@ -312,6 +312,15 @@ ${pageContent.substring(0, 15000)}
 YOUR APPROACH — DEEP ANALYSIS, NOT SURFACE SCANNING:
 You must think like a senior consultant, not an automated checker. Your job is to find REAL issues that actually impact users, conversions, and business outcomes. The kind of insights that make a client say "I never thought of that."
 
+CRITICAL — CONTEXT-AWARE EVALUATION:
+Before analyzing, determine the site's type (SaaS, e-commerce, content/blog, portfolio, marketplace, tool/API, etc.) and its target audience. Your evaluation MUST adapt to context:
+- A SaaS product doesn't need shopping cart agent-readiness or multi-currency support
+- A developer tool can use technical jargon without being "culturally insensitive"
+- An English-only startup shouldn't be heavily penalized for lacking RTL support
+- A site with no forms isn't "failing at form accessibility" — it simply has no forms
+- Missing a specific content format (FAQ, knowledge base, blog) is NOT a failure if the site communicates clearly through other means
+Evaluate what IS there, not what's absent. A clean, well-structured site that clearly communicates its purpose should score well — don't invent problems because a theoretical checklist item is "missing." The question is always: "Does this site WORK for its users and for AI systems?" — not "Does it have every possible feature?"
+
 CRITICAL — DEMO & ILLUSTRATIVE CONTENT EXCLUSION:
 Many websites display example/demo content to showcase their product's capabilities (e.g., a UX audit tool showing sample findings, a design tool showing example designs, a security scanner showing sample vulnerabilities). You MUST recognize and EXCLUDE this type of content from your analysis:
 - Content inside elements marked with data-demo="true", role="presentation", or aria-label containing "example", "demo", or "illustrative"
@@ -328,6 +337,11 @@ DO NOT flag these common false positives:
 - Things that "could be better" but work perfectly fine as-is
 - Issues that every website in the world has — focus on what THIS specific site is doing wrong
 - Demo or illustrative content used to showcase the product's features (see DEMO EXCLUSION rule above)
+- Missing content types that don't apply to the site's business model (e.g., no FAQ, no pricing table, no blog — these are only issues if the site NEEDS them)
+- RTL or multi-language support on sites that clearly target a single language market
+- "No shopping cart is agent-accessible" on sites that aren't e-commerce
+- Formatting localization (dates, currencies) on sites that don't display these elements
+- Standard web design color conventions (blue links, red errors, green success) as "culturally insensitive"
 
 DO flag these high-value findings:
 - Real friction points in the user journey that lose conversions
@@ -336,8 +350,8 @@ DO flag these high-value findings:
 - Emotional disconnects — where the tone doesn't match the audience
 - Critical accessibility barriers that exclude real user groups
 - Mobile-specific problems that break the experience
-- AI/LLM readiness gaps that will matter in 12-24 months
-- Cultural insensitivity or assumptions that alienate global users
+- AI/LLM readiness gaps that ACTUALLY prevent AI systems from understanding the site (not theoretical checklist items)
+- Cultural insensitivity or assumptions that ACTUALLY alienate real user groups (not theoretical concerns about standard web conventions)
 - Psychological safety issues — content that creates anxiety, pressure, or confusion
 - Performance bottlenecks that directly harm user retention
 
