@@ -36,6 +36,14 @@ export interface Profile {
   credits:     number
   created_at:  string
   updated_at:  string
+  // Billing / company details (optional — for invoices)
+  billing_company_name:  string | null
+  billing_vat_number:    string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city:          string | null
+  billing_postal_code:   string | null
+  billing_country:       string | null
 }
 
 export interface Audit {

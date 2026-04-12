@@ -93,13 +93,13 @@ const SettingsPage: React.FC = () => {
           company: profile.company || '',
         },
         billing: {
-          company_name: (profile as any).billing_company_name || '',
-          vat_number: (profile as any).billing_vat_number || '',
-          address_line1: (profile as any).billing_address_line1 || '',
-          address_line2: (profile as any).billing_address_line2 || '',
-          city: (profile as any).billing_city || '',
-          postal_code: (profile as any).billing_postal_code || '',
-          country: (profile as any).billing_country || '',
+          company_name: profile.billing_company_name || '',
+          vat_number: profile.billing_vat_number || '',
+          address_line1: profile.billing_address_line1 || '',
+          address_line2: profile.billing_address_line2 || '',
+          city: profile.billing_city || '',
+          postal_code: profile.billing_postal_code || '',
+          country: profile.billing_country || '',
         },
       }));
     }
