@@ -388,7 +388,8 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
     const jsonMatch = responseText.match(/\[[\s\S]*\]/m)
     if (!jsonMatch) {
-      console.error(`[analyzeCategory] No JSON in response for "${category}":`, responseText.substring(0, 200))
+      console.warn(`[analyzeCategory] No JSON in response for "${category}":`, responseText.substring(0, 200))
+      // Return empty array — this category had no findings (not necessarily an error)
       return []
     }
 
@@ -398,7 +399,8 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
       .map((f) => ({ ...f, targetElement: f.targetElement || null, pageUrl: f.pageUrl || null }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
-    return []
+    // Throw so the caller can track category failures
+    throw new Error(`Analysis failed for category "${category}": ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 
@@ -642,7 +644,7 @@ ${categoryExamples}
     }
   } catch (err) {
     console.error('[generateReport] Error:', err instanceof Error ? err.message : err)
-    return getDefaultReport()
+    throw new Error(`Report generation failed: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
 

@@ -23,9 +23,19 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
+    // Check if user is eligible for a free first audit
+    const { count: completedAudits } = await db
+      .from('audits')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
+
+    const firstAuditFree = (completedAudits ?? 0) === 0
+
     return NextResponse.json({
       credits: (profile as any)?.credits ?? 0,
       package_tier: (profile as any)?.package_tier ?? 'starter',
+      first_audit_free: firstAuditFree,
     })
   } catch (err) {
     console.error('GET /api/credits error:', err)
@@ -41,37 +51,58 @@ export async function POST(request: NextRequest) {
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { audit_id } = await request.json()
+    const { audit_id, is_free_first } = await request.json()
     if (!audit_id)
       return NextResponse.json({ error: 'audit_id required' }, { status: 400 })
 
     const db = createServiceSupabase()
 
-    // Check balance
-    const { data: profile } = await db
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single()
+    // Check if this is a free first audit
+    let usingFreeFirst = false
+    if (is_free_first) {
+      const { count: existingAudits } = await db
+        .from('audits')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
+        .neq('id', audit_id) // exclude the audit we just created
 
-    const balance = profile?.credits ?? 0
-    if (balance < 1)
-      return NextResponse.json({ error: 'No credits available' }, { status: 400 })
-
-    // Deduct 1 credit (atomic decrement via rpc or update)
-    const { error: deductErr } = await db
-      .from('profiles')
-      .update({
-        credits: balance - 1,
-        updated_at: new Date().toISOString(),
-      } as any)
-      .eq('id', user.id)
-      .gte('credits', 1) // safety: only deduct if still >= 1
-
-    if (deductErr) {
-      console.error('Credit deduct error:', deductErr)
-      return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
+      if ((existingAudits ?? 0) === 0) {
+        usingFreeFirst = true
+      }
     }
+
+    if (!usingFreeFirst) {
+      // Check balance
+      const { data: profile } = await db
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single()
+
+      const balance = profile?.credits ?? 0
+      if (balance < 1)
+        return NextResponse.json({ error: 'No credits available' }, { status: 400 })
+
+      // Deduct 1 credit (atomic decrement via rpc or update)
+      const { error: deductErr } = await db
+        .from('profiles')
+        .update({
+          credits: balance - 1,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', user.id)
+        .gte('credits', 1) // safety: only deduct if still >= 1
+
+      if (deductErr) {
+        console.error('Credit deduct error:', deductErr)
+        return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
+      }
+    }
+
+    const balance = usingFreeFirst
+      ? ((await db.from('profiles').select('credits').eq('id', user.id).single()).data?.credits ?? 0)
+      : ((await db.from('profiles').select('credits').eq('id', user.id).single()).data?.credits ?? 0)
 
     // Create a payment record for audit tracking
     await db.from('payments').insert({
@@ -80,7 +111,7 @@ export async function POST(request: NextRequest) {
       amount_cents: 0,
       currency: 'usd',
       status: 'succeeded',
-      stripe_payment_intent_id: `credit_${Date.now()}`,
+      stripe_payment_intent_id: usingFreeFirst ? `free_first_${Date.now()}` : `credit_${Date.now()}`,
     } as any)
 
     // Update audit status to payment_received
@@ -95,10 +126,14 @@ export async function POST(request: NextRequest) {
     // Log it
     await db.from('audit_logs').insert({
       audit_id,
-      event: 'credit_used',
+      event: usingFreeFirst ? 'free_first_audit' : 'credit_used',
       status: 'success',
-      message: `1 credit deducted. Remaining: ${balance - 1}`,
-      metadata: { credits_before: balance, credits_after: balance - 1 },
+      message: usingFreeFirst
+        ? 'Free first audit — no credit deducted'
+        : `1 credit deducted. Remaining: ${balance}`,
+      metadata: usingFreeFirst
+        ? { free_first: true }
+        : { credits_before: balance + 1, credits_after: balance },
     } as any)
 
     // Trigger audit processing via Inngest (background job)
@@ -120,8 +155,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      credits_remaining: balance - 1,
-      message: 'Credit applied, audit processing started',
+      credits_remaining: balance,
+      free_first: usingFreeFirst,
+      message: usingFreeFirst ? 'Free first audit started' : 'Credit applied, audit processing started',
     })
   } catch (err) {
     console.error('POST /api/credits error:', err)

@@ -56,6 +56,47 @@ async function auditLog(
   }
 }
 
+/* ── Refund credit helper ── */
+async function refundCredit(auditId: string) {
+  try {
+    const db = getDb()
+    // Find the payment record for this audit
+    const { data: payment } = await db
+      .from('payments')
+      .select('user_id, stripe_payment_intent_id')
+      .eq('audit_id', auditId)
+      .single()
+
+    if (!payment) return // No payment to refund (e.g., free first audit)
+
+    const paymentId = (payment as any).stripe_payment_intent_id as string
+    const userId = (payment as any).user_id as string
+
+    // Only refund credit-based or free-first payments (not Stripe payments)
+    if (paymentId.startsWith('credit_') || paymentId.startsWith('free_first_')) {
+      if (paymentId.startsWith('credit_')) {
+        // Add credit back
+        const { data: profile } = await db
+          .from('profiles')
+          .select('credits')
+          .eq('id', userId)
+          .single()
+
+        const currentCredits = (profile as any)?.credits ?? 0
+        await db
+          .from('profiles')
+          .update({ credits: currentCredits + 1, updated_at: new Date().toISOString() } as any)
+          .eq('id', userId)
+      }
+
+      await auditLog(auditId, 'credit_refunded', 'success',
+        paymentId.startsWith('free_first_') ? 'Free first audit — no credit to refund' : '1 credit refunded to user')
+    }
+  } catch (err) {
+    console.error('[inngest] Refund error (non-fatal):', err)
+  }
+}
+
 /* ── UX Categories — sourced from analyzer.ts (single source of truth) ── */
 
 const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
@@ -74,6 +115,7 @@ export const processAuditFn = inngest.createFunction(
   async ({ event, step }: { event: { data: { auditId: string } }; step: any }) => {
     const auditId = event.data.auditId
 
+    try {
     // ──────────────────────────────────────────────────────────
     // STEP 1: Fetch audit details
     // ──────────────────────────────────────────────────────────
@@ -194,8 +236,9 @@ export const processAuditFn = inngest.createFunction(
         const db = getDb()
         let sortOrder = totalFindingsCount
         let findingsInBatch = 0
+        let failedCategories: string[] = []
 
-        const batchResults = await Promise.all(
+        const batchResults = await Promise.allSettled(
           batch.map((categoryName) =>
             analyzeCategory(
               crawlResult.pageContent,
@@ -208,8 +251,19 @@ export const processAuditFn = inngest.createFunction(
         )
 
         for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
-          const findings = batchResults[catIdx]
+          const result = batchResults[catIdx]
           const categoryName = batch[catIdx]
+
+          if (result.status === 'rejected') {
+            console.error(`[inngest] Category "${categoryName}" failed:`, result.reason)
+            failedCategories.push(categoryName)
+            await auditLog(auditId, 'category_failed', 'error', `Failed: ${categoryName}`, {
+              error: result.reason?.message || String(result.reason),
+            })
+            continue
+          }
+
+          const findings = result.value
 
           for (const finding of findings) {
             // Validate pageUrl against actual crawled URLs
@@ -251,11 +305,41 @@ export const processAuditFn = inngest.createFunction(
           })
         }
 
-        return { findingsInBatch, newSortOrder: sortOrder }
+        return { findingsInBatch, newSortOrder: sortOrder, failedCategories }
       })
 
       totalFindingsCount = batchResult.newSortOrder
     }
+
+    // ──────────────────────────────────────────────────────────
+    // CHECK: Verify we got meaningful results before continuing
+    // If zero findings were produced, the analysis failed — fail the audit and refund
+    // ──────────────────────────────────────────────────────────
+    await step.run('verify-findings', async () => {
+      const db = getDb()
+      const { count: findingsCount } = await db
+        .from('audit_findings')
+        .select('id', { count: 'exact', head: true })
+        .eq('audit_id', auditId)
+
+      if ((findingsCount ?? 0) === 0) {
+        // Refund the credit
+        await refundCredit(auditId)
+        // Fail the audit with a clear message
+        await db
+          .from('audits')
+          .update({
+            status: 'failed',
+            crawl_error: 'The AI analysis could not produce any findings for this website. This can happen if the site content is too minimal, heavily JavaScript-rendered, or behind authentication. Your credit has been refunded.',
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', auditId)
+        await auditLog(auditId, 'audit_failed', 'error', 'Zero findings produced — audit failed, credit refunded')
+        throw new Error('Audit failed: zero findings produced after analysis. Credit refunded.')
+      }
+
+      await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
+    })
 
     // ──────────────────────────────────────────────────────────
     // STEP 8: Capture screenshots — page overviews + highlighted findings
@@ -433,5 +517,27 @@ export const processAuditFn = inngest.createFunction(
     })
 
     return { success: true, auditId }
+
+    } catch (err) {
+      // Top-level failure handler: refund credit and mark audit as failed
+      console.error(`[inngest] Audit ${auditId} FAILED:`, err)
+      try {
+        await refundCredit(auditId)
+        const db = getDb()
+        const errorMsg = err instanceof Error ? err.message : String(err)
+        await db
+          .from('audits')
+          .update({
+            status: 'failed',
+            crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', auditId)
+        await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
+      } catch (failErr) {
+        console.error(`[inngest] Failed to handle audit failure for ${auditId}:`, failErr)
+      }
+      throw err // Re-throw so Inngest marks the run as failed
+    }
   },
 )

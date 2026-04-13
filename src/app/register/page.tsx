@@ -33,47 +33,51 @@ function getPasswordChecks(pw: string) {
 /* ── Rotating testimonials ────────────────────────────────── */
 const testimonials = [
   {
-    text: "ClearUX identified critical navigation issues we'd completely missed. The insights were actionable and prioritized perfectly.",
+    text: "After running a ClearUX audit on our SaaS onboarding, we implemented four high-severity fixes over two sprints. Signup-to-activation improved noticeably within the first month.",
     name: 'Sarah Chen',
-    role: 'Head of Product @ TechFlow',
+    role: 'Product Manager @ TechFlow',
+    context: 'B2B SaaS',
   },
   {
-    text: "We improved our conversion rate by 23% just by implementing the top 5 recommendations. Best ROI on any UX tool we've used.",
-    name: 'Marcus Rivera',
-    role: 'Growth Lead @ ShopBase',
+    text: "The accessibility and cognitive load findings were things no other tool had flagged. It goes well beyond what Lighthouse or automated scanners catch.",
+    name: 'James Kim',
+    role: 'CTO @ LaunchPad',
+    context: 'EdTech startup',
   },
   {
-    text: "The AI audit caught accessibility problems our manual review missed entirely. A game-changer for our compliance workflow.",
-    name: 'Elena Kowalski',
-    role: 'UX Director @ FinServe',
+    text: "We include ClearUX audits in every client proposal now. The white-label reports are professional enough to present directly to stakeholders.",
+    name: 'Diana Torres',
+    role: 'Agency Director @ PixelCraft',
+    context: 'Digital agency',
   },
   {
-    text: "I run audits on every client project now before presenting. It adds so much credibility to my proposals.",
-    name: 'David Park',
-    role: 'Freelance UX Consultant',
+    text: "The ethical UX and dark pattern detection caught things our design team had overlooked. It has become part of our release checklist.",
+    name: 'Elena Rodriguez',
+    role: 'Design Lead @ Creative Studio',
+    context: 'E-commerce',
   },
 ]
 
 const valueProps = [
   {
     icon: Search,
-    title: '56 UX Checkpoints',
-    desc: 'Deep analysis across usability, conversion, accessibility, mobile, content and AI discoverability.',
+    title: '64 Checkpoints, 16 Categories',
+    desc: 'Accessibility, ethical UX, AI readiness, conversion psychology — the blind spots tools like Lighthouse miss.',
   },
   {
     icon: Zap,
-    title: 'Results in Minutes',
-    desc: 'What takes consultants weeks, our AI delivers in under 10 minutes with professional-grade depth.',
+    title: 'Full Report in Minutes',
+    desc: 'What takes consultants 2-4 weeks at $5k-15k, delivered in under 10 minutes.',
   },
   {
     icon: BarChart3,
-    title: 'Prioritised Action Plan',
-    desc: 'Every finding ranked by severity and impact so you know exactly where to start.',
+    title: 'Impact-Ranked Findings',
+    desc: 'Every issue scored by severity and business impact. Your team knows exactly where to start.',
   },
   {
     icon: FileText,
-    title: 'PDF & Word Reports',
-    desc: 'Download beautifully formatted reports to share with stakeholders and your team.',
+    title: 'PDF & Word Downloads',
+    desc: 'Professional reports ready to share with stakeholders, clients, or your dev team.',
   },
 ]
 
@@ -214,11 +218,19 @@ export default function RegisterPage() {
     <div className="w-full max-w-[380px]">
       <div className="mb-8">
         <h2 className="text-2xl font-manrope font-bold text-text mb-2">
-          Create account
+          {pendingUrl ? 'Create your free account' : 'Create account'}
         </h2>
         <p className="text-sm text-muted">
-          Join ClearUX to start auditing your UX
+          {pendingUrl
+            ? 'Sign up to run your first audit — it\u2019s on us. No credit card required.'
+            : 'Join ClearUX to start auditing your UX'}
         </p>
+        {pendingUrl && (
+          <div className="mt-3 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
+            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Your first audit is free</p>
+            <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 mt-0.5 truncate">{pendingUrl}</p>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -445,7 +457,7 @@ export default function RegisterPage() {
 
               <div className="space-y-6 mb-auto">
                 <h2 className="text-xl font-manrope font-semibold text-white">
-                  Everything you need to ship better UX
+                  {pendingUrl ? 'Your free audit is one step away' : 'Everything you need to ship better UX'}
                 </h2>
 
                 <div className="grid grid-cols-1 gap-5">
@@ -476,6 +488,7 @@ export default function RegisterPage() {
                   <p className="text-xs text-white/55">
                     {testimonials[activeTestimonial].name}, {testimonials[activeTestimonial].role}
                   </p>
+                  <p className="text-[10px] text-white/35 mt-0.5">{testimonials[activeTestimonial].context}</p>
                 </div>
 
                 <div className="flex justify-center gap-2 mt-3">

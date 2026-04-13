@@ -16,9 +16,9 @@ const loginSchema = z.object({
 })
 
 const kspItems = [
-  { icon: TrendingUp, text: 'Your audits and reports are waiting for you' },
-  { icon: Clock, text: 'Credits never expire — use them anytime' },
-  { icon: Shield, text: 'Your data is always safe and encrypted' },
+  { icon: TrendingUp, text: 'Your audits, findings, and reports are waiting' },
+  { icon: Clock, text: 'Credits never expire — audit whenever you need' },
+  { icon: Shield, text: 'Your data is encrypted and never shared' },
 ]
 
 export default function LoginPage() {
@@ -311,11 +311,11 @@ export default function LoginPage() {
 
               <div className="flex gap-4 mt-8">
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">56</p>
+                  <p className="text-lg font-bold text-white">64</p>
                   <p className="text-xs text-white/70 uppercase tracking-wide">Checkpoints</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">13</p>
+                  <p className="text-lg font-bold text-white">16</p>
                   <p className="text-xs text-white/70 uppercase tracking-wide">Categories</p>
                 </div>
                 <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">

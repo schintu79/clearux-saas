@@ -29,6 +29,7 @@ const NewAuditInner: React.FC = () => {
   const [generalError, setGeneralError] = useState('');
   const [credits, setCredits] = useState<number | null>(null);
   const [packageTier, setPackageTier] = useState<string>('starter');
+  const [firstAuditFree, setFirstAuditFree] = useState(false);
 
   // White-label fields (Agency/Scale only)
   const [companyName, setCompanyName] = useState('');
@@ -53,6 +54,7 @@ const NewAuditInner: React.FC = () => {
       .then((d) => {
         setCredits(d.credits ?? 0);
         if (d.package_tier) setPackageTier(d.package_tier);
+        if (d.first_audit_free) setFirstAuditFree(true);
       })
       .catch(() => setCredits(0));
   }, [user]);
@@ -76,7 +78,7 @@ const NewAuditInner: React.FC = () => {
     );
   }
 
-  const hasCredits = credits !== null && credits > 0;
+  const hasCredits = credits !== null && (credits > 0 || firstAuditFree);
 
   const validateUrl = (value: string): boolean => {
     if (!value.trim()) {
@@ -144,12 +146,12 @@ const NewAuditInner: React.FC = () => {
       }
       if (!audit) throw new Error('Failed to create audit');
 
-      // If user has credits, use one
+      // If user has credits or first audit is free, use it
       if (hasCredits) {
         const creditRes = await fetch('/api/credits', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audit_id: audit.id }),
+          body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }),
         });
         const creditData = await creditRes.json();
         if (!creditRes.ok) {
@@ -380,8 +382,27 @@ const NewAuditInner: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Free first audit banner ──────────────────────── */}
+      {firstAuditFree && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+              <Sparkles size={18} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-text">
+                Your first audit is free
+              </p>
+              <p className="text-xs text-muted">
+                No credit card needed. No credits deducted. Just paste your URL and go.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Credits banner ────────────────────────────────── */}
-      {credits !== null && hasCredits && (
+      {!firstAuditFree && credits !== null && hasCredits && (
         <div className="mb-6 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -400,7 +421,7 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {credits !== null && !hasCredits && (
+      {!firstAuditFree && credits !== null && !hasCredits && (
         <div className="mb-6 p-4 rounded-xl bg-off border border-border">
           <div className="flex items-center justify-between">
             <div>
@@ -440,6 +461,11 @@ const NewAuditInner: React.FC = () => {
             </svg>
             {hasCredits ? 'Starting audit...' : 'Creating checkout...'}
           </>
+        ) : firstAuditFree ? (
+          <>
+            Start Free Audit
+            <ArrowRight size={20} />
+          </>
         ) : hasCredits ? (
           <>
             Use 1 Credit — Start Audit
@@ -454,7 +480,9 @@ const NewAuditInner: React.FC = () => {
       </button>
 
       <p className="text-center text-xs text-muted mt-4">
-        {hasCredits
+        {firstAuditFree
+          ? 'Your first audit is on us. No credits will be deducted.'
+          : hasCredits
           ? `1 credit will be deducted. ${(credits ?? 0) - 1} remaining after this audit.`
           : 'Secure payment via Stripe. Credits never expire.'}
       </p>

@@ -1109,20 +1109,31 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <AlertTriangle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-red-900 dark:text-red-200">Audit failed</p>
-              <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
+              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
                 {audit.crawl_error || 'Something went wrong during processing.'}
               </p>
-              <div className="flex items-center gap-2.5 mt-3">
+              <div className="mt-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                    No credits were used for this audit
+                  </p>
+                </div>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5 ml-[22px]">
+                  Your credit has been automatically refunded. You can restart the audit at no extra cost.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 mt-4">
                 <button
-                  onClick={handleRetry}
-                  disabled={retrying}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-white px-4 py-2.5 rounded-xl transition-all disabled:opacity-60 hover:brightness-110"
+                  onClick={handleRestart}
+                  disabled={restarting}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-white px-5 py-2.5 rounded-xl transition-all disabled:opacity-60 hover:brightness-110"
                   style={{ background: 'var(--gradient-brand)' }}
                 >
-                  {retrying ? (
-                    <><Loader2 size={13} className="animate-spin" /> Retrying...</>
+                  {restarting ? (
+                    <><Loader2 size={14} className="animate-spin" /> Restarting...</>
                   ) : (
-                    <><Zap size={13} /> Retry Audit</>
+                    <><Zap size={14} /> Restart Audit</>
                   )}
                 </button>
                 <button
@@ -1131,12 +1142,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-red-600 dark:hover:text-red-400 px-3 py-2.5 rounded-xl border border-border hover:border-red-300 dark:hover:border-red-700 transition-colors disabled:opacity-60"
                 >
                   <Trash2 size={13} />
-                  {deleting ? 'Deleting...' : 'Delete (keep credit)'}
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
-              <p className="text-xs text-muted mt-2">
-                Your payment is safe. Retry runs the audit again at no extra cost.
-              </p>
             </div>
           </div>
         </div>
