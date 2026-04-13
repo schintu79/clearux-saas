@@ -381,10 +381,10 @@ export async function GET(
 
     // ── Pillar Overview — 2x2 visual cards ──────
     const pillarDefs = [
-      { name: 'Foundation', start: 0, end: 6, color: B.pillarFoundation },
-      { name: 'Human Experience', start: 6, end: 12, color: B.pillarHuman },
-      { name: 'Technical Excellence', start: 12, end: 16, color: B.pillarTech },
-      { name: 'Future Readiness', start: 16, end: 19, color: B.pillarFuture },
+      { name: 'Foundation', start: 0, end: 4, color: B.pillarFoundation },
+      { name: 'Human Experience', start: 4, end: 8, color: B.pillarHuman },
+      { name: 'Inclusive Design', start: 8, end: 12, color: B.pillarTech },
+      { name: 'Future Readiness', start: 12, end: 16, color: B.pillarFuture },
     ]
 
     const pillarScores = pillarDefs.map((p) => {
@@ -850,22 +850,22 @@ export async function GET(
         {
           name: 'Foundation',
           color: B.pillarFoundation,
-          categories: ['First Impression & Visual Design', 'Value Proposition & Messaging', 'Navigation & Information Architecture', 'Visual Hierarchy & Layout', 'Content Quality & Readability', 'Calls-to-Action & Conversion'],
+          categories: ['Visual Design & First Impression', 'Value Proposition & Messaging', 'Navigation & Information Architecture', 'Content Quality & Readability'],
         },
         {
           name: 'Human Experience',
           color: B.pillarHuman,
-          categories: ['Trust & Credibility', 'Ethical UX & Dark Pattern Detection', 'Emotional Intelligence & Psychological Safety', 'Cognitive Accessibility & Neurodiversity', 'Digital Wellbeing & Responsible Design', 'Age Inclusivity & Digital Literacy'],
+          categories: ['Calls-to-Action & Conversion Path', 'Trust, Credibility & Social Proof', 'Ethical UX & Dark Pattern Detection', 'Emotional Design & Psychological Safety'],
         },
         {
-          name: 'Technical Excellence',
+          name: 'Inclusive Design',
           color: B.pillarTech,
-          categories: ['Performance & Page Speed', 'Mobile Experience', 'Accessibility & Inclusive Design', 'Technical SEO & Accessibility'],
+          categories: ['Accessibility & WCAG Compliance', 'Cognitive Accessibility & Neurodiversity', 'Digital Wellbeing & Responsible Design', 'Mobile Experience & Responsive Design'],
         },
         {
           name: 'Future Readiness',
           color: B.pillarFuture,
-          categories: ['AI Discoverability & LLM Readiness', 'AI Agent Readiness', 'Cultural Sensitivity & Global Readiness'],
+          categories: ['Performance & Technical Health', 'AI Discoverability & LLM Readiness', 'AI Agent Readiness', 'Cultural Sensitivity & Global Readiness'],
         },
       ]
 

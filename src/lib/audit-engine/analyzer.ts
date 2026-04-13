@@ -55,219 +55,182 @@ export interface ReportData {
   categoryScores: CategoryScore[]
 }
 
-// ── The 19 UX categories we evaluate ─────────────────────────
-// Grouped into 4 pillars for report structure:
-//   FOUNDATION (1-6): Core UX quality
-//   HUMAN EXPERIENCE (7-12): How the site treats people
-//   TECHNICAL EXCELLENCE (13-16): Performance & compliance
-//   FUTURE READINESS (17-19): AI age preparedness
-const UX_CATEGORIES = [
+// ── The 16 UX categories we evaluate ─────────────────────────
+// Grouped into 4 pillars (4 categories each = 25% weight per pillar):
+//   FOUNDATION (1-4): Does the site look right?
+//   HUMAN EXPERIENCE (5-8): Does the site feel right?
+//   INCLUSIVE DESIGN (9-12): Does the site work for everyone?
+//   FUTURE READINESS (13-16): Is the site ready for what's next?
+export const UX_CATEGORIES = [
   // ═══ PILLAR 1: FOUNDATION ═══════════════════════════════════
+  // Core visual design, messaging, navigation, and content quality
   {
-    name: 'First Impression & Visual Design',
+    name: 'Visual Design & First Impression',
     pillar: 'Foundation',
     items: [
-      'Above-the-fold content clarity and impact',
-      'Visual hierarchy — are the most important elements prominent?',
-      'Consistent color palette and typography',
-      'Professional look and feel — does it inspire trust?',
+      'ABOVE THE FOLD: Does the first screen immediately communicate what the site does and who it\'s for? Evaluate the H1/headline, hero section, and above-the-fold layout. A visitor should understand the core offering within 5 seconds. Quote the actual headline and assess if it passes the "5-second test."',
+      'VISUAL HIERARCHY: Is there a clear visual flow guiding the eye from headline → supporting text → CTA? Check font sizes, weights, spacing, and whitespace. The most important element (usually the CTA or headline) should have the highest visual weight. Flag specific areas where hierarchy breaks down.',
+      'CONSISTENCY: Does the site use a consistent color palette, typography system, and component style across pages? Check for mixed fonts, inconsistent button styles, or pages that feel like different sites. Minor inconsistencies are LOW severity — only flag when it breaks trust or causes confusion.',
+      'PROFESSIONAL QUALITY: Does the overall design inspire enough trust for the site\'s context? A fintech needs bank-level polish; a personal blog can be simpler. Evaluate relative to the site type and target audience, not an absolute standard. Reference specific elements that build or erode trust.',
     ],
   },
   {
     name: 'Value Proposition & Messaging',
     pillar: 'Foundation',
     items: [
-      'Is the value proposition immediately clear?',
-      'Does the headline communicate what the product does and for whom?',
-      'Is there a clear differentiation from competitors?',
-      'Does the copy speak to user pain points?',
+      'CLARITY: Can a first-time visitor explain what this product/service does after reading just the headline and subheadline? Quote the actual headline and subheadline text. If they\'re vague, generic, or feature-focused rather than benefit-focused, flag it with a specific rewrite suggestion.',
+      'DIFFERENTIATION: Does the messaging clearly explain why someone should choose THIS over alternatives? Look for unique selling points, competitive positioning, or a clear "only we do X" statement. If the value prop could apply to any competitor in the space, that\'s a real gap.',
+      'AUDIENCE FIT: Does the copy speak directly to the target user\'s pain points, goals, and language? Check whether the site uses "we/our" (company-focused) vs "you/your" (user-focused). Flag jargon, insider language, or feature dumps that don\'t connect to user benefits.',
+      'PROOF & EVIDENCE: Does the site back up its claims with concrete evidence — numbers, case studies, demos, or specific examples? Vague promises like "the best solution" without evidence erode trust. Flag claims that need substantiation and suggest what evidence would strengthen them.',
     ],
   },
   {
     name: 'Navigation & Information Architecture',
     pillar: 'Foundation',
     items: [
-      'Primary navigation — is it intuitive and well-organized?',
-      'Can users find key pages within 2 clicks?',
-      'Is the footer useful with proper links?',
-      'Breadcrumbs or clear page hierarchy on inner pages',
-    ],
-  },
-  {
-    name: 'Visual Hierarchy & Layout',
-    pillar: 'Foundation',
-    items: [
-      'Is there a clear visual flow guiding the eye from top to bottom?',
-      'Are spacing and whitespace used effectively to group related content?',
-      'Do font sizes and weights create a clear content hierarchy?',
-      'Are key elements (CTAs, headlines, images) given appropriate visual weight?',
+      'PRIMARY NAVIGATION: Is the main nav intuitive, well-organized, and limited to 5-7 items? Are labels descriptive (what users expect to find) vs clever (creative labels that confuse)? Check if critical pages (pricing, about, contact, docs) are findable within 1-2 clicks from any page.',
+      'PAGE STRUCTURE: Does each page have a logical content flow with clear sections? Check for proper use of headings (H1 → H2 → H3), section breaks, and content grouping. A user scanning the page should understand the structure at a glance.',
+      'FOOTER & SECONDARY NAV: Does the footer provide useful links for users who scroll to the bottom — contact info, legal pages, social links, sitemap? A footer is the last chance to keep a visitor engaged. Flag empty or unhelpful footers.',
+      'INTERNAL LINKING: Are related pages cross-linked logically? Can users discover deeper content naturally through the content itself (not just the nav)? Check for orphan pages, dead ends, or pages that don\'t link back to key conversion paths.',
     ],
   },
   {
     name: 'Content Quality & Readability',
     pillar: 'Foundation',
     items: [
-      'Is text scannable with proper headings and short paragraphs?',
-      'Is the language clear, jargon-free, and user-focused?',
-      'Are there grammar or spelling issues?',
-      'Do images have alt text?',
-    ],
-  },
-  {
-    name: 'Calls-to-Action & Conversion',
-    pillar: 'Foundation',
-    items: [
-      'Primary CTA — is it visible, compelling, and above the fold?',
-      'CTA button copy — action-oriented vs generic ("Get Started" vs "Submit")',
-      'Is there urgency or social proof near CTAs?',
-      'Is the conversion path clear with minimal friction?',
+      'SCANNABILITY: Is content structured for how people actually read online (F-pattern, scanning)? Check for short paragraphs (3-4 lines max), descriptive subheadings every 2-3 paragraphs, bullet points for lists, and bold text for key phrases. Flag large walls of text.',
+      'WRITING QUALITY: Is the copy clear, concise, and free of errors? Check for grammar/spelling issues, passive voice, unnecessarily complex sentences, and filler words. The writing should feel confident and direct. Quote specific examples of weak or strong copy.',
+      'TONE & VOICE: Is the tone consistent and appropriate for the audience? A B2B enterprise product should feel authoritative; a consumer app can be playful. Flag tonal inconsistencies between pages or sections that feel "off" for the target audience.',
+      'MEDIA QUALITY: Are images, icons, and illustrations purposeful (not just decorative stock photos)? Do all meaningful images have alt text? Are videos captioned? Flag generic stock imagery that doesn\'t add value, and missing alt text on informational images.',
     ],
   },
 
   // ═══ PILLAR 2: HUMAN EXPERIENCE ═════════════════════════════
+  // Conversion, trust, ethics, and emotional design
   {
-    name: 'Trust & Credibility',
+    name: 'Calls-to-Action & Conversion Path',
     pillar: 'Human Experience',
     items: [
-      'Are there testimonials, reviews, or case studies?',
-      'Social proof — user count, logos, ratings?',
-      'Privacy policy, terms, and security indicators',
-      'Contact information or support options visible',
+      'PRIMARY CTA: Is the main call-to-action visible above the fold, with action-oriented copy that tells users what happens when they click? "Start Free Trial" beats "Submit." "Get My Report" beats "Continue." Quote the actual CTA text and evaluate its effectiveness. Suggest a specific improvement if weak.',
+      'CONVERSION FLOW: How many steps from "interested visitor" to "converted user"? Map the actual path. Each additional step loses ~20% of users. Flag unnecessary steps, confusing form fields, or moments where a user might abandon. A great conversion path feels effortless.',
+      'SUPPORTING ELEMENTS: Is there social proof (testimonials, logos, user counts), urgency, or risk-reducers (free trial, money-back guarantee, "no credit card required") near the CTA? These elements can boost conversion 20-40%. Flag CTAs that are isolated without supporting context.',
+      'SECONDARY CTAs: Beyond the primary action, are there appropriate secondary paths for users not ready to convert (learn more, see pricing, read case studies, watch demo)? A site with only one CTA ("Buy Now") loses everyone who isn\'t ready yet. Flag missing nurture paths.',
+    ],
+  },
+  {
+    name: 'Trust, Credibility & Social Proof',
+    pillar: 'Human Experience',
+    items: [
+      'SOCIAL PROOF: Are there real testimonials, reviews, case studies, or user counts? Check if they feel authentic (named people, photos, specific results) vs generic ("Great product!" — Anonymous). Specific results ("Increased conversions by 34%") are 3x more persuasive than vague praise.',
+      'AUTHORITY SIGNALS: Does the site display logos of known clients, media mentions, certifications, awards, or team credentials? For B2B: client logos and case studies matter most. For B2C: user reviews and ratings matter most. Evaluate based on what\'s appropriate for the business type.',
+      'TRANSPARENCY: Can users easily find pricing, contact information, company details (who\'s behind this?), and terms/privacy policy? Hidden pricing is the #1 trust killer for SaaS. Missing "About" or team info raises legitimacy concerns. Flag anything that feels deliberately hidden.',
+      'SECURITY & SAFETY: For sites handling money or data — are there SSL indicators, payment security badges, data handling explanations, or compliance mentions (GDPR, SOC2)? For informational sites, this is less critical. Evaluate based on what the site asks users to do (sign up, pay, share data).',
     ],
   },
   {
     name: 'Ethical UX & Dark Pattern Detection',
     pillar: 'Human Experience',
     items: [
-      'Are there confirmshaming patterns — manipulative language to guilt users into a choice (e.g., "No thanks, I don\'t want to save money")?',
-      'Are there fake urgency or scarcity tactics — countdown timers, "only X left" badges, or "limited time" messaging without genuine limits?',
-      'Is the cancellation or unsubscribe flow easy to find and complete — or is it deliberately buried or multi-step to prevent users from leaving?',
-      'Are there hidden costs that only appear at checkout — drip pricing, unexpected fees, or mandatory add-ons not disclosed upfront?',
-      'Is cookie consent implemented fairly — with equal visual weight for "Accept" and "Reject", no pre-checked boxes, and no dark patterns in consent flows?',
-      'Are privacy-hostile defaults present — opt-in vs opt-out for marketing, data sharing, or tracking set to benefit the company rather than the user?',
+      'CONFIRMSHAMING: Does the site use guilt-based language to manipulate decisions? Look for reject buttons like "No thanks, I don\'t want to save money" or "I\'ll stay uninformed." These erode trust and are increasingly flagged by regulators. Quote any examples found verbatim.',
+      'FAKE URGENCY & SCARCITY: Are there countdown timers that reset, "only X left" badges without real inventory limits, or "limited time" offers that never end? Genuine urgency is fine — fake urgency is a dark pattern. Check if urgency elements reset on page reload or seem artificial.',
+      'HIDDEN COSTS & DRIP PRICING: Does the final price differ from what was initially shown? Check for fees, taxes, or mandatory add-ons that only appear at checkout. Also check if the cancellation/unsubscribe process is deliberately buried or made unnecessarily difficult.',
+      'CONSENT & PRIVACY: Is cookie consent implemented fairly (equal visual weight for Accept/Reject, no pre-checked boxes)? Are privacy defaults set to benefit the user or the company? Are there forced account creation walls blocking basic content? Flag any pattern that tricks users into giving up more than they intended.',
     ],
   },
   {
-    name: 'Emotional Intelligence & Psychological Safety',
+    name: 'Emotional Design & Psychological Safety',
     pillar: 'Human Experience',
     items: [
-      'Does the site create unnecessary anxiety — through countdown timers, loss aversion messaging, alarming language, or pressure tactics?',
-      'When users make errors (wrong input, failed payment, 404), does the site respond with compassion and guidance — or with blame, punishment, or vague messages?',
-      'Is the overall tone respectful, empowering, and human — rather than robotic, condescending, or manipulative?',
-      'Does the checkout or signup process feel safe and transparent — with clear expectations, no surprises, and easy ability to go back or cancel?',
-      'Are empty states and loading states designed to reduce frustration — with helpful messaging, suggestions, or reassurance rather than blank screens?',
+      'ANXIETY REDUCTION: Does the site create unnecessary stress through alarming language, loss aversion messaging, pressure tactics, or fear-based copy? A sign-up flow should feel inviting, not pressured. Quote specific anxiety-inducing copy and suggest calmer alternatives.',
+      'ERROR HANDLING: When things go wrong (invalid input, 404 pages, failed actions), does the site respond with compassion and clear guidance — or with blame, jargon, or dead ends? Check form validation messages, error pages, and empty states. "Something went wrong" is never acceptable — the user needs to know what happened and what to do next.',
+      'TONE & RESPECT: Is the overall voice respectful, empowering, and human? Does it talk TO users or AT them? Check for condescending language, corporate jargon that alienates, or overly casual tone that undermines credibility. The tone should match what users need to feel to take the desired action.',
+      'PROCESS TRANSPARENCY: For multi-step flows (signup, checkout, onboarding) — can users see where they are, what\'s next, how long it takes, and easily go back? Surprise steps, hidden requirements, or inability to undo create anxiety. Flag any flow where the user might feel "trapped."',
+    ],
+  },
+
+  // ═══ PILLAR 3: INCLUSIVE DESIGN ═════════════════════════════
+  // Accessibility, cognitive design, wellbeing, and mobile
+  {
+    name: 'Accessibility & WCAG Compliance',
+    pillar: 'Inclusive Design',
+    items: [
+      'PERCEIVABLE: Can all users perceive the content? Check colour contrast (WCAG AA = 4.5:1 for text, 3:1 for large text), alt text on meaningful images, captions on videos, and whether information is conveyed by colour alone (red/green without labels). Quote specific contrast failures if found.',
+      'OPERABLE: Can all interactive elements be used via keyboard alone? Check for visible focus indicators on links/buttons, logical tab order, no keyboard traps, and touch targets ≥44×44px. Check if the site has skip-to-content links. Flag any interactive element that\'s mouse-only.',
+      'UNDERSTANDABLE: Are form inputs properly labeled (not just placeholder text), error messages specific and helpful, and the page language declared (html lang="...")? Check for inputs without associated <label> elements — placeholder text disappears when typing and fails accessibility.',
+      'ROBUST: Are ARIA roles and landmarks used correctly (not excessively)? Check for semantic HTML structure (<nav>, <main>, <aside>, <article>) that screen readers can parse. Misused ARIA is worse than no ARIA — flag aria roles that contradict the HTML element\'s native role.',
     ],
   },
   {
     name: 'Cognitive Accessibility & Neurodiversity',
-    pillar: 'Human Experience',
+    pillar: 'Inclusive Design',
     items: [
-      'Is the page layout clean and uncluttered, with clear visual grouping — reducing cognitive load for users with ADHD or attention differences?',
-      'Are fonts readable for users with dyslexia (sans-serif, adequate size ≥16px, line-height ≥1.5, line length 50-75 characters, no justified text)?',
-      'Is the language plain, literal, and unambiguous — avoiding idioms, sarcasm, or vague instructions that may be harder for autistic users to interpret?',
-      'Are there distracting elements (auto-playing media, flashing animations, carousels, popups) that cannot be paused or dismissed — which can overwhelm users with sensory sensitivities?',
-      'Is navigation predictable and consistent across pages — with clear labels, logical structure, and no unexpected layout shifts that disrupt cognitive flow?',
-      'Are error messages specific, non-alarming, and constructive — clearly explaining what went wrong and how to fix it, rather than using vague or anxiety-inducing language?',
-      'Are multi-step processes (forms, checkouts) broken into manageable chunks with visible progress indicators — rather than presenting one long overwhelming page?',
-      'Is important information communicated through multiple channels (text + icons + colour) rather than relying on a single modality — supporting diverse processing styles?',
+      'COGNITIVE LOAD: Is the layout clean with clear visual grouping, or cluttered with competing elements? Users with ADHD, anxiety, or cognitive differences are disproportionately affected by visual noise. Check for excessive pop-ups, auto-playing media, simultaneous animations, or more than 3 competing calls-to-action on one screen.',
+      'READABILITY: Are fonts readable (sans-serif for body, ≥16px, line-height ≥1.5, line length 50-75 characters, no justified text)? Users with dyslexia struggle with small fonts, tight spacing, and justified text. Check body text specifically — headings can be more stylized.',
+      'PREDICTABILITY: Is navigation consistent across pages? Do similar elements behave the same way throughout? Unexpected layout shifts, inconsistent menus, or buttons that do different things on different pages disrupt cognitive flow. Flag any "surprise" in the interface.',
+      'MULTI-MODAL COMMUNICATION: Is important information conveyed through multiple channels (text + icons + colour, not just one)? A form error shown only by a red border fails for colourblind users and users who don\'t notice subtle visual changes. Check status messages, errors, and navigation states.',
     ],
   },
   {
     name: 'Digital Wellbeing & Responsible Design',
-    pillar: 'Human Experience',
+    pillar: 'Inclusive Design',
     items: [
-      'Does the site use addictive design patterns — infinite scroll without endpoints, notification manipulation, or engagement loops designed to keep users longer than they intend?',
-      'Does the site respect users\' time — with honest time estimates, clear exit paths, and no unnecessary steps or friction added to increase time-on-site metrics?',
-      'Is cognitive load managed responsibly — or does the site overwhelm users with excessive choices, information overload, or attention-competing elements?',
-      'Are there manipulative engagement tactics — forced account creation to view content, artificial paywalls, or features deliberately withheld to drive upgrades?',
-      'Does the site support healthy usage patterns — clear session boundaries, no guilt-based re-engagement, respectful notification practices?',
+      'RESPECTFUL ENGAGEMENT: Does the site use addictive patterns — infinite scroll without endpoints, notification manipulation, engagement loops, or guilt-based re-engagement ("We miss you!")? Ethical sites respect users\' time and attention. Flag patterns designed to exploit rather than serve.',
+      'TIME RESPECT: Does the site create unnecessary friction to increase time-on-site? Forced multi-page articles, artificial pagination, mandatory account creation to view content, or hidden "close" buttons on modals all disrespect the user\'s time. Flag anything that adds steps without adding value.',
+      'INCLUSIVE OF ALL ABILITIES: Are essential functions accessible without advanced digital skills? Check for: drag-and-drop as the only option, gesture-only interactions, hidden navigation (e.g., swipe-to-reveal), or tiny close buttons. Older users and users with motor impairments need forgiving, discoverable interfaces.',
+      'HEALTHY DEFAULTS: Are default settings user-friendly? Check for pre-checked marketing opt-ins, privacy defaults that favour the company, auto-enrollment in features, or dark patterns in notification preferences. The default state should always favour the user\'s interests, not the business\'s.',
     ],
   },
   {
-    name: 'Age Inclusivity & Digital Literacy',
-    pillar: 'Human Experience',
+    name: 'Mobile Experience & Responsive Design',
+    pillar: 'Inclusive Design',
     items: [
-      'Is the font size large enough for older users (minimum 16px body text), with sufficient line-height and comfortable reading widths?',
-      'Are interactive elements (buttons, links, form fields) large enough and spaced well for users with reduced motor precision — meeting or exceeding 44x44px touch targets?',
-      'Does the site avoid assuming technical literacy — are instructions explicit, jargon-free, and do UI patterns follow common conventions that all age groups understand?',
-      'Is the interface forgiving of mistakes — with clear undo options, confirmation steps for destructive actions, and helpful guidance instead of dead ends?',
-      'Are essential functions accessible without requiring advanced digital skills — no drag-and-drop as the only option, no gesture-only interactions, no hidden navigation?',
-    ],
-  },
-
-  // ═══ PILLAR 3: TECHNICAL EXCELLENCE ═════════════════════════
-  {
-    name: 'Performance & Page Speed',
-    pillar: 'Technical Excellence',
-    items: [
-      'Does the page feel fast? (inferred from content weight)',
-      'Are images optimized or do they appear heavy?',
-      'Are there large scripts or heavy third-party embeds?',
-      'Lazy loading for below-the-fold content',
-    ],
-  },
-  {
-    name: 'Mobile Experience',
-    pillar: 'Technical Excellence',
-    items: [
-      'Is there a viewport meta tag?',
-      'Does content appear mobile-friendly from markup?',
-      'Touch targets — are buttons large enough for mobile?',
-      'Does navigation work for mobile (hamburger, bottom nav)?',
-    ],
-  },
-  {
-    name: 'Accessibility & Inclusive Design',
-    pillar: 'Technical Excellence',
-    items: [
-      'Sufficient colour contrast between text and background (WCAG AA)?',
-      'Can all interactive elements be reached via keyboard navigation?',
-      'Are form inputs properly labelled with associated labels?',
-      'Are ARIA roles and landmarks used to aid screen readers?',
-    ],
-  },
-  {
-    name: 'Technical SEO & Accessibility',
-    pillar: 'Technical Excellence',
-    items: [
-      'Title tag present and descriptive (50-60 chars)?',
-      'Meta description present (150-160 chars)?',
-      'Heading structure (H1 present, logical H2-H6)?',
-      'Structured data / schema markup?',
+      'VIEWPORT & RESPONSIVENESS: Does the site have a proper viewport meta tag and responsive layout? Check if content reflows for smaller screens or requires horizontal scrolling. Look for fixed-width elements, overflowing text, or images that break the layout on mobile viewport sizes.',
+      'TOUCH INTERACTION: Are all interactive elements (buttons, links, form fields) at least 44×44px with adequate spacing between them? On mobile, fat-finger errors from tiny or cramped targets are the #1 usability killer. Flag any button or link that would be hard to tap accurately.',
+      'MOBILE NAVIGATION: Does the site have a mobile-appropriate navigation pattern (hamburger menu, bottom nav, or simplified nav)? Is the full desktop nav crammed into mobile, or is it adapted? Check that the mobile menu is easy to open, navigate, and close.',
+      'MOBILE CONTENT PRIORITY: Is the most important content (value prop, CTA, key info) accessible without excessive scrolling on mobile? Desktop pages often have content spread across wide layouts that become extremely long on mobile. Check if the mobile experience respects the user\'s vertical scroll budget.',
     ],
   },
 
   // ═══ PILLAR 4: FUTURE READINESS ═════════════════════════════
+  // Performance, AI discoverability, agent readiness, global reach
+  {
+    name: 'Performance & Technical Health',
+    pillar: 'Future Readiness',
+    items: [
+      'PAGE WEIGHT: Evaluate the HTML for signs of heavy pages — large inline styles, excessive script tags, unoptimized image references (no srcset, no lazy loading, no WebP/AVIF), or heavy third-party embeds (chat widgets, analytics, social buttons). Each script tag and embed adds load time. Flag specific heavy elements.',
+      'RENDER STRATEGY: Is critical content in the HTML (server-rendered) or does it require JavaScript to appear? Check if the page\'s main content, headings, and navigation are present in the raw HTML vs injected by JS. Content that requires JS to render is slower, less accessible, and invisible to many crawlers.',
+      'TECHNICAL SEO: Does the page have a descriptive title tag (50-60 chars), meta description (120-160 chars), a single H1, and a logical heading hierarchy (H1→H2→H3, no skipped levels)? These are foundational signals for both search engines and AI systems. Quote the actual title/description and flag issues.',
+      'STRUCTURED DATA: Does the site implement JSON-LD, schema.org, or Open Graph markup? Check for og:title, og:description, og:image, og:type, and any schema.org types (Organization, Product, SoftwareApplication, FAQPage, etc.). Having OG + meta description = baseline (60). Adding JSON-LD = good (75+). Full implementation = excellent (90+).',
+    ],
+  },
   {
     name: 'AI Discoverability & LLM Readiness',
     pillar: 'Future Readiness',
     items: [
-      'OUTCOME TEST: If someone asked an LLM "What is [this website/product]?" — could the LLM give an accurate, comprehensive answer based purely on the HTML content? Evaluate whether the site\'s purpose, audience, value proposition, and key differentiators are clearly stated in text (not trapped in images, videos, or JS-only widgets). A site with clean semantic HTML and clear textual content that tells its story well should score HIGH — it does not need an FAQ page or knowledge base to be AI-discoverable.',
-      'Is the site\'s content structured with semantic HTML that LLMs can parse into coherent understanding? Check heading hierarchy (H1-H6), semantic elements (<article>, <section>, <nav>, <main>, <aside>), and logical information architecture. SCORING: If the HTML structure is clean and content follows a logical hierarchy, score high. Minor imperfections in semantic markup are LOW severity, not critical.',
-      'Does the site surface its key factual information as accessible text? CONTEXT-AWARE: Evaluate based on what\'s relevant for THIS type of website — a SaaS product should have features and pricing in text; a portfolio should have work samples described; a blog should have articles accessible. Do NOT penalize a site for missing content types that don\'t apply to its business model (e.g., don\'t dock a developer tool for not having "product availability" info).',
-      'Does the site have structured data (JSON-LD, schema.org, Open Graph) that helps AI systems categorize and describe it? Check for OG tags (og:title, og:description, og:image, og:type), meta description, and JSON-LD markup. SCORING: Good OG tags + meta description alone = decent score (60-70). Add JSON-LD with correct entity type (Organization, SoftwareApplication, Product, etc.) = high score (75-90). Having all three well-implemented = excellent (90+). Missing everything = low (30-40). Having only a basic meta description = medium (45-55).',
+      'THE LLM TEST: If someone asked an AI "What is [this website/product]?" — could it give an accurate, complete answer from the HTML alone? Evaluate whether purpose, audience, value proposition, and key differentiators are stated in text (not only in images/videos/JS). A site that tells its story clearly in text IS AI-discoverable — it doesn\'t need an FAQ page or knowledge base.',
+      'SEMANTIC STRUCTURE: Is content organized with semantic HTML that AI can parse — proper headings (H1-H6), semantic elements (<article>, <section>, <nav>, <main>), and a logical information architecture? Clean HTML with logical hierarchy scores high. Minor semantic imperfections are LOW severity.',
+      'CONTENT ACCESSIBILITY: Does the site surface its key facts as crawlable text? CONTEXT-AWARE: A SaaS should have features and pricing in text; a portfolio should describe its work; a blog should have articles accessible. Do NOT penalize for missing content types irrelevant to the business model.',
+      'MACHINE-READABLE IDENTITY: Can AI systems accurately categorize what this site is and what it offers? Check structured data, meta tags, and whether the site\'s "about" information is machine-readable. Look for llms.txt or ai-plugin.json as bonus signals (absence is neutral, not a penalty).',
     ],
   },
   {
     name: 'AI Agent Readiness',
     pillar: 'Future Readiness',
     items: [
-      'Can an AI agent navigate this site\'s information architecture by following HTML alone — reading navigation links, understanding page hierarchy, and finding key pages? Check that navigation uses semantic HTML (<nav>, descriptive <a> tags), pages have clear titles and headings, and the site structure is logically crawlable. IMPORTANT: A site does not need to be an e-commerce store to be agent-ready. A clearly navigable, content-rich site with good link structure IS agent-ready. Score based on navigability, not on whether it has a shopping cart.',
-      'For whatever interactive elements exist on the site (forms, buttons, inputs, modals) — are they built with standard, accessible HTML? Check for proper <label> associations, descriptive button text, appropriate input types, and autocomplete attributes. CRITICAL SCORING RULE: If a site has few or no forms (e.g., it\'s a content site or SaaS with OAuth login), that is NOT a failure — score it on the interactive elements it DOES have. A site with 1 well-built form scores higher than a site with 10 poorly-labeled forms.',
-      'Does the site have proper crawl infrastructure? Check for: (a) robots.txt that doesn\'t block AI crawlers, (b) sitemap.xml presence, (c) clean URL structure with descriptive slugs, (d) content that\'s server-rendered or pre-rendered (not hidden behind JS-only rendering). SCORING: Having robots.txt + sitemap.xml + clean URLs = high score. Missing sitemap but having everything else = medium. Actively blocking AI crawlers = critical issue.',
-      'Does the site expose sufficient metadata for AI assistants to accurately represent this business when users ask about it? Check Open Graph tags, schema.org markup, and whether the site\'s identity/offerings are machine-readable. BONUS: Check for llms.txt or .well-known/ai-plugin.json — these are forward-looking signals. Having them is a bonus (boost score), not having them is NOT a penalty (most sites don\'t have them yet, so absence is neutral).',
-      'REAL-WORLD AGENT TEST: Could an AI assistant (like ChatGPT, Claude, Perplexity) give a user accurate, helpful information about this site\'s product/service, pricing model, and how to get started — based on what\'s in the HTML? This is the ultimate test. If yes, the site is fundamentally agent-ready regardless of technical details. If the AI would struggle to answer basic questions about the business, that\'s a real gap.',
+      'NAVIGABILITY: Can an AI agent follow the site\'s link structure to find key pages (pricing, features, about, contact, docs)? Check that navigation uses semantic HTML (<nav>, descriptive <a> tags with meaningful link text, not "click here"). A well-structured site IS agent-ready — it doesn\'t need e-commerce features.',
+      'INTERACTIVE ELEMENTS: For whatever forms, buttons, and inputs exist — are they built with standard, labeled HTML? Check <label> associations, descriptive button text, input types, and autocomplete attributes. IMPORTANT: A site with no forms isn\'t "failing" — score based on what IS present. One well-built form beats ten poorly-labeled ones.',
+      'CRAWL INFRASTRUCTURE: Does the site allow AI crawlers to access it? Check robots.txt (not blocking AI user agents), sitemap.xml presence, clean URL structure, and server-rendered content. Having all three = high score. Actively blocking AI crawlers = critical issue. Missing sitemap but otherwise open = medium.',
+      'THE REAL-WORLD TEST: Could an AI assistant give someone accurate, helpful information about this business — its product, pricing, and how to get started — based on the HTML? This is the ultimate measure. If yes, the site is agent-ready regardless of technical details. If the AI would struggle with basic questions, that\'s the real gap to fix.',
     ],
   },
   {
     name: 'Cultural Sensitivity & Global Readiness',
     pillar: 'Future Readiness',
     items: [
-      'Is the content written in clear, plain language that non-native speakers can understand and translation tools can process accurately? Check for idioms, slang, culture-specific humor, or references that wouldn\'t translate well. IMPORTANT: Technical jargon is acceptable on products aimed at technical audiences — evaluate based on the target audience, not a universal plain-language standard. A developer docs site using "API endpoints" is fine; a consumer product using "synergize your workflow" is not.',
-      'Does the site declare its language properly (html lang="...") and is the text direction handled correctly? For sites clearly targeting a single-language market (e.g., English-only SaaS), not having RTL support is a LOW severity observation at most — only flag RTL as high severity if the site explicitly targets multilingual or global audiences (e.g., has a language switcher, mentions global users, or operates in regions with RTL languages).',
-      'Are visual design choices and imagery reasonably neutral across major cultural contexts? PRACTICAL STANDARD: Standard web design conventions (blue for links, red for errors/warnings, green for success) are universally understood and should NEVER be flagged. Only flag genuinely problematic choices — culturally offensive imagery, inappropriate symbols, or stereotypical representations. If the design is clean and uses standard web conventions, score HIGH.',
-      'If the site displays prices, dates, or numbers — are they formatted appropriately for the target audience? SCORING: This only applies if the site shows these elements. A blog with no pricing doesn\'t need currency localization — score it neutrally (70+). A site selling internationally with USD-only pricing and US date format has a real gap. A site selling to one market with correct local formatting scores high.',
-      'Does the site have appropriate legal/privacy infrastructure for its target markets? Check for privacy policy, cookie consent (if applicable), and data handling disclosures. SCORING: A US-focused site with a solid privacy policy = good score. A site clearly targeting EU users without GDPR compliance = real gap. Don\'t penalize a small US startup for not having a CCPA-specific page unless it targets California users explicitly.',
+      'LANGUAGE CLARITY: Is content written in plain language that non-native speakers and translation tools can process? Check for idioms, slang, or culture-specific references that wouldn\'t translate. IMPORTANT: Technical jargon is fine on technical products — evaluate based on the target audience.',
+      'INTERNATIONALIZATION: Does the site declare its language (html lang="..."), handle text direction correctly, and format numbers/dates/currency appropriately for its audience? SCORING: A single-market site with correct local formatting = good. Not having RTL on an English-only site = LOW severity at most. Only flag RTL as high if the site explicitly targets global/multilingual audiences.',
+      'CULTURAL NEUTRALITY: Are design choices and imagery neutral across major cultures? PRACTICAL: Standard web conventions (blue links, red errors, green success) are universal and should NEVER be flagged. Only flag genuinely problematic imagery, offensive symbols, or stereotypical representations.',
+      'LEGAL & PRIVACY: Does the site have appropriate legal infrastructure for its markets? Check for privacy policy, cookie consent (if applicable), and data handling disclosures. A US site with a solid privacy policy = good. A site targeting EU users without GDPR basics = real gap. Evaluate based on actual target market, not theoretical global compliance.',
     ],
   },
 ]
@@ -501,7 +464,7 @@ export async function generateReport(
 
   const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
   const categoryExamples = translatedNames.map((name, i) => {
-    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 52, 62, 48, 65, 58, 72, 66, 45, 40, 55]
+    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 62, 48, 65, 58, 72, 66, 45]
     return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "..." }`
   }).join(',\n')
 
@@ -529,7 +492,7 @@ For the EXECUTIVE SUMMARY:
 - Start with what the website does, who it serves, and the overall impression it creates
 - Discuss what works well — be genuine about strengths (this builds credibility for the critique)
 - Address the most impactful issues with depth: explain the human impact, not just the technical problem. How does this issue make real users FEEL? What does it cost the business?
-- Cover findings across all 4 audit pillars (Foundation, Human Experience, Technical Excellence, Future Readiness) — show the breadth of the analysis
+- Cover findings across all 4 audit pillars (Foundation, Human Experience, Inclusive Design, Future Readiness) — show the breadth of the analysis
 - End with a clear, prioritized action plan: what to fix first for maximum ROI
 - Write with authority and empathy. This should feel like advice from a trusted consultant, not a scan report
 - Reference specific content from the site — quote actual copy, describe actual design decisions
@@ -551,7 +514,7 @@ Score guidelines:
 - 0-19: Severely broken
 
 For CATEGORY SCORES:
-Provide a score (0-100) and a one-sentence summary for each of these 19 categories.
+Provide a score (0-100) and a one-sentence summary for each of these 16 categories.
 IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
 ${categoryList}
 

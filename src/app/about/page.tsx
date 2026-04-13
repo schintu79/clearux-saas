@@ -6,7 +6,7 @@ import { Heart, Shield, Brain, Eye, ArrowRight, Sparkles, Users, CheckCircle } f
 
 export const metadata: Metadata = {
   title: 'About ClearUX — Human-Centered AI Audit Platform',
-  description: 'ClearUX combines AI precision with human-centered design principles. 19 audit categories across 4 pillars — Foundation, Human Experience, Technical Excellence, Future Readiness.',
+  description: 'ClearUX combines AI precision with human-centered design principles. 16 audit categories across 4 pillars — Foundation, Human Experience, Inclusive Design, Future Readiness.',
 }
 
 const DIFFERENTIATORS = [
@@ -15,7 +15,7 @@ const DIFFERENTIATORS = [
     color: 'text-pink-500',
     bg: 'bg-pink-500/10',
     title: 'Human-centered, not just metric-driven',
-    body: 'Most audit tools count errors. We look at how real people experience your product. Our 19 categories include emotional intelligence, cognitive accessibility, digital wellbeing, and age inclusivity — things a simple Lighthouse score will never catch.',
+    body: 'Most audit tools count errors. We look at how real people experience your product. Our 16 categories include emotional intelligence, cognitive accessibility, digital wellbeing, and age inclusivity — things a simple Lighthouse score will never catch.',
   },
   {
     icon: Shield,
@@ -36,7 +36,7 @@ const DIFFERENTIATORS = [
     color: 'text-amber-500',
     bg: 'bg-amber-500/10',
     title: 'Consultant depth at tool speed',
-    body: "Each audit runs 95 checkpoints across 4 pillars: Foundation, Human Experience, Technical Excellence, and Future Readiness. The output isn't a generic checklist — it's a prioritised, severity-ranked report with specific recommendations.",
+    body: "Each audit runs 64 checkpoints across 4 pillars: Foundation, Human Experience, Inclusive Design, and Future Readiness. The output isn't a generic checklist — it's a prioritised, severity-ranked report with specific recommendations.",
   },
 ]
 
@@ -151,7 +151,7 @@ export default function AboutPage() {
               Ready to see what you&apos;re missing?
             </h2>
             <p className="text-white/80 text-base mb-8 max-w-lg mx-auto">
-              Run your first audit today. 95 checkpoints, 19 categories, results in minutes.
+              Run your first audit today. 64 checkpoints, 16 categories, results in minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

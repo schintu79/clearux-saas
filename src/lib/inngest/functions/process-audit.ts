@@ -14,7 +14,7 @@
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from '@/lib/audit-engine/crawler'
-import { analyzeCategory, runFullAnalysis, generateReport } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, runFullAnalysis, generateReport, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
@@ -56,22 +56,9 @@ async function auditLog(
   }
 }
 
-/* ── UX Categories (must match analyzer.ts) ── */
+/* ── UX Categories — sourced from analyzer.ts (single source of truth) ── */
 
-const UX_CATEGORY_NAMES = [
-  'First Impression & Visual Design',
-  'Value Proposition & Messaging',
-  'Navigation & Information Architecture',
-  'Calls-to-Action & Conversion',
-  'Performance & Page Speed',
-  'Mobile Experience',
-  'Trust & Credibility',
-  'Content Quality & Readability',
-  'Technical SEO & Accessibility',
-  'AI Discoverability & LLM Readiness',
-  'Visual Hierarchy & Layout',
-  'Accessibility & Inclusive Design',
-]
+const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
 
 /* ── The Inngest function ── */
 

@@ -247,7 +247,7 @@ function DashboardInner() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
-            Create your first audit to see how your website scores across 95 UX checkpoints.
+            Create your first audit to see how your website scores across 64 UX checkpoints.
           </p>
           <Link
             href="/dashboard/new-audit"

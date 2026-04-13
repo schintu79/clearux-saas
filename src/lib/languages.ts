@@ -78,62 +78,59 @@ export function getReportLabels(code: string): ReportLabels {
   return REPORT_LABELS[code] || REPORT_LABELS['en']
 }
 
-/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (19 categories) */
+/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (16 categories, 4 per pillar) */
 const CATEGORY_NAMES: Record<string, string[]> = {
   en: [
-    // Foundation (1-6)
-    'First Impression & Visual Design',
+    // Foundation (1-4)
+    'Visual Design & First Impression',
     'Value Proposition & Messaging',
     'Navigation & Information Architecture',
-    'Visual Hierarchy & Layout',
     'Content Quality & Readability',
-    'Calls-to-Action & Conversion',
-    // Human Experience (7-12)
-    'Trust & Credibility',
+    // Human Experience (5-8)
+    'Calls-to-Action & Conversion Path',
+    'Trust, Credibility & Social Proof',
     'Ethical UX & Dark Pattern Detection',
-    'Emotional Intelligence & Psychological Safety',
+    'Emotional Design & Psychological Safety',
+    // Inclusive Design (9-12)
+    'Accessibility & WCAG Compliance',
     'Cognitive Accessibility & Neurodiversity',
     'Digital Wellbeing & Responsible Design',
-    'Age Inclusivity & Digital Literacy',
-    // Technical Excellence (13-16)
-    'Performance & Page Speed',
-    'Mobile Experience',
-    'Accessibility & Inclusive Design',
-    'Technical SEO & Accessibility',
-    // Future Readiness (17-19)
+    'Mobile Experience & Responsive Design',
+    // Future Readiness (13-16)
+    'Performance & Technical Health',
     'AI Discoverability & LLM Readiness',
     'AI Agent Readiness',
     'Cultural Sensitivity & Global Readiness',
   ],
   es: [
-    'Primera Impresión y Diseño Visual', 'Propuesta de Valor y Mensajes', 'Navegación y Arquitectura de la Información', 'Jerarquía Visual y Diseño', 'Calidad del Contenido y Legibilidad', 'Llamadas a la Acción y Conversión',
-    'Confianza y Credibilidad', 'UX Ético y Detección de Patrones Oscuros', 'Inteligencia Emocional y Seguridad Psicológica', 'Accesibilidad Cognitiva y Neurodiversidad', 'Bienestar Digital y Diseño Responsable', 'Inclusión por Edad y Alfabetización Digital',
-    'Rendimiento y Velocidad de Carga', 'Experiencia Móvil', 'Accesibilidad y Diseño Inclusivo', 'SEO Técnico y Accesibilidad',
-    'Descubribilidad por IA y Preparación para LLM', 'Preparación para Agentes de IA', 'Sensibilidad Cultural y Preparación Global',
+    'Diseño Visual y Primera Impresión', 'Propuesta de Valor y Mensajes', 'Navegación y Arquitectura de la Información', 'Calidad del Contenido y Legibilidad',
+    'Llamadas a la Acción y Ruta de Conversión', 'Confianza, Credibilidad y Prueba Social', 'UX Ético y Detección de Patrones Oscuros', 'Diseño Emocional y Seguridad Psicológica',
+    'Accesibilidad y Cumplimiento WCAG', 'Accesibilidad Cognitiva y Neurodiversidad', 'Bienestar Digital y Diseño Responsable', 'Experiencia Móvil y Diseño Responsivo',
+    'Rendimiento y Salud Técnica', 'Descubribilidad por IA y Preparación para LLM', 'Preparación para Agentes de IA', 'Sensibilidad Cultural y Preparación Global',
   ],
   fr: [
-    'Première Impression et Design Visuel', 'Proposition de Valeur et Messages', 'Navigation et Architecture de l\'Information', 'Hiérarchie Visuelle et Mise en Page', 'Qualité du Contenu et Lisibilité', 'Appels à l\'Action et Conversion',
-    'Confiance et Crédibilité', 'UX Éthique et Détection de Dark Patterns', 'Intelligence Émotionnelle et Sécurité Psychologique', 'Accessibilité Cognitive et Neurodiversité', 'Bien-être Numérique et Design Responsable', 'Inclusion par Âge et Littératie Numérique',
-    'Performance et Vitesse de Chargement', 'Expérience Mobile', 'Accessibilité et Design Inclusif', 'SEO Technique et Accessibilité',
-    'Découvrabilité IA et Préparation LLM', 'Préparation aux Agents IA', 'Sensibilité Culturelle et Préparation Mondiale',
+    'Design Visuel et Première Impression', 'Proposition de Valeur et Messages', 'Navigation et Architecture de l\'Information', 'Qualité du Contenu et Lisibilité',
+    'Appels à l\'Action et Parcours de Conversion', 'Confiance, Crédibilité et Preuve Sociale', 'UX Éthique et Détection de Dark Patterns', 'Design Émotionnel et Sécurité Psychologique',
+    'Accessibilité et Conformité WCAG', 'Accessibilité Cognitive et Neurodiversité', 'Bien-être Numérique et Design Responsable', 'Expérience Mobile et Design Adaptatif',
+    'Performance et Santé Technique', 'Découvrabilité IA et Préparation LLM', 'Préparation aux Agents IA', 'Sensibilité Culturelle et Préparation Mondiale',
   ],
   de: [
-    'Erster Eindruck und Visuelles Design', 'Wertversprechen und Botschaften', 'Navigation und Informationsarchitektur', 'Visuelle Hierarchie und Layout', 'Inhaltsqualität und Lesbarkeit', 'Handlungsaufforderungen und Konversion',
-    'Vertrauen und Glaubwürdigkeit', 'Ethisches UX und Dark-Pattern-Erkennung', 'Emotionale Intelligenz und Psychologische Sicherheit', 'Kognitive Barrierefreiheit und Neurodiversität', 'Digitales Wohlbefinden und Verantwortungsvolles Design', 'Altersinklusion und Digitale Kompetenz',
-    'Leistung und Ladegeschwindigkeit', 'Mobile Erfahrung', 'Barrierefreiheit und Inklusives Design', 'Technisches SEO und Barrierefreiheit',
-    'KI-Auffindbarkeit und LLM-Bereitschaft', 'KI-Agenten-Bereitschaft', 'Kulturelle Sensibilität und Globale Bereitschaft',
+    'Visuelles Design und Erster Eindruck', 'Wertversprechen und Botschaften', 'Navigation und Informationsarchitektur', 'Inhaltsqualität und Lesbarkeit',
+    'Handlungsaufforderungen und Konversionspfad', 'Vertrauen, Glaubwürdigkeit und Social Proof', 'Ethisches UX und Dark-Pattern-Erkennung', 'Emotionales Design und Psychologische Sicherheit',
+    'Barrierefreiheit und WCAG-Konformität', 'Kognitive Barrierefreiheit und Neurodiversität', 'Digitales Wohlbefinden und Verantwortungsvolles Design', 'Mobile Erfahrung und Responsives Design',
+    'Leistung und Technische Gesundheit', 'KI-Auffindbarkeit und LLM-Bereitschaft', 'KI-Agenten-Bereitschaft', 'Kulturelle Sensibilität und Globale Bereitschaft',
   ],
   it: [
-    'Prima Impressione e Design Visivo', 'Proposta di Valore e Messaggi', 'Navigazione e Architettura dell\'Informazione', 'Gerarchia Visiva e Layout', 'Qualità dei Contenuti e Leggibilità', 'Chiamate all\'Azione e Conversione',
-    'Fiducia e Credibilità', 'UX Etico e Rilevamento Dark Pattern', 'Intelligenza Emotiva e Sicurezza Psicologica', 'Accessibilità Cognitiva e Neurodiversità', 'Benessere Digitale e Design Responsabile', 'Inclusione per Età e Alfabetizzazione Digitale',
-    'Prestazioni e Velocità di Caricamento', 'Esperienza Mobile', 'Accessibilità e Design Inclusivo', 'SEO Tecnico e Accessibilità',
-    'Scopribilità IA e Preparazione LLM', 'Preparazione per Agenti IA', 'Sensibilità Culturale e Preparazione Globale',
+    'Design Visivo e Prima Impressione', 'Proposta di Valore e Messaggi', 'Navigazione e Architettura dell\'Informazione', 'Qualità dei Contenuti e Leggibilità',
+    'Chiamate all\'Azione e Percorso di Conversione', 'Fiducia, Credibilità e Riprova Sociale', 'UX Etico e Rilevamento Dark Pattern', 'Design Emotivo e Sicurezza Psicologica',
+    'Accessibilità e Conformità WCAG', 'Accessibilità Cognitiva e Neurodiversità', 'Benessere Digitale e Design Responsabile', 'Esperienza Mobile e Design Responsivo',
+    'Prestazioni e Salute Tecnica', 'Scopribilità IA e Preparazione LLM', 'Preparazione per Agenti IA', 'Sensibilità Culturale e Preparazione Globale',
   ],
   pt: [
-    'Primeira Impressão e Design Visual', 'Proposta de Valor e Mensagens', 'Navegação e Arquitetura da Informação', 'Hierarquia Visual e Layout', 'Qualidade do Conteúdo e Legibilidade', 'Chamadas para Ação e Conversão',
-    'Confiança e Credibilidade', 'UX Ético e Detecção de Dark Patterns', 'Inteligência Emocional e Segurança Psicológica', 'Acessibilidade Cognitiva e Neurodiversidade', 'Bem-estar Digital e Design Responsável', 'Inclusão Etária e Literacia Digital',
-    'Desempenho e Velocidade de Carregamento', 'Experiência Mobile', 'Acessibilidade e Design Inclusivo', 'SEO Técnico e Acessibilidade',
-    'Descobribilidade por IA e Preparação para LLM', 'Preparação para Agentes de IA', 'Sensibilidade Cultural e Preparação Global',
+    'Design Visual e Primeira Impressão', 'Proposta de Valor e Mensagens', 'Navegação e Arquitetura da Informação', 'Qualidade do Conteúdo e Legibilidade',
+    'Chamadas para Ação e Caminho de Conversão', 'Confiança, Credibilidade e Prova Social', 'UX Ético e Detecção de Dark Patterns', 'Design Emocional e Segurança Psicológica',
+    'Acessibilidade e Conformidade WCAG', 'Acessibilidade Cognitiva e Neurodiversidade', 'Bem-estar Digital e Design Responsável', 'Experiência Mobile e Design Responsivo',
+    'Desempenho e Saúde Técnica', 'Descobribilidade por IA e Preparação para LLM', 'Preparação para Agentes de IA', 'Sensibilidade Cultural e Preparação Global',
   ],
 }
 

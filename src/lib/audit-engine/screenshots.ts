@@ -1,15 +1,15 @@
 // ============================================================
 // ClearUX Audit Engine — Screenshot Capture
-// Uses a dedicated /api/screenshot endpoint so each capture
-// runs in its own serverless invocation with fresh memory.
+// Multi-strategy approach for reliable screenshots:
+//   1. ScreenshotOne API (if key set) — reliable, supports selectors
+//   2. Google PageSpeed API — free, reliable, no element highlight
+//   3. /api/screenshot (Puppeteer) — self-hosted fallback
 // ============================================================
 
 import { createServiceSupabase } from '@/lib/supabase-server'
 
 /**
  * The base URL for our own API — used to call /api/screenshot.
- * In production: NEXT_PUBLIC_SITE_URL or VERCEL_URL.
- * In dev: localhost:3000.
  */
 function getBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
@@ -17,59 +17,55 @@ function getBaseUrl(): string {
   return 'http://localhost:3000'
 }
 
-/**
- * Call our /api/screenshot endpoint to capture a screenshot.
- * Each call spins up its own serverless function with 60s timeout.
- */
-export async function captureScreenshot(
-  url: string,
-  selector?: string | null,
-  label?: string | null,
-): Promise<Buffer | null> {
-  try {
-    const baseUrl = getBaseUrl()
-    const body: Record<string, string> = { url }
-    if (selector) body.selector = selector
-    if (label) body.label = label
+// ── Strategy 1: ScreenshotOne API (premium, reliable) ─────────
 
-    const res = await fetch(`${baseUrl}/api/screenshot`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-screenshot-key': process.env.SCREENSHOT_INTERNAL_KEY || '',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(55_000), // slightly less than the endpoint's 60s
+async function captureViaScreenshotOne(
+  url: string,
+  _selector?: string | null,
+): Promise<Buffer | null> {
+  const apiKey = process.env.SCREENSHOTONE_API_KEY
+  if (!apiKey) return null
+
+  try {
+    const params = new URLSearchParams({
+      access_key: apiKey,
+      url,
+      viewport_width: '1280',
+      viewport_height: '900',
+      format: 'png',
+      full_page: 'false',
+      delay: '2',           // wait 2s for page to settle
+      block_ads: 'true',
+      block_cookie_banners: 'true',
+      cache: 'true',
+      cache_ttl: '86400',   // 24h cache
+    })
+
+    // ScreenshotOne supports element selectors for cropping
+    if (_selector) {
+      params.set('selector', _selector)
+    }
+
+    const res = await fetch(`https://api.screenshotone.com/take?${params}`, {
+      signal: AbortSignal.timeout(30_000),
     })
 
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}))
-      console.error('[screenshots] API returned', res.status, errData)
+      console.error('[screenshots] ScreenshotOne returned', res.status)
       return null
     }
 
-    const data = await res.json()
-    if (data.screenshot) {
-      return Buffer.from(data.screenshot, 'base64')
-    }
-
-    return null
+    const arrayBuf = await res.arrayBuffer()
+    return Buffer.from(arrayBuf)
   } catch (err) {
-    console.error(
-      '[screenshots] Capture failed:',
-      err instanceof Error ? err.message : err,
-    )
+    console.error('[screenshots] ScreenshotOne error:', err instanceof Error ? err.message : err)
     return null
   }
 }
 
-/**
- * Fallback: Google PageSpeed API for page overview screenshot.
- * Free, reliable, but only gives a generic page screenshot (no element highlight).
- */
-export async function capturePageScreenshotFallback(
-  url: string,
-): Promise<Buffer | null> {
+// ── Strategy 2: Google PageSpeed API (free, reliable) ──────────
+
+async function captureViaPageSpeed(url: string): Promise<Buffer | null> {
   try {
     const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY
     const base = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
@@ -81,7 +77,7 @@ export async function capturePageScreenshotFallback(
     if (apiKey) params.set('key', apiKey)
 
     const res = await fetch(`${base}?${params}`, {
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(30_000),
     })
 
     if (!res.ok) return null
@@ -100,10 +96,80 @@ export async function capturePageScreenshotFallback(
   }
 }
 
-/**
- * Upload a screenshot buffer to Supabase Storage.
- * Returns the public URL of the uploaded file.
- */
+// ── Strategy 3: Self-hosted Puppeteer (/api/screenshot) ────────
+
+async function captureViaPuppeteer(
+  url: string,
+  selector?: string | null,
+  label?: string | null,
+): Promise<Buffer | null> {
+  try {
+    const baseUrl = getBaseUrl()
+    const body: Record<string, string> = { url }
+    if (selector) body.selector = selector
+    if (label) body.label = label
+
+    const res = await fetch(`${baseUrl}/api/screenshot`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-screenshot-key': process.env.SCREENSHOT_INTERNAL_KEY || '',
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(55_000),
+    })
+
+    if (!res.ok) {
+      console.error('[screenshots] Puppeteer API returned', res.status)
+      return null
+    }
+
+    const data = await res.json()
+    if (data.screenshot) {
+      return Buffer.from(data.screenshot, 'base64')
+    }
+
+    return null
+  } catch (err) {
+    console.error('[screenshots] Puppeteer capture failed:', err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
+// ── Main capture function (tries all strategies) ───────────────
+
+export async function captureScreenshot(
+  url: string,
+  selector?: string | null,
+  label?: string | null,
+): Promise<Buffer | null> {
+  // Strategy 1: ScreenshotOne (best quality, paid)
+  const s1 = await captureViaScreenshotOne(url, selector)
+  if (s1) {
+    console.log(`[screenshots] ScreenshotOne success: ${url}`)
+    return s1
+  }
+
+  // Strategy 2: PageSpeed API (free, page-level only)
+  const s2 = await captureViaPageSpeed(url)
+  if (s2) {
+    console.log(`[screenshots] PageSpeed success: ${url}`)
+    return s2
+  }
+
+  // Strategy 3: Self-hosted Puppeteer (fallback)
+  const s3 = await captureViaPuppeteer(url, selector, label)
+  if (s3) {
+    console.log(`[screenshots] Puppeteer success: ${url}`)
+    return s3
+  }
+
+  console.error(`[screenshots] All strategies failed for: ${url}`)
+  return null
+}
+
+// ── Upload to Supabase Storage ─────────────────────────────────
+
 export async function uploadScreenshot(
   auditId: string,
   filename: string,
@@ -131,19 +197,13 @@ export async function uploadScreenshot(
 
     return urlData?.publicUrl || null
   } catch (err) {
-    console.error(
-      '[screenshots] Upload exception:',
-      err instanceof Error ? err.message : err,
-    )
+    console.error('[screenshots] Upload exception:', err instanceof Error ? err.message : err)
     return null
   }
 }
 
-/**
- * Capture screenshots for an audit:
- * 1. Page overview for each unique URL
- * 2. Highlighted element screenshots for top findings
- */
+// ── Orchestrate screenshots for an entire audit ────────────────
+
 export async function captureAuditScreenshots(
   findings: Array<{
     id: string
@@ -156,30 +216,24 @@ export async function captureAuditScreenshots(
   auditId: string,
   maxFindingScreenshots: number = 10,
 ): Promise<{
-  pageScreenshots: Map<string, string> // url → public URL
-  findingScreenshots: Map<string, string> // findingId → public URL
+  pageScreenshots: Map<string, string>
+  findingScreenshots: Map<string, string>
 }> {
   const pageScreenshots = new Map<string, string>()
   const findingScreenshots = new Map<string, string>()
 
   // 1. Collect unique page URLs
   const uniqueUrls = new Set<string>()
-  uniqueUrls.add(fallbackUrl) // always capture the main page
+  uniqueUrls.add(fallbackUrl)
   for (const f of findings) {
     if (f.pageUrl) uniqueUrls.add(f.pageUrl)
   }
 
-  // 2. Capture page-level screenshots (no highlight)
+  // 2. Capture page-level screenshots (no element highlight)
   for (const url of uniqueUrls) {
     try {
       console.log(`[screenshots] Capturing page: ${url}`)
-      let buf = await captureScreenshot(url)
-
-      // Fallback to PageSpeed API if Puppeteer fails
-      if (!buf) {
-        console.log(`[screenshots] Puppeteer failed for ${url}, trying PageSpeed API...`)
-        buf = await capturePageScreenshotFallback(url)
-      }
+      const buf = await captureScreenshot(url)
 
       if (buf) {
         const safeName = url.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 60)
@@ -195,35 +249,42 @@ export async function captureAuditScreenshots(
   }
 
   // 3. Capture finding-specific screenshots with element highlight
-  const prioritized = [...findings]
-    .filter((f) => f.targetElement)
-    .sort((a, b) => {
-      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
-    })
-    .slice(0, maxFindingScreenshots)
+  //    Only if ScreenshotOne or Puppeteer is available (PageSpeed can't highlight)
+  const hasAdvancedCapture = !!(process.env.SCREENSHOTONE_API_KEY || process.env.SCREENSHOT_INTERNAL_KEY)
 
-  for (const finding of prioritized) {
-    if (!finding.targetElement) continue
+  if (hasAdvancedCapture) {
+    const prioritized = [...findings]
+      .filter((f) => f.targetElement)
+      .sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+        return (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
+      })
+      .slice(0, maxFindingScreenshots)
 
-    try {
-      const pageUrl = finding.pageUrl || fallbackUrl
-      const sevLabel = finding.severity.toUpperCase()
-      const label = `${sevLabel}: ${finding.title}`
+    for (const finding of prioritized) {
+      if (!finding.targetElement) continue
 
-      console.log(`[screenshots] Capturing finding: ${finding.id} (${finding.targetElement})`)
-      const buf = await captureScreenshot(pageUrl, finding.targetElement, label)
+      try {
+        const pageUrl = finding.pageUrl || fallbackUrl
+        const sevLabel = finding.severity.toUpperCase()
+        const label = `${sevLabel}: ${finding.title}`
 
-      if (buf) {
-        const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
-        if (publicUrl) {
-          findingScreenshots.set(finding.id, publicUrl)
-          console.log(`[screenshots] Finding screenshot uploaded: ${finding.id}`)
+        console.log(`[screenshots] Capturing finding: ${finding.id} (${finding.targetElement})`)
+        const buf = await captureScreenshot(pageUrl, finding.targetElement, label)
+
+        if (buf) {
+          const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
+          if (publicUrl) {
+            findingScreenshots.set(finding.id, publicUrl)
+            console.log(`[screenshots] Finding screenshot uploaded: ${finding.id}`)
+          }
         }
+      } catch (err) {
+        console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
       }
-    } catch (err) {
-      console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
     }
+  } else {
+    console.log('[screenshots] No advanced capture available — skipping finding-level screenshots')
   }
 
   return { pageScreenshots, findingScreenshots }

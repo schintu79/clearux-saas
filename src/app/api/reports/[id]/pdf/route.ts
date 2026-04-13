@@ -335,10 +335,10 @@ function drawDonutChart(doc: PDFKit.PDFDocument, cx: number, cy: number, outerR:
 
 /* ── Pillar mapping ──────────────────────────────────────── */
 const PILLAR_DEFS = [
-  { name: 'Foundation', color: C.pillarFoundation, categories: ['First Impression & Visual Design', 'Value Proposition & Messaging', 'Navigation & Information Architecture', 'Visual Hierarchy & Layout', 'Content Quality & Readability', 'Calls-to-Action & Conversion'] },
-  { name: 'Human Experience', color: C.pillarHuman, categories: ['Trust & Credibility', 'Ethical UX & Dark Pattern Detection', 'Emotional Intelligence & Psychological Safety', 'Cognitive Accessibility & Neurodiversity', 'Digital Wellbeing & Responsible Design', 'Age Inclusivity & Digital Literacy'] },
-  { name: 'Technical Excellence', color: C.pillarTech, categories: ['Performance & Page Speed', 'Mobile Experience', 'Accessibility & Inclusive Design', 'Technical SEO & Accessibility'] },
-  { name: 'Future Readiness', color: C.pillarFuture, categories: ['AI Discoverability & LLM Readiness', 'AI Agent Readiness', 'Cultural Sensitivity & Global Readiness'] },
+  { name: 'Foundation', color: C.pillarFoundation, categories: ['Visual Design & First Impression', 'Value Proposition & Messaging', 'Navigation & Information Architecture', 'Content Quality & Readability'] },
+  { name: 'Human Experience', color: C.pillarHuman, categories: ['Calls-to-Action & Conversion Path', 'Trust, Credibility & Social Proof', 'Ethical UX & Dark Pattern Detection', 'Emotional Design & Psychological Safety'] },
+  { name: 'Inclusive Design', color: C.pillarTech, categories: ['Accessibility & WCAG Compliance', 'Cognitive Accessibility & Neurodiversity', 'Digital Wellbeing & Responsible Design', 'Mobile Experience & Responsive Design'] },
+  { name: 'Future Readiness', color: C.pillarFuture, categories: ['Performance & Technical Health', 'AI Discoverability & LLM Readiness', 'AI Agent Readiness', 'Cultural Sensitivity & Global Readiness'] },
 ]
 
 const PILLAR_MAP: Record<string, { pillar: string; color: string }> = {}

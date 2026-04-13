@@ -13,7 +13,7 @@ export default function PricingPage() {
     {
       question: 'How do credits work?',
       answer:
-        'One credit = one full audit. Credits never expire. Every audit includes all 95 checkpoints, PDF & Word reports, and prioritised recommendations.',
+        'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, and prioritised recommendations.',
     },
     {
       question: 'How fast is the audit delivered?',
@@ -23,7 +23,7 @@ export default function PricingPage() {
     {
       question: 'What does every audit include?',
       answer:
-        'Every audit — regardless of which pack you buy — includes the full 95-point analysis across 19 UX categories, AI discoverability review, severity-ranked findings, and downloadable PDF + Word reports.',
+        'Every audit — regardless of which pack you buy — includes the full 64-point analysis across 16 UX categories, AI discoverability review, severity-ranked findings, and downloadable PDF + Word reports.',
     },
     {
       question: 'Can I buy more credits later?',
@@ -50,7 +50,7 @@ export default function PricingPage() {
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg">
               Pay per audit. No subscription, no feature gates.
-              Every audit gets the full 95-point analysis.
+              Every audit gets the full 64-point analysis.
             </p>
           </div>
         </section>
@@ -86,7 +86,7 @@ export default function PricingPage() {
                 {/* Right: What's included */}
                 <div className="space-y-3.5">
                   {[
-                    '95-point deep analysis across 19 categories',
+                    '64-point deep analysis across 16 categories',
                     'AI-powered findings with severity scoring',
                     'Executive summary & prioritised recommendations',
                     'PDF & Word report downloads',
@@ -165,7 +165,7 @@ export default function PricingPage() {
                 <p className="font-manrope text-lg font-bold text-text mb-1 leading-snug">All audits<br />include</p>
               </div>
               {[
-                { title: 'Full 95-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { title: 'Full 64-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
                 { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
                 { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
               ].map((item, i) => (

@@ -23,9 +23,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — AI-Powered UX Audits | 95 Checkpoints in Minutes',
+    default:  'ClearUX — AI-Powered UX Audits | 64 Checkpoints in Minutes',
   },
-  description: 'Get consultant-grade UX audits powered by AI. 95 checkpoints across 19 categories. Actionable findings with prioritised fixes — from $99 per audit.',
+  description: 'Get consultant-grade UX audits powered by AI. 64 checkpoints across 16 categories. Actionable findings with prioritised fixes — from $99 per audit.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
@@ -45,13 +45,13 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: 'ClearUX',
     title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Our AI audits your entire website across 95 checkpoints. Get a professional report in minutes.',
+    description: 'Paste your URL. Our AI audits your entire website across 64 checkpoints. Get a professional report in minutes.',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'ClearUX — Deep AI-Powered UX Audits' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Get a comprehensive UX audit with 95 checkpoints across 19 categories. Professional report in minutes.',
+    description: 'Paste your URL. Get a comprehensive UX audit with 64 checkpoints across 16 categories. Professional report in minutes.',
     images: ['/og-image.png'],
   },
   icons: {
@@ -95,7 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               url: siteUrl,
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web',
-              description: 'AI-powered UX audit tool that analyses websites across 95 checkpoints in 19 categories. Professional consultant-grade reports in minutes.',
+              description: 'AI-powered UX audit tool that analyses websites across 64 checkpoints in 16 categories. Professional consultant-grade reports in minutes.',
               offers: {
                 '@type': 'Offer',
                 price: '99',
@@ -109,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 ratingCount: '47',
                 bestRating: '5',
               },
-              featureList: '95 UX checkpoints, 19 audit categories, 4 pillar framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
+              featureList: '64 UX checkpoints, 16 audit categories, 4 pillar framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
             }),
           }}
         />

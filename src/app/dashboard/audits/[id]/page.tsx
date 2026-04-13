@@ -14,6 +14,7 @@ import {
   Clock,
   AlertTriangle,
   FileSearch,
+  Search,
   Loader2,
   Eye,
   Target,
@@ -68,7 +69,7 @@ function formatUrl(url: string) {
 }
 
 /* ── Pillar configuration ─────────────────────────────────── */
-// Must match the 19 categories in analyzer.ts exactly
+// Must match the 16 categories in analyzer.ts exactly (4 per pillar)
 
 const PILLAR_CONFIG = [
   {
@@ -81,14 +82,12 @@ const PILLAR_CONFIG = [
     iconColor: 'text-violet-500',
     badgeBg: 'bg-violet-500',
     scoreBg: 'bg-violet-500',
-    range: [0, 6],
+    range: [0, 4],
     categories: [
-      { name: 'First Impression & Visual Design', Icon: Eye },
+      { name: 'Visual Design & First Impression', Icon: Eye },
       { name: 'Value Proposition & Messaging', Icon: Target },
       { name: 'Navigation & Information Architecture', Icon: Map },
-      { name: 'Visual Hierarchy & Layout', Icon: Eye },
       { name: 'Content Quality & Readability', Icon: Type },
-      { name: 'Calls-to-Action & Conversion', Icon: MousePointerClick },
     ],
   },
   {
@@ -101,18 +100,16 @@ const PILLAR_CONFIG = [
     iconColor: 'text-pink-500',
     badgeBg: 'bg-pink-500',
     scoreBg: 'bg-pink-500',
-    range: [6, 12],
+    range: [4, 8],
     categories: [
-      { name: 'Trust & Credibility', Icon: Shield },
+      { name: 'Calls-to-Action & Conversion Path', Icon: MousePointerClick },
+      { name: 'Trust, Credibility & Social Proof', Icon: Shield },
       { name: 'Ethical UX & Dark Pattern Detection', Icon: AlertTriangle },
-      { name: 'Emotional Intelligence & Psychological Safety', Icon: Heart },
-      { name: 'Cognitive Accessibility & Neurodiversity', Icon: Brain },
-      { name: 'Digital Wellbeing & Responsible Design', Icon: Sparkles },
-      { name: 'Age Inclusivity & Digital Literacy', Icon: Users },
+      { name: 'Emotional Design & Psychological Safety', Icon: Heart },
     ],
   },
   {
-    name: 'Technical Excellence',
+    name: 'Inclusive Design',
     color: 'amber',
     gradient: 'from-amber-500 to-amber-600',
     gradientSubtle: 'from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10',
@@ -121,12 +118,12 @@ const PILLAR_CONFIG = [
     iconColor: 'text-amber-500',
     badgeBg: 'bg-amber-500',
     scoreBg: 'bg-amber-500',
-    range: [12, 16],
+    range: [8, 12],
     categories: [
-      { name: 'Performance & Page Speed', Icon: Gauge },
-      { name: 'Mobile Experience', Icon: Smartphone },
-      { name: 'Accessibility & Inclusive Design', Icon: Accessibility },
-      { name: 'Technical SEO & Accessibility', Icon: FileSearch },
+      { name: 'Accessibility & WCAG Compliance', Icon: Accessibility },
+      { name: 'Cognitive Accessibility & Neurodiversity', Icon: Brain },
+      { name: 'Digital Wellbeing & Responsible Design', Icon: Sparkles },
+      { name: 'Mobile Experience & Responsive Design', Icon: Smartphone },
     ],
   },
   {
@@ -139,9 +136,10 @@ const PILLAR_CONFIG = [
     iconColor: 'text-emerald-500',
     badgeBg: 'bg-emerald-500',
     scoreBg: 'bg-emerald-500',
-    range: [16, 19],
+    range: [12, 16],
     categories: [
-      { name: 'AI Discoverability & LLM Readiness', Icon: Brain },
+      { name: 'Performance & Technical Health', Icon: Gauge },
+      { name: 'AI Discoverability & LLM Readiness', Icon: Search },
       { name: 'AI Agent Readiness', Icon: Zap },
       { name: 'Cultural Sensitivity & Global Readiness', Icon: Globe },
     ],
@@ -255,7 +253,7 @@ const statusMeta: Record<
     label: 'Analysing UX',
     color: 'active',
     icon: Sparkles,
-    description: 'Running deep analysis across 19 categories...',
+    description: 'Running deep analysis across 16 categories...',
   },
   generating_report: {
     label: 'Generating Report',
@@ -539,7 +537,7 @@ function PillarSection({
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-sm`}>
               {pillar.name === 'Foundation' && <Scale size={18} className="text-white" />}
               {pillar.name === 'Human Experience' && <Heart size={18} className="text-white" />}
-              {pillar.name === 'Technical Excellence' && <Gauge size={18} className="text-white" />}
+              {pillar.name === 'Inclusive Design' && <Accessibility size={18} className="text-white" />}
               {pillar.name === 'Future Readiness' && <Brain size={18} className="text-white" />}
             </div>
             <div>

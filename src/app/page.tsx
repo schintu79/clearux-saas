@@ -150,14 +150,14 @@ const PILLAR_DATA = [
   },
   {
     key: 'technical',
-    label: 'Technical Excellence',
+    label: 'Inclusive Design',
     color: 'from-amber-500 to-orange-600',
     colorBg: 'bg-amber-500/10',
     colorText: 'text-amber-600 dark:text-amber-400',
     colorBorder: 'border-amber-500/20',
-    headline: 'Speed and accessibility that convert.',
-    subhead: 'Speed, mobile experience, accessibility, and SEO.',
-    body: 'We audit page speed, mobile responsiveness, WCAG accessibility compliance, keyboard navigation, screen reader support, structured data, and technical SEO. The invisible infrastructure that powers great experiences.',
+    headline: 'Accessibility that converts.',
+    subhead: 'Universal design, accessibility, and inclusive experience.',
+    body: 'We audit WCAG accessibility compliance, keyboard navigation, screen reader support, cognitive accessibility, mobile responsiveness, and digital wellbeing. Design that works for everyone, everywhere.',
   },
   {
     key: 'future',
@@ -173,7 +173,7 @@ const PILLAR_DATA = [
 ];
 
 function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string; icon: React.ElementType; title: string; desc: string; featured?: boolean }> }) {
-  const pillarNames = ['Foundation', 'Human Experience', 'Technical Excellence', 'Future Readiness'];
+  const pillarNames = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
 
   /* ── Visual panels for each pillar ── */
   /* NOTE: These are ILLUSTRATIVE EXAMPLES of audit output, not findings about this website.
@@ -457,8 +457,8 @@ export default function Home() {
   };
 
   // Animated counters
-  const c1 = useCountUp(95, 1800);
-  const c2 = useCountUp(19, 1400);
+  const c1 = useCountUp(64, 1800);
+  const c2 = useCountUp(16, 1400);
   const c3 = useCountUp(4, 1200);
   const c4 = useCountUp(40, 1000);
 
@@ -484,11 +484,11 @@ export default function Home() {
     { pillar: "Human Experience", icon: Sparkles, title: "Digital Wellbeing & Responsible Design", desc: "Reducing user anxiety and addictive patterns" },
     { pillar: "Human Experience", icon: Users, title: "Age Inclusivity & Digital Literacy", desc: "Accessible to users of all ages and tech fluency" },
 
-    // Technical Excellence (13-16)
-    { pillar: "Technical Excellence", icon: Gauge, title: "Performance & Page Speed", desc: "Speed, load times, and responsiveness" },
-    { pillar: "Technical Excellence", icon: Smartphone, title: "Mobile Experience", desc: "Responsive and optimized mobile design" },
-    { pillar: "Technical Excellence", icon: Accessibility, title: "Accessibility & Inclusive Design", desc: "WCAG compliance and assistive tech support", featured: true },
-    { pillar: "Technical Excellence", icon: FileText, title: "Technical SEO & Accessibility", desc: "Search engine and AI crawlability" },
+    // Inclusive Design (13-16)
+    { pillar: "Inclusive Design", icon: Accessibility, title: "Accessibility & WCAG Compliance", desc: "Perceivable, operable, understandable, robust" },
+    { pillar: "Inclusive Design", icon: Brain, title: "Cognitive Accessibility & Neurodiversity", desc: "Reducing cognitive load for all users" },
+    { pillar: "Inclusive Design", icon: Sparkles, title: "Digital Wellbeing & Responsible Design", desc: "Respectful engagement and healthy defaults", featured: true },
+    { pillar: "Inclusive Design", icon: Smartphone, title: "Mobile Experience & Responsive Design", desc: "Touch-friendly, responsive, mobile-first" },
 
     // Future Readiness (17-19)
     { pillar: "Future Readiness", icon: Brain, title: "AI Discoverability & LLM Readiness", desc: "Optimisation for AI model indexing", featured: true },
@@ -602,7 +602,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            For product teams, founders, and agencies who need consultant-grade UX audits without the $10k price tag. 95 checkpoints, 19 categories — results in minutes.
+            For product teams, founders, and agencies who need consultant-grade UX audits without the $10k price tag. 64 checkpoints, 16 categories — results in minutes.
           </p>
 
           {/* URL Input */}
@@ -704,7 +704,7 @@ export default function Home() {
               <span className="text-muted">We audit what others miss.</span>
             </h2>
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              95 professional checkpoints across 19 categories. Four pillars that cover everything from first impressions to AI readiness.
+              64 professional checkpoints across 16 categories. Four pillars that cover everything from first impressions to AI readiness.
             </p>
           </div>
 
@@ -785,7 +785,7 @@ export default function Home() {
               {/* Right: What's included */}
               <div className="space-y-3.5">
                 {[
-                  '95-point deep analysis across 19 categories',
+                  '64-point deep analysis across 16 categories',
                   'AI-powered findings with severity scoring',
                   'Executive summary & prioritised recommendations',
                   'PDF & Word report downloads',
@@ -955,9 +955,9 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {[
-              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 95 checkpoints across 19 categories, and generates a full professional report.' },
-              { q: 'What does the audit cover?', a: 'We evaluate 19 categories across 4 pillars: Foundation (First Impression, Value Proposition, Navigation, Visual Hierarchy, Content Quality, CTAs), Human Experience (Trust, Ethical UX, Emotional Intelligence, Cognitive Accessibility, Digital Wellbeing, Age Inclusivity), Technical Excellence (Performance, Mobile, Accessibility, SEO), and Future Readiness (AI Discoverability, AI Agent Readiness, Cultural Sensitivity).' },
-              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 95 checkpoints across 19 categories, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across 16 categories, and generates a full professional report.' },
+              { q: 'What does the audit cover?', a: 'We evaluate 16 categories across 4 pillars: Foundation (Visual Design, Value Proposition, Navigation, Content Quality), Human Experience (CTAs & Conversion, Trust & Credibility, Ethical UX, Emotional Design), Inclusive Design (Accessibility, Cognitive Accessibility, Digital Wellbeing, Mobile Experience), and Future Readiness (Performance & Technical Health, AI Discoverability, AI Agent Readiness, Cultural Sensitivity).' },
+              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints across 16 categories, PDF & Word reports, and prioritised recommendations.' },
               { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
               { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle all types of websites including dynamic apps, single-page applications, and traditional multi-page sites.' },
               { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
@@ -965,7 +965,7 @@ export default function Home() {
               { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
               { q: 'How accurate are the AI-generated findings?', a: 'Our AI models are tuned for precision over recall — we\u2019d rather miss an edge case than flag a false positive. Each finding includes confidence levels and specific evidence (screenshots, element selectors, or metrics). In testing, our critical-issue detection rate exceeds 94%. For nuanced brand strategy questions, we recommend pairing ClearUX with a specialist review.' },
               { q: 'What should I know before running an audit?', a: 'ClearUX analyses all publicly visible pages on your site. Content behind logins (admin panels, member areas) isn\u2019t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps. The audit is designed to catch the issues that matter most to real users — the same issues a $10k consultant would prioritize.' },
-              { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 95 checkpoints across 19 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
+              { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
             ].map((item, idx) => (
               <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
                 <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
@@ -1002,7 +1002,7 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-            95 checkpoints. 19 categories. Real findings your team can act on — delivered in minutes, not weeks.
+            64 checkpoints. 16 categories. Real findings your team can act on — delivered in minutes, not weeks.
           </p>
 
           {/* URL input — mirrors the hero */}
