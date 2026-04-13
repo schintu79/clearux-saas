@@ -104,7 +104,7 @@ export const processAuditFn = inngest.createFunction(
       await setStatus(auditId, 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
-      const maxPages = auditDetails.plan === 'starter' ? 8 : 25
+      const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
       const crawledPages = await crawlPages(auditDetails.productUrl, maxPages)
 
       if (crawledPages.length === 0 || !crawledPages[0].contentText) {

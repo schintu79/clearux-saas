@@ -81,10 +81,15 @@ export default function RegisterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pendingUrl = searchParams.get('url')
+  const redirectToParam = searchParams.get('redirect')
+  const claimParam = searchParams.get('claim')
   // Where to go after successful auth — if user came with a URL, go straight to new-audit
-  const postAuthRedirect = pendingUrl
-    ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}`
-    : '/dashboard'
+  // If a redirect was specified (e.g. from preview page), use that
+  const postAuthRedirect = redirectToParam
+    ? (claimParam ? `${redirectToParam}?claim=${claimParam}` : redirectToParam)
+    : pendingUrl
+      ? `/dashboard/new-audit?url=${encodeURIComponent(pendingUrl)}`
+      : '/dashboard'
   const { user: authUser, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     fullName: '',

@@ -646,6 +646,31 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPaymentReturn = searchParams.get('payment') === 'success';
+  const claimAuditId = searchParams.get('claim');
+
+  // ── Claim free preview audit if `claim` param is present ──
+  useEffect(() => {
+    if (!user || !claimAuditId) return;
+    let cancelled = false;
+    const claimAudit = async () => {
+      try {
+        const res = await fetch('/api/free-audit/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ audit_id: claimAuditId }),
+        });
+        if (res.ok && !cancelled) {
+          // Re-fetch to show the now-claimed audit
+          fetchAuditDetail();
+        }
+      } catch (err) {
+        console.error('[AuditDetail] Claim error:', err);
+      }
+    };
+    claimAudit();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, claimAuditId]);
 
   // ── Fetch audit data ──────────────────────────────────
   const fetchAuditDetail = useCallback(

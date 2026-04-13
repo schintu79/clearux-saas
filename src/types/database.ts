@@ -60,7 +60,7 @@ export interface Audit {
   target_user:       string | null
   ux_concern:        string
   notes:             string | null
-  plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | null
+  plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | 'free_preview' | null
   language:          string | null
   pages_crawled:     number
   crawl_error:       string | null
@@ -71,6 +71,10 @@ export interface Audit {
   // White-label branding (optional, Agency/Scale only)
   white_label_company_name: string | null
   white_label_logo_url:     string | null
+  // Free preview support
+  is_free_preview:    boolean
+  claimed_by:         string | null
+  free_audit_email:   string | null
 }
 
 export interface Payment {

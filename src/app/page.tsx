@@ -533,14 +533,37 @@ export default function Home() {
   const { user } = useAuth();
   const [heroUrl, setHeroUrl] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
   useEffect(() => setMounted(true), []);
 
-  const handleHeroSubmit = (e: React.FormEvent) => {
+  const handleHeroSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = heroUrl.trim();
     if (!trimmed) return;
-    const encoded = encodeURIComponent(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
-    router.push(user ? `/dashboard/new-audit?url=${encoded}` : `/register?url=${encoded}`);
+    const productUrl = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+
+    setAuditLoading(true);
+    setAuditError('');
+
+    try {
+      const res = await fetch('/api/free-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: productUrl }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to start audit');
+      }
+
+      // Redirect to the public preview page
+      router.push(`/preview/${data.audit_id}`);
+    } catch (err) {
+      setAuditError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setAuditLoading(false);
+    }
   };
 
   // Animated counters
@@ -711,20 +734,36 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                disabled={auditLoading}
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                Scan Your Site Now
-                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+                {auditLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Starting audit...
+                  </>
+                ) : (
+                  <>
+                    Start Your Free Audit
+                    <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
               </button>
             </div>
+            {auditError && (
+              <p className="text-red-500 text-sm mt-3 text-center">{auditError}</p>
+            )}
           </form>
 
           {/* Pricing highlights — bold, accent color */}
           <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>From $99 per audit</span>
+            <span>Free preview audit</span>
             <span className="opacity-40">·</span>
-            <span>No subscription</span>
+            <span>No sign-up needed</span>
             <span className="opacity-40">·</span>
             <span>Results in minutes</span>
           </div>
@@ -1085,10 +1124,11 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
+                disabled={auditLoading}
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                Start Your Free Audit
+                {auditLoading ? 'Starting...' : 'Start Your Free Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -1096,11 +1136,11 @@ export default function Home() {
 
           {/* Trust line */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>From $99 per audit</span>
+            <span>Free preview audit</span>
             <span className="opacity-40">·</span>
-            <span>No subscription</span>
+            <span>No sign-up needed</span>
             <span className="opacity-40">·</span>
-            <span>Credits never expire</span>
+            <span>Full audit from $99</span>
           </div>
 
           {/* Support link */}
