@@ -60,11 +60,10 @@ export default function AboutPage() {
                       <img
                         src="/team-stefano.jpg"
                         alt="Stefano Schintu — Founder of ClearUX"
-                        className="w-full h-full object-cover object-top"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        className="w-full h-full object-cover object-top relative z-10"
                       />
-                      {/* Fallback initials if image missing */}
-                      <div className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-muted/30 pointer-events-none">
+                      {/* Fallback initials shown behind image if it fails to load */}
+                      <div className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-muted/30">
                         SS
                       </div>
                     </div>
@@ -149,48 +148,37 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                {
-                  icon: Heart,
-                  color: 'text-pink-500',
-                  bg: 'bg-pink-500/10',
-                  accent: 'border-pink-400/30 dark:border-pink-500/20',
-                  title: 'Human-centered, not just metric-driven',
-                  body: 'Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. Things a Lighthouse score will never catch.',
-                },
-                {
-                  icon: Shield,
-                  color: 'text-violet-500',
-                  bg: 'bg-violet-500/10',
-                  accent: 'border-violet-400/30 dark:border-violet-500/20',
-                  title: 'We detect dark patterns — and refuse to use them',
-                  body: 'Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.',
-                },
-                {
-                  icon: Brain,
-                  color: 'text-emerald-500',
-                  bg: 'bg-emerald-500/10',
-                  accent: 'border-emerald-400/30 dark:border-emerald-500/20',
-                  title: 'Future-ready, not just backward-looking',
-                  body: "We're the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.",
-                },
-                {
-                  icon: Eye,
-                  color: 'text-amber-500',
-                  bg: 'bg-amber-500/10',
-                  accent: 'border-amber-400/30 dark:border-amber-500/20',
-                  title: 'Consultant depth at tool speed',
-                  body: "64 checkpoints across 4 pillars — Foundation, Human Experience, Inclusive Design, Future Readiness. Not a generic checklist. A prioritised, severity-ranked report with specific recommendations.",
-                },
-              ].map((item) => (
-                <div key={item.title} className={`rounded-2xl border ${item.accent} bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300`}>
-                  <div className={`w-12 h-12 rounded-xl ${item.bg} flex items-center justify-center mb-6`}>
-                    <item.icon size={22} className={item.color} />
-                  </div>
-                  <h3 className="font-manrope font-bold text-xl text-text mb-3">{item.title}</h3>
-                  <p className="text-text/65 text-[15px] leading-relaxed">{item.body}</p>
+              <div className="rounded-2xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
+                  <Heart size={22} className="text-pink-500" />
                 </div>
-              ))}
+                <h3 className="font-manrope font-bold text-xl text-text mb-3">Human-centered, not just metric-driven</h3>
+                <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. Things a Lighthouse score will never catch.</p>
+              </div>
+
+              <div className="rounded-2xl border border-violet-400/30 dark:border-violet-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
+                  <Shield size={22} className="text-violet-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-xl text-text mb-3">We detect dark patterns — and refuse to use them</h3>
+                <p className="text-text/65 text-[15px] leading-relaxed">Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.</p>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-400/30 dark:border-emerald-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
+                  <Brain size={22} className="text-emerald-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-xl text-text mb-3">Future-ready, not just backward-looking</h3>
+                <p className="text-text/65 text-[15px] leading-relaxed">We&apos;re the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.</p>
+              </div>
+
+              <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
+                  <Eye size={22} className="text-amber-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-xl text-text mb-3">Consultant depth at tool speed</h3>
+                <p className="text-text/65 text-[15px] leading-relaxed">64 checkpoints across 4 pillars — Foundation, Human Experience, Inclusive Design, Future Readiness. Not a generic checklist. A prioritised, severity-ranked report with specific recommendations.</p>
+              </div>
             </div>
           </div>
         </section>
