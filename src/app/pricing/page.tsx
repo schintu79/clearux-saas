@@ -1,4 +1,4 @@
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Search, BarChart3, Building2, Zap } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -62,28 +62,36 @@ export default function PricingPage() {
               <h2 className="font-manrope font-bold text-lg text-text mb-4">Which plan fits your workflow?</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex gap-3">
-                  <span className="text-xl mt-0.5">🔍</span>
+                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                    <Search size={16} className="text-violet-500" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Audit once to establish a baseline</p>
                     <p className="text-xs text-muted mt-0.5">Single Audit — one site, one report, $99</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <span className="text-xl mt-0.5">📊</span>
+                  <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                    <BarChart3 size={16} className="text-pink-500" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Run quarterly audits each release cycle</p>
                     <p className="text-xs text-muted mt-0.5">Growth — 5 audits/year, $79.80 each</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <span className="text-xl mt-0.5">🏢</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <Building2 size={16} className="text-amber-500" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Manage multiple client sites</p>
                     <p className="text-xs text-muted mt-0.5">Agency — 15+ audits/year, white-label reports included</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <span className="text-xl mt-0.5">⚡</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <Zap size={16} className="text-emerald-500" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Continuous auditing across teams</p>
                     <p className="text-xs text-muted mt-0.5">Scale — 50+ audits/year, dedicated support</p>
