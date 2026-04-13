@@ -46,12 +46,55 @@ export default function PricingPage() {
         <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-3" style={{ lineHeight: '1.1' }}>
-              Pricing
+              Transparent pricing
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg">
               Pay per audit. No subscription, no feature gates.
-              Every audit gets the full 64-point analysis.
+              Every audit gets the full 64-checkpoint analysis — nothing locked behind tiers.
             </p>
+          </div>
+        </section>
+
+        {/* ── Decision Framework ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-6 sm:p-8">
+              <h2 className="font-manrope font-bold text-lg text-text mb-4">Which plan fits your workflow?</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="flex gap-3">
+                  <span className="text-xl mt-0.5">🔍</span>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Audit once to establish a baseline</p>
+                    <p className="text-xs text-muted mt-0.5">Single Audit — one site, one report, $99</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-xl mt-0.5">📊</span>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Run quarterly audits each release cycle</p>
+                    <p className="text-xs text-muted mt-0.5">Growth — 5 audits/year, $79.80 each</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-xl mt-0.5">🏢</span>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Manage multiple client sites</p>
+                    <p className="text-xs text-muted mt-0.5">Agency — 15+ audits/year, white-label reports included</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-xl mt-0.5">⚡</span>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Continuous auditing across teams</p>
+                    <p className="text-xs text-muted mt-0.5">Scale — 50+ audits/year, dedicated support</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted mt-5 pt-4 border-t border-border/20 dark:border-white/[0.04]">
+                <strong className="text-text">White-label reports</strong> let you add your own logo and company name — agencies often send these directly to clients.
+                All plans include the same full 64-checkpoint analysis. Packs simply lower the per-audit cost.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -119,19 +162,23 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="grid sm:grid-cols-3 gap-4">
               {[
-                { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', cta: 'Buy 5 audits' },
-                { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios', cta: 'Buy 15 audits' },
-                { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume', cta: 'Buy 50 audits' },
+                { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'Quarterly audits to catch issues each release cycle', cta: 'Buy 5 audits', popular: true },
+                { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'Manage multiple client sites with white-label reports', cta: 'Buy 15 audits', popular: false },
+                { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Continuous auditing across teams and products', cta: 'Buy 50 audits', popular: false },
               ].map((pack) => (
                 <div
                   key={pack.name}
-                  className="group rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-6 hover:border-border/70 dark:hover:border-white/[0.1] hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300"
+                  className={`group rounded-2xl border bg-card p-6 hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-violet-400 dark:border-violet-500/40 shadow-lg shadow-violet-500/10 ring-1 ring-violet-400/30' : 'border-border/40 dark:border-white/[0.06] hover:border-border/70 dark:hover:border-white/[0.1]'}`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                    <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
-                      Save {pack.save}%
-                    </span>
+                    {pack.popular ? (
+                      <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full shadow-sm" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>
+                    ) : (
+                      <span className="text-xs font-bold text-text/60 px-2.5 py-1 rounded-full bg-surface-alt">
+                        {pack.per}/audit
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-baseline gap-1 mb-0.5">

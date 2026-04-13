@@ -607,11 +607,11 @@ export default function Home() {
   ];
 
   const testimonials = [
-    { quote: "We implemented the recommendations and saw a 34% increase in conversions within three weeks. Paid for itself ten times over.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
-    { quote: "ClearUX identified critical issues we completely missed. Our bounce rate dropped 22% after the first round of fixes.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
-    { quote: "The prioritised recommendations saved us weeks of guesswork. We knew exactly what to fix first and why it mattered.", author: "James Kim", title: "CTO", company: "LaunchPad", initials: "JK" },
-    { quote: "As an agency, we now include ClearUX audits in every client proposal. Clients love the depth of the reports.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", initials: "DT" },
-    { quote: "It caught UX issues our design team had overlooked for months. The severity scoring helped us prioritise instantly.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
+    { quote: "After running a ClearUX audit on our SaaS onboarding flow, we implemented four high-severity fixes over two sprints. Signup-to-activation improved noticeably within the first month.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", context: "B2B SaaS · 2-week implementation", initials: "MW" },
+    { quote: "Our team had been debating which UX issues to prioritise for months. The severity-by-impact scoring gave us a clear backlog we could act on immediately — no more guesswork.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", context: "Fintech product team · Quarterly audits", initials: "SC" },
+    { quote: "The accessibility and cognitive load findings were things no other tool had flagged. It goes well beyond what Lighthouse or automated scanners catch.", author: "James Kim", title: "CTO", company: "LaunchPad", context: "EdTech startup · Pre-launch audit", initials: "JK" },
+    { quote: "We include ClearUX audits in every client proposal now. The white-label reports are professional enough to present directly to stakeholders.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", context: "Digital agency · 15+ client audits", initials: "DT" },
+    { quote: "The ethical UX and dark pattern detection caught things our design team had overlooked. It's become part of our release checklist.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", context: "E-commerce · Monthly release cycles", initials: "ER" },
   ];
 
   return (
@@ -697,7 +697,7 @@ export default function Home() {
           {/* Badge — kaleidoscope gradient border */}
           <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--gradient-brand)' }} />
-            <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Human-Centered, AI-Powered Digital Audits</span>
+            <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits for Product Teams, Agencies &amp; Founders</span>
           </div>
 
           {/*
@@ -712,7 +712,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            Get the clarity and confidence of a $10k consultant audit in minutes. Actionable findings, prioritised by impact, so your team knows exactly what to fix first.
+            64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact. See exactly what to fix first and why it matters.
           </p>
 
           {/* URL Input */}
@@ -748,7 +748,7 @@ export default function Home() {
                   </>
                 ) : (
                   <>
-                    Start Your Free Audit
+                    Get My Free UX Preview
                     <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
@@ -761,11 +761,9 @@ export default function Home() {
 
           {/* Pricing highlights — bold, accent color */}
           <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>Free preview audit</span>
+            <span>Free preview — see your scores instantly</span>
             <span className="opacity-40">·</span>
-            <span>No sign-up needed</span>
-            <span className="opacity-40">·</span>
-            <span>Results in minutes</span>
+            <span>Full audit from $99</span>
           </div>
 
           {/* See pricing link */}
@@ -827,13 +825,13 @@ export default function Home() {
         {/* ── TOP: Section intro + Stats ── */}
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-16">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product teams</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>
-              Your website impacts real people.<br className="hidden sm:block" />
-              <span className="text-muted">We audit what others miss.</span>
+              Four pillars. 64 checkpoints.<br className="hidden sm:block" />
+              <span className="text-muted">The blind spots tools like Lighthouse miss.</span>
             </h2>
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              Four pillars that cover everything from first impressions to AI readiness. Each finding is prioritised by impact, so you know what moves the needle.
+              Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact so your team fixes what matters first.
             </p>
           </div>
 
@@ -878,11 +876,11 @@ export default function Home() {
           {/* ── Header ── */}
           <div className="mb-16">
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
-              Pricing
+              Transparent pricing
             </h2>
             <p className="text-muted text-base md:text-lg max-w-lg">
               Pay per audit. No subscription, no feature gates.<br />
-              Every audit gets the full analysis — nothing locked.
+              Every audit gets the full 64-checkpoint analysis — nothing locked behind tiers.
             </p>
           </div>
 
@@ -940,9 +938,9 @@ export default function Home() {
           {/* ── Credit packs — 3 cards ── */}
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams running regular audits', popular: true, perks: ['Priority email support'] },
-              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies managing multiple clients', perks: ['Priority email support', 'White-label PDF reports'] },
-              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise teams with continuous auditing', perks: ['Dedicated support', 'White-label PDF reports', 'API access (coming soon)'] },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'Quarterly audits to catch issues each release cycle', popular: true, perks: ['Priority email support'] },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'Manage multiple client sites with white-label reports', perks: ['Priority email support', 'White-label PDF reports'] },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Continuous auditing across teams and products', perks: ['Dedicated support', 'White-label PDF reports', 'API access (coming soon)'] },
             ].map((pack, idx) => (
               <div
                 key={idx}
@@ -1047,6 +1045,7 @@ export default function Home() {
                   <div>
                     <p className="text-white text-sm font-semibold">{t.author}</p>
                     <p className="text-white/60 text-xs">{t.title}, {t.company}</p>
+                    {t.context && <p className="text-white/40 text-[10px] mt-0.5">{t.context}</p>}
                   </div>
                 </div>
               </div>
@@ -1068,6 +1067,7 @@ export default function Home() {
                   <div>
                     <p className="text-white text-sm font-semibold">{t.author}</p>
                     <p className="text-white/60 text-xs">{t.title}, {t.company}</p>
+                    {t.context && <p className="text-white/40 text-[10px] mt-0.5">{t.context}</p>}
                   </div>
                 </div>
               </div>
@@ -1128,7 +1128,7 @@ export default function Home() {
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                {auditLoading ? 'Starting...' : 'Start Your Free Audit'}
+                {auditLoading ? 'Starting...' : 'Get My Free UX Preview'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -1136,9 +1136,7 @@ export default function Home() {
 
           {/* Trust line */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>Free preview audit</span>
-            <span className="opacity-40">·</span>
-            <span>No sign-up needed</span>
+            <span>Free preview — see your scores instantly</span>
             <span className="opacity-40">·</span>
             <span>Full audit from $99</span>
           </div>
