@@ -39,7 +39,7 @@ setInterval(() => {
 }, 60_000)
 
 // ── Route protection config ──
-const PROTECTED_PATHS = ['/dashboard']
+const PROTECTED_PATHS = ['/dashboard', '/admin']
 const RATE_LIMITED_API_PATHS = ['/api/audits', '/api/credits', '/api/stripe']
 
 // ── Helper: create Supabase client in middleware context ──
@@ -132,5 +132,6 @@ export const config = {
   matcher: [
     '/api/:path*',
     '/dashboard/:path*',
+    '/admin/:path*',
   ],
 }

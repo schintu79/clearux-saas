@@ -47,6 +47,8 @@ export interface Profile {
   // White-label (Agency/Scale packages)
   white_label:   boolean
   package_tier:  string
+  // Admin role
+  role:          'user' | 'admin' | 'super_admin'
 }
 
 export interface Audit {
