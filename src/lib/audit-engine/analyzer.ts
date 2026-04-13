@@ -45,7 +45,8 @@ export interface CategoryScore {
 
 export interface ReportData {
   executiveSummary: string
-  keyRecommendation: string | null
+  keyRecommendation: string | null          // kept for backwards compat
+  topRecommendations: string[]              // top 3 priority recommendations
   overallScore: number
   uxScore: number
   conversionScore: number
@@ -518,13 +519,17 @@ Provide a score (0-100) and a one-sentence summary for each of these 16 categori
 IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
 ${categoryList}
 
-For KEY RECOMMENDATION:
-- ONE sentence describing the single highest-impact change they should make
+For TOP 3 PRIORITY RECOMMENDATIONS:
+- Provide exactly 3 recommendations, ordered by impact (highest first)
+- Each recommendation should be 1-2 sentences: what to change and why it matters
+- Be specific — reference actual elements, copy, or patterns from the site
+- Cover different aspects of the site (don't give 3 recommendations about the same thing)
+- These should be the 3 changes that would move the needle the most
 
 Return ONLY valid JSON:
 {
   "executiveSummary": "...",
-  "keyRecommendation": "...",
+  "topRecommendations": ["First priority...", "Second priority...", "Third priority..."],
   "overallScore": 72,
   "uxScore": 68,
   "conversionScore": 65,
@@ -596,9 +601,17 @@ ${categoryExamples}
     }
 
     // Validate
+    // Parse top recommendations — handle both new and old format
+    const topRecs: string[] = Array.isArray(report.topRecommendations)
+      ? report.topRecommendations.filter((r: any) => typeof r === 'string' && r.trim())
+      : report.keyRecommendation
+        ? [report.keyRecommendation]
+        : []
+
     return {
       executiveSummary: report.executiveSummary || '',
-      keyRecommendation: report.keyRecommendation || null,
+      keyRecommendation: topRecs[0] || report.keyRecommendation || null,
+      topRecommendations: topRecs.length > 0 ? topRecs : ['Prioritize critical issues first, then address high-impact improvements.'],
       overallScore: clampScore(report.overallScore),
       uxScore: clampScore(report.uxScore),
       conversionScore: clampScore(report.conversionScore),
@@ -634,6 +647,7 @@ function getDefaultReport(): ReportData {
     executiveSummary:
       'The audit identified areas for improvement in user experience, performance, and conversion optimization. Review the detailed findings for specific recommendations.',
     keyRecommendation: 'Prioritize critical issues first, then address high-impact improvements.',
+    topRecommendations: ['Prioritize critical issues first, then address high-impact improvements.'],
     overallScore: 50,
     uxScore: 50,
     conversionScore: 50,

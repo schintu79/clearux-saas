@@ -635,11 +635,22 @@ export async function GET(
       y = doc.y + 6
     }
 
-    // Key Recommendation box
-    if (r.key_recommendation) {
-      const recText = r.key_recommendation as string
-      const recH = measure(doc, recText, 'Helvetica', 9.5, PW - 34, 3)
-      const boxH = 36 + recH
+    // Top Priority Recommendations box
+    const topRecs = (r.topRecommendations && Array.isArray(r.topRecommendations) ? r.topRecommendations : []) as string[]
+    const recsToShow = topRecs.length > 0 ? topRecs : (r.key_recommendation ? [r.key_recommendation] : [])
+
+    if (recsToShow.length > 0) {
+      // Calculate total height for all recommendations
+      let totalRecH = 0
+      const recHeights: number[] = []
+      for (const rec of recsToShow) {
+        const h = measure(doc, rec, 'Helvetica', 9.5, PW - 52, 3) // Account for number prefix
+        recHeights.push(h)
+        totalRecH += h + 4 // 4px spacing between items
+      }
+      totalRecH -= 4 // Remove last spacing
+
+      const boxH = 36 + totalRecH + (recsToShow.length > 1 ? (recsToShow.length - 1) * 6 : 0)
 
       y = ensureSpace(y, boxH + 10)
       y += 4
@@ -655,11 +666,21 @@ export async function GET(
 
       // Label
       doc.font('Helvetica-Bold').fontSize(10).fillColor(C.accent)
-      doc.text('Key Recommendation', ML + 18, y + 10, { lineBreak: false })
+      doc.text('Top Priority Recommendations', ML + 18, y + 10, { lineBreak: false })
 
-      // Text
-      doc.font('Helvetica').fontSize(9.5).fillColor(C.textSec)
-      doc.text(recText, ML + 18, y + 26, { width: PW - 34, lineGap: 3 })
+      // Recommendations with numbering
+      let recY = y + 26
+      recsToShow.forEach((rec, idx) => {
+        const numPrefix = `${idx + 1}. `
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(C.accent)
+        doc.text(numPrefix, ML + 18, recY, { lineBreak: false })
+
+        const numWidth = doc.widthOfString(numPrefix)
+        doc.font('Helvetica').fontSize(9.5).fillColor(C.textSec)
+        doc.text(rec, ML + 18 + numWidth, recY, { width: PW - 52 - numWidth, lineGap: 3 })
+
+        recY = doc.y + (recsToShow.length > 1 && idx < recsToShow.length - 1 ? 6 : 4)
+      })
 
       y = y + boxH + 10
     }

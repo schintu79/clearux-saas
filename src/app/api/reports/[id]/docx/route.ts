@@ -767,8 +767,30 @@ export async function GET(
       }
     }
 
-    // Key recommendation box
-    if (r.key_recommendation) {
+    // Top Priority Recommendations box
+    const topRecommendations = Array.isArray(r.top_recommendations) && r.top_recommendations.length > 0
+      ? r.top_recommendations.slice(0, 3)
+      : r.key_recommendation
+        ? [r.key_recommendation]
+        : []
+
+    if (topRecommendations.length > 0) {
+      const recommendationParagraphs: Paragraph[] = [
+        new Paragraph({
+          spacing: { after: 60 },
+          children: [new TextRun({ text: 'Top Priority Recommendations', font: 'Arial', size: 20, bold: true, color: B.accent })],
+        }),
+      ]
+
+      topRecommendations.forEach((rec: string, idx: number) => {
+        recommendationParagraphs.push(
+          new Paragraph({
+            spacing: { after: idx === topRecommendations.length - 1 ? 0 : 100 },
+            children: [new TextRun({ text: `${idx + 1}. ${rec}`, font: 'Arial', size: 19, color: B.textSec })],
+          }),
+        )
+      })
+
       children.push(
         new Paragraph({ spacing: { after: 200 }, children: [] }),
         new Table({
@@ -787,15 +809,7 @@ export async function GET(
                   width: { size: 9360, type: WidthType.DXA },
                   shading: { fill: B.recBg, type: ShadingType.CLEAR },
                   margins: { top: 140, bottom: 140, left: 180, right: 180 },
-                  children: [
-                    new Paragraph({
-                      spacing: { after: 60 },
-                      children: [new TextRun({ text: L.keyRecommendation, font: 'Arial', size: 20, bold: true, color: B.accent })],
-                    }),
-                    new Paragraph({
-                      children: [new TextRun({ text: r.key_recommendation, font: 'Arial', size: 19, color: B.textSec })],
-                    }),
-                  ],
+                  children: recommendationParagraphs,
                 }),
               ],
             }),

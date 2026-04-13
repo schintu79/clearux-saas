@@ -1251,16 +1251,23 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
-                  {rawJson?.keyRecommendation && (
-                    <div className="mt-4 p-4 rounded-xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
-                      <div className="flex gap-3">
+                  {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
+                    <div className="mt-5 p-5 rounded-xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
+                      <div className="flex items-center gap-2 mb-4">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
                           <Zap size={14} className="text-white" />
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-text mb-1">Top Priority Recommendation</p>
-                          <p className="text-sm text-text/80 leading-relaxed">{rawJson.keyRecommendation}</p>
-                        </div>
+                        <p className="text-sm font-bold text-text">Top Priority Recommendations</p>
+                      </div>
+                      <div className="space-y-3">
+                        {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
+                          <div key={i} className="flex gap-3 items-start">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5" style={{ background: 'var(--gradient-brand)' }}>
+                              {i + 1}
+                            </span>
+                            <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
