@@ -179,7 +179,8 @@ export async function GET(
         if (logoRes.ok) {
           const ab = await logoRes.arrayBuffer()
           const logoBuf = Buffer.from(ab)
-          doc.image(logoBuf, (pageW - 200) / 2, 100, { width: 200 })
+          // fit: preserves aspect ratio within bounding box (max 200w x 80h)
+          doc.image(logoBuf, (pageW - 200) / 2, 100, { fit: [200, 80], align: 'center', valign: 'center' })
           logoLoaded = true
         }
       } catch {}
@@ -188,7 +189,7 @@ export async function GET(
       try {
         const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
         if (fs.existsSync(logoPath)) {
-          doc.image(logoPath, (pageW - 200) / 2, 100, { width: 200 })
+          doc.image(logoPath, (pageW - 200) / 2, 100, { fit: [200, 80], align: 'center', valign: 'center' })
           logoLoaded = true
         }
       } catch {}
@@ -438,10 +439,16 @@ export async function GET(
       doc.text(`Page ${i + 1}`, leftM + contentW / 2, 750, { width: contentW / 2, align: 'right', lineBreak: false })
       // Header
       if (i > 0) {
-        doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
-          .text('Clear', leftM + contentW - 80, 50, { continued: true })
-        doc.fillColor(C.accent).text('UX', { continued: true })
-        doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
+        if (isWhiteLabel && wlCompany) {
+          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
+            .text(wlCompany, leftM + contentW - 120, 50, { continued: true })
+          doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
+        } else {
+          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
+            .text('Clear', leftM + contentW - 80, 50, { continued: true })
+          doc.fillColor(C.accent).text('UX', { continued: true })
+          doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
+        }
       }
     }
 

@@ -300,6 +300,45 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     }
 
     if (logoBuffer) {
+      // Calculate dimensions preserving aspect ratio (max 280w x 100h)
+      let imgW = 280
+      let imgH = 60
+      try {
+        // Read image dimensions from buffer header
+        if (logoIsPng && logoBuffer.length > 24) {
+          // PNG: width at offset 16, height at offset 20 (big-endian uint32)
+          const pngW = logoBuffer.readUInt32BE(16)
+          const pngH = logoBuffer.readUInt32BE(20)
+          if (pngW > 0 && pngH > 0) {
+            const ratio = pngW / pngH
+            const maxW = 280, maxH = 100
+            if (ratio > maxW / maxH) { imgW = maxW; imgH = Math.round(maxW / ratio) }
+            else { imgH = maxH; imgW = Math.round(maxH * ratio) }
+          }
+        } else if (!logoIsPng && logoBuffer.length > 2) {
+          // JPEG: scan for SOF0/SOF2 marker to get dimensions
+          let off = 2
+          while (off < logoBuffer.length - 9) {
+            if (logoBuffer[off] === 0xFF) {
+              const marker = logoBuffer[off + 1]
+              if (marker === 0xC0 || marker === 0xC2) {
+                const jpgH = logoBuffer.readUInt16BE(off + 5)
+                const jpgW = logoBuffer.readUInt16BE(off + 7)
+                if (jpgW > 0 && jpgH > 0) {
+                  const ratio = jpgW / jpgH
+                  const maxW = 280, maxH = 100
+                  if (ratio > maxW / maxH) { imgW = maxW; imgH = Math.round(maxW / ratio) }
+                  else { imgH = maxH; imgW = Math.round(maxH * ratio) }
+                }
+                break
+              }
+              const segLen = logoBuffer.readUInt16BE(off + 2)
+              off += 2 + segLen
+            } else { off++ }
+          }
+        }
+      } catch { /* fallback to defaults */ }
+
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
@@ -307,7 +346,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           new ImageRun({
             type: logoIsPng ? 'png' : 'jpg',
             data: logoBuffer,
-            transformation: { width: 280, height: 60 },
+            transformation: { width: imgW, height: imgH },
             altText: { title: wlCompany || 'ClearUX Logo', description: wlCompany ? `${wlCompany} logo` : 'ClearUX brand logo', name: 'report-logo' },
           }),
         ],
@@ -825,11 +864,16 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           default: new Header({
             children: [new Paragraph({
               alignment: AlignmentType.RIGHT,
-              children: [
-                new TextRun({ text: 'Clear', font: 'Arial', size: 16, bold: true, color: C.textTert }),
-                new TextRun({ text: 'UX', font: 'Arial', size: 16, bold: true, color: C.accent }),
-                new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
-              ],
+              children: isWhiteLabel && wlCompany
+                ? [
+                    new TextRun({ text: wlCompany, font: 'Arial', size: 16, bold: true, color: C.textTert }),
+                    new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
+                  ]
+                : [
+                    new TextRun({ text: 'Clear', font: 'Arial', size: 16, bold: true, color: C.textTert }),
+                    new TextRun({ text: 'UX', font: 'Arial', size: 16, bold: true, color: C.accent }),
+                    new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
+                  ],
             })],
           }),
         },
