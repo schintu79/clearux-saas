@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { ArrowRight, Sparkles, Heart, Shield, Brain, Eye, Users, CheckCircle } from 'lucide-react'
+import { ArrowRight, Sparkles, Heart, Shield, Brain, Eye, Users, BarChart3, Rocket, Tag, Target, Accessibility, HeartHandshake, Globe, Zap, ShieldCheck, Flower2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About ClearUX — Human-Centered AI Audit Platform',
@@ -91,6 +91,9 @@ export default function AboutPage() {
                   Why ClearUX exists
                 </h2>
                 <div className="space-y-5 text-text/75 text-base sm:text-[17px] leading-relaxed">
+                  <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-violet-500 pl-5 py-2 italic">
+                    What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
+                  </p>
                   <p>
                     After 20+ years designing digital experiences across industries and continents, I kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
                   </p>
@@ -99,9 +102,6 @@ export default function AboutPage() {
                   </p>
                   <p>
                     I&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
-                  </p>
-                  <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-violet-500 pl-5 py-1">
-                    What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
                   </p>
                   <p>
                     That&apos;s what we built. Not a checklist tool. Not another Lighthouse wrapper. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
@@ -184,6 +184,101 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════════
+            THE DIGITAL LANDSCAPE IS SHIFTING — new section
+            ═══════════════════════════════════════════════════════ */}
+        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+          <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.03] blur-[160px] pointer-events-none" />
+          <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-violet-500/[0.03] blur-[140px] pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto relative">
+            <div className="text-center mb-8">
+              <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond traditional audits</p>
+              <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-5">
+                The digital landscape is shifting.<br className="hidden sm:block" /> Most audits haven&apos;t caught up.
+              </h2>
+              <p className="text-text/65 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto">
+                AI agents are becoming how people discover products. Neurodiversity affects 1 in 5 users. Emotional design is no longer a nice-to-have — it&apos;s a competitive advantage. Traditional audit tools still check the same boxes from 2015. We don&apos;t.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
+              {/* Card 1 — AI Readiness */}
+              <div className="group relative rounded-2xl border border-emerald-400/20 dark:border-emerald-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5">
+                  <Globe size={20} className="text-emerald-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">AI Agent Readiness</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  LLMs and AI agents are the new search engines. We evaluate whether your product is discoverable, navigable, and interpretable by AI — structured data, semantic markup, and machine-readable content.
+                </p>
+              </div>
+
+              {/* Card 2 — Cognitive Accessibility & Neurodiversity */}
+              <div className="group relative rounded-2xl border border-violet-400/20 dark:border-violet-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center mb-5">
+                  <Accessibility size={20} className="text-violet-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Cognitive Accessibility & Neurodiversity</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  ADHD, dyslexia, autism spectrum, sensory processing — your users are diverse. We assess cognitive load, sensory overwhelm, predictable navigation, and clear information hierarchy for all minds.
+                </p>
+              </div>
+
+              {/* Card 3 — Psychological Safety */}
+              <div className="group relative rounded-2xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-5">
+                  <ShieldCheck size={20} className="text-pink-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Psychological Safety</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  Anxiety-inducing countdowns, guilt-driven copy, and dark patterns erode trust. We detect manipulative flows and evaluate whether your product makes users feel safe, respected, and in control.
+                </p>
+              </div>
+
+              {/* Card 4 — Emotional Design */}
+              <div className="group relative rounded-2xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-5">
+                  <HeartHandshake size={20} className="text-amber-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Emotional Intelligence</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  The best products understand how users feel. We assess tone, microcopy, error messaging, and delight moments — because the emotional experience is what users remember long after they close the tab.
+                </p>
+              </div>
+
+              {/* Card 5 — Digital Wellbeing */}
+              <div className="group relative rounded-2xl border border-teal-400/20 dark:border-teal-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-teal-500/10 flex items-center justify-center mb-5">
+                  <Flower2 size={20} className="text-teal-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Digital Wellbeing</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  Addictive patterns, endless scrolls, and notification overload damage user health. We evaluate whether your product respects attention, promotes healthy usage, and empowers users to disengage.
+                </p>
+              </div>
+
+              {/* Card 6 — Future-Proof Design */}
+              <div className="group relative rounded-2xl border border-indigo-400/20 dark:border-indigo-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5">
+                  <Zap size={20} className="text-indigo-500" />
+                </div>
+                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Future-Proof Design</h3>
+                <p className="text-text/60 text-[14px] leading-relaxed">
+                  Responsive design was yesterday&apos;s challenge. Tomorrow&apos;s is multi-modal: voice, gesture, AI-assisted navigation. We assess whether your product is ready for how people will interact with technology next.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom callout */}
+            <div className="mt-14 text-center">
+              <p className="text-text/50 text-sm max-w-2xl mx-auto leading-relaxed">
+                These aren&apos;t edge cases. They&apos;re the new baseline. As AI reshapes discovery and neurodiversity gains visibility, the products that adapt first will lead their markets.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════
             BUILT FOR — full width
             ═══════════════════════════════════════════════════════ */}
         <section className="py-24 px-4 md:px-6 lg:px-8 bg-surface">
@@ -200,17 +295,30 @@ export default function AboutPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { text: 'Product managers who need to justify UX investment with data', emoji: '📊' },
-                { text: 'Founders who can\'t afford a $15k consultancy but refuse to ship mediocre', emoji: '🚀' },
-                { text: 'Agencies who want white-label audit capabilities for their clients', emoji: '🏷️' },
-                { text: 'UX designers who want an objective second opinion before launch', emoji: '🎯' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/20 dark:border-white/[0.04]">
-                  <span className="text-2xl flex-shrink-0">{item.emoji}</span>
-                  <p className="text-text/80 text-[15px] leading-relaxed">{item.text}</p>
+              <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/20 dark:border-white/[0.04]">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                  <BarChart3 size={20} className="text-violet-500" />
                 </div>
-              ))}
+                <p className="text-text/80 text-[15px] leading-relaxed">Product managers who need to justify UX investment with data</p>
+              </div>
+              <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/20 dark:border-white/[0.04]">
+                <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                  <Rocket size={20} className="text-pink-500" />
+                </div>
+                <p className="text-text/80 text-[15px] leading-relaxed">Founders who can&apos;t afford a $15k consultancy but refuse to ship mediocre</p>
+              </div>
+              <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/20 dark:border-white/[0.04]">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <Tag size={20} className="text-emerald-500" />
+                </div>
+                <p className="text-text/80 text-[15px] leading-relaxed">Agencies who want white-label audit capabilities for their clients</p>
+              </div>
+              <div className="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/20 dark:border-white/[0.04]">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                  <Target size={20} className="text-amber-500" />
+                </div>
+                <p className="text-text/80 text-[15px] leading-relaxed">UX designers who want an objective second opinion before launch</p>
+              </div>
             </div>
           </div>
         </section>
