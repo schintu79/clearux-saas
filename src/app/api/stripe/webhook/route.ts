@@ -64,31 +64,51 @@ export async function POST(request: NextRequest) {
           const creditsToAdd = parseInt(meta.credits || '0', 10)
           const pack = meta.pack as string | undefined // 'starter' | 'growth' | 'agency' | 'scale'
           if (creditsToAdd > 0) {
-            // Fetch current balance and tier
+            // Fetch current balance
             const { data: prof } = await supabase
               .from('profiles')
-              .select('credits, package_tier')
+              .select('credits')
               .eq('id', userId)
               .single()
             const current = (prof as any)?.credits ?? 0
-            const currentTier = (prof as any)?.package_tier ?? 'starter'
 
-            // Determine the highest tier — never downgrade
-            const tierRank: Record<string, number> = { starter: 0, growth: 1, agency: 2, scale: 3 }
-            const newTier = (tierRank[pack || 'starter'] ?? 0) > (tierRank[currentTier] ?? 0) ? pack : currentTier
-            const isWhiteLabel = tierRank[newTier || 'starter'] >= 2 // agency or scale
-
-            await supabase
+            // Always add credits first (core operation that must not fail)
+            const { error: creditError } = await supabase
               .from('profiles')
               .update({
                 credits: current + creditsToAdd,
-                package_tier: newTier,
-                white_label: isWhiteLabel,
                 updated_at: new Date().toISOString(),
               } as any)
               .eq('id', userId)
 
-            console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}. Tier: ${newTier}, white_label: ${isWhiteLabel}`)
+            if (creditError) {
+              console.error(`Failed to add credits for user ${userId}:`, creditError)
+              return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 })
+            }
+
+            console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}`)
+
+            // Update package tier & white-label flag (non-critical — don't block credits)
+            try {
+              const tierRank: Record<string, number> = { starter: 0, growth: 1, agency: 2, scale: 3 }
+              const { data: tierProf } = await supabase
+                .from('profiles')
+                .select('package_tier')
+                .eq('id', userId)
+                .single()
+              const currentTier = (tierProf as any)?.package_tier ?? 'starter'
+              const newTier = (tierRank[pack || 'starter'] ?? 0) > (tierRank[currentTier] ?? 0) ? pack : currentTier
+              const isWhiteLabel = tierRank[newTier || 'starter'] >= 2
+
+              await supabase
+                .from('profiles')
+                .update({ package_tier: newTier, white_label: isWhiteLabel } as any)
+                .eq('id', userId)
+
+              console.log(`Updated tier for user ${userId}: ${newTier}, white_label: ${isWhiteLabel}`)
+            } catch (tierErr) {
+              console.warn(`Non-critical: failed to update tier for user ${userId}:`, tierErr)
+            }
           }
           return NextResponse.json({ received: true }, { status: 200 })
         }
