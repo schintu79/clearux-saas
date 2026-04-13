@@ -680,7 +680,7 @@ export default function Home() {
               <span className="text-sm font-semibold">Credits Never Expire</span>
             </div>
           </div>
-          <p className="text-white/60 text-xs text-center mt-2">Your website data is never stored or shared — only your report.</p>
+          <p className="text-white/80 text-sm text-center mt-3 font-medium">Your website data is never stored or shared — only your report.</p>
         </div>
       </section>
 

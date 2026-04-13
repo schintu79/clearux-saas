@@ -13,6 +13,7 @@ import {
   Packer,
   Paragraph,
   TextRun,
+  ImageRun,
   Table,
   TableRow,
   TableCell,
@@ -27,6 +28,8 @@ import {
   LevelFormat,
 } from 'docx'
 import { createServiceSupabase } from '@/lib/supabase-server'
+import fs from 'fs'
+import path from 'path'
 
 /* ── Brand colors ─────────────────────────────────────────── */
 const C = {
@@ -276,20 +279,43 @@ export async function GET(
 
     children.push(new Paragraph({ spacing: { after: 600 }, children: [] }))
 
-    // ClearUX logo
-    children.push(new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 },
-      children: [
-        new TextRun({ text: 'Clear', font: 'Arial', size: 80, bold: true, color: C.text }),
-        new TextRun({ text: 'UX', font: 'Arial', size: 80, bold: true, color: C.accent }),
-      ],
-    }))
+    // ClearUX logo (PNG)
+    let logoBuffer: Buffer | null = null
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
+      logoBuffer = fs.readFileSync(logoPath)
+    } catch {
+      console.warn('[DOCX] Logo PNG not found, falling back to text')
+    }
+
+    if (logoBuffer) {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 40 },
+        children: [
+          new ImageRun({
+            type: 'png',
+            data: logoBuffer,
+            transformation: { width: 280, height: 60 },
+            altText: { title: 'ClearUX Logo', description: 'ClearUX brand logo', name: 'clearux-logo' },
+          }),
+        ],
+      }))
+    } else {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 40 },
+        children: [
+          new TextRun({ text: 'Clear', font: 'Arial', size: 80, bold: true, color: C.text }),
+          new TextRun({ text: 'UX', font: 'Arial', size: 80, bold: true, color: C.accent }),
+        ],
+      }))
+    }
 
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 600 },
-      children: [new TextRun({ text: 'Human-Centered Digital Audit', font: 'Arial', size: 22, color: C.textSec })],
+      children: [new TextRun({ text: 'Human-Centered, AI-Powered Digital Audits', font: 'Arial', size: 22, color: C.textSec })],
     }))
 
     // Large overall score
