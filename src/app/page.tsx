@@ -722,7 +722,7 @@ export default function Home() {
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="hero-url-input"
-                  type="url"
+                  type="text"
                   name="url"
                   autoComplete="url"
                   value={heroUrl}
@@ -1112,7 +1112,7 @@ export default function Home() {
                 <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="cta-url-input"
-                  type="url"
+                  type="text"
                   name="url"
                   autoComplete="url"
                   value={heroUrl}
