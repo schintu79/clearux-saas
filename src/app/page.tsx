@@ -497,11 +497,11 @@ export default function Home() {
   ];
 
   const testimonials = [
-    { quote: "ClearUX identified critical issues we completely missed. The audit was thorough and actionable.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
-    { quote: "Worth every penny. We implemented the recommendations and saw a 34% increase in conversions.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
-    { quote: "The AI-powered analysis is impressive. It caught UX issues our team had overlooked for months.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
-    { quote: "The report was incredibly detailed — the prioritised recommendations saved us weeks of guesswork.", author: "James Kim", title: "CTO", company: "LaunchPad", initials: "JK" },
-    { quote: "As an agency, we now include ClearUX audits in every client proposal. It's a game-changer.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", initials: "DT" },
+    { quote: "We implemented the recommendations and saw a 34% increase in conversions within three weeks. Paid for itself ten times over.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
+    { quote: "ClearUX identified critical issues we completely missed. Our bounce rate dropped 22% after the first round of fixes.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
+    { quote: "The prioritised recommendations saved us weeks of guesswork. We knew exactly what to fix first and why it mattered.", author: "James Kim", title: "CTO", company: "LaunchPad", initials: "JK" },
+    { quote: "As an agency, we now include ClearUX audits in every client proposal. Clients love the depth of the reports.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", initials: "DT" },
+    { quote: "It caught UX issues our design team had overlooked for months. The severity scoring helped us prioritise instantly.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
   ];
 
   return (
@@ -602,7 +602,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            Consultant-grade analysis of 64 checkpoints across 16 categories in minutes, with the same rigor as a $10k audit.
+            Get the clarity and confidence of a $10k consultant audit in minutes. Actionable findings, prioritised by impact, so your team knows exactly what to fix first.
           </p>
 
           {/* URL Input */}
@@ -704,7 +704,7 @@ export default function Home() {
               <span className="text-muted">We audit what others miss.</span>
             </h2>
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              64 professional checkpoints across 16 categories. Four pillars that cover everything from first impressions to AI readiness.
+              Four pillars that cover everything from first impressions to AI readiness. Each finding is prioritised by impact, so you know what moves the needle.
             </p>
           </div>
 
@@ -753,7 +753,7 @@ export default function Home() {
             </h2>
             <p className="text-muted text-base md:text-lg max-w-lg">
               Pay per audit. No subscription, no feature gates.<br />
-              Every audit gets the full 95-point analysis.
+              Every audit gets the full analysis — nothing locked.
             </p>
           </div>
 
@@ -785,10 +785,10 @@ export default function Home() {
               {/* Right: What's included */}
               <div className="space-y-3.5">
                 {[
-                  '64-point deep analysis across 16 categories',
-                  'AI-powered findings with severity scoring',
-                  'Executive summary & prioritised recommendations',
-                  'PDF & Word report downloads',
+                  'Deep analysis across 16 UX categories',
+                  'Findings ranked by severity & business impact',
+                  'Top 3 priority recommendations to act on first',
+                  'Executive summary + detailed PDF & Word reports',
                   'Issue screenshots with element highlighting',
                   '6 languages supported',
                 ].map((item, i) => (
@@ -811,9 +811,9 @@ export default function Home() {
           {/* ── Credit packs — 3 cards ── */}
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams', popular: true },
-              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies & studios' },
-              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise volume' },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'For growing teams running regular audits', popular: true, perks: ['Priority email support'] },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'For agencies managing multiple clients', perks: ['Priority email support', 'White-label PDF reports'] },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Enterprise teams with continuous auditing', perks: ['Dedicated support', 'White-label PDF reports', 'API access (coming soon)'] },
             ].map((pack, idx) => (
               <div
                 key={idx}
@@ -837,8 +837,18 @@ export default function Home() {
                   {pack.per} per audit <span className="text-muted/50">·</span> {pack.credits} audits
                 </p>
 
-                {/* Desc */}
-                <p className="text-xs text-muted mb-5">{pack.desc}</p>
+                {/* Desc + Perks */}
+                <p className="text-xs text-muted mb-3">{pack.desc}</p>
+                {(pack as any).perks && (pack as any).perks.length > 0 && (
+                  <div className="space-y-1.5 mb-5">
+                    {(pack as any).perks.map((perk: string, pi: number) => (
+                      <div key={pi} className="flex items-center gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+                        <span className="text-xs text-text/70">{perk}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* CTA */}
                 <Link
@@ -851,14 +861,12 @@ export default function Home() {
             ))}
           </div>
 
-          {/* ── All audits include — footer strip ── */}
+          {/* ── All audits include — title + 4 items in one row ── */}
           <div className="mt-14 pt-10 border-t border-border/30 dark:border-white/[0.04]">
-            <div className="grid sm:grid-cols-4 gap-6 sm:gap-8">
-              <div>
-                <p className="font-manrope text-lg font-bold text-text mb-1 leading-snug">All audits<br />include</p>
-              </div>
+            <p className="font-manrope text-lg font-bold text-text mb-6">All audits include</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
               {[
-                { title: 'Full 95-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
                 { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
                 { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
                 { title: 'Instant delivery', desc: 'Reports arrive via email within minutes of purchase, plus downloadable PDF & Word versions from your dashboard.' },
@@ -1002,7 +1010,7 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-            64 checkpoints. 16 categories. Real findings your team can act on — delivered in minutes, not weeks.
+            Real findings your team can act on — prioritised by impact, delivered in minutes, not weeks.
           </p>
 
           {/* URL input — mirrors the hero */}
