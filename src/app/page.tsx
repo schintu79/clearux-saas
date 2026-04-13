@@ -681,11 +681,11 @@ export default function Home() {
             </div>
           </div>
         </div>
-        {/* Privacy promise — sits inside the gradient section to avoid seam */}
-        <div className="relative py-2.5 text-center bg-black/[0.12]">
-          <p className="text-sm text-white/80 font-medium">Your website data is never stored or shared — only your report.</p>
-        </div>
       </section>
+      {/* Privacy promise — seamless, no background, readable in both modes */}
+      <div className="py-3 text-center">
+        <p className="text-sm text-muted font-medium">Your website data is never stored or shared — only your report.</p>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════
           VALUE PROPOSITION + STATS + HOW IT WORKS
