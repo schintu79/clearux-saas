@@ -164,6 +164,7 @@ export const processAuditFn = inngest.createFunction(
         pageCount: crawledPages.length,
         pageContent, // Passed to analysis steps
         firstPageUrl: crawledPages[0]?.url || '',
+        crawledUrls: crawledPages.map((p) => p.url).filter(Boolean) as string[],
       }
     })
 
@@ -211,6 +212,23 @@ export const processAuditFn = inngest.createFunction(
           const categoryName = batch[catIdx]
 
           for (const finding of findings) {
+            // Validate pageUrl against actual crawled URLs
+            let resolvedPageUrl = crawlResult.firstPageUrl
+            const crawledUrls = crawlResult.crawledUrls || [crawlResult.firstPageUrl]
+            if (finding.pageUrl) {
+              // Check if it exactly matches a crawled URL
+              if (crawledUrls.includes(finding.pageUrl)) {
+                resolvedPageUrl = finding.pageUrl
+              } else {
+                // Try partial match (Claude might return with/without trailing slash)
+                const match = crawledUrls.find((u: string) =>
+                  u.replace(/\/$/, '') === finding.pageUrl!.replace(/\/$/, '') ||
+                  finding.pageUrl!.includes(new URL(u).pathname)
+                )
+                if (match) resolvedPageUrl = match
+              }
+            }
+
             await db.from('audit_findings').insert({
               audit_id: auditId,
               checklist_item_id: null,
@@ -218,7 +236,7 @@ export const processAuditFn = inngest.createFunction(
               title: finding.title,
               description: finding.description,
               evidence: null,
-              page_url: finding.pageUrl || crawlResult.firstPageUrl,
+              page_url: resolvedPageUrl,
               recommendation: finding.recommendation,
               estimated_impact: finding.estimatedImpact || null,
               target_element: finding.targetElement || null,

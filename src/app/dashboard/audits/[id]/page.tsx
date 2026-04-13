@@ -1271,6 +1271,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Research note */}
+                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
+                    <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted leading-relaxed">
+                      For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.
+                    </p>
+                  </div>
                 </div>
               )}
 

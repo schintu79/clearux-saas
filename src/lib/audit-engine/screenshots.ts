@@ -248,28 +248,28 @@ export async function captureAuditScreenshots(
     }
   }
 
-  // 3. Capture finding-specific screenshots with element highlight
-  //    Only if ScreenshotOne or Puppeteer is available (PageSpeed can't highlight)
+  // 3. Capture finding-specific screenshots
+  //    With ScreenshotOne/Puppeteer: use element highlighting for targeted captures
+  //    Without: fall back to page-level screenshots so findings still have visuals
   const hasAdvancedCapture = !!(process.env.SCREENSHOTONE_API_KEY || process.env.SCREENSHOT_INTERNAL_KEY)
 
-  if (hasAdvancedCapture) {
-    const prioritized = [...findings]
-      .filter((f) => f.targetElement)
-      .sort((a, b) => {
-        const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-        return (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
-      })
-      .slice(0, maxFindingScreenshots)
+  const prioritized = [...findings]
+    .sort((a, b) => {
+      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4)
+    })
+    .slice(0, maxFindingScreenshots)
 
-    for (const finding of prioritized) {
-      if (!finding.targetElement) continue
+  for (const finding of prioritized) {
+    try {
+      const pageUrl = finding.pageUrl || fallbackUrl
 
-      try {
-        const pageUrl = finding.pageUrl || fallbackUrl
+      if (hasAdvancedCapture && finding.targetElement) {
+        // Advanced: capture with element highlighting
         const sevLabel = finding.severity.toUpperCase()
         const label = `${sevLabel}: ${finding.title}`
 
-        console.log(`[screenshots] Capturing finding: ${finding.id} (${finding.targetElement})`)
+        console.log(`[screenshots] Capturing finding (highlighted): ${finding.id} (${finding.targetElement})`)
         const buf = await captureScreenshot(pageUrl, finding.targetElement, label)
 
         if (buf) {
@@ -277,14 +277,33 @@ export async function captureAuditScreenshots(
           if (publicUrl) {
             findingScreenshots.set(finding.id, publicUrl)
             console.log(`[screenshots] Finding screenshot uploaded: ${finding.id}`)
+            continue // success — skip fallback
           }
         }
-      } catch (err) {
-        console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
       }
+
+      // Fallback: use the page-level screenshot if we already captured one
+      const pageScreenshot = pageScreenshots.get(pageUrl)
+      if (pageScreenshot) {
+        findingScreenshots.set(finding.id, pageScreenshot)
+        console.log(`[screenshots] Finding ${finding.id} linked to page screenshot: ${pageUrl}`)
+      } else {
+        // Try capturing a fresh page-level screenshot for this finding's page
+        console.log(`[screenshots] Capturing page for finding: ${finding.id} → ${pageUrl}`)
+        const buf = await captureScreenshot(pageUrl)
+        if (buf) {
+          const safeName = pageUrl.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 60)
+          const publicUrl = await uploadScreenshot(auditId, `page-${safeName}.png`, buf)
+          if (publicUrl) {
+            pageScreenshots.set(pageUrl, publicUrl)
+            findingScreenshots.set(finding.id, publicUrl)
+            console.log(`[screenshots] Finding ${finding.id} got fresh page screenshot`)
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
     }
-  } else {
-    console.log('[screenshots] No advanced capture available — skipping finding-level screenshots')
   }
 
   return { pageScreenshots, findingScreenshots }

@@ -591,18 +591,18 @@ export default function Home() {
           </div>
 
           {/*
-            Force the H1 to always be exactly 2 lines.
-            Line 1: "Find & fix UX issues impacting"
+            Outcome-led H1:
+            Line 1: "Discover the UX issues impacting"
             Line 2: the rotating word (centered, on its own line)
           */}
           <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
-            Find &amp; fix UX issues impacting{' '}
+            Discover the UX issues impacting{' '}
             <br />
             <RotatingWord />
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            For product teams, founders, and agencies who need consultant-grade UX audits without the $10k price tag. 64 checkpoints, 16 categories — results in minutes.
+            Consultant-grade analysis of 64 checkpoints across 16 categories in minutes, with the same rigor as a $10k audit.
           </p>
 
           {/* URL Input */}

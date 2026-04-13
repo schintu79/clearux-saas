@@ -261,10 +261,19 @@ export async function analyzeCategory(
 
   const languageInstruction = getLanguagePromptInstruction(language)
 
+  // Extract available page URLs from the aggregated content for the prompt
+  const availableUrls = pageContent
+    .split('\n')
+    .filter((line) => line.startsWith('URL: '))
+    .map((line) => line.replace('URL: ', '').trim())
+  const pageUrlIndex = availableUrls.length > 0
+    ? `\nAVAILABLE PAGE URLs (use ONLY these exact URLs for the "pageUrl" field):\n${availableUrls.map((u, i) => `  [${i + 1}] ${u}`).join('\n')}\n`
+    : ''
+
   const prompt = `You are a senior UX strategist at a world-class design consultancy (think IDEO, Pentagram, or Nielsen Norman Group). You are conducting a deep, human-centered UX audit for a paying client. This is NOT a basic checklist scan — it is the kind of audit that agencies charge $5,000–$15,000 for.
 ${languageInstruction}
 CATEGORY: ${category}
-${focusBlock}
+${focusBlock}${pageUrlIndex}
 EVALUATION CRITERIA:
 ${itemsToCheck}
 
@@ -325,7 +334,12 @@ QUALITY STANDARDS FOR EACH FINDING:
 3. FIXABLE — Give a concrete, implementable recommendation. Not "improve your CTA" but "Change the CTA from 'Submit' to 'Get My Free Report' — action-oriented language increases click-through by 20-30%."
 4. DEEP — Go beyond what a basic tool would catch. Show the insight of a $200/hour consultant.
 
-IMPORTANT: The content above includes MULTIPLE pages, each starting with "URL:". Set "pageUrl" to the SPECIFIC page URL where each issue exists — NOT the homepage for every finding.
+CRITICAL — PAGE URL ASSIGNMENT:
+The content above includes MULTIPLE pages, each starting with "URL:". For each finding, you MUST set "pageUrl" to the EXACT page URL (from the list above) where the issue exists.
+- Look at which page's content contains the problem you're describing
+- Use the FULL URL exactly as shown (e.g., "https://example.com/pricing" not just "example.com")
+- NEVER use the homepage URL for every finding — distribute findings across the actual pages where issues occur
+- If a finding is about the pricing page, use the pricing page URL. If about the FAQ, use the FAQ URL. Etc.
 
 For each issue, assign severity honestly:
 - "critical": Actively losing significant revenue, users, or trust. Must fix immediately.
@@ -341,7 +355,7 @@ Return a JSON array. Each issue:
   "recommendation": "Concrete, implementable fix with specific details. Include the 'why' — what improvement the client should expect. Reference best practices or data where relevant.",
   "estimatedImpact": "Specific expected improvement (e.g., '15-25% increase in CTA clicks', 'Reduces bounce rate for mobile users', 'Eliminates trust barrier for first-time visitors')",
   "targetElement": "CSS selector or descriptive text to locate the element (e.g., 'nav', '.hero-section', 'button.cta'). Set to null if page-wide.",
-  "pageUrl": "REQUIRED — The exact URL from the 'URL:' lines above where this issue exists. Never null."
+  "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain."
 }
 
 QUANTITY GUIDELINES:
