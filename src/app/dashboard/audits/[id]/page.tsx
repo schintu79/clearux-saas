@@ -484,6 +484,20 @@ function FindingCard({ finding, pillarColor, categoryName }: { finding: AuditFin
   );
 }
 
+/* ── Expandable category summary ─────────────────────────── */
+function ExpandableSummary({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <p
+      onClick={() => setExpanded(!expanded)}
+      className={`text-[11px] leading-snug mt-1.5 cursor-pointer text-text/70 hover:text-text transition-colors ${expanded ? '' : 'line-clamp-2'}`}
+      title={expanded ? 'Click to collapse' : 'Click to read more'}
+    >
+      {text}
+    </p>
+  );
+}
+
 /* ── Pillar Section ───────────────────────────────────────── */
 function PillarSection({
   pillar,
@@ -574,7 +588,7 @@ function PillarSection({
                   />
                 </div>
                 {cat.summary && (
-                  <p className="text-[11px] text-muted leading-snug mt-1.5 line-clamp-2">{cat.summary}</p>
+                  <ExpandableSummary text={cat.summary} />
                 )}
               </div>
             );
