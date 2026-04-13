@@ -163,7 +163,7 @@ function progressBar(score: number, totalWidth: number, color: string): Table {
 
 /* ── Core DOCX generation — exported for PDF route ────────── */
 
-export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safeDomain: string }> {
+export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safeDomain: string; whitelabelCompany: string | null }> {
     const db = createServiceSupabase()
 
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([
@@ -184,6 +184,11 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     const r = reportRes.data as any
     const f = (findingsRes.data || []) as any[]
     const pages = (pagesRes.data || []) as any[]
+
+    // White-label branding
+    const wlCompany: string | null = a.white_label_company_name || null
+    const wlLogoUrl: string | null = a.white_label_logo_url || null
+    const isWhiteLabel = !!(wlCompany || wlLogoUrl)
 
     const lang = a.language || 'en'
     const L = getReportLabels(lang)
@@ -274,13 +279,24 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     children.push(new Paragraph({ spacing: { after: 600 }, children: [] }))
 
-    // ClearUX logo (PNG)
+    // Logo — white-label or ClearUX default
     let logoBuffer: Buffer | null = null
-    try {
-      const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
-      logoBuffer = fs.readFileSync(logoPath)
-    } catch {
-      console.warn('[DOCX] Logo PNG not found, falling back to text')
+    let logoIsPng = true
+    if (wlLogoUrl) {
+      try {
+        const logoRes = await fetch(wlLogoUrl)
+        if (logoRes.ok) {
+          const ab = await logoRes.arrayBuffer()
+          logoBuffer = Buffer.from(ab)
+          logoIsPng = wlLogoUrl.toLowerCase().endsWith('.png') || wlLogoUrl.includes('.png')
+        }
+      } catch { console.warn('[DOCX] Failed to fetch white-label logo') }
+    }
+    if (!logoBuffer) {
+      try {
+        const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
+        logoBuffer = fs.readFileSync(logoPath)
+      } catch { console.warn('[DOCX] Logo PNG not found, falling back to text') }
     }
 
     if (logoBuffer) {
@@ -289,10 +305,10 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
         spacing: { after: 40 },
         children: [
           new ImageRun({
-            type: 'png',
+            type: logoIsPng ? 'png' : 'jpg',
             data: logoBuffer,
             transformation: { width: 280, height: 60 },
-            altText: { title: 'ClearUX Logo', description: 'ClearUX brand logo', name: 'clearux-logo' },
+            altText: { title: wlCompany || 'ClearUX Logo', description: wlCompany ? `${wlCompany} logo` : 'ClearUX brand logo', name: 'report-logo' },
           }),
         ],
       }))
@@ -300,17 +316,24 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
-        children: [
-          new TextRun({ text: 'Clear', font: 'Arial', size: 80, bold: true, color: C.text }),
-          new TextRun({ text: 'UX', font: 'Arial', size: 80, bold: true, color: C.accent }),
-        ],
+        children: wlCompany
+          ? [new TextRun({ text: wlCompany, font: 'Arial', size: 80, bold: true, color: C.text })]
+          : [
+              new TextRun({ text: 'Clear', font: 'Arial', size: 80, bold: true, color: C.text }),
+              new TextRun({ text: 'UX', font: 'Arial', size: 80, bold: true, color: C.accent }),
+            ],
       }))
     }
+
+    // Subtitle: white-label shows company name, default shows ClearUX tagline
+    const subtitle = isWhiteLabel
+      ? (wlCompany ? `${wlCompany} — UX Audit Report` : 'UX Audit Report')
+      : 'Human-Centered, AI-Powered Digital Audits'
 
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 600 },
-      children: [new TextRun({ text: 'Human-Centered, AI-Powered Digital Audits', font: 'Arial', size: 22, color: C.textSec })],
+      children: [new TextRun({ text: subtitle, font: 'Arial', size: 22, color: C.textSec })],
     }))
 
     // Large overall score
@@ -463,7 +486,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           margins: { top: 100, bottom: 100, left: 180, right: 180 },
           children: [new Paragraph({
             children: [
-              new TextRun({ text: 'For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.', font: 'Arial', size: 18, italics: true, color: C.textSec }),
+              new TextRun({ text: `For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'ClearUX'} findings with a specialist.`, font: 'Arial', size: 18, italics: true, color: C.textSec }),
             ],
           })],
         })],
@@ -829,7 +852,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     const buffer = Buffer.from(await Packer.toBuffer(doc))
     const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '_')
 
-    return { buffer, safeDomain }
+    return { buffer, safeDomain, whitelabelCompany: wlCompany }
 }
 
 /* ── Route handler ────────────────────────────────────────── */
@@ -840,12 +863,16 @@ export async function GET(
 ) {
   try {
     const { id: auditId } = await params
-    const { buffer, safeDomain } = await buildDocx(auditId)
+    const { buffer, safeDomain, whitelabelCompany } = await buildDocx(auditId)
+
+    const brandName = whitelabelCompany
+      ? whitelabelCompany.replace(/[^a-zA-Z0-9 .-]/g, '').replace(/\s+/g, '-')
+      : 'ClearUX'
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="ClearUX-Audit-${safeDomain}.docx"`,
+        'Content-Disposition': `attachment; filename="${brandName}-Audit-${safeDomain}.docx"`,
         'Cache-Control': 'no-store',
       },
     })

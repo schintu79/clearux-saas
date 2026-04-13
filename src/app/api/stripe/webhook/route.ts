@@ -62,24 +62,33 @@ export async function POST(request: NextRequest) {
         // ── Credit pack purchase — add credits to profile ──
         if (paymentType === 'credit_pack') {
           const creditsToAdd = parseInt(meta.credits || '0', 10)
+          const pack = meta.pack as string | undefined // 'starter' | 'growth' | 'agency' | 'scale'
           if (creditsToAdd > 0) {
-            // Fetch current balance
+            // Fetch current balance and tier
             const { data: prof } = await supabase
               .from('profiles')
-              .select('credits')
+              .select('credits, package_tier')
               .eq('id', userId)
               .single()
             const current = (prof as any)?.credits ?? 0
+            const currentTier = (prof as any)?.package_tier ?? 'starter'
+
+            // Determine the highest tier — never downgrade
+            const tierRank: Record<string, number> = { starter: 0, growth: 1, agency: 2, scale: 3 }
+            const newTier = (tierRank[pack || 'starter'] ?? 0) > (tierRank[currentTier] ?? 0) ? pack : currentTier
+            const isWhiteLabel = tierRank[newTier || 'starter'] >= 2 // agency or scale
 
             await supabase
               .from('profiles')
               .update({
                 credits: current + creditsToAdd,
+                package_tier: newTier,
+                white_label: isWhiteLabel,
                 updated_at: new Date().toISOString(),
               } as any)
               .eq('id', userId)
 
-            console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}`)
+            console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}. Tier: ${newTier}, white_label: ${isWhiteLabel}`)
           }
           return NextResponse.json({ received: true }, { status: 200 })
         }

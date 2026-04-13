@@ -95,6 +95,11 @@ export async function GET(
     const r = reportRes.data as any
     const f = (findingsRes.data || []) as any[]
 
+    // White-label branding
+    const wlCompany: string | null = a.white_label_company_name || null
+    const wlLogoUrl: string | null = a.white_label_logo_url || null
+    const isWhiteLabel = !!(wlCompany || wlLogoUrl)
+
     const lang = a.language || 'en'
     const L = getReportLabels(lang)
     const dateStr = new Date(a.created_at).toLocaleDateString(getLocale(lang), {
@@ -166,25 +171,44 @@ export async function GET(
     // Accent bar at top
     doc.rect(0, 0, pageW, 6).fill(C.accent)
 
-    // Logo image
+    // Logo — white-label or ClearUX default
     let logoLoaded = false
-    try {
-      const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, (pageW - 200) / 2, 100, { width: 200 })
-        logoLoaded = true
-      }
-    } catch {}
-
+    if (wlLogoUrl) {
+      try {
+        const logoRes = await fetch(wlLogoUrl)
+        if (logoRes.ok) {
+          const ab = await logoRes.arrayBuffer()
+          const logoBuf = Buffer.from(ab)
+          doc.image(logoBuf, (pageW - 200) / 2, 100, { width: 200 })
+          logoLoaded = true
+        }
+      } catch {}
+    }
+    if (!logoLoaded) {
+      try {
+        const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
+        if (fs.existsSync(logoPath)) {
+          doc.image(logoPath, (pageW - 200) / 2, 100, { width: 200 })
+          logoLoaded = true
+        }
+      } catch {}
+    }
     if (!logoLoaded) {
       doc.fontSize(36).font('Helvetica-Bold')
-        .fillColor(C.text).text('Clear', (pageW - 160) / 2, 110, { continued: true })
-        .fillColor(C.accent).text('UX')
+      if (wlCompany) {
+        doc.fillColor(C.text).text(wlCompany, leftM, 110, { align: 'center', width: contentW })
+      } else {
+        doc.fillColor(C.text).text('Clear', (pageW - 160) / 2, 110, { continued: true })
+          .fillColor(C.accent).text('UX')
+      }
     }
 
     // Subtitle
+    const pdfSubtitle = isWhiteLabel
+      ? (wlCompany ? `${wlCompany} — UX Audit Report` : 'UX Audit Report')
+      : 'Human-Centered, AI-Powered Digital Audits'
     doc.fontSize(11).font('Helvetica').fillColor(C.textSec)
-      .text('Human-Centered, AI-Powered Digital Audits', leftM, logoLoaded ? 155 : 160, { align: 'center', width: contentW })
+      .text(pdfSubtitle, leftM, logoLoaded ? 155 : 160, { align: 'center', width: contentW })
 
     // Large score
     doc.moveDown(3)
@@ -259,7 +283,7 @@ export async function GET(
     // Research note
     doc.moveDown(0.5)
     doc.fontSize(9).font('Helvetica-Oblique').fillColor(C.textSec)
-      .text('For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.', leftM, undefined, { width: contentW })
+      .text(`For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'ClearUX'} findings with a specialist.`, leftM, undefined, { width: contentW })
 
     // ── PILLAR SCORES ──────────────────────────────────────
     doc.addPage()
@@ -432,7 +456,7 @@ export async function GET(
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="ClearUX-Audit-${safeDomain}.pdf"`,
+        'Content-Disposition': `attachment; filename="${wlCompany ? wlCompany.replace(/[^a-zA-Z0-9 .-]/g, '').replace(/\s+/g, '-') : 'ClearUX'}-Audit-${safeDomain}.pdf"`,
         'Cache-Control': 'no-store',
       },
     })

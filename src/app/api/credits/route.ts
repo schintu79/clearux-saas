@@ -19,11 +19,14 @@ export async function GET(request: NextRequest) {
     const db = createServiceSupabase()
     const { data: profile } = await db
       .from('profiles')
-      .select('credits')
+      .select('credits, package_tier')
       .eq('id', user.id)
       .single()
 
-    return NextResponse.json({ credits: profile?.credits ?? 0 })
+    return NextResponse.json({
+      credits: (profile as any)?.credits ?? 0,
+      package_tier: (profile as any)?.package_tier ?? 'starter',
+    })
   } catch (err) {
     console.error('GET /api/credits error:', err)
     return NextResponse.json({ error: 'Failed to fetch credits' }, { status: 500 })

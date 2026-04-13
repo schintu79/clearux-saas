@@ -44,6 +44,9 @@ export interface Profile {
   billing_city:          string | null
   billing_postal_code:   string | null
   billing_country:       string | null
+  // White-label (Agency/Scale packages)
+  white_label:   boolean
+  package_tier:  string
 }
 
 export interface Audit {
@@ -63,6 +66,9 @@ export interface Audit {
   completed_at:      string | null
   created_at:        string
   updated_at:        string
+  // White-label branding (optional, Agency/Scale only)
+  white_label_company_name: string | null
+  white_label_logo_url:     string | null
 }
 
 export interface Payment {
