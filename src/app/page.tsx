@@ -655,10 +655,10 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TRUST STRIP — prominent, below hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-5 overflow-hidden" style={{ background: 'var(--gradient-brand)' }}>
+      <section className="relative overflow-hidden" style={{ background: 'var(--gradient-brand)' }}>
         {/* Subtle overlay for legibility */}
         <div className="absolute inset-0 bg-black/[0.08] pointer-events-none" />
-        <div className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="relative max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-white">
             <div className="flex items-center gap-2">
               <Lock size={16} className="opacity-90" />
@@ -681,12 +681,11 @@ export default function Home() {
             </div>
           </div>
         </div>
+        {/* Privacy promise — sits inside the gradient section to avoid seam */}
+        <div className="relative py-2.5 text-center bg-black/[0.12]">
+          <p className="text-sm text-white/80 font-medium">Your website data is never stored or shared — only your report.</p>
+        </div>
       </section>
-
-      {/* Privacy promise — below the colored bar, on the page background */}
-      <div className="py-3 text-center bg-surface">
-        <p className="text-sm text-muted font-medium">Your website data is never stored or shared — only your report.</p>
-      </div>
 
       {/* ═══════════════════════════════════════════════════════
           VALUE PROPOSITION + STATS + HOW IT WORKS
