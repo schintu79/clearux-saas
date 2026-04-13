@@ -680,9 +680,13 @@ export default function Home() {
               <span className="text-sm font-semibold">Credits Never Expire</span>
             </div>
           </div>
-          <p className="text-white/80 text-sm text-center mt-3 font-medium">Your website data is never stored or shared — only your report.</p>
         </div>
       </section>
+
+      {/* Privacy promise — below the colored bar, on the page background */}
+      <div className="py-3 text-center bg-surface">
+        <p className="text-sm text-muted font-medium">Your website data is never stored or shared — only your report.</p>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════
           VALUE PROPOSITION + STATS + HOW IT WORKS
@@ -759,8 +763,8 @@ export default function Home() {
 
           {/* ── Hero card: Single Audit ── */}
           <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
-            {/* Subtle warm gradient like Sketch */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-accent/[0.03] dark:via-transparent dark:to-transparent pointer-events-none" />
+            {/* Subtle warm gradient — light: amber/rose tints, dark: on-brand kaleidoscope */}
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-violet-500/[0.06] dark:via-pink-500/[0.04] dark:to-emerald-500/[0.06] pointer-events-none" />
 
             <div className="relative grid sm:grid-cols-2 gap-8 items-center">
               {/* Left: Price */}
@@ -822,7 +826,7 @@ export default function Home() {
                 {/* Pack name + badge */}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
-                  {(pack as any).popular && <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>}
+                  {(pack as any).popular && <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full shadow-sm" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>}
                   {!(pack as any).popular && <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
                   </span>}

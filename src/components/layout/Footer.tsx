@@ -13,10 +13,10 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <h3 className="font-manrope font-bold text-xl mb-3 text-sidebar-text">
+            <h3 className="font-manrope font-bold text-xl mb-3 text-white">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </h3>
-            <p className="font-inter text-sm text-muted leading-relaxed mb-5">
+            <p className="font-inter text-sm text-white/60 leading-relaxed mb-5">
               Consultant-grade UX audits, powered by AI.<br />
               Professional reports in minutes.
             </p>
@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow ClearUX on Instagram"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:text-sidebar-text transition-all"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white/50 hover:text-white transition-all"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
               </a>
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow ClearUX on LinkedIn"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:text-sidebar-text transition-all"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white/50 hover:text-white transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
               </a>
@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
           {/* Link columns */}
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div>
-              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-muted mb-4">Product</h4>
+              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-white/40 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'Features', href: '/#features' },
@@ -56,7 +56,7 @@ const Footer: React.FC = () => {
                   { label: 'FAQ', href: '/#faq' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-inter text-sm text-muted hover:text-sidebar-text transition-colors">
+                    <Link href={link.href} className="font-inter text-sm text-white/60 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -65,7 +65,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-muted mb-4">Company</h4>
+              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-white/40 mb-4">Company</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'About Us', href: '/about' },
@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
                   { label: 'Dashboard', href: '/dashboard' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-inter text-sm text-muted hover:text-sidebar-text transition-colors">
+                    <Link href={link.href} className="font-inter text-sm text-white/60 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-muted mb-4">Legal</h4>
+              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-white/40 mb-4">Legal</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'Privacy Policy', href: '/privacy' },
@@ -91,13 +91,13 @@ const Footer: React.FC = () => {
                   { label: 'Cookie Policy', href: '/cookies' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-inter text-sm text-muted hover:text-sidebar-text transition-colors">
+                    <Link href={link.href} className="font-inter text-sm text-white/60 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
                 ))}
                 <li>
-                  <a href="mailto:support@clearux.ai" className="font-inter text-sm text-muted hover:text-sidebar-text transition-colors">
+                  <a href="mailto:support@clearux.ai" className="font-inter text-sm text-white/60 hover:text-white transition-colors">
                     support@clearux.ai
                   </a>
                 </li>
@@ -107,11 +107,11 @@ const Footer: React.FC = () => {
         </div>
 
         {/* ── Bottom bar ── */}
-        <div className="pt-8 border-t border-border/30 dark:border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-inter text-xs text-muted/80">
+        <div className="pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-inter text-xs text-white/50">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-muted/60">
+          <div className="flex items-center gap-4 text-xs text-white/40">
             <span className="flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               SSL Encrypted
