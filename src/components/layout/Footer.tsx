@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
                   { label: 'Features', href: '/#features' },
                   { label: 'How It Works', href: '/#how-it-works' },
                   { label: 'Pricing', href: '/pricing' },
-                  { label: 'FAQ', href: '/#faq' },
+                  { label: 'FAQ', href: '/faq' },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="font-inter text-sm text-white/60 hover:text-white transition-colors">
