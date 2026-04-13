@@ -9,6 +9,10 @@
     },
     "src/app/api/reports/*/docx/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/screenshot/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }

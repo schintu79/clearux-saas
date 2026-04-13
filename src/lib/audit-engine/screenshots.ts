@@ -143,28 +143,45 @@ export async function captureScreenshot(
   selector?: string | null,
   label?: string | null,
 ): Promise<Buffer | null> {
+  const hasScreenshotOne = !!process.env.SCREENSHOTONE_API_KEY
+  const hasPageSpeed = true // always available (public API)
+  const hasPuppeteer = !!process.env.SCREENSHOT_INTERNAL_KEY
+
+  if (!hasScreenshotOne && !hasPuppeteer) {
+    console.warn(`[screenshots] No screenshot API keys configured. Set SCREENSHOTONE_API_KEY (recommended) or SCREENSHOT_INTERNAL_KEY in your environment variables.`)
+  }
+
   // Strategy 1: ScreenshotOne (best quality, paid)
-  const s1 = await captureViaScreenshotOne(url, selector)
-  if (s1) {
-    console.log(`[screenshots] ScreenshotOne success: ${url}`)
-    return s1
+  if (hasScreenshotOne) {
+    const s1 = await captureViaScreenshotOne(url, selector)
+    if (s1) {
+      console.log(`[screenshots] ScreenshotOne success: ${url}`)
+      return s1
+    }
+    console.warn(`[screenshots] ScreenshotOne failed for: ${url}`)
   }
 
   // Strategy 2: PageSpeed API (free, page-level only)
-  const s2 = await captureViaPageSpeed(url)
-  if (s2) {
-    console.log(`[screenshots] PageSpeed success: ${url}`)
-    return s2
+  if (hasPageSpeed) {
+    const s2 = await captureViaPageSpeed(url)
+    if (s2) {
+      console.log(`[screenshots] PageSpeed success: ${url}`)
+      return s2
+    }
+    console.warn(`[screenshots] PageSpeed failed for: ${url}`)
   }
 
   // Strategy 3: Self-hosted Puppeteer (fallback)
-  const s3 = await captureViaPuppeteer(url, selector, label)
-  if (s3) {
-    console.log(`[screenshots] Puppeteer success: ${url}`)
-    return s3
+  if (hasPuppeteer) {
+    const s3 = await captureViaPuppeteer(url, selector, label)
+    if (s3) {
+      console.log(`[screenshots] Puppeteer success: ${url}`)
+      return s3
+    }
+    console.warn(`[screenshots] Puppeteer failed for: ${url}`)
   }
 
-  console.error(`[screenshots] All strategies failed for: ${url}`)
+  console.error(`[screenshots] ALL strategies failed for: ${url} | ScreenshotOne: ${hasScreenshotOne ? 'configured' : 'MISSING'} | Puppeteer: ${hasPuppeteer ? 'configured' : 'MISSING'}`)
   return null
 }
 
@@ -187,7 +204,11 @@ export async function uploadScreenshot(
       })
 
     if (error) {
-      console.error('[screenshots] Upload error:', error.message)
+      if (error.message?.includes('not found') || error.message?.includes('Bucket')) {
+        console.error(`[screenshots] BUCKET MISSING: The 'audit-screenshots' storage bucket does not exist in Supabase. Run this SQL: INSERT INTO storage.buckets (id, name, public) VALUES ('audit-screenshots', 'audit-screenshots', true) ON CONFLICT (id) DO NOTHING;`)
+      } else {
+        console.error('[screenshots] Upload error:', error.message)
+      }
       return null
     }
 
