@@ -161,14 +161,9 @@ function progressBar(score: number, totalWidth: number, color: string): Table {
   })
 }
 
-/* ── Main route ───────────────────────────────────────────── */
+/* ── Core DOCX generation — exported for PDF route ────────── */
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id: auditId } = await params
+export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safeDomain: string }> {
     const db = createServiceSupabase()
 
     const [auditRes, reportRes, findingsRes, pagesRes] = await Promise.all([
@@ -181,9 +176,9 @@ export async function GET(
     ])
 
     if (auditRes.error || !auditRes.data)
-      return NextResponse.json({ error: 'Audit not found' }, { status: 404 })
+      throw new Error('Audit not found')
     if (reportRes.error || !reportRes.data)
-      return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+      throw new Error('Report not found')
 
     const a = auditRes.data as any
     const r = reportRes.data as any
@@ -831,8 +826,21 @@ export async function GET(
       }],
     })
 
-    const buffer = await Packer.toBuffer(doc)
+    const buffer = Buffer.from(await Packer.toBuffer(doc))
     const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '_')
+
+    return { buffer, safeDomain }
+}
+
+/* ── Route handler ────────────────────────────────────────── */
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: auditId } = await params
+    const { buffer, safeDomain } = await buildDocx(auditId)
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
