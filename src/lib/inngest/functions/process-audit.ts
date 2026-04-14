@@ -241,8 +241,72 @@ ${lines.join('\n')}
 IMPORTANT CROSS-PAGE CONTEXT:
 The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
 
-      await auditLog(auditId, 'site_context_built', 'success', `Site context map built from ${lines.length} pages`)
-      return siteMap
+      // Fetch user's site notes for this domain (dismissals, context, discussions)
+      const noteDb = getDb()
+      let domain = ''
+      try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+
+      // Get the user_id for this audit (needed for site_notes lookup)
+      const { data: auditOwner } = await noteDb.from('audits').select('user_id').eq('id', auditId).single()
+      const userId = (auditOwner as any)?.user_id
+
+      let userContext = ''
+      if (domain && userId) {
+        const { data: siteNotes } = await noteDb
+          .from('site_notes')
+          .select('note_type, title, content, category, finding_ref')
+          .eq('user_id', userId)
+          .eq('domain', domain)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(30)
+
+        if (siteNotes && siteNotes.length > 0) {
+          const noteLines = (siteNotes as any[]).map((n) => {
+            const typeLabel = n.note_type === 'dismissal' ? 'SKIP' : n.note_type === 'discussion' ? 'CONTEXT' : 'NOTE'
+            return `  [${typeLabel}] ${n.title}: ${n.content}${n.category ? ` (Category: ${n.category})` : ''}`
+          })
+          userContext = `\n\nCLIENT NOTES — The site owner has provided the following context. RESPECT THESE:
+${noteLines.join('\n')}
+
+CRITICAL: If a note says "SKIP" for a specific finding, do NOT report that issue again. The client has already reviewed and dismissed it. If a note provides context (e.g., "This content exists on the About page"), adjust your analysis accordingly. These notes represent decisions the client has already made — your job is to find NEW issues, not re-flag resolved ones.`
+        }
+
+        // Also check previous audit findings that were dismissed or fixed
+        const { data: prevAudits } = await noteDb
+          .from('audits')
+          .select('id')
+          .eq('user_id', userId)
+          .neq('id', auditId)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+
+        if (prevAudits && prevAudits.length > 0) {
+          const prevAuditId = (prevAudits[0] as any).id
+          const { data: prevFindings } = await noteDb
+            .from('audit_findings')
+            .select('title, status, dismissal_reason, dismissed')
+            .eq('audit_id', prevAuditId)
+            .or('dismissed.eq.true,status.eq.fixed')
+            .limit(50)
+
+          if (prevFindings && prevFindings.length > 0) {
+            const fixedLines = (prevFindings as any[]).map((f) => {
+              if (f.dismissed) return `  [DISMISSED] "${f.title}" — ${f.dismissal_reason || 'No reason given'}`
+              return `  [FIXED] "${f.title}" — Client reports this has been resolved`
+            })
+            userContext += `\n\nPREVIOUS AUDIT FINDINGS — Status from the client's last audit:
+${fixedLines.join('\n')}
+Do NOT re-flag findings marked [DISMISSED] or [FIXED] unless the issue is clearly still present in the current content. The client has taken action on these.`
+          }
+        }
+      }
+
+      const fullContext = siteMap + userContext
+
+      await auditLog(auditId, 'site_context_built', 'success', `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''}`)
+      return fullContext
     })
 
     // ──────────────────────────────────────────────────────────

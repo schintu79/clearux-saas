@@ -832,7 +832,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           BEYOND THE REPORT — Track, Share, Improve
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
         {/* Background grid — subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',

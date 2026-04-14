@@ -152,6 +152,21 @@ export interface AuditPage {
 }
 
 export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
+export type SiteNoteType = 'context' | 'dismissal' | 'discussion'
+
+export interface SiteNote {
+  id:          string
+  user_id:     string
+  domain:      string
+  note_type:   SiteNoteType
+  category:    string | null
+  title:       string
+  content:     string
+  finding_ref: string | null
+  is_active:   boolean
+  created_at:  string
+  updated_at:  string
+}
 
 export interface AuditFinding {
   id:                string
@@ -170,6 +185,9 @@ export interface AuditFinding {
   status:            FindingStatus
   status_updated_at: string | null
   status_note:       string | null
+  dismissed:         boolean
+  dismissal_reason:  string | null
+  dismissed_at:      string | null
   created_at:        string
 }
 

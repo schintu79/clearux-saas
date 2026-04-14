@@ -38,6 +38,9 @@ import {
   RefreshCw,
   Copy,
   Check,
+  ArrowUp,
+  ArrowDown,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -334,6 +337,80 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
+/* ── Score Trend — shows improvement across re-audits ───── */
+function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; currentAuditId: string }) {
+  const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; totalIssues: number }>>([]);
+  const [improvement, setImprovement] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.trend && d.trend.length > 1) {
+          setTrend(d.trend);
+          setImprovement(d.improvement || 0);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [productUrl]);
+
+  if (loading || trend.length < 2) return null;
+
+  const maxScore = Math.max(...trend.map(t => t.overallScore));
+
+  return (
+    <div className="mb-6 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={16} className="text-violet-500" />
+          <h3 className="text-sm font-bold text-text">Score Trend</h3>
+          <span className="text-[10px] text-muted">{trend.length} audits</span>
+        </div>
+        {improvement !== 0 && (
+          <span className={`text-sm font-bold flex items-center gap-1 ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            {improvement > 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+            {improvement > 0 ? '+' : ''}{improvement} points
+          </span>
+        )}
+      </div>
+      <div className="space-y-2.5">
+        {trend.map((t, i) => {
+          const isCurrent = t.auditId === currentAuditId;
+          const dateStr = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return (
+            <div key={t.auditId} className={`flex items-center gap-3 ${isCurrent ? '' : 'opacity-70'}`}>
+              <span className="text-[11px] text-muted w-14 flex-shrink-0">{dateStr}</span>
+              <div className="flex-1 h-3 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${t.overallScore >= 70 ? 'bg-emerald-500' : t.overallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  style={{ width: `${(t.overallScore / Math.max(maxScore, 100)) * 100}%` }}
+                />
+              </div>
+              <span className={`text-sm font-bold w-8 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                {t.overallScore}
+              </span>
+              {isCurrent && <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">current</span>}
+              {i === 0 && !isCurrent && <span className="text-[9px] text-muted">baseline</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
+        <span className="text-[11px] text-muted">Issues: {trend[0].totalIssues} → {trend[trend.length - 1].totalIssues}</span>
+        <Link
+          href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
+          className="text-[11px] font-semibold bg-clip-text text-transparent hover:underline"
+          style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+        >
+          Run next audit →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 const FINDING_STATUSES = [
   { key: 'open', label: 'Open', color: 'text-muted', bg: 'bg-off', dot: 'bg-gray-400' },
   { key: 'in_progress', label: 'In Progress', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', dot: 'bg-amber-500' },
@@ -345,6 +422,9 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(finding.status || 'open');
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [dismissed, setDismissed] = useState(finding.dismissed || false);
+  const [showDismissForm, setShowDismissForm] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
   const sev = sevConfig[finding.severity] || sevConfig.medium;
 
   const handleStatusChange = async (newStatus: string) => {
@@ -359,6 +439,35 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
     } catch {}
     setStatusUpdating(false);
   };
+
+  const handleDismiss = async () => {
+    if (!dismissReason.trim()) return;
+    setStatusUpdating(true);
+    try {
+      const res = await fetch(`/api/findings/${finding.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dismiss: true, dismissal_reason: dismissReason }),
+      });
+      if (res.ok) { setDismissed(true); setShowDismissForm(false); }
+    } catch {}
+    setStatusUpdating(false);
+  };
+
+  if (dismissed) {
+    return (
+      <div className="rounded-xl border border-border/20 dark:border-white/[0.04] bg-off/30 dark:bg-white/[0.02] p-3 opacity-60">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
+          <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
+          <span className="text-[10px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
+        </div>
+        {finding.dismissal_reason && (
+          <p className="text-[11px] text-muted mt-1 ml-4">{finding.dismissal_reason}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
@@ -456,10 +565,10 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
             </div>
           )}
 
-          {/* Status toggle */}
-          <div className="flex items-center gap-2 pt-2">
+          {/* Status toggle + Dismiss */}
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Status:</span>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {FINDING_STATUSES.map((s) => {
                 const active = status === s.key;
                 return (
@@ -477,7 +586,43 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
                 );
               })}
             </div>
+            <span className="text-border mx-1 hidden sm:inline">|</span>
+            <button
+              onClick={() => setShowDismissForm(!showDismissForm)}
+              className="text-[10px] font-semibold text-muted hover:text-red-500 transition-colors"
+            >
+              Dismiss finding
+            </button>
           </div>
+
+          {/* Dismiss form */}
+          {showDismissForm && (
+            <div className="mt-2 p-3 rounded-lg bg-red-50/50 dark:bg-red-900/10 border border-red-200/30 dark:border-red-800/20">
+              <p className="text-[11px] font-semibold text-text mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
+              <textarea
+                value={dismissReason}
+                onChange={(e) => setDismissReason(e.target.value)}
+                placeholder="e.g. This is addressed on our About page, or: This is intentional for our target audience..."
+                className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-card text-text placeholder:text-placeholder focus:outline-none focus:border-violet-500 resize-none"
+                rows={2}
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleDismiss}
+                  disabled={statusUpdating || !dismissReason.trim()}
+                  className="text-[11px] font-semibold text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  Dismiss and skip on re-audit
+                </button>
+                <button
+                  onClick={() => setShowDismissForm(false)}
+                  className="text-[11px] font-semibold text-muted px-3 py-1.5 rounded-lg hover:bg-off transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1296,11 +1441,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           </div>
 
+          {/* ── Score Trend (shows when there are multiple audits of the same URL) ── */}
+          <ScoreTrend productUrl={audit.product_url} currentAuditId={auditId} />
+
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/[0.08] border border-violet-200/30 dark:border-violet-800/20">
             <RefreshCw size={15} className="text-violet-500 flex-shrink-0" />
             <p className="text-xs text-text/60 dark:text-text/50">
-              <span className="font-semibold text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, then re-audit to compare your score over time.
+              <span className="font-semibold text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
 
