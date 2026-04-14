@@ -12,7 +12,7 @@ function getAnthropicClient(): Anthropic {
   if (!_anthropic) {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set. Cannot run AI analysis.')
-    _anthropic = new Anthropic({ apiKey, timeout: 90_000 }) // 90s per request
+    _anthropic = new Anthropic({ apiKey, timeout: 60_000 }) // 60s per request
   }
   return _anthropic
 }
@@ -279,7 +279,7 @@ ${itemsToCheck}
 
 WEBSITE CONTENT (text extracted from MULTIPLE PAGES — each page starts with "URL:" followed by the page address):
 ---
-${pageContent.substring(0, 15000)}
+${pageContent.substring(0, 10000)}
 ---
 
 YOUR APPROACH — DEEP ANALYSIS, NOT SURFACE SCANNING:
@@ -374,10 +374,10 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
     const message = await withTimeout(
       anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4000,
+        max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }],
       }),
-      90_000,
+      60_000,
       `analyzeCategory(${category})`,
     )
 
@@ -416,41 +416,29 @@ export async function runFullAnalysis(
   language: string = 'en',
 ): Promise<AnalysisFinding[]> {
   const allFindings: AnalysisFinding[] = []
-  const CONCURRENCY = 3
 
-  // Process categories in batches of CONCURRENCY
-  for (let i = 0; i < UX_CATEGORIES.length; i += CONCURRENCY) {
-    const batch = UX_CATEGORIES.slice(i, i + CONCURRENCY)
-    console.log(`[runFullAnalysis] Batch ${Math.floor(i / CONCURRENCY) + 1}: ${batch.map((c) => c.name).join(', ')}`)
+  // Process categories ONE AT A TIME to avoid rate limits and memory issues
+  for (let i = 0; i < UX_CATEGORIES.length; i++) {
+    const category = UX_CATEGORIES[i]
+    console.log(`[runFullAnalysis] Category ${i + 1}/${UX_CATEGORIES.length}: ${category.name}`)
 
-    const batchResults = await Promise.allSettled(
-      batch.map((category) =>
-        analyzeCategory(
-          pageContent,
-          category.name,
-          category.items.map((item) => ({
-            title: item,
-            description: item,
-            whatToCheck: item,
-          })),
-          userFocus,
-          language,
-        ),
-      ),
+    const findings = await analyzeCategory(
+      pageContent,
+      category.name,
+      category.items.map((item) => ({
+        title: item,
+        description: item,
+        whatToCheck: item,
+      })),
+      userFocus,
+      language,
     )
 
-    for (let j = 0; j < batchResults.length; j++) {
-      const result = batchResults[j]
-      if (result.status === 'fulfilled') {
-        allFindings.push(...result.value)
-      } else {
-        console.error(`[runFullAnalysis] Category "${batch[j].name}" failed:`, result.reason)
-      }
-    }
+    allFindings.push(...findings)
 
-    // Brief pause between batches to avoid rate limits
-    if (i + CONCURRENCY < UX_CATEGORIES.length) {
-      await new Promise((r) => setTimeout(r, 1000))
+    // Brief pause between categories to avoid rate limits
+    if (i < UX_CATEGORIES.length - 1) {
+      await new Promise((r) => setTimeout(r, 500))
     }
   }
 

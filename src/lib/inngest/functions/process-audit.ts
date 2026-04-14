@@ -218,10 +218,11 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 4-7: Analyze categories in 4 batches of 3
+    // STEP 4+: Analyze categories in batches of 2
     // Each batch is a separate step → separate serverless call
+    // Running 2 categories per step keeps well within Vercel timeout
     // ──────────────────────────────────────────────────────────
-    const BATCH_SIZE = 3
+    const BATCH_SIZE = 2
     const batches = []
     for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
       batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
@@ -236,17 +237,21 @@ export const processAuditFn = inngest.createFunction(
         const db = getDb()
         let sortOrder = totalFindingsCount
         let findingsInBatch = 0
-        const batchResults = await Promise.all(
-          batch.map((categoryName) =>
-            analyzeCategory(
-              crawlResult.pageContent,
-              categoryName,
-              [], // empty = use built-in checklist items
-              auditDetails.userFocus,
-              auditDetails.language,
-            ),
-          ),
-        )
+
+        // Process categories SEQUENTIALLY within each step to avoid
+        // overwhelming Vercel serverless memory/CPU limits
+        const batchResults: Awaited<ReturnType<typeof analyzeCategory>>[] = []
+        for (const categoryName of batch) {
+          console.log(`[inngest] Analyzing: ${categoryName}`)
+          const result = await analyzeCategory(
+            crawlResult.pageContent,
+            categoryName,
+            [], // empty = use built-in checklist items
+            auditDetails.userFocus,
+            auditDetails.language,
+          )
+          batchResults.push(result)
+        }
 
         for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
           const findings = batchResults[catIdx]
