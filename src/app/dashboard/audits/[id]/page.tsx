@@ -1582,32 +1582,29 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
 
                   {/* Action buttons — 2x2 grid on mobile, inline on desktop */}
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
-                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="block">
-                      <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2.5 rounded-lg transition-all hover:brightness-110 shadow-sm bg-[#FF0000]">
-                        <Download size={13} />
-                        PDF
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer">
+                      <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white px-3 py-2 rounded-lg transition-all hover:brightness-110 shadow-sm bg-[#FF0000] whitespace-nowrap">
+                        <Download size={12} /> PDF
                       </button>
                     </a>
-                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="block">
-                      <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2.5 rounded-lg transition-all hover:brightness-110 shadow-sm bg-[#2B579A]">
-                        <Download size={13} />
-                        Word
+                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer">
+                      <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-white px-3 py-2 rounded-lg transition-all hover:brightness-110 shadow-sm bg-[#2B579A] whitespace-nowrap">
+                        <Download size={12} /> Word
                       </button>
                     </a>
                     <button
                       onClick={handleShare}
                       disabled={shareLoading}
-                      className="w-full flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3.5 py-2.5 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
                     >
-                      {shareCopied ? <><Check size={13} className="text-emerald-500" /> Copied</> : <><Share2 size={13} /> Share</>}
+                      {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
                     </button>
                     <Link
                       href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                      className="w-full flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3.5 py-2.5 rounded-lg hover:bg-surface-alt transition-colors"
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
-                      <RefreshCw size={13} />
-                      Re-audit
+                      <RefreshCw size={12} /> Re-audit
                     </Link>
                   </div>
                 </div>
@@ -1863,38 +1860,35 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-lg mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto">
               <a
                 href={`/api/reports/${auditId}/pdf`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-all hover:brightness-110 shadow-sm bg-[#FF0000]"
+                className="flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all hover:brightness-110 shadow-sm bg-[#FF0000] whitespace-nowrap"
               >
-                <Download size={14} />
-                {L.downloadPdf}
+                <Download size={14} /> PDF Report
               </a>
               <a
                 href={`/api/reports/${auditId}/docx`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-white text-sm font-semibold px-4 py-3 rounded-xl transition-all hover:brightness-110 shadow-sm bg-[#2B579A]"
+                className="flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all hover:brightness-110 shadow-sm bg-[#2B579A] whitespace-nowrap"
               >
-                <Download size={14} />
-                {L.downloadWord}
+                <Download size={14} /> Word Report
               </a>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-4 py-3 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold py-3 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
               >
                 {shareCopied ? <><Check size={14} className="text-emerald-500" /> Copied</> : <><Share2 size={14} /> Share</>}
               </button>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-4 py-3 rounded-xl hover:bg-surface-alt transition-colors"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
-                <RefreshCw size={14} />
-                Re-audit
+                <RefreshCw size={14} /> Re-audit
               </Link>
             </div>
             {shareUrl && (
