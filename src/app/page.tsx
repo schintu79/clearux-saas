@@ -952,8 +952,29 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-violet-500" /> <span>PDF & Word exports</span></div>
                 </div>
               </div>
-              {/* Visual mock — 4 pillar cards matching real audit output */}
-              <div className="grid grid-cols-2 gap-3" aria-label="Illustrative example" data-demo="true" role="presentation">
+              {/* Visual mock — overall score + 4 pillar cards */}
+              <div aria-label="Illustrative example" data-demo="true" role="presentation">
+                {/* Overall score header */}
+                <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden mb-3">
+                  <div className="h-1" style={{ background: 'var(--gradient-brand)' }} />
+                  <div className="p-4 flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full border-[3px] border-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">93</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Eye size={12} className="text-muted" />
+                        <span className="text-[10px] text-muted">Shared audit report</span>
+                        <span className="text-[8px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-500/15 px-1.5 py-0.5 rounded">DEMO</span>
+                      </div>
+                      <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
+                      <p className="text-[11px] text-muted">Excellent | 6 issues found</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4 pillar cards */}
+                <div className="grid grid-cols-2 gap-3">
                 {[
                   { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-violet-500 to-violet-600', iconBg: 'bg-violet-500',
                     cats: [{ n: 'Visual Design & First Impression', s: 35 }, { n: 'Value Proposition & Messaging', s: 83 }, { n: 'Navigation & Info Architecture', s: 95 }, { n: 'Content Quality & Readability', s: 73 }] },
@@ -993,10 +1014,9 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
-
-
 
           </div>
         </div>
