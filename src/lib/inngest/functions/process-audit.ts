@@ -410,8 +410,10 @@ export const processAuditFn = inngest.createFunction(
           })
       } catch (err) {
         // Screenshots are non-fatal — audit can complete without them
-        console.error('[inngest] Screenshot capture error (non-fatal):', err)
-        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — audit will complete without screenshots')
+        const errMsg = err instanceof Error ? err.message : String(err)
+        console.error('[inngest] Screenshot capture error (non-fatal):', errMsg)
+        console.error('[inngest] Screenshot stack:', err instanceof Error ? err.stack : 'no stack')
+        await auditLog(auditId, 'screenshots_error', 'warning', `Screenshot capture failed: ${errMsg.slice(0, 300)}`)
       }
     })
 

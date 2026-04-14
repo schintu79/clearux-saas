@@ -24,7 +24,10 @@ async function captureViaScreenshotOne(
   _selector?: string | null,
 ): Promise<Buffer | null> {
   const apiKey = process.env.SCREENSHOTONE_API_KEY
-  if (!apiKey) return null
+  if (!apiKey) {
+    console.error('[screenshots] SCREENSHOTONE_API_KEY is NOT set in environment variables')
+    return null
+  }
 
   try {
     const params = new URLSearchParams({
@@ -46,19 +49,26 @@ async function captureViaScreenshotOne(
       params.set('selector', _selector)
     }
 
-    const res = await fetch(`https://api.screenshotone.com/take?${params}`, {
+    const requestUrl = `https://api.screenshotone.com/take?${params}`
+    console.log(`[screenshots] ScreenshotOne request: ${url} (key: ${apiKey.slice(0, 6)}...)`)
+
+    const res = await fetch(requestUrl, {
       signal: AbortSignal.timeout(30_000),
     })
 
     if (!res.ok) {
-      console.error('[screenshots] ScreenshotOne returned', res.status)
+      const errorBody = await res.text().catch(() => 'unable to read response body')
+      console.error(`[screenshots] ScreenshotOne FAILED: HTTP ${res.status} for ${url}`)
+      console.error(`[screenshots] ScreenshotOne response body: ${errorBody.slice(0, 500)}`)
       return null
     }
 
     const arrayBuf = await res.arrayBuffer()
-    return Buffer.from(arrayBuf)
+    const buf = Buffer.from(arrayBuf)
+    console.log(`[screenshots] ScreenshotOne OK: ${url} (${(buf.length / 1024).toFixed(0)} KB)`)
+    return buf
   } catch (err) {
-    console.error('[screenshots] ScreenshotOne error:', err instanceof Error ? err.message : err)
+    console.error(`[screenshots] ScreenshotOne EXCEPTION for ${url}:`, err instanceof Error ? err.message : err)
     return null
   }
 }
@@ -196,6 +206,8 @@ export async function uploadScreenshot(
     const db = createServiceSupabase()
     const path = `${auditId}/${filename}`
 
+    console.log(`[screenshots] Uploading to Supabase: audit-screenshots/${path} (${(buffer.length / 1024).toFixed(0)} KB)`)
+
     const { error } = await db.storage
       .from('audit-screenshots')
       .upload(path, buffer, {
@@ -205,9 +217,9 @@ export async function uploadScreenshot(
 
     if (error) {
       if (error.message?.includes('not found') || error.message?.includes('Bucket')) {
-        console.error(`[screenshots] BUCKET MISSING: The 'audit-screenshots' storage bucket does not exist in Supabase. Run this SQL: INSERT INTO storage.buckets (id, name, public) VALUES ('audit-screenshots', 'audit-screenshots', true) ON CONFLICT (id) DO NOTHING;`)
+        console.error(`[screenshots] BUCKET MISSING: The 'audit-screenshots' storage bucket does not exist in Supabase. Run this SQL:\n  INSERT INTO storage.buckets (id, name, public) VALUES ('audit-screenshots', 'audit-screenshots', true) ON CONFLICT (id) DO NOTHING;`)
       } else {
-        console.error('[screenshots] Upload error:', error.message)
+        console.error(`[screenshots] Upload FAILED for ${path}: ${error.message}`)
       }
       return null
     }
@@ -216,9 +228,11 @@ export async function uploadScreenshot(
       .from('audit-screenshots')
       .getPublicUrl(path)
 
-    return urlData?.publicUrl || null
+    const publicUrl = urlData?.publicUrl || null
+    console.log(`[screenshots] Upload OK: ${publicUrl}`)
+    return publicUrl
   } catch (err) {
-    console.error('[screenshots] Upload exception:', err instanceof Error ? err.message : err)
+    console.error('[screenshots] Upload EXCEPTION:', err instanceof Error ? err.message : err)
     return null
   }
 }
