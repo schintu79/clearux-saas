@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
 import { createServiceSupabase } from '@/lib/supabase-server'
-import { getReportLabels, getLocale } from '@/lib/languages'
+import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
 import fs from 'fs'
 import path from 'path'
 
@@ -38,12 +38,18 @@ const C = {
   border: '#E8E8ED',
 }
 
-const PILLARS = [
-  { name: 'Foundation', start: 0, end: 4, color: C.pillarFoundation },
-  { name: 'Human Experience', start: 4, end: 8, color: C.pillarHuman },
-  { name: 'Inclusive Design', start: 8, end: 12, color: C.pillarInclusive },
-  { name: 'Future Readiness', start: 12, end: 16, color: C.pillarFuture },
-]
+const PILLAR_COLORS = [C.pillarFoundation, C.pillarHuman, C.pillarInclusive, C.pillarFuture]
+const PILLAR_RANGES = [[0, 4], [4, 8], [8, 12], [12, 16]]
+
+function buildPillars(lang: string) {
+  const names = getPillarNames(lang)
+  return names.map((name, i) => ({
+    name,
+    start: PILLAR_RANGES[i][0],
+    end: PILLAR_RANGES[i][1],
+    color: PILLAR_COLORS[i],
+  }))
+}
 
 function scoreColor(s: number): string {
   if (s >= 70) return C.scoreGreen
@@ -51,13 +57,7 @@ function scoreColor(s: number): string {
   return C.scoreRed
 }
 
-function scoreLabel(s: number): string {
-  if (s >= 90) return 'Excellent'
-  if (s >= 75) return 'Good'
-  if (s >= 60) return 'Decent'
-  if (s >= 40) return 'Needs Work'
-  return 'Poor'
-}
+// scoreLabel is now imported from languages.ts as getScoreLabel(score, lang)
 
 function sevColor(sev: string): string {
   switch (sev) {
@@ -102,6 +102,8 @@ export async function GET(
 
     const lang = a.language || 'en'
     const L = getReportLabels(lang)
+    const UI = getUILabels(lang)
+    const PILLARS = buildPillars(lang)
     const dateStr = new Date(a.created_at).toLocaleDateString(getLocale(lang), {
       year: 'numeric', month: 'long', day: 'numeric',
     })
@@ -206,8 +208,8 @@ export async function GET(
 
     // Subtitle
     const pdfSubtitle = isWhiteLabel
-      ? (wlCompany ? `${wlCompany} — UX Audit Report` : 'UX Audit Report')
-      : 'Human-Centered, AI-Powered Digital Audits'
+      ? (wlCompany ? `${wlCompany} — ${UI.uxAuditReport}` : UI.uxAuditReport)
+      : UI.reportSubtitle
     doc.fontSize(11).font('Helvetica').fillColor(C.textSec)
       .text(pdfSubtitle, leftM, logoLoaded ? 155 : 160, { align: 'center', width: contentW })
 
@@ -218,7 +220,7 @@ export async function GET(
     doc.fontSize(16).font('Helvetica').fillColor(C.textTert).text(' / 100')
 
     doc.fontSize(16).font('Helvetica-Bold').fillColor(C.text)
-      .text(scoreLabel(overall), leftM, undefined, { align: 'center', width: contentW })
+      .text(getScoreLabel(overall, lang), leftM, undefined, { align: 'center', width: contentW })
 
     doc.moveDown(1)
     doc.fontSize(12).font('Helvetica').fillColor(C.accent)
@@ -305,7 +307,7 @@ export async function GET(
       doc.fontSize(13).font('Helvetica-Bold').fillColor(pillar.color)
         .text(pillar.name, leftM + 12, phy + 6, { width: contentW - 80 })
       doc.fontSize(8).font('Helvetica').fillColor(C.textSec)
-        .text(`${cats.length} categories evaluated`, leftM + 12, phy + 24)
+        .text(`${cats.length} ${UI.categoriesEvaluated}`, leftM + 12, phy + 24)
       doc.fontSize(22).font('Helvetica-Bold').fillColor(pillar.color)
         .text(`${pillar.avg}`, leftM + contentW - 60, phy + 8, { width: 48, align: 'right' })
       doc.y = phy + 46
@@ -379,7 +381,7 @@ export async function GET(
 
           // Severity + URL
           doc.fontSize(8).font('Helvetica-Bold').fillColor(sevColor(sev))
-            .text(sev.toUpperCase(), leftM, undefined, { continued: true })
+            .text(getSeverityLabel(sev, lang).toUpperCase(), leftM, undefined, { continued: true })
           if (finding.page_url) {
             let displayUrl = finding.page_url
             try { const u = new URL(finding.page_url); displayUrl = u.hostname + (u.pathname === '/' ? '' : u.pathname) } catch {}
@@ -406,7 +408,7 @@ export async function GET(
             const recH = doc.heightOfString(finding.recommendation, { width: contentW - 24 })
             doc.rect(leftM, recY - 4, contentW, recH + 28).fill(C.recBg)
             doc.fontSize(8).font('Helvetica-Bold').fillColor(C.text)
-              .text('Recommendation', leftM + 12, recY + 2)
+              .text(L.recommendation, leftM + 12, recY + 2)
             doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
               .text(finding.recommendation, leftM + 12, recY + 14, { width: contentW - 24 })
             doc.y = recY + recH + 28

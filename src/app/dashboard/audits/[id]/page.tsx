@@ -46,6 +46,7 @@ import type {
   FindingSeverity,
   Report,
 } from '@/types/database';
+import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import clsx from 'clsx';
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -71,9 +72,17 @@ function formatUrl(url: string) {
 /* ── Pillar configuration ─────────────────────────────────── */
 // Must match the 16 categories in analyzer.ts exactly (4 per pillar)
 
-const PILLAR_CONFIG = [
+/* Category icons in index order (must match the 16 categories in analyzer.ts) */
+const CATEGORY_ICONS: React.ElementType[] = [
+  Eye, Target, Map, Type,                          // Foundation (0-3)
+  MousePointerClick, Shield, AlertTriangle, Heart,  // Human Experience (4-7)
+  Accessibility, Brain, Sparkles, Smartphone,       // Inclusive Design (8-11)
+  Gauge, Search, Zap, Globe,                        // Future Readiness (12-15)
+];
+
+/* Pillar visual config — names come from translations at render time */
+const PILLAR_STYLE = [
   {
-    name: 'Foundation',
     color: 'violet',
     gradient: 'from-violet-500 to-violet-600',
     gradientSubtle: 'from-violet-50 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/10',
@@ -82,16 +91,9 @@ const PILLAR_CONFIG = [
     iconColor: 'text-violet-500',
     badgeBg: 'bg-violet-500',
     scoreBg: 'bg-violet-500',
-    range: [0, 4],
-    categories: [
-      { name: 'Visual Design & First Impression', Icon: Eye },
-      { name: 'Value Proposition & Messaging', Icon: Target },
-      { name: 'Navigation & Information Architecture', Icon: Map },
-      { name: 'Content Quality & Readability', Icon: Type },
-    ],
+    range: [0, 4] as [number, number],
   },
   {
-    name: 'Human Experience',
     color: 'pink',
     gradient: 'from-pink-500 to-pink-600',
     gradientSubtle: 'from-pink-50 to-pink-100/50 dark:from-pink-950/30 dark:to-pink-900/10',
@@ -100,16 +102,9 @@ const PILLAR_CONFIG = [
     iconColor: 'text-pink-500',
     badgeBg: 'bg-pink-500',
     scoreBg: 'bg-pink-500',
-    range: [4, 8],
-    categories: [
-      { name: 'Calls-to-Action & Conversion Path', Icon: MousePointerClick },
-      { name: 'Trust, Credibility & Social Proof', Icon: Shield },
-      { name: 'Ethical UX & Dark Pattern Detection', Icon: AlertTriangle },
-      { name: 'Emotional Design & Psychological Safety', Icon: Heart },
-    ],
+    range: [4, 8] as [number, number],
   },
   {
-    name: 'Inclusive Design',
     color: 'amber',
     gradient: 'from-amber-500 to-amber-600',
     gradientSubtle: 'from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10',
@@ -118,16 +113,9 @@ const PILLAR_CONFIG = [
     iconColor: 'text-amber-500',
     badgeBg: 'bg-amber-500',
     scoreBg: 'bg-amber-500',
-    range: [8, 12],
-    categories: [
-      { name: 'Accessibility & WCAG Compliance', Icon: Accessibility },
-      { name: 'Cognitive Accessibility & Neurodiversity', Icon: Brain },
-      { name: 'Digital Wellbeing & Responsible Design', Icon: Sparkles },
-      { name: 'Mobile Experience & Responsive Design', Icon: Smartphone },
-    ],
+    range: [8, 12] as [number, number],
   },
   {
-    name: 'Future Readiness',
     color: 'emerald',
     gradient: 'from-emerald-500 to-emerald-600',
     gradientSubtle: 'from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/10',
@@ -136,76 +124,78 @@ const PILLAR_CONFIG = [
     iconColor: 'text-emerald-500',
     badgeBg: 'bg-emerald-500',
     scoreBg: 'bg-emerald-500',
-    range: [12, 16],
-    categories: [
-      { name: 'Performance & Technical Health', Icon: Gauge },
-      { name: 'AI Discoverability & LLM Readiness', Icon: Search },
-      { name: 'AI Agent Readiness', Icon: Zap },
-      { name: 'Cultural Sensitivity & Global Readiness', Icon: Globe },
-    ],
+    range: [12, 16] as [number, number],
   },
 ];
 
-const CATEGORY_ICONS_BY_INDEX: React.ElementType[] = PILLAR_CONFIG.flatMap(p => p.categories.map(c => c.Icon));
+/** Build full PILLAR_CONFIG with translated names */
+function buildPillarConfig(lang: string) {
+  const pillarNames = getPillarNames(lang);
+  const categoryNames = getCategoryNames(lang);
+  return PILLAR_STYLE.map((style, i) => ({
+    ...style,
+    name: pillarNames[i],
+    categories: categoryNames.slice(style.range[0], style.range[1]).map((name, j) => ({
+      name,
+      Icon: CATEGORY_ICONS[style.range[0] + j],
+    })),
+  }));
+}
 
 function getCategoryIcon(name: string, index?: number): React.ElementType {
-  if (index !== undefined && index >= 0 && index < CATEGORY_ICONS_BY_INDEX.length) {
-    return CATEGORY_ICONS_BY_INDEX[index];
-  }
-  const lower = name.toLowerCase();
-  for (const pillar of PILLAR_CONFIG) {
-    for (const cat of pillar.categories) {
-      if (lower.includes(cat.name.toLowerCase().split(' ')[0])) return cat.Icon;
-    }
+  if (index !== undefined && index >= 0 && index < CATEGORY_ICONS.length) {
+    return CATEGORY_ICONS[index];
   }
   return Sparkles;
 }
 
-function getPillarForCategory(index: number) {
-  for (const pillar of PILLAR_CONFIG) {
+function getPillarForCategory(index: number, pillarConfig: ReturnType<typeof buildPillarConfig>) {
+  for (const pillar of pillarConfig) {
     if (index >= pillar.range[0] && index < pillar.range[1]) return pillar;
   }
-  return PILLAR_CONFIG[0];
+  return pillarConfig[0];
 }
 
-const severityConfig = {
-  critical: {
-    badge: 'danger' as const,
-    label: 'Critical',
-    bg: 'bg-white dark:bg-card',
-    border: 'border-border/40 dark:border-white/[0.06]',
-    dot: 'bg-red-500',
-    text: 'text-red-600 dark:text-red-400',
-    impactBg: 'bg-red-50 dark:bg-red-950/20',
-  },
-  high: {
-    badge: 'failed' as const,
-    label: 'High',
-    bg: 'bg-white dark:bg-card',
-    border: 'border-border/40 dark:border-white/[0.06]',
-    dot: 'bg-orange-500',
-    text: 'text-orange-600 dark:text-orange-400',
-    impactBg: 'bg-orange-50 dark:bg-orange-950/20',
-  },
-  medium: {
-    badge: 'pending' as const,
-    label: 'Medium',
-    bg: 'bg-white dark:bg-card',
-    border: 'border-border/40 dark:border-white/[0.06]',
-    dot: 'bg-yellow-500',
-    text: 'text-yellow-600 dark:text-yellow-500',
-    impactBg: 'bg-yellow-50 dark:bg-yellow-950/20',
-  },
-  low: {
-    badge: 'active' as const,
-    label: 'Low',
-    bg: 'bg-white dark:bg-card',
-    border: 'border-border/40 dark:border-white/[0.06]',
-    dot: 'bg-blue-500',
-    text: 'text-blue-600 dark:text-blue-400',
-    impactBg: 'bg-blue-50 dark:bg-blue-950/20',
-  },
-};
+function buildSeverityConfig(L: UILabels) {
+  return {
+    critical: {
+      badge: 'danger' as const,
+      label: L.severityCritical,
+      bg: 'bg-white dark:bg-card',
+      border: 'border-border/40 dark:border-white/[0.06]',
+      dot: 'bg-red-500',
+      text: 'text-red-600 dark:text-red-400',
+      impactBg: 'bg-red-50 dark:bg-red-950/20',
+    },
+    high: {
+      badge: 'failed' as const,
+      label: L.severityHigh,
+      bg: 'bg-white dark:bg-card',
+      border: 'border-border/40 dark:border-white/[0.06]',
+      dot: 'bg-orange-500',
+      text: 'text-orange-600 dark:text-orange-400',
+      impactBg: 'bg-orange-50 dark:bg-orange-950/20',
+    },
+    medium: {
+      badge: 'pending' as const,
+      label: L.severityMedium,
+      bg: 'bg-white dark:bg-card',
+      border: 'border-border/40 dark:border-white/[0.06]',
+      dot: 'bg-yellow-500',
+      text: 'text-yellow-600 dark:text-yellow-500',
+      impactBg: 'bg-yellow-50 dark:bg-yellow-950/20',
+    },
+    low: {
+      badge: 'active' as const,
+      label: L.severityLow,
+      bg: 'bg-white dark:bg-card',
+      border: 'border-border/40 dark:border-white/[0.06]',
+      dot: 'bg-blue-500',
+      text: 'text-blue-600 dark:text-blue-400',
+      impactBg: 'bg-blue-50 dark:bg-blue-950/20',
+    },
+  };
+}
 
 function scoreColor(s: number) {
   if (s >= 70) return 'text-emerald-600 dark:text-emerald-400';
@@ -219,70 +209,30 @@ function scoreBg(s: number) {
   return 'bg-red-500';
 }
 
-function scoreLabel(s: number) {
-  if (s >= 90) return 'Excellent';
-  if (s >= 75) return 'Good';
-  if (s >= 60) return 'Decent';
-  if (s >= 40) return 'Needs Work';
-  return 'Poor';
-}
-
-const statusMeta: Record<
+function buildStatusMeta(L: UILabels): Record<
   string,
   { label: string; color: string; icon: React.ElementType; description: string }
-> = {
-  pending_payment: {
-    label: 'Awaiting Payment',
-    color: 'pending',
-    icon: Clock,
-    description: 'Complete payment to start the audit.',
-  },
-  payment_received: {
-    label: 'Payment Confirmed',
-    color: 'active',
-    icon: CheckCircle2,
-    description: 'Payment received. Your audit is being queued.',
-  },
-  crawling: {
-    label: 'Crawling Website',
-    color: 'active',
-    icon: Globe,
-    description: 'Our AI is crawling your website and collecting data...',
-  },
-  analysing: {
-    label: 'Analysing UX',
-    color: 'active',
-    icon: Sparkles,
-    description: 'Running deep analysis across 16 categories...',
-  },
-  generating_report: {
-    label: 'Generating Report',
-    color: 'active',
-    icon: FileSearch,
-    description: 'Compiling your professional audit report...',
-  },
-  completed: {
-    label: 'Completed',
-    color: 'completed',
-    icon: CheckCircle2,
-    description: 'Your audit is ready.',
-  },
-  failed: {
-    label: 'Failed',
-    color: 'failed',
-    icon: AlertTriangle,
-    description: 'Something went wrong. You can retry the audit.',
-  },
-};
+> {
+  return {
+    pending_payment: { label: L.statusAwaitingPayment, color: 'pending', icon: Clock, description: L.descAwaitingPayment },
+    payment_received: { label: L.statusPaymentConfirmed, color: 'active', icon: CheckCircle2, description: L.descPaymentConfirmed },
+    crawling: { label: L.statusCrawling, color: 'active', icon: Globe, description: L.descCrawling },
+    analysing: { label: L.statusAnalysing, color: 'active', icon: Sparkles, description: L.descAnalysing },
+    generating_report: { label: L.statusGeneratingReport, color: 'active', icon: FileSearch, description: L.descGeneratingReport },
+    completed: { label: L.statusCompleted, color: 'completed', icon: CheckCircle2, description: L.descCompleted },
+    failed: { label: L.statusFailed, color: 'failed', icon: AlertTriangle, description: L.descFailed },
+  };
+}
 
-/* ── Progress steps ──────────────────────────────────────── */
-const progressSteps = [
-  { key: 'payment_received', label: 'Payment' },
-  { key: 'crawling', label: 'Crawling' },
-  { key: 'analysing', label: 'Analysing' },
-  { key: 'generating_report', label: 'Report' },
-  { key: 'completed', label: 'Done' },
-];
+function buildProgressSteps(L: UILabels) {
+  return [
+    { key: 'payment_received', label: L.stepPayment },
+    { key: 'crawling', label: L.stepCrawling },
+    { key: 'analysing', label: L.stepAnalysing },
+    { key: 'generating_report', label: L.stepReport },
+    { key: 'completed', label: L.stepDone },
+  ];
+}
 
 /* ── Rotating checkpoint labels ─────────────────────────── */
 const auditCheckpoints = [
@@ -344,8 +294,8 @@ const auditCheckpoints = [
   'Checking progressive disclosure patterns',
 ];
 
-function getStepIndex(status: string) {
-  return progressSteps.findIndex((s) => s.key === status);
+function getStepIndex(status: string, steps: ReturnType<typeof buildProgressSteps>) {
+  return steps.findIndex((s) => s.key === status);
 }
 
 /* ── Rotating checkpoint text ─────────────────────────────── */
@@ -379,9 +329,9 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
-function FindingCard({ finding, pillarColor, categoryName }: { finding: AuditFinding; pillarColor: string; categoryName?: string }) {
+function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig> }) {
   const [open, setOpen] = useState(false);
-  const sev = severityConfig[finding.severity] || severityConfig.medium;
+  const sev = sevConfig[finding.severity] || sevConfig.medium;
 
   return (
     <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
@@ -499,15 +449,22 @@ function ExpandableSummary({ text }: { text: string }) {
 }
 
 /* ── Pillar Section ───────────────────────────────────────── */
+const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain];
+
 function PillarSection({
   pillar,
+  pillarIndex,
   categoryScores,
   findings,
+  lang,
 }: {
-  pillar: typeof PILLAR_CONFIG[number];
+  pillar: ReturnType<typeof buildPillarConfig>[number];
+  pillarIndex: number;
   categoryScores: Array<{ name: string; score: number; summary: string }>;
   findings: AuditFinding[];
+  lang: string;
 }) {
+  const L = getUILabels(lang);
   const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
   const avgScore = pillarCats.length > 0
     ? Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length)
@@ -549,19 +506,16 @@ function PillarSection({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-sm`}>
-              {pillar.name === 'Foundation' && <Scale size={18} className="text-white" />}
-              {pillar.name === 'Human Experience' && <Heart size={18} className="text-white" />}
-              {pillar.name === 'Inclusive Design' && <Accessibility size={18} className="text-white" />}
-              {pillar.name === 'Future Readiness' && <Brain size={18} className="text-white" />}
+              {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'text-white' })}
             </div>
             <div>
               <h2 className="font-manrope font-bold text-lg text-text">{pillar.name}</h2>
-              <p className="text-xs text-muted">{pillarCats.length} categories evaluated</p>
+              <p className="text-xs text-muted">{pillarCats.length} {L.categoriesEvaluated}</p>
             </div>
           </div>
           <div className="text-right">
             <p className={`text-2xl font-bold font-manrope ${scoreColor(avgScore)}`}>{avgScore}</p>
-            <p className="text-[11px] text-muted">{scoreLabel(avgScore)}</p>
+            <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
 
@@ -615,7 +569,7 @@ function PillarSection({
             </div>
             <div className="space-y-2">
               {sorted.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} />
+                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} />
               ))}
             </div>
           </div>
@@ -918,12 +872,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   /* ── Derived state ─────────────────────────────────────── */
   const report = audit.report as Report | null;
+  const auditLang = (audit as any).language || 'en';
+  const L = getUILabels(auditLang);
+  const PILLAR_CONFIG = buildPillarConfig(auditLang);
+  const severityConfig = buildSeverityConfig(L);
+  const statusMeta = buildStatusMeta(L);
+  const progressSteps = buildProgressSteps(L);
+
   const meta = statusMeta[audit.status] || statusMeta.pending_payment;
   const StatusIcon = meta.icon;
   const isCompleted = audit.status === 'completed';
   const isInProgress = ['crawling', 'analysing', 'generating_report', 'payment_received'].includes(audit.status);
   const canDelete = audit.status === 'pending_payment';
-  const currentStepIdx = getStepIndex(audit.status);
+  const currentStepIdx = getStepIndex(audit.status, progressSteps);
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
@@ -954,7 +915,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         Math.floor(f.sort_order / Math.max(1, findingsPerCategory)),
         totalCategories - 1,
       );
-      const pillar = getPillarForCategory(estimatedCatIdx);
+      const pillar = getPillarForCategory(estimatedCatIdx, PILLAR_CONFIG);
       perPillar[pillar.name].push(f);
     }
 
@@ -1171,7 +1132,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                    <h2 className="text-xl font-bold font-manrope text-text">Overall Score</h2>
+                    <h2 className="text-xl font-bold font-manrope text-text">{L.overallScore}</h2>
                     <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
                       (report.overall_score ?? 0) >= 70
                         ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
@@ -1179,7 +1140,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                           : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                     }`}>
-                      {scoreLabel(report.overall_score ?? 0)}
+                      {getScoreLabel(report.overall_score ?? 0, auditLang)}
                     </span>
                   </div>
 
@@ -1225,26 +1186,26 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {report.total_issues > 0 && (
                 <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
                   <span className="text-sm font-semibold text-text">
-                    {report.total_issues} issues found
+                    {report.total_issues} {L.issuesFound}
                   </span>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     {severityCounts.critical > 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                        {severityCounts.critical} critical
+                        {severityCounts.critical} {L.severityCritical.toLowerCase()}
                       </span>
                     )}
                     {severityCounts.high > 0 && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        {severityCounts.high} high
+                        {severityCounts.high} {L.severityHigh.toLowerCase()}
                       </span>
                     )}
                     {severityCounts.medium > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.medium} medium</span>
+                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.medium} {L.severityMedium.toLowerCase()}</span>
                     )}
                     {severityCounts.low > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.low} low</span>
+                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.low} {L.severityLow.toLowerCase()}</span>
                     )}
                   </div>
                 </div>
@@ -1263,7 +1224,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 loading="lazy"
               />
               <div className="px-4 py-2 bg-card border-t border-border/20 dark:border-white/[0.03]">
-                <p className="text-xs text-muted">Homepage captured during audit</p>
+                <p className="text-xs text-muted">{L.homepageCaptured}</p>
               </div>
             </div>
           )}
@@ -1281,9 +1242,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     : 'text-muted hover:text-text',
                 )}
               >
-                {tab === 'overview' && 'Overview'}
-                {tab === 'findings' && `Findings (${findings.length})`}
-                {tab === 'pages' && `Pages (${auditPages.length})`}
+                {tab === 'overview' && L.tabOverview}
+                {tab === 'findings' && `${L.tabFindings} (${findings.length})`}
+                {tab === 'pages' && `${L.tabPages} (${auditPages.length})`}
               </button>
             ))}
           </div>
@@ -1294,7 +1255,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Executive Summary */}
               {report.executive_summary && (
                 <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-manrope font-bold text-lg text-text mb-3">Executive Summary</h2>
+                  <h2 className="font-manrope font-bold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
@@ -1304,7 +1265,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
                           <Zap size={14} className="text-white" />
                         </div>
-                        <p className="text-sm font-bold text-text">Top Priority Recommendations</p>
+                        <p className="text-sm font-bold text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
                       </div>
                       <div className="space-y-3">
                         {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
@@ -1323,19 +1284,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
                     <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-muted leading-relaxed">
-                      For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.
+                      {L.qualitativeNote}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Pillar Sections with scores and findings */}
-              {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar) => (
+              {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar, pillarIdx) => (
                 <PillarSection
                   key={pillar.name}
                   pillar={pillar}
+                  pillarIndex={pillarIdx}
                   categoryScores={categoryScores}
                   findings={findingsByPillar[pillar.name] || []}
+                  lang={auditLang}
                 />
               ))}
 
@@ -1363,7 +1326,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {findings.length > 0 && (
                     <div className="space-y-3">
                       {findings.map((finding) => (
-                        <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" />
+                        <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} />
                       ))}
                     </div>
                   )}
@@ -1378,8 +1341,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {findings.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-3" />
-                  <p className="text-text font-semibold">No issues found</p>
-                  <p className="text-sm text-muted mt-1">Your site passed all checks.</p>
+                  <p className="text-text font-semibold">{L.noIssuesFound}</p>
+                  <p className="text-sm text-muted mt-1">{L.noIssuesDescription}</p>
                 </div>
               ) : (
                 (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
@@ -1399,7 +1362,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                       <div className="space-y-2">
                         {items.map((finding) => (
-                          <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" />
+                          <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} />
                         ))}
                       </div>
                     </div>
@@ -1413,7 +1376,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'pages' && (
             <div>
               <p className="text-sm text-muted mb-4">
-                {auditPages.length} page{auditPages.length !== 1 ? 's' : ''} crawled and analysed during this audit
+                {auditPages.length} {L.pagesCrawled}
               </p>
               <div className="bg-card border border-border/30 dark:border-white/[0.06] rounded-xl overflow-hidden divide-y divide-border/30 dark:divide-white/[0.04]">
                 {auditPages.map((pg, idx) => (
@@ -1454,7 +1417,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               style={{ background: 'var(--gradient-brand)' }}
             >
               <Download size={14} />
-              Download PDF Report
+              {L.downloadPdf}
             </a>
             <a
               href={`/api/reports/${auditId}/docx`}
@@ -1463,7 +1426,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               className="inline-flex items-center gap-2 bg-card border border-border text-text text-sm font-semibold px-6 py-3 rounded-xl hover:bg-surface-alt transition-colors"
             >
               <Download size={14} />
-              Download Word Report
+              {L.downloadWord}
             </a>
           </div>
         </>

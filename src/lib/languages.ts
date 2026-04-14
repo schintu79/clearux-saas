@@ -147,3 +147,397 @@ export function getLocale(code: string): string {
   }
   return localeMap[code] || 'en-US'
 }
+
+// ============================================================
+// UI Labels — translated strings for dashboard + reports
+// ============================================================
+
+export interface UILabels {
+  // Pillar names
+  pillarFoundation: string
+  pillarHumanExperience: string
+  pillarInclusiveDesign: string
+  pillarFutureReadiness: string
+  // Severity
+  severityCritical: string
+  severityHigh: string
+  severityMedium: string
+  severityLow: string
+  // Score ratings
+  scoreExcellent: string
+  scoreGood: string
+  scoreDecent: string
+  scoreNeedsWork: string
+  scorePoor: string
+  // Status
+  statusAwaitingPayment: string
+  statusPaymentConfirmed: string
+  statusCrawling: string
+  statusAnalysing: string
+  statusGeneratingReport: string
+  statusCompleted: string
+  statusFailed: string
+  // Status descriptions
+  descAwaitingPayment: string
+  descPaymentConfirmed: string
+  descCrawling: string
+  descAnalysing: string
+  descGeneratingReport: string
+  descCompleted: string
+  descFailed: string
+  // Progress steps
+  stepPayment: string
+  stepCrawling: string
+  stepAnalysing: string
+  stepReport: string
+  stepDone: string
+  // Tab labels
+  tabOverview: string
+  tabFindings: string
+  tabPages: string
+  // Section headings
+  overallScore: string
+  issuesFound: string
+  noIssuesFound: string
+  noIssuesDescription: string
+  pagesCrawled: string
+  categoriesEvaluated: string
+  homepageCaptured: string
+  qualitativeNote: string
+  // Buttons
+  downloadPdf: string
+  downloadWord: string
+  // Report cover
+  uxAuditReport: string
+  reportSubtitle: string
+}
+
+const UI_LABELS: Record<string, UILabels> = {
+  en: {
+    pillarFoundation: 'Foundation',
+    pillarHumanExperience: 'Human Experience',
+    pillarInclusiveDesign: 'Inclusive Design',
+    pillarFutureReadiness: 'Future Readiness',
+    severityCritical: 'Critical',
+    severityHigh: 'High',
+    severityMedium: 'Medium',
+    severityLow: 'Low',
+    scoreExcellent: 'Excellent',
+    scoreGood: 'Good',
+    scoreDecent: 'Decent',
+    scoreNeedsWork: 'Needs Work',
+    scorePoor: 'Poor',
+    statusAwaitingPayment: 'Awaiting Payment',
+    statusPaymentConfirmed: 'Payment Confirmed',
+    statusCrawling: 'Crawling Website',
+    statusAnalysing: 'Analysing UX',
+    statusGeneratingReport: 'Generating Report',
+    statusCompleted: 'Completed',
+    statusFailed: 'Failed',
+    descAwaitingPayment: 'Complete payment to start the audit.',
+    descPaymentConfirmed: 'Payment received. Your audit is being queued.',
+    descCrawling: 'Our AI is crawling your website and collecting data...',
+    descAnalysing: 'Running deep analysis across 16 categories...',
+    descGeneratingReport: 'Compiling your professional audit report...',
+    descCompleted: 'Your audit is ready.',
+    descFailed: 'Something went wrong. You can retry the audit.',
+    stepPayment: 'Payment',
+    stepCrawling: 'Crawling',
+    stepAnalysing: 'Analysing',
+    stepReport: 'Report',
+    stepDone: 'Done',
+    tabOverview: 'Overview',
+    tabFindings: 'Findings',
+    tabPages: 'Pages',
+    overallScore: 'Overall Score',
+    issuesFound: 'issues found',
+    noIssuesFound: 'No issues found',
+    noIssuesDescription: 'Your site passed all checks.',
+    pagesCrawled: 'page(s) crawled and analysed during this audit',
+    categoriesEvaluated: 'categories evaluated',
+    homepageCaptured: 'Homepage captured during audit',
+    qualitativeNote: 'For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
+    downloadPdf: 'Download PDF Report',
+    downloadWord: 'Download Word Report',
+    uxAuditReport: 'UX Audit Report',
+    reportSubtitle: 'Human-Centered, AI-Powered Digital Audits',
+  },
+  es: {
+    pillarFoundation: 'Fundamentos',
+    pillarHumanExperience: 'Experiencia Humana',
+    pillarInclusiveDesign: 'Diseno Inclusivo',
+    pillarFutureReadiness: 'Preparacion para el Futuro',
+    severityCritical: 'Critico',
+    severityHigh: 'Alto',
+    severityMedium: 'Medio',
+    severityLow: 'Bajo',
+    scoreExcellent: 'Excelente',
+    scoreGood: 'Bueno',
+    scoreDecent: 'Aceptable',
+    scoreNeedsWork: 'Necesita Mejoras',
+    scorePoor: 'Deficiente',
+    statusAwaitingPayment: 'Esperando Pago',
+    statusPaymentConfirmed: 'Pago Confirmado',
+    statusCrawling: 'Rastreando Sitio Web',
+    statusAnalysing: 'Analizando UX',
+    statusGeneratingReport: 'Generando Informe',
+    statusCompleted: 'Completado',
+    statusFailed: 'Fallido',
+    descAwaitingPayment: 'Complete el pago para iniciar la auditoria.',
+    descPaymentConfirmed: 'Pago recibido. Su auditoria esta en cola.',
+    descCrawling: 'Nuestra IA esta rastreando su sitio web y recopilando datos...',
+    descAnalysing: 'Ejecutando analisis profundo en 16 categorias...',
+    descGeneratingReport: 'Compilando su informe profesional de auditoria...',
+    descCompleted: 'Su auditoria esta lista.',
+    descFailed: 'Algo salio mal. Puede reintentar la auditoria.',
+    stepPayment: 'Pago',
+    stepCrawling: 'Rastreo',
+    stepAnalysing: 'Analisis',
+    stepReport: 'Informe',
+    stepDone: 'Listo',
+    tabOverview: 'Resumen',
+    tabFindings: 'Hallazgos',
+    tabPages: 'Paginas',
+    overallScore: 'Puntuacion General',
+    issuesFound: 'problemas encontrados',
+    noIssuesFound: 'Sin problemas encontrados',
+    noIssuesDescription: 'Su sitio paso todas las verificaciones.',
+    pagesCrawled: 'pagina(s) rastreadas y analizadas durante esta auditoria',
+    categoriesEvaluated: 'categorias evaluadas',
+    homepageCaptured: 'Pagina principal capturada durante la auditoria',
+    qualitativeNote: 'Para investigacion cualitativa profunda (entrevistas, pruebas de usabilidad), recomendamos complementar los hallazgos de ClearUX con un especialista.',
+    downloadPdf: 'Descargar Informe PDF',
+    downloadWord: 'Descargar Informe Word',
+    uxAuditReport: 'Informe de Auditoria UX',
+    reportSubtitle: 'Auditorias Digitales Centradas en el Humano, Impulsadas por IA',
+  },
+  fr: {
+    pillarFoundation: 'Fondation',
+    pillarHumanExperience: 'Experience Humaine',
+    pillarInclusiveDesign: 'Design Inclusif',
+    pillarFutureReadiness: 'Preparation au Futur',
+    severityCritical: 'Critique',
+    severityHigh: 'Eleve',
+    severityMedium: 'Moyen',
+    severityLow: 'Faible',
+    scoreExcellent: 'Excellent',
+    scoreGood: 'Bon',
+    scoreDecent: 'Correct',
+    scoreNeedsWork: 'A Ameliorer',
+    scorePoor: 'Insuffisant',
+    statusAwaitingPayment: 'En Attente de Paiement',
+    statusPaymentConfirmed: 'Paiement Confirme',
+    statusCrawling: 'Exploration du Site',
+    statusAnalysing: 'Analyse UX',
+    statusGeneratingReport: 'Generation du Rapport',
+    statusCompleted: 'Termine',
+    statusFailed: 'Echoue',
+    descAwaitingPayment: 'Completez le paiement pour demarrer l\'audit.',
+    descPaymentConfirmed: 'Paiement recu. Votre audit est en file d\'attente.',
+    descCrawling: 'Notre IA explore votre site web et collecte les donnees...',
+    descAnalysing: 'Analyse approfondie sur 16 categories en cours...',
+    descGeneratingReport: 'Compilation de votre rapport d\'audit professionnel...',
+    descCompleted: 'Votre audit est pret.',
+    descFailed: 'Une erreur s\'est produite. Vous pouvez relancer l\'audit.',
+    stepPayment: 'Paiement',
+    stepCrawling: 'Exploration',
+    stepAnalysing: 'Analyse',
+    stepReport: 'Rapport',
+    stepDone: 'Termine',
+    tabOverview: 'Apercu',
+    tabFindings: 'Resultats',
+    tabPages: 'Pages',
+    overallScore: 'Score Global',
+    issuesFound: 'problemes trouves',
+    noIssuesFound: 'Aucun probleme trouve',
+    noIssuesDescription: 'Votre site a passe tous les controles.',
+    pagesCrawled: 'page(s) explorees et analysees lors de cet audit',
+    categoriesEvaluated: 'categories evaluees',
+    homepageCaptured: 'Page d\'accueil capturee lors de l\'audit',
+    qualitativeNote: 'Pour une recherche qualitative approfondie (entretiens, tests d\'utilisabilite), nous recommandons de combiner les resultats ClearUX avec un specialiste.',
+    downloadPdf: 'Telecharger le Rapport PDF',
+    downloadWord: 'Telecharger le Rapport Word',
+    uxAuditReport: 'Rapport d\'Audit UX',
+    reportSubtitle: 'Audits Numeriques Centres sur l\'Humain, Propulses par l\'IA',
+  },
+  de: {
+    pillarFoundation: 'Grundlagen',
+    pillarHumanExperience: 'Menschliche Erfahrung',
+    pillarInclusiveDesign: 'Inklusives Design',
+    pillarFutureReadiness: 'Zukunftsbereitschaft',
+    severityCritical: 'Kritisch',
+    severityHigh: 'Hoch',
+    severityMedium: 'Mittel',
+    severityLow: 'Niedrig',
+    scoreExcellent: 'Ausgezeichnet',
+    scoreGood: 'Gut',
+    scoreDecent: 'Ordentlich',
+    scoreNeedsWork: 'Verbesserungsbedarf',
+    scorePoor: 'Mangelhaft',
+    statusAwaitingPayment: 'Zahlung Ausstehend',
+    statusPaymentConfirmed: 'Zahlung Bestatigt',
+    statusCrawling: 'Website wird gecrawlt',
+    statusAnalysing: 'UX wird analysiert',
+    statusGeneratingReport: 'Bericht wird erstellt',
+    statusCompleted: 'Abgeschlossen',
+    statusFailed: 'Fehlgeschlagen',
+    descAwaitingPayment: 'Schliessen Sie die Zahlung ab, um das Audit zu starten.',
+    descPaymentConfirmed: 'Zahlung erhalten. Ihr Audit wird in die Warteschlange eingereiht.',
+    descCrawling: 'Unsere KI crawlt Ihre Website und sammelt Daten...',
+    descAnalysing: 'Tiefenanalyse uber 16 Kategorien lauft...',
+    descGeneratingReport: 'Ihr professioneller Audit-Bericht wird erstellt...',
+    descCompleted: 'Ihr Audit ist fertig.',
+    descFailed: 'Etwas ist schiefgelaufen. Sie konnen das Audit erneut starten.',
+    stepPayment: 'Zahlung',
+    stepCrawling: 'Crawling',
+    stepAnalysing: 'Analyse',
+    stepReport: 'Bericht',
+    stepDone: 'Fertig',
+    tabOverview: 'Ubersicht',
+    tabFindings: 'Ergebnisse',
+    tabPages: 'Seiten',
+    overallScore: 'Gesamtbewertung',
+    issuesFound: 'Probleme gefunden',
+    noIssuesFound: 'Keine Probleme gefunden',
+    noIssuesDescription: 'Ihre Website hat alle Prufungen bestanden.',
+    pagesCrawled: 'Seite(n) wahrend dieses Audits gecrawlt und analysiert',
+    categoriesEvaluated: 'Kategorien bewertet',
+    homepageCaptured: 'Startseite wahrend des Audits erfasst',
+    qualitativeNote: 'Fur tiefgehende qualitative Forschung (Nutzerinterviews, Usability-Tests) empfehlen wir, ClearUX-Ergebnisse mit einem Spezialisten zu kombinieren.',
+    downloadPdf: 'PDF-Bericht herunterladen',
+    downloadWord: 'Word-Bericht herunterladen',
+    uxAuditReport: 'UX-Audit-Bericht',
+    reportSubtitle: 'Menschenzentrierte, KI-gestuetzte Digitale Audits',
+  },
+  it: {
+    pillarFoundation: 'Fondamenta',
+    pillarHumanExperience: 'Esperienza Umana',
+    pillarInclusiveDesign: 'Design Inclusivo',
+    pillarFutureReadiness: 'Preparazione al Futuro',
+    severityCritical: 'Critico',
+    severityHigh: 'Alto',
+    severityMedium: 'Medio',
+    severityLow: 'Basso',
+    scoreExcellent: 'Eccellente',
+    scoreGood: 'Buono',
+    scoreDecent: 'Discreto',
+    scoreNeedsWork: 'Da Migliorare',
+    scorePoor: 'Insufficiente',
+    statusAwaitingPayment: 'In Attesa di Pagamento',
+    statusPaymentConfirmed: 'Pagamento Confermato',
+    statusCrawling: 'Scansione del Sito',
+    statusAnalysing: 'Analisi UX',
+    statusGeneratingReport: 'Generazione Report',
+    statusCompleted: 'Completato',
+    statusFailed: 'Fallito',
+    descAwaitingPayment: 'Completa il pagamento per avviare l\'audit.',
+    descPaymentConfirmed: 'Pagamento ricevuto. Il tuo audit e in coda.',
+    descCrawling: 'La nostra IA sta scansionando il tuo sito web e raccogliendo dati...',
+    descAnalysing: 'Analisi approfondita su 16 categorie in corso...',
+    descGeneratingReport: 'Compilazione del tuo report professionale di audit...',
+    descCompleted: 'Il tuo audit e pronto.',
+    descFailed: 'Qualcosa e andato storto. Puoi riprovare l\'audit.',
+    stepPayment: 'Pagamento',
+    stepCrawling: 'Scansione',
+    stepAnalysing: 'Analisi',
+    stepReport: 'Report',
+    stepDone: 'Fatto',
+    tabOverview: 'Panoramica',
+    tabFindings: 'Risultati',
+    tabPages: 'Pagine',
+    overallScore: 'Punteggio Globale',
+    issuesFound: 'problemi trovati',
+    noIssuesFound: 'Nessun problema trovato',
+    noIssuesDescription: 'Il tuo sito ha superato tutti i controlli.',
+    pagesCrawled: 'pagina/e scansionate e analizzate durante questo audit',
+    categoriesEvaluated: 'categorie valutate',
+    homepageCaptured: 'Homepage catturata durante l\'audit',
+    qualitativeNote: 'Per ricerche qualitative approfondite (interviste, test di usabilita), consigliamo di combinare i risultati ClearUX con uno specialista.',
+    downloadPdf: 'Scarica Report PDF',
+    downloadWord: 'Scarica Report Word',
+    uxAuditReport: 'Report di Audit UX',
+    reportSubtitle: 'Audit Digitali Incentrati sull\'Uomo, Potenziati dall\'IA',
+  },
+  pt: {
+    pillarFoundation: 'Fundamentos',
+    pillarHumanExperience: 'Experiencia Humana',
+    pillarInclusiveDesign: 'Design Inclusivo',
+    pillarFutureReadiness: 'Preparacao para o Futuro',
+    severityCritical: 'Critico',
+    severityHigh: 'Alto',
+    severityMedium: 'Medio',
+    severityLow: 'Baixo',
+    scoreExcellent: 'Excelente',
+    scoreGood: 'Bom',
+    scoreDecent: 'Razoavel',
+    scoreNeedsWork: 'Precisa Melhorar',
+    scorePoor: 'Insuficiente',
+    statusAwaitingPayment: 'Aguardando Pagamento',
+    statusPaymentConfirmed: 'Pagamento Confirmado',
+    statusCrawling: 'Rastreando o Site',
+    statusAnalysing: 'Analisando UX',
+    statusGeneratingReport: 'Gerando Relatorio',
+    statusCompleted: 'Concluido',
+    statusFailed: 'Falhou',
+    descAwaitingPayment: 'Complete o pagamento para iniciar a auditoria.',
+    descPaymentConfirmed: 'Pagamento recebido. Sua auditoria esta na fila.',
+    descCrawling: 'Nossa IA esta rastreando seu site e coletando dados...',
+    descAnalysing: 'Executando analise profunda em 16 categorias...',
+    descGeneratingReport: 'Compilando seu relatorio profissional de auditoria...',
+    descCompleted: 'Sua auditoria esta pronta.',
+    descFailed: 'Algo deu errado. Voce pode tentar novamente.',
+    stepPayment: 'Pagamento',
+    stepCrawling: 'Rastreamento',
+    stepAnalysing: 'Analise',
+    stepReport: 'Relatorio',
+    stepDone: 'Pronto',
+    tabOverview: 'Visao Geral',
+    tabFindings: 'Descobertas',
+    tabPages: 'Paginas',
+    overallScore: 'Pontuacao Geral',
+    issuesFound: 'problemas encontrados',
+    noIssuesFound: 'Nenhum problema encontrado',
+    noIssuesDescription: 'Seu site passou em todas as verificacoes.',
+    pagesCrawled: 'pagina(s) rastreadas e analisadas durante esta auditoria',
+    categoriesEvaluated: 'categorias avaliadas',
+    homepageCaptured: 'Pagina inicial capturada durante a auditoria',
+    qualitativeNote: 'Para pesquisa qualitativa aprofundada (entrevistas, testes de usabilidade), recomendamos combinar os resultados do ClearUX com um especialista.',
+    downloadPdf: 'Baixar Relatorio PDF',
+    downloadWord: 'Baixar Relatorio Word',
+    uxAuditReport: 'Relatorio de Auditoria UX',
+    reportSubtitle: 'Auditorias Digitais Centradas no Humano, Impulsionadas por IA',
+  },
+}
+
+/** Get translated UI labels for a language */
+export function getUILabels(code: string): UILabels {
+  return UI_LABELS[code] || UI_LABELS['en']
+}
+
+/** Translated pillar names as array (order: Foundation, Human, Inclusive, Future) */
+export function getPillarNames(code: string): string[] {
+  const L = getUILabels(code)
+  return [L.pillarFoundation, L.pillarHumanExperience, L.pillarInclusiveDesign, L.pillarFutureReadiness]
+}
+
+/** Translated score label */
+export function getScoreLabel(score: number, code: string = 'en'): string {
+  const L = getUILabels(code)
+  if (score >= 90) return L.scoreExcellent
+  if (score >= 75) return L.scoreGood
+  if (score >= 60) return L.scoreDecent
+  if (score >= 40) return L.scoreNeedsWork
+  return L.scorePoor
+}
+
+/** Translated severity label */
+export function getSeverityLabel(severity: string, code: string = 'en'): string {
+  const L = getUILabels(code)
+  switch (severity) {
+    case 'critical': return L.severityCritical
+    case 'high': return L.severityHigh
+    case 'medium': return L.severityMedium
+    case 'low': return L.severityLow
+    default: return severity
+  }
+}

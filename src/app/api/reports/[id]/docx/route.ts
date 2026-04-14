@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getReportLabels, getLocale } from '@/lib/languages'
+import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
 import {
   Document,
   Packer,
@@ -78,13 +78,7 @@ function scoreColor(s: number): string {
   return C.scoreRed
 }
 
-function scoreLabel(s: number): string {
-  if (s >= 90) return 'Excellent'
-  if (s >= 75) return 'Good'
-  if (s >= 60) return 'Decent'
-  if (s >= 40) return 'Needs Work'
-  return 'Poor'
-}
+// scoreLabel is now imported from languages.ts as getScoreLabel(score, lang)
 
 function sevColor(sev: string): string {
   switch (sev) {
@@ -117,12 +111,17 @@ const MARGIN = 1440    // 1 inch
 const CONTENT_W = PAGE_W - MARGIN * 2  // 9360
 
 /* ── Pillar definitions ───────────────────────────────────── */
-const PILLARS = [
-  { name: 'Foundation', start: 0, end: 4, color: C.pillarFoundation, bg: C.pillarFoundationBg },
-  { name: 'Human Experience', start: 4, end: 8, color: C.pillarHuman, bg: C.pillarHumanBg },
-  { name: 'Inclusive Design', start: 8, end: 12, color: C.pillarInclusive, bg: C.pillarInclusiveBg },
-  { name: 'Future Readiness', start: 12, end: 16, color: C.pillarFuture, bg: C.pillarFutureBg },
+const PILLAR_STYLES = [
+  { start: 0, end: 4, color: C.pillarFoundation, bg: C.pillarFoundationBg },
+  { start: 4, end: 8, color: C.pillarHuman, bg: C.pillarHumanBg },
+  { start: 8, end: 12, color: C.pillarInclusive, bg: C.pillarInclusiveBg },
+  { start: 12, end: 16, color: C.pillarFuture, bg: C.pillarFutureBg },
 ]
+
+function buildPillars(lang: string) {
+  const names = getPillarNames(lang)
+  return PILLAR_STYLES.map((s, i) => ({ ...s, name: names[i] }))
+}
 
 /* ── Helper: progress bar as a thin table ─────────────────── */
 function progressBar(score: number, totalWidth: number, color: string): Table {
@@ -192,6 +191,8 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     const lang = a.language || 'en'
     const L = getReportLabels(lang)
+    const UI = getUILabels(lang)
+    const PILLARS = buildPillars(lang)
     const dateStr = new Date(a.created_at).toLocaleDateString(getLocale(lang), {
       year: 'numeric', month: 'long', day: 'numeric',
     })
@@ -366,8 +367,8 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     // Subtitle: white-label shows company name, default shows ClearUX tagline
     const subtitle = isWhiteLabel
-      ? (wlCompany ? `${wlCompany} — UX Audit Report` : 'UX Audit Report')
-      : 'Human-Centered, AI-Powered Digital Audits'
+      ? (wlCompany ? `${wlCompany} — ${UI.uxAuditReport}` : UI.uxAuditReport)
+      : UI.reportSubtitle
 
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -388,7 +389,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
-      children: [new TextRun({ text: scoreLabel(overall), font: 'Arial', size: 28, bold: true, color: C.text })],
+      children: [new TextRun({ text: getScoreLabel(overall, lang), font: 'Arial', size: 28, bold: true, color: C.text })],
     }))
 
     // URL
@@ -570,7 +571,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                 }),
                 new Paragraph({
                   spacing: { before: 40 },
-                  children: [new TextRun({ text: `${cats.length} categories evaluated`, font: 'Arial', size: 17, color: C.textSec })],
+                  children: [new TextRun({ text: `${cats.length} ${UI.categoriesEvaluated}`, font: 'Arial', size: 17, color: C.textSec })],
                 }),
               ],
             }),
@@ -694,7 +695,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
           // Severity badge + URL line
           const badgeChildren: TextRun[] = [
-            new TextRun({ text: sev.toUpperCase(), font: 'Arial', size: 16, bold: true, color: sevColor(sev) }),
+            new TextRun({ text: getSeverityLabel(sev, lang).toUpperCase(), font: 'Arial', size: 16, bold: true, color: sevColor(sev) }),
           ]
           if (finding.page_url) {
             let displayUrl = finding.page_url
