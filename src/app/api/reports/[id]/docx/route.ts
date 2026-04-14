@@ -803,8 +803,8 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
         children: [new TextRun({ text: L.pagesSubtitle, font: 'Arial', size: 19, color: C.textSec })],
       }))
 
-      // Header row
-      const colW = [4000, 2800, 1200, 1360]
+      // Header row — Title + URL only
+      const colW = [4500, 4860]
       const headerBorder = { style: BorderStyle.SINGLE, size: 1, color: C.border }
       const headerBorders = { top: noBorder, bottom: headerBorder, left: noBorder, right: noBorder }
 
@@ -819,10 +819,6 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                 children: [new Paragraph({ children: [new TextRun({ text: L.title, font: 'Arial', size: 17, bold: true, color: C.textSec })] })] }),
               new TableCell({ borders: headerBorders, width: { size: colW[1], type: WidthType.DXA }, margins: cellPad,
                 children: [new Paragraph({ children: [new TextRun({ text: L.url, font: 'Arial', size: 17, bold: true, color: C.textSec })] })] }),
-              new TableCell({ borders: headerBorders, width: { size: colW[2], type: WidthType.DXA }, margins: cellPad,
-                children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: L.status, font: 'Arial', size: 17, bold: true, color: C.textSec })] })] }),
-              new TableCell({ borders: headerBorders, width: { size: colW[3], type: WidthType.DXA }, margins: cellPad,
-                children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: L.loadTime, font: 'Arial', size: 17, bold: true, color: C.textSec })] })] }),
             ],
           }),
           // Data rows
@@ -836,10 +832,6 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                   children: [new Paragraph({ children: [new TextRun({ text: pg.title || 'Untitled', font: 'Arial', size: 18, color: C.text })] })] }),
                 new TableCell({ borders: rowBorders, width: { size: colW[1], type: WidthType.DXA }, margins: cellPad,
                   children: [new Paragraph({ children: [new TextRun({ text: shortUrl, font: 'Arial', size: 16, color: C.textTert })] })] }),
-                new TableCell({ borders: rowBorders, width: { size: colW[2], type: WidthType.DXA }, margins: cellPad,
-                  children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `${pg.status_code || '—'}`, font: 'Arial', size: 18, color: pg.status_code === 200 ? C.scoreGreen : C.scoreRed })] })] }),
-                new TableCell({ borders: rowBorders, width: { size: colW[3], type: WidthType.DXA }, margins: cellPad,
-                  children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: pg.load_time_ms ? `${(pg.load_time_ms / 1000).toFixed(1)}s` : '—', font: 'Arial', size: 18, color: C.textBody })] })] }),
               ],
             })
           }),
