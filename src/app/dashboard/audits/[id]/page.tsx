@@ -41,6 +41,7 @@ import {
   ArrowUp,
   ArrowDown,
   MessageSquare,
+  MoreVertical,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -337,11 +338,14 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
-/* ── Score Trend — shows improvement across re-audits ───── */
+/* ── Score Trend — matches homepage demo visual ─────────── */
 function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; currentAuditId: string }) {
   const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; totalIssues: number }>>([]);
   const [improvement, setImprovement] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  let domain = '';
+  try { domain = new URL(productUrl.startsWith('http') ? productUrl : `https://${productUrl}`).hostname.replace(/^www\./, ''); } catch {}
 
   useEffect(() => {
     fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
@@ -358,35 +362,27 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
 
   if (loading || trend.length < 2) return null;
 
-  const maxScore = Math.max(...trend.map(t => t.overallScore));
-
   return (
-    <div className="mb-6 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp size={16} className="text-violet-500" />
-          <h3 className="text-sm font-bold text-text">Score Trend</h3>
-          <span className="text-[10px] text-muted">{trend.length} audits</span>
+    <div className="mb-6 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center">
+          <TrendingUp size={12} className="text-violet-500" />
         </div>
-        {improvement !== 0 && (
-          <span className={`text-sm font-bold flex items-center gap-1 ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-            {improvement > 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-            {improvement > 0 ? '+' : ''}{improvement} points
-          </span>
-        )}
+        <span className="text-xs font-semibold text-text">Score Trend</span>
+        <span className="ml-auto text-[10px] text-muted">{domain}</span>
       </div>
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {[...trend].reverse().map((t, i, reversed) => {
           const isCurrent = t.auditId === currentAuditId;
           const isOldest = i === reversed.length - 1;
           const dateStr = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           return (
-            <div key={t.auditId} className={`flex items-center gap-3 ${isCurrent ? '' : 'opacity-70'}`}>
-              <span className="text-[11px] text-muted w-14 flex-shrink-0">{dateStr}</span>
+            <div key={t.auditId} className="flex items-center gap-3">
+              <span className="text-[11px] text-muted w-12 flex-shrink-0">{dateStr}</span>
               <div className="flex-1 h-3 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${t.overallScore >= 70 ? 'bg-emerald-500' : t.overallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
-                  style={{ width: `${(t.overallScore / Math.max(maxScore, 100)) * 100}%` }}
+                  style={{ width: `${t.overallScore}%` }}
                 />
               </div>
               <span className={`text-sm font-bold w-8 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -398,7 +394,15 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
           );
         })}
       </div>
-      <div className="mt-3 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
+      <div className="mt-4 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
+        <span className="text-xs text-muted">Improvement</span>
+        <span className={`text-sm font-bold flex items-center gap-1 ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : improvement < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted'}`}>
+          {improvement > 0 && <ArrowUp size={14} />}
+          {improvement < 0 && <ArrowDown size={14} />}
+          {improvement > 0 ? '+' : ''}{improvement} points
+        </span>
+      </div>
+      <div className="mt-2 flex items-center justify-between">
         <span className="text-[11px] text-muted">Issues: {trend[0].totalIssues} → {trend[trend.length - 1].totalIssues}</span>
         <Link
           href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
@@ -796,6 +800,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPaymentReturn = searchParams.get('payment') === 'success';
@@ -1005,6 +1011,25 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   };
 
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    if (menuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const handleRevokeShare = async () => {
+    if (!audit || !auditId) return;
+    if (!confirm('Revoke the share link? Anyone with the link will no longer be able to view this audit.')) return;
+    try {
+      await fetch(`/api/audits/${auditId}/share`, { method: 'DELETE' });
+      setShareUrl(null);
+      setMenuOpen(false);
+    } catch {}
+  };
+
   const handleShare = async () => {
     if (!audit || !auditId) return;
     setShareLoading(true);
@@ -1169,11 +1194,63 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </a>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {canDelete && (
-            <Button variant="danger" size="sm" onClick={handleDelete} loading={deleting} disabled={deleting}>
-              <Trash2 size={14} />
-            </Button>
+        <div className="flex items-center gap-2 flex-shrink-0 relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-off transition-colors"
+            aria-label="Audit settings"
+          >
+            <MoreVertical size={16} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-border/40 dark:border-white/[0.08] bg-card shadow-xl shadow-black/10 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+              {isCompleted && (
+                <>
+                  <button
+                    onClick={() => { handleShare(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                  >
+                    <Share2 size={13} className="text-muted" />
+                    {shareUrl ? 'Copy share link' : 'Create share link'}
+                  </button>
+                  {(shareUrl || (audit as any).share_enabled) && (
+                    <button
+                      onClick={handleRevokeShare}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                    >
+                      <LinkIcon size={13} />
+                      Revoke share link
+                    </button>
+                  )}
+                  <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+                </>
+              )}
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+              >
+                <RefreshCw size={13} className="text-muted" />
+                Re-audit this site
+              </Link>
+              <button
+                onClick={() => { handleRestart(); setMenuOpen(false); }}
+                disabled={restarting}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50"
+              >
+                <Zap size={13} className="text-muted" />
+                Restart audit
+              </button>
+              <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+              <button
+                onClick={() => { handleDelete(); setMenuOpen(false); }}
+                disabled={deleting}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={13} />
+                Delete audit
+              </button>
+            </div>
           )}
         </div>
       </div>

@@ -162,6 +162,191 @@ function StatsCards({ stats }: { stats: DashboardStats }) {
 
 /* ── Main component ───────────────────────────────────────── */
 
+/* ── Site Group — groups audits by domain ─────────────────── */
+function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMultiple = audits.length > 1;
+  const latest = audits[0]; // already sorted newest first
+  const latestMeta = statusMeta[latest.status] || statusMeta.pending_payment;
+  const LatestIcon = latestMeta.icon;
+  const latestDone = latest.status === 'completed';
+  const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
+
+  // Score trend for multi-audit sites
+  const scores = audits
+    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
+    .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
+    .reverse(); // oldest first for trend display
+
+  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[0].score : 0;
+
+  return (
+    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
+      {/* Header — always visible */}
+      <div
+        className={`px-4 py-3 flex items-center justify-between gap-3 ${hasMultiple ? 'cursor-pointer hover:bg-off/30 dark:hover:bg-white/[0.02]' : ''} transition-colors`}
+        onClick={() => hasMultiple && setExpanded(!expanded)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <Globe size={12} className="text-muted flex-shrink-0" />
+            <p className="font-medium text-sm text-text truncate">{domain}</p>
+            {hasMultiple && (
+              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
+                {audits.length} audits
+              </span>
+            )}
+            {langFlag((latest as any).language) && (
+              <span className="text-[11px]">{langFlag((latest as any).language)}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted">
+            <span>Latest: {formatDate(latest.created_at)}</span>
+            <span className="text-border">·</span>
+            <span className="flex items-center gap-0.5">
+              <LatestIcon size={10} />
+              {latestMeta.label}
+            </span>
+            {improvement !== 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {improvement > 0 ? '+' : ''}{improvement} pts
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href={`/dashboard/new-audit?url=${encodeURIComponent(latest.product_url)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
+          >
+            <RefreshCw size={10} />
+            Re-audit
+          </Link>
+          {latestScore != null && (
+            <div className={`w-10 h-10 rounded-md border flex flex-col items-center justify-center ${scoreBg(latestScore)}`}>
+              <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>
+                {latestScore}
+              </span>
+            </div>
+          )}
+          {!latestDone && (
+            <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
+          )}
+          {hasMultiple && (
+            <ChevronRight size={14} className={`text-muted transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
+          )}
+        </div>
+      </div>
+
+      {/* Expanded: score trend + audit list */}
+      {expanded && hasMultiple && (
+        <div className="border-t border-border/30 dark:border-white/[0.04]">
+          {/* Mini score trend — matches homepage demo style */}
+          {scores.length >= 2 && (
+            <div className="px-4 py-3 bg-off/30 dark:bg-white/[0.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-md bg-violet-500/10 flex items-center justify-center">
+                  <TrendingUp size={10} className="text-violet-500" />
+                </div>
+                <span className="text-[11px] font-semibold text-text">Score Trend</span>
+                {improvement !== 0 && (
+                  <span className={`ml-auto text-xs font-bold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {improvement > 0 ? '+' : ''}{improvement} points
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                {scores.map((s, i) => {
+                  const dateStr = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  const isLatest = i === scores.length - 1;
+                  const isBaseline = i === 0;
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-[11px] text-muted w-12 flex-shrink-0">{dateStr}</span>
+                      <div className="flex-1 h-2.5 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-500' : s.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                          style={{ width: `${s.score}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold w-7 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {s.score}
+                      </span>
+                      {isLatest && <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">latest</span>}
+                      {isBaseline && !isLatest && <span className="text-[9px] text-muted">baseline</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Individual audit rows */}
+          <div className="divide-y divide-border/20 dark:divide-white/[0.04]">
+            {audits.map((audit) => {
+              const meta = statusMeta[audit.status] || statusMeta.pending_payment;
+              const Icon = meta.icon;
+              const done = audit.status === 'completed';
+              const report = audit.report;
+              const flag = langFlag((audit as any).language);
+
+              return (
+                <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
+                  <div className="px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 text-[11px] text-muted">
+                        <span>{formatDate(audit.created_at)}</span>
+                        <span className="text-border">·</span>
+                        <span className="flex items-center gap-0.5">
+                          <Icon size={10} />
+                          {meta.label}
+                        </span>
+                        {flag && (
+                          <>
+                            <span className="text-border">·</span>
+                            <span>{flag}</span>
+                          </>
+                        )}
+                        {done && report?.executive_summary && (
+                          <>
+                            <span className="text-border">·</span>
+                            <span className="truncate max-w-[200px]">{report.executive_summary}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {done && report?.overall_score != null ? (
+                      <span className={`text-xs font-bold ${scoreColor(report.overall_score)}`}>
+                        {report.overall_score}
+                      </span>
+                    ) : (
+                      <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Single audit — clicking anywhere goes to the audit */}
+      {!hasMultiple && (
+        <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 pb-2">
+          {latestDone && latest.report?.executive_summary && (
+            <p className="text-muted text-[10px] line-clamp-1">{latest.report.executive_summary}</p>
+          )}
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function DashboardInner() {
   const searchParams = useSearchParams();
   const { user, profile, loading: authLoading } = useAuth();
@@ -354,101 +539,47 @@ function DashboardInner() {
         </div>
       )}
 
-      {/* Audit list */}
-      {has && (
-        <div>
-          <h2 className="text-xs font-semibold text-text mb-3">Your Audits</h2>
-          <div className="flex flex-col" style={{ gap: '10px' }}>
-            {audits.map((audit) => {
-              const meta = statusMeta[audit.status] || statusMeta.pending_payment;
-              const Icon = meta.icon;
-              const report = audit.report;
-              const done = audit.status === 'completed';
-              const domain = formatUrl(audit.product_url);
-              const isReAudit = urlCounts[domain] > 1;
+      {/* Audit list — grouped by domain */}
+      {has && (() => {
+        // Group audits by domain
+        const grouped: Record<string, AuditWithReport[]> = {};
+        for (const audit of audits) {
+          const domain = formatUrl(audit.product_url);
+          if (!grouped[domain]) grouped[domain] = [];
+          grouped[domain].push(audit);
+        }
+        const domainKeys = Object.keys(grouped);
 
-              const flag = langFlag((audit as any).language);
+        return (
+          <div>
+            <h2 className="text-xs font-semibold text-text mb-3">Your Audits</h2>
+            <div className="flex flex-col" style={{ gap: '12px' }}>
+              {domainKeys.map((domain) => (
+                <SiteGroup
+                  key={domain}
+                  domain={domain}
+                  audits={grouped[domain]}
+                />
+              ))}
+            </div>
 
-              return (
-                <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
-                  <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-violet-400/30 transition-colors cursor-pointer group">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <Globe size={12} className="text-muted flex-shrink-0" />
-                          <p className="font-medium text-xs text-text truncate">{domain}</p>
-                          {isReAudit && (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
-                              <RefreshCw size={8} />
-                              re-audit
-                            </span>
-                          )}
-                          <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted">
-                          <span>{formatDate(audit.created_at)}</span>
-                          <span className="text-border">·</span>
-                          <span className="flex items-center gap-0.5">
-                            <Icon size={10} />
-                            {meta.label}
-                          </span>
-                          {flag && (
-                            <>
-                              <span className="text-border">·</span>
-                              <span title={(audit as any).language}>{flag}</span>
-                            </>
-                          )}
-                        </div>
-                        {done && report?.executive_summary && (
-                          <p className="text-muted text-[10px] mt-1 line-clamp-1">{report.executive_summary}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {done && report?.overall_score != null ? (
-                          <div className="flex items-center gap-2">
-                            <Link
-                              href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
-                              title="Re-audit this site"
-                            >
-                              <RefreshCw size={10} />
-                              Re-audit
-                            </Link>
-                            <div className={`w-10 h-10 rounded-md border flex flex-col items-center justify-center ${scoreBg(report.overall_score)}`}>
-                              <span className={`font-semibold text-sm leading-none ${scoreColor(report.overall_score)}`}>
-                                {report.overall_score}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
-                        )}
-                      </div>
-                    </div>
+            {/* Track improvement banner */}
+            {audits.some(a => a.status === 'completed') && (
+              <div className="mt-5 p-5 rounded-xl border-2 border-violet-200/50 dark:border-violet-800/30" style={{ background: 'var(--gradient-brand-subtle)' }}>
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+                    <TrendingUp size={20} className="text-white" />
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Track improvement banner — prominent */}
-          {audits.some(a => a.status === 'completed') && (
-            <div className="mt-5 p-5 rounded-xl border-2 border-violet-200/50 dark:border-violet-800/30" style={{ background: 'var(--gradient-brand-subtle)' }}>
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
-                  <TrendingUp size={20} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-text">Track your improvement</p>
-                  <p className="text-xs text-muted mt-0.5">Fix the issues, then re-audit the same URL. Your dashboard shows score trends, resolved findings, and measurable progress over time.</p>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-text">Track your improvement</p>
+                    <p className="text-xs text-muted mt-0.5">Fix the issues, then re-audit the same URL. Your dashboard shows score trends, resolved findings, and measurable progress over time.</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
