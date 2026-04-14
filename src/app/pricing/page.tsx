@@ -344,7 +344,7 @@ export default function PricingPage() {
                 >
                   <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                     <h3 className="font-medium text-text text-sm pr-4">{faq.question}</h3>
-                    <span className="text-muted text-xs flex-shrink-0 group-open:rotate-90 transition-transform">&#9654;</span>
+                    <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
                   </summary>
                   <div className="mx-5 pb-5 pt-1 border-t border-border/20 dark:border-white/[0.04]">
                     <p className="text-muted text-sm leading-relaxed pt-4">{faq.answer}</p>

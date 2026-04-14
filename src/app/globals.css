@@ -142,11 +142,11 @@ body {
 /* ── Form inputs ──────────────────────────────────────────── */
 .input {
   width: 100%;
-  padding: 0.75rem 0.875rem;
-  min-height: 44px;
-  border: 1px solid var(--border);
+  padding: 0.875rem 1rem;
+  min-height: 48px;
+  border: 2px solid var(--border);
   border-radius: 10px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--text);
   background: var(--input-bg);
   outline: none;
@@ -160,11 +160,12 @@ body {
 
 .dark .input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.15);
 }
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(124,58,237,.08), 0 0 0 6px rgba(236,72,153,.04);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
 }
 
 .input::placeholder {
@@ -393,16 +394,25 @@ article, .prose {
   flex-direction: row-reverse;
 }
 
-/* ── Mobile: prevent iOS auto-zoom on input focus ────────── */
+/* ── Mobile: touch-friendly sizing + iOS auto-zoom prevention ── */
 @media (max-width: 768px) {
+  /* Prevent iOS auto-zoom on input focus (must be >= 16px) */
   input, select, textarea {
-    font-size: 16px !important; /* prevents iOS zoom */
+    font-size: 16px !important;
   }
-  /* Ensure all CTA buttons are properly sized on mobile */
-  .btn-primary {
+  /* All form inputs: 48px min height, generous padding */
+  .input {
     min-height: 48px;
     padding: 0.875rem 1rem;
     font-size: 1rem;
+  }
+  /* All primary buttons: 48px, full-width, 16px font */
+  .btn-primary {
+    min-height: 48px;
+    padding: 1rem;
+    font-size: 1rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
   }
 }
 
