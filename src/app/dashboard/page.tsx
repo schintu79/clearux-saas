@@ -256,41 +256,45 @@ function DashboardInner() {
       {/* Onboarding for new users */}
       {isNewUser && <OnboardingBanner />}
 
-      {/* ── New Audit + Quick Stats row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        {/* New Audit CTA */}
-        <Link href="/dashboard/new-audit" className="sm:col-span-1">
-          <div className="h-full rounded-xl p-4 text-white transition-all hover:brightness-110 group flex items-center gap-3" style={{ background: 'var(--gradient-brand)' }}>
-            <Sparkles size={20} className="text-white flex-shrink-0" />
-            <div>
-              <p className="font-bold text-sm">New Audit</p>
-              <p className="text-white/60 text-[11px]">Paste a URL</p>
-            </div>
-            <ArrowRight size={16} className="text-white/40 ml-auto group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </Link>
-
-        {/* Total Audits */}
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 flex items-center gap-3">
-          <FileSearch size={16} className="text-violet-500 flex-shrink-0" />
+      {/* ── Quick Stats row ── */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5">
+          <FileSearch size={15} className="text-violet-500 flex-shrink-0" />
           <div>
-            <p className="text-lg font-bold text-text leading-none">{totalAudits}</p>
-            <p className="text-[10px] text-muted mt-0.5">{completedCount} completed</p>
+            <p className="text-base font-bold text-text leading-none">{completedCount}</p>
+            <p className="text-[10px] text-muted mt-0.5">completed</p>
           </div>
         </div>
-
-        {/* Credits */}
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 flex items-center gap-3">
-          <Coins size={16} className="text-emerald-500 flex-shrink-0" />
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5">
+          <Coins size={15} className="text-emerald-500 flex-shrink-0" />
           <div>
-            <p className="text-lg font-bold text-text leading-none">{credits ?? '--'}</p>
-            <p className="text-[10px] text-muted mt-0.5">credits available</p>
+            <p className="text-base font-bold text-text leading-none">{credits ?? '--'}</p>
+            <p className="text-[10px] text-muted mt-0.5">credits</p>
           </div>
           {credits !== null && credits < 1 && (
-            <Link href="/dashboard/buy-credits" className="ml-auto text-[10px] font-semibold text-violet-500 hover:underline">Buy</Link>
+            <Link href="/dashboard/buy-credits" className="ml-auto text-[9px] font-semibold text-violet-500 hover:underline">Buy</Link>
           )}
         </div>
+        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5 hover:border-violet-400/30 transition-colors">
+          <div className="relative">
+            <Bell size={15} className="text-muted flex-shrink-0" />
+            {pinnedNotification && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />}
+          </div>
+          <div>
+            <p className="text-base font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
+            <p className="text-[10px] text-muted mt-0.5">new</p>
+          </div>
+        </Link>
       </div>
+
+      {/* ── New Audit CTA — full width, homepage style ── */}
+      <Link href="/dashboard/new-audit" className="block mb-5">
+        <div className="w-full flex items-center justify-center gap-2.5 text-white font-manrope font-bold text-base py-4 px-8 rounded-xl hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]" style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}>
+          <Sparkles size={18} />
+          Run a New Audit
+          <ArrowRight size={18} />
+        </div>
+      </Link>
 
       {/* ── Pinned notification from admin ── */}
       {pinnedNotification && (
@@ -396,20 +400,12 @@ function DashboardInner() {
 
       {/* ── Empty state (only when no in-progress or failed) ── */}
       {!isNewUser && inProgressAudits.length === 0 && failedAudits.length === 0 && (
-        <div className="text-center py-10 px-4">
-          <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-text mb-1">All clear</p>
-          <p className="text-xs text-muted mb-4 max-w-xs mx-auto">
+        <div className="text-center py-8 px-4">
+          <CheckCircle2 size={22} className="text-emerald-500 mx-auto mb-2" />
+          <p className="text-sm font-medium text-text mb-0.5">All clear</p>
+          <p className="text-xs text-muted max-w-xs mx-auto">
             No audits in progress. Your completed audits are in the Audits tab.
           </p>
-          <Link
-            href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110"
-            style={{ background: 'var(--gradient-brand)' }}
-          >
-            <Sparkles size={13} />
-            Run a new audit
-          </Link>
         </div>
       )}
 
