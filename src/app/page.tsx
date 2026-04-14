@@ -715,7 +715,7 @@ export default function Home() {
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                {user ? 'Get My Audit' : 'Get My UX Audit'}
+                {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -779,7 +779,7 @@ export default function Home() {
           VALUE PROPOSITION + STATS + HOW IT WORKS
           Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative overflow-hidden bg-surface-alt">
+      <section id="features" className="relative overflow-hidden bg-surface">
         {/* Background grid — subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -832,7 +832,12 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           BEYOND THE REPORT — Track, Share, Improve
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
+      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+        {/* Background grid — subtle */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
+        }} />
         <div className="absolute top-[15%] right-[10%] w-[500px] h-[400px] rounded-full bg-violet-500/[0.04] blur-[160px] pointer-events-none" />
         <div className="absolute bottom-[10%] left-[15%] w-[400px] h-[400px] rounded-full bg-emerald-500/[0.03] blur-[140px] pointer-events-none" />
 
@@ -1328,7 +1333,7 @@ export default function Home() {
                 className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
-                {user ? 'Get My Audit' : 'Get My UX Audit'}
+                {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>

@@ -294,6 +294,17 @@ Before analyzing, determine the site's type (SaaS, e-commerce, content/blog, por
 - Missing a specific content format (FAQ, knowledge base, blog) is NOT a failure if the site communicates clearly through other means
 Evaluate what IS there, not what's absent. A clean, well-structured site that clearly communicates its purpose should score well — don't invent problems because a theoretical checklist item is "missing." The question is always: "Does this site WORK for its users and for AI systems?" — not "Does it have every possible feature?"
 
+CRITICAL — CROSS-PAGE AWARENESS:
+The content provided includes ALL crawled pages from this website. Before flagging something as "missing" or "absent", you MUST check if it exists on ANY page — not just the homepage.
+Common examples of cross-page content that should NOT be flagged as missing:
+- Founder bios, team info, credentials → often on /about
+- Pricing details, plan comparisons → often on /pricing
+- FAQ, help content → often on /faq or /help
+- Privacy, terms, cookie policy → often on /privacy, /terms
+- Contact info, support → often on /contact
+- Testimonials, case studies → may be on dedicated pages
+If the SITE MAP section above shows a relevant page exists (e.g., an About page), assume that page addresses the concern. Only flag content as missing if it GENUINELY does not exist anywhere on the site. Flagging "no founder credentials" when there is an About page with a founder story is a FALSE POSITIVE — and a sign of poor audit quality.
+
 CRITICAL — DEMO & ILLUSTRATIVE CONTENT EXCLUSION:
 Many websites display example/demo content to showcase their product's capabilities (e.g., a UX audit tool showing sample findings, a design tool showing example designs, a security scanner showing sample vulnerabilities). You MUST recognize and EXCLUDE this type of content from your analysis:
 - Content inside elements marked with data-demo="true", role="presentation", or aria-label containing "example", "demo", or "illustrative"
@@ -315,6 +326,9 @@ DO NOT flag these common false positives:
 - "No shopping cart is agent-accessible" on sites that aren't e-commerce
 - Formatting localization (dates, currencies) on sites that don't display these elements
 - Standard web design color conventions (blue links, red errors, green success) as "culturally insensitive"
+- Content that EXISTS on another page of the same site (e.g., "no team credentials" when there's an About page, "no pricing" when there's a Pricing page) — CHECK THE SITE MAP
+- Suggesting content that already exists elsewhere on the site should be "added to the homepage" — that's a layout preference, not a UX issue
+- Generic recommendations like "add social proof" when testimonials exist on the site
 
 DO flag these high-value findings:
 - Real friction points in the user journey that lose conversions
@@ -333,6 +347,7 @@ QUALITY STANDARDS FOR EACH FINDING:
 2. IMPACTFUL — Explain WHY this matters in business terms (lost conversions, user drop-off, trust erosion).
 3. FIXABLE — Give a concrete, implementable recommendation. Not "improve your CTA" but "Change the CTA from 'Submit' to 'Get My Free Report' — action-oriented language increases click-through by 20-30%."
 4. DEEP — Go beyond what a basic tool would catch. Show the insight of a $200/hour consultant.
+5. VERIFIED — Before including ANY finding about "missing" content, confirm it's not on another page. If the site has an About page, don't flag missing team info. If it has a Pricing page, don't flag missing pricing. If it has an FAQ page, don't flag missing FAQ. A senior consultant would check the WHOLE site, not just one page.
 
 CRITICAL — PAGE URL ASSIGNMENT:
 The content above includes MULTIPLE pages, each starting with "URL:". For each finding, you MUST set "pageUrl" to the EXACT page URL (from the list above) where the issue exists.

@@ -211,10 +211,38 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 3: Set status to analysing
+    // STEP 3: Build site context map + set status to analysing
+    // Creates a summary of what exists across ALL pages so the
+    // analyzer has cross-page awareness (e.g., "founder bio exists
+    // on /about" prevents false positive on homepage)
     // ──────────────────────────────────────────────────────────
-    await step.run('set-analysing', async () => {
+    const siteContext = await step.run('build-site-context', async () => {
       await setStatus(auditId, 'analysing')
+
+      // Build a structured map of what each page contains
+      const lines: string[] = []
+      const pages = crawlResult.pageContent.split('\n---\n')
+      for (const page of pages) {
+        const urlMatch = page.match(/^URL: (.+)$/m)
+        const titleMatch = page.match(/^Title: (.+)$/m)
+        const h1Match = page.match(/^H1: (.+)$/m)
+        if (urlMatch) {
+          const url = urlMatch[1]
+          const title = titleMatch?.[1] || ''
+          const h1 = h1Match?.[1] || ''
+          const contentPreview = page.replace(/^(URL|Title|H1|Meta Description|Content):.*\n?/gm, '').trim().substring(0, 300)
+          lines.push(`- ${url} | "${title}" | H1: "${h1}" | Preview: ${contentPreview}...`)
+        }
+      }
+
+      const siteMap = `SITE MAP — What exists across ALL crawled pages:
+${lines.join('\n')}
+
+IMPORTANT CROSS-PAGE CONTEXT:
+The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
+
+      await auditLog(auditId, 'site_context_built', 'success', `Site context map built from ${lines.length} pages`)
+      return siteMap
     })
 
     // ──────────────────────────────────────────────────────────
@@ -243,8 +271,10 @@ export const processAuditFn = inngest.createFunction(
         const batchResults: Awaited<ReturnType<typeof analyzeCategory>>[] = []
         for (const categoryName of batch) {
           console.log(`[inngest] Analyzing: ${categoryName}`)
+          // Prepend site context map so the AI has cross-page awareness
+          const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
           const result = await analyzeCategory(
-            crawlResult.pageContent,
+            contentWithContext,
             categoryName,
             [], // empty = use built-in checklist items
             auditDetails.userFocus,
@@ -437,10 +467,11 @@ export const processAuditFn = inngest.createFunction(
         .eq('id', auditId)
         .single()
 
+      const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
       const reportData = await generateReport(
         findings,
         audit as any,
-        crawlResult.pageContent,
+        contentWithContext,
         auditDetails.userFocus,
         auditDetails.language,
       )
