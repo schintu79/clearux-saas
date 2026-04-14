@@ -376,8 +376,9 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
         )}
       </div>
       <div className="space-y-2.5">
-        {trend.map((t, i) => {
+        {[...trend].reverse().map((t, i, reversed) => {
           const isCurrent = t.auditId === currentAuditId;
+          const isOldest = i === reversed.length - 1;
           const dateStr = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           return (
             <div key={t.auditId} className={`flex items-center gap-3 ${isCurrent ? '' : 'opacity-70'}`}>
@@ -392,7 +393,7 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
                 {t.overallScore}
               </span>
               {isCurrent && <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">current</span>}
-              {i === 0 && !isCurrent && <span className="text-[9px] text-muted">baseline</span>}
+              {isOldest && !isCurrent && <span className="text-[9px] text-muted">baseline</span>}
             </div>
           );
         })}

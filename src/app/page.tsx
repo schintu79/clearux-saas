@@ -606,7 +606,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-16 pb-14 sm:pt-28 sm:pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-16 pb-14 sm:pt-28 sm:pb-24 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
         {/* ── Animated grid background ── */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Grid lines */}
@@ -779,7 +779,7 @@ export default function Home() {
           VALUE PROPOSITION + STATS + HOW IT WORKS
           Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative overflow-hidden bg-surface">
+      <section id="features" className="relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
         {/* Background grid — subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -787,7 +787,7 @@ export default function Home() {
         }} />
 
         {/* ── TOP: Section intro + Stats ── */}
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-16">
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-40 sm:pt-44 pb-16">
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>

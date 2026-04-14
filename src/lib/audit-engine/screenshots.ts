@@ -17,11 +17,31 @@ function getBaseUrl(): string {
   return 'http://localhost:3000'
 }
 
+/**
+ * Check if a string looks like a valid CSS selector (vs a description like "the hero image").
+ * We only want to send actual selectors to ScreenshotOne — not prose.
+ */
+function isLikelyCSSSelector(s: string): boolean {
+  if (!s || s.length > 100) return false
+  // Must start with a tag, class, ID, or attribute selector
+  if (/^[a-z]/i.test(s) || s.startsWith('.') || s.startsWith('#') || s.startsWith('[')) {
+    // Should NOT contain spaces that suggest prose (e.g., "the hero section")
+    // But allow spaces in valid selectors like "nav > ul > li"
+    if (/\b(the|a|an|is|of|for|in|on|this|that|with|and|or)\b/i.test(s)) return false
+    // Should look like CSS: contains dots, hashes, brackets, combinators, or is a simple tag
+    if (/^[a-z][a-z0-9-]*$/i.test(s)) return true // simple tag like "nav", "header", "footer"
+    if (/[.#\[\]>+~:]/.test(s)) return true // has CSS selector characters
+    return false
+  }
+  return false
+}
+
 // ── Strategy 1: ScreenshotOne API (premium, reliable) ─────────
 
 async function captureViaScreenshotOne(
   url: string,
   _selector?: string | null,
+  highlightMode: 'crop' | 'highlight' | 'none' = 'none',
 ): Promise<Buffer | null> {
   const apiKey = process.env.SCREENSHOTONE_API_KEY
   if (!apiKey) {
@@ -44,13 +64,21 @@ async function captureViaScreenshotOne(
       cache_ttl: '86400',   // 24h cache
     })
 
-    // ScreenshotOne supports element selectors for cropping
-    if (_selector) {
+    if (_selector && highlightMode === 'highlight') {
+      // Highlight mode: scroll to the element and inject a visual highlight border
+      // The page screenshot stays full-width but the element is clearly marked
+      params.set('selector_scroll_into_view', _selector)
+      params.set('scroll_into_view_adjust_top', '-100') // 100px above so element isn't at the very edge
+      // Inject CSS that highlights the element with a dashed red border + subtle background
+      const highlightCSS = `${_selector}{outline:3px dashed #EF4444 !important;outline-offset:4px !important;box-shadow:0 0 0 6px rgba(239,68,68,0.15) !important;}`
+      params.set('styles', highlightCSS)
+    } else if (_selector && highlightMode === 'crop') {
+      // Crop mode: crop the screenshot to just the element
       params.set('selector', _selector)
     }
 
     const requestUrl = `https://api.screenshotone.com/take?${params}`
-    console.log(`[screenshots] ScreenshotOne request: ${url} (key: ${apiKey.slice(0, 6)}...)`)
+    console.log(`[screenshots] ScreenshotOne request: ${url} | selector: ${_selector || 'none'} | mode: ${highlightMode}`)
 
     const res = await fetch(requestUrl, {
       signal: AbortSignal.timeout(30_000),
@@ -161,9 +189,21 @@ export async function captureScreenshot(
     console.warn(`[screenshots] No screenshot API keys configured. Set SCREENSHOTONE_API_KEY (recommended) or SCREENSHOT_INTERNAL_KEY in your environment variables.`)
   }
 
-  // Strategy 1: ScreenshotOne (best quality, paid)
+  // Strategy 1: ScreenshotOne with element highlighting (best quality)
   if (hasScreenshotOne) {
-    const s1 = await captureViaScreenshotOne(url, selector)
+    // If we have a selector, try highlight mode first (scrolls to element + red border)
+    // then fall back to plain screenshot if the selector fails
+    if (selector && isLikelyCSSSelector(selector)) {
+      const s1h = await captureViaScreenshotOne(url, selector, 'highlight')
+      if (s1h) {
+        console.log(`[screenshots] ScreenshotOne highlight success: ${url} (${selector})`)
+        return s1h
+      }
+      console.warn(`[screenshots] ScreenshotOne highlight failed for selector "${selector}", falling back to plain`)
+    }
+
+    // Plain page screenshot (no selector or selector failed)
+    const s1 = await captureViaScreenshotOne(url, null, 'none')
     if (s1) {
       console.log(`[screenshots] ScreenshotOne success: ${url}`)
       return s1
