@@ -1,34 +1,46 @@
-import { CheckCircle, Search, BarChart3, Building2, Zap } from 'lucide-react';
+import { CheckCircle, Search, BarChart3, Building2, Zap, ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata = {
   title: 'Pricing',
-  description: 'AI-powered UX audits starting at $99. Simple credit-based pricing — no subscriptions.',
+  description: 'AI-powered UX audits starting at $99. First audit free. Simple credit-based pricing — no subscriptions.',
 };
 
 export default function PricingPage() {
   const faqs = [
+    // Getting Started & Billing
+    {
+      question: 'Is my first audit really free?',
+      answer:
+        'Yes. No credit card, no hidden charges. Create an account and run your first UX audit completely free. You only pay for additional audits after that.',
+    },
+    {
+      question: 'What happens after my free audit?',
+      answer:
+        'You\u2019ll see a full report with findings ranked by severity and business impact, an executive summary, top 3 priority recommendations, and downloadable PDF & Word reports. From there, you can purchase credits to run more audits or buy a pack if you audit regularly.',
+    },
+    {
+      question: 'How does the free-to-paid transition work?',
+      answer:
+        'After your free audit, you buy credits. One credit = one audit. Credits never expire. Buy a single audit for $99, or save up to 50% with credit packs. No subscription, no recurring charges \u2014 pay only when you audit.',
+    },
+    {
+      question: 'Can I cancel anytime?',
+      answer:
+        'There\u2019s nothing to cancel. ClearUX uses a credit system, not subscriptions. Buy credits when you need them, use them whenever. No lock-in, no recurring fees, no cancellation process.',
+    },
+    // Standard pricing FAQs
     {
       question: 'How do credits work?',
       answer:
         'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding tracking, shareable links, and prioritised recommendations.',
     },
     {
-      question: 'How fast is the audit delivered?',
-      answer:
-        'Most audits complete in under 10 minutes. Our AI-powered engine crawls your site and generates a comprehensive report automatically. You can track findings, share results, and re-audit immediately.',
-    },
-    {
       question: 'What does every audit include?',
       answer:
-        'Every audit includes the full 64-point analysis across 16 UX categories, AI discoverability review, severity-ranked findings with status tracking (open, in progress, fixed, backlog), shareable read-only links for your team, re-audit comparison, and downloadable PDF + Word reports.',
-    },
-    {
-      question: 'Can I buy more credits later?',
-      answer:
-        'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.',
+        'Every audit includes the full 64-point analysis across 16 UX categories, AI discoverability review, severity-ranked findings with status tracking, shareable read-only links, re-audit comparison, and downloadable PDF + Word reports.',
     },
     {
       question: 'Is there a refund policy?',
@@ -42,8 +54,35 @@ export default function PricingPage() {
       <Navbar />
 
       <main id="main-content" className="flex-1">
+        {/* ── Free Audit Banner ── */}
+        <section className="pt-20 pb-4 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles size={18} className="text-violet-500" />
+                    <h2 className="font-manrope font-bold text-xl text-text">Start with a Free Audit</h2>
+                  </div>
+                  <p className="text-sm text-text/70 max-w-md">
+                    No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
+                  </p>
+                </div>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.2)' }}
+                >
+                  Start Free Audit
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Header ── */}
-        <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
+        <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-3" style={{ lineHeight: '1.1' }}>
               Transparent pricing
@@ -230,6 +269,63 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ── Pricing Comparison Table ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="font-manrope font-bold text-2xl text-text mb-6">Compare plans</h2>
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-off/50 dark:bg-white/[0.03]">
+                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Plan</th>
+                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Price</th>
+                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Per Audit</th>
+                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Best For</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/20 dark:divide-white/[0.04]">
+                    <tr className="bg-emerald-50/30 dark:bg-emerald-900/[0.04]">
+                      <td className="px-5 py-3.5 font-semibold text-text">Free Audit</td>
+                      <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">$0</td>
+                      <td className="px-5 py-3.5 text-muted">Free (1 audit)</td>
+                      <td className="px-5 py-3.5 text-muted">First-time users evaluating the platform</td>
+                    </tr>
+                    <tr>
+                      <td className="px-5 py-3.5 font-semibold text-text">Single Audit</td>
+                      <td className="px-5 py-3.5 font-bold text-text">$99</td>
+                      <td className="px-5 py-3.5 text-muted">$99.00</td>
+                      <td className="px-5 py-3.5 text-muted">One-off baseline or pre-launch check</td>
+                    </tr>
+                    <tr>
+                      <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full ml-1" style={{ background: 'var(--gradient-brand)' }}>Popular</span></td>
+                      <td className="px-5 py-3.5 font-bold text-text">$399</td>
+                      <td className="px-5 py-3.5 text-muted">$79.80 <span className="text-emerald-500 text-xs font-semibold">save 19%</span></td>
+                      <td className="px-5 py-3.5 text-muted">Quarterly audits per release cycle</td>
+                    </tr>
+                    <tr>
+                      <td className="px-5 py-3.5 font-semibold text-text">Agency</td>
+                      <td className="px-5 py-3.5 font-bold text-text">$999</td>
+                      <td className="px-5 py-3.5 text-muted">$66.60 <span className="text-emerald-500 text-xs font-semibold">save 33%</span></td>
+                      <td className="px-5 py-3.5 text-muted">Multiple client sites + white-label</td>
+                    </tr>
+                    <tr>
+                      <td className="px-5 py-3.5 font-semibold text-text">Scale</td>
+                      <td className="px-5 py-3.5 font-bold text-text">$2,499</td>
+                      <td className="px-5 py-3.5 text-muted">$49.98 <span className="text-emerald-500 text-xs font-semibold">save 50%</span></td>
+                      <td className="px-5 py-3.5 text-muted">Continuous auditing across teams</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {/* Value anchor */}
+            <p className="text-xs text-muted mt-4 text-center">
+              At $99 per audit, that&apos;s <span className="font-semibold text-text">$1.55 per checkpoint</span> across 64 checks — compared to $100+ per checkpoint with traditional UX consultants.
+            </p>
           </div>
         </section>
 
