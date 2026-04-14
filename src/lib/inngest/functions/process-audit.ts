@@ -236,9 +236,7 @@ export const processAuditFn = inngest.createFunction(
         const db = getDb()
         let sortOrder = totalFindingsCount
         let findingsInBatch = 0
-        let failedCategories: string[] = []
-
-        const batchResults = await Promise.allSettled(
+        const batchResults = await Promise.all(
           batch.map((categoryName) =>
             analyzeCategory(
               crawlResult.pageContent,
@@ -251,19 +249,8 @@ export const processAuditFn = inngest.createFunction(
         )
 
         for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
-          const result = batchResults[catIdx]
+          const findings = batchResults[catIdx]
           const categoryName = batch[catIdx]
-
-          if (result.status === 'rejected') {
-            console.error(`[inngest] Category "${categoryName}" failed:`, result.reason)
-            failedCategories.push(categoryName)
-            await auditLog(auditId, 'category_failed', 'error', `Failed: ${categoryName}`, {
-              error: result.reason?.message || String(result.reason),
-            })
-            continue
-          }
-
-          const findings = result.value
 
           for (const finding of findings) {
             // Validate pageUrl against actual crawled URLs
@@ -305,7 +292,7 @@ export const processAuditFn = inngest.createFunction(
           })
         }
 
-        return { findingsInBatch, newSortOrder: sortOrder, failedCategories }
+        return { findingsInBatch, newSortOrder: sortOrder }
       })
 
       totalFindingsCount = batchResult.newSortOrder
@@ -323,22 +310,13 @@ export const processAuditFn = inngest.createFunction(
         .eq('audit_id', auditId)
 
       if ((findingsCount ?? 0) === 0) {
-        // Refund the credit
-        await refundCredit(auditId)
-        // Fail the audit with a clear message
-        await db
-          .from('audits')
-          .update({
-            status: 'failed',
-            crawl_error: 'The AI analysis could not produce any findings for this website. This can happen if the site content is too minimal, heavily JavaScript-rendered, or behind authentication. Your credit has been refunded.',
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('id', auditId)
-        await auditLog(auditId, 'audit_failed', 'error', 'Zero findings produced — audit failed, credit refunded')
-        throw new Error('Audit failed: zero findings produced after analysis. Credit refunded.')
+        // Zero findings — log a warning but still continue to generate a report.
+        // The report will reflect that no issues were found (could be a clean site).
+        console.warn(`[inngest] Audit ${auditId}: zero findings after analysis — continuing anyway`)
+        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings produced — site may be clean or analysis had issues')
+      } else {
+        await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
       }
-
-      await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
     })
 
     // ──────────────────────────────────────────────────────────

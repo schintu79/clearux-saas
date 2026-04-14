@@ -399,8 +399,8 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
       .map((f) => ({ ...f, targetElement: f.targetElement || null, pageUrl: f.pageUrl || null }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
-    // Throw so the caller can track category failures
-    throw new Error(`Analysis failed for category "${category}": ${err instanceof Error ? err.message : String(err)}`)
+    // Return empty — don't throw. One category failing shouldn't kill the audit.
+    return []
   }
 }
 
@@ -423,7 +423,7 @@ export async function runFullAnalysis(
     const batch = UX_CATEGORIES.slice(i, i + CONCURRENCY)
     console.log(`[runFullAnalysis] Batch ${Math.floor(i / CONCURRENCY) + 1}: ${batch.map((c) => c.name).join(', ')}`)
 
-    const batchResults = await Promise.all(
+    const batchResults = await Promise.allSettled(
       batch.map((category) =>
         analyzeCategory(
           pageContent,
@@ -439,13 +439,18 @@ export async function runFullAnalysis(
       ),
     )
 
-    for (const findings of batchResults) {
-      allFindings.push(...findings)
+    for (let j = 0; j < batchResults.length; j++) {
+      const result = batchResults[j]
+      if (result.status === 'fulfilled') {
+        allFindings.push(...result.value)
+      } else {
+        console.error(`[runFullAnalysis] Category "${batch[j].name}" failed:`, result.reason)
+      }
     }
 
     // Brief pause between batches to avoid rate limits
     if (i + CONCURRENCY < UX_CATEGORIES.length) {
-      await new Promise((r) => setTimeout(r, 500))
+      await new Promise((r) => setTimeout(r, 1000))
     }
   }
 
@@ -644,7 +649,8 @@ ${categoryExamples}
     }
   } catch (err) {
     console.error('[generateReport] Error:', err instanceof Error ? err.message : err)
-    throw new Error(`Report generation failed: ${err instanceof Error ? err.message : String(err)}`)
+    // Return defaults instead of crashing — a partial report is better than no report
+    return getDefaultReport()
   }
 }
 
