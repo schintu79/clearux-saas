@@ -1,12 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-
-export const metadata = {
-  title: 'FAQ — ClearUX',
-  description: 'Frequently asked questions about ClearUX audits, pricing, reports, and how the AI analysis works.',
-};
 
 const FAQ_SECTIONS = [
   {
@@ -72,6 +70,27 @@ const FAQ_SECTIONS = [
     ],
   },
   {
+    title: 'How Our AI Works',
+    items: [
+      {
+        q: 'What AI powers the audits?',
+        a: 'ClearUX uses Anthropic\u2019s Claude as its analysis engine. Each category is evaluated by a specialised prompt trained on UX best practices, WCAG accessibility guidelines, dark pattern databases, conversion research, and AI readiness standards. The AI analyses your actual page content \u2014 not just metadata \u2014 and produces findings that reference specific text, elements, and patterns on your site.',
+      },
+      {
+        q: 'What are the known limitations?',
+        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience \u2014 that\u2019s why we built the dismiss-with-reason feature.',
+      },
+      {
+        q: 'How does the AI improve over time?',
+        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked \u2014 the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
+      },
+      {
+        q: 'Does ClearUX replace a human UX auditor?',
+        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes \u2014 the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
+      },
+    ],
+  },
+  {
     title: 'Account & Billing',
     items: [
       {
@@ -93,27 +112,6 @@ const FAQ_SECTIONS = [
       {
         q: 'What payment methods are accepted?',
         a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.',
-      },
-    ],
-  },
-  {
-    title: 'How Our AI Works',
-    items: [
-      {
-        q: 'What AI powers the audits?',
-        a: 'ClearUX uses Anthropic\u2019s Claude as its analysis engine. Each category is evaluated by a specialised prompt trained on UX best practices, WCAG accessibility guidelines, dark pattern databases, conversion research, and AI readiness standards. The AI analyses your actual page content \u2014 not just metadata \u2014 and produces findings that reference specific text, elements, and patterns on your site.',
-      },
-      {
-        q: 'What are the known limitations?',
-        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience \u2014 that\u2019s why we built the dismiss-with-reason feature.',
-      },
-      {
-        q: 'How does the AI improve over time?',
-        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked \u2014 the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
-      },
-      {
-        q: 'Does ClearUX replace a human UX auditor?',
-        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes \u2014 the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
       },
     ],
   },
@@ -140,14 +138,20 @@ const FAQ_SECTIONS = [
   },
 ];
 
+const TAB_ALL = 'All';
+
 export default function FaqPage() {
+  const [activeTab, setActiveTab] = useState(TAB_ALL);
+  const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)];
+  const visibleSections = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
+
   return (
     <div className="flex flex-col min-h-screen bg-surface">
       <Navbar />
 
       <main id="main-content" className="flex-1">
         {/* Header */}
-        <section className="pt-20 pb-10 px-4 sm:px-6 lg:px-8">
+        <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-4" style={{ lineHeight: '1.1' }}>
               Frequently asked questions
@@ -158,13 +162,37 @@ export default function FaqPage() {
           </div>
         </section>
 
+        {/* Tabs */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex flex-wrap items-center gap-2 justify-center">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-xs font-semibold px-4 py-2 rounded-full transition-all ${
+                    activeTab === tab
+                      ? 'text-white shadow-sm'
+                      : 'text-muted bg-off/60 dark:bg-white/[0.04] hover:bg-off dark:hover:bg-white/[0.06]'
+                  }`}
+                  style={activeTab === tab ? { background: 'var(--gradient-brand)' } : undefined}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Sections */}
-        {FAQ_SECTIONS.map((section) => (
-          <section key={section.title} className="px-4 sm:px-6 lg:px-8 pb-12">
+        {visibleSections.map((section) => (
+          <section key={section.title} className="px-4 sm:px-6 lg:px-8 pb-10">
             <div className="max-w-3xl mx-auto">
-              <h2 className="font-manrope font-bold text-xl text-text mb-5 pb-3 border-b border-border/30 dark:border-white/[0.04]">
-                {section.title}
-              </h2>
+              {activeTab === TAB_ALL && (
+                <h2 className="font-manrope font-bold text-xl text-text mb-5 pb-3 border-b border-border/30 dark:border-white/[0.04]">
+                  {section.title}
+                </h2>
+              )}
               <div className="space-y-3">
                 {section.items.map((faq, i) => (
                   <details
@@ -212,7 +240,6 @@ export default function FaqPage() {
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );

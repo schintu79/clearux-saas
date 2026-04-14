@@ -422,43 +422,15 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
 
 /* ── Scroll-to-top button ───────────────────────────────── */
 /* ── FAQ Tabs ────────────────────────────────────────────── */
-const FAQ_TABS = [
-  {
-    id: 'general',
-    label: 'General',
-    items: [
-      { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across 16 categories, and generates a full professional report.' },
-      { q: 'What does the audit cover?', a: 'We evaluate 16 categories across 4 pillars: Foundation (Visual Design, Value Proposition, Navigation, Content Quality), Human Experience (CTAs & Conversion, Trust & Credibility, Ethical UX, Emotional Design), Inclusive Design (Accessibility, Cognitive Accessibility, Digital Wellbeing, Mobile Experience), and Future Readiness (Performance & Technical Health, AI Discoverability, AI Agent Readiness, Cultural Sensitivity).' },
-      { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn\u2019t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.' },
-      { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese. All findings, recommendations, and the full report are translated.' },
-      { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000\u2013$15,000 and takes 2\u20134 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
-    ],
-  },
-  {
-    id: 'audit',
-    label: 'Audit & AI',
-    items: [
-      { q: 'How accurate are the AI-generated findings?', a: 'Our AI models are tested against a dataset of 5,000+ audited websites with human-verified findings. Critical-issue detection rate: 94% (we catch 94 of every 100 real problems). False positive rate: 2\u20133% (only 2\u20133% of flagged issues may be non-problems or require additional context). Accuracy by category: Accessibility issues 96%, Performance & technical issues 91%, Visual design issues 88%. All findings are cross-checked against WCAG 2.1 standards and best practice libraries \u2014 not solely AI-generated opinions. Each finding includes a confidence indicator so you know how certain the AI is.' },
-      { q: 'What format is the report?', a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, pillar score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.' },
-      { q: 'What should I know before running an audit?', a: 'ClearUX analyses all publicly visible pages on your site. The audit is designed to catch the issues that matter most to real users \u2014 the same issues a $10k consultant would prioritize. For the most comprehensive results, ensure your site is live and publicly accessible.' },
-      { q: 'What about white-label reports?', a: 'Agency and Scale package customers can add their own company logo and name to reports. The ClearUX branding is replaced with yours in both PDF and Word exports \u2014 perfect for client-facing deliverables.' },
-    ],
-  },
-  {
-    id: 'billing',
-    label: 'Account & Billing',
-    items: [
-      { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints across 16 categories, PDF & Word reports, and prioritised recommendations. Buy in packs to save up to 50%.' },
-      { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Your website data is never stored or shared \u2014 only your report. Payments are processed securely via Stripe. We are GDPR compliant and use SSL encryption throughout.' },
-      { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied with an audit, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.' },
-    ],
-  },
-]
+const TOP_FAQS = [
+  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across 16 categories, and generates a full professional report.' },
+  { q: 'What does the audit cover?', a: 'We evaluate 16 categories across 4 pillars: Foundation, Human Experience, Inclusive Design, and Future Readiness. Every audit includes accessibility, ethical UX, AI readiness, conversion analysis, and more.' },
+  { q: 'Is ClearUX 100% accurate?', a: 'No automated tool is perfect, and we believe honesty about this builds trust. Our AI catches what other tools miss, but we recommend human review for critical accessibility findings. You can dismiss any finding with a reason, and the AI learns from your feedback on re-audits.' },
+  { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations.' },
+  { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-auditing the same URL is the best way to prove progress. Your dashboard shows score trends over time, and the AI skips previously dismissed findings so each audit gets smarter.' },
+];
 
 function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>; visible: boolean } }) {
-  const [activeTab, setActiveTab] = useState('general');
-  const activeFaqs = FAQ_TABS.find(t => t.id === activeTab)?.items || [];
-
   return (
     <section id="faq" className="py-28 px-4 md:px-6 lg:px-8 bg-surface">
       <div
@@ -472,27 +444,10 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
           </h2>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-surface-alt border border-border/40 dark:border-white/[0.06] mb-8 max-w-md mx-auto">
-          {FAQ_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 text-[13px] font-medium py-2 px-3 rounded-lg transition-all ${
-                activeTab === tab.id
-                  ? 'bg-card text-text shadow-sm'
-                  : 'text-muted hover:text-text'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* FAQ items */}
+        {/* Top 5 FAQ items */}
         <div className="space-y-3">
-          {activeFaqs.map((item, idx) => (
-            <details key={`${activeTab}-${idx}`} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
+          {TOP_FAQS.map((item, idx) => (
+            <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
               <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                 <h3 className="font-medium text-text text-sm pr-4">{item.q}</h3>
                 <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
@@ -502,6 +457,18 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
               </div>
             </details>
           ))}
+        </div>
+
+        {/* Read all FAQ link */}
+        <div className="text-center mt-8">
+          <Link
+            href="/faq"
+            className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+            style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+          >
+            Read all FAQ
+            <ArrowRight size={14} className="text-violet-500" />
+          </Link>
         </div>
       </div>
     </section>
