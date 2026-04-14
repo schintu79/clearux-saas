@@ -569,11 +569,11 @@ ${categoryExamples}
     const anthropic = getAnthropicClient()
     const message = await withTimeout(
       anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 8192,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       }),
-      120_000,
+      60_000,
       'generateReport',
     )
 
@@ -588,7 +588,7 @@ ${categoryExamples}
     if (!jsonMatch) {
       console.error('[generateReport] No JSON in response:', responseText.substring(0, 500))
       console.error('[generateReport] Response length:', responseText.length, '| stop_reason:', message.stop_reason)
-      return getDefaultReport()
+      return calculateScoresFromFindings(findings, language)
     }
 
     let report: ReportData
@@ -620,7 +620,7 @@ ${categoryExamples}
         console.log('[generateReport] JSON repair succeeded')
       } catch {
         console.error('[generateReport] JSON repair also failed. Raw start:', raw.substring(0, 300))
-        return getDefaultReport()
+        return calculateScoresFromFindings(findings, language)
       }
     }
 
@@ -673,33 +673,94 @@ ${categoryExamples}
     }
   } catch (err) {
     console.error('[generateReport] Error:', err instanceof Error ? err.message : err)
-    // Return defaults instead of crashing — a partial report is better than no report
-    return getDefaultReport()
+    // Calculate scores from findings instead of returning fake 50s
+    return calculateScoresFromFindings(findings, language)
   }
 }
 
 function clampScore(v: number | undefined): number {
-  if (v == null || isNaN(v)) return 50
+  if (v == null || isNaN(v)) return 70 // Default to 70 (decent) not 50 — absence of findings is positive
   return Math.min(100, Math.max(0, Math.round(v)))
 }
 
 function getDefaultCategoryScores(language: string = 'en'): CategoryScore[] {
   const names = getCategoryNames(language)
-  return names.map((name) => ({ name, score: 50, summary: 'Needs evaluation' }))
+  return names.map((name) => ({ name, score: 70, summary: '' }))
 }
 
-function getDefaultReport(): ReportData {
+/**
+ * Calculate scores from findings when report generation fails.
+ * Uses severity-based deduction: each finding reduces the score from 100.
+ * This ensures scores always reflect real analysis, never static defaults.
+ */
+function calculateScoresFromFindings(findings: AuditFinding[], language: string = 'en'): ReportData {
+  const categoryNames = getCategoryNames(language)
+  const severityPenalty: Record<string, number> = { critical: 15, high: 10, medium: 5, low: 2 }
+
+  // Assign findings to categories by keyword matching
+  const findingsPerCategory: Record<string, AuditFinding[]> = {}
+  for (const name of categoryNames) findingsPerCategory[name] = []
+
+  for (const f of findings) {
+    let matched = false
+    for (const catName of categoryNames) {
+      const words = catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+      const text = `${f.title} ${f.description}`.toLowerCase()
+      if (words.some(w => text.includes(w))) {
+        findingsPerCategory[catName].push(f)
+        matched = true
+        break
+      }
+    }
+    if (!matched) {
+      // Distribute by sort order
+      const idx = Math.min(Math.floor(f.sort_order / Math.max(1, findings.length / categoryNames.length)), categoryNames.length - 1)
+      findingsPerCategory[categoryNames[idx]].push(f)
+    }
+  }
+
+  // Calculate score per category: start at 100, deduct per finding severity
+  const categoryScores: CategoryScore[] = categoryNames.map(name => {
+    const catFindings = findingsPerCategory[name]
+    let score = 100
+    for (const f of catFindings) {
+      score -= severityPenalty[f.severity] || 5
+    }
+    return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary: '' }
+  })
+
+  const allScores = categoryScores.map(c => c.score)
+  const overall = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 70
+
+  const pillarAvg = (start: number, end: number) => {
+    const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+    return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 70
+  }
+
+  // Build a basic executive summary from findings
+  const criticalCount = findings.filter(f => f.severity === 'critical').length
+  const highCount = findings.filter(f => f.severity === 'high').length
+  const summary = criticalCount > 0
+    ? `This audit identified ${findings.length} issues, including ${criticalCount} critical finding${criticalCount > 1 ? 's' : ''} that require immediate attention. Focus on the critical and high-severity issues first for maximum impact.`
+    : highCount > 0
+    ? `This audit identified ${findings.length} issues, with ${highCount} high-priority finding${highCount > 1 ? 's' : ''}. Addressing these will meaningfully improve the user experience.`
+    : `This audit identified ${findings.length} areas for improvement. Most are medium or low severity, suggesting a solid baseline with room for refinement.`
+
+  const topRecs = findings
+    .filter(f => f.severity === 'critical' || f.severity === 'high')
+    .slice(0, 3)
+    .map(f => f.recommendation)
+
   return {
-    executiveSummary:
-      'The audit identified areas for improvement in user experience, performance, and conversion optimization. Review the detailed findings for specific recommendations.',
-    keyRecommendation: 'Prioritize critical issues first, then address high-impact improvements.',
-    topRecommendations: ['Prioritize critical issues first, then address high-impact improvements.'],
-    overallScore: 50,
-    uxScore: 50,
-    conversionScore: 50,
-    mobileScore: 50,
-    aiDiscoverabilityScore: 50,
-    contentScore: 50,
-    categoryScores: getDefaultCategoryScores(),
+    executiveSummary: summary,
+    keyRecommendation: topRecs[0] || 'Review the detailed findings and prioritise by severity.',
+    topRecommendations: topRecs.length > 0 ? topRecs : ['Review the detailed findings and prioritise by severity.'],
+    overallScore: overall,
+    uxScore: pillarAvg(0, 4),
+    conversionScore: pillarAvg(4, 8),
+    mobileScore: pillarAvg(8, 12),
+    aiDiscoverabilityScore: pillarAvg(12, 16),
+    contentScore: overall,
+    categoryScores,
   }
 }

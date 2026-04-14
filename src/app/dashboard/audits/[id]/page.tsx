@@ -1234,6 +1234,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const categoryScores: Array<{ name: string; score: number; summary: string }> =
     rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [];
 
+  // ALWAYS calculate overall score from category data (don't trust stored value)
+  const calculatedOverallScore = categoryScores.length > 0
+    ? Math.round(categoryScores.reduce((s, c) => s + c.score, 0) / categoryScores.length)
+    : (report?.overall_score ?? 0);
+
   // Severity counts
   const severityCounts = {
     critical: findings.filter((f) => f.severity === 'critical').length,
@@ -1521,7 +1526,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 {/* Score ring */}
                 <div className="flex-shrink-0">
-                  <ScoreRing score={report.overall_score ?? 0} size={110} strokeWidth={7} />
+                  <ScoreRing score={calculatedOverallScore} size={110} strokeWidth={7} />
                 </div>
 
                 {/* Score details */}
@@ -1529,13 +1534,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
                     <h2 className="text-xl font-bold font-manrope text-text">{L.overallScore}</h2>
                     <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                      (report.overall_score ?? 0) >= 70
+                      (calculatedOverallScore) >= 70
                         ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                        : (report.overall_score ?? 0) >= 40
+                        : (calculatedOverallScore) >= 40
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                           : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                     }`}>
-                      {getScoreLabel(report.overall_score ?? 0, auditLang)}
+                      {getScoreLabel(calculatedOverallScore, auditLang)}
                     </span>
                   </div>
 

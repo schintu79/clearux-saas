@@ -14,11 +14,8 @@ import {
   FileSearch,
   ExternalLink,
   Coins,
-  BarChart3,
   TrendingUp,
-  Shield,
   RefreshCw,
-  CheckCircle,
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -30,16 +27,6 @@ import type { Audit, Report } from '@/types/database';
 
 interface AuditWithReport extends Audit {
   report: Report | null;
-}
-
-interface DashboardStats {
-  totalAudits: number;
-  completedAudits: number;
-  avgScore: number | null;
-  totalFindings: number;
-  fixedFindings: number;
-  severityBreakdown: { critical: number; high: number; medium: number; low: number };
-  recentScores: Array<{ url: string; score: number; date: string }>;
 }
 
 const statusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -106,59 +93,6 @@ function OnboardingBanner() {
     </div>
   );
 }
-
-/* ── Stats cards ──────────────────────────────────────────── */
-
-function StatsCards({ stats }: { stats: DashboardStats }) {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
-        <div className="flex items-center gap-2 mb-1.5">
-          <BarChart3 size={13} className="text-violet-500" />
-          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Audits</span>
-        </div>
-        <p className="text-xl font-bold text-text">{stats.completedAudits}</p>
-        <p className="text-[10px] text-muted">{stats.totalAudits} total</p>
-      </div>
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
-        <div className="flex items-center gap-2 mb-1.5">
-          <TrendingUp size={13} className="text-emerald-500" />
-          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Avg Score</span>
-        </div>
-        <p className={`text-xl font-bold ${stats.avgScore ? scoreColor(stats.avgScore) : 'text-muted'}`}>
-          {stats.avgScore ?? '--'}
-        </p>
-        <p className="text-[10px] text-muted">across all audits</p>
-      </div>
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
-        <div className="flex items-center gap-2 mb-1.5">
-          <Shield size={13} className="text-red-500" />
-          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Findings</span>
-        </div>
-        <p className="text-xl font-bold text-text">{stats.totalFindings}</p>
-        <p className="text-[10px] text-muted">
-          {stats.severityBreakdown.critical > 0 && <span className="text-red-500">{stats.severityBreakdown.critical} critical</span>}
-          {stats.severityBreakdown.critical > 0 && stats.severityBreakdown.high > 0 && ' · '}
-          {stats.severityBreakdown.high > 0 && <span className="text-orange-500">{stats.severityBreakdown.high} high</span>}
-        </p>
-      </div>
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
-        <div className="flex items-center gap-2 mb-1.5">
-          <CheckCircle size={13} className="text-emerald-500" />
-          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Fixed</span>
-        </div>
-        <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.fixedFindings}</p>
-        <p className="text-[10px] text-muted">
-          {stats.totalFindings > 0
-            ? `${Math.round((stats.fixedFindings / stats.totalFindings) * 100)}% resolved`
-            : 'no findings yet'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ── Main component ───────────────────────────────────────── */
 
 /* ── Site Group — groups audits by domain ─────────────────── */
 function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport[] }) {
@@ -336,7 +270,6 @@ function DashboardInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState(false);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   // Handle return from Stripe credit purchase
   useEffect(() => {
@@ -379,15 +312,6 @@ function DashboardInner() {
       setLoading(false);
     }
   }, []);
-
-  // Fetch stats
-  useEffect(() => {
-    if (!user) return;
-    fetch('/api/dashboard/stats')
-      .then((r) => r.json())
-      .then((d) => { if (!d.error) setStats(d); })
-      .catch(() => {});
-  }, [user]);
 
   // Verify pending audits
   const verifyPendingAudits = useCallback(async (auditList: AuditWithReport[]) => {
@@ -473,9 +397,6 @@ function DashboardInner() {
 
       {/* Onboarding for new users */}
       {isNewUser && <OnboardingBanner />}
-
-      {/* Stats cards (show only if user has completed audits) */}
-      {stats && stats.completedAudits > 0 && <StatsCards stats={stats} />}
 
       {/* New Audit CTA */}
       <Link href="/dashboard/new-audit" className="block mb-5">
