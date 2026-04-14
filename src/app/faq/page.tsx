@@ -96,6 +96,27 @@ const FAQ_SECTIONS = [
       },
     ],
   },
+  {
+    title: 'Trust & Accuracy',
+    items: [
+      {
+        q: 'Is ClearUX 100% accurate?',
+        a: 'No, and we believe honesty about this is important. Our AI catches issues that traditional tools miss \u2014 dark patterns, emotional design gaps, cognitive accessibility barriers, AI readiness gaps \u2014 but no automated system is perfect. We recommend human review for accessibility-critical and security-sensitive findings. That\u2019s why every finding includes a status tracker: your team can verify, dismiss with a reason, or mark as fixed. The AI learns from your feedback on re-audits.',
+      },
+      {
+        q: 'What if the audit flags something incorrectly?',
+        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we\u2019ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
+      },
+      {
+        q: 'Can I share the report with clients or my team?',
+        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary \u2014 no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
+      },
+      {
+        q: 'How does ClearUX handle false positives?',
+        a: 'Our analysis engine uses cross-page awareness \u2014 it checks if content exists on other pages before flagging it as "missing" (e.g., it won\u2019t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
+      },
+    ],
+  },
 ];
 
 export default function FaqPage() {

@@ -81,7 +81,7 @@ export async function PATCH(
         return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
       }
 
-      await db
+      const { error: updateErr } = await db
         .from('audit_findings')
         .update({
           status,
@@ -89,6 +89,11 @@ export async function PATCH(
           status_note: note || null,
         } as any)
         .eq('id', findingId)
+
+      if (updateErr) {
+        console.error('Finding status update error:', updateErr)
+        return NextResponse.json({ error: updateErr.message }, { status: 500 })
+      }
 
       return NextResponse.json({ success: true, status })
     }

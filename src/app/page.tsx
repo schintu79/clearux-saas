@@ -187,9 +187,9 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center"><Eye size={12} className="text-violet-500" /></div>
             <span className="text-xs font-semibold text-text">Audit Overview</span>
-            <span className="text-[9px] font-medium text-white bg-violet-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded">Demo</span>
           </div>
-          <span className="text-xs text-muted px-2 py-0.5 rounded-full bg-surface-alt">clearux.ai</span>
+          <span className="text-[9px] text-muted/50 italic">Example output</span>
         </div>
         <div className="flex items-center gap-6 mb-6">
           <div className="relative">
@@ -237,9 +237,9 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-pink-500/15 flex items-center justify-center"><Heart size={12} className="text-pink-500" /></div>
             <span className="text-xs font-semibold text-text">Human Experience Scan</span>
-            <span className="text-[9px] font-medium text-white bg-pink-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-500/15 px-2 py-0.5 rounded">Demo</span>
           </div>
-          <span className="text-xs font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">6 issues</span>
+          <span className="text-[9px] text-muted/50 italic">Example output</span>
         </div>
         <div className="space-y-3">
           {[
@@ -272,7 +272,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center"><Gauge size={12} className="text-amber-500" /></div>
             <span className="text-xs font-semibold text-text">Technical Audit</span>
-            <span className="text-[9px] font-medium text-white bg-amber-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 rounded">Demo</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -314,7 +314,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center"><Brain size={12} className="text-emerald-500" /></div>
             <span className="text-xs font-semibold text-text">AI & Global Readiness</span>
-            <span className="text-[9px] font-medium text-white bg-emerald-500 px-1.5 py-0.5 rounded-full">Sample Report</span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded">Demo</span>
           </div>
           <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
         </div>

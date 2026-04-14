@@ -437,8 +437,15 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) setStatus(newStatus as any);
-    } catch {}
+      if (res.ok) {
+        setStatus(newStatus as any);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error('Status update failed:', err);
+      }
+    } catch (err) {
+      console.error('Status update error:', err);
+    }
     setStatusUpdating(false);
   };
 
