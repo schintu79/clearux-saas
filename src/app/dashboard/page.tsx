@@ -178,68 +178,74 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
 
   const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[0].score : 0;
 
-  return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
-      {/* Header — always visible */}
-      <div
-        className={`px-4 py-3 flex items-center justify-between gap-3 ${hasMultiple ? 'cursor-pointer hover:bg-off/30 dark:hover:bg-white/[0.02]' : ''} transition-colors`}
-        onClick={() => hasMultiple && setExpanded(!expanded)}
-      >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <Globe size={12} className="text-muted flex-shrink-0" />
-            <p className="font-medium text-sm text-text truncate">{domain}</p>
-            {hasMultiple && (
-              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
-                {audits.length} audits
-              </span>
-            )}
-            {langCode((latest as any).language) && (
-              <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{langCode((latest as any).language)}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted">
-            <span>Latest: {formatDate(latest.created_at)}</span>
-            <span className="text-border">·</span>
-            <span className="flex items-center gap-0.5">
-              <LatestIcon size={10} />
-              {latestMeta.label}
-            </span>
-            {improvement !== 0 && (
-              <>
-                <span className="text-border">·</span>
-                <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {improvement > 0 ? '+' : ''}{improvement} pts
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+  const lang = langCode((latest as any).language);
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link
-            href={`/dashboard/new-audit?url=${encodeURIComponent(latest.product_url)}`}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
-          >
-            <RefreshCw size={10} />
-            Re-audit
-          </Link>
-          {latestScore != null && (
-            <div className={`w-10 h-10 rounded-md border flex flex-col items-center justify-center ${scoreBg(latestScore)}`}>
-              <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>
-                {latestScore}
-              </span>
-            </div>
-          )}
-          {!latestDone && (
-            <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
-          )}
+  const headerContent = (
+    <div className="px-4 py-3 flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <Globe size={12} className="text-muted flex-shrink-0" />
+          <p className="font-medium text-sm text-text truncate">{domain}</p>
           {hasMultiple && (
-            <ChevronRight size={14} className={`text-muted transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
+            <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
+              {audits.length} audits
+            </span>
+          )}
+          {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted">
+          <span>{hasMultiple ? 'Latest: ' : ''}{formatDate(latest.created_at)}</span>
+          <span className="text-border">·</span>
+          <span className="flex items-center gap-0.5">
+            <LatestIcon size={10} />
+            {latestMeta.label}
+          </span>
+          {improvement !== 0 && (
+            <>
+              <span className="text-border">·</span>
+              <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {improvement > 0 ? '+' : ''}{improvement} pts
+              </span>
+            </>
           )}
         </div>
+        {!hasMultiple && latestDone && latest.report?.executive_summary && (
+          <p className="text-muted text-[10px] mt-1 line-clamp-1">{latest.report.executive_summary}</p>
+        )}
       </div>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <Link
+          href={`/dashboard/new-audit?url=${encodeURIComponent(latest.product_url)}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
+        >
+          <RefreshCw size={10} />
+          Re-audit
+        </Link>
+        {latestScore != null && (
+          <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
+            <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+          </div>
+        )}
+        {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
+        {hasMultiple && <ChevronRight size={14} className={`text-muted transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors">
+      {/* Header — single audit: full link; multiple: expandable */}
+      {hasMultiple ? (
+        <div className="cursor-pointer" onClick={() => setExpanded(!expanded)}>
+          {headerContent}
+        </div>
+      ) : (
+        <Link href={`/dashboard/audits/${latest.id}`}>
+          {headerContent}
+        </Link>
+      )}
 
       {/* Expanded: score trend + audit list */}
       {expanded && hasMultiple && (
@@ -333,14 +339,6 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
         </div>
       )}
 
-      {/* Single audit — clicking anywhere goes to the audit */}
-      {!hasMultiple && (
-        <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 pb-2">
-          {latestDone && latest.report?.executive_summary && (
-            <p className="text-muted text-[10px] line-clamp-1">{latest.report.executive_summary}</p>
-          )}
-        </Link>
-      )}
     </div>
   );
 }
