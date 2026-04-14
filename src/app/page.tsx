@@ -587,7 +587,7 @@ export default function Home() {
   const testimonials = [
     { quote: "After running a ClearUX audit on our SaaS onboarding flow, we implemented four high-severity fixes over two sprints. Signup-to-activation improved noticeably within the first month.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", context: "B2B SaaS · 2-week implementation", initials: "MW" },
     { quote: "Our team had been debating which UX issues to prioritise for months. The severity-by-impact scoring gave us a clear backlog we could act on immediately — no more guesswork.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", context: "Fintech product team · Quarterly audits", initials: "SC" },
-    { quote: "The accessibility and cognitive load findings were things no other tool had flagged. It goes well beyond what Lighthouse or automated scanners catch.", author: "James Kim", title: "CTO", company: "LaunchPad", context: "EdTech startup · Pre-launch audit", initials: "JK" },
+    { quote: "The accessibility and cognitive load findings were things no other tool had flagged. It catches the blind spots automated scanners miss entirely.", author: "James Kim", title: "CTO", company: "LaunchPad", context: "EdTech startup · Pre-launch audit", initials: "JK" },
     { quote: "We include ClearUX audits in every client proposal now. The white-label reports are professional enough to present directly to stakeholders.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", context: "Digital agency · 15+ client audits", initials: "DT" },
     { quote: "The ethical UX and dark pattern detection caught things our design team had overlooked. It's become part of our release checklist.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", context: "E-commerce · Monthly release cycles", initials: "ER" },
   ];
@@ -792,7 +792,7 @@ export default function Home() {
             <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
-              <span className="text-muted">The blind spots tools like Lighthouse miss.</span>
+              <span className="text-muted">The blind spots other tools miss.</span>
             </h2>
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
               Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.

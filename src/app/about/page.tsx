@@ -220,7 +220,7 @@ export default function AboutPage() {
                     We&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
                   </p>
                   <p>
-                    That&apos;s what we built. Not a checklist tool. Not another Lighthouse wrapper. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
+                    That&apos;s what we built. Not a checklist tool. Not another automated scanner. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
                   </p>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export default function AboutPage() {
                   <Heart size={22} className="text-pink-500" />
                 </div>
                 <h3 className="font-manrope font-bold text-xl text-text mb-3">Human-centered, not just metric-driven</h3>
-                <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. Things a Lighthouse score will never catch.</p>
+                <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. The blind spots other tools miss.</p>
               </div>
 
               <div className="rounded-2xl border border-violet-400/30 dark:border-violet-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">

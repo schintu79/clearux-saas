@@ -39,7 +39,7 @@ const testimonials = [
     context: 'B2B SaaS',
   },
   {
-    text: "The accessibility and cognitive load findings were things no other tool had flagged. It goes well beyond what Lighthouse or automated scanners catch.",
+    text: "The accessibility and cognitive load findings were things no other tool had flagged. It catches the blind spots automated scanners miss.",
     name: 'James Kim',
     role: 'CTO @ LaunchPad',
     context: 'EdTech startup',
@@ -62,7 +62,7 @@ const valueProps = [
   {
     icon: Search,
     title: '64 Checkpoints, 16 Categories',
-    desc: 'Accessibility, ethical UX, AI readiness, conversion psychology — the blind spots tools like Lighthouse miss.',
+    desc: 'Accessibility, ethical UX, AI readiness, conversion psychology — the blind spots other tools miss.',
   },
   {
     icon: Zap,
