@@ -180,13 +180,13 @@ body {
 .btn-primary {
   display: block;
   width: 100%;
-  padding: 0.75rem 1.5rem;
-  min-height: 44px;
+  padding: 0.875rem 1.5rem;
+  min-height: 48px;
   background: var(--gradient-brand);
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
   font-family: var(--font-inter), sans-serif;
   cursor: pointer;
@@ -391,6 +391,19 @@ article, .prose {
 
 [dir="rtl"] .flex-row {
   flex-direction: row-reverse;
+}
+
+/* ── Mobile: prevent iOS auto-zoom on input focus ────────── */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important; /* prevents iOS zoom */
+  }
+  /* Ensure all CTA buttons are properly sized on mobile */
+  .btn-primary {
+    min-height: 48px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────────── */

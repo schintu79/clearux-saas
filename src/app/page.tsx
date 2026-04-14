@@ -679,7 +679,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
@@ -689,7 +689,7 @@ export default function Home() {
           </form>
 
           {/* KSPs — different for logged in vs out */}
-          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+          <div className="animate-fade-up delay-400 mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
             {user ? (
               <>
                 <span>Track fixes over time</span>
@@ -1309,7 +1309,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group inline-flex items-center justify-center gap-2 px-7 py-4 text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-2xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
