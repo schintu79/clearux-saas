@@ -14,6 +14,7 @@ import {
   Coins,
   ChevronRight,
   ShieldCheck,
+  Bell,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -45,6 +46,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
+    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: false },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 

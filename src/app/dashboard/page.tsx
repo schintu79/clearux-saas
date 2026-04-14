@@ -12,13 +12,13 @@ import {
   AlertTriangle,
   Zap,
   FileSearch,
-  ExternalLink,
   Coins,
   TrendingUp,
   RefreshCw,
   ChevronRight,
   X,
   Info,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -61,11 +61,6 @@ function scoreBg(s: number) {
   return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
 }
 
-function langCode(code: string | null): string {
-  if (!code || code === 'en') return '';
-  return code.toUpperCase();
-}
-
 /* ── Onboarding steps ─────────────────────────────────────── */
 
 function OnboardingBanner() {
@@ -96,206 +91,29 @@ function OnboardingBanner() {
   );
 }
 
-/* ── Dismissable notification tip ─────────────────────────── */
-function TrackImprovementTip({ show }: { show: boolean }) {
+/* ── Dismissable tip ──────────────────────────────────────── */
+function DismissableTip({ id, children }: { id: string; children: React.ReactNode }) {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem('clearux_tip_dismissed') === '1';
+    return sessionStorage.getItem(`clearux_tip_${id}`) === '1';
   });
-
-  if (!show || dismissed) return null;
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    sessionStorage.setItem('clearux_tip_dismissed', '1');
-  };
-
+  if (dismissed) return null;
   return (
-    <div className="mt-4 p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-200/40 dark:border-blue-800/20 flex items-start gap-3">
-      <Info size={15} className="text-blue-500 flex-shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-blue-900 dark:text-blue-300">Track your improvement</p>
-        <p className="text-[11px] text-blue-700/70 dark:text-blue-400/60 mt-0.5">Fix the issues, then re-audit the same URL to compare your scores over time.</p>
-      </div>
+    <div className="mb-4 p-3 rounded-xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-200/40 dark:border-blue-800/20 flex items-start gap-3">
+      <Info size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0 text-xs text-blue-800 dark:text-blue-300">{children}</div>
       <button
-        onClick={handleDismiss}
-        className="p-1 rounded-md text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/20 transition-colors flex-shrink-0"
+        onClick={() => { setDismissed(true); sessionStorage.setItem(`clearux_tip_${id}`, '1'); }}
+        className="p-1 rounded-md text-blue-400 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800/20 transition-colors flex-shrink-0"
         aria-label="Dismiss"
       >
-        <X size={14} />
+        <X size={12} />
       </button>
     </div>
   );
 }
 
-/* ── Site Group — groups audits by domain ─────────────────── */
-function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport[] }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasMultiple = audits.length > 1;
-  const latest = audits[0]; // already sorted newest first
-  const latestMeta = statusMeta[latest.status] || statusMeta.pending_payment;
-  const LatestIcon = latestMeta.icon;
-  const latestDone = latest.status === 'completed';
-  const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
-
-  // Score trend for multi-audit sites
-  const scores = audits
-    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
-    .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
-    .reverse(); // oldest first for trend display
-
-  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[0].score : 0;
-
-  const lang = langCode((latest as any).language);
-
-  const headerContent = (
-    <div className="px-4 py-3 flex items-center justify-between gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <Globe size={12} className="text-muted flex-shrink-0" />
-          <p className="font-medium text-sm text-text truncate">{domain}</p>
-          {hasMultiple && (
-            <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
-              {audits.length} audits
-            </span>
-          )}
-          {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
-        </div>
-        <div className="flex items-center gap-2 text-[10px] text-muted">
-          <span>{hasMultiple ? 'Latest: ' : ''}{formatDate(latest.created_at)}</span>
-          <span className="text-border">·</span>
-          <span className="flex items-center gap-0.5">
-            <LatestIcon size={10} />
-            {latestMeta.label}
-          </span>
-          {improvement !== 0 && (
-            <>
-              <span className="text-border">·</span>
-              <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                {improvement > 0 ? '+' : ''}{improvement} pts
-              </span>
-            </>
-          )}
-        </div>
-        {!hasMultiple && latestDone && latest.report?.executive_summary && (
-          <p className="text-muted text-[10px] mt-1 line-clamp-1">{latest.report.executive_summary}</p>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <Link
-          href={`/dashboard/new-audit?url=${encodeURIComponent(latest.product_url)}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
-        >
-          <RefreshCw size={10} />
-          Re-audit
-        </Link>
-        {latestScore != null && (
-          <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
-            <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
-          </div>
-        )}
-        {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
-        <ChevronRight size={14} className={`text-muted transition-transform duration-200 ${hasMultiple && expanded ? 'rotate-90' : ''}`} />
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors">
-      {/* Header — single audit: full link; multiple: expandable */}
-      {hasMultiple ? (
-        <div className="cursor-pointer" onClick={() => setExpanded(!expanded)}>
-          {headerContent}
-        </div>
-      ) : (
-        <Link href={`/dashboard/audits/${latest.id}`}>
-          {headerContent}
-        </Link>
-      )}
-
-      {/* Expanded: score trend + audit list */}
-      {expanded && hasMultiple && (
-        <div className="border-t border-border/30 dark:border-white/[0.04]">
-          {/* Mini score trend — clean, thin bars */}
-          {scores.length >= 2 && (
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-2 mb-2.5">
-                <TrendingUp size={11} className="text-violet-400" />
-                <span className="text-[10px] font-medium text-text/60">Score Trend</span>
-                {improvement !== 0 && (
-                  <span className={`ml-auto text-[10px] font-semibold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {improvement > 0 ? '+' : ''}{improvement} pts
-                  </span>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                {scores.map((s, i) => {
-                  const dateStr = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  const isLatest = i === scores.length - 1;
-                  const isBaseline = i === 0;
-                  return (
-                    <div key={i} className={`flex items-center gap-2.5 ${isLatest ? '' : 'opacity-55'}`}>
-                      <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
-                        <div className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-400' : s.score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s.score}%` }} />
-                      </div>
-                      <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{s.score}</span>
-                      {isLatest && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
-                      {isBaseline && !isLatest && <span className="text-[8px] text-muted/50">start</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Individual audit rows */}
-          <div className="divide-y divide-border/20 dark:divide-white/[0.04]">
-            {audits.map((audit) => {
-              const meta = statusMeta[audit.status] || statusMeta.pending_payment;
-              const Icon = meta.icon;
-              const done = audit.status === 'completed';
-              const report = audit.report;
-              const aLang = langCode((audit as any).language) || 'EN';
-
-              return (
-                <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
-                  <div className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-violet-50/40 dark:hover:bg-violet-900/[0.06] transition-colors group/row cursor-pointer">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-[11px] text-muted">
-                        <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
-                        <span className="text-border">·</span>
-                        <span className="flex items-center gap-0.5">
-                          <Icon size={10} />
-                          {meta.label}
-                        </span>
-                        <span className="text-border">·</span>
-                        <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
-                        {done && report?.overall_score != null && (
-                          <>
-                            <span className="text-border">·</span>
-                            <span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {!done && (
-                      <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
-                    )}
-                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-violet-500 transition-colors flex-shrink-0" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+/* ── Main component ───────────────────────────────────────── */
 
 function DashboardInner() {
   const searchParams = useSearchParams();
@@ -304,6 +122,7 @@ function DashboardInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
 
   // Handle return from Stripe credit purchase
   useEffect(() => {
@@ -339,13 +158,17 @@ function DashboardInner() {
       }
       setAudits((auditsRes.data || []).map((a: any) => ({ ...a, report: reportsMap[a.id] || null })));
     } catch (err: any) {
-      const msg = err?.message || err?.error_description || JSON.stringify(err);
-      console.error('[Dashboard] fetch error:', msg, err);
-      setError(`Failed to load audits: ${msg}`);
+      setError(`Failed to load audits: ${err?.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Fetch credits
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/credits').then(r => r.json()).then(d => setCredits(d.credits ?? 0)).catch(() => {});
+  }, [user]);
 
   // Verify pending audits
   const verifyPendingAudits = useCallback(async (auditList: AuditWithReport[]) => {
@@ -385,26 +208,23 @@ function DashboardInner() {
     return (
       <div className="max-w-3xl mx-auto py-6 space-y-4">
         <div className="h-6 w-40 bg-off rounded animate-pulse" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-off rounded-xl animate-pulse" />)}
-        </div>
-        <div className="space-y-3 mt-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />)}
+        <div className="h-14 bg-off rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 bg-off rounded-xl animate-pulse" />
+          <div className="h-16 bg-off rounded-xl animate-pulse" />
         </div>
       </div>
     );
   }
 
   const name = profile?.full_name?.split(' ')[0] || 'there';
-  const has = audits.length > 0;
   const isNewUser = audits.length === 0;
-
-  // Group audits by unique URL for re-audit indicator
-  const urlCounts: Record<string, number> = {};
-  for (const a of audits) {
-    const key = formatUrl(a.product_url);
-    urlCounts[key] = (urlCounts[key] || 0) + 1;
-  }
+  const inProgressAudits = audits.filter(a =>
+    ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(a.status)
+  );
+  const failedAudits = audits.filter(a => a.status === 'failed');
+  const completedCount = audits.filter(a => a.status === 'completed').length;
+  const totalAudits = audits.length;
 
   return (
     <div className="max-w-3xl mx-auto py-2">
@@ -412,19 +232,17 @@ function DashboardInner() {
       <div className="mb-5">
         <h1 className="text-lg font-semibold text-text">Hey {name}</h1>
         <p className="text-muted text-xs mt-0.5">
-          {has ? `${audits.length} audit${audits.length !== 1 ? 's' : ''} run` : 'Run your first UX audit'}
+          {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}
         </p>
       </div>
 
       {/* Credits purchased banner */}
       {creditsBanner && (
-        <div role="status" aria-live="polite" className="mb-5 p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-            <Coins size={16} className="text-white" />
-          </div>
+        <div role="status" aria-live="polite" className="mb-4 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+          <Coins size={16} className="text-emerald-500 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-text">Credits added successfully!</p>
-            <p className="text-xs text-muted">Your credits are ready to use. Start a new audit anytime.</p>
+            <p className="text-xs font-semibold text-text">Credits added successfully!</p>
+            <p className="text-[11px] text-muted">Your credits are ready to use.</p>
           </div>
         </div>
       )}
@@ -432,23 +250,48 @@ function DashboardInner() {
       {/* Onboarding for new users */}
       {isNewUser && <OnboardingBanner />}
 
-      {/* New Audit CTA */}
-      <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="relative overflow-hidden rounded-xl p-5 text-white transition-all hover:brightness-110 group" style={{ background: 'var(--gradient-brand)' }}>
-          <div className="flex items-center justify-between">
+      {/* ── New Audit + Quick Stats row ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        {/* New Audit CTA */}
+        <Link href="/dashboard/new-audit" className="sm:col-span-1">
+          <div className="h-full rounded-xl p-4 text-white transition-all hover:brightness-110 group flex items-center gap-3" style={{ background: 'var(--gradient-brand)' }}>
+            <Sparkles size={20} className="text-white flex-shrink-0" />
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkles size={20} className="text-white" />
-                <span className="font-bold text-lg">New Audit</span>
-              </div>
-              <p className="text-white/60 text-sm">
-                Paste a URL and get a professional UX report
-              </p>
+              <p className="font-bold text-sm">New Audit</p>
+              <p className="text-white/60 text-[11px]">Paste a URL</p>
             </div>
-            <ArrowRight size={22} className="text-white/40 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight size={16} className="text-white/40 ml-auto group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
+
+        {/* Total Audits */}
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 flex items-center gap-3">
+          <FileSearch size={16} className="text-violet-500 flex-shrink-0" />
+          <div>
+            <p className="text-lg font-bold text-text leading-none">{totalAudits}</p>
+            <p className="text-[10px] text-muted mt-0.5">{completedCount} completed</p>
           </div>
         </div>
-      </Link>
+
+        {/* Credits */}
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 flex items-center gap-3">
+          <Coins size={16} className="text-emerald-500 flex-shrink-0" />
+          <div>
+            <p className="text-lg font-bold text-text leading-none">{credits ?? '--'}</p>
+            <p className="text-[10px] text-muted mt-0.5">credits available</p>
+          </div>
+          {credits !== null && credits < 1 && (
+            <Link href="/dashboard/buy-credits" className="ml-auto text-[10px] font-semibold text-violet-500 hover:underline">Buy</Link>
+          )}
+        </div>
+      </div>
+
+      {/* ── Notifications / Tips ── */}
+      {!isNewUser && (
+        <DismissableTip id="track">
+          <span className="font-semibold">Track your improvement</span> — fix the issues, then re-audit the same URL to compare your scores over time.
+        </DismissableTip>
+      )}
 
       {/* Error */}
       {error && (
@@ -457,54 +300,90 @@ function DashboardInner() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && !has && (
-        <div className="text-center py-12">
+      {/* ── In-Progress Audits ── */}
+      {inProgressAudits.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-xs font-semibold text-text mb-3">Processing</h2>
+          <div className="space-y-2.5">
+            {inProgressAudits.map((audit) => {
+              const meta = statusMeta[audit.status] || statusMeta.payment_received;
+              const Icon = meta.icon;
+              return (
+                <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
+                  <div className="bg-card border border-border/40 dark:border-white/[0.06] rounded-xl px-4 py-3.5 hover:border-violet-400/30 transition-colors flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                      <Loader2 size={14} className="text-violet-500 animate-spin" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+                        <span>{formatDate(audit.created_at)}</span>
+                        <span className="text-border">·</span>
+                        <span className="flex items-center gap-0.5 text-violet-500 font-medium">
+                          <Icon size={10} />
+                          {meta.label}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-muted flex-shrink-0" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Failed Audits ── */}
+      {failedAudits.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-xs font-semibold text-text mb-3">Failed</h2>
+          <div className="space-y-2.5">
+            {failedAudits.map((audit) => (
+              <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
+                <div className="bg-card border border-red-200/40 dark:border-red-800/20 rounded-xl px-4 py-3.5 hover:border-red-400/30 transition-colors flex items-center gap-3">
+                  <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
+                    <p className="text-[10px] text-muted mt-0.5">{formatDate(audit.created_at)} · Credit refunded</p>
+                  </div>
+                  <ChevronRight size={14} className="text-muted flex-shrink-0" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Empty state (only when no in-progress or failed) ── */}
+      {!isNewUser && inProgressAudits.length === 0 && failedAudits.length === 0 && (
+        <div className="text-center py-10 px-4">
+          <CheckCircle2 size={24} className="text-emerald-500 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-text mb-1">All clear</p>
+          <p className="text-xs text-muted mb-4 max-w-xs mx-auto">
+            No audits in progress. Your completed audits are in the Audits tab.
+          </p>
+          <Link
+            href="/dashboard/new-audit"
+            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110"
+            style={{ background: 'var(--gradient-brand)' }}
+          >
+            <Sparkles size={13} />
+            Run a new audit
+          </Link>
+        </div>
+      )}
+
+      {/* ── New user empty state ── */}
+      {isNewUser && (
+        <div className="text-center py-8">
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
             Create your first audit to see how your website scores across 64 UX checkpoints.
           </p>
-          <Link
-            href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2 rounded-md transition-all hover:brightness-110"
-            style={{ background: 'var(--gradient-brand)' }}
-          >
-            <Sparkles size={13} />
-            Start Audit
-          </Link>
         </div>
       )}
-
-      {/* Audit list — grouped by domain */}
-      {has && (() => {
-        // Group audits by domain
-        const grouped: Record<string, AuditWithReport[]> = {};
-        for (const audit of audits) {
-          const domain = formatUrl(audit.product_url);
-          if (!grouped[domain]) grouped[domain] = [];
-          grouped[domain].push(audit);
-        }
-        const domainKeys = Object.keys(grouped);
-
-        return (
-          <div>
-            <h2 className="text-xs font-semibold text-text mb-3">Your Audits</h2>
-            <div className="flex flex-col" style={{ gap: '12px' }}>
-              {domainKeys.map((domain) => (
-                <SiteGroup
-                  key={domain}
-                  domain={domain}
-                  audits={grouped[domain]}
-                />
-              ))}
-            </div>
-
-            {/* Track improvement notification — dismissable */}
-            <TrackImprovementTip show={audits.some(a => a.status === 'completed')} />
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -514,11 +393,10 @@ export default function DashboardPage() {
     <Suspense fallback={
       <div className="max-w-3xl mx-auto py-6 space-y-4">
         <div className="h-6 w-40 bg-off rounded animate-pulse" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-off rounded-xl animate-pulse" />)}
-        </div>
-        <div className="space-y-3 mt-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />)}
+        <div className="h-14 bg-off rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 bg-off rounded-xl animate-pulse" />
+          <div className="h-16 bg-off rounded-xl animate-pulse" />
         </div>
       </div>
     }>
