@@ -1230,23 +1230,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     })}
                   </div>
 
-                  {/* Download buttons — below pillar scores on mobile, stays in row on desktop */}
-                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-4">
+                  {/* Action buttons — responsive: wrap on mobile, inline on desktop */}
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
                     <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer">
                       <button
-                        className="flex items-center gap-2 text-xs font-semibold text-white px-4 py-2.5 rounded-xl transition-all hover:brightness-110 shadow-sm"
+                        className="flex items-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2 rounded-lg transition-all hover:brightness-110 shadow-sm"
                         style={{ background: 'var(--gradient-brand)' }}
                       >
-                        <Download size={14} />
+                        <Download size={13} />
                         PDF
                       </button>
                     </a>
                     <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer">
-                      <button className="flex items-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors">
-                        <Download size={14} />
+                      <button className="flex items-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3.5 py-2 rounded-lg hover:bg-surface-alt transition-colors">
+                        <Download size={13} />
                         Word
                       </button>
                     </a>
+                    <button
+                      onClick={handleShare}
+                      disabled={shareLoading}
+                      className="flex items-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3.5 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
+                    >
+                      {shareCopied ? <><Check size={13} className="text-emerald-500" /> Copied</> : <><Share2 size={13} /> Share</>}
+                    </button>
+                    <Link
+                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                      className="flex items-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3.5 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+                    >
+                      <RefreshCw size={13} />
+                      Re-audit
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -1280,6 +1294,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ── Improvement tip ─────────────────────────────── */}
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50/50 dark:bg-violet-900/[0.08] border border-violet-200/30 dark:border-violet-800/20">
+            <RefreshCw size={15} className="text-violet-500 flex-shrink-0" />
+            <p className="text-xs text-text/60 dark:text-text/50">
+              <span className="font-semibold text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, then re-audit to compare your score over time.
+            </p>
           </div>
 
           {/* ── Page Screenshot ────────────────────────────── */}

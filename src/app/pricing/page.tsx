@@ -13,17 +13,17 @@ export default function PricingPage() {
     {
       question: 'How do credits work?',
       answer:
-        'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, and prioritised recommendations.',
+        'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding tracking, shareable links, and prioritised recommendations.',
     },
     {
       question: 'How fast is the audit delivered?',
       answer:
-        'Most audits complete in under 10 minutes. Our AI-powered engine crawls your site and generates a comprehensive report automatically.',
+        'Most audits complete in under 10 minutes. Our AI-powered engine crawls your site and generates a comprehensive report automatically. You can track findings, share results, and re-audit immediately.',
     },
     {
       question: 'What does every audit include?',
       answer:
-        'Every audit — regardless of which pack you buy — includes the full 64-point analysis across 16 UX categories, AI discoverability review, severity-ranked findings, and downloadable PDF + Word reports.',
+        'Every audit includes the full 64-point analysis across 16 UX categories, AI discoverability review, severity-ranked findings with status tracking (open, in progress, fixed, backlog), shareable read-only links for your team, re-audit comparison, and downloadable PDF + Word reports.',
     },
     {
       question: 'Can I buy more credits later?',
@@ -66,8 +66,8 @@ export default function PricingPage() {
                     <Search size={16} className="text-violet-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Audit once to establish a baseline</p>
-                    <p className="text-xs text-muted mt-0.5">Single Audit — one site, one report, $99</p>
+                    <p className="text-sm font-semibold text-text">Establish a baseline, then track improvement</p>
+                    <p className="text-xs text-muted mt-0.5">Single Audit — one site, full report, shareable results, $99</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -75,8 +75,8 @@ export default function PricingPage() {
                     <BarChart3 size={16} className="text-pink-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Run quarterly audits each release cycle</p>
-                    <p className="text-xs text-muted mt-0.5">Growth — 5 audits/year, $79.80 each</p>
+                    <p className="text-sm font-semibold text-text">Re-audit quarterly and prove progress to stakeholders</p>
+                    <p className="text-xs text-muted mt-0.5">Growth — 5 audits/year, score comparison over time, $79.80 each</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -99,8 +99,8 @@ export default function PricingPage() {
                 </div>
               </div>
               <p className="text-xs text-muted mt-5 pt-4 border-t border-border/20 dark:border-white/[0.04]">
-                <strong className="text-text">White-label reports</strong> let you add your own logo and company name — agencies often send these directly to clients.
-                All plans include the same full 64-checkpoint analysis. Packs simply lower the per-audit cost.
+                <strong className="text-text">Every audit includes</strong> finding status tracking, shareable read-only links for your team, and re-audit comparison so you can prove improvement.
+                White-label reports let agencies add their own branding. Packs simply lower the per-audit cost.
               </p>
             </div>
           </div>

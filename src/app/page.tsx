@@ -690,7 +690,7 @@ export default function Home() {
           </h1>
 
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
-            64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact. See exactly what to fix first and why it matters.
+            64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact. Fix what matters first, track your progress, and prove the improvement.
           </p>
 
           {/* URL Input */}
@@ -801,7 +801,7 @@ export default function Home() {
               <span className="text-muted">The blind spots tools like Lighthouse miss.</span>
             </h2>
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact so your team fixes what matters first.
+              Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.
             </p>
           </div>
 
@@ -884,10 +884,10 @@ export default function Home() {
                 {[
                   'Deep analysis across 16 UX categories',
                   'Findings ranked by severity & business impact',
-                  'Top 3 priority recommendations to act on first',
+                  'Track progress: mark findings as fixed, in progress, or backlog',
                   'Executive summary + detailed PDF & Word reports',
-                  'Issue screenshots with element highlighting',
-                  '6 languages supported',
+                  'Share results with your team via read-only links',
+                  'Re-audit the same URL to measure your improvement over time',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5">
                     <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -964,9 +964,9 @@ export default function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
               {[
                 { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { title: 'Track and share progress', desc: 'Mark findings as fixed, share results with stakeholders, and re-audit to prove improvement.' },
                 { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
-                { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
-                { title: 'Instant delivery', desc: 'Reports arrive via email within minutes of purchase, plus downloadable PDF & Word versions from your dashboard.' },
+                { title: 'Instant delivery', desc: 'Reports arrive within minutes. PDF, Word, and an interactive dashboard with improvement tracking.' },
               ].map((item, i) => (
                 <div key={i}>
                   <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
@@ -1072,7 +1072,7 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-            Real findings your team can act on — prioritised by impact, delivered in minutes, not weeks.
+            Real findings your team can act on — prioritised by impact, trackable as you fix them, and re-auditable to prove the improvement. Delivered in minutes, not weeks.
           </p>
 
           {/* URL input — mirrors the hero */}

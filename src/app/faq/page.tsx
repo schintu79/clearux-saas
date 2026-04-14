@@ -32,6 +32,18 @@ const FAQ_SECTIONS = [
         q: 'How does ClearUX compare to hiring a UX consultant?',
         a: 'A traditional UX audit costs $5,000\u2013$15,000 and takes 2\u20134 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
       },
+      {
+        q: 'Can I track which findings have been fixed?',
+        a: 'Yes. Every finding has a status you can update: Open, In Progress, Fixed, or Backlog. Your dashboard tracks how many issues you\u2019ve resolved over time, giving you a clear picture of progress.',
+      },
+      {
+        q: 'Can I share audit results with my team?',
+        a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown \u2014 no account needed. You can revoke the link at any time.',
+      },
+      {
+        q: 'Can I re-audit the same website to measure improvement?',
+        a: 'Absolutely. Re-auditing the same URL is the best way to prove progress. Your dashboard shows re-audit badges and your stats track average scores over time. Audit the same site before and after implementing fixes to see your score improve.',
+      },
     ],
   },
   {
@@ -64,7 +76,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How do credits work?',
-        a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints across 16 categories, PDF & Word reports, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
+        a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
       },
       {
         q: 'Is my data secure?',

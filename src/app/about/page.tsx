@@ -271,8 +271,8 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Eye size={22} className="text-amber-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Consultant depth at tool speed</h3>
-                <p className="text-text/65 text-[15px] leading-relaxed">64 checkpoints across 4 pillars — Foundation, Human Experience, Inclusive Design, Future Readiness. Not a generic checklist. A prioritised, severity-ranked report with specific recommendations.</p>
+                <h3 className="font-manrope font-bold text-xl text-text mb-3">Audit once, improve continuously</h3>
+                <p className="text-text/65 text-[15px] leading-relaxed">64 checkpoints across 4 pillars. Track each finding from open to fixed, share results with your team, and re-audit to compare scores over time. Not just a one-time report — an ongoing improvement system.</p>
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function AboutPage() {
                   <BarChart3 size={22} className="text-violet-500" />
                 </div>
                 <h3 className="font-manrope font-bold text-xl text-text mb-3">Product Managers</h3>
-                <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Get severity-ranked findings, ROI-focused recommendations, and exportable reports your stakeholders will actually read.</p>
+                <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Track findings from open to fixed, share results with stakeholders via read-only links, and re-audit to show measurable improvement over time.</p>
               </div>
 
               <div className="rounded-2xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
@@ -315,7 +315,7 @@ export default function AboutPage() {
                   <Tag size={22} className="text-emerald-500" />
                 </div>
                 <h3 className="font-manrope font-bold text-xl text-text mb-3">Agencies</h3>
-                <p className="text-text/65 text-[15px] leading-relaxed">White-label audit capabilities for your clients. Upload your logo, use your brand name, and deliver professional UX reports under your own banner.</p>
+                <p className="text-text/65 text-[15px] leading-relaxed">White-label reports for your clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time. Upload your logo and deliver under your own banner.</p>
               </div>
 
               <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
