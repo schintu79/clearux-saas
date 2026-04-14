@@ -216,35 +216,15 @@ export default function RegisterPage() {
 
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
-    <div className="w-full max-w-[400px]">
-      {/* Value proposition banner */}
-      <div className="mb-6 p-4 rounded-xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
-        <h2 className="text-lg font-manrope font-bold text-text mb-1">
-          Start Your Free Audit
-        </h2>
-        <p className="text-sm text-text/70 mb-3">
-          No credit card required. Get consultant-grade UX insights in under 10 minutes.
-        </p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text/55">
-          <span>64-point analysis</span>
-          <span className="opacity-40">·</span>
-          <span>Actionable findings</span>
-          <span className="opacity-40">·</span>
-          <span>Impact-ranked recommendations</span>
-        </div>
-        {pendingUrl && (
-          <div className="mt-3 pt-2.5 border-t border-violet-200/30 dark:border-violet-800/15">
-            <p className="text-[11px] text-violet-700 dark:text-violet-400 font-medium truncate">Auditing: {pendingUrl}</p>
-          </div>
-        )}
-      </div>
-
+    <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h3 className="text-xl font-manrope font-bold text-text mb-1">
+        <h2 className="text-2xl font-manrope font-bold text-text mb-1">
           Create your account
-        </h3>
+        </h2>
         <p className="text-sm text-muted">
-          Sign up to access your audit dashboard, track findings, and share results.
+          {pendingUrl
+            ? 'Sign up to run your first audit \u2014 it\u2019s free. No credit card required.'
+            : 'Sign up to access your audit dashboard and start improving.'}
         </p>
       </div>
 
@@ -450,7 +430,12 @@ export default function RegisterPage() {
       {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
       <div className="lg:hidden min-h-screen bg-surface flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+          {/* Slim value banner on mobile */}
+          <div className="w-full max-w-[380px] mb-5 p-3.5 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/30 dark:border-violet-800/20 text-center">
+            <p className="text-sm font-semibold text-text">Your first audit is free</p>
+            <p className="text-[11px] text-muted mt-0.5">64-point analysis · No credit card · Results in minutes</p>
+          </div>
           {formContent}
         </div>
       </div>
@@ -471,9 +456,31 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-6 mb-auto">
-                <h2 className="text-xl font-manrope font-semibold text-white">
-                  {pendingUrl ? 'Your free audit is one step away' : 'Everything you need to ship better UX'}
-                </h2>
+                {/* Free audit banner */}
+                <div className="rounded-xl bg-white/10 border border-white/10 p-5 backdrop-blur-sm">
+                  <h2 className="text-lg font-manrope font-bold text-white mb-1.5">
+                    {pendingUrl ? 'Your free audit is one step away' : 'Start Your Free Audit'}
+                  </h2>
+                  <p className="text-sm text-white/70 mb-3">
+                    No credit card required. Get consultant-grade UX insights in under 10 minutes.
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/50">
+                    <span>64-point analysis</span>
+                    <span className="opacity-40">·</span>
+                    <span>Actionable findings</span>
+                    <span className="opacity-40">·</span>
+                    <span>Impact-ranked recommendations</span>
+                  </div>
+                  {pendingUrl && (
+                    <div className="mt-3 pt-2.5 border-t border-white/10">
+                      <p className="text-[11px] text-white/60 font-medium truncate">Auditing: {pendingUrl}</p>
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="text-lg font-manrope font-semibold text-white/80">
+                  Everything you get
+                </h3>
 
                 <div className="grid grid-cols-1 gap-5">
                   {valueProps.map((prop) => (
