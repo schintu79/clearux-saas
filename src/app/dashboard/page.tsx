@@ -17,6 +17,8 @@ import {
   TrendingUp,
   RefreshCw,
   ChevronRight,
+  X,
+  Info,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -90,6 +92,38 @@ function OnboardingBanner() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ── Dismissable notification tip ─────────────────────────── */
+function TrackImprovementTip({ show }: { show: boolean }) {
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem('clearux_tip_dismissed') === '1';
+  });
+
+  if (!show || dismissed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem('clearux_tip_dismissed', '1');
+  };
+
+  return (
+    <div className="mt-4 p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-900/10 border border-blue-200/40 dark:border-blue-800/20 flex items-start gap-3">
+      <Info size={15} className="text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-blue-900 dark:text-blue-300">Track your improvement</p>
+        <p className="text-[11px] text-blue-700/70 dark:text-blue-400/60 mt-0.5">Fix the issues, then re-audit the same URL to compare your scores over time.</p>
+      </div>
+      <button
+        onClick={handleDismiss}
+        className="p-1 rounded-md text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/20 transition-colors flex-shrink-0"
+        aria-label="Dismiss"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
@@ -466,20 +500,8 @@ function DashboardInner() {
               ))}
             </div>
 
-            {/* Track improvement banner */}
-            {audits.some(a => a.status === 'completed') && (
-              <div className="mt-5 p-5 rounded-xl border-2 border-violet-200/50 dark:border-violet-800/30" style={{ background: 'var(--gradient-brand-subtle)' }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
-                    <TrendingUp size={20} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-text">Track your improvement</p>
-                    <p className="text-xs text-muted mt-0.5">Fix the issues, then re-audit the same URL. Your dashboard shows score trends, resolved findings, and measurable progress over time.</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Track improvement notification — dismissable */}
+            <TrackImprovementTip show={audits.some(a => a.status === 'completed')} />
           </div>
         );
       })()}
