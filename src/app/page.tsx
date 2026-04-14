@@ -1058,6 +1058,31 @@ export default function Home() {
           ref={priceRef.ref}
           className={`max-w-4xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
+          {/* ── Free Audit Banner (logged out only) ── */}
+          {!user && (
+            <div className="rounded-2xl p-6 sm:p-8 mb-12 relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles size={18} className="text-violet-500" />
+                    <h3 className="font-manrope font-bold text-xl text-text">Start with a Free Audit</h3>
+                  </div>
+                  <p className="text-sm text-text/70 max-w-md">
+                    No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
+                  </p>
+                </div>
+                <Link
+                  href="/register"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white text-sm font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.2)' }}
+                >
+                  Start Free Audit
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* ── Header ── */}
           <div className="mb-16">
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.15' }}>
