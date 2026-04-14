@@ -258,31 +258,32 @@ function DashboardInner() {
 
       {/* ── Quick Stats row ── */}
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5">
-          <FileSearch size={15} className="text-violet-500 flex-shrink-0" />
-          <div>
-            <p className="text-base font-bold text-text leading-none">{completedCount}</p>
-            <p className="text-[10px] text-muted mt-0.5">completed</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5">
-          <Coins size={15} className="text-emerald-500 flex-shrink-0" />
-          <div>
-            <p className="text-base font-bold text-text leading-none">{credits ?? '--'}</p>
-            <p className="text-[10px] text-muted mt-0.5">credits</p>
-          </div>
-          {credits !== null && credits < 1 && (
-            <Link href="/dashboard/buy-credits" className="ml-auto text-[9px] font-semibold text-violet-500 hover:underline">Buy</Link>
-          )}
-        </div>
-        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5 flex items-center gap-2.5 hover:border-violet-400/30 transition-colors">
-          <div className="relative">
-            <Bell size={15} className="text-muted flex-shrink-0" />
-            {pinnedNotification && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />}
+        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-violet-400/30 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+            <FileSearch size={20} className="text-violet-500" />
           </div>
           <div>
-            <p className="text-base font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
-            <p className="text-[10px] text-muted mt-0.5">new</p>
+            <p className="text-xl font-bold text-text leading-none">{completedCount}</p>
+            <p className="text-[11px] text-muted mt-1">completed</p>
+          </div>
+        </Link>
+        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-emerald-400/30 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+            <Coins size={20} className="text-emerald-500" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-text leading-none">{credits ?? '--'}</p>
+            <p className="text-[11px] text-muted mt-1">credits</p>
+          </div>
+        </Link>
+        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-amber-400/30 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 relative">
+            <Bell size={20} className="text-amber-500" />
+            {pinnedNotification && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-card" />}
+          </div>
+          <div>
+            <p className="text-xl font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
+            <p className="text-[11px] text-muted mt-1">new</p>
           </div>
         </Link>
       </div>
