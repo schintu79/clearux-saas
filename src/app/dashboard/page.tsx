@@ -297,40 +297,33 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
               const Icon = meta.icon;
               const done = audit.status === 'completed';
               const report = audit.report;
-              const aLang = langCode((audit as any).language);
+              const aLang = langCode((audit as any).language) || 'EN';
 
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
-                  <div className="px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors">
+                  <div className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-violet-50/40 dark:hover:bg-violet-900/[0.06] transition-colors group/row cursor-pointer">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-[11px] text-muted">
-                        <span>{formatDate(audit.created_at)}</span>
+                        <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
                         <span className="text-border">·</span>
                         <span className="flex items-center gap-0.5">
                           <Icon size={10} />
                           {meta.label}
                         </span>
-                        {aLang && (
+                        <span className="text-border">·</span>
+                        <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                        {done && report?.overall_score != null && (
                           <>
                             <span className="text-border">·</span>
-                            <span className="font-bold text-[10px]">{aLang}</span>
-                          </>
-                        )}
-                        {done && report?.executive_summary && (
-                          <>
-                            <span className="text-border">·</span>
-                            <span className="truncate max-w-[200px]">{report.executive_summary}</span>
+                            <span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span>
                           </>
                         )}
                       </div>
                     </div>
-                    {done && report?.overall_score != null ? (
-                      <span className={`text-xs font-bold ${scoreColor(report.overall_score)}`}>
-                        {report.overall_score}
-                      </span>
-                    ) : (
+                    {!done && (
                       <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
                     )}
+                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-violet-500 transition-colors flex-shrink-0" />
                   </div>
                 </Link>
               );

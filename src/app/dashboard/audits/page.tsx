@@ -205,25 +205,25 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
               const Icon = meta.icon;
               const done = audit.status === 'completed';
               const report = audit.report;
-              const aLang = langCode((audit as any).language);
+              const aLang = langCode((audit as any).language) || 'EN';
 
               return (
-                <div key={audit.id} className="flex items-center justify-between gap-2 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors">
-                  <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-2.5">
-                    <div className="flex items-center gap-2 text-[11px] text-muted">
-                      <span>{formatDate(audit.created_at)}</span>
+                <div key={audit.id} className="flex items-center gap-2 hover:bg-violet-50/40 dark:hover:bg-violet-900/[0.06] transition-colors group/row">
+                  <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
+                      <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
                       <span className="text-border">·</span>
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
-                      {aLang && <><span className="text-border">·</span><span className="font-bold text-[10px]">{aLang}</span></>}
+                      <span className="text-border">·</span>
+                      <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
                       {done && report?.overall_score != null && (
-                        <><span className="text-border">·</span><span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score}</span></>
+                        <><span className="text-border">·</span><span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span></>
                       )}
                     </div>
+                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-violet-500 transition-colors flex-shrink-0" />
                   </Link>
                   <button
-                    onClick={() => {
-                      if (confirm('Delete this audit?')) onDelete(audit.id);
-                    }}
+                    onClick={() => { if (confirm('Delete this audit?')) onDelete(audit.id); }}
                     className="px-3 py-2 text-muted hover:text-red-500 transition-colors flex-shrink-0"
                   >
                     <Trash2 size={11} />
