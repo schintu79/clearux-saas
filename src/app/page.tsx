@@ -787,7 +787,7 @@ export default function Home() {
         }} />
 
         {/* ── TOP: Section intro + Stats ── */}
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-40 sm:pt-44 pb-16">
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-16">
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.15' }}>
@@ -825,7 +825,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL — own section (no overflow-hidden so sticky works)
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-surface pt-24 sm:pt-28 py-12">
+      <section className="relative bg-surface pt-28 sm:pt-32 pb-12">
         <PillarScrollReveal categories={auditCategories} />
       </section>
 
