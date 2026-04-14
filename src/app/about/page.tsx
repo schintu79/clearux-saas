@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, Heart, Shield, Brain, Eye, Users, BarChart3, Rock
 
 export const metadata: Metadata = {
   title: 'About ClearUX — Human-Centered AI Audit Platform',
-  description: 'ClearUX was built by a design leader who spent 20+ years watching companies ship products that ignored their users. Learn why we exist and what drives us.',
+  description: 'ClearUX was built by a team that spent 20+ years watching companies ship products that ignored their users. Learn why we exist and what drives us.',
 }
 
 export default function AboutPage() {
@@ -51,10 +51,10 @@ export default function AboutPage() {
             <div className="text-center mb-8">
               <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond traditional audits</p>
               <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-5">
-                The digital landscape is shifting.<br className="hidden sm:block" /> Most audits haven&apos;t caught up.
+                Traditional audit tools still check the same<br className="hidden sm:block" /> boxes from 2015. We don&apos;t.
               </h2>
               <p className="text-text/65 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto">
-                AI agents are becoming how people discover products. Neurodiversity affects 1 in 5 users. Emotional design is no longer a nice-to-have — it&apos;s a competitive advantage. Traditional audit tools still check the same boxes from 2015. We don&apos;t.
+                The digital landscape is shifting. Most audits haven&apos;t caught up. AI agents are becoming how people discover products. Neurodiversity affects 1 in 5 users. Emotional design is no longer a nice-to-have — it&apos;s a competitive advantage.
               </p>
             </div>
 
@@ -145,13 +145,13 @@ export default function AboutPage() {
               <Sparkles size={24} className="text-white" />
             </div>
             <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-white mb-6">
-              Our mission
+              Our commitment
             </h2>
             <p className="text-white/90 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-4">
               Make professional-grade UX auditing accessible to every team that builds digital products — so that better experiences become the norm, not the exception.
             </p>
-            <p className="text-white/70 text-base leading-relaxed max-w-xl mx-auto">
-              Ethical design is good business. Products that respect users build trust. Trust drives retention. Retention drives growth. We give you the evidence to prove it.
+            <p className="text-white/70 text-base leading-relaxed max-w-2xl mx-auto">
+              Ethical design is good business. Products that respect users build trust. Trust drives retention.<br className="hidden sm:block" /> Retention drives growth. We give you the evidence to prove it.
             </p>
           </div>
         </section>
@@ -211,13 +211,13 @@ export default function AboutPage() {
                     What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
                   </p>
                   <p>
-                    After 20+ years designing digital experiences across industries and continents, I kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
+                    After 20+ years designing digital experiences across industries and continents, we kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
                   </p>
                   <p>
                     Enterprise clients would commission $15,000 consultancy engagements and get genuine insights. Startups, agencies, and growing teams? They were stuck guessing — or relying on automated tools that counted errors without understanding people.
                   </p>
                   <p>
-                    I&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
+                    We&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
                   </p>
                   <p>
                     That&apos;s what we built. Not a checklist tool. Not another Lighthouse wrapper. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.

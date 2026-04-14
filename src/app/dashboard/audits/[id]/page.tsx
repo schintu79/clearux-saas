@@ -1259,33 +1259,35 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
-                  {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
-                    <div className="mt-5 p-5 rounded-xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
-                          <Zap size={14} className="text-white" />
-                        </div>
-                        <p className="text-sm font-bold text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
-                      </div>
-                      <div className="space-y-3">
-                        {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
-                          <div key={i} className="flex gap-3 items-start">
-                            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5" style={{ background: 'var(--gradient-brand)' }}>
-                              {i + 1}
-                            </span>
-                            <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Research note */}
                   <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
                     <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted leading-relaxed">
+                    <p className="text-xs text-text/50 dark:text-text/45 leading-relaxed">
                       {L.qualitativeNote}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Top Priority Recommendations — separate card below executive summary */}
+              {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
+                <div className="mb-6 p-5 rounded-2xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+                      <Zap size={14} className="text-white" />
+                    </div>
+                    <p className="text-sm font-bold text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
+                  </div>
+                  <div className="space-y-3">
+                    {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5" style={{ background: 'var(--gradient-brand)' }}>
+                          {i + 1}
+                        </span>
+                        <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
