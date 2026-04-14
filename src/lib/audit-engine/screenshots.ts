@@ -304,24 +304,24 @@ export async function captureAuditScreenshots(
     if (f.pageUrl) uniqueUrls.add(f.pageUrl)
   }
 
-  // 2. Capture page-level screenshots (no element highlight)
-  for (const url of uniqueUrls) {
-    try {
-      console.log(`[screenshots] Capturing page: ${url}`)
-      const buf = await captureScreenshot(url)
-
-      if (buf) {
-        const safeName = url.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 60)
-        const publicUrl = await uploadScreenshot(auditId, `page-${safeName}.png`, buf)
-        if (publicUrl) {
-          pageScreenshots.set(url, publicUrl)
-          console.log(`[screenshots] Page screenshot uploaded: ${url}`)
+  // 2. Capture page-level screenshots IN PARALLEL (all at once)
+  console.log(`[screenshots] Capturing ${uniqueUrls.size} page screenshots in parallel`)
+  await Promise.all(
+    [...uniqueUrls].map(async (url) => {
+      try {
+        const buf = await captureScreenshot(url)
+        if (buf) {
+          const safeName = url.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 60)
+          const publicUrl = await uploadScreenshot(auditId, `page-${safeName}.png`, buf)
+          if (publicUrl) {
+            pageScreenshots.set(url, publicUrl)
+          }
         }
+      } catch (err) {
+        console.error(`[screenshots] Page capture failed for ${url}:`, err instanceof Error ? err.message : err)
       }
-    } catch (err) {
-      console.error(`[screenshots] Page capture failed for ${url}:`, err instanceof Error ? err.message : err)
-    }
-  }
+    })
+  )
 
   // 3. Capture finding-specific screenshots
   //    With ScreenshotOne/Puppeteer: use element highlighting for targeted captures
@@ -335,50 +335,37 @@ export async function captureAuditScreenshots(
     })
     .slice(0, maxFindingScreenshots)
 
-  for (const finding of prioritized) {
-    try {
-      const pageUrl = finding.pageUrl || fallbackUrl
+  // Process finding screenshots in parallel batches of 3 (avoid API hammering)
+  console.log(`[screenshots] Capturing ${prioritized.length} finding screenshots (batches of 3)`)
+  const SCREENSHOT_CONCURRENCY = 3
+  for (let i = 0; i < prioritized.length; i += SCREENSHOT_CONCURRENCY) {
+    const batch = prioritized.slice(i, i + SCREENSHOT_CONCURRENCY)
+    await Promise.all(
+      batch.map(async (finding) => {
+        try {
+          const pageUrl = finding.pageUrl || fallbackUrl
 
-      if (hasAdvancedCapture && finding.targetElement) {
-        // Advanced: capture with element highlighting
-        const sevLabel = finding.severity.toUpperCase()
-        const label = `${sevLabel}: ${finding.title}`
-
-        console.log(`[screenshots] Capturing finding (highlighted): ${finding.id} (${finding.targetElement})`)
-        const buf = await captureScreenshot(pageUrl, finding.targetElement, label)
-
-        if (buf) {
-          const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
-          if (publicUrl) {
-            findingScreenshots.set(finding.id, publicUrl)
-            console.log(`[screenshots] Finding screenshot uploaded: ${finding.id}`)
-            continue // success — skip fallback
+          if (hasAdvancedCapture && finding.targetElement) {
+            const buf = await captureScreenshot(pageUrl, finding.targetElement, `${finding.severity.toUpperCase()}: ${finding.title}`)
+            if (buf) {
+              const publicUrl = await uploadScreenshot(auditId, `finding-${finding.id}.png`, buf)
+              if (publicUrl) {
+                findingScreenshots.set(finding.id, publicUrl)
+                return
+              }
+            }
           }
-        }
-      }
 
-      // Fallback: use the page-level screenshot if we already captured one
-      const pageScreenshot = pageScreenshots.get(pageUrl)
-      if (pageScreenshot) {
-        findingScreenshots.set(finding.id, pageScreenshot)
-        console.log(`[screenshots] Finding ${finding.id} linked to page screenshot: ${pageUrl}`)
-      } else {
-        // Try capturing a fresh page-level screenshot for this finding's page
-        console.log(`[screenshots] Capturing page for finding: ${finding.id} → ${pageUrl}`)
-        const buf = await captureScreenshot(pageUrl)
-        if (buf) {
-          const safeName = pageUrl.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 60)
-          const publicUrl = await uploadScreenshot(auditId, `page-${safeName}.png`, buf)
-          if (publicUrl) {
-            pageScreenshots.set(pageUrl, publicUrl)
-            findingScreenshots.set(finding.id, publicUrl)
-            console.log(`[screenshots] Finding ${finding.id} got fresh page screenshot`)
+          // Fallback: link to existing page screenshot
+          const pageScreenshot = pageScreenshots.get(pageUrl)
+          if (pageScreenshot) {
+            findingScreenshots.set(finding.id, pageScreenshot)
           }
+        } catch (err) {
+          console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
         }
-      }
-    } catch (err) {
-      console.error(`[screenshots] Finding capture failed for ${finding.id}:`, err instanceof Error ? err.message : err)
-    }
+      })
+    )
   }
 
   return { pageScreenshots, findingScreenshots }

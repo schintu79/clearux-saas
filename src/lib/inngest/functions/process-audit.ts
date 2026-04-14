@@ -241,64 +241,47 @@ ${lines.join('\n')}
 IMPORTANT CROSS-PAGE CONTEXT:
 The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
 
-      // Fetch user's site notes for this domain (dismissals, context, discussions)
+      // Fetch user's site notes + previous findings in PARALLEL (single round-trip)
       const noteDb = getDb()
       let domain = ''
       try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
 
-      // Get the user_id for this audit (needed for site_notes lookup)
+      // We already know user_id from auditDetails step — no need to re-query
       const { data: auditOwner } = await noteDb.from('audits').select('user_id').eq('id', auditId).single()
       const userId = (auditOwner as any)?.user_id
 
       let userContext = ''
       if (domain && userId) {
-        const { data: siteNotes } = await noteDb
-          .from('site_notes')
-          .select('note_type, title, content, category, finding_ref')
-          .eq('user_id', userId)
-          .eq('domain', domain)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(30)
+        // Run BOTH queries in parallel
+        const [siteNotesRes, prevAuditsRes] = await Promise.all([
+          noteDb.from('site_notes')
+            .select('note_type, title, content, category, finding_ref')
+            .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
+            .order('created_at', { ascending: false }).limit(20),
+          noteDb.from('audits')
+            .select('id').eq('user_id', userId).neq('id', auditId)
+            .eq('status', 'completed').order('completed_at', { ascending: false }).limit(1),
+        ])
 
-        if (siteNotes && siteNotes.length > 0) {
-          const noteLines = (siteNotes as any[]).map((n) => {
+        if (siteNotesRes.data && siteNotesRes.data.length > 0) {
+          const noteLines = (siteNotesRes.data as any[]).map((n) => {
             const typeLabel = n.note_type === 'dismissal' ? 'SKIP' : n.note_type === 'discussion' ? 'CONTEXT' : 'NOTE'
-            return `  [${typeLabel}] ${n.title}: ${n.content}${n.category ? ` (Category: ${n.category})` : ''}`
+            return `  [${typeLabel}] ${n.title}: ${n.content}`
           })
-          userContext = `\n\nCLIENT NOTES — The site owner has provided the following context. RESPECT THESE:
-${noteLines.join('\n')}
-
-CRITICAL: If a note says "SKIP" for a specific finding, do NOT report that issue again. The client has already reviewed and dismissed it. If a note provides context (e.g., "This content exists on the About page"), adjust your analysis accordingly. These notes represent decisions the client has already made — your job is to find NEW issues, not re-flag resolved ones.`
+          userContext = `\nCLIENT NOTES — RESPECT THESE:\n${noteLines.join('\n')}\nDo NOT re-flag [SKIP] findings.`
         }
 
-        // Also check previous audit findings that were dismissed or fixed
-        const { data: prevAudits } = await noteDb
-          .from('audits')
-          .select('id')
-          .eq('user_id', userId)
-          .neq('id', auditId)
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-
-        if (prevAudits && prevAudits.length > 0) {
-          const prevAuditId = (prevAudits[0] as any).id
-          const { data: prevFindings } = await noteDb
-            .from('audit_findings')
+        if (prevAuditsRes.data && prevAuditsRes.data.length > 0) {
+          const { data: prevFindings } = await noteDb.from('audit_findings')
             .select('title, status, dismissal_reason, dismissed')
-            .eq('audit_id', prevAuditId)
-            .or('dismissed.eq.true,status.eq.fixed')
-            .limit(50)
+            .eq('audit_id', (prevAuditsRes.data[0] as any).id)
+            .or('dismissed.eq.true,status.eq.fixed').limit(30)
 
           if (prevFindings && prevFindings.length > 0) {
-            const fixedLines = (prevFindings as any[]).map((f) => {
-              if (f.dismissed) return `  [DISMISSED] "${f.title}" — ${f.dismissal_reason || 'No reason given'}`
-              return `  [FIXED] "${f.title}" — Client reports this has been resolved`
-            })
-            userContext += `\n\nPREVIOUS AUDIT FINDINGS — Status from the client's last audit:
-${fixedLines.join('\n')}
-Do NOT re-flag findings marked [DISMISSED] or [FIXED] unless the issue is clearly still present in the current content. The client has taken action on these.`
+            const fixedLines = (prevFindings as any[]).map((f) =>
+              f.dismissed ? `  [SKIP] "${f.title}"` : `  [FIXED] "${f.title}"`
+            )
+            userContext += `\nPREVIOUS AUDIT: ${fixedLines.join('\n')}\nDo NOT re-flag [SKIP] or [FIXED] findings unless clearly still present.`
           }
         }
       }
@@ -310,15 +293,19 @@ Do NOT re-flag findings marked [DISMISSED] or [FIXED] unless the issue is clearl
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 4+: Analyze categories in batches of 2
+    // STEP 4+: Analyze categories in batches of 4
     // Each batch is a separate step → separate serverless call
-    // Running 2 categories per step keeps well within Vercel timeout
+    // 4 categories run in PARALLEL within each step (4 × 15s = 60s typical)
+    // 16 categories / 4 = only 4 Inngest steps (was 8)
     // ──────────────────────────────────────────────────────────
-    const BATCH_SIZE = 2
+    const BATCH_SIZE = 4
     const batches = []
     for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
       batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
     }
+
+    // Pre-build the content string ONCE (don't rebuild per category)
+    const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
 
     let totalFindingsCount = 0
 
@@ -330,22 +317,19 @@ Do NOT re-flag findings marked [DISMISSED] or [FIXED] unless the issue is clearl
         let sortOrder = totalFindingsCount
         let findingsInBatch = 0
 
-        // Process categories SEQUENTIALLY within each step to avoid
-        // overwhelming Vercel serverless memory/CPU limits
-        const batchResults: Awaited<ReturnType<typeof analyzeCategory>>[] = []
-        for (const categoryName of batch) {
-          console.log(`[inngest] Analyzing: ${categoryName}`)
-          // Prepend site context map so the AI has cross-page awareness
-          const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
-          const result = await analyzeCategory(
-            contentWithContext,
-            categoryName,
-            [], // empty = use built-in checklist items
-            auditDetails.userFocus,
-            auditDetails.language,
-          )
-          batchResults.push(result)
-        }
+        // Run all categories in this batch IN PARALLEL
+        console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
+        const batchResults = await Promise.all(
+          batch.map((categoryName) =>
+            analyzeCategory(
+              contentWithContext,
+              categoryName,
+              [], // empty = use built-in checklist items
+              auditDetails.userFocus,
+              auditDetails.language,
+            )
+          ),
+        )
 
         for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
           const findings = batchResults[catIdx]
@@ -463,7 +447,7 @@ Do NOT re-flag findings marked [DISMISSED] or [FIXED] unless the issue is clearl
           findingsToCapture,
           mainUrl,
           auditId,
-          10, // capture up to 10 finding screenshots
+          5, // capture top 5 finding screenshots (critical + high priority)
         )
 
         // Update audit_pages with their page-level screenshots
