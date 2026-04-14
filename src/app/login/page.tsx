@@ -49,6 +49,7 @@ export default function LoginPage() {
         provider,
         options: {
           redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+          queryParams: { prompt: 'select_account' },
         },
       })
       if (oauthError) {

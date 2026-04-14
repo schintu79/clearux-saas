@@ -120,6 +120,7 @@ export default function RegisterPage() {
         provider,
         options: {
           redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
+          queryParams: { prompt: 'select_account' },
         },
       })
       if (oauthError) {
