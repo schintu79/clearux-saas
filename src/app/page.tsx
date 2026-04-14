@@ -854,7 +854,7 @@ export default function Home() {
           </div>
 
           {/* Feature cards — alternating layout */}
-          <div className="space-y-12 md:space-y-16">
+          <div className="space-y-20 md:space-y-28">
 
             {/* ── Feature 1: Finding Status Tracking ── */}
             <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">

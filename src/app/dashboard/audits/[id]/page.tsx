@@ -463,56 +463,60 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
   if (loading || trend.length < 2) return null;
 
   return (
-    <div className="mb-6 rounded-2xl border border-border/20 dark:border-white/[0.04] bg-card overflow-hidden">
+    <div className="mb-6 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-sm">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full px-5 py-4 flex items-center gap-3 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors"
       >
-        <TrendingUp size={13} className="text-violet-400" />
-        <span className="text-[11px] font-semibold text-text/70">Score Trend</span>
-        <span className="text-[10px] text-muted/50">{trend.length} audits</span>
+        <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+          <TrendingUp size={16} className="text-violet-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <span className="text-sm font-bold text-text">Score Trend</span>
+          <span className="text-xs text-muted ml-2">{trend.length} audits · {domain}</span>
+        </div>
         {improvement !== 0 && (
-          <span className={`text-[10px] font-semibold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+          <span className={`text-sm font-bold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
-        <ChevronDown size={12} className={`text-muted ml-auto flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 pt-0">
-          <div className="space-y-2">
+        <div className="px-5 pb-5 pt-1 border-t border-border/15 dark:border-white/[0.04]">
+          <div className="space-y-3 mt-3">
             {[...trend].reverse().map((t, i, reversed) => {
               const isCurrent = t.auditId === currentAuditId;
               const isOldest = i === reversed.length - 1;
               const dateStr = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               return (
-                <div key={t.auditId} className={`flex items-center gap-2.5 ${isCurrent ? '' : 'opacity-60'}`}>
-                  <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
+                <div key={t.auditId} className={`flex items-center gap-3 ${isCurrent ? '' : 'opacity-55'}`}>
+                  <span className="text-xs text-muted w-14 flex-shrink-0">{dateStr}</span>
+                  <div className="flex-1 h-2 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
                     <div
                       className={`h-full rounded-full ${t.overallScore >= 70 ? 'bg-emerald-400' : t.overallScore >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
                       style={{ width: `${t.overallScore}%` }}
                     />
                   </div>
-                  <span className={`text-[11px] font-semibold w-6 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <span className={`text-sm font-bold w-8 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                     {t.overallScore}
                   </span>
-                  {isCurrent && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
-                  {isOldest && !isCurrent && <span className="text-[8px] text-muted/50">start</span>}
+                  {isCurrent && <span className="text-[9px] font-semibold text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded">now</span>}
+                  {isOldest && !isCurrent && <span className="text-[9px] text-muted/50">start</span>}
                 </div>
               );
             })}
           </div>
-          <div className="mt-3 pt-2.5 border-t border-border/10 dark:border-white/[0.03] flex items-center justify-between">
-            <span className="text-[10px] text-muted/60">
+          <div className="mt-4 pt-3 border-t border-border/10 dark:border-white/[0.03] flex items-center justify-between">
+            <span className="text-xs text-muted">
               {trend[0].totalIssues} → {trend[trend.length - 1].totalIssues} issues
             </span>
             <Link
               href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-              className="text-[10px] font-medium text-violet-500 hover:text-violet-600 transition-colors"
+              className="text-xs font-semibold text-violet-500 hover:text-violet-600 transition-colors"
             >
               Re-audit →
             </Link>
