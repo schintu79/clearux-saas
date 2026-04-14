@@ -1007,44 +1007,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── Feature 4: Dashboard Stats ── */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              {/* Visual mock — on left */}
-              <div className="order-2 md:order-1 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Audits', value: '12', sub: '12 total', icon: BarChart3, iconColor: 'text-violet-500' },
-                    { label: 'Avg Score', value: '74', sub: 'across all audits', icon: TrendingUp, iconColor: 'text-emerald-500' },
-                    { label: 'Findings', value: '156', sub: '18 critical', icon: Shield, iconColor: 'text-red-500' },
-                    { label: 'Fixed', value: '104', sub: '67% resolved', icon: CheckCircle, iconColor: 'text-emerald-500' },
-                  ].map((stat) => (
-                    <div key={stat.label} className="p-3.5 rounded-xl bg-off/50 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <stat.icon size={12} className={stat.iconColor} />
-                        <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">{stat.label}</span>
-                      </div>
-                      <p className="text-xl font-bold text-text">{stat.value}</p>
-                      <p className="text-[10px] text-muted">{stat.sub}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 mb-4">
-                  <BarChart3 size={14} className="text-amber-500" />
-                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Dashboard Stats</span>
-                </div>
-                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
-                  Your UX health at a glance.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  See how many audits you&apos;ve run, your average score, total findings, and how many you&apos;ve resolved. The dashboard gives you the evidence to justify UX investment to leadership.
-                </p>
-                <p className="text-sm text-text/70 font-medium">
-                  Every stat updates in real time as you track findings and run re-audits. Your team&apos;s progress, visible at a glance.
-                </p>
-              </div>
-            </div>
+
 
           </div>
         </div>
