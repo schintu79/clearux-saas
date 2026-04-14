@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServiceSupabase } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -52,10 +53,12 @@ export async function GET(request: NextRequest) {
   }
 
   // For OAuth sign-ins, populate profile from provider metadata if needed
+  // Uses service role client to bypass RLS
   const user = sessionData?.session?.user
   if (user) {
     try {
-      const { data: existingProfile } = await supabase
+      const db = createServiceSupabase()
+      const { data: existingProfile } = await db
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
@@ -71,13 +74,14 @@ export async function GET(request: NextRequest) {
           || null
 
         if (fullName || avatarUrl) {
-          await supabase
+          await db
             .from('profiles')
             .upsert({
               id: user.id,
+              email: user.email,
               ...(fullName ? { full_name: fullName } : {}),
               ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
-            }, { onConflict: 'id' })
+            } as any, { onConflict: 'id' })
         }
       }
     } catch (err) {

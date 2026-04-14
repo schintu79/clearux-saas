@@ -1252,25 +1252,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: Overview ──────────────────────────────── */}
           {activeTab === 'overview' && (
             <>
-              {/* Executive Summary */}
-              {report.executive_summary && (
-                <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-manrope font-bold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
-                  <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
-                    {report.executive_summary}
-                  </div>
-
-                  {/* Research note */}
-                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
-                    <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-text/50 dark:text-text/45 leading-relaxed">
-                      {L.qualitativeNote}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Top Priority Recommendations — separate card below executive summary */}
+              {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
                 <div className="mb-6 p-5 rounded-2xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
                   <div className="flex items-center gap-2 mb-4">
@@ -1288,6 +1270,24 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Executive Summary */}
+              {report.executive_summary && (
+                <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
+                  <h2 className="font-manrope font-bold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
+                  <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
+                    {report.executive_summary}
+                  </div>
+
+                  {/* Research note */}
+                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
+                    <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-text/50 dark:text-text/45 leading-relaxed">
+                      {L.qualitativeNote}
+                    </p>
                   </div>
                 </div>
               )}

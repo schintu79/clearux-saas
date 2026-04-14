@@ -353,11 +353,15 @@ export const processAuditFn = inngest.createFunction(
 
       try {
         // Fetch all findings with target_element and page_url
-        const { data: findingsWithTargets } = await db
+        const { data: findingsWithTargets, error: findingsErr } = await db
           .from('audit_findings')
           .select('id, title, severity, target_element, page_url')
           .eq('audit_id', auditId)
           .order('sort_order', { ascending: true })
+
+        if (findingsErr) {
+          console.error(`[inngest] Screenshots: failed to fetch findings: ${findingsErr.message}`)
+        }
 
         const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
           id: f.id as string,
@@ -368,6 +372,15 @@ export const processAuditFn = inngest.createFunction(
         }))
 
         const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl
+
+        // Detailed pre-capture logging
+        const uniquePageUrls = new Set([mainUrl, ...findingsToCapture.map(f => f.pageUrl).filter(Boolean)])
+        console.log(`[inngest] Screenshots: mainUrl=${mainUrl}`)
+        console.log(`[inngest] Screenshots: ${findingsToCapture.length} findings, ${uniquePageUrls.size} unique page URLs`)
+        console.log(`[inngest] Screenshots: SCREENSHOTONE_API_KEY=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
+        console.log(`[inngest] Screenshots: SCREENSHOT_INTERNAL_KEY=${process.env.SCREENSHOT_INTERNAL_KEY ? 'set' : 'MISSING'}`)
+        await auditLog(auditId, 'screenshots_debug', 'info',
+          `Pre-capture: ${findingsToCapture.length} findings, ${uniquePageUrls.size} pages, mainUrl=${mainUrl}, s1Key=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
 
         const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
           findingsToCapture,
