@@ -363,53 +363,50 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
   if (loading || trend.length < 2) return null;
 
   return (
-    <div className="mb-6 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center">
-          <TrendingUp size={12} className="text-violet-500" />
-        </div>
-        <span className="text-xs font-semibold text-text">Score Trend</span>
-        <span className="ml-auto text-[10px] text-muted">{domain}</span>
+    <div className="mb-6 rounded-2xl border border-border/20 dark:border-white/[0.04] bg-card p-4 sm:p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <TrendingUp size={13} className="text-violet-400" />
+        <span className="text-[11px] font-semibold text-text/70">Score Trend</span>
+        <span className="ml-auto text-[10px] text-muted/60">{domain} · {trend.length} audits</span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {[...trend].reverse().map((t, i, reversed) => {
           const isCurrent = t.auditId === currentAuditId;
           const isOldest = i === reversed.length - 1;
           const dateStr = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           return (
-            <div key={t.auditId} className="flex items-center gap-3">
-              <span className="text-[11px] text-muted w-12 flex-shrink-0">{dateStr}</span>
-              <div className="flex-1 h-3 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
+            <div key={t.auditId} className={`flex items-center gap-2.5 ${isCurrent ? '' : 'opacity-60'}`}>
+              <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
+              <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${t.overallScore >= 70 ? 'bg-emerald-500' : t.overallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  className={`h-full rounded-full ${t.overallScore >= 70 ? 'bg-emerald-400' : t.overallScore >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
                   style={{ width: `${t.overallScore}%` }}
                 />
               </div>
-              <span className={`text-sm font-bold w-8 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+              <span className={`text-[11px] font-semibold w-6 text-right ${t.overallScore >= 70 ? 'text-emerald-600 dark:text-emerald-400' : t.overallScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                 {t.overallScore}
               </span>
-              {isCurrent && <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">current</span>}
-              {isOldest && !isCurrent && <span className="text-[9px] text-muted">baseline</span>}
+              {isCurrent && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
+              {isOldest && !isCurrent && <span className="text-[8px] text-muted/50">start</span>}
             </div>
           );
         })}
       </div>
-      <div className="mt-4 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
-        <span className="text-xs text-muted">Improvement</span>
-        <span className={`text-sm font-bold flex items-center gap-1 ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : improvement < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted'}`}>
-          {improvement > 0 && <ArrowUp size={14} />}
-          {improvement < 0 && <ArrowDown size={14} />}
-          {improvement > 0 ? '+' : ''}{improvement} points
+      <div className="mt-3 pt-2.5 border-t border-border/10 dark:border-white/[0.03] flex items-center justify-between">
+        <span className="text-[10px] text-muted/60">
+          {improvement !== 0 && (
+            <span className={improvement > 0 ? 'text-emerald-500' : 'text-red-500'}>
+              {improvement > 0 ? '+' : ''}{improvement} pts
+            </span>
+          )}
+          {improvement !== 0 && ' · '}
+          {trend[0].totalIssues} → {trend[trend.length - 1].totalIssues} issues
         </span>
-      </div>
-      <div className="mt-2 flex items-center justify-between">
-        <span className="text-[11px] text-muted">Issues: {trend[0].totalIssues} → {trend[trend.length - 1].totalIssues}</span>
         <Link
           href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-          className="text-[11px] font-semibold bg-clip-text text-transparent hover:underline"
-          style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+          className="text-[10px] font-medium text-violet-500 hover:text-violet-600 transition-colors"
         >
-          Run next audit →
+          Re-audit →
         </Link>
       </div>
     </div>

@@ -114,6 +114,7 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
             )}
+            <ChevronRight size={14} className="text-muted flex-shrink-0" />
           </div>
         </Link>
       </div>
@@ -165,32 +166,32 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
       {/* Expanded */}
       {expanded && (
         <div className="border-t border-border/30 dark:border-white/[0.04]">
-          {/* Score trend */}
+          {/* Score trend — clean, thin */}
           {scores.length >= 2 && (
-            <div className="px-4 py-3 bg-off/30 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-5 rounded-md bg-violet-500/10 flex items-center justify-center">
-                  <TrendingUp size={10} className="text-violet-500" />
-                </div>
-                <span className="text-[11px] font-semibold text-text">Score Trend</span>
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-2 mb-2.5">
+                <TrendingUp size={11} className="text-violet-400" />
+                <span className="text-[10px] font-medium text-text/60">Score Trend</span>
                 {improvement !== 0 && (
-                  <span className={`ml-auto text-xs font-bold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {improvement > 0 ? '+' : ''}{improvement} points
+                  <span className={`ml-auto text-[10px] font-semibold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {scores.map((s, i) => {
                   const dateStr = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  const isLatest = i === scores.length - 1;
+                  const isBaseline = i === 0;
                   return (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-[11px] text-muted w-12 flex-shrink-0">{dateStr}</span>
-                      <div className="flex-1 h-2.5 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
-                        <div className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-500' : s.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${s.score}%` }} />
+                    <div key={i} className={`flex items-center gap-2.5 ${isLatest ? '' : 'opacity-55'}`}>
+                      <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
+                        <div className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-400' : s.score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s.score}%` }} />
                       </div>
-                      <span className={`text-xs font-bold w-7 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{s.score}</span>
-                      {i === scores.length - 1 && <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">latest</span>}
-                      {i === 0 && scores.length > 1 && <span className="text-[9px] text-muted">baseline</span>}
+                      <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{s.score}</span>
+                      {isLatest && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
+                      {isBaseline && !isLatest && <span className="text-[8px] text-muted/50">start</span>}
                     </div>
                   );
                 })}
