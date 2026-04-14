@@ -952,58 +952,47 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-violet-500" /> <span>PDF & Word exports</span></div>
                 </div>
               </div>
-              {/* Visual mock */}
-              <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="h-1" style={{ background: 'var(--gradient-brand)' }} />
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Eye size={13} className="text-muted" />
-                    <span className="text-[11px] text-muted">Shared audit report</span>
-                    <span className="text-border">|</span>
-                    <span className="text-[11px] font-medium text-text">acme.com</span>
-                  </div>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full border-[3px] border-emerald-500 flex items-center justify-center">
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">78</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
-                      <p className="text-xs text-muted">Good | 23 issues found</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {[
-                      { name: 'Foundation', score: 82, color: 'bg-violet-500' },
-                      { name: 'Human Experience', score: 71, color: 'bg-pink-500' },
-                      { name: 'Inclusive Design', score: 68, color: 'bg-amber-500' },
-                      { name: 'Future Readiness', score: 84, color: 'bg-emerald-500' },
-                    ].map((p) => (
-                      <div key={p.name} className="p-2.5 rounded-lg bg-off/50 dark:bg-white/[0.03]">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] text-muted truncate">{p.name}</span>
-                          <span className="text-[11px] font-bold text-text">{p.score}</span>
+              {/* Visual mock — 4 pillar cards matching real audit output */}
+              <div className="grid grid-cols-2 gap-3" aria-label="Illustrative example" data-demo="true" role="presentation">
+                {[
+                  { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-violet-500 to-violet-600', iconBg: 'bg-violet-500',
+                    cats: [{ n: 'Visual Design & First Impression', s: 35 }, { n: 'Value Proposition & Messaging', s: 83 }, { n: 'Navigation & Info Architecture', s: 95 }, { n: 'Content Quality & Readability', s: 73 }] },
+                  { name: 'Human Experience', score: 99, label: 'Excellent', icon: Heart, gradient: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-500',
+                    cats: [{ n: 'Calls-to-Action & Conversion', s: 100 }, { n: 'Trust & Social Proof', s: 95 }, { n: 'Ethical UX & Dark Patterns', s: 100 }, { n: 'Emotional Design & Safety', s: 100 }] },
+                  { name: 'Inclusive Design', score: 100, label: 'Excellent', icon: Accessibility, gradient: 'from-amber-500 to-amber-600', iconBg: 'bg-amber-500',
+                    cats: [{ n: 'Accessibility & WCAG', s: 100 }, { n: 'Cognitive Accessibility', s: 100 }, { n: 'Digital Wellbeing', s: 100 }, { n: 'Mobile & Responsive', s: 98 }] },
+                  { name: 'Future Readiness', score: 100, label: 'Excellent', icon: Brain, gradient: 'from-emerald-500 to-emerald-600', iconBg: 'bg-emerald-500',
+                    cats: [{ n: 'Performance & Technical', s: 100 }, { n: 'AI Discoverability', s: 100 }, { n: 'AI Agent Readiness', s: 100 }, { n: 'Cultural Sensitivity', s: 100 }] },
+                ].map((pillar) => (
+                  <div key={pillar.name} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
+                    <div className="px-3.5 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
+                          <pillar.icon size={14} className="text-white" />
                         </div>
-                        <div className="w-full h-1 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
-                          <div className={`h-full rounded-full ${p.color}`} style={{ width: `${p.score}%` }} />
+                        <div>
+                          <p className="text-[11px] font-bold text-text">{pillar.name}</p>
+                          <p className="text-[9px] text-muted">4 categories</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="p-3 rounded-lg bg-violet-50/50 dark:bg-violet-900/[0.08] border border-violet-200/30 dark:border-violet-800/20">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Zap size={11} className="text-violet-500" />
-                      <span className="text-[10px] font-bold text-text">Top Recommendations</span>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold leading-none ${pillar.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : pillar.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{pillar.score}</p>
+                        <p className="text-[8px] text-muted">{pillar.label}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {['Add missing ARIA labels to form fields', 'Improve colour contrast on primary CTA', 'Add structured data for AI discoverability'].map((rec, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="text-[10px] font-bold text-violet-500 mt-px">{i + 1}.</span>
-                          <span className="text-[11px] text-muted leading-snug">{rec}</span>
+                    <div className="px-3.5 pb-3 space-y-1.5">
+                      {pillar.cats.map((cat) => (
+                        <div key={cat.n} className="flex items-center gap-2">
+                          <span className="text-[9px] text-muted truncate flex-1">{cat.n}</span>
+                          <div className="w-12 h-1 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden flex-shrink-0">
+                            <div className={`h-full rounded-full ${cat.s >= 70 ? 'bg-emerald-500' : cat.s >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${cat.s}%` }} />
+                          </div>
+                          <span className={`text-[10px] font-bold w-5 text-right flex-shrink-0 ${cat.s >= 70 ? 'text-emerald-600 dark:text-emerald-400' : cat.s >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{cat.s}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
