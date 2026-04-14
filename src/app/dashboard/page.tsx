@@ -24,6 +24,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
+import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import type { Audit, Report } from '@/types/database';
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -70,6 +71,12 @@ function scoreBg(s: number) {
   if (s >= 70) return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
   if (s >= 40) return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
   return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+}
+
+function langFlag(code: string | null): string {
+  if (!code) return '';
+  const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
+  return lang?.flag || '';
 }
 
 /* ── Onboarding steps ─────────────────────────────────────── */
@@ -360,6 +367,8 @@ function DashboardInner() {
               const domain = formatUrl(audit.product_url);
               const isReAudit = urlCounts[domain] > 1;
 
+              const flag = langFlag((audit as any).language);
+
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
                   <div className="bg-card border border-border rounded-lg px-4 py-3 hover:border-violet-400/30 transition-colors cursor-pointer group">
@@ -383,21 +392,40 @@ function DashboardInner() {
                             <Icon size={10} />
                             {meta.label}
                           </span>
+                          {flag && (
+                            <>
+                              <span className="text-border">·</span>
+                              <span title={(audit as any).language}>{flag}</span>
+                            </>
+                          )}
                         </div>
                         {done && report?.executive_summary && (
                           <p className="text-muted text-[10px] mt-1 line-clamp-1">{report.executive_summary}</p>
                         )}
                       </div>
 
-                      {done && report?.overall_score != null ? (
-                        <div className={`w-10 h-10 rounded-md border flex flex-col items-center justify-center flex-shrink-0 ${scoreBg(report.overall_score)}`}>
-                          <span className={`font-semibold text-sm leading-none ${scoreColor(report.overall_score)}`}>
-                            {report.overall_score}
-                          </span>
-                        </div>
-                      ) : (
-                        <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {done && report?.overall_score != null ? (
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 px-2.5 py-1.5 rounded-lg transition-colors"
+                              title="Re-audit this site"
+                            >
+                              <RefreshCw size={10} />
+                              Re-audit
+                            </Link>
+                            <div className={`w-10 h-10 rounded-md border flex flex-col items-center justify-center ${scoreBg(report.overall_score)}`}>
+                              <span className={`font-semibold text-sm leading-none ${scoreColor(report.overall_score)}`}>
+                                {report.overall_score}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -405,20 +433,17 @@ function DashboardInner() {
             })}
           </div>
 
-          {/* Re-audit suggestion */}
+          {/* Track improvement banner — prominent */}
           {audits.some(a => a.status === 'completed') && (
-            <div className="mt-5 p-4 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                  <RefreshCw size={16} className="text-violet-500" />
+            <div className="mt-5 p-5 rounded-xl border-2 border-violet-200/50 dark:border-violet-800/30" style={{ background: 'var(--gradient-brand-subtle)' }}>
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+                  <TrendingUp size={20} className="text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-text">Track your improvement</p>
-                  <p className="text-[11px] text-muted">Re-audit the same URL after making changes to compare your scores over time.</p>
+                  <p className="text-sm font-bold text-text">Track your improvement</p>
+                  <p className="text-xs text-muted mt-0.5">Fix the issues, then re-audit the same URL. Your dashboard shows score trends, resolved findings, and measurable progress over time.</p>
                 </div>
-                <Link href="/dashboard/new-audit" className="text-xs font-semibold bg-clip-text text-transparent whitespace-nowrap" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-                  Re-audit <ChevronRight size={12} className="inline text-violet-500" />
-                </Link>
               </div>
             </div>
           )}

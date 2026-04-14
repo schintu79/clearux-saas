@@ -779,7 +779,7 @@ export default function Home() {
           VALUE PROPOSITION + STATS + HOW IT WORKS
           Stripe-inspired unified section
           ═══════════════════════════════════════════════════════ */}
-      <section id="features" className="relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+      <section id="features" className="relative overflow-hidden bg-surface">
         {/* Background grid — subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -825,7 +825,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL — own section (no overflow-hidden so sticky works)
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-surface-alt py-12">
+      <section className="relative bg-surface pt-24 sm:pt-28 py-12">
         <PillarScrollReveal categories={auditCategories} />
       </section>
 

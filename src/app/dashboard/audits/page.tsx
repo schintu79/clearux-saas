@@ -16,7 +16,13 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
+import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import type { Audit, Report } from '@/types/database';
+
+function langFlag(code: string | null): string {
+  if (!code) return '';
+  return SUPPORTED_LANGUAGES.find(l => l.code === code)?.flag || '';
+}
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -201,10 +207,10 @@ export default function AuditsPage() {
                           <Icon size={10} />
                           {meta.label}
                         </span>
-                        {audit.plan && (
+                        {langFlag((audit as any).language) && (
                           <>
                             <span className="text-border">&middot;</span>
-                            <span>{audit.plan === 'quick_scan' ? 'Quick' : 'Full'}</span>
+                            <span title={(audit as any).language}>{langFlag((audit as any).language)}</span>
                           </>
                         )}
                       </div>
