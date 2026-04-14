@@ -24,7 +24,6 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
-import { SUPPORTED_LANGUAGES } from '@/lib/languages';
 import type { Audit, Report } from '@/types/database';
 
 /* ── Helpers ───────────────────────────────────────────────── */
@@ -73,10 +72,9 @@ function scoreBg(s: number) {
   return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
 }
 
-function langFlag(code: string | null): string {
-  if (!code) return '';
-  const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
-  return lang?.flag || '';
+function langCode(code: string | null): string {
+  if (!code || code === 'en') return '';
+  return code.toUpperCase();
 }
 
 /* ── Onboarding steps ─────────────────────────────────────── */
@@ -196,8 +194,8 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
                 {audits.length} audits
               </span>
             )}
-            {langFlag((latest as any).language) && (
-              <span className="text-[11px]">{langFlag((latest as any).language)}</span>
+            {langCode((latest as any).language) && (
+              <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{langCode((latest as any).language)}</span>
             )}
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted">
@@ -293,7 +291,7 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
               const Icon = meta.icon;
               const done = audit.status === 'completed';
               const report = audit.report;
-              const flag = langFlag((audit as any).language);
+              const aLang = langCode((audit as any).language);
 
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
@@ -306,10 +304,10 @@ function SiteGroup({ domain, audits }: { domain: string; audits: AuditWithReport
                           <Icon size={10} />
                           {meta.label}
                         </span>
-                        {flag && (
+                        {aLang && (
                           <>
                             <span className="text-border">·</span>
-                            <span>{flag}</span>
+                            <span className="font-bold text-[10px]">{aLang}</span>
                           </>
                         )}
                         {done && report?.executive_summary && (
