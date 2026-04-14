@@ -67,7 +67,13 @@ export async function GET(request: NextRequest) {
       }
     }).filter((t: any) => t.overallScore !== null)
 
+    // Improvement = latest score vs previous audit (not vs first ever)
     const improvement = trend.length >= 2
+      ? trend[trend.length - 1].overallScore - trend[trend.length - 2].overallScore
+      : 0
+
+    // Also track total change from baseline
+    const totalChange = trend.length >= 2
       ? trend[trend.length - 1].overallScore - trend[0].overallScore
       : 0
 
@@ -76,6 +82,7 @@ export async function GET(request: NextRequest) {
       totalAudits: trend.length,
       trend,
       improvement,
+      totalChange,
       latestScore: trend.length > 0 ? trend[trend.length - 1].overallScore : null,
       baselineScore: trend.length > 0 ? trend[0].overallScore : null,
     })

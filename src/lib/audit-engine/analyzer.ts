@@ -719,10 +719,16 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     }
   }
 
-  // Calculate score per category: start at 100, deduct per finding severity
+  // Calculate score per category
+  // Categories WITH findings: start at 85, deduct per severity (findings = something was wrong)
+  // Categories WITHOUT findings: score 75 (we can't verify they're perfect, so be conservative)
   const categoryScores: CategoryScore[] = categoryNames.map(name => {
     const catFindings = findingsPerCategory[name]
-    let score = 100
+    if (catFindings.length === 0) {
+      // No findings doesn't mean perfect — it means the AI might not have analyzed this category deeply
+      return { name, score: 75, summary: '' }
+    }
+    let score = 85
     for (const f of catFindings) {
       score -= severityPenalty[f.severity] || 5
     }
