@@ -675,7 +675,7 @@ export default function Home() {
           {/* Badge — kaleidoscope gradient border */}
           <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--gradient-brand)' }} />
-            <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits for Product Teams, Agencies &amp; Founders</span>
+            <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>AI-Powered, Human-Centered Professional UX Audits</span>
           </div>
 
           {/*
@@ -723,17 +723,11 @@ export default function Home() {
 
           {/* Pricing highlights — bold, accent color */}
           <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            {user ? (
-              <span>Results in minutes</span>
-            ) : (
-              <>
-                <span>First audit free</span>
-                <span className="opacity-40">·</span>
-                <span>No credit card needed</span>
-                <span className="opacity-40">·</span>
-                <span>Results in minutes</span>
-              </>
-            )}
+            <span>First audit free</span>
+            <span className="opacity-40">·</span>
+            <span>No credit card needed</span>
+            <span className="opacity-40">·</span>
+            <span>Results in minutes</span>
           </div>
 
           {/* See pricing link */}
@@ -833,6 +827,243 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative bg-surface-alt py-12">
         <PillarScrollReveal categories={auditCategories} />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          BEYOND THE REPORT — Track, Share, Improve
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
+        <div className="absolute top-[15%] right-[10%] w-[500px] h-[400px] rounded-full bg-violet-500/[0.04] blur-[160px] pointer-events-none" />
+        <div className="absolute bottom-[10%] left-[15%] w-[400px] h-[400px] rounded-full bg-emerald-500/[0.03] blur-[140px] pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond the report</p>
+            <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-5" style={{ lineHeight: '1.15' }}>
+              An audit is just the beginning.<br className="hidden sm:block" />
+              <span className="text-muted">What you do next is what matters.</span>
+            </h2>
+            <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+              ClearUX doesn&apos;t just find problems — it gives your team a system to track fixes, prove improvement, and share progress with stakeholders.
+            </p>
+          </div>
+
+          {/* Feature cards — alternating layout */}
+          <div className="space-y-12 md:space-y-16">
+
+            {/* ── Feature 1: Finding Status Tracking ── */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 mb-4">
+                  <ListChecks size={14} className="text-emerald-500" />
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Finding Tracker</span>
+                </div>
+                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
+                  Track every fix from<br className="hidden sm:block" /> open to resolved
+                </h3>
+                <p className="text-muted text-base leading-relaxed mb-4">
+                  Every finding has a status: Open, In Progress, Fixed, or Backlog. Update them as your team works through the list. Your dashboard tracks the percentage resolved — proof that the investment is paying off.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => {
+                    const colors = ['bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'];
+                    return (
+                      <span key={s} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${colors[i]}`}>{s}</span>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Visual mock */}
+              <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center"><ListChecks size={12} className="text-violet-500" /></div>
+                  <span className="text-xs font-semibold text-text">Issue Tracker</span>
+                  <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">67% resolved</span>
+                </div>
+                <div className="space-y-2.5">
+                  {[
+                    { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                    { title: 'Low colour contrast on CTA', severity: 'high', status: 'In Progress', statusColor: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
+                    { title: 'No skip-to-content link', severity: 'medium', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                    { title: 'Form lacks error messaging', severity: 'high', status: 'Open', statusColor: 'text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400' },
+                    { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-off/50 dark:bg-white/[0.03]">
+                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
+                      <span className="text-xs text-text flex-1 truncate">{item.title}</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${item.statusColor}`}>{item.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Feature 2: Re-audit & Score Comparison ── */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              {/* Visual mock — on left for desktop (reversed order) */}
+              <div className="order-2 md:order-1 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center"><TrendingUp size={12} className="text-violet-500" /></div>
+                  <span className="text-xs font-semibold text-text">Score Trend</span>
+                  <span className="ml-auto text-[10px] text-muted">acme.com</span>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { date: 'Jan 15', score: 42, label: 'Baseline' },
+                    { date: 'Feb 28', score: 61, label: 'After sprint 1' },
+                    { date: 'Apr 10', score: 78, label: 'Current' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-[11px] text-muted w-12 flex-shrink-0">{item.date}</span>
+                      <div className="flex-1 h-3 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${item.score >= 70 ? 'bg-emerald-500' : item.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${item.score}%` }} />
+                      </div>
+                      <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{item.score}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
+                  <span className="text-xs text-muted">Improvement</span>
+                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <ArrowUp size={14} />
+                    +36 points
+                  </span>
+                </div>
+              </div>
+              <div className="order-1 md:order-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 mb-4">
+                  <RefreshCw size={14} className="text-violet-500" />
+                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Re-Audit</span>
+                </div>
+                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
+                  Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
+                </h3>
+                <p className="text-muted text-base leading-relaxed mb-4">
+                  Implement your fixes, then re-audit the same URL. ClearUX tracks every audit so you can compare scores over time. Show your team — or your client — exactly how much you improved.
+                </p>
+                <p className="text-sm text-text/70 font-medium">
+                  Your dashboard shows re-audit badges and average score trends across all your audits. Every point of improvement is evidence.
+                </p>
+              </div>
+            </div>
+
+            {/* ── Feature 3: Share with Your Team ── */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 mb-4">
+                  <Share2 size={14} className="text-pink-500" />
+                  <span className="text-xs font-semibold text-pink-600 dark:text-pink-400">Team Sharing</span>
+                </div>
+                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
+                  Share results with anyone.<br className="hidden sm:block" /> No account needed.
+                </h3>
+                <p className="text-muted text-base leading-relaxed mb-4">
+                  Generate a read-only link for any completed audit. Stakeholders see the overall score, pillar breakdown, top 3 recommendations, and executive summary — without needing a ClearUX account. Revoke the link anytime.
+                </p>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+                  <div className="flex items-center gap-1.5"><Link2 size={14} className="text-violet-500" /> <span>Shareable link</span></div>
+                  <span className="text-border">|</span>
+                  <div className="flex items-center gap-1.5"><Lock size={14} className="text-violet-500" /> <span>Revocable anytime</span></div>
+                  <span className="text-border hidden sm:block">|</span>
+                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-violet-500" /> <span>PDF & Word exports</span></div>
+                </div>
+              </div>
+              {/* Visual mock */}
+              <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="h-1" style={{ background: 'var(--gradient-brand)' }} />
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Eye size={13} className="text-muted" />
+                    <span className="text-[11px] text-muted">Shared audit report</span>
+                    <span className="text-border">|</span>
+                    <span className="text-[11px] font-medium text-text">acme.com</span>
+                  </div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-full border-[3px] border-emerald-500 flex items-center justify-center">
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">78</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
+                      <p className="text-xs text-muted">Good | 23 issues found</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {[
+                      { name: 'Foundation', score: 82, color: 'bg-violet-500' },
+                      { name: 'Human Experience', score: 71, color: 'bg-pink-500' },
+                      { name: 'Inclusive Design', score: 68, color: 'bg-amber-500' },
+                      { name: 'Future Readiness', score: 84, color: 'bg-emerald-500' },
+                    ].map((p) => (
+                      <div key={p.name} className="p-2.5 rounded-lg bg-off/50 dark:bg-white/[0.03]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-muted truncate">{p.name}</span>
+                          <span className="text-[11px] font-bold text-text">{p.score}</span>
+                        </div>
+                        <div className="w-full h-1 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
+                          <div className={`h-full rounded-full ${p.color}`} style={{ width: `${p.score}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-3 rounded-lg bg-violet-50/50 dark:bg-violet-900/[0.08] border border-violet-200/30 dark:border-violet-800/20">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Zap size={11} className="text-violet-500" />
+                      <span className="text-[10px] font-bold text-text">Top Recommendations</span>
+                    </div>
+                    <div className="space-y-1">
+                      {['Add missing ARIA labels to form fields', 'Improve colour contrast on primary CTA', 'Add structured data for AI discoverability'].map((rec, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="text-[10px] font-bold text-violet-500 mt-px">{i + 1}.</span>
+                          <span className="text-[11px] text-muted leading-snug">{rec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Feature 4: Dashboard Stats ── */}
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              {/* Visual mock — on left */}
+              <div className="order-2 md:order-1 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Audits', value: '12', sub: '12 total', icon: BarChart3, iconColor: 'text-violet-500' },
+                    { label: 'Avg Score', value: '74', sub: 'across all audits', icon: TrendingUp, iconColor: 'text-emerald-500' },
+                    { label: 'Findings', value: '156', sub: '18 critical', icon: Shield, iconColor: 'text-red-500' },
+                    { label: 'Fixed', value: '104', sub: '67% resolved', icon: CheckCircle, iconColor: 'text-emerald-500' },
+                  ].map((stat) => (
+                    <div key={stat.label} className="p-3.5 rounded-xl bg-off/50 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <stat.icon size={12} className={stat.iconColor} />
+                        <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">{stat.label}</span>
+                      </div>
+                      <p className="text-xl font-bold text-text">{stat.value}</p>
+                      <p className="text-[10px] text-muted">{stat.sub}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="order-1 md:order-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 mb-4">
+                  <BarChart3 size={14} className="text-amber-500" />
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Dashboard Stats</span>
+                </div>
+                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
+                  Your UX health at a glance.
+                </h3>
+                <p className="text-muted text-base leading-relaxed mb-4">
+                  See how many audits you&apos;ve run, your average score, total findings, and how many you&apos;ve resolved. The dashboard gives you the evidence to justify UX investment to leadership.
+                </p>
+                <p className="text-sm text-text/70 font-medium">
+                  Every stat updates in real time as you track findings and run re-audits. Your team&apos;s progress, visible at a glance.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
@@ -1047,243 +1278,6 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          BEYOND THE REPORT — Track, Share, Improve
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        <div className="absolute top-[15%] right-[10%] w-[500px] h-[400px] rounded-full bg-violet-500/[0.04] blur-[160px] pointer-events-none" />
-        <div className="absolute bottom-[10%] left-[15%] w-[400px] h-[400px] rounded-full bg-emerald-500/[0.03] blur-[140px] pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto relative">
-          <div className="text-center mb-16">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond the report</p>
-            <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-5" style={{ lineHeight: '1.15' }}>
-              An audit is just the beginning.<br className="hidden sm:block" />
-              <span className="text-muted">What you do next is what matters.</span>
-            </h2>
-            <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              ClearUX doesn&apos;t just find problems — it gives your team a system to track fixes, prove improvement, and share progress with stakeholders.
-            </p>
-          </div>
-
-          {/* Feature cards — alternating layout */}
-          <div className="space-y-12 md:space-y-16">
-
-            {/* ── Feature 1: Finding Status Tracking ── */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 mb-4">
-                  <ListChecks size={14} className="text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Finding Tracker</span>
-                </div>
-                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
-                  Track every fix from<br className="hidden sm:block" /> open to resolved
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Every finding has a status: Open, In Progress, Fixed, or Backlog. Update them as your team works through the list. Your dashboard tracks the percentage resolved — proof that the investment is paying off.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => {
-                    const colors = ['bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'];
-                    return (
-                      <span key={s} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${colors[i]}`}>{s}</span>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* Visual mock */}
-              <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center"><ListChecks size={12} className="text-violet-500" /></div>
-                  <span className="text-xs font-semibold text-text">Issue Tracker</span>
-                  <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">67% resolved</span>
-                </div>
-                <div className="space-y-2.5">
-                  {[
-                    { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
-                    { title: 'Low colour contrast on CTA', severity: 'high', status: 'In Progress', statusColor: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
-                    { title: 'No skip-to-content link', severity: 'medium', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
-                    { title: 'Form lacks error messaging', severity: 'high', status: 'Open', statusColor: 'text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400' },
-                    { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-off/50 dark:bg-white/[0.03]">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
-                      <span className="text-xs text-text flex-1 truncate">{item.title}</span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${item.statusColor}`}>{item.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Feature 2: Re-audit & Score Comparison ── */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              {/* Visual mock — on left for desktop (reversed order) */}
-              <div className="order-2 md:order-1 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-md bg-violet-500/10 flex items-center justify-center"><TrendingUp size={12} className="text-violet-500" /></div>
-                  <span className="text-xs font-semibold text-text">Score Trend</span>
-                  <span className="ml-auto text-[10px] text-muted">acme.com</span>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { date: 'Jan 15', score: 42, label: 'Baseline' },
-                    { date: 'Feb 28', score: 61, label: 'After sprint 1' },
-                    { date: 'Apr 10', score: 78, label: 'Current' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-[11px] text-muted w-12 flex-shrink-0">{item.date}</span>
-                      <div className="flex-1 h-3 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${item.score >= 70 ? 'bg-emerald-500' : item.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${item.score}%` }} />
-                      </div>
-                      <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{item.score}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 pt-3 border-t border-border/20 dark:border-white/[0.04] flex items-center justify-between">
-                  <span className="text-xs text-muted">Improvement</span>
-                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <ArrowUp size={14} />
-                    +36 points
-                  </span>
-                </div>
-              </div>
-              <div className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 mb-4">
-                  <RefreshCw size={14} className="text-violet-500" />
-                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Re-Audit</span>
-                </div>
-                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
-                  Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Implement your fixes, then re-audit the same URL. ClearUX tracks every audit so you can compare scores over time. Show your team — or your client — exactly how much you improved.
-                </p>
-                <p className="text-sm text-text/70 font-medium">
-                  Your dashboard shows re-audit badges and average score trends across all your audits. Every point of improvement is evidence.
-                </p>
-              </div>
-            </div>
-
-            {/* ── Feature 3: Share with Your Team ── */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 mb-4">
-                  <Share2 size={14} className="text-pink-500" />
-                  <span className="text-xs font-semibold text-pink-600 dark:text-pink-400">Team Sharing</span>
-                </div>
-                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
-                  Share results with anyone.<br className="hidden sm:block" /> No account needed.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Generate a read-only link for any completed audit. Stakeholders see the overall score, pillar breakdown, top 3 recommendations, and executive summary — without needing a ClearUX account. Revoke the link anytime.
-                </p>
-                <div className="flex items-center gap-3 text-sm text-muted">
-                  <div className="flex items-center gap-1.5"><Link2 size={14} className="text-violet-500" /> <span>Shareable link</span></div>
-                  <span className="text-border">|</span>
-                  <div className="flex items-center gap-1.5"><Lock size={14} className="text-violet-500" /> <span>Revocable anytime</span></div>
-                  <span className="text-border hidden sm:block">|</span>
-                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-violet-500" /> <span>PDF & Word exports</span></div>
-                </div>
-              </div>
-              {/* Visual mock */}
-              <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="h-1" style={{ background: 'var(--gradient-brand)' }} />
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Eye size={13} className="text-muted" />
-                    <span className="text-[11px] text-muted">Shared audit report</span>
-                    <span className="text-border">|</span>
-                    <span className="text-[11px] font-medium text-text">acme.com</span>
-                  </div>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full border-[3px] border-emerald-500 flex items-center justify-center">
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">78</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
-                      <p className="text-xs text-muted">Good | 23 issues found</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {[
-                      { name: 'Foundation', score: 82, color: 'bg-violet-500' },
-                      { name: 'Human Experience', score: 71, color: 'bg-pink-500' },
-                      { name: 'Inclusive Design', score: 68, color: 'bg-amber-500' },
-                      { name: 'Future Readiness', score: 84, color: 'bg-emerald-500' },
-                    ].map((p) => (
-                      <div key={p.name} className="p-2.5 rounded-lg bg-off/50 dark:bg-white/[0.03]">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] text-muted truncate">{p.name}</span>
-                          <span className="text-[11px] font-bold text-text">{p.score}</span>
-                        </div>
-                        <div className="w-full h-1 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
-                          <div className={`h-full rounded-full ${p.color}`} style={{ width: `${p.score}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-3 rounded-lg bg-violet-50/50 dark:bg-violet-900/[0.08] border border-violet-200/30 dark:border-violet-800/20">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Zap size={11} className="text-violet-500" />
-                      <span className="text-[10px] font-bold text-text">Top Recommendations</span>
-                    </div>
-                    <div className="space-y-1">
-                      {['Add missing ARIA labels to form fields', 'Improve colour contrast on primary CTA', 'Add structured data for AI discoverability'].map((rec, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="text-[10px] font-bold text-violet-500 mt-px">{i + 1}.</span>
-                          <span className="text-[11px] text-muted leading-snug">{rec}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Feature 4: Dashboard Stats ── */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              {/* Visual mock — on left */}
-              <div className="order-2 md:order-1 rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-lg shadow-black/[0.03]" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Audits', value: '12', sub: '12 total', icon: BarChart3, iconColor: 'text-violet-500' },
-                    { label: 'Avg Score', value: '74', sub: 'across all audits', icon: TrendingUp, iconColor: 'text-emerald-500' },
-                    { label: 'Findings', value: '156', sub: '18 critical', icon: Shield, iconColor: 'text-red-500' },
-                    { label: 'Fixed', value: '104', sub: '67% resolved', icon: CheckCircle, iconColor: 'text-emerald-500' },
-                  ].map((stat) => (
-                    <div key={stat.label} className="p-3.5 rounded-xl bg-off/50 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <stat.icon size={12} className={stat.iconColor} />
-                        <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">{stat.label}</span>
-                      </div>
-                      <p className="text-xl font-bold text-text">{stat.value}</p>
-                      <p className="text-[10px] text-muted">{stat.sub}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 mb-4">
-                  <BarChart3 size={14} className="text-amber-500" />
-                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Dashboard Stats</span>
-                </div>
-                <h3 className="font-manrope font-bold text-2xl sm:text-3xl text-text mb-3">
-                  Your UX health at a glance.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  See how many audits you&apos;ve run, your average score, total findings, and how many you&apos;ve resolved. The dashboard gives you the evidence to justify UX investment to leadership.
-                </p>
-                <p className="text-sm text-text/70 font-medium">
-                  Every stat updates in real time as you track findings and run re-audits. Your team&apos;s progress, visible at a glance.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
           FAQ — Tabbed
           ═══════════════════════════════════════════════════════ */}
       <FaqSection faqRef={faqRef} />
@@ -1342,17 +1336,11 @@ export default function Home() {
 
           {/* Trust line */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            {user ? (
-              <span>Results in minutes</span>
-            ) : (
-              <>
-                <span>First audit free</span>
-                <span className="opacity-40">·</span>
-                <span>No credit card needed</span>
-                <span className="opacity-40">·</span>
-                <span>Results in minutes</span>
-              </>
-            )}
+            <span>First audit free</span>
+            <span className="opacity-40">·</span>
+            <span>No credit card needed</span>
+            <span className="opacity-40">·</span>
+            <span>Results in minutes</span>
           </div>
 
           {/* Support link */}
