@@ -19,6 +19,7 @@ import {
   X,
   Info,
   Loader2,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -123,6 +124,7 @@ function DashboardInner() {
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [pinnedNotification, setPinnedNotification] = useState<{ id: string; title: string; message: string; color: string; icon: string } | null>(null);
 
   // Handle return from Stripe credit purchase
   useEffect(() => {
@@ -164,10 +166,14 @@ function DashboardInner() {
     }
   }, []);
 
-  // Fetch credits
+  // Fetch credits + pinned notification
   useEffect(() => {
     if (!user) return;
     fetch('/api/credits').then(r => r.json()).then(d => setCredits(d.credits ?? 0)).catch(() => {});
+    fetch('/api/notifications').then(r => r.json()).then(d => {
+      const pinned = (d.notifications || []).find((n: any) => n.show_in_overview && !n.is_read);
+      if (pinned) setPinnedNotification(pinned);
+    }).catch(() => {});
   }, [user]);
 
   // Verify pending audits
@@ -285,6 +291,39 @@ function DashboardInner() {
           )}
         </div>
       </div>
+
+      {/* ── Pinned notification from admin ── */}
+      {pinnedNotification && (
+        <div className={`mb-4 p-3.5 rounded-xl border flex items-start gap-3 ${
+          pinnedNotification.color === 'green' ? 'border-green-200/40 bg-green-50/60 dark:bg-green-900/10 dark:border-green-800/20' :
+          pinnedNotification.color === 'yellow' ? 'border-yellow-200/40 bg-yellow-50/60 dark:bg-yellow-900/10 dark:border-yellow-800/20' :
+          pinnedNotification.color === 'red' ? 'border-red-200/40 bg-red-50/60 dark:bg-red-900/10 dark:border-red-800/20' :
+          pinnedNotification.color === 'violet' ? 'border-violet-200/40 bg-violet-50/60 dark:bg-violet-900/10 dark:border-violet-800/20' :
+          'border-blue-200/40 bg-blue-50/60 dark:bg-blue-900/10 dark:border-blue-800/20'
+        }`}>
+          <Bell size={14} className={`flex-shrink-0 mt-0.5 ${
+            pinnedNotification.color === 'green' ? 'text-green-500' :
+            pinnedNotification.color === 'yellow' ? 'text-yellow-500' :
+            pinnedNotification.color === 'red' ? 'text-red-500' :
+            pinnedNotification.color === 'violet' ? 'text-violet-500' :
+            'text-blue-500'
+          }`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-text">{pinnedNotification.title}</p>
+            <p className="text-[11px] text-muted mt-0.5">{pinnedNotification.message}</p>
+          </div>
+          <button
+            onClick={async () => {
+              await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notification_id: pinnedNotification.id }) });
+              setPinnedNotification(null);
+            }}
+            className="p-1 rounded-md text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/[0.05] transition-colors flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
 
       {/* ── Notifications / Tips ── */}
       {!isNewUser && (

@@ -29,14 +29,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    const load = () =>
-      fetch('/api/credits')
-        .then((r) => r.json())
-        .then((d) => setCredits(d.credits ?? 0))
-        .catch(() => {});
+    const load = () => {
+      fetch('/api/credits').then((r) => r.json()).then((d) => setCredits(d.credits ?? 0)).catch(() => {});
+      fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
+    };
     load();
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
@@ -46,7 +46,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
-    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: false },
+    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
@@ -126,9 +126,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                         : 'text-muted hover:text-text hover:bg-surface-alt/60'
                     )}
                   >
-                    <Icon size={16} strokeWidth={active ? 2 : 1.75} />
+                    <span className="relative">
+                      <Icon size={16} strokeWidth={active ? 2 : 1.75} />
+                      {(item as any).badge && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                      )}
+                    </span>
                     <span>{item.label}</span>
-                    {active && (
+                    {(item as any).badge && (
+                      <span className="ml-auto text-[9px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full leading-none">
+                        {unreadNotifications}
+                      </span>
+                    )}
+                    {active && !(item as any).badge && (
                       <ChevronRight size={12} className="ml-auto text-muted/50" />
                     )}
                   </Link>

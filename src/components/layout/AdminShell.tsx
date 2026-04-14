@@ -13,6 +13,7 @@ import {
   LogOut,
   ArrowLeft,
   ChevronRight,
+  Bell,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -61,6 +62,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
     { label: 'Users', href: '/admin/users', icon: Users },
     { label: 'Audits', href: '/admin/audits', icon: FileSearch },
     { label: 'Admins', href: '/admin/admins', icon: ShieldCheck },
+    { label: 'Notifications', href: '/admin/notifications', icon: Bell },
   ];
 
   const isActive = (href: string) => {
