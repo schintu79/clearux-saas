@@ -399,6 +399,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
       anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 3000,
+        temperature: 0,
         messages: [{ role: 'user', content: prompt }],
       }),
       45_000,
@@ -497,9 +498,15 @@ export async function generateReport(
   const translatedNames = getCategoryNames(language)
 
   const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
+  const summaryExamples = [
+    'Strong visual hierarchy but hero CTA lacks contrast on mobile viewports.',
+    'Clear value proposition with specific proof points. Differentiation could be stronger.',
+    'Well-structured navigation with descriptive labels. Footer could include more utility links.',
+    'Content is scannable with good subheadings. Some paragraphs exceed recommended length.',
+  ]
   const categoryExamples = translatedNames.map((name, i) => {
     const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 62, 48, 65, 58, 72, 66, 45]
-    return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "..." }`
+    return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "${summaryExamples[i % summaryExamples.length]}" }`
   }).join(',\n')
 
   const prompt = `You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.
@@ -545,6 +552,12 @@ Score guidelines:
 - 60-74: Decent but with significant gaps
 - 40-59: Below average, needs substantial work
 - 20-39: Poor, major issues throughout
+
+For CATEGORY SUMMARIES (REQUIRED — do NOT leave empty):
+- Each categoryScores entry MUST have a "summary" field with 1-2 sentences
+- The summary should describe what was good AND what needs improvement in that category
+- Be specific: reference actual content, elements, or patterns from the site
+- Example: "Strong visual hierarchy with clear CTA placement. Hero section lacks contrast on mobile viewports."
 - 0-19: Severely broken
 
 For CATEGORY SCORES:
@@ -589,6 +602,7 @@ ${categoryExamples}
       anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
+        temperature: 0,
         messages: [{ role: 'user', content: prompt }],
       }),
       60_000,
@@ -743,14 +757,18 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
   const categoryScores: CategoryScore[] = categoryNames.map(name => {
     const catFindings = findingsPerCategory[name]
     if (catFindings.length === 0) {
-      // No findings doesn't mean perfect — it means the AI might not have analyzed this category deeply
-      return { name, score: 75, summary: '' }
+      return { name, score: 75, summary: 'No specific issues identified in this category.' }
     }
     let score = 85
     for (const f of catFindings) {
       score -= severityPenalty[f.severity] || 5
     }
-    return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary: '' }
+    // Generate a basic summary from findings
+    const topFinding = catFindings[0]
+    const summary = catFindings.length === 1
+      ? `1 issue found: ${topFinding.title}.`
+      : `${catFindings.length} issues found. Top priority: ${topFinding.title}.`
+    return { name, score: Math.max(0, Math.min(100, Math.round(score))), summary }
   })
 
   const allScores = categoryScores.map(c => c.score)

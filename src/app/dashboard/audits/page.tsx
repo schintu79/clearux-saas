@@ -82,7 +82,7 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
     .filter(a => a.status === 'completed' && a.report?.overall_score != null)
     .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
     .reverse();
-  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[0].score : 0;
+  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
   const lang = langCode((latest as any).language);
 
   // Single audit — entire card is clickable

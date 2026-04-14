@@ -862,12 +862,10 @@ function PillarSection({
                     style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
                   />
                 </div>
-                {cat.summary ? (
+                {cat.summary && cat.summary.trim() && (
                   <div className="mt-2 p-2.5 rounded-lg bg-off/40 dark:bg-white/[0.03] border border-border/10 dark:border-white/[0.03]">
                     <ExpandableSummary text={cat.summary} />
                   </div>
-                ) : (
-                  <p className="text-[10px] text-muted/50 mt-1.5 italic">No summary available for this category</p>
                 )}
               </div>
             );
