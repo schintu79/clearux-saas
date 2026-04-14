@@ -97,6 +97,27 @@ const FAQ_SECTIONS = [
     ],
   },
   {
+    title: 'How Our AI Works',
+    items: [
+      {
+        q: 'What AI powers the audits?',
+        a: 'ClearUX uses Anthropic\u2019s Claude as its analysis engine. Each category is evaluated by a specialised prompt trained on UX best practices, WCAG accessibility guidelines, dark pattern databases, conversion research, and AI readiness standards. The AI analyses your actual page content \u2014 not just metadata \u2014 and produces findings that reference specific text, elements, and patterns on your site.',
+      },
+      {
+        q: 'What are the known limitations?',
+        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience \u2014 that\u2019s why we built the dismiss-with-reason feature.',
+      },
+      {
+        q: 'How does the AI improve over time?',
+        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked \u2014 the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
+      },
+      {
+        q: 'Does ClearUX replace a human UX auditor?',
+        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes \u2014 the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
+      },
+    ],
+  },
+  {
     title: 'Trust & Accuracy',
     items: [
       {
