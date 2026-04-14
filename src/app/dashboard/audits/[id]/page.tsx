@@ -689,33 +689,36 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
           )}
 
           {/* Status toggle + Dismiss */}
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Status:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {FINDING_STATUSES.map((s) => {
-                const active = status === s.key;
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => handleStatusChange(s.key)}
-                    disabled={statusUpdating}
-                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-all ${
-                      active ? `${s.bg} ${s.color} ring-1 ring-current/20` : 'text-muted hover:bg-off'
-                    } disabled:opacity-50`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : 'bg-border'}`} />
-                    {s.label}
-                  </button>
-                );
-              })}
+          <div className="mt-1 p-3 rounded-lg bg-surface-alt/60 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-text uppercase tracking-wide">Status</span>
+              <div className="flex flex-wrap gap-1.5">
+                {FINDING_STATUSES.map((s) => {
+                  const active = status === s.key;
+                  return (
+                    <button
+                      key={s.key}
+                      onClick={() => handleStatusChange(s.key)}
+                      disabled={statusUpdating}
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                        active ? `${s.bg} ${s.color} ring-1 ring-current/20 shadow-sm` : 'text-muted hover:bg-off dark:hover:bg-white/[0.04]'
+                      } disabled:opacity-50`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${active ? s.dot : 'bg-border'}`} />
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="ml-auto">
+                <button
+                  onClick={() => setShowDismissForm(!showDismissForm)}
+                  className="text-[11px] font-semibold text-muted hover:text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
-            <span className="text-border mx-1 hidden sm:inline">|</span>
-            <button
-              onClick={() => setShowDismissForm(!showDismissForm)}
-              className="text-[10px] font-semibold text-muted hover:text-red-500 transition-colors"
-            >
-              Dismiss finding
-            </button>
           </div>
 
           {/* Dismiss form */}
@@ -758,7 +761,7 @@ function ExpandableSummary({ text }: { text: string }) {
   return (
     <p
       onClick={() => setExpanded(!expanded)}
-      className={`text-[11px] leading-snug mt-1.5 cursor-pointer text-text/70 hover:text-text transition-colors ${expanded ? '' : 'line-clamp-2'}`}
+      className={`text-xs leading-relaxed cursor-pointer text-text/65 hover:text-text/85 transition-colors ${expanded ? '' : 'line-clamp-2'}`}
       title={expanded ? 'Click to collapse' : 'Click to read more'}
     >
       {text}
@@ -859,8 +862,12 @@ function PillarSection({
                     style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
                   />
                 </div>
-                {cat.summary && (
-                  <ExpandableSummary text={cat.summary} />
+                {cat.summary ? (
+                  <div className="mt-2 p-2.5 rounded-lg bg-off/40 dark:bg-white/[0.03] border border-border/10 dark:border-white/[0.03]">
+                    <ExpandableSummary text={cat.summary} />
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted/50 mt-1.5 italic">No summary available for this category</p>
                 )}
               </div>
             );
