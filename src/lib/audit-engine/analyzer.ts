@@ -379,6 +379,15 @@ QUANTITY GUIDELINES:
 - Every finding must be genuinely worth the client's attention and effort to fix.
 - If you can't find real issues, report fewer findings rather than inventing problems.
 
+RE-AUDIT CONSISTENCY:
+If a PREVIOUS AUDIT BASELINE is provided above, you MUST be consistent:
+- Do NOT invent new issues for content that hasn't changed since the previous audit.
+- Do NOT assign a different severity to the same unchanged issue.
+- If a [SKIP] or [FIXED] finding is listed, do NOT re-report it unless the issue is CLEARLY still present.
+- If a [OPEN] finding from the previous audit is still present, re-report it with the SAME title and severity.
+- Only report genuinely NEW issues that were not covered in any previous finding.
+- Consistency between audits is CRITICAL. Random variation on unchanged content destroys user trust.
+
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
   try {
@@ -549,6 +558,15 @@ For TOP 3 PRIORITY RECOMMENDATIONS:
 - Be specific — reference actual elements, copy, or patterns from the site
 - Cover different aspects of the site (don't give 3 recommendations about the same thing)
 - These should be the 3 changes that would move the needle the most
+
+SCORE CALIBRATION (CRITICAL FOR RE-AUDITS):
+If a PREVIOUS AUDIT BASELINE with category scores is provided in the content above:
+- Your category scores MUST be calibrated against the previous baseline.
+- For unchanged content, scores should be within 5-10 points of the previous score.
+- Score a category HIGHER only if you can identify a specific improvement in the content.
+- Score a category LOWER only if you can identify a specific regression or new issue.
+- Random variation of 15+ points on unchanged content is UNACCEPTABLE.
+- In the executive summary, note what changed vs what stayed the same.
 
 Return ONLY valid JSON:
 {

@@ -241,18 +241,17 @@ ${lines.join('\n')}
 IMPORTANT CROSS-PAGE CONTEXT:
 The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
 
-      // Fetch user's site notes + previous findings in PARALLEL (single round-trip)
+      // Fetch user's site notes + FULL previous audit baseline
       const noteDb = getDb()
       let domain = ''
       try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
 
-      // We already know user_id from auditDetails step — no need to re-query
       const { data: auditOwner } = await noteDb.from('audits').select('user_id').eq('id', auditId).single()
       const userId = (auditOwner as any)?.user_id
 
       let userContext = ''
       if (domain && userId) {
-        // Run BOTH queries in parallel
+        // Fetch site notes + previous audit ID in parallel
         const [siteNotesRes, prevAuditsRes] = await Promise.all([
           noteDb.from('site_notes')
             .select('note_type, title, content, category, finding_ref')
@@ -263,6 +262,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
             .eq('status', 'completed').order('completed_at', { ascending: false }).limit(1),
         ])
 
+        // Site notes (dismissals, context, discussions)
         if (siteNotesRes.data && siteNotesRes.data.length > 0) {
           const noteLines = (siteNotesRes.data as any[]).map((n) => {
             const typeLabel = n.note_type === 'dismissal' ? 'SKIP' : n.note_type === 'discussion' ? 'CONTEXT' : 'NOTE'
@@ -271,17 +271,54 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           userContext = `\nCLIENT NOTES — RESPECT THESE:\n${noteLines.join('\n')}\nDo NOT re-flag [SKIP] findings.`
         }
 
+        // FULL previous audit baseline — scores + ALL findings with statuses
         if (prevAuditsRes.data && prevAuditsRes.data.length > 0) {
-          const { data: prevFindings } = await noteDb.from('audit_findings')
-            .select('title, status, dismissal_reason, dismissed')
-            .eq('audit_id', (prevAuditsRes.data[0] as any).id)
-            .or('dismissed.eq.true,status.eq.fixed').limit(30)
+          const prevAuditId = (prevAuditsRes.data[0] as any).id
 
-          if (prevFindings && prevFindings.length > 0) {
-            const fixedLines = (prevFindings as any[]).map((f) =>
-              f.dismissed ? `  [SKIP] "${f.title}"` : `  [FIXED] "${f.title}"`
-            )
-            userContext += `\nPREVIOUS AUDIT: ${fixedLines.join('\n')}\nDo NOT re-flag [SKIP] or [FIXED] findings unless clearly still present.`
+          // Fetch previous report scores + all findings in parallel
+          const [prevReportRes, prevFindingsRes] = await Promise.all([
+            noteDb.from('reports').select('overall_score, raw_json').eq('audit_id', prevAuditId).single(),
+            noteDb.from('audit_findings')
+              .select('title, severity, status, dismissed, dismissal_reason')
+              .eq('audit_id', prevAuditId)
+              .order('sort_order', { ascending: true }).limit(60),
+          ])
+
+          // Previous category scores as baseline
+          if (prevReportRes.data) {
+            const prevReport = prevReportRes.data as any
+            const prevCatScores = prevReport.raw_json?.categoryScores
+            if (Array.isArray(prevCatScores) && prevCatScores.length > 0) {
+              const scoreLines = prevCatScores.map((c: any) => `  ${c.name}: ${c.score}/100`)
+              userContext += `\n\nPREVIOUS AUDIT BASELINE (overall: ${prevReport.overall_score}/100):
+${scoreLines.join('\n')}
+
+CRITICAL — SCORE CONSISTENCY:
+The scores above are from the client's PREVIOUS audit of this SAME site. Your new scores MUST be calibrated against this baseline:
+- If the site content has NOT changed for a category, the score should be SIMILAR (within 5-10 points). Do NOT randomly assign different scores for unchanged content.
+- If the site content HAS improved (e.g., new alt text added, better CTA copy), the score should INCREASE and you should note what improved.
+- If the site content has REGRESSED, the score should DECREASE and you should explain what got worse.
+- A score swing of more than 15 points for the same unchanged content is a BUG in your analysis. Be consistent.`
+            }
+          }
+
+          // All previous findings with their current status
+          if (prevFindingsRes.data && prevFindingsRes.data.length > 0) {
+            const findingLines = (prevFindingsRes.data as any[]).map((f) => {
+              if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
+              if (f.status === 'fixed') return `  [FIXED] "${f.title}" — Client says resolved`
+              if (f.status === 'in_progress') return `  [IN PROGRESS] "${f.title}" — Being worked on`
+              return `  [OPEN] "${f.title}" (${f.severity})`
+            })
+            userContext += `\n\nPREVIOUS FINDINGS (${prevFindingsRes.data.length} total):
+${findingLines.join('\n')}
+
+RULES FOR RE-AUDIT:
+- [SKIP] findings: Do NOT report these again. The client has dismissed them with a reason.
+- [FIXED] findings: Verify if the fix is visible in the current content. If fixed, do not re-report. If still broken, re-report with a note that the fix may not have been deployed.
+- [IN PROGRESS] findings: Check if the issue is still present. If still present, re-report at the same severity.
+- [OPEN] findings: These were not addressed. If still present, re-report them. If the content has changed and the issue is resolved, do not re-report.
+- NEW findings: Only report genuinely NEW issues not covered by any previous finding. Do not rephrase an existing finding as a "new" one.`
           }
         }
       }
