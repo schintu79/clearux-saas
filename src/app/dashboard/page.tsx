@@ -321,6 +321,7 @@ function DashboardInner() {
             onClick={async () => {
               await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notification_id: pinnedNotification.id }) });
               setPinnedNotification(null);
+              window.dispatchEvent(new Event('focus')); // triggers sidebar to re-fetch unread count
             }}
             className="p-1 rounded-md text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/[0.05] transition-colors flex-shrink-0"
             aria-label="Dismiss"

@@ -53,6 +53,7 @@ export default function NotificationsPage() {
     });
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
+    window.dispatchEvent(new Event('focus')); // triggers sidebar to re-fetch unread count
   };
 
   if (loading) {
