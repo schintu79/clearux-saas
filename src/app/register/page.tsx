@@ -216,22 +216,36 @@ export default function RegisterPage() {
 
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
-    <div className="w-full max-w-[380px]">
-      <div className="mb-8">
-        <h2 className="text-2xl font-manrope font-bold text-text mb-2">
-          {pendingUrl ? 'Create your free account' : 'Create account'}
+    <div className="w-full max-w-[400px]">
+      {/* Value proposition banner */}
+      <div className="mb-6 p-4 rounded-xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>
+        <h2 className="text-lg font-manrope font-bold text-text mb-1">
+          Start Your Free Audit
         </h2>
-        <p className="text-sm text-muted">
-          {pendingUrl
-            ? 'Sign up to run your first audit — it\u2019s on us. No credit card required.'
-            : 'Join ClearUX to start auditing your UX'}
+        <p className="text-sm text-text/70 mb-3">
+          No credit card required. Get consultant-grade UX insights in under 10 minutes.
         </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text/55">
+          <span>64-point analysis</span>
+          <span className="opacity-40">·</span>
+          <span>Actionable findings</span>
+          <span className="opacity-40">·</span>
+          <span>Impact-ranked recommendations</span>
+        </div>
         {pendingUrl && (
-          <div className="mt-3 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Your first audit is free</p>
-            <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 mt-0.5 truncate">{pendingUrl}</p>
+          <div className="mt-3 pt-2.5 border-t border-violet-200/30 dark:border-violet-800/15">
+            <p className="text-[11px] text-violet-700 dark:text-violet-400 font-medium truncate">Auditing: {pendingUrl}</p>
           </div>
         )}
+      </div>
+
+      <div className="mb-6">
+        <h3 className="text-xl font-manrope font-bold text-text mb-1">
+          Create your account
+        </h3>
+        <p className="text-sm text-muted">
+          Sign up to access your audit dashboard, track findings, and share results.
+        </p>
       </div>
 
       {error && (
