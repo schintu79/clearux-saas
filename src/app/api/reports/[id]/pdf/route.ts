@@ -263,6 +263,7 @@ export async function GET(
 
     // Section heading with accent left bar
     const sectionHead = (title: string, y?: number) => {
+      if (doc.y > 680) doc.addPage() // only add page if near bottom
       const sy = y ?? doc.y
       doc.rect(leftM, sy, 4, 20).fill(C.accent)
       doc.fontSize(18).font('Helvetica-Bold').fillColor(C.text)
@@ -304,7 +305,7 @@ export async function GET(
       .text(`For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'ClearUX'} findings with a specialist.`, leftM, undefined, { width: contentW })
 
     // ── PILLAR SCORES ──────────────────────────────────────
-    doc.addPage()
+    doc.moveDown(1)
     sectionHead(L.scoreBreakdown)
     doc.fontSize(9.5).font('Helvetica').fillColor(C.textSec)
       .text(L.scoreSubtitle, leftM, undefined, { width: contentW })
@@ -314,7 +315,7 @@ export async function GET(
       const cats = catScores.slice(pillar.start, Math.min(pillar.end, catScores.length))
 
       // Check page space
-      if (doc.y > 620) doc.addPage()
+      if (doc.y > 690) doc.addPage()
 
       // Pillar header bar
       const phy = doc.y
@@ -356,7 +357,7 @@ export async function GET(
     }
 
     // ── DETAILED FINDINGS ──────────────────────────────────
-    doc.addPage()
+    doc.moveDown(1)
     sectionHead(L.detailedFindings)
     doc.fontSize(9.5).font('Helvetica').fillColor(C.textSec)
       .text(L.findingsSubtitle, leftM, undefined, { width: contentW })
@@ -368,7 +369,7 @@ export async function GET(
       if (!hasFindings) continue
 
       // Pillar header
-      if (doc.y > 620) doc.addPage()
+      if (doc.y > 690) doc.addPage()
       doc.fontSize(14).font('Helvetica-Bold').fillColor(pillar.color)
         .text(pillar.name, leftM, undefined, { width: contentW })
       doc.moveTo(leftM, doc.y).lineTo(leftM + contentW, doc.y)
@@ -382,7 +383,7 @@ export async function GET(
         const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
         findings.sort((a, b) => (sevOrder[a.severity] ?? 4) - (sevOrder[b.severity] ?? 4))
 
-        if (doc.y > 640) doc.addPage()
+        if (doc.y > 700) doc.addPage()
         doc.fontSize(11).font('Helvetica-Bold').fillColor(C.text)
           .text(catName, leftM, undefined, { width: contentW, continued: true })
         doc.fontSize(9).font('Helvetica').fillColor(C.textTert)
@@ -390,7 +391,7 @@ export async function GET(
         doc.moveDown(0.3)
 
         for (const finding of findings) {
-          if (doc.y > 660) doc.addPage()
+          if (doc.y > 700) doc.addPage()
 
           const sev = (finding.severity || 'medium').toLowerCase()
 
