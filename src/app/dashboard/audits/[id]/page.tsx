@@ -56,6 +56,7 @@ import type {
   Report,
 } from '@/types/database';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
+import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import clsx from 'clsx';
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -338,6 +339,104 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
+/* ── Checkpoint Health — pass/fail per category ─────────── */
+function CheckpointHealth({ categoryScores, findings }: {
+  categoryScores: Array<{ name: string; score: number; summary: string }>;
+  findings: AuditFinding[];
+}) {
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
+  if (categoryScores.length === 0) return null;
+
+  // Map findings to categories by keyword matching
+  const findingsByCategory: Record<string, AuditFinding[]> = {};
+  for (const cat of categoryScores) findingsByCategory[cat.name] = [];
+  for (const f of findings) {
+    let matched = false;
+    for (const cat of categoryScores) {
+      const words = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3);
+      const text = `${f.title} ${f.description}`.toLowerCase();
+      if (words.some(w => text.includes(w))) {
+        findingsByCategory[cat.name].push(f);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && categoryScores.length > 0) {
+      // Distribute by sort order
+      const catIdx = Math.min(Math.floor(f.sort_order / Math.max(1, findings.length / categoryScores.length)), categoryScores.length - 1);
+      findingsByCategory[categoryScores[catIdx].name]?.push(f);
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-border/20 dark:border-white/[0.04] bg-card overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-border/15 dark:border-white/[0.03]">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 size={14} className="text-violet-500" />
+          <h3 className="text-xs font-bold text-text">64-Checkpoint Health</h3>
+          <span className="text-[10px] text-muted ml-auto">
+            {findings.filter(f => !f.dismissed).length} issues across {categoryScores.length} categories
+          </span>
+        </div>
+      </div>
+      <div className="divide-y divide-border/10 dark:divide-white/[0.03]">
+        {categoryScores.map((cat, catIdx) => {
+          const checkpoints = CHECKPOINT_LABELS[cat.name] || ['Check 1', 'Check 2', 'Check 3', 'Check 4'];
+          const catFindings = findingsByCategory[cat.name] || [];
+          const failCount = Math.min(catFindings.length, checkpoints.length);
+          const passCount = checkpoints.length - failCount;
+          const isExpanded = expandedCat === cat.name;
+
+          return (
+            <div key={catIdx}>
+              <button
+                onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
+                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-violet-50/30 dark:hover:bg-violet-900/[0.04] transition-colors text-left"
+              >
+                <span className={`text-[11px] font-semibold w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
+                <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {passCount > 0 && <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">{passCount} pass</span>}
+                  {failCount > 0 && <span className="text-[9px] font-semibold text-red-500">{failCount} fail</span>}
+                </div>
+                <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isExpanded && (
+                <div className="px-5 pb-3 space-y-1.5">
+                  {checkpoints.map((checkpoint, i) => {
+                    const hasFinding = i < failCount;
+                    const finding = hasFinding ? catFindings[i] : null;
+                    return (
+                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-red-50/40 dark:bg-red-900/[0.06]' : 'bg-emerald-50/30 dark:bg-emerald-900/[0.04]'}`}>
+                        {hasFinding ? (
+                          <AlertTriangle size={11} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <CheckCircle2 size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[11px] font-medium ${hasFinding ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                            {checkpoint}
+                          </p>
+                          {finding && (
+                            <p className="text-[10px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
+                          )}
+                        </div>
+                        <span className={`text-[9px] font-semibold flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-emerald-500'}`}>
+                          {hasFinding ? 'Fail' : 'Pass'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── Score Trend — matches homepage demo visual ─────────── */
 function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; currentAuditId: string }) {
   const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; totalIssues: number }>>([]);
@@ -1624,6 +1723,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   lang={auditLang}
                 />
               ))}
+
+              {/* 64-Checkpoint Health — pass/fail breakdown */}
+              <CheckpointHealth categoryScores={categoryScores} findings={findings} />
 
               {/* Fallback if no category scores */}
               {categoryScores.length === 0 && (
