@@ -688,13 +688,25 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Pricing highlights — bold, accent color */}
+          {/* KSPs — different for logged in vs out */}
           <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>First audit free</span>
-            <span className="opacity-40">·</span>
-            <span>No credit card needed</span>
-            <span className="opacity-40">·</span>
-            <span>Results in minutes</span>
+            {user ? (
+              <>
+                <span>Track fixes over time</span>
+                <span className="opacity-40">·</span>
+                <span>Share with your team</span>
+                <span className="opacity-40">·</span>
+                <span>Re-audit to prove improvement</span>
+              </>
+            ) : (
+              <>
+                <span>First audit free</span>
+                <span className="opacity-40">·</span>
+                <span>No credit card needed</span>
+                <span className="opacity-40">·</span>
+                <span>Results in minutes</span>
+              </>
+            )}
           </div>
 
           {/* See pricing link */}
@@ -1308,11 +1320,23 @@ export default function Home() {
 
           {/* Trust line */}
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
-            <span>First audit free</span>
-            <span className="opacity-40">·</span>
-            <span>No credit card needed</span>
-            <span className="opacity-40">·</span>
-            <span>Results in minutes</span>
+            {user ? (
+              <>
+                <span>Track fixes over time</span>
+                <span className="opacity-40">·</span>
+                <span>Share with your team</span>
+                <span className="opacity-40">·</span>
+                <span>Re-audit to prove improvement</span>
+              </>
+            ) : (
+              <>
+                <span>First audit free</span>
+                <span className="opacity-40">·</span>
+                <span>No credit card needed</span>
+                <span className="opacity-40">·</span>
+                <span>Results in minutes</span>
+              </>
+            )}
           </div>
 
           {/* Support link */}
