@@ -12,7 +12,7 @@ function getAnthropicClient(): Anthropic {
   if (!_anthropic) {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set. Cannot run AI analysis.')
-    _anthropic = new Anthropic({ apiKey, timeout: 60_000 }) // 60s per request
+    _anthropic = new Anthropic({ apiKey, timeout: 45_000 }) // 45s per request — Haiku is fast
   }
   return _anthropic
 }
@@ -392,7 +392,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
         max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }],
       }),
-      60_000,
+      45_000,
       `analyzeCategory(${category})`,
     )
 

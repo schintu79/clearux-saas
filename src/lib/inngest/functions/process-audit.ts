@@ -106,9 +106,9 @@ const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
 export const processAuditFn = inngest.createFunction(
   {
     id: 'process-audit',
-    retries: 1,
+    retries: 0, // Don't retry — failed audits refund credits and show error UI
     concurrency: {
-      limit: 5, // Max 5 audits processing simultaneously (Inngest free plan limit)
+      limit: 3, // Lower concurrency to avoid API rate limits across parallel audits
     },
     triggers: [{ event: 'audit/process' as const }],
   },
