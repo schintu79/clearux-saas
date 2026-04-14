@@ -46,13 +46,13 @@ export const metadata: Metadata = {
     siteName: 'ClearUX',
     title: 'ClearUX — Deep AI-Powered UX Audits',
     description: 'Paste your URL. Our AI audits your entire website across 64 checkpoints. Get a professional report in minutes.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'ClearUX — Deep AI-Powered UX Audits' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — Deep AI-Powered UX Audits' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ClearUX — Deep AI-Powered UX Audits',
     description: 'Paste your URL. Get a comprehensive UX audit with 64 checkpoints across 16 categories. Professional report in minutes.',
-    images: ['/og-image.png'],
+    images: ['/api/og'],
   },
   icons: {
     icon: '/favicon.ico',

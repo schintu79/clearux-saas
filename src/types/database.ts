@@ -75,6 +75,22 @@ export interface Audit {
   is_free_preview:    boolean
   claimed_by:         string | null
   free_audit_email:   string | null
+  // Sharing
+  share_token:        string | null
+  share_enabled:      boolean
+}
+
+export interface ScheduledAudit {
+  id:          string
+  user_id:     string
+  product_url: string
+  frequency:   'weekly' | 'monthly' | 'quarterly'
+  language:    string
+  is_active:   boolean
+  last_run_at: string | null
+  next_run_at: string | null
+  created_at:  string
+  updated_at:  string
 }
 
 export interface Payment {
@@ -135,6 +151,8 @@ export interface AuditPage {
   crawled_at:          string
 }
 
+export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
+
 export interface AuditFinding {
   id:                string
   audit_id:          string
@@ -149,6 +167,9 @@ export interface AuditFinding {
   target_element:    string | null
   screenshot_url:    string | null
   sort_order:        number
+  status:            FindingStatus
+  status_updated_at: string | null
+  status_note:       string | null
   created_at:        string
 }
 

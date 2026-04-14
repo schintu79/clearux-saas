@@ -33,6 +33,11 @@ import {
   Scale,
   Lightbulb,
   Accessibility,
+  Share2,
+  LinkIcon,
+  RefreshCw,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -329,9 +334,31 @@ function RotatingCheckpoints() {
 }
 
 /* ── Collapsible Finding Card ─────────────────────────────── */
+const FINDING_STATUSES = [
+  { key: 'open', label: 'Open', color: 'text-muted', bg: 'bg-off', dot: 'bg-gray-400' },
+  { key: 'in_progress', label: 'In Progress', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', dot: 'bg-amber-500' },
+  { key: 'fixed', label: 'Fixed', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', dot: 'bg-emerald-500' },
+  { key: 'backlog', label: 'Backlog', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', dot: 'bg-blue-500' },
+] as const;
+
 function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig> }) {
   const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState(finding.status || 'open');
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const sev = sevConfig[finding.severity] || sevConfig.medium;
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusUpdating(true);
+    try {
+      const res = await fetch(`/api/findings/${finding.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) setStatus(newStatus as any);
+    } catch {}
+    setStatusUpdating(false);
+  };
 
   return (
     <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
@@ -428,6 +455,29 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
               />
             </div>
           )}
+
+          {/* Status toggle */}
+          <div className="flex items-center gap-2 pt-2">
+            <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Status:</span>
+            <div className="flex gap-1.5">
+              {FINDING_STATUSES.map((s) => {
+                const active = status === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => handleStatusChange(s.key)}
+                    disabled={statusUpdating}
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full transition-all ${
+                      active ? `${s.bg} ${s.color} ring-1 ring-current/20` : 'text-muted hover:bg-off'
+                    } disabled:opacity-50`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : 'bg-border'}`} />
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -597,6 +647,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages'>('overview');
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const isPaymentReturn = searchParams.get('payment') === 'success';
@@ -804,6 +857,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     } finally {
       setRetrying(false);
     }
+  };
+
+  const handleShare = async () => {
+    if (!audit || !auditId) return;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/share`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.share_url) {
+        setShareUrl(data.share_url);
+        await navigator.clipboard.writeText(data.share_url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 3000);
+      }
+    } catch {}
+    setShareLoading(false);
   };
 
   const handleRestart = async () => {
@@ -1409,27 +1478,52 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           )}
 
-          {/* ── Bottom download CTA ────────────────────────── */}
-          <div className="mt-8 mb-4 flex items-center justify-center gap-3">
-            <a
-              href={`/api/reports/${auditId}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all hover:brightness-110 shadow-md"
-              style={{ background: 'var(--gradient-brand)' }}
-            >
-              <Download size={14} />
-              {L.downloadPdf}
-            </a>
-            <a
-              href={`/api/reports/${auditId}/docx`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-card border border-border text-text text-sm font-semibold px-6 py-3 rounded-xl hover:bg-surface-alt transition-colors"
-            >
-              <Download size={14} />
-              {L.downloadWord}
-            </a>
+          {/* ── Bottom action bar ────────────────────────── */}
+          <div className="mt-8 mb-4 space-y-3">
+            {/* Downloads */}
+            <div className="flex items-center justify-center gap-3">
+              <a
+                href={`/api/reports/${auditId}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all hover:brightness-110 shadow-md"
+                style={{ background: 'var(--gradient-brand)' }}
+              >
+                <Download size={14} />
+                {L.downloadPdf}
+              </a>
+              <a
+                href={`/api/reports/${auditId}/docx`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-card border border-border text-text text-sm font-semibold px-6 py-3 rounded-xl hover:bg-surface-alt transition-colors"
+              >
+                <Download size={14} />
+                {L.downloadWord}
+              </a>
+            </div>
+            {/* Share + Re-audit */}
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                className="inline-flex items-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50"
+              >
+                {shareCopied ? <><Check size={13} className="text-emerald-500" /> Link copied</> : <><Share2 size={13} /> Share audit</>}
+              </button>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                className="inline-flex items-center gap-2 bg-card border border-border text-text text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-surface-alt transition-colors"
+              >
+                <RefreshCw size={13} />
+                Re-audit this site
+              </Link>
+            </div>
+            {shareUrl && (
+              <p className="text-center text-[11px] text-muted">
+                Share link: <span className="font-mono text-violet-500">{shareUrl}</span>
+              </p>
+            )}
           </div>
         </>
       )}

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import PDFDocument from 'pdfkit'
-import { createServiceSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
 import fs from 'fs'
 import path from 'path'
@@ -77,7 +77,22 @@ export async function GET(
 ) {
   try {
     const { id: auditId } = await params
+
+    // Auth check — user must own this audit
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const db = createServiceSupabase()
+
+    // Verify ownership (or admin)
+    const { data: ownerCheck } = await db
+      .from('audits')
+      .select('user_id')
+      .eq('id', auditId)
+      .single()
+    if (!ownerCheck || ((ownerCheck as any).user_id !== user.id && user.email !== 's.schintu@gmail.com'))
+      return NextResponse.json({ error: 'Not authorized to access this report' }, { status: 403 })
 
     const [auditRes, reportRes, findingsRes] = await Promise.all([
       db.from('audits').select('*').eq('id', auditId).single(),

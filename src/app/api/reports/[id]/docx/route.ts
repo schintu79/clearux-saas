@@ -27,7 +27,7 @@ import {
   PageNumber,
   LevelFormat,
 } from 'docx'
-import { createServiceSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import fs from 'fs'
 import path from 'path'
 
@@ -908,6 +908,21 @@ export async function GET(
 ) {
   try {
     const { id: auditId } = await params
+
+    // Auth check — user must own this audit
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const db = createServiceSupabase()
+    const { data: ownerCheck } = await db
+      .from('audits')
+      .select('user_id')
+      .eq('id', auditId)
+      .single()
+    if (!ownerCheck || ((ownerCheck as any).user_id !== user.id && user.email !== 's.schintu@gmail.com'))
+      return NextResponse.json({ error: 'Not authorized to access this report' }, { status: 403 })
+
     const { buffer, safeDomain, whitelabelCompany } = await buildDocx(auditId)
 
     const brandName = whitelabelCompany

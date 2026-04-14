@@ -14,6 +14,12 @@ import {
   FileSearch,
   ExternalLink,
   Coins,
+  BarChart3,
+  TrendingUp,
+  Shield,
+  RefreshCw,
+  CheckCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -24,6 +30,16 @@ import type { Audit, Report } from '@/types/database';
 
 interface AuditWithReport extends Audit {
   report: Report | null;
+}
+
+interface DashboardStats {
+  totalAudits: number;
+  completedAudits: number;
+  avgScore: number | null;
+  totalFindings: number;
+  fixedFindings: number;
+  severityBreakdown: { critical: number; high: number; medium: number; low: number };
+  recentScores: Array<{ url: string; score: number; date: string }>;
 }
 
 const statusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -56,7 +72,88 @@ function scoreBg(s: number) {
   return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
 }
 
-/* ── Component ─────────────────────────────────────────────── */
+/* ── Onboarding steps ─────────────────────────────────────── */
+
+function OnboardingBanner() {
+  return (
+    <div className="mb-5 rounded-xl border border-violet-200/40 dark:border-violet-800/20 p-5" style={{ background: 'var(--gradient-brand-subtle)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles size={18} className="text-violet-500" />
+        <h2 className="font-manrope font-bold text-base text-text">Welcome to ClearUX</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          { step: '1', title: 'Paste your URL', desc: 'Enter any website to audit', icon: Globe },
+          { step: '2', title: 'AI analyses 64 checkpoints', desc: 'Across 16 UX categories', icon: Sparkles },
+          { step: '3', title: 'Get your report', desc: 'PDF, Word, and dashboard', icon: FileSearch },
+        ].map((s) => (
+          <div key={s.step} className="flex items-start gap-3 p-3 rounded-lg bg-card/80 dark:bg-white/[0.04] border border-border/20 dark:border-white/[0.04]">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: 'var(--gradient-brand)' }}>
+              {s.step}
+            </span>
+            <div>
+              <p className="text-xs font-bold text-text">{s.title}</p>
+              <p className="text-[11px] text-muted">{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Stats cards ──────────────────────────────────────────── */
+
+function StatsCards({ stats }: { stats: DashboardStats }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <BarChart3 size={13} className="text-violet-500" />
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Audits</span>
+        </div>
+        <p className="text-xl font-bold text-text">{stats.completedAudits}</p>
+        <p className="text-[10px] text-muted">{stats.totalAudits} total</p>
+      </div>
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <TrendingUp size={13} className="text-emerald-500" />
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Avg Score</span>
+        </div>
+        <p className={`text-xl font-bold ${stats.avgScore ? scoreColor(stats.avgScore) : 'text-muted'}`}>
+          {stats.avgScore ?? '--'}
+        </p>
+        <p className="text-[10px] text-muted">across all audits</p>
+      </div>
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <Shield size={13} className="text-red-500" />
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Findings</span>
+        </div>
+        <p className="text-xl font-bold text-text">{stats.totalFindings}</p>
+        <p className="text-[10px] text-muted">
+          {stats.severityBreakdown.critical > 0 && <span className="text-red-500">{stats.severityBreakdown.critical} critical</span>}
+          {stats.severityBreakdown.critical > 0 && stats.severityBreakdown.high > 0 && ' · '}
+          {stats.severityBreakdown.high > 0 && <span className="text-orange-500">{stats.severityBreakdown.high} high</span>}
+        </p>
+      </div>
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <CheckCircle size={13} className="text-emerald-500" />
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-wide">Fixed</span>
+        </div>
+        <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{stats.fixedFindings}</p>
+        <p className="text-[10px] text-muted">
+          {stats.totalFindings > 0
+            ? `${Math.round((stats.fixedFindings / stats.totalFindings) * 100)}% resolved`
+            : 'no findings yet'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main component ───────────────────────────────────────── */
 
 function DashboardInner() {
   const searchParams = useSearchParams();
@@ -65,64 +162,43 @@ function DashboardInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   // Handle return from Stripe credit purchase
   useEffect(() => {
     if (searchParams.get('credits') !== 'purchased') return;
-
     setCreditsBanner(true);
-    // Clean URL without reload
     window.history.replaceState({}, '', '/dashboard');
-    // Auto-dismiss after 6s
     const t = setTimeout(() => setCreditsBanner(false), 6000);
-
-    // Verify purchase directly with Stripe (webhook may be delayed)
     fetch('/api/stripe/verify-credits', { method: 'POST' })
       .then((r) => r.json())
-      .then((d) => {
-        if (d.verified) {
-          // Trigger a focus event so Navbar + DashboardShell re-fetch credits
-          window.dispatchEvent(new Event('focus'));
-        }
-      })
+      .then((d) => { if (d.verified) window.dispatchEvent(new Event('focus')); })
       .catch(() => {});
-
     return () => clearTimeout(t);
   }, [searchParams]);
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {
       const supabase = createBrowserSupabase();
-
-      // Fetch audits and reports in PARALLEL — single round-trip each
       const auditsPromise = supabase
         .from('audits')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
-
       const reportsPromise = supabase
         .from('reports')
         .select('audit_id, overall_score, executive_summary, key_recommendation')
         .eq('user_id', userId);
-
       const [auditsRes, reportsRes] = await Promise.all([auditsPromise, reportsPromise]);
-
       if (auditsRes.error) throw auditsRes.error;
-
       const reportsMap: Record<string, Report> = {};
       if (reportsRes.data) {
-        for (const r of reportsRes.data) {
-          reportsMap[r.audit_id] = r as any;
-        }
-      } else if (reportsRes.error) {
-        console.warn('[Dashboard] reports fetch error:', reportsRes.error.message);
+        for (const r of reportsRes.data) reportsMap[r.audit_id] = r as any;
       }
-
       setAudits((auditsRes.data || []).map((a: any) => ({ ...a, report: reportsMap[a.id] || null })));
     } catch (err: any) {
-      const msg = err?.message || err?.error_description || JSON.stringify(err)
+      const msg = err?.message || err?.error_description || JSON.stringify(err);
       console.error('[Dashboard] fetch error:', msg, err);
       setError(`Failed to load audits: ${msg}`);
     } finally {
@@ -130,24 +206,25 @@ function DashboardInner() {
     }
   }, []);
 
-  // Verify any stuck pending_payment audits (Stripe webhook may be delayed)
+  // Fetch stats
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/dashboard/stats')
+      .then((r) => r.json())
+      .then((d) => { if (!d.error) setStats(d); })
+      .catch(() => {});
+  }, [user]);
+
+  // Verify pending audits
   const verifyPendingAudits = useCallback(async (auditList: AuditWithReport[]) => {
     const pending = auditList.filter((a) => a.status === 'pending_payment');
     if (pending.length === 0) return;
-
     for (const audit of pending) {
       try {
-        await fetch('/api/stripe/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audit_id: audit.id }),
-        });
+        await fetch('/api/stripe/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
       } catch {}
     }
-    // Re-fetch after verifications
-    if (pending.length > 0 && user) {
-      setTimeout(() => fetchAudits(user.id), 1500);
-    }
+    if (pending.length > 0 && user) setTimeout(() => fetchAudits(user.id), 1500);
   }, [user, fetchAudits]);
 
   useEffect(() => {
@@ -156,35 +233,31 @@ function DashboardInner() {
     fetchAudits(user.id);
   }, [authLoading, user?.id, fetchAudits]);
 
-  // After audits load, verify any pending ones
   useEffect(() => {
-    if (audits.length > 0) {
-      verifyPendingAudits(audits);
-    }
+    if (audits.length > 0) verifyPendingAudits(audits);
   }, [audits.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh every 15s for in-progress audits
+  // Auto-refresh for in-progress audits
   useEffect(() => {
     if (!user) return;
     const hasInProgress = audits.some((a) =>
       ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(a.status)
     );
     if (!hasInProgress) return;
-
     const iv = setInterval(() => fetchAudits(user.id), 8000);
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 
-  /* ── Skeleton (includes auth loading + data loading) ─── */
+  /* ── Skeleton ─── */
   if (authLoading || (loading && user)) {
     return (
-      <div className="max-w-2xl mx-auto py-6 space-y-4">
+      <div className="max-w-3xl mx-auto py-6 space-y-4">
         <div className="h-6 w-40 bg-off rounded animate-pulse" />
-        <div className="h-3 w-28 bg-off rounded animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-off rounded-xl animate-pulse" />)}
+        </div>
         <div className="space-y-3 mt-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />
-          ))}
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />)}
         </div>
       </div>
     );
@@ -192,14 +265,22 @@ function DashboardInner() {
 
   const name = profile?.full_name?.split(' ')[0] || 'there';
   const has = audits.length > 0;
+  const isNewUser = audits.length === 0;
+
+  // Group audits by unique URL for re-audit indicator
+  const urlCounts: Record<string, number> = {};
+  for (const a of audits) {
+    const key = formatUrl(a.product_url);
+    urlCounts[key] = (urlCounts[key] || 0) + 1;
+  }
 
   return (
-    <div className="max-w-2xl mx-auto py-2">
+    <div className="max-w-3xl mx-auto py-2">
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-lg font-semibold text-text">Hey {name}</h1>
         <p className="text-muted text-xs mt-0.5">
-          {has ? `${audits.length} audit${audits.length !== 1 ? 's' : ''}` : 'Run your first UX audit'}
+          {has ? `${audits.length} audit${audits.length !== 1 ? 's' : ''} run` : 'Run your first UX audit'}
         </p>
       </div>
 
@@ -215,6 +296,12 @@ function DashboardInner() {
           </div>
         </div>
       )}
+
+      {/* Onboarding for new users */}
+      {isNewUser && <OnboardingBanner />}
+
+      {/* Stats cards (show only if user has completed audits) */}
+      {stats && stats.completedAudits > 0 && <StatsCards stats={stats} />}
 
       {/* New Audit CTA */}
       <Link href="/dashboard/new-audit" className="block mb-5">
@@ -270,6 +357,8 @@ function DashboardInner() {
               const Icon = meta.icon;
               const report = audit.report;
               const done = audit.status === 'completed';
+              const domain = formatUrl(audit.product_url);
+              const isReAudit = urlCounts[domain] > 1;
 
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
@@ -278,9 +367,13 @@ function DashboardInner() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <Globe size={12} className="text-muted flex-shrink-0" />
-                          <p className="font-medium text-xs text-text truncate">
-                            {formatUrl(audit.product_url)}
-                          </p>
+                          <p className="font-medium text-xs text-text truncate">{domain}</p>
+                          {isReAudit && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
+                              <RefreshCw size={8} />
+                              re-audit
+                            </span>
+                          )}
                           <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-muted">
@@ -311,6 +404,24 @@ function DashboardInner() {
               );
             })}
           </div>
+
+          {/* Re-audit suggestion */}
+          {audits.some(a => a.status === 'completed') && (
+            <div className="mt-5 p-4 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                  <RefreshCw size={16} className="text-violet-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-text">Track your improvement</p>
+                  <p className="text-[11px] text-muted">Re-audit the same URL after making changes to compare your scores over time.</p>
+                </div>
+                <Link href="/dashboard/new-audit" className="text-xs font-semibold bg-clip-text text-transparent whitespace-nowrap" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+                  Re-audit <ChevronRight size={12} className="inline text-violet-500" />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -320,13 +431,13 @@ function DashboardInner() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={
-      <div className="max-w-2xl mx-auto py-6 space-y-4">
+      <div className="max-w-3xl mx-auto py-6 space-y-4">
         <div className="h-6 w-40 bg-off rounded animate-pulse" />
-        <div className="h-3 w-28 bg-off rounded animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-off rounded-xl animate-pulse" />)}
+        </div>
         <div className="space-y-3 mt-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />
-          ))}
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-off rounded-lg animate-pulse" />)}
         </div>
       </div>
     }>
