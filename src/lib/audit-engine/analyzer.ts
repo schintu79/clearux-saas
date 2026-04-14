@@ -632,23 +632,44 @@ ${categoryExamples}
         ? [report.keyRecommendation]
         : []
 
+    // Parse category scores
+    const categoryScores = Array.isArray(report.categoryScores)
+      ? report.categoryScores.map((c: any) => ({
+          name: c.name || 'Unknown',
+          score: clampScore(c.score),
+          summary: c.summary || '',
+        }))
+      : getDefaultCategoryScores()
+
+    // CALCULATE scores from category data — don't trust AI's arbitrary numbers
+    // Pillars: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11), Future Readiness (12-15)
+    const pillarAvg = (start: number, end: number) => {
+      const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+      return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
+    }
+
+    const calculatedUx = pillarAvg(0, 4)           // Foundation
+    const calculatedConversion = pillarAvg(4, 8)    // Human Experience
+    const calculatedInclusive = pillarAvg(8, 12)    // Inclusive Design
+    const calculatedFuture = pillarAvg(12, 16)      // Future Readiness
+
+    // Overall = average of ALL category scores (not just pillar averages)
+    const allScores = categoryScores.map(c => c.score)
+    const calculatedOverall = allScores.length > 0
+      ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
+      : 50
+
     return {
       executiveSummary: report.executiveSummary || '',
       keyRecommendation: topRecs[0] || report.keyRecommendation || null,
       topRecommendations: topRecs.length > 0 ? topRecs : ['Prioritize critical issues first, then address high-impact improvements.'],
-      overallScore: clampScore(report.overallScore),
-      uxScore: clampScore(report.uxScore),
-      conversionScore: clampScore(report.conversionScore),
-      mobileScore: clampScore(report.mobileScore),
-      aiDiscoverabilityScore: clampScore(report.aiDiscoverabilityScore),
-      contentScore: clampScore(report.contentScore),
-      categoryScores: Array.isArray(report.categoryScores)
-        ? report.categoryScores.map((c: any) => ({
-            name: c.name || 'Unknown',
-            score: clampScore(c.score),
-            summary: c.summary || '',
-          }))
-        : getDefaultCategoryScores(),
+      overallScore: calculatedOverall,
+      uxScore: calculatedUx,
+      conversionScore: calculatedConversion,
+      mobileScore: calculatedInclusive,
+      aiDiscoverabilityScore: calculatedFuture,
+      contentScore: clampScore(report.contentScore), // keep AI's content score as supplementary
+      categoryScores,
     }
   } catch (err) {
     console.error('[generateReport] Error:', err instanceof Error ? err.message : err)
