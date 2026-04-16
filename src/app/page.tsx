@@ -418,7 +418,7 @@ const TOP_FAQS = [
   { q: 'What does the audit cover?', a: 'We evaluate 16 categories across 4 pillars: Foundation, Human Experience, Inclusive Design, and Future Readiness. Every audit includes accessibility, ethical UX, AI readiness, conversion analysis, and more.' },
   { q: 'Is ClearUX 100% accurate?', a: 'No automated tool is perfect, and we believe honesty about this builds trust. Our AI catches what other tools miss, but we recommend human review for critical accessibility findings. You can dismiss any finding with a reason, and the AI learns from your feedback on re-audits.' },
   { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations.' },
-  { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-auditing the same URL is the best way to prove progress. Your dashboard shows score trends over time, and the AI skips previously dismissed findings so each audit gets smarter.' },
+  { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they only verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues beyond the baseline, hit "Dig Deeper" for a full Deep mode analysis.' },
 ];
 
 function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>; visible: boolean } }) {
@@ -550,7 +550,7 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
-        <div className="max-w-3xl mx-auto text-center relative">
+        <div className="max-w-5xl mx-auto text-center relative">
           {/* Doodle accents */}
           <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
           <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
@@ -588,24 +588,23 @@ export default function Home() {
           </div>
 
           {/* Primary headline — outcome-first for cold traffic */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-4" style={{ lineHeight: '1.08' }}>
             Consultant-Grade <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits</span>
-            <br />
-            <span className="text-[0.7em] text-muted">
-              in Minutes, Not{' '}
-              <span className="relative inline-block">
-                Weeks
-                <UnderlineScribble className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
-              </span>
-            </span>
           </h1>
+          <p className="animate-fade-up delay-150 font-handwriting text-3xl sm:text-4xl md:text-5xl text-muted mb-6" style={{ lineHeight: '1.2' }}>
+            in Minutes, Not{' '}
+            <span className="relative inline-block">
+              Weeks
+              <UnderlineScribble className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+            </span>
+          </p>
 
           {/* Outcome subheading — rotating word shows breadth */}
           <p className="animate-fade-up delay-200 text-[1.7rem] text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
             Find the issues impacting{' '}<RotatingWord />
           </p>
 
-          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-lg mx-auto" style={{ lineHeight: '1.7' }}>
+          <p className="animate-fade-up delay-300 text-base text-muted/70 mb-12 sm:mb-14 max-w-lg mx-auto" style={{ lineHeight: '1.7' }}>
             64 AI-powered checkpoints across accessibility, ethics, AI readiness, and conversion. At a fraction of the cost of hiring a consultant.
           </p>
 
@@ -834,6 +833,81 @@ export default function Home() {
                 <p className="text-sm text-muted/80 font-medium">
                   Your dashboard shows re-audit badges and average score trends across all your audits. Every point of improvement is evidence.
                 </p>
+              </div>
+            </div>
+
+            {/* ── Feature 2b: Two Audit Modes ── */}
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-5">
+                <BarChart3 size={14} className="text-violet-500" />
+                <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Two Audit Modes</span>
+              </div>
+              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
+                Consistent results you can trust
+              </h3>
+              <p className="text-muted text-base leading-relaxed max-w-2xl mx-auto">
+                Re-audits verify your fixes — they don&apos;t invent new problems. When you&apos;re ready to go deeper, one click unlocks the next layer.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+              {/* Baseline Mode */}
+              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <RefreshCw size={18} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-heading font-semibold text-lg text-text">Baseline Mode</h4>
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Default on re-audits</span>
+                  </div>
+                </div>
+                <p className="text-muted text-sm leading-relaxed mb-5">
+                  When you re-audit, ClearUX focuses on verifying your previous findings. Are they fixed? Still present? Dismissed? No new issues are introduced — your score improves predictably as you resolve each finding.
+                </p>
+                <div className="space-y-2.5">
+                  {[
+                    'Checks status of every previous finding',
+                    'Score improves as fixes land',
+                    'No surprise new issues between runs',
+                    'Consistent, trustworthy results',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-text">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Deep Mode */}
+              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'var(--gradient-brand)' }} />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <Search size={18} className="text-violet-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-heading font-semibold text-lg text-text">Deep Mode</h4>
+                    <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
+                  </div>
+                </div>
+                <p className="text-muted text-sm leading-relaxed mb-5">
+                  Your first audit always runs in Deep mode — discovering every issue across all 64 checkpoints. Want to go beyond the baseline later? Hit &ldquo;Dig Deeper&rdquo; to uncover new issues that weren&apos;t in the original scope.
+                </p>
+                <div className="space-y-2.5">
+                  {[
+                    'Full discovery across 64 checkpoints',
+                    'Finds new issues beyond the baseline',
+                    'Triggered on first audit or on demand',
+                    'Expands your audit coverage over time',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-text">{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

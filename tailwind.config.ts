@@ -38,6 +38,7 @@ const config: Config = {
         inter:   ["var(--font-inter)", "system-ui", "sans-serif"],
         heading: ["var(--font-heading)", "system-ui", "sans-serif"],
         manrope: ["var(--font-heading)", "system-ui", "sans-serif"], /* backward compat alias */
+        handwriting: ["var(--font-handwriting)", "cursive"],
       },
     },
   },
