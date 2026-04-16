@@ -252,6 +252,8 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
 
       let userContext = ''
       let previousCategoryScores: Array<{ name: string; score: number; summary: string }> = []
+      let previousOverallScore = 0
+      let previousTotalFindings = 0
       if (domain && userId) {
         // Fetch site notes + previous audit ID in parallel
         const [siteNotesRes, prevAuditsRes] = await Promise.all([
@@ -290,6 +292,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           // Previous category scores as baseline
           if (prevReportRes.data) {
             const prevReport = prevReportRes.data as any
+            previousOverallScore = prevReport.overall_score || 0
             const prevCatScores = prevReport.raw_json?.categoryScores
             if (Array.isArray(prevCatScores) && prevCatScores.length > 0) {
               // Store for deterministic baseline anchoring in generateReport
@@ -313,6 +316,7 @@ The scores above are from the client's PREVIOUS audit of this SAME site. Your ne
 
           // All previous findings with their current status
           if (prevFindingsRes.data && prevFindingsRes.data.length > 0) {
+            previousTotalFindings = prevFindingsRes.data.length
             const findingLines = (prevFindingsRes.data as any[]).map((f) => {
               if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
               if (f.status === 'fixed') return `  [FIXED] "${f.title}" — Client says resolved`
@@ -346,7 +350,7 @@ RULES FOR RE-AUDIT:
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
-      return { context: fullContext, effectiveDepthMode, previousCategoryScores }
+      return { context: fullContext, effectiveDepthMode, previousCategoryScores, previousOverallScore, previousTotalFindings }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -588,7 +592,11 @@ RULES FOR RE-AUDIT:
         auditDetails.userFocus,
         auditDetails.language,
         effectiveDepthMode,
-        siteContext.previousCategoryScores,
+        siteContext.previousCategoryScores.length > 0 ? {
+          previousCategoryScores: siteContext.previousCategoryScores,
+          previousOverallScore: siteContext.previousOverallScore,
+          previousTotalFindings: siteContext.previousTotalFindings,
+        } : undefined,
       )
 
       const severityCount = {
