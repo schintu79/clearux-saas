@@ -547,9 +547,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO — Sketch-style: clean, confident, generous space
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt">
-        {/* Single subtle gradient blob — no grid lines, no sweep animations */}
-        <div className="absolute top-[-20%] left-[50%] -translate-x-1/2 w-[800px] h-[600px] rounded-full opacity-60 blur-[200px] pointer-events-none" style={{ background: 'var(--gradient-brand-subtle)' }} />
+      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Badge */}
@@ -701,7 +699,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-16">
+      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-16 bg-dotgrid">
         <PillarScrollReveal categories={auditCategories} />
       </section>
 
@@ -912,7 +910,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING — Clean, editorial
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt">
+      <section id="pricing" className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt bg-dotgrid">
         <div
           ref={priceRef.ref}
           className={`max-w-4xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
@@ -1134,9 +1132,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA — Clean, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt">
-        {/* Single subtle blob */}
-        <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full opacity-50 blur-[200px] pointer-events-none" style={{ background: 'var(--gradient-brand-subtle)' }} />
+      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
         <div className="max-w-3xl mx-auto text-center relative">
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>

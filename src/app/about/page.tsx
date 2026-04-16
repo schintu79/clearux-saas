@@ -159,9 +159,7 @@ export default function AboutPage() {
         {/* ═══════════════════════════════════════════════════════
             4. FOUNDER STORY — full width, side-by-side
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
-          {/* Subtle glow behind photo */}
-          <div className="absolute top-[20%] left-[5%] w-[400px] h-[400px] rounded-full bg-violet-500/[0.03] blur-[140px] pointer-events-none" />
+        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden bg-dotgrid">
 
           <div className="max-w-6xl mx-auto relative">
             <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 items-center">
@@ -281,8 +279,7 @@ export default function AboutPage() {
         {/* ═══════════════════════════════════════════════════════
             6. BUILT FOR — same 2-col card style
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
-          <div className="absolute top-[15%] left-[8%] w-[400px] h-[400px] rounded-full bg-pink-500/[0.03] blur-[140px] pointer-events-none" />
+        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden bg-dotgrid">
 
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">

@@ -330,7 +330,7 @@ export default function PricingPage() {
         </section>
 
         {/* ── FAQ ── */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-surface-alt">
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-surface-alt bg-dotgrid relative">
           <div className="max-w-3xl mx-auto">
             <h2 className="font-manrope font-bold text-3xl text-text mb-10">
               Frequently asked questions
