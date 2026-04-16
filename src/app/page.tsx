@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { ArrowCurvy, DoodleArrowDown, Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, Spiral, CircleScribble } from "@/components/ui/Doodles";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
 
@@ -422,7 +423,7 @@ const TOP_FAQS = [
 
 function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>; visible: boolean } }) {
   return (
-    <section id="faq" className="py-28 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface">
+    <section id="faq" className="py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface">
       <div
         ref={faqRef.ref}
         className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
@@ -563,6 +564,10 @@ export default function Home() {
             <RotatingWord />
           </h1>
 
+          {/* Doodle: arrow pointing to input */}
+          <DoodleArrowDown className="animate-fade-up delay-200 hidden md:block absolute -right-2 top-[45%] lg:right-8" color="var(--color-human)" />
+          <Sparkle className="animate-fade-up delay-300 hidden md:block absolute left-4 top-[30%] lg:left-12" color="var(--color-tech)" />
+
           <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-10 sm:mb-14 max-w-xl mx-auto" style={{ lineHeight: '1.65' }}>
             64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact. Fix what matters first, track your progress, and prove the improvement.
           </p>
@@ -662,20 +667,21 @@ export default function Home() {
           FEATURES + STATS
           ═══════════════════════════════════════════════════════ */}
       <section id="features" className="relative bg-surface">
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 sm:pt-32 pb-20">
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-24">
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
               <span className="text-muted">The blind spots other tools miss.</span>
             </h2>
+            <UnderlineScribble className="mx-auto -mt-2 mb-4 hidden sm:block" color="var(--color-foundation)" />
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
               Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.
             </p>
           </div>
 
           {/* Stats — clean, no background decorations */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-20 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-24 max-w-4xl mx-auto">
             {([
               { counter: c1, suffix: '+', label: 'UX checkpoints', prefix: '' },
               { counter: c2, suffix: '', label: 'Categories', prefix: '' },
@@ -699,16 +705,19 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-16 bg-dotgrid">
+      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-24 bg-dotgrid">
+        {/* Doodle accents */}
+        <ArrowCurvy className="hidden lg:block absolute top-16 right-[8%] rotate-12" color="var(--color-foundation)" />
+        <Spiral className="hidden lg:block absolute bottom-24 left-[5%]" color="var(--color-future)" />
         <PillarScrollReveal categories={auditCategories} />
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           BEYOND THE REPORT
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
         <div className="max-w-6xl mx-auto relative">
-          <div className="text-center mb-20">
+          <div className="text-center mb-24">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond the report</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
               An audit is just the beginning.<br className="hidden sm:block" />
@@ -719,7 +728,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="space-y-24 md:space-y-32">
+          <div className="space-y-28 md:space-y-36">
+            {/* Doodle accent */}
+            <Squiggle className="hidden md:block absolute -top-2 right-[10%]" color="var(--color-tech)" />
 
             {/* ── Feature 1: Finding Status Tracking ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
@@ -910,7 +921,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING — Clean, editorial
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt bg-dotgrid">
+      <section id="pricing" className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt bg-dotgrid">
         <div
           ref={priceRef.ref}
           className={`max-w-4xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
@@ -941,7 +952,8 @@ export default function Home() {
           )}
 
           {/* Header */}
-          <div className="mb-16">
+          <div className="mb-16 relative">
+            <ArrowZigzag className="hidden md:block absolute -right-4 -top-8 lg:right-0" color="var(--color-future)" />
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.5rem] font-bold text-text mb-3 tracking-tight" style={{ lineHeight: '1.1' }}>
               Transparent pricing
             </h2>
@@ -1063,11 +1075,13 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TESTIMONIALS — Clean cards on subtle bg
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-28 sm:py-36 px-4 md:px-6 lg:px-8 relative overflow-hidden bg-surface">
+      <section className="py-32 sm:py-40 px-4 md:px-6 lg:px-8 relative overflow-hidden bg-surface">
         <div
           ref={testRef.ref}
           className={`max-w-5xl mx-auto relative transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
+          <Sparkle className="hidden md:block absolute -left-8 top-4 lg:-left-16" color="var(--color-tech)" />
+          <CircleScribble className="hidden lg:block absolute -right-12 top-24" color="var(--color-human)" />
           <div className="text-center mb-16">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Testimonials</p>
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-text mb-3 tracking-tight">
@@ -1132,7 +1146,11 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA — Clean, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
+      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
+
+        {/* Doodle accents */}
+        <ArrowCurvy className="hidden lg:block absolute top-20 left-[6%] -rotate-6" color="var(--color-foundation)" />
+        <Squiggle className="hidden lg:block absolute bottom-28 right-[5%] rotate-3" color="var(--color-human)" />
 
         <div className="max-w-3xl mx-auto text-center relative">
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
