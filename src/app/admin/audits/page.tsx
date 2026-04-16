@@ -89,7 +89,7 @@ export default function AdminAuditsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-manrope font-bold text-2xl text-text">Audits</h1>
+        <h1 className="font-heading font-semibold text-2xl text-text">Audits</h1>
         <p className="text-sm text-muted mt-1">{total} total audits</p>
       </div>
 

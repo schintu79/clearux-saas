@@ -63,7 +63,7 @@ export default function PricingPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles size={18} className="text-violet-500" />
-                    <h2 className="font-manrope font-bold text-xl text-text">Start with a Free Audit</h2>
+                    <h2 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h2>
                   </div>
                   <p className="text-sm text-text/70 max-w-md">
                     No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
@@ -85,7 +85,7 @@ export default function PricingPage() {
         {/* ── Header ── */}
         <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-3" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-3" style={{ lineHeight: '1.1' }}>
               Transparent pricing
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg">
@@ -99,7 +99,7 @@ export default function PricingPage() {
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           <div className="max-w-4xl mx-auto">
             <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-6 sm:p-8">
-              <h2 className="font-manrope font-bold text-lg text-text mb-4">Which plan fits your workflow?</h2>
+              <h2 className="font-heading font-semibold text-lg text-text mb-4">Which plan fits your workflow?</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
@@ -156,12 +156,12 @@ export default function PricingPage() {
               <div className="relative grid sm:grid-cols-2 gap-8 items-center">
                 {/* Left: Price */}
                 <div>
-                  <h2 className="font-manrope text-2xl font-bold text-text mb-1">Single Audit</h2>
+                  <h2 className="font-heading text-2xl font-semibold text-text mb-1">Single Audit</h2>
                   <p className="text-muted text-sm mb-6">For individuals and small teams</p>
 
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-muted text-lg">$</span>
-                    <span className="font-manrope text-6xl sm:text-7xl font-extrabold text-text tracking-tight">99</span>
+                    <span className="font-heading text-6xl sm:text-7xl font-extrabold text-text tracking-tight">99</span>
                   </div>
                   <p className="text-muted text-sm mb-8">One-time payment per audit</p>
 
@@ -219,7 +219,7 @@ export default function PricingPage() {
                   className={`group rounded-2xl border bg-card p-6 hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-violet-400 dark:border-violet-500/40 shadow-lg shadow-violet-500/10 ring-1 ring-violet-400/30' : 'border-border/40 dark:border-white/[0.06] hover:border-border/70 dark:hover:border-white/[0.1]'}`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-manrope font-bold text-lg text-text">{pack.name}</h3>
+                    <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
                     {pack.popular ? (
                       <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full shadow-sm" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>
                     ) : (
@@ -231,7 +231,7 @@ export default function PricingPage() {
 
                   <div className="flex items-baseline gap-1 mb-0.5">
                     <span className="text-muted text-sm">$</span>
-                    <span className="font-manrope text-4xl font-extrabold text-text">{pack.price.toLocaleString()}</span>
+                    <span className="font-heading text-4xl font-extrabold text-text">{pack.price.toLocaleString()}</span>
                   </div>
                   <p className="text-muted text-sm mb-5">
                     {pack.per} per audit <span className="text-muted/50">·</span> {pack.credits} audits
@@ -257,7 +257,7 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto pt-10 border-t border-border/30 dark:border-white/[0.04]">
             <div className="grid sm:grid-cols-4 gap-6 sm:gap-8">
               <div>
-                <p className="font-manrope text-lg font-bold text-text mb-1 leading-snug">All audits<br />include</p>
+                <p className="font-heading text-lg font-semibold text-text mb-1 leading-snug">All audits<br />include</p>
               </div>
               {[
                 { title: 'Full 64-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
@@ -276,7 +276,7 @@ export default function PricingPage() {
         {/* ── Pricing Comparison Table ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="max-w-4xl mx-auto">
-            <h2 className="font-manrope font-bold text-2xl text-text mb-6">Compare plans</h2>
+            <h2 className="font-heading font-semibold text-2xl text-text mb-6">Compare plans</h2>
             <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -335,7 +335,7 @@ export default function PricingPage() {
           <Sparkle className="hidden lg:block absolute top-10 right-[8%]" color="var(--color-tech)" />
           <Spiral className="hidden lg:block absolute bottom-12 left-[5%]" color="var(--color-foundation)" />
           <div className="max-w-3xl mx-auto">
-            <h2 className="font-manrope font-bold text-3xl text-text mb-10">
+            <h2 className="font-heading font-semibold text-3xl text-text mb-10">
               Frequently asked questions
             </h2>
 

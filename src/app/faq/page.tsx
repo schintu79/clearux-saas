@@ -153,7 +153,7 @@ export default function FaqPage() {
         {/* Header */}
         <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-4" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-4" style={{ lineHeight: '1.1' }}>
               Frequently asked questions
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg mx-auto">
@@ -189,7 +189,7 @@ export default function FaqPage() {
           <section key={section.title} className="px-4 sm:px-6 lg:px-8 pb-10">
             <div className="max-w-3xl mx-auto">
               {activeTab === TAB_ALL && (
-                <h2 className="font-manrope font-bold text-xl text-text mb-5 pb-3 border-b border-border/30 dark:border-white/[0.04]">
+                <h2 className="font-heading font-semibold text-xl text-text mb-5 pb-3 border-b border-border/30 dark:border-white/[0.04]">
                   {section.title}
                 </h2>
               )}
@@ -217,7 +217,7 @@ export default function FaqPage() {
         <section className="px-4 sm:px-6 lg:px-8 pb-20">
           <div className="max-w-3xl mx-auto">
             <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-8 text-center">
-              <h2 className="font-manrope font-bold text-xl text-text mb-2">Still have questions?</h2>
+              <h2 className="font-heading font-semibold text-xl text-text mb-2">Still have questions?</h2>
               <p className="text-muted text-sm mb-6">
                 Reach out and we will get back to you within a business day.
               </p>

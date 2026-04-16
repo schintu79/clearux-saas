@@ -8,10 +8,10 @@ export default function NotFound() {
       <Navbar />
       <main id="main-content" className="flex-1 flex items-center justify-center px-4 py-20">
         <div className="text-center max-w-md mx-auto">
-          <p className="text-6xl font-manrope font-bold bg-clip-text text-transparent mb-4" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+          <p className="text-6xl font-heading font-semibold bg-clip-text text-transparent mb-4" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
             404
           </p>
-          <h1 className="text-2xl font-bold font-manrope text-text mb-3">
+          <h1 className="text-2xl font-bold font-heading text-text mb-3">
             Page not found
           </h1>
           <p className="text-muted text-base leading-relaxed mb-8">

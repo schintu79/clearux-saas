@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
         <div className="relative z-10 flex flex-col">
           {/* Logo & Tagline */}
           <div className="mb-16">
-            <h1 className="text-3xl font-manrope font-bold text-white mb-3">
+            <h1 className="text-3xl font-heading font-semibold text-white mb-3">
               ClearUX
             </h1>
             <p className="text-sm text-white/80 opacity-85">
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="mb-8">
-            <h2 className="text-2xl font-manrope font-bold text-text mb-2">
+            <h2 className="text-2xl font-heading font-semibold text-text mb-2">
               Reset password
             </h2>
             <p className="text-sm text-muted">

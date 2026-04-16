@@ -97,7 +97,7 @@ export default function AdminManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-manrope font-bold text-2xl text-text">Admin Management</h1>
+          <h1 className="font-heading font-semibold text-2xl text-text">Admin Management</h1>
           <p className="text-sm text-muted mt-1">Manage who has admin access to the platform</p>
         </div>
         <button
@@ -202,7 +202,7 @@ export default function AdminManagementPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-manrope font-bold text-lg text-text">Add Admin</h3>
+              <h3 className="font-heading font-semibold text-lg text-text">Add Admin</h3>
               <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
                 <X size={18} className="text-muted" />
               </button>

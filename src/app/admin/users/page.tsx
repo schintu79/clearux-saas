@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-manrope font-bold text-2xl text-text">Users</h1>
+        <h1 className="font-heading font-semibold text-2xl text-text">Users</h1>
         <p className="text-sm text-muted mt-1">{total} total users</p>
       </div>
 
@@ -236,7 +236,7 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setCreditModal(null)}>
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-manrope font-bold text-lg text-text">
+              <h3 className="font-heading font-semibold text-lg text-text">
                 {creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
               </h3>
               <button onClick={() => setCreditModal(null)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">

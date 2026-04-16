@@ -101,9 +101,9 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
         <main className="min-h-[60vh] flex items-center justify-center bg-surface px-4">
           <div className="text-center max-w-md">
             <Lock size={40} className="text-muted mx-auto mb-4" />
-            <h1 className="font-manrope font-bold text-2xl text-text mb-2">Link unavailable</h1>
+            <h1 className="font-heading font-semibold text-2xl text-text mb-2">Link unavailable</h1>
             <p className="text-muted text-sm mb-6">{error || 'This shared audit link is invalid or has been revoked.'}</p>
-            <Link href="/" className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
+            <Link href="/" className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-full transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
               Go to ClearUX
             </Link>
           </div>
@@ -164,7 +164,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                       <ScoreRing score={overall} size={100} strokeWidth={6} />
                     </div>
                     <div className="flex-1 min-w-0 text-center sm:text-left">
-                      <h1 className="font-manrope font-bold text-xl sm:text-2xl text-text mb-1">
+                      <h1 className="font-heading font-semibold text-xl sm:text-2xl text-text mb-1">
                         UX Audit: {domain}
                       </h1>
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-sm">
@@ -237,7 +237,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className={`text-2xl font-bold font-manrope ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
+                            <p className={`text-2xl font-bold font-heading ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
                             <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>
                           </div>
                         </div>
@@ -264,7 +264,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               {/* ── Executive Summary ─────────────────────── */}
               {report.executive_summary && (
                 <div className="rounded-2xl border border-border/30 dark:border-white/[0.06] bg-card p-5 sm:p-6 mb-6">
-                  <h2 className="font-manrope font-bold text-lg text-text mb-3">Executive Summary</h2>
+                  <h2 className="font-heading font-semibold text-lg text-text mb-3">Executive Summary</h2>
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
@@ -275,7 +275,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               <div className="text-center mt-10 mb-6 px-4">
                 <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
                 <p className="text-muted text-xs mb-5">64 checkpoints. 16 categories. Results in minutes. First audit free.</p>
-                <Link href="/register" className="inline-flex items-center gap-2 text-white text-sm font-semibold px-8 py-3.5 rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5" style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2)' }}>
+                <Link href="/register" className="inline-flex items-center gap-2 text-white text-sm font-semibold px-8 py-3.5 rounded-full transition-all hover:brightness-110 hover:-translate-y-0.5" style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2)' }}>
                   <Sparkles size={16} />
                   Get Your Free Audit
                 </Link>

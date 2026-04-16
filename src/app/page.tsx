@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ArrowCurvy, DoodleArrowDown, Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, Spiral, CircleScribble } from "@/components/ui/Doodles";
+import { Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, CircleScribble } from "@/components/ui/Doodles";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
 
@@ -194,7 +194,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
               <circle cx="50" cy="50" r="42" fill="none" strokeWidth="5" className="stroke-border" />
               <circle cx="50" cy="50" r="42" fill="none" strokeWidth="5" strokeLinecap="round" className="stroke-violet-500" style={{ strokeDasharray: `${2*Math.PI*42}`, strokeDashoffset: `${2*Math.PI*42*(1-0.78)}` }} />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-xl font-bold text-text">78</span>
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-xl font-semibold text-text">78</span>
           </div>
           <div className="flex-1 space-y-2.5">
             <p className="text-xs font-semibold text-text">Overall Score</p>
@@ -276,7 +276,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div key={m.l} className="p-3.5 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
               <div className="flex items-center justify-between mb-2">
                 <m.Icon size={14} className="text-muted" />
-                <span className={`font-heading text-lg font-bold ${m.c}`}>{m.s}</span>
+                <span className={`font-heading text-lg font-semibold ${m.c}`}>{m.s}</span>
               </div>
               <p className="text-xs font-semibold text-text">{m.l}</p>
               <div className="mt-1.5 h-1 rounded-full bg-border/30 dark:bg-white/[0.06]">
@@ -358,7 +358,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
               <p className={`text-[13px] font-semibold tracking-widest uppercase mb-4 ${pillar.colorText}`}>
                 {pillar.label}
               </p>
-              <h3 className="font-heading text-2xl sm:text-3xl md:text-[2.25rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
+              <h3 className="font-heading text-2xl sm:text-3xl md:text-[2.25rem] font-semibold text-text mb-4" style={{ lineHeight: '1.1' }}>
                 {pillar.headline}
               </h3>
               <p className="text-muted text-lg md:text-xl mb-4 font-medium" style={{ lineHeight: '1.5' }}>
@@ -430,7 +430,7 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
       >
         <div className="text-center mb-12">
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>FAQ</p>
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-text tracking-tight">
+          <h2 className="font-heading text-3xl md:text-4xl font-semibold text-text tracking-tight">
             Frequently asked questions
           </h2>
         </div>
@@ -542,21 +542,22 @@ export default function Home() {
   return (
     <div className="bg-surface text-text min-h-screen">
       <HomeJsonLd />
-      <Navbar />
+      <Navbar transparent />
       <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
-          HERO — Sketch-style: clean, confident, generous space
+          HERO — Dark inverted depth with animated grid
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
+      <section className="hero-dark relative pt-24 pb-28 sm:pt-36 sm:pb-36 px-4 md:px-6 lg:px-8">
+        {/* Animated grid sweep lines */}
+        <div className="hero-grid-sweep" />
+        {/* Bottom gradient fade to next section */}
+        <div className="hero-dark-fade" />
 
-        <div className="max-w-3xl mx-auto text-center relative">
-          {/* Doodle accents */}
-          <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
-          <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
+        <div className="max-w-3xl mx-auto text-center relative z-10">
 
-          {/* Social proof widget — BEFORE headline */}
-          <div className="animate-fade-up flex items-center justify-center gap-3 mb-8">
+          {/* Social proof widget — bright on dark */}
+          <div className="animate-fade-up flex items-center justify-center gap-3 mb-10">
             <div className="flex -space-x-2.5">
               {['MW', 'SC', 'JK', 'DT'].map((initials, i) => {
                 const colors = [
@@ -568,7 +569,7 @@ export default function Home() {
                 return (
                   <div
                     key={initials}
-                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-off dark:ring-surface-alt`}
+                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-[#08080C]`}
                   >
                     {initials}
                   </div>
@@ -581,32 +582,35 @@ export default function Home() {
                   <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-xs text-muted mt-0.5">
-                Trusted by <span className="font-semibold text-text">500+</span> product teams
+              <p className="text-xs text-white/50 mt-0.5">
+                Trusted by <span className="font-semibold text-white/80">500+</span> product teams
               </p>
             </div>
           </div>
 
-          {/* Primary headline — semibold, with "Powered by AI" scribble underline */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
+          {/* Primary headline — white on dark, gradient glow on "Powered by AI" */}
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight text-white mb-8" style={{ lineHeight: '1.08' }}>
             Professional UX Audits,<br className="hidden sm:block" />
-            <span className="relative inline-block">
-              Powered by AI
-              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+            <span className="relative inline-block mt-1">
+              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%)' }}>
+                Powered by AI
+              </span>
+              {/* Soft glow behind text */}
+              <span className="absolute -inset-x-4 -inset-y-2 bg-gradient-to-r from-violet-500/10 via-pink-500/8 to-emerald-500/6 blur-2xl rounded-full -z-10" aria-hidden="true" />
             </span>
           </h1>
 
-          {/* Outcome-focused subheading — more space */}
-          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
+          {/* Outcome-focused subheading */}
+          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-white/50 mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
             Discover the issues impacting{' '}<RotatingWord />
           </p>
 
-          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
+          <p className="animate-fade-up delay-300 text-sm text-white/35 mb-14 sm:mb-16 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
             64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
           </p>
 
-          {/* Single focal CTA — URL Input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-6">
+          {/* CTA — Glassmorphism input */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -619,12 +623,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-full bg-white/[0.06] border border-white/[0.1] text-white placeholder:text-white/30 backdrop-blur-sm focus:outline-none focus:border-violet-400/40 focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(124,58,237,.25)] flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)' }}
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
@@ -633,8 +637,8 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Trust signals — differ for logged in vs logged out */}
-          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-muted/60 uppercase">
+          {/* Trust signals */}
+          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-white/25 uppercase">
             {user
               ? 'Track fixes over time · Share with your team · Re-audit to prove improvement'
               : 'No credit card required · Results in under 10 minutes · Free first audit'}
@@ -680,7 +684,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-24">
           <div className="text-center max-w-3xl mx-auto">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
               <span className="text-muted">The blind spots other tools miss.</span>
             </h2>
@@ -701,7 +705,7 @@ export default function Home() {
               const counter = (stat as { counter: typeof c1 }).counter;
               return (
                 <div key={idx} ref={counter.ref} className="text-center">
-                  <p className="font-heading text-5xl sm:text-6xl md:text-7xl font-bold bg-clip-text text-transparent leading-none tracking-tight" style={{ backgroundImage: 'var(--gradient-brand-text)' }} suppressHydrationWarning>
+                  <p className="font-heading text-5xl sm:text-6xl md:text-7xl font-semibold bg-clip-text text-transparent leading-none tracking-tight" style={{ backgroundImage: 'var(--gradient-brand-text)' }} suppressHydrationWarning>
                     {mounted ? `${stat.prefix}${counter.count}${stat.suffix}` : '\u00A0'}
                   </p>
                   <p className="text-sm text-muted mt-3 font-medium">{stat.label}</p>
@@ -715,11 +719,10 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-24 bg-dotgrid">
-        {/* Doodle accents */}
-        <ArrowCurvy className="hidden lg:block absolute top-16 right-[8%] rotate-12" color="var(--color-foundation)" />
-        <Spiral className="hidden lg:block absolute bottom-24 left-[5%]" color="var(--color-future)" />
-        <PillarScrollReveal categories={auditCategories} />
+      <section className="section-dark relative pt-28 sm:pt-36 pb-24 dark-forced">
+        <div className="relative z-10">
+          <PillarScrollReveal categories={auditCategories} />
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
@@ -729,7 +732,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-24">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond the report</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
               An audit is just the beginning.<br className="hidden sm:block" />
               <span className="text-muted">What you do next is what matters.</span>
             </h2>
@@ -749,7 +752,7 @@ export default function Home() {
                   <ListChecks size={14} className="text-emerald-500" />
                   <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Finding Tracker</span>
                 </div>
-                <h3 className="font-heading font-bold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
+                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Track every fix from<br className="hidden sm:block" /> open to resolved
                 </h3>
                 <p className="text-muted text-base leading-relaxed mb-5">
@@ -827,7 +830,7 @@ export default function Home() {
                   <RefreshCw size={14} className="text-violet-500" />
                   <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Re-Audit</span>
                 </div>
-                <h3 className="font-heading font-bold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
+                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
                 </h3>
                 <p className="text-muted text-base leading-relaxed mb-4">
@@ -846,7 +849,7 @@ export default function Home() {
                   <Share2 size={14} className="text-pink-500" />
                   <span className="text-xs font-semibold text-pink-600 dark:text-pink-400">Team Sharing</span>
                 </div>
-                <h3 className="font-heading font-bold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
+                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Share results with anyone.<br className="hidden sm:block" /> No account needed.
                 </h3>
                 <p className="text-muted text-base leading-relaxed mb-4">
@@ -943,7 +946,7 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles size={18} className="text-violet-500" />
-                    <h3 className="font-heading font-bold text-xl text-text">Start with a Free Audit</h3>
+                    <h3 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h3>
                   </div>
                   <p className="text-sm text-muted max-w-md">
                     No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
@@ -964,7 +967,7 @@ export default function Home() {
           {/* Header */}
           <div className="mb-16 relative">
             <ArrowZigzag className="hidden md:block absolute -right-4 -top-8 lg:right-0" color="var(--color-future)" />
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.5rem] font-bold text-text mb-3 tracking-tight" style={{ lineHeight: '1.1' }}>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.5rem] font-semibold text-text mb-3 tracking-tight" style={{ lineHeight: '1.1' }}>
               Transparent pricing
             </h2>
             <p className="text-muted text-base md:text-lg max-w-lg">
@@ -977,11 +980,11 @@ export default function Home() {
           <div className="rounded-2xl border border-border bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
             <div className="relative grid sm:grid-cols-2 gap-8 items-center">
               <div>
-                <h3 className="font-heading text-2xl font-bold text-text mb-1">Single Audit</h3>
+                <h3 className="font-heading text-2xl font-semibold text-text mb-1">Single Audit</h3>
                 <p className="text-muted text-sm mb-6">For individuals and small teams</p>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-muted text-lg">$</span>
-                  <span className="font-heading text-6xl sm:text-7xl font-bold text-text tracking-tight">99</span>
+                  <span className="font-heading text-6xl sm:text-7xl font-semibold text-text tracking-tight">99</span>
                 </div>
                 <p className="text-muted text-sm mb-8">One-time payment per audit</p>
                 <Link
@@ -1028,7 +1031,7 @@ export default function Home() {
                 className={`group rounded-2xl border bg-card p-6 hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 ${(pack as any).popular ? 'border-accent ring-1 ring-accent/20' : 'border-border'}`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-heading font-bold text-lg text-text">{pack.name}</h3>
+                  <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
                   {(pack as any).popular && <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>}
                   {!(pack as any).popular && <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
@@ -1036,7 +1039,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-baseline gap-1 mb-0.5">
                   <span className="text-muted text-sm">$</span>
-                  <span className="font-heading text-4xl font-bold text-text">{pack.price.toLocaleString()}</span>
+                  <span className="font-heading text-4xl font-semibold text-text">{pack.price.toLocaleString()}</span>
                 </div>
                 <p className="text-muted text-sm mb-5">
                   {pack.per} per audit <span className="opacity-40">·</span> {pack.credits} audits
@@ -1064,7 +1067,7 @@ export default function Home() {
 
           {/* All audits include */}
           <div className="mt-14 pt-10 border-t border-border">
-            <p className="font-heading text-lg font-bold text-text mb-6">All audits include</p>
+            <p className="font-heading text-lg font-semibold text-text mb-6">All audits include</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
               {[
                 { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
@@ -1094,7 +1097,7 @@ export default function Home() {
           <CircleScribble className="hidden lg:block absolute -right-12 top-24" color="var(--color-human)" />
           <div className="text-center mb-16">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Testimonials</p>
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-text mb-3 tracking-tight">
+            <h2 className="font-heading text-3xl md:text-4xl font-semibold text-text mb-3 tracking-tight">
               Loved by product teams
             </h2>
             <div className="flex justify-center gap-0.5 mb-2">
@@ -1156,21 +1159,17 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA — Clean, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
+      <section className="section-dark dark-forced relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden">
 
-        {/* Doodle accents */}
-        <ArrowCurvy className="hidden lg:block absolute top-20 left-[6%] -rotate-6" color="var(--color-foundation)" />
-        <Squiggle className="hidden lg:block absolute bottom-28 right-[5%] rotate-3" color="var(--color-human)" />
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%)' }}>Start your audit today</p>
 
-        <div className="max-w-3xl mx-auto text-center relative">
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
-
-          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-bold text-text mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
+          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-white mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
             Ready to see what<br className="hidden sm:block" />
             you&apos;re missing?
           </h2>
 
-          <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-white/50 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
             Real findings your team can act on — prioritised by impact, trackable as you fix them, and re-auditable to prove the improvement. Delivered in minutes, not weeks.
           </p>
 
@@ -1187,12 +1186,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-full bg-white/[0.06] border border-white/[0.1] text-white placeholder:text-white/30 backdrop-blur-sm focus:outline-none focus:border-violet-400/40 focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(124,58,237,.25)] flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)' }}
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
@@ -1201,7 +1200,7 @@ export default function Home() {
             </div>
           </form>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-muted">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-white/40">
             {user ? (
               <>
                 <span>Track fixes over time</span>
@@ -1221,8 +1220,8 @@ export default function Home() {
             )}
           </div>
 
-          <p className="text-muted text-sm mt-6">
-            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-text transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-text transition-colors">contact us</Link>
+          <p className="text-white/30 text-sm mt-6">
+            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-white/60 transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-white/60 transition-colors">contact us</Link>
           </p>
         </div>
       </section>

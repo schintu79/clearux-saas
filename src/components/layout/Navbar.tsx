@@ -19,13 +19,23 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   );
 }
 
-const Navbar: React.FC = () => {
+const Navbar: React.FC<{ transparent?: boolean }> = ({ transparent = false }) => {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll for transparent navbar mode
+  useEffect(() => {
+    if (!transparent) return;
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [transparent]);
 
   // Fetch credits on mount + re-fetch when tab regains focus (e.g. returning from Stripe)
   useEffect(() => {
@@ -75,13 +85,20 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-border">
+    <nav
+      aria-label="Main navigation"
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        transparent && !scrolled
+          ? 'bg-transparent border-b border-white/[0.06]'
+          : 'bg-surface/80 backdrop-blur-xl border-b border-border'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <span className="font-heading font-bold text-[1.7rem] tracking-tight text-text">
-              Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+            <span className={`font-heading font-semibold text-[1.7rem] tracking-tight transition-colors duration-300 ${transparent && !scrolled ? 'text-white' : 'text-text'}`}>
+              Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: transparent && !scrolled ? 'linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%)' : 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
 
@@ -91,7 +108,11 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-text/70 hover:text-text transition-colors"
+                className={`text-sm font-medium transition-colors ${
+                  transparent && !scrolled
+                    ? 'text-white/60 hover:text-white'
+                    : 'text-text/70 hover:text-text'
+                }`}
               >
                 {link.label}
               </Link>
@@ -166,7 +187,11 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-text hover:bg-off rounded-md px-3 py-1.5 transition-colors"
+                  className={`text-sm font-medium rounded-md px-3 py-1.5 transition-colors ${
+                    transparent && !scrolled
+                      ? 'text-white/70 hover:text-white hover:bg-white/[0.06]'
+                      : 'text-text hover:bg-off'
+                  }`}
                 >
                   Login
                 </Link>
@@ -188,16 +213,18 @@ const Navbar: React.FC = () => {
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isOpen}
-              className="relative w-[44px] h-[44px] rounded-md hover:bg-off transition-colors flex items-center justify-center"
+              className={`relative w-[44px] h-[44px] rounded-md transition-colors flex items-center justify-center ${
+                transparent && !scrolled ? 'hover:bg-white/[0.06]' : 'hover:bg-off'
+              }`}
             >
               {/* Animated 2-line → X toggle */}
               <div className="w-5 h-3.5 flex flex-col justify-between">
                 <span
-                  className="block h-[2px] w-full bg-text rounded-full transition-all duration-300 origin-center"
+                  className={`block h-[2px] w-full rounded-full transition-all duration-300 origin-center ${transparent && !scrolled ? 'bg-white' : 'bg-text'}`}
                   style={isOpen ? { transform: 'translateY(5px) rotate(45deg)' } : {}}
                 />
                 <span
-                  className="block h-[2px] w-full bg-text rounded-full transition-all duration-300 origin-center"
+                  className={`block h-[2px] w-full rounded-full transition-all duration-300 origin-center ${transparent && !scrolled ? 'bg-white' : 'bg-text'}`}
                   style={isOpen ? { transform: 'translateY(-5px) rotate(-45deg)' } : {}}
                 />
               </div>
@@ -234,7 +261,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1" style={{ background: 'var(--gradient-brand)' }}>
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white rounded-full px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1" style={{ background: 'var(--gradient-brand)' }}>
                       Sign Up
                     </Link>
                   </>

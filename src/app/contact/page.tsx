@@ -29,7 +29,7 @@ export default function ContactPage() {
 
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-16 relative">
             <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Get in touch</p>
-            <h1 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-3">
+            <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-3">
               Contact Us
             </h1>
             <p className="text-text/70 mb-10 max-w-lg">
@@ -42,7 +42,7 @@ export default function ContactPage() {
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={28} className="text-emerald-500" />
                 </div>
-                <p className="font-manrope font-bold text-lg text-text mb-1">Message sent!</p>
+                <p className="font-heading font-semibold text-lg text-text mb-1">Message sent!</p>
                 <p className="text-text/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
               </div>
             ) : (

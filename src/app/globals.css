@@ -174,6 +174,165 @@
     linear-gradient(to bottom, transparent 55%, var(--surface-alt) 100%);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   HERO DARK — Inverted depth: dark surface with animated grid
+   ═══════════════════════════════════════════════════════════════ */
+
+.hero-dark {
+  position: relative;
+  background: #08080C;
+  overflow: hidden;
+}
+
+/* Animated fine-line grid with pulse sweep */
+.hero-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.04) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(255,255,255,0.04) 0.5px, transparent 0.5px);
+  background-size: 56px 56px;
+  mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+  -webkit-mask-image:
+    radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 70%);
+  animation: grid-breathe 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Ambient glow orbs — slow-drifting brand colors */
+.hero-dark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 50% at 25% 20%, rgba(124,58,237,.12), transparent 60%),
+    radial-gradient(ellipse 40% 45% at 75% 30%, rgba(236,72,153,.08), transparent 55%),
+    radial-gradient(ellipse 35% 35% at 60% 70%, rgba(16,185,129,.06), transparent 50%),
+    radial-gradient(ellipse 30% 30% at 35% 80%, rgba(245,158,11,.04), transparent 45%);
+  animation: glow-drift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* Bottom fade — dark to white surface (or dark surface-alt) */
+.hero-dark-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to bottom, transparent, var(--surface));
+  pointer-events: none;
+  z-index: 1;
+}
+.dark .hero-dark-fade {
+  background: linear-gradient(to bottom, transparent, var(--surface));
+}
+
+/* Grid breathe — subtle opacity pulse */
+@keyframes grid-breathe {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* Glow drift — ambient orbs shift subtly */
+@keyframes glow-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(15px, -10px) scale(1.05); }
+}
+
+/* Line sweep animation — horizontal light sweep across grid */
+.hero-grid-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-grid-sweep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -20%;
+  width: 15%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(124,58,237,.06), rgba(236,72,153,.04), transparent);
+  animation: sweep-x 8s ease-in-out infinite;
+}
+.hero-grid-sweep::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 100%;
+  height: 15%;
+  background: linear-gradient(180deg, transparent, rgba(16,185,129,.05), rgba(245,158,11,.03), transparent);
+  animation: sweep-y 10s ease-in-out infinite 3s;
+}
+
+@keyframes sweep-x {
+  0%   { left: -20%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 110%; opacity: 0; }
+}
+@keyframes sweep-y {
+  0%   { top: -20%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 110%; opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK SECTION — Reusable dark section with subtle grid
+   ═══════════════════════════════════════════════════════════════ */
+
+.section-dark {
+  position: relative;
+  background: #08080C;
+  overflow: hidden;
+}
+.section-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 0.5px, transparent 0.5px);
+  background-size: 56px 56px;
+  mask-image:
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%);
+  -webkit-mask-image:
+    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%);
+  pointer-events: none;
+}
+.section-dark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 50% at 30% 30%, rgba(124,58,237,.08), transparent 60%),
+    radial-gradient(ellipse 40% 40% at 70% 60%, rgba(16,185,129,.05), transparent 55%);
+  pointer-events: none;
+}
+
+/* Force dark palette on any section regardless of user theme */
+.dark-forced {
+  --text:        #F5F5F7;
+  --muted:       #98989D;
+  --border:      #2C2C2E;
+  --card:        #1C1C1E;
+  --card-hover:  #2C2C2E;
+  --off:         #111113;
+  --surface:     #08080C;
+  --surface-alt: #1C1C1E;
+  --input-bg:    #1C1C1E;
+  --placeholder: #636366;
+  --accent:      #A78BFA;
+  --accent-dk:   #C4B5FD;
+  --gradient-brand-text: linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%);
+}
+
 /* Content sits above the gradient/grid layers */
 .bg-dotgrid > *,
 .bg-crossgrid > * {

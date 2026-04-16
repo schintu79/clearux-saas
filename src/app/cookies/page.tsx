@@ -13,7 +13,7 @@ export default function CookiesPage() {
       <Navbar />
       <main id="main-content" className="min-h-[70vh] bg-surface">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <h1 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-2">Cookie Policy</h1>
+          <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-2">Cookie Policy</h1>
           <p className="text-sm text-muted mb-10">Last updated: April 2026</p>
 
           <div className="space-y-6 text-text/80 text-sm leading-relaxed">

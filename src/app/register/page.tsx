@@ -218,7 +218,7 @@ export default function RegisterPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h2 className="text-2xl font-manrope font-bold text-text mb-1">
+        <h2 className="text-2xl font-heading font-semibold text-text mb-1">
           Create your account
         </h2>
         <p className="text-sm text-muted">
@@ -449,7 +449,7 @@ export default function RegisterPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <h1 className="text-3xl font-manrope font-bold text-white">
+                  <h1 className="text-3xl font-heading font-semibold text-white">
                     Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
                   </h1>
                 </Link>
@@ -458,7 +458,7 @@ export default function RegisterPage() {
               <div className="space-y-6 mb-auto">
                 {/* Free audit banner */}
                 <div className="rounded-xl bg-white/10 border border-white/10 p-5 backdrop-blur-sm">
-                  <h2 className="text-lg font-manrope font-bold text-white mb-1.5">
+                  <h2 className="text-lg font-heading font-semibold text-white mb-1.5">
                     {pendingUrl ? 'Your free audit is one step away' : 'Start Your Free Audit'}
                   </h2>
                   <p className="text-sm text-white/70 mb-3">
@@ -478,7 +478,7 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                <h3 className="text-lg font-manrope font-semibold text-white/80">
+                <h3 className="text-lg font-heading font-semibold text-white/80">
                   Everything you get
                 </h3>
 

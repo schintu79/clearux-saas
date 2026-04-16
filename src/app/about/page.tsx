@@ -31,7 +31,7 @@ export default function AboutPage() {
               <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>About ClearUX</span>
             </div>
 
-            <h1 className="font-manrope font-bold text-4xl sm:text-5xl md:text-6xl text-text mb-6" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-text mb-6" style={{ lineHeight: '1.1' }}>
               Every product deserves<br className="hidden sm:block" />{' '}
               <span className="text-muted">an honest audit.</span>
             </h1>
@@ -51,7 +51,7 @@ export default function AboutPage() {
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-8">
               <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond traditional audits</p>
-              <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-5">
+              <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-5">
                 Traditional audit tools still check the same<br className="hidden sm:block" /> boxes from 2015. We don&apos;t.
               </h2>
               <p className="text-text/65 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto">
@@ -65,7 +65,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5">
                   <BrainCircuit size={20} className="text-emerald-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">AI Agent Readiness</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">AI Agent Readiness</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   LLMs and AI agents are the new search engines. We evaluate whether your product is discoverable, navigable, and interpretable by AI — structured data, semantic markup, and machine-readable content.
                 </p>
@@ -76,7 +76,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center mb-5">
                   <Accessibility size={20} className="text-violet-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Cognitive Accessibility & Neurodiversity</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Cognitive Accessibility & Neurodiversity</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   ADHD, dyslexia, autism spectrum, sensory processing — your users are diverse. We assess cognitive load, sensory overwhelm, predictable navigation, and clear information hierarchy for all minds.
                 </p>
@@ -87,7 +87,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-5">
                   <ShieldCheck size={20} className="text-pink-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Psychological Safety</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Psychological Safety</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   Anxiety-inducing countdowns, guilt-driven copy, and dark patterns erode trust. We detect manipulative flows and evaluate whether your product makes users feel safe, respected, and in control.
                 </p>
@@ -98,7 +98,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-5">
                   <HeartHandshake size={20} className="text-amber-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Emotional Intelligence</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Emotional Intelligence</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   The best products understand how users feel. We assess tone, microcopy, error messaging, and delight moments — because the emotional experience is what users remember long after they close the tab.
                 </p>
@@ -109,7 +109,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-teal-500/10 flex items-center justify-center mb-5">
                   <Flower2 size={20} className="text-teal-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Digital Wellbeing</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Digital Wellbeing</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   Addictive patterns, endless scrolls, and notification overload damage user health. We evaluate whether your product respects attention, promotes healthy usage, and empowers users to disengage.
                 </p>
@@ -120,7 +120,7 @@ export default function AboutPage() {
                 <div className="w-11 h-11 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5">
                   <Zap size={20} className="text-indigo-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-lg text-text mb-2.5">Future-Proof Design</h3>
+                <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Future-Proof Design</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
                   Responsive design was yesterday&apos;s challenge. Tomorrow&apos;s is multi-modal: voice, gesture, AI-assisted navigation. We assess whether your product is ready for how people will interact with technology next.
                 </p>
@@ -153,7 +153,7 @@ export default function AboutPage() {
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-6">
               <Sparkles size={24} className="text-white" />
             </div>
-            <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-white mb-6">
+            <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-white mb-6">
               Our commitment
             </h2>
             <p className="text-white/90 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-4">
@@ -195,7 +195,7 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <div className="text-center lg:text-left mt-6">
-                  <h3 className="font-manrope font-bold text-xl text-text">Stefano Schintu</h3>
+                  <h3 className="font-heading font-semibold text-xl text-text">Stefano Schintu</h3>
                   <p className="text-sm text-muted mt-0.5">Founder &amp; CEO</p>
                   <a
                     href="https://www.linkedin.com/in/stefanoschintu"
@@ -212,7 +212,7 @@ export default function AboutPage() {
               {/* Story text */}
               <div className="flex-1 max-w-2xl">
                 <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>The founding story</p>
-                <h2 className="font-manrope text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
+                <h2 className="font-heading text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
                   Why ClearUX exists
                 </h2>
                 <div className="space-y-6 text-text/75 text-base sm:text-[17px] leading-relaxed">
@@ -220,7 +220,7 @@ export default function AboutPage() {
                     What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
                   </p>
 
-                  <h3 className="font-manrope text-lg text-text pt-2">The problem we kept seeing</h3>
+                  <h3 className="font-heading text-lg text-text pt-2">The problem we kept seeing</h3>
                   <p>
                     After 20+ years designing digital experiences across industries and continents, we kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
                   </p>
@@ -228,12 +228,12 @@ export default function AboutPage() {
                     Enterprise clients would commission $15,000 consultancy engagements and get genuine insights. Startups, agencies, and growing teams? They were stuck guessing — or relying on automated tools that counted errors without understanding people.
                   </p>
 
-                  <h3 className="font-manrope text-lg text-text pt-2">What we saw going wrong</h3>
+                  <h3 className="font-heading text-lg text-text pt-2">What we saw going wrong</h3>
                   <p>
                     We&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
                   </p>
 
-                  <h3 className="font-manrope text-lg text-text pt-2">What we built instead</h3>
+                  <h3 className="font-heading text-lg text-text pt-2">What we built instead</h3>
                   <p>
                     Not a checklist tool. Not another automated scanner. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
                   </p>
@@ -252,7 +252,7 @@ export default function AboutPage() {
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">
               <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Our approach</p>
-              <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text">
+              <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text">
                 What makes us different
               </h2>
             </div>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Heart size={22} className="text-pink-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Human-centered, not just metric-driven</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Human-centered, not just metric-driven</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. The blind spots other tools miss.</p>
               </div>
 
@@ -270,7 +270,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
                   <Shield size={22} className="text-violet-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">We detect dark patterns — and refuse to use them</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">We detect dark patterns — and refuse to use them</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.</p>
               </div>
 
@@ -278,7 +278,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
                   <Brain size={22} className="text-emerald-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Future-ready, not just backward-looking</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Future-ready, not just backward-looking</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">We&apos;re the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.</p>
               </div>
 
@@ -286,7 +286,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Eye size={22} className="text-amber-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Audit once, improve continuously</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Audit once, improve continuously</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">64 checkpoints across 4 pillars. Track each finding from open to fixed, share results with your team, and re-audit to compare scores over time. Not just a one-time report — an ongoing improvement system.</p>
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function AboutPage() {
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">
               <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Who we serve</p>
-              <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text">
+              <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text">
                 Built for people who ship products
               </h2>
               <p className="text-muted text-base mt-3 max-w-lg mx-auto">Not another enterprise tool. Built for teams that move fast.</p>
@@ -314,7 +314,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
                   <BarChart3 size={22} className="text-violet-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Product Managers</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Product Managers</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Track findings from open to fixed, share results with stakeholders via read-only links, and re-audit to show measurable improvement over time.</p>
               </div>
 
@@ -322,7 +322,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Rocket size={22} className="text-pink-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Founders & Startups</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Founders & Startups</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Can&apos;t afford a $15k consultancy but refuse to ship mediocre? Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks.</p>
               </div>
 
@@ -330,7 +330,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
                   <Tag size={22} className="text-emerald-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">Agencies</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">Agencies</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">White-label reports for your clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time. Upload your logo and deliver under your own banner.</p>
               </div>
 
@@ -338,7 +338,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Target size={22} className="text-amber-500" />
                 </div>
-                <h3 className="font-manrope font-bold text-xl text-text mb-3">UX Designers</h3>
+                <h3 className="font-heading font-semibold text-xl text-text mb-3">UX Designers</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Want an objective second opinion before launch? Get a comprehensive, evidence-based review across 16 categories that catches what fresh eyes would.</p>
               </div>
             </div>
@@ -354,7 +354,7 @@ export default function AboutPage() {
 
           <div className="max-w-3xl mx-auto text-center relative">
             <p className="text-sm font-semibold tracking-wide uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
-            <h2 className="font-manrope font-bold text-4xl sm:text-5xl text-text mb-6" style={{ lineHeight: '1.1' }}>
+            <h2 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-6" style={{ lineHeight: '1.1' }}>
               Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
             </h2>
             <p className="text-muted text-lg mb-10 max-w-lg mx-auto">

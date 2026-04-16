@@ -88,7 +88,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-manrope font-bold text-[17px] text-text">
+            <span className="font-heading font-semibold text-[17px] text-text">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
@@ -243,7 +243,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-manrope font-bold text-[17px] text-text">
+          <span className="ml-3 font-heading font-semibold text-[17px] text-text">
             Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
           </span>
         </div>

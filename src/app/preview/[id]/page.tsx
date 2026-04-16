@@ -251,7 +251,7 @@ export default function PreviewPage() {
           <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="rounded-xl border border-border bg-card p-8 sm:p-12">
               <div className="mb-8 text-center">
-                <h1 className="font-manrope text-2xl font-bold text-text sm:text-3xl">
+                <h1 className="font-heading text-2xl font-semibold text-text sm:text-3xl">
                   Auditing Your Website
                 </h1>
                 <p className="mt-2 font-inter text-sm text-muted">{audit.url}</p>
@@ -350,7 +350,7 @@ export default function PreviewPage() {
                 <ExternalLink className="mb-0.5 ml-1 inline-block h-3 w-3" />
               </a>
             </div>
-            <h1 className="font-manrope text-3xl font-bold text-text sm:text-4xl">
+            <h1 className="font-heading text-3xl font-semibold text-text sm:text-4xl">
               Your Free UX Audit Preview
             </h1>
             <p className="mt-2 font-inter text-sm text-muted">
@@ -372,7 +372,7 @@ export default function PreviewPage() {
 
             {/* Severity Breakdown */}
             <div className="space-y-3 lg:col-span-3">
-              <h3 className="font-manrope text-sm font-semibold text-text">Issues Found</h3>
+              <h3 className="font-heading text-sm font-semibold text-text">Issues Found</h3>
               <div className="rounded-lg border border-border bg-card p-4">
                 <p className="font-inter text-sm text-text">
                   <span className="font-semibold text-red-500">{severityCounts.CRITICAL}</span>
@@ -409,7 +409,7 @@ export default function PreviewPage() {
                     <Icon className="h-4 w-4 text-text opacity-60" />
                     <p className="font-inter text-xs font-medium text-muted uppercase tracking-wide">{label}</p>
                   </div>
-                  <p className="font-manrope text-3xl font-bold text-text">{Math.round(Number(pillarScore))}</p>
+                  <p className="font-heading text-3xl font-semibold text-text">{Math.round(Number(pillarScore))}</p>
                 </div>
               )
             })}
@@ -417,7 +417,7 @@ export default function PreviewPage() {
 
           {/* Executive Summary */}
           <div className="mb-12 rounded-lg border border-border bg-card p-6 sm:p-8">
-            <h3 className="font-manrope text-lg font-semibold text-text">Executive Summary</h3>
+            <h3 className="font-heading text-lg font-semibold text-text">Executive Summary</h3>
             <p className="mt-3 font-inter text-sm leading-relaxed text-text">{executiveSummary}</p>
           </div>
 
@@ -427,7 +427,7 @@ export default function PreviewPage() {
               <div className="mb-4 inline-flex items-center justify-center rounded-full bg-[var(--gradient-brand)] bg-opacity-10 p-3">
                 <Sparkles className="h-6 w-6 text-[var(--gradient-brand-text)]" />
               </div>
-              <h2 className="font-manrope text-2xl font-bold text-text sm:text-3xl">
+              <h2 className="font-heading text-2xl font-semibold text-text sm:text-3xl">
                 Unlock Your Full Audit
               </h2>
               <p className="mt-3 font-inter text-sm text-muted">
@@ -462,7 +462,7 @@ export default function PreviewPage() {
 
             {/* Blurred content */}
             <div className="select-none" style={{ filter: 'blur(6px)', pointerEvents: 'none', userSelect: 'none' }}>
-              <h3 className="font-manrope text-lg font-semibold text-text">Detailed Findings</h3>
+              <h3 className="font-heading text-lg font-semibold text-text">Detailed Findings</h3>
 
               <div className="mt-6 space-y-4">
                 {findings.slice(0, 4).map((finding) => {
@@ -506,7 +506,7 @@ export default function PreviewPage() {
 
           {/* Bottom CTA */}
           <div className="rounded-lg border border-border bg-card p-8 text-center sm:p-12">
-            <h3 className="font-manrope text-xl font-bold text-text sm:text-2xl">
+            <h3 className="font-heading text-xl font-semibold text-text sm:text-2xl">
               Ready to fix these issues?
             </h3>
             <p className="mt-2 font-inter text-sm text-muted">

@@ -197,7 +197,7 @@ const NewAuditInner: React.FC = () => {
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Sparkles size={28} className="text-violet-500" />
         </div>
-        <h1 className="text-3xl font-bold font-manrope text-text mb-2">
+        <h1 className="text-3xl font-bold font-heading text-text mb-2">
           New Audit
         </h1>
         <p className="text-muted">
@@ -450,7 +450,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 text-white font-manrope font-bold text-lg py-4 px-8 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2.5 text-white font-heading font-semibold text-lg py-4 px-8 rounded-full hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ background: 'var(--gradient-brand)' }}
       >
         {loading ? (

@@ -137,7 +137,7 @@ export default function LoginPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-8">
-        <h2 className="text-2xl font-manrope font-bold text-text mb-2">
+        <h2 className="text-2xl font-heading font-semibold text-text mb-2">
           Sign in
         </h2>
         <p className="text-sm text-muted">
@@ -284,14 +284,14 @@ export default function LoginPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <h1 className="text-3xl font-manrope font-bold text-white">
+                  <h1 className="text-3xl font-heading font-semibold text-white">
                     Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
                   </h1>
                 </Link>
               </div>
 
               <div className="mb-auto">
-                <h2 className="text-2xl font-manrope font-bold text-white mb-2">
+                <h2 className="text-2xl font-heading font-semibold text-white mb-2">
                   Welcome back
                 </h2>
                 <p className="text-sm text-white/70 leading-relaxed max-w-[320px]">
