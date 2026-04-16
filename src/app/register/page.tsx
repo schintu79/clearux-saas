@@ -531,11 +531,19 @@ export default function RegisterPage() {
                 <p className="text-xs text-white/40 mb-3">Not ready to sign up?</p>
                 <div className="flex flex-wrap items-center gap-3">
                   <Link href="/about" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
-                    See how it works <ArrowRight size={14} />
+                    How it works <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
                   <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
-                    View pricing <ArrowRight size={14} />
+                    Pricing <ArrowRight size={14} />
+                  </Link>
+                  <span className="text-white/15">|</span>
+                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    FAQ <ArrowRight size={14} />
+                  </Link>
+                  <span className="text-white/15">|</span>
+                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    Contact <ArrowRight size={14} />
                   </Link>
                 </div>
               </div>
