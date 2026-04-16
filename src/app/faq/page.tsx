@@ -221,7 +221,7 @@ export default function FaqPage() {
               <p className="text-muted text-sm mb-6">
                 Reach out and we will get back to you within a business day.
               </p>
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-4">
                 <a
                   href="mailto:support@clearux.ai"
                   className="inline-flex items-center justify-center gap-2 text-white font-semibold text-sm rounded-full px-6 py-3 hover:brightness-110 transition-all"
@@ -234,6 +234,21 @@ export default function FaqPage() {
                   className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full px-6 py-3 border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
                 >
                   Contact Us
+                </Link>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-border/30">
+                <Link href="/pricing" className="text-sm font-medium text-muted hover:text-text transition-colors">
+                  See pricing
+                </Link>
+                <Link href="/about" className="text-sm font-medium text-muted hover:text-text transition-colors">
+                  How it works
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold bg-clip-text text-transparent"
+                  style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+                >
+                  Start free audit <ArrowRight size={13} className="text-violet-500" />
                 </Link>
               </div>
             </div>

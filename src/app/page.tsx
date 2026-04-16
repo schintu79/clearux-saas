@@ -551,29 +551,27 @@ export default function Home() {
       <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
         <div className="max-w-3xl mx-auto text-center relative">
-          {/* Badge */}
-          <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card mb-8">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--gradient-brand)' }} />
-            <span className="text-[13px] font-medium text-muted">AI-Powered, Human-Centered Professional UX Audits</span>
-          </div>
+          {/* Doodle accents */}
+          <DoodleArrowDown className="animate-fade-up delay-300 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
+          <Sparkle className="animate-fade-up delay-400 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* H1 */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-bold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
-            Discover the UX issues impacting{' '}
-            <br />
-            <RotatingWord />
+          {/* Primary headline — passes the 5-second test */}
+          <h1 className="animate-fade-up font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-tight mb-5" style={{ lineHeight: '1.08' }}>
+            Professional UX Audits,<br className="hidden sm:block" />
+            Powered by AI
           </h1>
 
-          {/* Doodle: arrow pointing to input */}
-          <DoodleArrowDown className="animate-fade-up delay-200 hidden md:block absolute -right-2 top-[45%] lg:right-8" color="var(--color-human)" />
-          <Sparkle className="animate-fade-up delay-300 hidden md:block absolute left-4 top-[30%] lg:left-12" color="var(--color-tech)" />
-
-          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-10 sm:mb-14 max-w-xl mx-auto" style={{ lineHeight: '1.65' }}>
-            64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact. Fix what matters first, track your progress, and prove the improvement.
+          {/* Outcome-focused subheading */}
+          <p className="animate-fade-up delay-100 text-lg sm:text-xl md:text-2xl text-muted mb-4 max-w-2xl mx-auto font-medium" style={{ lineHeight: '1.45' }}>
+            Discover the issues impacting{' '}<RotatingWord />
           </p>
 
-          {/* URL Input — clean, pill-shaped */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-8">
+          <p className="animate-fade-up delay-200 text-base text-muted/80 mb-10 sm:mb-12 max-w-lg mx-auto" style={{ lineHeight: '1.65' }}>
+            64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
+          </p>
+
+          {/* Single focal CTA — URL Input */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -594,39 +592,19 @@ export default function Home() {
                 className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)' }}
               >
-                {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
+                {user ? 'Run My Audit' : 'Start Free Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </form>
 
-          {/* KSPs */}
-          <div className="animate-fade-up delay-400 mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-muted">
-            {user ? (
-              <>
-                <span>Track fixes over time</span>
-                <span className="opacity-30">·</span>
-                <span>Share with your team</span>
-                <span className="opacity-30">·</span>
-                <span>Re-audit to prove improvement</span>
-              </>
-            ) : (
-              <>
-                <span>First audit free</span>
-                <span className="opacity-30">·</span>
-                <span>No credit card needed</span>
-                <span className="opacity-30">·</span>
-                <span>Results in minutes</span>
-              </>
-            )}
-          </div>
-
-          {/* See pricing */}
-          <div className="animate-fade-up delay-400 mt-8">
-            <a href="#pricing" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-text transition-colors group">
-              See pricing
-              <ArrowDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
-            </a>
+          {/* Trust signals — minimal */}
+          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted">
+            <span>No credit card required</span>
+            <span className="opacity-30">·</span>
+            <span>Results in under 10 minutes</span>
+            <span className="opacity-30">·</span>
+            <span>Free first audit</span>
           </div>
         </div>
       </section>

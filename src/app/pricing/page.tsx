@@ -355,6 +355,18 @@ export default function PricingPage() {
                 </details>
               ))}
             </div>
+
+            {/* Cross-link */}
+            <div className="text-center mt-10">
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+                style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+              >
+                Learn how ClearUX works
+                <ArrowRight size={14} className="text-violet-500" />
+              </Link>
+            </div>
           </div>
         </section>
       </main>

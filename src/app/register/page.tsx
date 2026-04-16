@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
@@ -444,7 +444,7 @@ export default function RegisterPage() {
       <div className="hidden lg:block">
         <div className="auth-page">
           {/* Left Panel — Value Props + Rotating Reviews */}
-          <div className="auth-left relative z-0">
+          <div className="auth-left relative z-0 bg-dotgrid">
             <div className="auth-glow" />
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
@@ -526,9 +526,15 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors mt-6">
-                <ArrowLeft size={16} /> Back to home
-              </Link>
+              <div className="flex items-center gap-4 mt-6">
+                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
+                  <ArrowLeft size={16} /> Home
+                </Link>
+                <span className="text-white/20">|</span>
+                <Link href="/pricing" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
+                  Pricing <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
           </div>
 

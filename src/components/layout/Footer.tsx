@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = 2026;
@@ -8,16 +9,34 @@ const Footer: React.FC = () => {
     <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-sidebar py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
 
+        {/* ── Re-engagement CTA banner ── */}
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6 sm:p-8 mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-heading text-lg text-white mb-1">Ready to audit your site?</h3>
+              <p className="text-sm text-white/55">First audit is free. No credit card required. Results in minutes.</p>
+            </div>
+            <Link
+              href="/register"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold text-white px-6 py-3 rounded-full transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+              style={{ background: 'var(--gradient-brand)' }}
+            >
+              Start Free Audit
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+
         {/* ── Top: Brand + Links ── */}
         <div className="flex flex-col md:flex-row gap-12 md:gap-16 mb-12">
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <h3 className="font-heading font-bold text-[1.7rem] mb-3 text-white">
+            <h3 className="font-heading text-[1.7rem] mb-3 text-white">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </h3>
             <p className="font-inter text-sm text-white/60 leading-relaxed mb-5">
-              Professional consultant-grade UX audits in minutes, powered by AI.
+              Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>
 
             {/* Social links */}
@@ -49,10 +68,10 @@ const Footer: React.FC = () => {
               <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-white/40 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'Features', href: '/#features' },
-                  { label: 'How It Works', href: '/#how-it-works' },
+                  { label: 'How It Works', href: '/about' },
                   { label: 'Pricing', href: '/pricing' },
                   { label: 'FAQ', href: '/faq' },
+                  { label: 'Start Free Audit', href: '/register' },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="font-inter text-sm text-white/60 hover:text-white transition-colors">

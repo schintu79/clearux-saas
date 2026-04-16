@@ -127,11 +127,19 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Bottom callout */}
+            {/* Bottom callout + cross-link */}
             <div className="mt-14 text-center">
-              <p className="text-text/50 text-sm max-w-2xl mx-auto leading-relaxed">
+              <p className="text-text/50 text-sm max-w-2xl mx-auto leading-relaxed mb-6">
                 These aren&apos;t edge cases. They&apos;re the new baseline. As AI reshapes discovery and neurodiversity gains visibility, the products that adapt first will lead their markets.
               </p>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+                style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+              >
+                See pricing and plans
+                <ArrowRight size={14} className="text-violet-500" />
+              </Link>
             </div>
           </div>
         </section>
@@ -204,24 +212,30 @@ export default function AboutPage() {
               {/* Story text */}
               <div className="flex-1 max-w-2xl">
                 <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>The founding story</p>
-                <h2 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
+                <h2 className="font-manrope text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
                   Why ClearUX exists
                 </h2>
-                <div className="space-y-5 text-text/75 text-base sm:text-[17px] leading-relaxed">
+                <div className="space-y-6 text-text/75 text-base sm:text-[17px] leading-relaxed">
                   <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-violet-500 pl-5 py-2 italic">
                     What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
                   </p>
+
+                  <h3 className="font-manrope text-lg text-text pt-2">The problem we kept seeing</h3>
                   <p>
                     After 20+ years designing digital experiences across industries and continents, we kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
                   </p>
                   <p>
                     Enterprise clients would commission $15,000 consultancy engagements and get genuine insights. Startups, agencies, and growing teams? They were stuck guessing — or relying on automated tools that counted errors without understanding people.
                   </p>
+
+                  <h3 className="font-manrope text-lg text-text pt-2">What we saw going wrong</h3>
                   <p>
                     We&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
                   </p>
+
+                  <h3 className="font-manrope text-lg text-text pt-2">What we built instead</h3>
                   <p>
-                    That&apos;s what we built. Not a checklist tool. Not another automated scanner. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
+                    Not a checklist tool. Not another automated scanner. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
                   </p>
                 </div>
               </div>
