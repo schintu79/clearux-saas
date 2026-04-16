@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, CircleScribble } from "@/components/ui/Doodles";
+import { ArrowCurvy, DoodleArrowDown, Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, Spiral, CircleScribble } from "@/components/ui/Doodles";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
 
@@ -542,22 +542,21 @@ export default function Home() {
   return (
     <div className="bg-surface text-text min-h-screen">
       <HomeJsonLd />
-      <Navbar transparent />
+      <Navbar />
       <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
-          HERO — Dark inverted depth with animated grid
+          HERO — Sketch-style: clean, confident, generous space
           ═══════════════════════════════════════════════════════ */}
-      <section className="hero-dark relative pt-24 pb-28 sm:pt-36 sm:pb-36 px-4 md:px-6 lg:px-8">
-        {/* Animated grid sweep lines */}
-        <div className="hero-grid-sweep" />
-        {/* Bottom gradient fade to next section */}
-        <div className="hero-dark-fade" />
+      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
-        <div className="max-w-3xl mx-auto text-center relative z-10">
+        <div className="max-w-3xl mx-auto text-center relative">
+          {/* Doodle accents */}
+          <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
+          <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* Social proof widget — bright on dark */}
-          <div className="animate-fade-up flex items-center justify-center gap-3 mb-10">
+          {/* Social proof widget — BEFORE headline */}
+          <div className="animate-fade-up flex items-center justify-center gap-3 mb-8">
             <div className="flex -space-x-2.5">
               {['MW', 'SC', 'JK', 'DT'].map((initials, i) => {
                 const colors = [
@@ -569,7 +568,7 @@ export default function Home() {
                 return (
                   <div
                     key={initials}
-                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-[#08080C]`}
+                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-off dark:ring-surface-alt`}
                   >
                     {initials}
                   </div>
@@ -582,35 +581,32 @@ export default function Home() {
                   <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <p className="text-xs text-white/50 mt-0.5">
-                Trusted by <span className="font-semibold text-white/80">500+</span> product teams
+              <p className="text-xs text-muted mt-0.5">
+                Trusted by <span className="font-semibold text-text">500+</span> product teams
               </p>
             </div>
           </div>
 
-          {/* Primary headline — white on dark, gradient glow on "Powered by AI" */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight text-white mb-8" style={{ lineHeight: '1.08' }}>
+          {/* Primary headline — semibold, with "Powered by AI" scribble underline */}
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
             Professional UX Audits,<br className="hidden sm:block" />
-            <span className="relative inline-block mt-1">
-              <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%)' }}>
-                Powered by AI
-              </span>
-              {/* Soft glow behind text */}
-              <span className="absolute -inset-x-4 -inset-y-2 bg-gradient-to-r from-violet-500/10 via-pink-500/8 to-emerald-500/6 blur-2xl rounded-full -z-10" aria-hidden="true" />
+            <span className="relative inline-block">
+              Powered by AI
+              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
             </span>
           </h1>
 
-          {/* Outcome-focused subheading */}
-          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-white/50 mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
+          {/* Outcome-focused subheading — more space */}
+          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
             Discover the issues impacting{' '}<RotatingWord />
           </p>
 
-          <p className="animate-fade-up delay-300 text-sm text-white/35 mb-14 sm:mb-16 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
+          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
             64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
           </p>
 
-          {/* CTA — Glassmorphism input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-8">
+          {/* Single focal CTA — URL Input */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -623,12 +619,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-white/[0.06] border border-white/[0.1] text-white placeholder:text-white/30 backdrop-blur-sm focus:outline-none focus:border-violet-400/40 focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(124,58,237,.25)] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)' }}
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
@@ -637,8 +633,8 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Trust signals */}
-          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-white/25 uppercase">
+          {/* Trust signals — differ for logged in vs logged out */}
+          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-muted/60 uppercase">
             {user
               ? 'Track fixes over time · Share with your team · Re-audit to prove improvement'
               : 'No credit card required · Results in under 10 minutes · Free first audit'}
@@ -719,10 +715,11 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
-      <section className="section-dark relative pt-28 sm:pt-36 pb-24 dark-forced">
-        <div className="relative z-10">
-          <PillarScrollReveal categories={auditCategories} />
-        </div>
+      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-24 bg-dotgrid">
+        {/* Doodle accents */}
+        <ArrowCurvy className="hidden lg:block absolute top-16 right-[8%] rotate-12" color="var(--color-foundation)" />
+        <Spiral className="hidden lg:block absolute bottom-24 left-[5%]" color="var(--color-future)" />
+        <PillarScrollReveal categories={auditCategories} />
       </section>
 
       {/* ═══════════════════════════════════════════════════════
@@ -1159,17 +1156,21 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA — Clean, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="section-dark dark-forced relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
 
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #A78BFA 0%, #F472B6 40%, #FBBF24 70%, #34D399 100%)' }}>Start your audit today</p>
+        {/* Doodle accents */}
+        <ArrowCurvy className="hidden lg:block absolute top-20 left-[6%] -rotate-6" color="var(--color-foundation)" />
+        <Squiggle className="hidden lg:block absolute bottom-28 right-[5%] rotate-3" color="var(--color-human)" />
 
-          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-white mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
+        <div className="max-w-3xl mx-auto text-center relative">
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
+
+          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
             Ready to see what<br className="hidden sm:block" />
             you&apos;re missing?
           </h2>
 
-          <p className="text-white/50 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
             Real findings your team can act on — prioritised by impact, trackable as you fix them, and re-auditable to prove the improvement. Delivered in minutes, not weeks.
           </p>
 
@@ -1186,12 +1187,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-white/[0.06] border border-white/[0.1] text-white placeholder:text-white/30 backdrop-blur-sm focus:outline-none focus:border-violet-400/40 focus:shadow-[0_0_0_3px_rgba(167,139,250,0.1)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(124,58,237,.25)] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
                 style={{ background: 'var(--gradient-brand)' }}
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
@@ -1200,7 +1201,7 @@ export default function Home() {
             </div>
           </form>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-white/40">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-muted">
             {user ? (
               <>
                 <span>Track fixes over time</span>
@@ -1220,8 +1221,8 @@ export default function Home() {
             )}
           </div>
 
-          <p className="text-white/30 text-sm mt-6">
-            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-white/60 transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-white/60 transition-colors">contact us</Link>
+          <p className="text-muted text-sm mt-6">
+            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-text transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-text transition-colors">contact us</Link>
           </p>
         </div>
       </section>
