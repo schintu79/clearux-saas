@@ -634,12 +634,6 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Trust signals — differ for logged in vs logged out */}
-          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-muted/60 uppercase">
-            {user
-              ? 'Track fixes over time · Share with your team · Re-audit to prove improvement'
-              : 'No credit card required · Results in under 10 minutes · Free first audit'}
-          </p>
         </div>
       </section>
 
