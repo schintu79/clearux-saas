@@ -36,8 +36,8 @@ const config: Config = {
       },
       fontFamily: {
         inter:   ["var(--font-inter)", "system-ui", "sans-serif"],
-        heading: ["var(--font-heading)", "Georgia", "serif"],
-        manrope: ["var(--font-heading)", "Georgia", "serif"], /* backward compat alias */
+        heading: ["var(--font-heading)", "system-ui", "sans-serif"],
+        manrope: ["var(--font-heading)", "system-ui", "sans-serif"], /* backward compat alias */
       },
     },
   },

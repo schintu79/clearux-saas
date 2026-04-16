@@ -1,4 +1,5 @@
 import { CheckCircle, Search, BarChart3, Building2, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { Sparkle, Spiral } from '@/components/ui/Doodles';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -331,6 +332,8 @@ export default function PricingPage() {
 
         {/* ── FAQ ── */}
         <section className="py-16 px-4 sm:px-6 lg:px-8 bg-surface-alt bg-dotgrid relative">
+          <Sparkle className="hidden lg:block absolute top-10 right-[8%]" color="var(--color-tech)" />
+          <Spiral className="hidden lg:block absolute bottom-12 left-[5%]" color="var(--color-foundation)" />
           <div className="max-w-3xl mx-auto">
             <h2 className="font-manrope font-bold text-3xl text-text mb-10">
               Frequently asked questions

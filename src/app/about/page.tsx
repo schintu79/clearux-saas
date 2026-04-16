@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { ArrowRight, Sparkles, Heart, Shield, Brain, Eye, Users, BarChart3, Rocket, Tag, Target, Accessibility, HeartHandshake, BrainCircuit, Zap, ShieldCheck, Flower2 } from 'lucide-react'
+import { ArrowCurvy, Sparkle, Spiral, Squiggle } from '@/components/ui/Doodles'
 
 export const metadata: Metadata = {
   title: 'About ClearUX — Human-Centered AI Audit Platform',
@@ -160,6 +161,8 @@ export default function AboutPage() {
             4. FOUNDER STORY — full width, side-by-side
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden bg-dotgrid">
+          <ArrowCurvy className="hidden lg:block absolute top-12 right-[7%] rotate-6" color="var(--color-foundation)" />
+          <Sparkle className="hidden lg:block absolute bottom-16 left-[4%]" color="var(--color-tech)" />
 
           <div className="max-w-6xl mx-auto relative">
             <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 items-center">
@@ -280,6 +283,8 @@ export default function AboutPage() {
             6. BUILT FOR — same 2-col card style
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden bg-dotgrid">
+          <Spiral className="hidden lg:block absolute top-10 left-[5%]" color="var(--color-future)" />
+          <Squiggle className="hidden lg:block absolute bottom-14 right-[6%]" color="var(--color-human)" />
 
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">

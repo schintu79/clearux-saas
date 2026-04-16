@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Instrument_Serif } from 'next/font/google'
+import { Inter, IBM_Plex_Sans } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -11,11 +11,10 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-const instrumentSerif = Instrument_Serif({
+const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   variable: '--font-heading',
-  weight: '400',
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700'],
 })
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
@@ -83,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${inter.variable} ${instrumentSerif.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${inter.variable} ${ibmPlexSans.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
