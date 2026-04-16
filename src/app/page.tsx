@@ -552,63 +552,11 @@ export default function Home() {
 
         <div className="max-w-3xl mx-auto text-center relative">
           {/* Doodle accents */}
-          <DoodleArrowDown className="animate-fade-up delay-300 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
-          <Sparkle className="animate-fade-up delay-400 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
+          <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
+          <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* Primary headline — bolder, with "Powered by AI" underlined */}
-          <h1 className="animate-fade-up font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-5" style={{ lineHeight: '1.08' }}>
-            Professional UX Audits,<br className="hidden sm:block" />
-            <span className="relative inline-block">
-              Powered by AI
-              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
-            </span>
-          </h1>
-
-          {/* Outcome-focused subheading */}
-          <p className="animate-fade-up delay-100 text-lg sm:text-xl md:text-2xl text-muted mb-4 max-w-2xl mx-auto font-medium" style={{ lineHeight: '1.45' }}>
-            Discover the issues impacting{' '}<RotatingWord />
-          </p>
-
-          <p className="animate-fade-up delay-200 text-base text-muted/80 mb-10 sm:mb-12 max-w-lg mx-auto" style={{ lineHeight: '1.65' }}>
-            64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
-          </p>
-
-          {/* Single focal CTA — URL Input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
-                <input
-                  id="hero-url-input"
-                  type="text"
-                  name="url"
-                  autoComplete="url"
-                  value={heroUrl}
-                  onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder="yourwebsite.com"
-                  aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
-                />
-              </div>
-              <button
-                type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
-                style={{ background: 'var(--gradient-brand)' }}
-              >
-                {user ? 'Run My Audit' : 'Start Free Audit'}
-                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          </form>
-
-          {/* Trust signals — smaller, bolder */}
-          <p className="animate-fade-up delay-400 text-xs font-semibold tracking-wide text-muted/70 uppercase mb-8">
-            No credit card required · Results in under 10 minutes · Free first audit
-          </p>
-
-          {/* Social proof widget */}
-          <div className="animate-fade-up delay-500 flex items-center justify-center gap-3">
-            {/* Stacked avatars */}
+          {/* Social proof widget — BEFORE headline */}
+          <div className="animate-fade-up flex items-center justify-center gap-3 mb-8">
             <div className="flex -space-x-2.5">
               {['MW', 'SC', 'JK', 'DT'].map((initials, i) => {
                 const colors = [
@@ -638,6 +586,59 @@ export default function Home() {
               </p>
             </div>
           </div>
+
+          {/* Primary headline — semibold, with "Powered by AI" scribble underline */}
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
+            Professional UX Audits,<br className="hidden sm:block" />
+            <span className="relative inline-block">
+              Powered by AI
+              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+            </span>
+          </h1>
+
+          {/* Outcome-focused subheading — more space */}
+          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
+            Discover the issues impacting{' '}<RotatingWord />
+          </p>
+
+          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
+            64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
+          </p>
+
+          {/* Single focal CTA — URL Input */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
+                <input
+                  id="hero-url-input"
+                  type="text"
+                  name="url"
+                  autoComplete="url"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder="yourwebsite.com"
+                  aria-label="Website URL to audit"
+                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                style={{ background: 'var(--gradient-brand)' }}
+              >
+                {user ? 'Run My Audit' : 'Start Free Audit'}
+                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </form>
+
+          {/* Trust signals — differ for logged in vs logged out */}
+          <p className="animate-fade-up delay-500 text-[11px] font-semibold tracking-wide text-muted/60 uppercase">
+            {user
+              ? 'Track fixes over time · Share with your team · Re-audit to prove improvement'
+              : 'No credit card required · Results in under 10 minutes · Free first audit'}
+          </p>
         </div>
       </section>
 
