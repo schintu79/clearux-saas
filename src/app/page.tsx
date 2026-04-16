@@ -589,7 +589,7 @@ export default function Home() {
 
           {/* Primary headline — semibold, with "Powered by AI" scribble underline */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
-            Professional UX Audits,<br className="hidden sm:block" />
+            Professional <span className="relative inline-block"><span className="relative z-10">UX Audits</span><span className="absolute bottom-1 left-0 right-0 h-[0.32em] rounded-full bg-gradient-to-r from-violet-400/25 via-pink-400/20 to-amber-400/15 -z-0" aria-hidden="true" /></span>,<br className="hidden sm:block" />
             <span className="relative inline-block">
               Powered by AI
               <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
@@ -597,7 +597,7 @@ export default function Home() {
           </h1>
 
           {/* Outcome-focused subheading — more space */}
-          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
+          <p className="animate-fade-up delay-200 text-[1.7rem] text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
             Discover the issues impacting{' '}<RotatingWord />
           </p>
 
