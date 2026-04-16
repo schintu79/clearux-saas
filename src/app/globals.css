@@ -199,12 +199,12 @@ body {
   letter-spacing: -0.011em;
 }
 
-/* Heading defaults — IBM Plex Sans */
+/* Heading defaults — Manrope */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  font-weight: 500;
 }
 
 p, li, td, th, label, span, a {
