@@ -60,8 +60,7 @@ async function captureViaScreenshotOne(
       delay: '2',           // wait 2s for page to settle
       block_ads: 'true',
       block_cookie_banners: 'true',
-      cache: 'true',
-      cache_ttl: '3600',    // 1h cache (was 24h — too stale for re-audits)
+      cache: 'false',        // Always capture fresh screenshots for accurate audits
     })
 
     if (_selector && highlightMode === 'highlight') {

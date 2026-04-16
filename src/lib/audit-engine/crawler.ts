@@ -148,7 +148,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         Pragma: 'no-cache',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
@@ -160,6 +160,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       },
       signal: controller.signal,
       redirect: 'follow',
+      cache: 'no-store',
     })
 
     const html = await response.text()
@@ -215,6 +216,8 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-Return-Format': 'text',
+      'X-No-Cache': 'true',
+      'Cache-Control': 'no-cache',
     }
 
     // Use Jina API key if available (higher rate limits)
@@ -226,6 +229,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     const response = await fetch(jinaUrl, {
       headers,
       signal: controller.signal,
+      cache: 'no-store',
     })
 
     if (!response.ok) {
