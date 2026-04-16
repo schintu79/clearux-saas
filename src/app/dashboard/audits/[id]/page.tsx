@@ -1361,6 +1361,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <RefreshCw size={13} className="text-muted" />
                 Re-audit this site
               </Link>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+              >
+                <Search size={13} className="text-muted" />
+                Dig Deeper (find new issues)
+              </Link>
               <button
                 onClick={() => { handleRestart(); setMenuOpen(false); }}
                 disabled={restarting}
@@ -1605,6 +1613,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
                       <RefreshCw size={12} /> Re-audit
+                    </Link>
+                    <Link
+                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                      className="flex items-center justify-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+                      style={{ backgroundImage: 'var(--gradient-brand)' }}
+                      title="Run a deeper audit that discovers new issues beyond the baseline"
+                    >
+                      <Search size={12} /> Dig Deeper
                     </Link>
                   </div>
                 </div>
@@ -1889,6 +1905,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <RefreshCw size={14} /> Re-audit
+              </Link>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                className="flex items-center justify-center gap-2 text-white text-sm font-semibold py-3 rounded-xl transition-all hover:brightness-110 shadow-sm whitespace-nowrap"
+                style={{ backgroundImage: 'var(--gradient-brand)' }}
+                title="Run a deeper audit that discovers new issues beyond the baseline"
+              >
+                <Search size={14} /> Dig Deeper
               </Link>
             </div>
             {shareUrl && (

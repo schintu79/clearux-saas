@@ -136,6 +136,7 @@ export const processAuditFn = inngest.createFunction(
         plan: (audit as any).plan as string,
         userFocus: (audit as any).ux_concern as string | null,
         language: ((audit as any).language as string) || 'en',
+        depthMode: ((audit as any).depth_mode as string) || 'standard',
       }
     })
 
@@ -323,10 +324,21 @@ RULES FOR RE-AUDIT:
         }
       }
 
+      // Determine effective depth mode:
+      // - 'deep' explicitly requested → always deep (find new issues)
+      // - 'standard' + has previous audit → baseline (only verify previous findings)
+      // - 'standard' + no previous audit → deep (first audit, must find issues)
+      const hasPreviousFindings = userContext.includes('PREVIOUS FINDINGS')
+      let effectiveDepthMode: 'deep' | 'baseline' = 'deep'
+      if (auditDetails.depthMode === 'standard' && hasPreviousFindings) {
+        effectiveDepthMode = 'baseline'
+      }
+
       const fullContext = siteMap + userContext
 
-      await auditLog(auditId, 'site_context_built', 'success', `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''}`)
-      return fullContext
+      await auditLog(auditId, 'site_context_built', 'success',
+        `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
+      return { context: fullContext, effectiveDepthMode }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -342,9 +354,16 @@ RULES FOR RE-AUDIT:
     }
 
     // Pre-build the content string ONCE (don't rebuild per category)
-    const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
+    const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
+    const effectiveDepthMode = siteContext.effectiveDepthMode
 
     let totalFindingsCount = 0
+
+    console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
+    await step.run('log-depth-mode', async () => {
+      await auditLog(auditId, 'depth_mode', 'info',
+        `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — only verifying previous findings' : ' — full analysis with new issue discovery'}`)
+    })
 
     for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
       const batch = batches[batchIdx]
@@ -364,6 +383,7 @@ RULES FOR RE-AUDIT:
               [], // empty = use built-in checklist items
               auditDetails.userFocus,
               auditDetails.language,
+              effectiveDepthMode,
             )
           ),
         )
@@ -552,11 +572,11 @@ RULES FOR RE-AUDIT:
         .eq('id', auditId)
         .single()
 
-      const contentWithContext = `${siteContext}\n\n${crawlResult.pageContent}`
+      const reportContentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
       const reportData = await generateReport(
         findings,
         audit as any,
-        contentWithContext,
+        reportContentWithContext,
         auditDetails.userFocus,
         auditDetails.language,
       )

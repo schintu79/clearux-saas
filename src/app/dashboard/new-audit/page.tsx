@@ -23,6 +23,7 @@ const NewAuditInner: React.FC = () => {
   const urlInputRef = useRef<HTMLInputElement>(null);
 
   const [url, setUrl] = useState(searchParams.get('url') || '');
+  const depthParam = searchParams.get('depth'); // 'deep' for Dig Deeper, null for standard
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [urlError, setUrlError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -134,6 +135,7 @@ const NewAuditInner: React.FC = () => {
           notes: null,
           plan: 'full_audit',
           language: language,
+          depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
           ...(isWhiteLabelEligible && companyName.trim() ? { white_label_company_name: companyName.trim() } : {}),
           ...(isWhiteLabelEligible && whitelabelLogoUrl ? { white_label_logo_url: whitelabelLogoUrl } : {}),
         })

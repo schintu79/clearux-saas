@@ -238,6 +238,8 @@ export const UX_CATEGORIES = [
 
 /**
  * Analyze a single UX category — called once per category
+ * @param depthMode 'deep' = find new issues freely (first audit or explicit Dig Deeper)
+ *                  'baseline' = ONLY check status of previous findings, no new issues
  */
 export async function analyzeCategory(
   pageContent: string,
@@ -245,6 +247,7 @@ export async function analyzeCategory(
   checklistItems: Array<{ title: string; description: string; whatToCheck: string }>,
   userFocus?: string | null,
   language: string = 'en',
+  depthMode: 'deep' | 'baseline' = 'deep',
 ): Promise<AnalysisFinding[]> {
   // If checklist is empty (DB not seeded), use our built-in category
   const builtIn = UX_CATEGORIES.find((c) => c.name.toLowerCase().includes(category.toLowerCase()))
@@ -387,7 +390,21 @@ If a PREVIOUS AUDIT BASELINE is provided above, you MUST be consistent:
 - If a [OPEN] finding from the previous audit is still present, re-report it with the SAME title and severity.
 - Only report genuinely NEW issues that were not covered in any previous finding.
 - Consistency between audits is CRITICAL. Random variation on unchanged content destroys user trust.
+${depthMode === 'baseline' ? `
+DEPTH MODE: BASELINE (RE-AUDIT VERIFICATION ONLY)
+This is a BASELINE re-audit. Your job is STRICTLY LIMITED to verifying the status of PREVIOUS findings listed above.
 
+RULES:
+1. ONLY evaluate findings marked as [OPEN] or [IN PROGRESS] from the PREVIOUS FINDINGS list.
+2. For each [OPEN] finding: check if it is STILL present in the current content. If yes, re-report it with the EXACT SAME title and severity. If fixed, do NOT re-report it.
+3. For each [IN PROGRESS] finding: check if still present. If yes, re-report at the same severity. If fixed, do not report.
+4. Do NOT report [SKIP] or [FIXED] findings unless the issue has clearly regressed.
+5. DO NOT FIND NEW ISSUES. You must ONLY report findings that match previous findings. No new titles, no new observations — NOTHING NEW.
+6. If there are no [OPEN] or [IN PROGRESS] findings for this category, return an EMPTY array [].
+7. The purpose of this mode is to track improvement over time. The client wants to see their score go UP as they fix issues.
+
+Return ONLY previously-identified findings that are still present. Return [] if all previous findings in this category are fixed or dismissed.
+` : ''}
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
   try {
@@ -439,6 +456,7 @@ export async function runFullAnalysis(
   audit: Audit,
   userFocus?: string | null,
   language: string = 'en',
+  depthMode: 'deep' | 'baseline' = 'deep',
 ): Promise<AnalysisFinding[]> {
   const allFindings: AnalysisFinding[] = []
 
@@ -457,6 +475,7 @@ export async function runFullAnalysis(
       })),
       userFocus,
       language,
+      depthMode,
     )
 
     allFindings.push(...findings)

@@ -24,6 +24,8 @@ export type FindingSeverity =
   | 'medium'
   | 'low'
 
+export type AuditDepthMode = 'standard' | 'deep'
+
 // ── TABLE TYPES ──────────────────────────────────────────────
 
 export interface Profile {
@@ -78,6 +80,8 @@ export interface Audit {
   // Sharing
   share_token:        string | null
   share_enabled:      boolean
+  // Depth mode: 'standard' = re-audit checks only baseline findings; 'deep' = find new issues
+  depth_mode:         AuditDepthMode
 }
 
 export interface ScheduledAudit {
