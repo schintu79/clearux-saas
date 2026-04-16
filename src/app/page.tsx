@@ -837,74 +837,74 @@ export default function Home() {
             </div>
 
             {/* ── Feature 2b: Two Audit Modes ── */}
-            <div className="text-center mb-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-3">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-5">
                 <BarChart3 size={14} className="text-violet-500" />
                 <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Two Audit Modes</span>
               </div>
-              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-2 tracking-tight">
+              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
                 Consistent results you can trust
               </h3>
-              <p className="text-muted text-sm leading-relaxed max-w-xl mx-auto">
+              <p className="text-muted text-base leading-relaxed max-w-2xl mx-auto">
                 Re-audits verify your fixes — they don&apos;t invent new problems. When you&apos;re ready to go deeper, one click unlocks the next layer.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
               {/* Baseline Mode */}
-              <div className="rounded-xl border border-border bg-card p-5 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500" />
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <RefreshCw size={15} className="text-emerald-500" />
+              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <RefreshCw size={18} className="text-emerald-500" />
                   </div>
                   <div>
-                    <h4 className="font-heading font-semibold text-base text-text leading-tight">Baseline Mode</h4>
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">Default on re-audits</span>
+                    <h4 className="font-heading font-semibold text-lg text-text">Baseline Mode</h4>
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Default on re-audits</span>
                   </div>
                 </div>
-                <p className="text-muted text-xs leading-relaxed mb-3">
-                  Re-audits verify your previous findings — fixed, still present, or dismissed. No new issues introduced, score improves predictably.
+                <p className="text-muted text-sm leading-relaxed mb-5">
+                  When you re-audit, ClearUX focuses on verifying your previous findings. Are they fixed? Still present? Dismissed? No new issues are introduced — your score improves predictably as you resolve each finding.
                 </p>
-                <div className="space-y-1.5">
+                <div className="space-y-2.5">
                   {[
                     'Checks status of every previous finding',
                     'Score improves as fixes land',
                     'No surprise new issues between runs',
                     'Consistent, trustworthy results',
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                      <span className="text-xs text-text">{item}</span>
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Deep Mode */}
-              <div className="rounded-xl border border-border bg-card p-5 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--gradient-brand)' }} />
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                    <Search size={15} className="text-violet-500" />
+              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'var(--gradient-brand)' }} />
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <Search size={18} className="text-violet-500" />
                   </div>
                   <div>
-                    <h4 className="font-heading font-semibold text-base text-text leading-tight">Deep Mode</h4>
-                    <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
+                    <h4 className="font-heading font-semibold text-lg text-text">Deep Mode</h4>
+                    <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
                   </div>
                 </div>
-                <p className="text-muted text-xs leading-relaxed mb-3">
-                  First audit discovers every issue across all 64 checkpoints. Hit &ldquo;Dig Deeper&rdquo; later to find new issues beyond the baseline.
+                <p className="text-muted text-sm leading-relaxed mb-5">
+                  Your first audit always runs in Deep mode — discovering every issue across all 64 checkpoints. Want to go beyond the baseline later? Hit &ldquo;Dig Deeper&rdquo; to uncover new issues that weren&apos;t in the original scope.
                 </p>
-                <div className="space-y-1.5">
+                <div className="space-y-2.5">
                   {[
                     'Full discovery across 64 checkpoints',
                     'Finds new issues beyond the baseline',
                     'Triggered on first audit or on demand',
                     'Expands your audit coverage over time',
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                      <span className="text-xs text-text">{item}</span>
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
                 </div>
