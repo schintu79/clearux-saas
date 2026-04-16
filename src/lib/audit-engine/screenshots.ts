@@ -61,7 +61,7 @@ async function captureViaScreenshotOne(
       block_ads: 'true',
       block_cookie_banners: 'true',
       cache: 'true',
-      cache_ttl: '86400',   // 24h cache
+      cache_ttl: '3600',    // 1h cache (was 24h — too stale for re-audits)
     })
 
     if (_selector && highlightMode === 'highlight') {

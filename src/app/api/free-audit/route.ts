@@ -16,8 +16,9 @@ export const dynamic = 'force-dynamic'
  *
  * Request body:
  *   {
- *     url: string     (required) — the URL to audit (https:// prepended if missing)
- *     email?: string  (optional) — email for rate limiting and follow-up
+ *     url: string      (required) — the URL to audit (https:// prepended if missing)
+ *     email?: string   (optional) — email for rate limiting and follow-up
+ *     force?: boolean  (optional) — skip 24h cache and run a fresh audit
  *   }
  *
  * Response:
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json()
-    const { url, email } = body
+    const { url, email, force } = body
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json(
@@ -63,38 +64,40 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceSupabase()
 
     // ────────────────────────────────────────────────────────────
-    // Check for cached audit (URL + 24h)
+    // Check for cached audit (URL + 24h) — skip if force=true
     // ────────────────────────────────────────────────────────────
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    if (!force) {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-    const { data: existingAudits, error: fetchError } = await supabase
-      .from('audits')
-      .select('id, status, created_at')
-      .eq('product_url', validatedUrl)
-      .eq('is_free_preview', true)
-      .gte('created_at', oneDayAgo)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      const { data: existingAudits, error: fetchError } = await supabase
+        .from('audits')
+        .select('id, status, created_at')
+        .eq('product_url', validatedUrl)
+        .eq('is_free_preview', true)
+        .gte('created_at', oneDayAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
 
-    if (fetchError) {
-      console.error('Error checking for cached audit:', fetchError)
-      return NextResponse.json(
-        { error: 'Failed to check for existing audits' },
-        { status: 500 },
-      )
-    }
+      if (fetchError) {
+        console.error('Error checking for cached audit:', fetchError)
+        return NextResponse.json(
+          { error: 'Failed to check for existing audits' },
+          { status: 500 },
+        )
+      }
 
-    // If cached audit exists and is already processed or being processed, return it
-    if (existingAudits && existingAudits.length > 0) {
-      const cached = existingAudits[0]
-      return NextResponse.json(
-        {
-          success: true,
-          audit_id: cached.id,
-          cached: true,
-        },
-        { status: 200 },
-      )
+      // If cached audit exists and is already processed or being processed, return it
+      if (existingAudits && existingAudits.length > 0) {
+        const cached = existingAudits[0]
+        return NextResponse.json(
+          {
+            success: true,
+            audit_id: cached.id,
+            cached: true,
+          },
+          { status: 200 },
+        )
+      }
     }
 
     // ────────────────────────────────────────────────────────────
