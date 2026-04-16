@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Manrope } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -11,10 +11,10 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-const manrope = Manrope({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-manrope',
-  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-heading',
+  weight: ['400', '500', '600', '700'],
 })
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
@@ -82,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${inter.variable} ${manrope.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script

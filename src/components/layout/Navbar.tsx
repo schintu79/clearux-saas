@@ -76,12 +76,12 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border/60">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <span className="font-inter font-semibold text-2xl text-text">
+            <span className="font-heading font-bold text-xl tracking-tight text-text">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
@@ -173,8 +173,8 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-medium text-white rounded-full px-5 py-1.5 transition-all hover:shadow-lg hover:-translate-y-0.5"
-                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 12px rgba(124,58,237,.15), 0 2px 6px rgba(236,72,153,.08)' }}
+                  className="text-sm font-semibold text-white rounded-full px-5 py-2 transition-all hover:-translate-y-0.5"
+                  style={{ background: 'var(--gradient-brand)' }}
                 >
                   Sign Up
                 </Link>

@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <h3 className="font-manrope font-bold text-xl mb-3 text-white">
+            <h3 className="font-heading font-bold text-xl mb-3 text-white">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </h3>
             <p className="font-inter text-sm text-white/60 leading-relaxed mb-5">
