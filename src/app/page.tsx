@@ -750,6 +750,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center"><ListChecks size={13} className="text-violet-500" /></div>
                   <span className="text-xs font-semibold text-text">Issue Tracker</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full">Demo</span>
                   <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">67% resolved</span>
                 </div>
                 <div className="space-y-2">
@@ -776,6 +777,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center"><TrendingUp size={13} className="text-violet-500" /></div>
                   <span className="text-xs font-semibold text-text">Score Trend</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full">Demo</span>
                   <span className="ml-auto text-[10px] text-muted">acme.com</span>
                 </div>
                 <div className="space-y-3">

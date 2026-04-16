@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
-            <span className="font-heading font-bold text-xl tracking-tight text-text">
+            <span className="font-heading font-bold text-[1.7rem] tracking-tight text-text">
               Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
             </span>
           </Link>
