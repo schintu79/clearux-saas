@@ -491,6 +491,8 @@ export async function runFullAnalysis(
 
 /**
  * Generate comprehensive report with executive summary and scores
+ * @param depthMode 'deep' = full scoring | 'baseline' = anchor to previous scores
+ * @param previousCategoryScores Previous audit's category scores for baseline anchoring
  */
 export async function generateReport(
   findings: AuditFinding[],
@@ -498,6 +500,8 @@ export async function generateReport(
   pageContent: string,
   userFocus?: string | null,
   language: string = 'en',
+  depthMode: 'deep' | 'baseline' = 'deep',
+  previousCategoryScores?: CategoryScore[],
 ): Promise<ReportData> {
   const criticalCount = findings.filter((f) => f.severity === 'critical').length
   const highCount = findings.filter((f) => f.severity === 'high').length
@@ -594,11 +598,20 @@ For TOP 3 PRIORITY RECOMMENDATIONS:
 SCORE CALIBRATION (CRITICAL FOR RE-AUDITS):
 If a PREVIOUS AUDIT BASELINE with category scores is provided in the content above:
 - Your category scores MUST be calibrated against the previous baseline.
-- For unchanged content, scores should be within 5-10 points of the previous score.
+- For unchanged content, scores should be IDENTICAL or within 3-5 points of the previous score.
 - Score a category HIGHER only if you can identify a specific improvement in the content.
-- Score a category LOWER only if you can identify a specific regression or new issue.
-- Random variation of 15+ points on unchanged content is UNACCEPTABLE.
+- Score a category LOWER only if you can identify a specific, concrete regression.
+- Random variation of more than 5 points on unchanged content is UNACCEPTABLE — it destroys user trust.
 - In the executive summary, note what changed vs what stayed the same.
+- When in doubt, use the SAME score as the previous audit for that category.
+${depthMode === 'baseline' ? `
+DEPTH MODE: BASELINE RE-AUDIT
+This is a baseline re-audit — the user did NOT request deeper analysis.
+- Scores should ONLY go UP (if issues were fixed) or stay the same.
+- Scores must NEVER go DOWN in baseline mode unless content clearly regressed.
+- Use the previous baseline scores as your starting point and only adjust upward for verified fixes.
+- The client expects to see progress, not random fluctuation.
+` : ''}
 
 Return ONLY valid JSON:
 {
@@ -691,6 +704,29 @@ ${categoryExamples}
           summary: c.summary || '',
         }))
       : getDefaultCategoryScores()
+
+    // ── BASELINE MODE: Anchor scores to previous audit ──────────────────
+    // In baseline mode, scores should only go UP (fixes) or stay the same.
+    // We use the previous scores as a floor and only increase when findings
+    // were resolved. This prevents AI randomness from causing regressions.
+    if (depthMode === 'baseline' && previousCategoryScores && previousCategoryScores.length > 0) {
+      const prevMap = new Map(previousCategoryScores.map(c => [c.name.toLowerCase(), c]))
+      for (let i = 0; i < categoryScores.length; i++) {
+        const prevCat = prevMap.get(categoryScores[i].name.toLowerCase())
+        if (prevCat) {
+          // In baseline mode: score can only go UP or stay the same
+          // If AI scored LOWER than previous, use the previous score (no regression allowed)
+          // If AI scored HIGHER, allow it (but cap the increase to +15 per re-audit to avoid jumps)
+          const prevScore = prevCat.score
+          if (categoryScores[i].score < prevScore) {
+            categoryScores[i].score = prevScore // Floor: no regression in baseline mode
+          } else if (categoryScores[i].score > prevScore + 15) {
+            categoryScores[i].score = prevScore + 15 // Cap big jumps
+          }
+        }
+      }
+      console.log('[generateReport] Baseline mode: anchored category scores to previous audit')
+    }
 
     // CALCULATE scores from category data — don't trust AI's arbitrary numbers
     // Pillars: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11), Future Readiness (12-15)

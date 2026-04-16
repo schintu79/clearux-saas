@@ -251,6 +251,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
       const userId = (auditOwner as any)?.user_id
 
       let userContext = ''
+      let previousCategoryScores: Array<{ name: string; score: number; summary: string }> = []
       if (domain && userId) {
         // Fetch site notes + previous audit ID in parallel
         const [siteNotesRes, prevAuditsRes] = await Promise.all([
@@ -259,8 +260,9 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
             .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
             .order('created_at', { ascending: false }).limit(20),
           noteDb.from('audits')
-            .select('id').eq('user_id', userId).neq('id', auditId)
-            .eq('status', 'completed').order('completed_at', { ascending: false }).limit(1),
+            .select('id, product_url').eq('user_id', userId).neq('id', auditId)
+            .eq('status', 'completed').ilike('product_url', `%${domain}%`)
+            .order('completed_at', { ascending: false }).limit(1),
         ])
 
         // Site notes (dismissals, context, discussions)
@@ -290,6 +292,12 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
             const prevReport = prevReportRes.data as any
             const prevCatScores = prevReport.raw_json?.categoryScores
             if (Array.isArray(prevCatScores) && prevCatScores.length > 0) {
+              // Store for deterministic baseline anchoring in generateReport
+              previousCategoryScores = prevCatScores.map((c: any) => ({
+                name: c.name as string,
+                score: c.score as number,
+                summary: (c.summary || '') as string,
+              }))
               const scoreLines = prevCatScores.map((c: any) => `  ${c.name}: ${c.score}/100`)
               userContext += `\n\nPREVIOUS AUDIT BASELINE (overall: ${prevReport.overall_score}/100):
 ${scoreLines.join('\n')}
@@ -338,7 +346,7 @@ RULES FOR RE-AUDIT:
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
-      return { context: fullContext, effectiveDepthMode }
+      return { context: fullContext, effectiveDepthMode, previousCategoryScores }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -579,6 +587,8 @@ RULES FOR RE-AUDIT:
         reportContentWithContext,
         auditDetails.userFocus,
         auditDetails.language,
+        effectiveDepthMode,
+        siteContext.previousCategoryScores,
       )
 
       const severityCount = {

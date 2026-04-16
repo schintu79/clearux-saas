@@ -1222,9 +1222,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-4">
-        <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors">
+        <Link href="/dashboard/audits" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors">
           <ArrowLeft size={16} />
-          Dashboard
+          All Audits
         </Link>
         <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-red-800 dark:text-red-300 text-sm">{error || 'Audit not found'}</p>
@@ -1296,11 +1296,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     <div className="max-w-4xl mx-auto py-4 px-4">
       {/* Back */}
       <Link
-        href="/dashboard"
+        href="/dashboard/audits"
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        Dashboard
+        All Audits
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}
