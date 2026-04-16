@@ -587,22 +587,23 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Primary headline — semibold, with "Powered by AI" scribble underline */}
+          {/* Primary headline — outcome-first for cold traffic */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
-            Professional <span className="relative inline-block"><span className="relative z-10">UX Audits</span><span className="absolute -inset-x-2 inset-y-0 rounded-lg bg-gradient-to-r from-violet-400/15 via-pink-400/10 to-amber-400/8 -z-0" aria-hidden="true" /></span>,<br className="hidden sm:block" />
+            Consultant-Grade{' '}<span className="relative inline-block"><span className="relative z-10">UX Audits</span><span className="absolute -inset-x-2 inset-y-0 rounded-lg bg-gradient-to-r from-violet-400/15 via-pink-400/10 to-amber-400/8 -z-0" aria-hidden="true" /></span><br className="hidden sm:block" />
+            in Minutes, Not{' '}
             <span className="relative inline-block">
-              Powered by AI
+              Weeks
               <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
             </span>
           </h1>
 
-          {/* Outcome-focused subheading — more space */}
+          {/* Outcome subheading — rotating word shows breadth */}
           <p className="animate-fade-up delay-200 text-[1.7rem] text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
-            Discover the issues impacting{' '}<RotatingWord />
+            Find the issues impacting{' '}<RotatingWord />
           </p>
 
-          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-md mx-auto" style={{ lineHeight: '1.7' }}>
-            64 checkpoints across accessibility, ethics, AI readiness, and conversion. Consultant-grade results in minutes, not weeks.
+          <p className="animate-fade-up delay-300 text-sm text-muted/70 mb-12 sm:mb-14 max-w-lg mx-auto" style={{ lineHeight: '1.7' }}>
+            64 AI-powered checkpoints across accessibility, ethics, AI readiness, and conversion. At a fraction of the cost of hiring a consultant.
           </p>
 
           {/* Single focal CTA — URL Input */}

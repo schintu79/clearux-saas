@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowLeft, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
@@ -526,14 +526,18 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-6">
-                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
-                  <ArrowLeft size={16} /> Home
-                </Link>
-                <span className="text-white/20">|</span>
-                <Link href="/pricing" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
-                  Pricing <ArrowRight size={16} />
-                </Link>
+              {/* Secondary CTA for hesitant users */}
+              <div className="mt-6 pt-5 border-t border-white/10">
+                <p className="text-xs text-white/40 mb-3">Not ready to sign up?</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    See how it works <ArrowRight size={14} />
+                  </Link>
+                  <span className="text-white/15">|</span>
+                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    View pricing <ArrowRight size={14} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

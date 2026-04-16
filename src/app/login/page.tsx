@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowLeft, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowRight } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
@@ -16,9 +16,9 @@ const loginSchema = z.object({
 })
 
 const kspItems = [
-  { icon: TrendingUp, text: 'Your audits, findings, and reports are waiting' },
-  { icon: Clock, text: 'Credits never expire — audit whenever you need' },
   { icon: Shield, text: 'Your data is encrypted and never shared' },
+  { icon: Clock, text: 'Credits never expire — audit whenever you need' },
+  { icon: TrendingUp, text: 'Track fixes, re-audit, and prove improvement' },
 ]
 
 export default function LoginPage() {
@@ -325,14 +325,18 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-6">
-                <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
-                  <ArrowLeft size={16} /> Home
-                </Link>
-                <span className="text-white/20">|</span>
-                <Link href="/pricing" className="flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white transition-colors">
-                  Pricing <ArrowRight size={16} />
-                </Link>
+              {/* Secondary CTA for hesitant users */}
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <p className="text-xs text-white/40 mb-3">Not ready to sign in?</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    See how it works <ArrowRight size={14} />
+                  </Link>
+                  <span className="text-white/15">|</span>
+                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                    View pricing <ArrowRight size={14} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

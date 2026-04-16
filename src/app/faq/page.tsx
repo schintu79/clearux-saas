@@ -185,26 +185,32 @@ export default function FaqPage() {
         </section>
 
         {/* FAQ Sections */}
-        {visibleSections.map((section) => (
-          <section key={section.title} className="px-4 sm:px-6 lg:px-8 pb-10">
+        {visibleSections.map((section, sIdx) => (
+          <section key={section.title} className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-12' : 'pb-10'}`}>
             <div className="max-w-3xl mx-auto">
               {activeTab === TAB_ALL && (
-                <h2 className="font-heading font-semibold text-xl text-text mb-5 pb-3 border-b border-border/30 dark:border-white/[0.04]">
-                  {section.title}
-                </h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="font-heading font-semibold text-xl text-text">
+                    {section.title}
+                  </h2>
+                  <span className="text-[11px] font-semibold text-muted/50 bg-off dark:bg-white/[0.04] px-2.5 py-1 rounded-full">
+                    {section.items.length} questions
+                  </span>
+                  <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+                </div>
               )}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {section.items.map((faq, i) => (
                   <details
                     key={i}
                     className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden"
                   >
                     <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
-                      <h3 className="font-medium text-text text-sm pr-4">{faq.q}</h3>
+                      <h3 className="font-medium text-text text-[15px] pr-4">{faq.q}</h3>
                       <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
                     </summary>
                     <div className="mx-5 pb-5 pt-1 border-t border-border/20 dark:border-white/[0.04]">
-                      <p className="text-muted text-sm leading-relaxed pt-4">{faq.a}</p>
+                      <p className="text-muted text-sm leading-[1.75] pt-4">{faq.a}</p>
                     </div>
                   </details>
                 ))}
