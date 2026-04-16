@@ -555,10 +555,13 @@ export default function Home() {
           <DoodleArrowDown className="animate-fade-up delay-300 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
           <Sparkle className="animate-fade-up delay-400 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* Primary headline — passes the 5-second test */}
-          <h1 className="animate-fade-up font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] tracking-tight mb-5" style={{ lineHeight: '1.08' }}>
+          {/* Primary headline — bolder, with "Powered by AI" underlined */}
+          <h1 className="animate-fade-up font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-5" style={{ lineHeight: '1.08' }}>
             Professional UX Audits,<br className="hidden sm:block" />
-            Powered by AI
+            <span className="relative inline-block">
+              Powered by AI
+              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+            </span>
           </h1>
 
           {/* Outcome-focused subheading */}
@@ -598,48 +601,76 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Trust signals — minimal */}
-          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted">
-            <span>No credit card required</span>
-            <span className="opacity-30">·</span>
-            <span>Results in under 10 minutes</span>
-            <span className="opacity-30">·</span>
-            <span>Free first audit</span>
+          {/* Trust signals — smaller, bolder */}
+          <p className="animate-fade-up delay-400 text-xs font-semibold tracking-wide text-muted/70 uppercase mb-8">
+            No credit card required · Results in under 10 minutes · Free first audit
+          </p>
+
+          {/* Social proof widget */}
+          <div className="animate-fade-up delay-500 flex items-center justify-center gap-3">
+            {/* Stacked avatars */}
+            <div className="flex -space-x-2.5">
+              {['MW', 'SC', 'JK', 'DT'].map((initials, i) => {
+                const colors = [
+                  'from-violet-500 to-purple-600',
+                  'from-pink-500 to-rose-600',
+                  'from-amber-500 to-orange-500',
+                  'from-emerald-500 to-teal-600',
+                ];
+                return (
+                  <div
+                    key={initials}
+                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-off dark:ring-surface-alt`}
+                  >
+                    {initials}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <p className="text-xs text-muted mt-0.5">
+                Trusted by <span className="font-semibold text-text">500+</span> product teams
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TRUST STRIP — Clean, minimal
+          TRUST STRIP — Compact, visual break with doodle
           ═══════════════════════════════════════════════════════ */}
-      <section className="border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-5">
+      <section className="relative border-b border-border bg-surface">
+        <Squiggle className="hidden lg:block absolute top-1/2 -translate-y-1/2 right-[4%]" color="var(--color-future)" />
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-muted">
             <div className="flex items-center gap-2">
-              <Lock size={15} />
-              <span className="text-sm font-medium">SSL Encrypted</span>
+              <Lock size={14} className="opacity-60" />
+              <span className="text-xs font-semibold uppercase tracking-wider">SSL Encrypted</span>
             </div>
-            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="w-px h-3 bg-border hidden sm:block" />
             <div className="flex items-center gap-2">
-              <Shield size={15} />
-              <span className="text-sm font-medium">GDPR Compliant</span>
+              <Shield size={14} className="opacity-60" />
+              <span className="text-xs font-semibold uppercase tracking-wider">GDPR Compliant</span>
             </div>
-            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="w-px h-3 bg-border hidden sm:block" />
             <div className="flex items-center gap-2">
-              <CreditCard size={15} />
-              <span className="text-sm font-medium">Secure Payments via Stripe</span>
+              <CreditCard size={14} className="opacity-60" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Stripe Payments</span>
             </div>
-            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="w-px h-3 bg-border hidden sm:block" />
             <div className="flex items-center gap-2">
-              <Clock size={15} />
-              <span className="text-sm font-medium">Credits Never Expire</span>
+              <Clock size={14} className="opacity-60" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Credits Never Expire</span>
             </div>
           </div>
+          <p className="text-center text-[11px] text-muted/60 mt-3">Your website data is never stored or shared — only your report.</p>
         </div>
       </section>
-      <div className="py-3 text-center bg-surface">
-        <p className="text-sm text-muted">Your website data is never stored or shared — only your report.</p>
-      </div>
 
       {/* ═══════════════════════════════════════════════════════
           FEATURES + STATS
