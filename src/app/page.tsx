@@ -589,10 +589,14 @@ export default function Home() {
 
           {/* Primary headline — outcome-first for cold traffic */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-6" style={{ lineHeight: '1.08' }}>
-            Consultant-Grade <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits</span>{' '}in Minutes, Not{' '}
-            <span className="relative inline-block">
-              Weeks
-              <UnderlineScribble className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+            Consultant-Grade <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits</span>
+            <br />
+            <span className="text-[0.7em] text-muted">
+              in Minutes, Not{' '}
+              <span className="relative inline-block">
+                Weeks
+                <UnderlineScribble className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
+              </span>
             </span>
           </h1>
 
