@@ -888,12 +888,12 @@ function PillarSection({
               {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'text-white' })}
             </div>
             <div>
-              <h2 className="font-body font-semibold text-lg text-text">{pillar.name}</h2>
+              <h2 className="font-heading font-semibold text-lg text-text">{pillar.name}</h2>
               <p className="text-xs text-muted">{pillarCats.length} {L.categoriesEvaluated}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className={`text-2xl font-bold font-body ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className={`text-2xl font-bold font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
             <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
@@ -1442,7 +1442,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold font-body text-text mb-1 truncate">
+          <h1 className="text-2xl font-bold font-heading text-text mb-1 truncate">
             {formatUrl(audit.product_url)}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
@@ -1698,7 +1698,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-                    <h2 className="text-xl font-bold font-body text-text">{L.overallScore}</h2>
+                    <h2 className="text-xl font-bold font-heading text-text">{L.overallScore}</h2>
                     <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
                       (calculatedOverallScore) >= 70
                         ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
@@ -1933,7 +1933,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Executive Summary */}
               {report.executive_summary && (
                 <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-body font-semibold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
+                  <h2 className="font-heading font-semibold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>

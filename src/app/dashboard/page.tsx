@@ -69,7 +69,7 @@ function OnboardingBanner() {
     <div className="mb-5 rounded-xl border border-brand/20 dark:border-brand/10 p-5" style={{ background: 'var(--gradient-brand-subtle)' }}>
       <div className="flex items-center gap-2 mb-4">
         <Sparkles size={18} className="text-brand" />
-        <h2 className="font-body font-semibold text-base text-text">Welcome to ClearUX</h2>
+        <h2 className="font-heading font-semibold text-base text-text">Welcome to ClearUX</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
@@ -290,7 +290,7 @@ function DashboardInner() {
 
       {/* ── New Audit CTA — full width, homepage style ── */}
       <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-body font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
           <Sparkles size={18} />
           Run a New Audit
           <ArrowRight size={18} />

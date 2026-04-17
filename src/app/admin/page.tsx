@@ -60,7 +60,7 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-body font-semibold text-2xl text-text">Admin Dashboard</h1>
+        <h1 className="font-heading font-semibold text-2xl text-text">Admin Dashboard</h1>
         <p className="text-sm text-muted mt-1">Platform overview and quick actions</p>
       </div>
 
@@ -90,7 +90,7 @@ export default function AdminOverviewPage() {
       {/* Audits by status */}
       {Object.keys(stats.auditsByStatus).length > 0 && (
         <div className="bg-card border border-border rounded-xl p-5">
-          <h2 className="font-body font-semibold text-sm text-text mb-4">Audits by Status</h2>
+          <h2 className="font-heading font-semibold text-sm text-text mb-4">Audits by Status</h2>
           <div className="flex flex-wrap gap-2">
             {Object.entries(stats.auditsByStatus).map(([status, count]) => (
               <span
@@ -109,7 +109,7 @@ export default function AdminOverviewPage() {
         {/* Recent users */}
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-body font-semibold text-sm text-text">Recent Users</h2>
+            <h2 className="font-heading font-semibold text-sm text-text">Recent Users</h2>
             <Link href="/admin/users" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
           </div>
           <div className="space-y-2.5">
@@ -133,7 +133,7 @@ export default function AdminOverviewPage() {
         {/* Recent audits */}
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-body font-semibold text-sm text-text">Recent Audits</h2>
+            <h2 className="font-heading font-semibold text-sm text-text">Recent Audits</h2>
             <Link href="/admin/audits" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
           </div>
           <div className="space-y-2.5">
