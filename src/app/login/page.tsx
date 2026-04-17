@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowRight, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
@@ -136,12 +136,22 @@ export default function LoginPage() {
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
-      <div className="mb-8">
-        <h2 className="text-2xl font-heading font-semibold text-text mb-2">
-          Sign in
+      {/* Brand wordmark — mobile + desktop form */}
+      <Link href="/" className="inline-block mb-6 lg:hidden">
+        <span className="text-2xl font-heading font-semibold text-text">
+          Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+        </span>
+      </Link>
+
+      <div className="mb-6">
+        <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
+          Get Back to Your UX Insights
         </h2>
         <p className="text-sm text-muted">
-          Enter your credentials to access your dashboard
+          Sign in to access your dashboard, track fixes, and run new audits.
+        </p>
+        <p className="text-xs text-muted/60 mt-2">
+          64-point analysis · Actionable findings · Impact-ranked recommendations
         </p>
       </div>
 
@@ -270,8 +280,24 @@ export default function LoginPage() {
       {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
       <div className="lg:hidden min-h-screen bg-surface flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {formContent}
+        </div>
+        {/* Mobile footer nav */}
+        <div className="border-t border-border/30 dark:border-white/[0.06] px-4 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
+            <Link href="/" className="hover:text-text transition-colors font-medium flex items-center gap-1">
+              <ArrowLeft size={12} /> Back to Home
+            </Link>
+            <span className="text-border">|</span>
+            <Link href="/pricing" className="hover:text-text transition-colors">Pricing</Link>
+            <span className="text-border">|</span>
+            <Link href="/about" className="hover:text-text transition-colors">About</Link>
+            <span className="text-border">|</span>
+            <Link href="/faq" className="hover:text-text transition-colors">FAQ</Link>
+            <span className="text-border">|</span>
+            <Link href="/contact" className="hover:text-text transition-colors">Contact</Link>
+          </div>
         </div>
       </div>
 
@@ -295,7 +321,7 @@ export default function LoginPage() {
                   Welcome back
                 </h2>
                 <p className="text-sm text-white/70 leading-relaxed max-w-[320px]">
-                  Pick up right where you left off. Your UX insights are ready and waiting.
+                  Pick up where you left off. Your UX insights, tracked fixes, and score trends are ready and waiting.
                 </p>
 
                 <div className="mt-8 space-y-5">

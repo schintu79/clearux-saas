@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Search, ChevronDown, HelpCircle, BookOpen, Brain, CreditCard, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+
+/* ── FAQ Data ───────────────────────────────────────────────── */
 
 const FAQ_SECTIONS = [
   {
     title: 'General',
+    icon: HelpCircle,
     items: [
       {
         q: 'How long does an audit take?',
@@ -46,6 +49,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Audit & AI',
+    icon: BookOpen,
     items: [
       {
         q: 'How does the AI analysis work?',
@@ -71,6 +75,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'How Our AI Works',
+    icon: Brain,
     items: [
       {
         q: 'What AI powers the audits?',
@@ -92,6 +97,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Account & Billing',
+    icon: CreditCard,
     items: [
       {
         q: 'How do credits work?',
@@ -117,6 +123,7 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Trust & Accuracy',
+    icon: ShieldCheck,
     items: [
       {
         q: 'Is ClearUX 100% accurate?',
@@ -140,10 +147,76 @@ const FAQ_SECTIONS = [
 
 const TAB_ALL = 'All';
 
+/* ── Accordion Item ──────────────────────────────────────────── */
+
+function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
+  return (
+    <div className="border border-border/40 dark:border-white/[0.06] rounded-xl overflow-hidden bg-card">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-start gap-3 p-5 text-left hover:bg-surface-alt/40 dark:hover:bg-white/[0.02] transition-colors"
+        aria-expanded={isOpen}
+      >
+        <span className="flex-1 font-semibold text-text text-[15px] leading-snug">{q}</span>
+        <ChevronDown
+          size={16}
+          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {isOpen && (
+        <div className="px-5 pb-5 pt-0">
+          <div className="border-t border-border/20 dark:border-white/[0.04] pt-4">
+            <p className="text-muted text-sm leading-[1.8]">{a}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main Page ───────────────────────────────────────────────── */
+
 export default function FaqPage() {
   const [activeTab, setActiveTab] = useState(TAB_ALL);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+
   const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)];
-  const visibleSections = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
+
+  // Filter sections by tab and search
+  const { visibleSections, totalVisible } = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    const tabFiltered = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
+
+    if (!query) {
+      const total = tabFiltered.reduce((sum, s) => sum + s.items.length, 0);
+      return { visibleSections: tabFiltered, totalVisible: total };
+    }
+
+    const filtered = tabFiltered.map(section => ({
+      ...section,
+      items: section.items.filter(
+        item => item.q.toLowerCase().includes(query) || item.a.toLowerCase().includes(query)
+      ),
+    })).filter(section => section.items.length > 0);
+
+    const total = filtered.reduce((sum, s) => sum + s.items.length, 0);
+    return { visibleSections: filtered, totalVisible: total };
+  }, [activeTab, searchQuery]);
+
+  const toggleItem = (key: string) => {
+    setOpenItems(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
 
   return (
     <div className="flex flex-col min-h-screen bg-surface">
@@ -151,10 +224,10 @@ export default function FaqPage() {
 
       <main id="main-content" className="flex-1">
         {/* Header */}
-        <section className="pt-20 pb-6 px-4 sm:px-6 lg:px-8">
+        <section className="pt-20 pb-4 px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-4" style={{ lineHeight: '1.1' }}>
-              Frequently asked questions
+              Frequently Asked Questions
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg mx-auto">
               Everything you need to know about ClearUX audits, pricing, and reports.
@@ -162,62 +235,116 @@ export default function FaqPage() {
           </div>
         </section>
 
-        {/* Tabs */}
+        {/* Search Box */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search FAQs..."
+                className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/40 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-xs text-muted mt-2 text-center">
+                {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
+                {activeTab !== TAB_ALL && ` in ${activeTab}`}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Category Tabs */}
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           <div className="max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-2 justify-center">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-xs font-semibold px-4 py-2 rounded-full transition-all ${
-                    activeTab === tab
-                      ? 'text-white shadow-sm'
-                      : 'text-muted bg-off/60 dark:bg-white/[0.04] hover:bg-off dark:hover:bg-white/[0.06]'
-                  }`}
-                  style={activeTab === tab ? { background: 'var(--gradient-brand)' } : undefined}
-                >
-                  {tab}
-                </button>
-              ))}
+              {tabs.map((tab) => {
+                const section = FAQ_SECTIONS.find(s => s.title === tab);
+                const SectionIcon = section?.icon;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
+                    className={`text-xs font-semibold px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
+                      activeTab === tab
+                        ? 'text-white shadow-sm'
+                        : 'text-muted bg-off/60 dark:bg-white/[0.04] hover:bg-off dark:hover:bg-white/[0.06]'
+                    }`}
+                    style={activeTab === tab ? { background: 'var(--gradient-brand)' } : undefined}
+                  >
+                    {SectionIcon && <SectionIcon size={12} />}
+                    {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* FAQ Sections */}
-        {visibleSections.map((section, sIdx) => (
-          <section key={section.title} className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-12' : 'pb-10'}`}>
-            <div className="max-w-3xl mx-auto">
-              {activeTab === TAB_ALL && (
-                <div className="flex items-center gap-3 mb-6">
-                  <h2 className="font-heading font-semibold text-xl text-text">
-                    {section.title}
-                  </h2>
-                  <span className="text-[11px] font-semibold text-muted/50 bg-off dark:bg-white/[0.04] px-2.5 py-1 rounded-full">
-                    {section.items.length} questions
-                  </span>
-                  <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
-                </div>
-              )}
-              <div className="space-y-2.5">
-                {section.items.map((faq, i) => (
-                  <details
-                    key={i}
-                    className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden"
-                  >
-                    <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
-                      <h3 className="font-medium text-text text-[15px] pr-4">{faq.q}</h3>
-                      <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
-                    </summary>
-                    <div className="mx-5 pb-5 pt-1 border-t border-border/20 dark:border-white/[0.04]">
-                      <p className="text-muted text-sm leading-[1.75] pt-4">{faq.a}</p>
-                    </div>
-                  </details>
-                ))}
-              </div>
+        {visibleSections.length === 0 ? (
+          <section className="px-4 sm:px-6 lg:px-8 pb-10">
+            <div className="max-w-3xl mx-auto text-center py-12">
+              <Search size={24} className="text-muted mx-auto mb-3" />
+              <p className="text-text font-medium text-sm mb-1">No results found</p>
+              <p className="text-muted text-xs">
+                Try a different search term, or{' '}
+                <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-text transition-colors">
+                  browse all questions
+                </button>
+              </p>
             </div>
           </section>
-        ))}
+        ) : (
+          visibleSections.map((section, sIdx) => (
+            <section key={section.title} className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}>
+              <div className="max-w-3xl mx-auto">
+                {/* Section header */}
+                {(activeTab === TAB_ALL || searchQuery) && (
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+                      <section.icon size={14} className="text-white" />
+                    </div>
+                    <h2 className="font-heading font-semibold text-lg text-text">
+                      {section.title}
+                    </h2>
+                    <span className="text-[11px] font-semibold text-muted/50 bg-off dark:bg-white/[0.04] px-2.5 py-1 rounded-full">
+                      {section.items.length}
+                    </span>
+                    <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+                  </div>
+                )}
+
+                {/* Accordion items */}
+                <div className="space-y-2.5">
+                  {section.items.map((faq, i) => {
+                    const key = `${section.title}-${i}`;
+                    return (
+                      <FaqItem
+                        key={key}
+                        q={faq.q}
+                        a={faq.a}
+                        isOpen={openItems.has(key)}
+                        onToggle={() => toggleItem(key)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          ))
+        )}
 
         {/* CTA */}
         <section className="px-4 sm:px-6 lg:px-8 pb-20">

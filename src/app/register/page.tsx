@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowRight, ArrowLeft } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
@@ -217,14 +217,24 @@ export default function RegisterPage() {
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
+      {/* Brand wordmark — mobile + desktop form */}
+      <Link href="/" className="inline-block mb-6 lg:hidden">
+        <span className="text-2xl font-heading font-semibold text-text">
+          Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+        </span>
+      </Link>
+
       <div className="mb-6">
-        <h2 className="text-2xl font-heading font-semibold text-text mb-1">
-          Create your account
+        <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
+          Start Your Free UX Audit
         </h2>
         <p className="text-sm text-muted">
           {pendingUrl
-            ? 'Sign up to run your first audit \u2014 it\u2019s free. No credit card required.'
-            : 'Sign up to access your audit dashboard and start improving.'}
+            ? 'Create your account to run your first audit \u2014 free, no credit card required.'
+            : 'Sign up to get consultant-grade UX insights in under 10 minutes.'}
+        </p>
+        <p className="text-xs text-muted/60 mt-2">
+          64-point analysis · Actionable findings · Impact-ranked recommendations
         </p>
       </div>
 
@@ -431,12 +441,23 @@ export default function RegisterPage() {
       <div className="lg:hidden min-h-screen bg-surface flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-          {/* Slim value banner on mobile */}
-          <div className="w-full max-w-[380px] mb-5 p-3.5 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/30 dark:border-violet-800/20 text-center">
-            <p className="text-sm font-semibold text-text">Your first audit is free</p>
-            <p className="text-[11px] text-muted mt-0.5">64-point analysis · No credit card · Results in minutes</p>
-          </div>
           {formContent}
+        </div>
+        {/* Mobile footer nav */}
+        <div className="border-t border-border/30 dark:border-white/[0.06] px-4 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
+            <Link href="/" className="hover:text-text transition-colors font-medium flex items-center gap-1">
+              <ArrowLeft size={12} /> Back to Home
+            </Link>
+            <span className="text-border">|</span>
+            <Link href="/pricing" className="hover:text-text transition-colors">Pricing</Link>
+            <span className="text-border">|</span>
+            <Link href="/about" className="hover:text-text transition-colors">About</Link>
+            <span className="text-border">|</span>
+            <Link href="/faq" className="hover:text-text transition-colors">FAQ</Link>
+            <span className="text-border">|</span>
+            <Link href="/contact" className="hover:text-text transition-colors">Contact</Link>
+          </div>
         </div>
       </div>
 
