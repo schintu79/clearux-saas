@@ -622,6 +622,11 @@ article, .prose {
   50%      { transform: scale(1.02); }
 }
 
+@keyframes gridMove {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(60px, 60px); }
+}
+
 @keyframes gridSweepX {
   0%   { left: -5%; }
   100% { left: 105%; }
@@ -647,6 +652,7 @@ article, .prose {
 .delay-400 { animation-delay: 400ms; }
 .delay-500 { animation-delay: 500ms; }
 .delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
 .delay-700 { animation-delay: 700ms; }
 .delay-800 { animation-delay: 800ms; }
 

@@ -423,6 +423,16 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden">
 
+        {/* Animated grid background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(185,255,102,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.04) 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+            animation: 'gridMove 20s linear infinite',
+          }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#111111] via-transparent to-[#111111]" />
+        </div>
+
         <div className="max-w-5xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20">
 
           {/* Primary headline — price anchor, 2 rows */}
@@ -439,8 +449,8 @@ export default function Home() {
             64 checkpoints across accessibility, ethical UX, conversion, and AI-agent readiness — delivered in minutes.
           </p>
 
-          {/* Single focal CTA — URL Input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-10">
+          {/* Single focal CTA — URL Input (wider) */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-2xl mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -466,24 +476,27 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Scroll indicator scribble */}
+          {/* Lime scribbled arrow pointing down */}
           <button
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="animate-fade-up delay-600 mx-auto flex flex-col items-center gap-2 text-white/30 hover:text-white/60 transition-colors cursor-pointer mb-8"
+            className="animate-fade-up delay-600 mx-auto flex flex-col items-center gap-1 hover:scale-110 transition-transform cursor-pointer mb-8"
             aria-label="Scroll to features"
           >
-            <svg width="28" height="40" viewBox="0 0 28 40" fill="none" className="animate-float">
-              <path d="M14 2C14 2 6 8 6 14C6 18 8 22 14 22C20 22 22 18 22 14C22 8 14 2 14 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-              <path d="M14 16V28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M10 24L14 28L18 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="32" height="48" viewBox="0 0 32 48" fill="none" className="animate-float">
+              <path d="M16 4C15 8 14 12 15 18C16 24 17 28 16 34" stroke="#B9FF66" strokeWidth="2" strokeLinecap="round" fill="none" style={{ filter: 'url(#scribble)' }} />
+              <path d="M8 28C11 31 14 35 16 38C18 35 21 31 24 28" stroke="#B9FF66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path d="M10 30C12 32 14 36 16 39C18 36 20 32 22 30" stroke="#B9FF66" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.4" />
+              <defs>
+                <filter id="scribble">
+                  <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+                </filter>
+              </defs>
             </svg>
           </button>
 
-        </div>
-
-        {/* Trust KSPs at bottom of hero */}
-        <div className="relative z-10 pb-10 pt-4">
-          <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+          {/* Trust KSPs — visible without scrolling */}
+          <div className="animate-fade-up delay-700 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 mb-6">
             <div className="flex items-center gap-2.5">
               <Zap size={18} className="text-white" />
               <span className="text-sm font-semibold text-white">Results in minutes</span>
@@ -499,6 +512,7 @@ export default function Home() {
               <span className="text-sm font-semibold text-white">Credits never expire</span>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -759,66 +773,43 @@ export default function Home() {
                   <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={16} className="text-text" /> <span>PDF & Word exports</span></div>
                 </div>
               </div>
-              {/* Visual mock — overall score + 4 pillar cards */}
-              <div aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="rounded-xl border border-border bg-card overflow-hidden mb-3">
-                  <div className="h-0.5 bg-brand" />
-                  <div className="p-4 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-bold text-emerald-500">93</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Eye size={12} className="text-muted" />
-                        <span className="text-[10px] text-muted">Shared audit report</span>
-                        <span className="text-[8px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">DEMO</span>
-                      </div>
-                      <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
-                      <p className="text-[11px] text-muted">Excellent | 6 issues found</p>
-                    </div>
+              {/* Visual mock — clean shared report card */}
+              <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Share2 size={18} className="text-text" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Shared Report</p>
+                    <p className="text-xs text-muted">acme.com</p>
+                  </div>
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
+                </div>
+
+                <div className="flex items-center gap-5 mb-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                  <div className="w-16 h-16 rounded-full border-[3px] border-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <span className="font-heading text-2xl font-bold text-emerald-500">78</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-text mb-1">Overall UX Score</p>
+                    <p className="text-xs text-muted">6 findings across 4 pillars</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-brand to-brand', iconBg: 'bg-brand',
-                    cats: [{ n: 'Visual Design & First Impression', s: 35 }, { n: 'Value Proposition & Messaging', s: 83 }, { n: 'Navigation & Info Architecture', s: 95 }, { n: 'Content Quality & Readability', s: 73 }] },
-                  { name: 'Human Experience', score: 95, label: 'Excellent', icon: Heart, gradient: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-500',
-                    cats: [{ n: 'Calls-to-Action & Conversion', s: 100 }, { n: 'Trust & Social Proof', s: 95 }, { n: 'Ethical UX & Dark Patterns', s: 94 }, { n: 'Emotional Design & Safety', s: 91 }] },
-                  { name: 'Inclusive Design', score: 98, label: 'Excellent', icon: Accessibility, gradient: 'from-amber-500 to-amber-600', iconBg: 'bg-amber-500',
-                    cats: [{ n: 'Accessibility & WCAG', s: 100 }, { n: 'Cognitive Accessibility', s: 96 }, { n: 'Digital Wellbeing', s: 100 }, { n: 'Mobile & Responsive', s: 98 }] },
-                  { name: 'Future Readiness', score: 94, label: 'Excellent', icon: Brain, gradient: 'from-emerald-500 to-emerald-600', iconBg: 'bg-emerald-500',
-                    cats: [{ n: 'Performance & Technical', s: 100 }, { n: 'AI Discoverability', s: 92 }, { n: 'AI Agent Readiness', s: 96 }, { n: 'Cultural Sensitivity', s: 87 }] },
-                ].map((pillar) => (
-                  <div key={pillar.name} className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="px-3.5 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
-                          <pillar.icon size={13} className="text-white" />
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-text">{pillar.name}</p>
-                          <p className="text-[9px] text-muted">4 categories</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-lg font-bold leading-none ${pillar.score >= 70 ? 'text-emerald-500' : pillar.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'}`}>{pillar.score}</p>
-                        <p className="text-[8px] text-muted">{pillar.label}</p>
-                      </div>
+                <div className="space-y-3 mb-6">
+                  {[{l:'Foundation',s:72},{l:'Human Experience',s:95},{l:'Inclusive Design',s:64},{l:'Future Readiness',s:82}].map(p=>(
+                    <div key={p.l} className="flex items-center gap-3">
+                      <span className="text-xs text-muted w-[120px]">{p.l}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${p.s}%`}} /></div>
+                      <span className="text-xs font-bold text-text w-6 text-right">{p.s}</span>
                     </div>
-                    <div className="px-3.5 pb-3 space-y-1.5">
-                      {pillar.cats.map((cat) => (
-                        <div key={cat.n} className="flex items-center gap-2">
-                          <span className="text-[9px] text-muted truncate flex-1">{cat.n}</span>
-                          <div className="w-12 h-1 rounded-full bg-off dark:bg-white/[0.06] overflow-hidden flex-shrink-0">
-                            <div className={`h-full rounded-full ${cat.s >= 70 ? 'bg-emerald-500' : cat.s >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${cat.s}%` }} />
-                          </div>
-                          <span className={`text-[10px] font-bold w-5 text-right flex-shrink-0 ${cat.s >= 70 ? 'text-emerald-500' : cat.s >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'}`}>{cat.s}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3 pt-5 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 text-xs text-muted"><Link2 size={12} /> Read-only link</div>
+                  <span className="text-border">|</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted"><Lock size={12} /> Revocable</div>
+                  <span className="text-border hidden sm:block">|</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted hidden sm:flex"><Download size={12} /> PDF export</div>
                 </div>
               </div>
             </div>
@@ -831,47 +822,92 @@ export default function Home() {
           WHY CLEARUX — Competitor differentiation
           ═══════════════════════════════════════════════════════ */}
       <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-10 tracking-tight" style={{ lineHeight: '1.1' }}>
-            Why ClearUX
-          </h2>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-          <div className="space-y-6 mb-10">
-            <p className="text-muted text-base leading-relaxed">
-              <span className="font-semibold text-text">User-behavior tools</span> (Hotjar, Maze, FullStory) show you what users did. They don&apos;t tell you what&apos;s wrong with your design.
-            </p>
-            <p className="text-muted text-base leading-relaxed">
-              <span className="font-semibold text-text">Accessibility scanners</span> (axe, WAVE, Lighthouse) catch WCAG violations. They miss dark patterns, cognitive load, and AI-agent readiness entirely.
-            </p>
-            <p className="text-muted text-base leading-relaxed">
-              <span className="font-semibold text-text">UX consultants</span> deliver depth. They also cost $5K&ndash;15K and take weeks.
-            </p>
-          </div>
-
-          <p className="text-text font-semibold text-lg mb-5">ClearUX is the only audit that combines:</p>
-          <div className="space-y-3 mb-10">
-            {[
-              'Ethical UX & dark-pattern detection',
-              'Cognitive accessibility & neurodiversity',
-              'AI discoverability & agent readiness',
-              'Conversion psychology',
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span className="text-text text-base">{item}</span>
+          {/* Left — Comparison visual */}
+          <div className="hidden lg:block">
+            <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Gauge size={18} className="text-text" /></div>
+                <div>
+                  <p className="text-sm font-semibold text-text">Coverage Comparison</p>
+                  <p className="text-xs text-muted">What other tools miss</p>
+                </div>
               </div>
-            ))}
+              <div className="space-y-4">
+                {[
+                  { label: 'Ethical UX & dark patterns', others: false, clearux: true },
+                  { label: 'Cognitive accessibility', others: false, clearux: true },
+                  { label: 'AI agent readiness', others: false, clearux: true },
+                  { label: 'Conversion psychology', others: false, clearux: true },
+                  { label: 'WCAG accessibility', others: true, clearux: true },
+                  { label: 'Performance metrics', others: true, clearux: true },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs text-text flex-1">{row.label}</span>
+                    <div className="w-20 flex justify-center">
+                      {row.others
+                        ? <CheckCircle size={14} className="text-muted/40" />
+                        : <span className="w-3.5 h-[2px] rounded bg-border" />
+                      }
+                    </div>
+                    <div className="w-20 flex justify-center">
+                      <CheckCircle size={14} className="text-emerald-500" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-3 mt-2 pt-4 border-t border-border/50">
+                <span className="text-xs text-muted flex-1" />
+                <span className="w-20 text-center text-[10px] font-semibold text-muted uppercase tracking-wider">Others</span>
+                <span className="w-20 text-center text-[10px] font-semibold text-[#B9FF66] uppercase tracking-wider">ClearUX</span>
+              </div>
+            </div>
           </div>
 
-          <p className="text-text text-lg font-semibold mb-8">In minutes. For $99.</p>
+          {/* Right — Text content */}
+          <div>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-10 tracking-tight" style={{ lineHeight: '1.1' }}>
+              Why ClearUX
+            </h2>
 
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
-          >
-            Start free audit
-            <ArrowRight size={16} />
-          </Link>
+            <div className="space-y-6 mb-10">
+              <p className="text-muted text-base leading-relaxed">
+                <span className="font-semibold text-text">User-behavior tools</span> (Hotjar, Maze, FullStory) show you what users did. They don&apos;t tell you what&apos;s wrong with your design.
+              </p>
+              <p className="text-muted text-base leading-relaxed">
+                <span className="font-semibold text-text">Accessibility scanners</span> (axe, WAVE, Lighthouse) catch WCAG violations. They miss dark patterns, cognitive load, and AI-agent readiness entirely.
+              </p>
+              <p className="text-muted text-base leading-relaxed">
+                <span className="font-semibold text-text">UX consultants</span> deliver depth. They also cost $5K&ndash;15K and take weeks.
+              </p>
+            </div>
+
+            <p className="text-text font-semibold text-lg mb-5">ClearUX is the only audit that combines:</p>
+            <div className="space-y-3 mb-10">
+              {[
+                'Ethical UX & dark-pattern detection',
+                'Cognitive accessibility & neurodiversity',
+                'AI discoverability & agent readiness',
+                'Conversion psychology',
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                  <span className="text-text text-base">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-text text-lg font-semibold mb-8">In minutes. For $99.</p>
+
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+            >
+              Start free audit
+              <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -1009,7 +1045,7 @@ export default function Home() {
 
           {/* All audits include */}
           <div className="mt-14 pt-10 border-t border-border">
-            <p className="font-heading text-lg font-semibold text-text mb-6">All audits include</p>
+            <h2 className="font-heading text-2xl font-semibold text-text mb-6">All audits include</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
               {[
                 { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
@@ -1061,17 +1097,17 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           FINAL CTA — Clean, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="section-dark dark-forced relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 overflow-hidden bg-[#B9FF66]">
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 text-text">Start your audit today</p>
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 text-[#111111]/60">Start your audit today</p>
 
-          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
+          <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-[#111111] mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
             Ready to see what<br className="hidden sm:block" />
             you&apos;re missing?
           </h2>
 
-          <p className="text-muted text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-[#111111]/60 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
             Real findings your team can act on — prioritised by impact, trackable as you fix them, and re-auditable to prove the improvement. Delivered in minutes, not weeks.
           </p>
 
@@ -1088,12 +1124,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:outline-none focus:border-[#B9FF66]/40 focus:shadow-[0_0_0_3px_rgba(185,255,102,0.08)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-xl bg-[#111111]/[0.06] border border-[#111111]/[0.10] text-[#111111] placeholder:text-[#111111]/30 focus:outline-none focus:border-[#111111]/30 focus:shadow-[0_0_0_3px_rgba(17,17,17,0.06)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-[#111111] text-[#B9FF66] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#222222] flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -1101,7 +1137,7 @@ export default function Home() {
             </div>
           </form>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-muted">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-semibold text-[#111111]/50">
             {user ? (
               <>
                 <span>Track fixes over time</span>
@@ -1121,8 +1157,8 @@ export default function Home() {
             )}
           </div>
 
-          <p className="text-muted text-sm mt-6">
-            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-text transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-text transition-colors">contact us</Link>
+          <p className="text-[#111111]/50 text-sm mt-6">
+            Have questions? <a href="mailto:support@clearux.ai" className="underline hover:text-[#111111] transition-colors">support@clearux.ai</a> or <Link href="/contact" className="underline hover:text-[#111111] transition-colors">contact us</Link>
           </p>
         </div>
       </section>

@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#111111] py-14 px-4 sm:px-6 lg:px-8">
+    <footer role="contentinfo" aria-label="Site footer" className="bg-[#111111] py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Top: Brand + Links */}

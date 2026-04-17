@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-text hover:opacity-60 transition-opacity"
+                className="text-[16px] font-medium text-text hover:opacity-60 transition-opacity"
               >
                 {link.label}
               </Link>
@@ -205,7 +205,7 @@ const Navbar: React.FC = () => {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-sm text-muted hover:text-text transition-colors px-3 py-3 min-h-[44px] flex items-center"
+                  className="text-[17px] text-muted hover:text-text transition-colors px-3 py-3 min-h-[44px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
