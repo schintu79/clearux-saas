@@ -547,6 +547,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
   const handleStatusChange = async (newStatus: string) => {
     setStatusUpdating(true);
+    const previousStatus = status;
     try {
       const res = await fetch(`/api/findings/${finding.id}`, {
         method: 'PATCH',
@@ -554,11 +555,10 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        const data = await res.json();
         setStatus(newStatus as any);
-        // If score was updated (likely_fixed confirmed as fixed, or poorly_fixed penalty),
-        // trigger parent to refresh the page data so scores update in real time
-        if (data.scoreUpdate && onScoreUpdate) {
+        // Refresh scores whenever status changes to/from "fixed"
+        const involvesFixed = newStatus === 'fixed' || previousStatus === 'fixed';
+        if (involvesFixed && onScoreUpdate) {
           onScoreUpdate();
         }
       } else {
@@ -580,7 +580,12 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dismiss: true, dismissal_reason: dismissReason }),
       });
-      if (res.ok) { setDismissed(true); setShowDismissForm(false); }
+      if (res.ok) {
+        setDismissed(true);
+        setShowDismissForm(false);
+        // Dismissal also recalculates score — refresh
+        if (onScoreUpdate) onScoreUpdate();
+      }
     } catch {}
     setStatusUpdating(false);
   };

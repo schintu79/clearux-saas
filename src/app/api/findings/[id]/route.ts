@@ -2,8 +2,11 @@
 // ClearUX API — PATCH /api/findings/:id
 // Update finding status, or dismiss with reason
 // Dismissals automatically create site_notes for future audits
-// When a "likely_fixed" finding is confirmed fixed → recalculate scores
-// When a "poorly_fixed" finding is acknowledged → reduce scores
+//
+// SCORE RECALCULATION:
+// Whenever a finding status changes to/from "fixed", we recalculate
+// the report score from scratch based on ALL current finding statuses.
+// This is the ONLY reliable approach — no fragile delta math.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,63 +18,33 @@ function normalizeDomain(url: string): string {
   } catch { return url }
 }
 
-/**
- * Score bump per confirmed fix, based on severity.
- * These are OVERALL score points (not per-category).
- * A high finding fix should feel impactful: +3 points.
- * Three medium fixes ≈ +6 points total — meaningful progress.
- */
-function scoreImpact(severity: string): number {
+/** Severity weight — how much an open finding of this severity drags the score down */
+function severityPenalty(severity: string): number {
   switch (severity) {
-    case 'critical': return 5
-    case 'high': return 3
-    case 'medium': return 2
-    case 'low': return 1
-    default: return 2
+    case 'critical': return 8
+    case 'high': return 5
+    case 'medium': return 3
+    case 'low': return 1.5
+    default: return 3
   }
 }
 
-/** Extract significant words from text for fuzzy matching */
-function extractKeywords(text: string): string[] {
-  return text.toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter(w => w.length > 3)
-}
-
-/** Check if a recommendation text is related to a finding (fuzzy match) */
-function isRecommendationRelated(recText: string, findingTitle: string, findingRecommendation: string): boolean {
-  const recWords = extractKeywords(recText)
-  const titleWords = extractKeywords(findingTitle)
-  const findingRecWords = extractKeywords(findingRecommendation)
-
-  const allFindingWords = new Set([...titleWords, ...findingRecWords])
-  const matchCount = recWords.filter(w => allFindingWords.has(w)).length
-  const matchRatio = recWords.length > 0 ? matchCount / recWords.length : 0
-
-  return matchRatio >= 0.4
-}
-
 /**
- * Recalculate report scores after a finding status change.
- * Also updates Top Priority Recommendations when a fixed finding
- * is related to one of the current recommendations.
+ * Full score recalculation from current finding statuses.
  *
- * Score approach: apply a FLAT improvement per fix (based on severity),
- * distributed across categories proportionally to their headroom.
- * This ensures every confirmed fix produces a visible score change.
+ * Approach: start from the ORIGINAL report scores, then calculate
+ * how many findings are now fixed vs the original state. Each fixed
+ * finding removes its severity penalty from the deficit.
+ *
+ * Also rebuilds Top Priority Recommendations from the highest-severity
+ * still-open findings — no fuzzy matching, just hard data.
  */
-async function recalculateReportScores(
+async function recalculateFromFindings(
   db: ReturnType<typeof createServiceSupabase>,
   auditId: string,
-  findingSeverity: string,
-  findingTitle: string,
-  findingRecommendation: string,
-  findingId: string,
-  direction: 'up' | 'down',
 ) {
   try {
-    // Fetch current report
+    // 1. Fetch report
     const { data: report } = await db
       .from('reports')
       .select('id, overall_score, raw_json')
@@ -79,114 +52,101 @@ async function recalculateReportScores(
       .single()
 
     if (!report) {
-      console.error('[recalculateScores] No report found for audit:', auditId)
+      console.error('[recalculate] No report for audit:', auditId)
       return null
     }
 
     const rawJson = (report as any).raw_json as any
     if (!rawJson?.categoryScores || !Array.isArray(rawJson.categoryScores)) {
-      console.error('[recalculateScores] No categoryScores in report')
+      console.error('[recalculate] No categoryScores in report')
       return null
     }
 
-    const categoryScores = rawJson.categoryScores as Array<{ name: string; score: number; summary: string }>
-    const impact = scoreImpact(findingSeverity)
-    const numCategories = categoryScores.length
+    // 2. Fetch ALL findings for this audit
+    const { data: allFindings } = await db
+      .from('audit_findings')
+      .select('id, title, severity, status, recommendation, dismissed, sort_order')
+      .eq('audit_id', auditId)
+      .order('sort_order', { ascending: true })
 
-    // Flat overall-score delta, then distribute to categories
-    // Target: overall score changes by exactly `impact` points
-    // Each category gets `impact` points added (capped at 100)
-    // This way the overall average shifts by ~impact points
-    const updatedCategoryScores = categoryScores.map(cat => {
-      let newScore: number
-      if (direction === 'up') {
-        // Add impact points, but scale by headroom so near-100 categories gain less
-        const headroom = 100 - cat.score
-        if (headroom <= 0) return { ...cat, score: 100 }
-        // Each category gets `impact` points, but capped by its headroom
-        const gain = Math.min(impact, headroom)
-        newScore = cat.score + gain
-      } else {
-        // Penalty: subtract impact points, floored at 0
-        newScore = Math.max(0, cat.score - impact)
+    if (!allFindings) {
+      console.error('[recalculate] Could not fetch findings')
+      return null
+    }
+
+    // 3. Count fixed + dismissed findings and calculate score improvement
+    const originalCategoryScores = rawJson.categoryScores as Array<{ name: string; score: number; summary: string }>
+
+    // Get the BASELINE scores — either from the original report generation
+    // or the stored originalCategoryScores if we've recalculated before
+    const baselineScores: Array<{ name: string; score: number; summary: string }> =
+      rawJson._baselineCategoryScores || originalCategoryScores
+
+    const totalFindings = allFindings.length
+    const fixedFindings = allFindings.filter((f: any) => f.status === 'fixed' || f.dismissed)
+    const openFindings = allFindings.filter((f: any) => f.status !== 'fixed' && !f.dismissed)
+
+    // Calculate total severity penalty of ALL findings
+    const totalPenalty = allFindings.reduce((sum: number, f: any) => sum + severityPenalty(f.severity), 0)
+    // Calculate penalty of still-OPEN findings
+    const openPenalty = openFindings.reduce((sum: number, f: any) => sum + severityPenalty(f.severity), 0)
+
+    // Improvement ratio: what fraction of the total penalty has been addressed
+    const improvementRatio = totalPenalty > 0 ? 1 - (openPenalty / totalPenalty) : 0
+
+    // Apply improvement to each category score
+    const updatedCategoryScores = baselineScores.map(cat => {
+      const headroom = 100 - cat.score
+      // The improvement fills a proportional amount of the headroom
+      const gain = Math.round(headroom * improvementRatio)
+      return {
+        ...cat,
+        score: Math.min(100, cat.score + gain),
       }
-      return { ...cat, score: Math.round(newScore) }
     })
 
-    // Recalculate overall score
+    // 4. Recalculate overall + pillar scores
     const newOverallScore = updatedCategoryScores.length > 0
       ? Math.round(updatedCategoryScores.reduce((s, c) => s + c.score, 0) / updatedCategoryScores.length)
       : (report as any).overall_score
 
-    // Recalculate pillar scores
     const pillarAvg = (start: number, end: number) => {
       const cats = updatedCategoryScores.slice(start, Math.min(end, updatedCategoryScores.length))
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
 
-    // ── Update Top Priority Recommendations ──
-    let updatedTopRecs = rawJson.topRecommendations as string[] | undefined
-    let updatedKeyRec = rawJson.keyRecommendation as string | undefined
+    // 5. Rebuild Top Priority Recommendations from current open findings
+    const severityOrder = ['critical', 'high', 'medium', 'low']
+    const sortedOpen = [...openFindings].sort((a: any, b: any) =>
+      severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity)
+    )
 
-    if (direction === 'up' && updatedTopRecs && updatedTopRecs.length > 0) {
-      const beforeCount = updatedTopRecs.length
-
-      // Filter out recommendations related to the just-fixed finding
-      updatedTopRecs = updatedTopRecs.filter(
-        rec => !isRecommendationRelated(rec, findingTitle, findingRecommendation)
-      )
-
-      const removedCount = beforeCount - updatedTopRecs.length
-
-      if (removedCount > 0) {
-        console.log(`[recalculateScores] Removed ${removedCount} recommendation(s) related to fixed finding: "${findingTitle}"`)
-
-        // Backfill from next highest-severity open findings
-        if (updatedTopRecs.length < 3) {
-          try {
-            const severityOrder = ['critical', 'high', 'medium', 'low']
-            const { data: openFindings } = await db
-              .from('audit_findings')
-              .select('id, title, recommendation, severity')
-              .eq('audit_id', auditId)
-              .in('status', ['open', 'in_progress'])
-              .eq('dismissed', false)
-              .neq('id', findingId)
-
-            if (openFindings && openFindings.length > 0) {
-              const sorted = openFindings.sort((a: any, b: any) =>
-                severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity)
-              )
-
-              for (const f of sorted) {
-                if (updatedTopRecs.length >= 3) break
-                const rec = (f as any).recommendation
-                if (!rec) continue
-
-                const isDuplicate = updatedTopRecs.some(existing =>
-                  isRecommendationRelated(existing, (f as any).title, rec)
-                )
-                if (!isDuplicate) {
-                  updatedTopRecs.push(rec)
-                }
-              }
-            }
-          } catch (e) {
-            console.error('[recalculateScores] Backfill error (non-fatal):', e)
-          }
-        }
-
-        updatedKeyRec = updatedTopRecs[0] || 'Continue addressing open findings to improve your score.'
-      }
+    // Take top 3 unique recommendations from highest-severity open findings
+    const newTopRecs: string[] = []
+    const seenTitles = new Set<string>()
+    for (const f of sortedOpen) {
+      if (newTopRecs.length >= 3) break
+      const rec = (f as any).recommendation
+      const title = ((f as any).title || '').toLowerCase()
+      if (!rec || seenTitles.has(title)) continue
+      seenTitles.add(title)
+      newTopRecs.push(rec)
     }
 
-    // Update report in DB
+    // Fallback if no open findings
+    if (newTopRecs.length === 0) {
+      newTopRecs.push('All identified issues have been addressed. Run a new audit to discover further improvements.')
+    }
+
+    // 6. Update report
     const updatedRawJson = {
       ...rawJson,
+      // Preserve baseline for future recalculations
+      _baselineCategoryScores: rawJson._baselineCategoryScores || originalCategoryScores,
       categoryScores: updatedCategoryScores,
       overallScore: newOverallScore,
-      topRecommendations: updatedTopRecs || rawJson.topRecommendations,
-      keyRecommendation: updatedKeyRec || rawJson.keyRecommendation,
+      topRecommendations: newTopRecs,
+      keyRecommendation: newTopRecs[0],
     }
 
     const { error: updateErr } = await db
@@ -203,14 +163,22 @@ async function recalculateReportScores(
       .eq('id', (report as any).id)
 
     if (updateErr) {
-      console.error('[recalculateScores] Update error:', updateErr)
+      console.error('[recalculate] DB update error:', updateErr)
       return null
     }
 
-    console.log(`[recalculateScores] ${direction === 'up' ? 'Improved' : 'Reduced'} score: ${(report as any).overall_score} → ${newOverallScore} (severity=${findingSeverity}, impact=${impact})`)
-    return { previousScore: (report as any).overall_score, newScore: newOverallScore }
+    const prevScore = (report as any).overall_score
+    console.log(`[recalculate] Score: ${prevScore} → ${newOverallScore} | Fixed: ${fixedFindings.length}/${totalFindings} | Open penalty: ${openPenalty.toFixed(1)}/${totalPenalty.toFixed(1)} | Improvement: ${(improvementRatio * 100).toFixed(1)}%`)
+
+    return {
+      previousScore: prevScore,
+      newScore: newOverallScore,
+      fixedCount: fixedFindings.length,
+      openCount: openFindings.length,
+      totalCount: totalFindings,
+    }
   } catch (err) {
-    console.error('[recalculateScores] Error:', err)
+    console.error('[recalculate] Error:', err)
     return null
   }
 }
@@ -229,11 +197,10 @@ export async function PATCH(
 
     const db = createServiceSupabase()
 
-    // ── Fetch finding — DO NOT include verification_status in select
-    // (column may not exist if migration 014 hasn't been run yet)
+    // Fetch finding (no verification_status — column may not exist)
     const { data: finding } = await db
       .from('audit_findings')
-      .select('audit_id, title, severity, recommendation')
+      .select('audit_id, title, severity, recommendation, status')
       .eq('id', findingId)
       .single()
 
@@ -275,7 +242,10 @@ export async function PATCH(
         is_active: true,
       } as any)
 
-      return NextResponse.json({ success: true, dismissed: true })
+      // Recalculate score after dismissal
+      const scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
+
+      return NextResponse.json({ success: true, dismissed: true, scoreUpdate: scoreUpdate || undefined })
     }
 
     // Handle status update
@@ -284,6 +254,7 @@ export async function PATCH(
         return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
       }
 
+      const previousStatus = (finding as any).status
       const { error: updateErr } = await db
         .from('audit_findings')
         .update({
@@ -298,56 +269,14 @@ export async function PATCH(
         return NextResponse.json({ error: updateErr.message }, { status: 500 })
       }
 
-      // ── Resolve verification status ──
-      // Always check report raw_json (works whether migration is run or not)
-      let verificationStatus: string | null = null
-
-      // Try DB column first (if migration 014 was run)
-      try {
-        const { data: findingWithVer } = await db
-          .from('audit_findings')
-          .select('verification_status')
-          .eq('id', findingId)
-          .single()
-        if (findingWithVer) {
-          verificationStatus = (findingWithVer as any).verification_status || null
-        }
-      } catch {
-        // Column doesn't exist — that's fine, fall through to raw_json
-      }
-
-      // Fallback: check report raw_json (always reliable)
-      if (!verificationStatus) {
-        try {
-          const { data: report } = await db
-            .from('reports')
-            .select('raw_json')
-            .eq('audit_id', (finding as any).audit_id)
-            .single()
-          const verResults = (report as any)?.raw_json?.verificationResults as Array<{ findingId: string; status: string }> | undefined
-          if (verResults) {
-            const match = verResults.find(v => v.findingId === findingId)
-            if (match) verificationStatus = match.status
-          }
-        } catch { /* ignore fallback errors */ }
-      }
-
+      // Recalculate score whenever status changes to/from "fixed"
+      // This covers: open→fixed, fixed→open, in_progress→fixed, etc.
       let scoreUpdate = null
+      const statusChanged = previousStatus !== status
+      const involvesFixed = status === 'fixed' || previousStatus === 'fixed'
 
-      if (verificationStatus === 'likely_fixed' && status === 'fixed') {
-        // User confirmed the AI's "likely fixed" → IMPROVE score + update recommendations
-        scoreUpdate = await recalculateReportScores(
-          db,
-          (finding as any).audit_id,
-          (finding as any).severity,
-          (finding as any).title || '',
-          (finding as any).recommendation || '',
-          findingId,
-          'up',
-        )
-      } else if (verificationStatus === 'poorly_fixed') {
-        // AI flagged a bad fix — score was already penalized during verification,
-        // but if user sets to fixed anyway, we don't penalize again.
+      if (statusChanged && involvesFixed) {
+        scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
       }
 
       return NextResponse.json({
