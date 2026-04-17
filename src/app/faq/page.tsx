@@ -278,10 +278,9 @@ export default function FaqPage() {
                     onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
                     className={`text-xs font-semibold px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
                       activeTab === tab
-                        ? 'text-white shadow-sm'
+                        ? 'text-white bg-text dark:bg-white dark:text-[#1D1D1F] shadow-sm'
                         : 'text-muted bg-off/60 dark:bg-white/[0.04] hover:bg-off dark:hover:bg-white/[0.06]'
                     }`}
-                    style={activeTab === tab ? { background: 'var(--gradient-brand)' } : undefined}
                   >
                     {SectionIcon && <SectionIcon size={12} />}
                     {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
@@ -313,10 +312,8 @@ export default function FaqPage() {
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
-                      <section.icon size={14} className="text-white" />
-                    </div>
-                    <h2 className="font-heading font-semibold text-lg text-text">
+                    <section.icon size={20} className="text-text flex-shrink-0" />
+                    <h2 className="font-heading font-semibold text-xl sm:text-2xl text-text">
                       {section.title}
                     </h2>
                     <span className="text-[11px] font-semibold text-muted/50 bg-off dark:bg-white/[0.04] px-2.5 py-1 rounded-full">
