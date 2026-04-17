@@ -450,7 +450,7 @@ export default function Home() {
           </p>
 
           {/* Single focal CTA — URL Input (full width) */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-3xl w-full mx-auto mb-8">
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-3xl w-full mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -476,21 +476,8 @@ export default function Home() {
             </div>
           </form>
 
-          {/* Scribble arrow pointing down */}
-          <button
-            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="animate-fade-up delay-600 mx-auto flex flex-col items-center hover:scale-110 transition-transform cursor-pointer"
-            aria-label="Scroll to features"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/scribble-arrow.svg" alt="" width={80} height={120} className="animate-float" style={{ filter: 'brightness(0) invert(1) sepia(1) saturate(50) hue-rotate(30deg) brightness(1.5)' }} />
-          </button>
-
-        </div>
-
-        {/* Trust KSPs — pinned 50px from bottom of dark section */}
-        <div className="absolute bottom-0 left-0 right-0 z-10" style={{ paddingBottom: '50px' }}>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+          {/* Trust KSPs — directly under input */}
+          <div className="animate-fade-up delay-500 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 mb-10">
             <div className="flex items-center gap-2.5">
               <Zap size={18} className="text-[#B9FF66]" />
               <span className="text-sm font-semibold text-white">Results in minutes</span>
@@ -506,6 +493,17 @@ export default function Home() {
               <span className="text-sm font-semibold text-white">Credits never expire</span>
             </div>
           </div>
+
+          {/* Scribble arrow pointing down — 4x size */}
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="animate-fade-up delay-700 mx-auto flex flex-col items-center hover:scale-105 transition-transform cursor-pointer mb-8"
+            aria-label="Scroll to features"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/scribble-arrow.svg" alt="" width={320} height={480} className="animate-float" style={{ filter: 'brightness(0) invert(1) sepia(1) saturate(50) hue-rotate(30deg) brightness(1.5)' }} />
+          </button>
+
         </div>
       </section>
 
