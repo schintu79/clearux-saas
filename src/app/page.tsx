@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, ArrowDown, Layers, Accessibility, FileText, ChevronLeft, ChevronRight, Lightbulb, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, CreditCard, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
+import { Brain, CheckCircle, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ArrowCurvy, DoodleArrowDown, Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, Spiral, CircleScribble } from "@/components/ui/Doodles";
+import { ArrowCurvy, DoodleArrowDown, Squiggle, Sparkle, UnderlineScribble, ArrowZigzag, Spiral } from "@/components/ui/Doodles";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
 
@@ -58,74 +58,21 @@ function useScrollReveal() {
   return { ref, visible };
 }
 
-/* ── Rotating words ───────────────────────────────────────── */
-const HERO_WORDS = ['Conversions', 'AI Discoverability', 'Engagement', 'Value Proposition', 'Mobile UX', 'Trust', 'Digital Wellbeing', 'Inclusivity', 'Accessibility', 'Cultural Sensitivity', 'Visual Design', 'Content Quality', 'Usability', 'Readability'];
-
-function RotatingWord() {
-  const [idx, setIdx] = useState(0);
-  const [fade, setFade] = useState(true);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => { setIdx((i) => (i + 1) % HERO_WORDS.length); setFade(true); }, 200);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, []);
-  return (
-    <span
-      className={`transition-opacity duration-300 text-text ${fade ? 'opacity-100' : 'opacity-0'}`}
-    >
-      {HERO_WORDS[idx]}
-    </span>
-  );
-}
-
-/* ── Rotating testimonials ──────────────────────────────── */
-function RotatingReview({ reviews }: { reviews: { quote: string; author: string; title: string; company: string; initials: string }[] }) {
-  const [idx, setIdx] = useState(0);
-  const [fade, setFade] = useState(true);
-
-  const next = () => { setFade(false); setTimeout(() => { setIdx((i) => (i + 1) % reviews.length); setFade(true); }, 250); };
-  const prev = () => { setFade(false); setTimeout(() => { setIdx((i) => (i - 1 + reviews.length) % reviews.length); setFade(true); }, 250); };
-
-  useEffect(() => {
-    const interval = setInterval(next, 5000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const r = reviews[idx];
-  return (
-    <div className="relative max-w-2xl mx-auto text-center">
-      <div className={`transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
-        <p className="text-text text-base md:text-lg font-medium mb-4 leading-relaxed">&ldquo;{r.quote}&rdquo;</p>
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent text-xs font-bold">{r.initials}</div>
-          <div className="text-left">
-            <p className="text-text text-sm font-semibold">{r.author}</p>
-            <p className="text-muted text-xs">{r.title}, {r.company}</p>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-center gap-3 mt-5">
-        <button onClick={prev} aria-label="Previous review" className="w-10 h-10 rounded-full border border-border bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
-          <ChevronLeft size={16} className="text-muted" />
-        </button>
-        <div className="flex gap-1.5">
-          {reviews.map((_, i) => (
-            <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-accent w-4' : 'bg-border'}`} />
-          ))}
-        </div>
-        <button onClick={next} aria-label="Next review" className="w-10 h-10 rounded-full border border-border bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
-          <ChevronRight size={16} className="text-muted" />
-        </button>
-      </div>
-    </div>
-  );
-}
+/* (Rotating words and testimonials removed — no longer used) */
 
 /* ── Pillar scroll reveal ────────────────────────────────── */
 const PILLAR_DATA = [
+  {
+    key: 'future',
+    label: 'Future Readiness',
+    color: 'from-emerald-500 to-teal-600',
+    colorBg: 'bg-[#2D7A4F]/10',
+    colorText: 'text-[#2D7A4F]',
+    colorBorder: 'border-[#2D7A4F]/20',
+    headline: 'Ready for AI agents and global users.',
+    subhead: 'AI discoverability, agent readiness, and global reach.',
+    body: 'We evaluate how LLMs and AI agents understand your site, whether your content is structured for the AI era, and how well your design translates across cultures, languages, and regulations worldwide.',
+  },
   {
     key: 'foundation',
     label: 'Foundation',
@@ -159,21 +106,13 @@ const PILLAR_DATA = [
     subhead: 'Universal design, accessibility, and inclusive experience.',
     body: 'We audit WCAG accessibility compliance, keyboard navigation, screen reader support, cognitive accessibility, mobile responsiveness, and digital wellbeing. Design that works for everyone, everywhere.',
   },
-  {
-    key: 'future',
-    label: 'Future Readiness',
-    color: 'from-emerald-500 to-teal-600',
-    colorBg: 'bg-[#2D7A4F]/10',
-    colorText: 'text-[#2D7A4F]',
-    colorBorder: 'border-[#2D7A4F]/20',
-    headline: 'Ready for AI agents and global users.',
-    subhead: 'AI discoverability, agent readiness, and global reach.',
-    body: 'We evaluate how LLMs and AI agents understand your site, whether your content is structured for the AI era, and how well your design translates across cultures, languages, and regulations worldwide.',
-  },
 ];
 
 function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string; icon: React.ElementType; title: string; desc: string; featured?: boolean }> }) {
-  const pillarNames = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
+  const pillarNames = ['Future Readiness', 'Foundation', 'Human Experience', 'Inclusive Design'];
+
+  /* Map reordered PILLAR_DATA indices to their original visual panel */
+  const visualOrder = [3, 0, 1, 2]; // Future Readiness, Foundation, Human Experience, Inclusive Design
 
   /* ── Visual panels — clean card style ── */
   const visuals = [
@@ -226,8 +165,8 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
       </div>
     </aside>,
 
-    /* HUMAN EXPERIENCE — Dark patterns scan */
-    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection, not a real finding on this site" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
+    /* HUMAN EXPERIENCE — Dark patterns scan (airline checkout example) */
+    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection based on common airline checkout patterns" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
@@ -235,14 +174,15 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <span className="text-xs font-semibold text-text tracking-tight">Human Experience Scan</span>
             <span className="text-[9px] font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-500/15 px-2 py-0.5 rounded-full">Demo</span>
           </div>
+          <span className="text-[10px] text-muted">example-airline.com</span>
         </div>
         <div className="space-y-2.5">
           {[
-            {Icon:AlertTriangle,t:'Confirmshaming detected (example)',d:'Example: "No thanks, I don\'t want to save money" — manipulative opt-out copy found on audited site',pass:false},
-            {Icon:Clock,t:'Fake urgency pattern (example)',d:'Example: Countdown timer resets on page refresh — not a genuine deadline on audited site',pass:false},
-            {Icon:CheckCircle,t:'Cookie consent is fair (example)',d:'Example: Equal visual weight for Accept and Reject options on audited site',pass:true},
-            {Icon:AlertTriangle,t:'Cancellation flow buried (example)',d:'Example: 4-step process to unsubscribe vs 1-click to sign up on audited site',pass:false},
-            {Icon:CheckCircle,t:'No hidden costs (example)',d:'Example: All fees disclosed upfront before payment on audited site',pass:true},
+            {Icon:AlertTriangle,t:'Confirmshaming detected',d:'"No thanks, I\'ll risk paying more later" on fare-lock modal',pass:false},
+            {Icon:Clock,t:'Fake urgency pattern',d:'"Only 2 seats left at this price" resets on page refresh',pass:false},
+            {Icon:AlertTriangle,t:'Hidden fees',d:'Baggage fees disclosed only at final checkout step',pass:false},
+            {Icon:AlertTriangle,t:'Cancellation buried',d:'Refund requests require phone call — no self-serve option',pass:false},
+            {Icon:CheckCircle,t:'Cookie consent is fair',d:'Accept and Reject have equal visual weight',pass:true},
           ].map((item,i)=>(
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-[#2D7A4F]/5 border-[#2D7A4F]/15' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
               <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-[#2D7A4F]' : 'text-pink-500'}`} />
@@ -255,7 +195,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         </div>
         <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
           <p className="text-xs font-bold text-pink-700 dark:text-pink-400 mb-1">Recommendation</p>
-          <p className="text-xs text-muted leading-relaxed">Replace manipulative opt-out copy with neutral language and simplify the cancellation flow to match sign-up steps. Ethical UX builds long-term trust.</p>
+          <p className="text-xs text-muted leading-relaxed">Align disclosure timing to match the sign-up flow. Transparent pricing at step one increases completion rates by double digits in most retail benchmarks.</p>
         </div>
       </div>
     </aside>,
@@ -385,7 +325,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
 
           const visualBlock = (
             <div className="flex items-center justify-center">
-              {visuals[idx]}
+              {visuals[visualOrder[idx]]}
             </div>
           );
 
@@ -528,13 +468,7 @@ export default function Home() {
     { pillar: "Future Readiness", icon: Globe2, title: "Cultural Sensitivity & Global Readiness", desc: "Inclusive design for diverse global audiences" },
   ];
 
-  const testimonials = [
-    { quote: "After running a ClearUX audit on our SaaS onboarding flow, we implemented four high-severity fixes over two sprints. Signup-to-activation improved noticeably within the first month.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", context: "B2B SaaS · 2-week implementation", initials: "MW" },
-    { quote: "Our team had been debating which UX issues to prioritise for months. The severity-by-impact scoring gave us a clear backlog we could act on immediately — no more guesswork.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", context: "Fintech product team · Quarterly audits", initials: "SC" },
-    { quote: "The accessibility and cognitive load findings were things no other tool had flagged. It catches the blind spots automated scanners miss entirely.", author: "James Kim", title: "CTO", company: "LaunchPad", context: "EdTech startup · Pre-launch audit", initials: "JK" },
-    { quote: "We include ClearUX audits in every client proposal now. The white-label reports are professional enough to present directly to stakeholders.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", context: "Digital agency · 15+ client audits", initials: "DT" },
-    { quote: "The ethical UX and dark pattern detection caught things our design team had overlooked. It's become part of our release checklist.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", context: "E-commerce · Monthly release cycles", initials: "ER" },
-  ];
+  /* Testimonials removed — waiting for real client quotes */
 
   return (
     <div className="bg-surface text-text min-h-screen">
@@ -552,57 +486,16 @@ export default function Home() {
           <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
           <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* Social proof widget — BEFORE headline */}
-          <div className="animate-fade-up flex items-center justify-center gap-3 mb-8">
-            <div className="flex -space-x-2.5">
-              {['MW', 'SC', 'JK', 'DT'].map((initials, i) => {
-                const colors = [
-                  'from-violet-500 to-purple-600',
-                  'from-pink-500 to-rose-600',
-                  'from-amber-500 to-orange-500',
-                  'from-emerald-500 to-teal-600',
-                ];
-                return (
-                  <div
-                    key={initials}
-                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${colors[i]} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-off dark:ring-surface-alt`}
-                  >
-                    {initials}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="text-left">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-muted mt-0.5">
-                Trusted by <span className="font-semibold text-text">500+</span> product teams
-              </p>
-            </div>
-          </div>
-
-          {/* Primary headline — outcome-first for cold traffic */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-4" style={{ lineHeight: '1.08' }}>
-            Consultant-Grade <span className="text-text">UX Audits</span>
+          {/* Primary headline — price anchor */}
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-2" style={{ lineHeight: '1.08' }}>
+            The UX audit that used to cost $10K.
           </h1>
-          <p className="animate-fade-up delay-150 font-handwriting text-3xl sm:text-4xl md:text-5xl text-muted mb-6" style={{ lineHeight: '1.2' }}>
-            in Minutes, Not{' '}
-            <span className="relative inline-block">
-              Weeks
-              <UnderlineScribble className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[110%]" color="var(--color-foundation)" />
-            </span>
+          <p className="animate-fade-up delay-150 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight text-text mb-8" style={{ lineHeight: '1.08' }}>
+            For $99.
           </p>
 
-          {/* Outcome subheading — rotating word shows breadth */}
-          <p className="animate-fade-up delay-200 text-[1.7rem] text-muted mb-6 max-w-2xl mx-auto" style={{ lineHeight: '1.55' }}>
-            Find the issues impacting{' '}<RotatingWord />
-          </p>
-
-          <p className="animate-fade-up delay-300 text-base text-muted/70 mb-12 sm:mb-14 max-w-lg mx-auto" style={{ lineHeight: '1.7' }}>
-            64 AI-powered checkpoints across accessibility, ethics, AI readiness, and conversion. At a fraction of the cost of hiring a consultant.
+          <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-12 sm:mb-14 max-w-2xl mx-auto" style={{ lineHeight: '1.6' }}>
+            64 checkpoints across accessibility, ethical UX, conversion, and AI-agent readiness — delivered in minutes.
           </p>
 
           {/* Single focal CTA — URL Input */}
@@ -639,30 +532,8 @@ export default function Home() {
           TRUST STRIP — Compact, visual break with doodle
           ═══════════════════════════════════════════════════════ */}
       <section className="relative border-b border-border bg-surface">
-        <Squiggle className="hidden lg:block absolute top-1/2 -translate-y-1/2 right-[4%]" color="var(--color-future)" />
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-muted">
-            <div className="flex items-center gap-2">
-              <Lock size={14} className="opacity-60" />
-              <span className="text-xs font-semibold uppercase tracking-wider">SSL Encrypted</span>
-            </div>
-            <div className="w-px h-3 bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <Shield size={14} className="opacity-60" />
-              <span className="text-xs font-semibold uppercase tracking-wider">GDPR Compliant</span>
-            </div>
-            <div className="w-px h-3 bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <CreditCard size={14} className="opacity-60" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Stripe Payments</span>
-            </div>
-            <div className="w-px h-3 bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="opacity-60" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Credits Never Expire</span>
-            </div>
-          </div>
-          <p className="text-center text-[11px] text-muted/60 mt-3">Your website data is never stored or shared — only your report.</p>
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-5">
+          <p className="text-center text-sm text-muted">Your website data is never stored — only your report.</p>
         </div>
       </section>
 
@@ -675,7 +546,7 @@ export default function Home() {
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
-              <span className="text-muted">The blind spots other tools miss.</span>
+              <span className="text-muted">Including the ones nobody else is auditing yet.</span>
             </h2>
             <UnderlineScribble className="mx-auto -mt-2 mb-4 hidden sm:block" color="var(--color-foundation)" />
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
@@ -952,12 +823,12 @@ export default function Home() {
                 {[
                   { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-brand to-brand', iconBg: 'bg-brand',
                     cats: [{ n: 'Visual Design & First Impression', s: 35 }, { n: 'Value Proposition & Messaging', s: 83 }, { n: 'Navigation & Info Architecture', s: 95 }, { n: 'Content Quality & Readability', s: 73 }] },
-                  { name: 'Human Experience', score: 99, label: 'Excellent', icon: Heart, gradient: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-500',
-                    cats: [{ n: 'Calls-to-Action & Conversion', s: 100 }, { n: 'Trust & Social Proof', s: 95 }, { n: 'Ethical UX & Dark Patterns', s: 100 }, { n: 'Emotional Design & Safety', s: 100 }] },
-                  { name: 'Inclusive Design', score: 100, label: 'Excellent', icon: Accessibility, gradient: 'from-amber-500 to-amber-600', iconBg: 'bg-amber-500',
-                    cats: [{ n: 'Accessibility & WCAG', s: 100 }, { n: 'Cognitive Accessibility', s: 100 }, { n: 'Digital Wellbeing', s: 100 }, { n: 'Mobile & Responsive', s: 98 }] },
-                  { name: 'Future Readiness', score: 100, label: 'Excellent', icon: Brain, gradient: 'from-emerald-500 to-emerald-600', iconBg: 'bg-emerald-500',
-                    cats: [{ n: 'Performance & Technical', s: 100 }, { n: 'AI Discoverability', s: 100 }, { n: 'AI Agent Readiness', s: 100 }, { n: 'Cultural Sensitivity', s: 100 }] },
+                  { name: 'Human Experience', score: 95, label: 'Excellent', icon: Heart, gradient: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-500',
+                    cats: [{ n: 'Calls-to-Action & Conversion', s: 100 }, { n: 'Trust & Social Proof', s: 95 }, { n: 'Ethical UX & Dark Patterns', s: 94 }, { n: 'Emotional Design & Safety', s: 91 }] },
+                  { name: 'Inclusive Design', score: 98, label: 'Excellent', icon: Accessibility, gradient: 'from-amber-500 to-amber-600', iconBg: 'bg-amber-500',
+                    cats: [{ n: 'Accessibility & WCAG', s: 100 }, { n: 'Cognitive Accessibility', s: 96 }, { n: 'Digital Wellbeing', s: 100 }, { n: 'Mobile & Responsive', s: 98 }] },
+                  { name: 'Future Readiness', score: 94, label: 'Excellent', icon: Brain, gradient: 'from-emerald-500 to-emerald-600', iconBg: 'bg-emerald-500',
+                    cats: [{ n: 'Performance & Technical', s: 100 }, { n: 'AI Discoverability', s: 92 }, { n: 'AI Agent Readiness', s: 96 }, { n: 'Cultural Sensitivity', s: 87 }] },
                 ].map((pillar) => (
                   <div key={pillar.name} className="rounded-xl border border-border bg-card overflow-hidden">
                     <div className="px-3.5 py-3 flex items-center justify-between">
@@ -997,6 +868,54 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          WHY CLEARUX — Competitor differentiation
+          ═══════════════════════════════════════════════════════ */}
+      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-10 tracking-tight" style={{ lineHeight: '1.1' }}>
+            Why ClearUX
+          </h2>
+
+          <div className="space-y-6 mb-10">
+            <p className="text-muted text-base leading-relaxed">
+              <span className="font-semibold text-text">User-behavior tools</span> (Hotjar, Maze, FullStory) show you what users did. They don&apos;t tell you what&apos;s wrong with your design.
+            </p>
+            <p className="text-muted text-base leading-relaxed">
+              <span className="font-semibold text-text">Accessibility scanners</span> (axe, WAVE, Lighthouse) catch WCAG violations. They miss dark patterns, cognitive load, and AI-agent readiness entirely.
+            </p>
+            <p className="text-muted text-base leading-relaxed">
+              <span className="font-semibold text-text">UX consultants</span> deliver depth. They also cost $5K&ndash;15K and take weeks.
+            </p>
+          </div>
+
+          <p className="text-text font-semibold text-lg mb-5">ClearUX is the only audit that combines:</p>
+          <div className="space-y-3 mb-10">
+            {[
+              'Ethical UX & dark-pattern detection',
+              'Cognitive accessibility & neurodiversity',
+              'AI discoverability & agent readiness',
+              'Conversion psychology',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-[#2D7A4F] flex-shrink-0" />
+                <span className="text-text text-base">{item}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-text text-lg font-semibold mb-8">In minutes. For $99.</p>
+
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+          >
+            Start free audit
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           PRICING — Clean, editorial
           ═══════════════════════════════════════════════════════ */}
       <section id="pricing" className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt bg-dotgrid">
@@ -1011,7 +930,7 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles size={18} className="text-brand" />
-                    <h3 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h3>
+                    <h3 className="font-heading font-semibold text-xl text-text">Start with a free audit</h3>
                   </div>
                   <p className="text-sm text-muted max-w-md">
                     No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
@@ -1044,7 +963,7 @@ export default function Home() {
           <div className="rounded-xl border border-border bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
             <div className="relative grid sm:grid-cols-2 gap-8 items-center">
               <div>
-                <h3 className="font-heading text-2xl font-semibold text-text mb-1">Single Audit</h3>
+                <h3 className="font-heading text-2xl font-semibold text-text mb-1">Single audit</h3>
                 <p className="text-muted text-sm mb-6">For individuals and small teams</p>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-muted text-lg">$</span>
@@ -1086,7 +1005,7 @@ export default function Home() {
           {/* Credit packs */}
           <div className="grid sm:grid-cols-3 gap-4">
             {[
-              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'Quarterly audits to catch issues each release cycle', popular: true, perks: ['Priority email support'] },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'Quarterly audits to catch issues each release cycle', popular: false, perks: ['Priority email support'] },
               { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'Manage multiple client sites with white-label reports', perks: ['Priority email support', 'White-label PDF reports'] },
               { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Continuous auditing across teams and products', perks: ['Dedicated support', 'White-label PDF reports', 'API access (coming soon)'] },
             ].map((pack, idx) => (
@@ -1150,67 +1069,27 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          TESTIMONIALS — Clean cards on subtle bg
+          CASE STUDIES — Placeholder until real quotes exist
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-32 sm:py-40 px-4 md:px-6 lg:px-8 relative overflow-hidden bg-surface">
+      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 relative overflow-hidden bg-surface">
         <div
           ref={testRef.ref}
-          className={`max-w-5xl mx-auto relative transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+          className={`max-w-2xl mx-auto text-center transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
-          <Sparkle className="hidden md:block absolute -left-8 top-4 lg:-left-16" color="var(--color-tech)" />
-          <CircleScribble className="hidden lg:block absolute -right-12 top-24" color="var(--color-human)" />
-          <div className="text-center mb-16">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Testimonials</p>
-            <h2 className="font-heading text-3xl md:text-4xl font-semibold text-text mb-3 tracking-tight">
-              Loved by product teams
+          <div className="rounded-xl border border-border bg-card p-10 sm:p-14">
+            <h2 className="font-heading text-2xl sm:text-3xl font-semibold text-text mb-4 tracking-tight">
+              Case studies launching soon.
             </h2>
-            <div className="flex justify-center gap-0.5 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            {testimonials.slice(0, 3).map((t, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-6">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-text text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs font-bold">{t.initials}</div>
-                  <div>
-                    <p className="text-text text-sm font-semibold">{t.author}</p>
-                    <p className="text-muted text-xs">{t.title}, {t.company}</p>
-                    {t.context && <p className="text-muted/50 text-[10px] mt-0.5">{t.context}</p>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
-            {testimonials.slice(3, 5).map((t, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-6">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-text text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs font-bold">{t.initials}</div>
-                  <div>
-                    <p className="text-text text-sm font-semibold">{t.author}</p>
-                    <p className="text-muted text-xs">{t.title}, {t.company}</p>
-                    {t.context && <p className="text-muted/50 text-[10px] mt-0.5">{t.context}</p>}
-                  </div>
-                </div>
-              </div>
-            ))}
+            <p className="text-muted text-base leading-relaxed mb-8 max-w-md mx-auto">
+              We&apos;d rather show you real client results than invent testimonials. Want to be one of the first?
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+            >
+              Start your free audit
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>

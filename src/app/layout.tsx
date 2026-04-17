@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — AI-Powered UX Audits | 64 Checkpoints in Minutes',
+    default:  'ClearUX — The UX audit that used to cost $10K. For $99.',
   },
-  description: 'Get consultant-grade UX audits powered by AI. 64 checkpoints across 16 categories. Actionable findings with prioritised fixes — from $99 per audit.',
+  description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
@@ -52,14 +52,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'ClearUX',
-    title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Our AI audits your entire website across 64 checkpoints. Get a professional report in minutes.',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — Deep AI-Powered UX Audits' }],
+    title: 'ClearUX — The UX audit that used to cost $10K. For $99.',
+    description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — The UX audit that used to cost $10K. For $99.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearUX — Deep AI-Powered UX Audits',
-    description: 'Paste your URL. Get a comprehensive UX audit with 64 checkpoints across 16 categories. Professional report in minutes.',
+    title: 'ClearUX — The UX audit that used to cost $10K. For $99.',
+    description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
     images: ['/api/og'],
   },
   icons: {
