@@ -184,20 +184,24 @@ export default function FaqPage() {
   const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)];
 
   // Filter sections by tab and search
+  // When searching, always search ALL sections (ignore active tab)
   const { visibleSections, totalVisible } = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    const tabFiltered = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
 
     if (!query) {
+      const tabFiltered = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
       const total = tabFiltered.reduce((sum, s) => sum + s.items.length, 0);
       return { visibleSections: tabFiltered, totalVisible: total };
     }
 
-    const filtered = tabFiltered.map(section => ({
+    // Search across ALL sections — split query into words for broader matching
+    const words = query.split(/\s+/).filter(w => w.length > 0);
+    const filtered = FAQ_SECTIONS.map(section => ({
       ...section,
-      items: section.items.filter(
-        item => item.q.toLowerCase().includes(query) || item.a.toLowerCase().includes(query)
-      ),
+      items: section.items.filter(item => {
+        const text = `${item.q} ${item.a}`.toLowerCase();
+        return words.every(word => text.includes(word));
+      }),
     })).filter(section => section.items.length > 0);
 
     const total = filtered.reduce((sum, s) => sum + s.items.length, 0);
@@ -237,20 +241,20 @@ export default function FaqPage() {
 
         {/* Search Box */}
         <section className="px-4 sm:px-6 lg:px-8 pb-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-md mx-auto">
             <div className="relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search FAQs..."
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/40 transition-all"
+                className="w-full pl-10 pr-16 py-2.5 rounded-full border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/40 transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
                 >
                   Clear
                 </button>
@@ -259,7 +263,6 @@ export default function FaqPage() {
             {searchQuery && (
               <p className="text-xs text-muted mt-2 text-center">
                 {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
-                {activeTab !== TAB_ALL && ` in ${activeTab}`}
               </p>
             )}
           </div>
