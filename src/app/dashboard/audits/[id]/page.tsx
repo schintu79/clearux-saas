@@ -42,6 +42,8 @@ import {
   ArrowDown,
   MessageSquare,
   MoreVertical,
+  X,
+  Info,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -606,6 +608,12 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
             <span className={`text-[11px] font-bold uppercase tracking-wider ${sev.text}`}>
               {sev.label}
             </span>
+            {(finding as any).verification_status === 'likely_fixed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                <Eye size={10} />
+                Likely Fixed
+              </span>
+            )}
             {finding.page_url && (
               <a
                 href={finding.page_url}
@@ -641,6 +649,22 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
           <p className="text-muted text-sm leading-relaxed pt-3">
             {finding.description}
           </p>
+
+          {/* AI Verification Note */}
+          {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
+            <div className="flex items-start gap-2.5 p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg border border-emerald-200/40 dark:border-emerald-800/20">
+              <Eye size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-bold text-text mb-0.5">AI Verification</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                  {(finding as any).verification_note}
+                </p>
+                <p className="text-[10px] text-muted mt-1">
+                  Mark this finding as &quot;Fixed&quot; to confirm and update your score.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Recommendation */}
           {finding.recommendation && (
@@ -925,6 +949,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1720,6 +1745,53 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: Overview ──────────────────────────────── */}
           {activeTab === 'overview' && (
             <>
+              {/* Verification alerts — baseline re-audit feedback */}
+              {!verificationAlertDismissed && rawJson?.verificationSummary && (
+                <>
+                  {/* "Nothing changed" alert */}
+                  {rawJson.verificationSummary.nothingChanged && (
+                    <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-border/40 dark:border-white/[0.06] flex items-start gap-3">
+                      <Info size={16} className="text-muted flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text mb-0.5">No changes detected</p>
+                        <p className="text-xs text-muted leading-relaxed">
+                          Nothing has changed compared to the latest audit. Your score remains the same.
+                          To improve, address open findings and mark them as fixed, or run a Deep Mode audit to discover new insights.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setVerificationAlertDismissed(true)}
+                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* "Likely fixed findings detected" alert */}
+                  {rawJson.verificationSummary.likelyFixed > 0 && (
+                    <div className="mb-4 p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/40 dark:border-emerald-800/20 flex items-start gap-3">
+                      <Eye size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text mb-0.5">
+                          {rawJson.verificationSummary.likelyFixed} finding{rawJson.verificationSummary.likelyFixed > 1 ? 's' : ''} may have been fixed
+                        </p>
+                        <p className="text-xs text-muted leading-relaxed">
+                          Our AI scanned the live site and detected changes that suggest {rawJson.verificationSummary.likelyFixed > 1 ? 'these issues have' : 'this issue has'} been addressed.
+                          Look for the &quot;Likely Fixed&quot; badge on findings below. Confirm the fix to update your score.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setVerificationAlertDismissed(true)}
+                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
                 <div className="mb-6 p-5 rounded-2xl border border-violet-200/40 dark:border-violet-800/20" style={{ background: 'var(--gradient-brand-subtle)' }}>

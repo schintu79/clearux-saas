@@ -54,6 +54,12 @@ export interface ReportData {
   aiDiscoverabilityScore: number
   contentScore: number
   categoryScores: CategoryScore[]
+  verificationSummary?: {
+    likelyFixed: number
+    confirmedOpen: number
+    totalVerified: number
+    nothingChanged: boolean
+  }
 }
 
 // ── The 16 UX categories we evaluate ─────────────────────────
@@ -925,4 +931,123 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
     contentScore: overall,
     categoryScores,
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * VERIFICATION — Lightweight AI check for baseline re-audits
+ * Checks each open finding against freshly crawled page content
+ * to detect if the issue has been silently fixed on the live site.
+ *
+ * DOES NOT change scores. Purely informational — user must confirm.
+ * ══════════════════════════════════════════════════════════════ */
+
+export interface VerificationResult {
+  findingId: string
+  status: 'confirmed_open' | 'likely_fixed'
+  note: string
+}
+
+/**
+ * Verify a batch of findings against fresh page content.
+ * Returns verification status for each finding.
+ * Processes in batches to stay within token/time limits.
+ */
+export async function verifyFindings(
+  findings: Array<{ id: string; title: string; description: string; recommendation: string; page_url: string | null; severity: string; target_element: string | null }>,
+  pageContent: string,
+  language?: string | null,
+): Promise<VerificationResult[]> {
+  if (findings.length === 0) return []
+
+  const anthropic = getAnthropicClient()
+  const results: VerificationResult[] = []
+
+  // Process in batches of 8 findings to keep prompt size manageable
+  const BATCH_SIZE = 8
+  for (let i = 0; i < findings.length; i += BATCH_SIZE) {
+    const batch = findings.slice(i, i + BATCH_SIZE)
+
+    const findingsList = batch.map((f, idx) => {
+      let entry = `FINDING ${idx + 1} [id=${f.id}]:\n`
+      entry += `  Title: ${f.title}\n`
+      entry += `  Description: ${f.description}\n`
+      entry += `  Severity: ${f.severity}\n`
+      if (f.page_url) entry += `  Page URL: ${f.page_url}\n`
+      if (f.target_element) entry += `  Target Element: ${f.target_element}\n`
+      entry += `  Recommendation: ${f.recommendation}`
+      return entry
+    }).join('\n\n')
+
+    // Truncate page content to avoid token explosion
+    const truncatedContent = pageContent.length > 30000
+      ? pageContent.substring(0, 30000) + '\n\n[...content truncated for verification...]'
+      : pageContent
+
+    const langInstruction = language && language !== 'en'
+      ? getLanguagePromptInstruction(language)
+      : ''
+
+    const prompt = `You are a UX verification assistant. You are given previously identified UX issues and the CURRENT state of the website (freshly crawled). Your job is to check if each issue STILL EXISTS on the live site.
+
+IMPORTANT RULES:
+- You are NOT looking for new issues. Only verify the listed findings.
+- Be conservative: if you cannot clearly confirm the issue is fixed, mark it as "confirmed_open".
+- Only mark as "likely_fixed" if you see clear evidence the issue has been addressed (e.g., the problematic element was removed, the recommended fix was implemented, the page structure changed in a way that resolves the issue).
+- A finding should be "likely_fixed" ONLY if you are fairly confident — if in doubt, say "confirmed_open".
+${langInstruction ? `- Write your verification notes in the same language as the findings. ${langInstruction}` : ''}
+
+CURRENT WEBSITE CONTENT:
+${truncatedContent}
+
+FINDINGS TO VERIFY:
+${findingsList}
+
+Respond with a JSON array. Each entry must have:
+- "id": the finding id exactly as provided
+- "status": "confirmed_open" or "likely_fixed"
+- "note": a brief (1-2 sentence) explanation of why you made this determination
+
+Respond ONLY with the JSON array, no other text.`
+
+    try {
+      const response = await withTimeout(
+        anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2000,
+          temperature: 0,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        30_000,
+        'verify-findings-batch',
+      )
+
+      const text = response.content[0]?.type === 'text' ? response.content[0].text : ''
+      // Extract JSON array from response
+      const jsonMatch = text.match(/\[[\s\S]*\]/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]) as Array<{ id: string; status: string; note: string }>
+        for (const item of parsed) {
+          const validStatus = item.status === 'likely_fixed' ? 'likely_fixed' : 'confirmed_open'
+          results.push({
+            findingId: item.id,
+            status: validStatus,
+            note: item.note || '',
+          })
+        }
+      } else {
+        // Couldn't parse — default all to confirmed_open
+        for (const f of batch) {
+          results.push({ findingId: f.id, status: 'confirmed_open', note: 'Verification inconclusive.' })
+        }
+      }
+    } catch (err) {
+      console.error('[verifyFindings] AI verification error:', err)
+      // On error, default all to confirmed_open (safe fallback)
+      for (const f of batch) {
+        results.push({ findingId: f.id, status: 'confirmed_open', note: 'Verification could not be completed.' })
+      }
+    }
+  }
+
+  return results
 }

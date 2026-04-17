@@ -14,7 +14,7 @@
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from '@/lib/audit-engine/crawler'
-import { analyzeCategory, runFullAnalysis, generateReport, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
@@ -445,6 +445,62 @@ RULES FOR RE-AUDIT:
         return { copiedCount, droppedFixed, droppedDismissed }
       })
 
+      // ════════════════════════════════════════════════════════════
+      // VERIFICATION STEP — Lightweight AI check against live site
+      // Checks each copied finding against freshly crawled content.
+      // Does NOT affect scores — purely informational flags for the user.
+      // ════════════════════════════════════════════════════════════
+      await step.run('ai-verify-findings', async () => {
+        const db = getDb()
+
+        // Fetch the findings we just copied
+        const { data: copiedFindings } = await db
+          .from('audit_findings')
+          .select('id, title, description, recommendation, page_url, severity, target_element')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        if (!copiedFindings || copiedFindings.length === 0) {
+          await auditLog(auditId, 'verification_skipped', 'info', 'No findings to verify')
+          return { verified: 0, likelyFixed: 0 }
+        }
+
+        // Use the freshly crawled page content for verification
+        const freshContent = crawlResult.pageContent
+
+        await auditLog(auditId, 'verification_started', 'info',
+          `Verifying ${copiedFindings.length} findings against live site`)
+
+        const verificationResults = await verifyFindings(
+          copiedFindings as any[],
+          freshContent,
+          auditDetails.language,
+        )
+
+        // Update findings in DB with verification results
+        let likelyFixedCount = 0
+        for (const result of verificationResults) {
+          await db
+            .from('audit_findings')
+            .update({
+              verification_status: result.status,
+              verification_note: result.note,
+            } as any)
+            .eq('id', result.findingId)
+
+          if (result.status === 'likely_fixed') likelyFixedCount++
+        }
+
+        await auditLog(auditId, 'verification_completed', 'success',
+          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed, ${verificationResults.length - likelyFixedCount} confirmed open`, {
+            total_verified: verificationResults.length,
+            likely_fixed: likelyFixedCount,
+            confirmed_open: verificationResults.length - likelyFixedCount,
+          })
+
+        return { verified: verificationResults.length, likelyFixed: likelyFixedCount }
+      })
+
     } else {
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
@@ -688,6 +744,24 @@ RULES FOR RE-AUDIT:
         high: findings.filter((f) => f.severity === 'high').length,
         medium: findings.filter((f) => f.severity === 'medium').length,
         low: findings.filter((f) => f.severity === 'low').length,
+      }
+
+      // Count verification results for report metadata
+      const likelyFixedCount = findings.filter((f: any) => f.verification_status === 'likely_fixed').length
+      const confirmedOpenCount = findings.filter((f: any) => f.verification_status === 'confirmed_open').length
+      if (effectiveDepthMode === 'baseline') {
+        const nothingChanged = droppedFixed === 0 && droppedDismissed === 0 && likelyFixedCount === 0
+        reportData.verificationSummary = {
+          likelyFixed: likelyFixedCount,
+          confirmedOpen: confirmedOpenCount,
+          totalVerified: likelyFixedCount + confirmedOpenCount,
+          nothingChanged,
+        }
+
+        // Enrich executive summary with verification insights
+        if (likelyFixedCount > 0) {
+          reportData.executiveSummary += ` Our AI verification detected that ${likelyFixedCount} finding${likelyFixedCount > 1 ? 's appear' : ' appears'} to have been addressed on the live site. Review ${likelyFixedCount > 1 ? 'them' : 'it'} and confirm the fix to update your score.`
+        }
       }
 
       // Generate PDF
