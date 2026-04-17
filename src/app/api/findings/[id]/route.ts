@@ -15,11 +15,16 @@ function normalizeDomain(url: string): string {
   } catch { return url }
 }
 
-/** Severity weight for score impact calculation */
-function severityWeight(severity: string): number {
+/**
+ * Score bump per confirmed fix, based on severity.
+ * These are OVERALL score points (not per-category).
+ * A high finding fix should feel impactful: +3 points.
+ * Three medium fixes ≈ +6 points total — meaningful progress.
+ */
+function scoreImpact(severity: string): number {
   switch (severity) {
     case 'critical': return 5
-    case 'high': return 3.5
+    case 'high': return 3
     case 'medium': return 2
     case 'low': return 1
     default: return 2
@@ -40,12 +45,10 @@ function isRecommendationRelated(recText: string, findingTitle: string, findingR
   const titleWords = extractKeywords(findingTitle)
   const findingRecWords = extractKeywords(findingRecommendation)
 
-  // Count how many significant words from the recommendation match the finding
   const allFindingWords = new Set([...titleWords, ...findingRecWords])
   const matchCount = recWords.filter(w => allFindingWords.has(w)).length
   const matchRatio = recWords.length > 0 ? matchCount / recWords.length : 0
 
-  // If 40%+ of the recommendation's keywords appear in the finding, it's related
   return matchRatio >= 0.4
 }
 
@@ -54,9 +57,9 @@ function isRecommendationRelated(recText: string, findingTitle: string, findingR
  * Also updates Top Priority Recommendations when a fixed finding
  * is related to one of the current recommendations.
  *
- * Called when:
- * - A "likely_fixed" finding is confirmed as "fixed" → score goes UP, recs updated
- * - A "poorly_fixed" finding is acknowledged → score goes DOWN
+ * Score approach: apply a FLAT improvement per fix (based on severity),
+ * distributed across categories proportionally to their headroom.
+ * This ensures every confirmed fix produces a visible score change.
  */
 async function recalculateReportScores(
   db: ReturnType<typeof createServiceSupabase>,
@@ -87,27 +90,27 @@ async function recalculateReportScores(
     }
 
     const categoryScores = rawJson.categoryScores as Array<{ name: string; score: number; summary: string }>
-    const weight = severityWeight(findingSeverity)
+    const impact = scoreImpact(findingSeverity)
+    const numCategories = categoryScores.length
 
-    // Calculate total headroom (for upward) or total score (for downward)
-    const totalHeadroom = categoryScores.reduce((sum, c) => sum + (100 - c.score), 0)
-    const totalScore = categoryScores.reduce((sum, c) => sum + c.score, 0)
-
-    // Apply proportional adjustment across all categories
+    // Flat overall-score delta, then distribute to categories
+    // Target: overall score changes by exactly `impact` points
+    // Each category gets `impact` points added (capped at 100)
+    // This way the overall average shifts by ~impact points
     const updatedCategoryScores = categoryScores.map(cat => {
       let newScore: number
       if (direction === 'up') {
-        const catHeadroom = 100 - cat.score
-        const improvement = totalHeadroom > 0
-          ? Math.round((catHeadroom / totalHeadroom) * weight * 3)
-          : 0
-        newScore = Math.min(100, cat.score + improvement)
+        // Add impact points, but scale by headroom so near-100 categories gain less
+        const headroom = 100 - cat.score
+        if (headroom <= 0) return { ...cat, score: 100 }
+        // Each category gets `impact` points, but capped by its headroom
+        const gain = Math.min(impact, headroom)
+        newScore = cat.score + gain
       } else {
-        const catWeight = cat.score / Math.max(1, totalScore / categoryScores.length)
-        const penalty = Math.round(weight * catWeight * 1.5)
-        newScore = Math.max(0, cat.score - penalty)
+        // Penalty: subtract impact points, floored at 0
+        newScore = Math.max(0, cat.score - impact)
       }
-      return { ...cat, score: newScore }
+      return { ...cat, score: Math.round(newScore) }
     })
 
     // Recalculate overall score
@@ -122,8 +125,6 @@ async function recalculateReportScores(
     }
 
     // ── Update Top Priority Recommendations ──
-    // If a confirmed fix is related to a top recommendation, remove it and
-    // backfill from the next highest-severity open finding
     let updatedTopRecs = rawJson.topRecommendations as string[] | undefined
     let updatedKeyRec = rawJson.keyRecommendation as string | undefined
 
@@ -140,7 +141,7 @@ async function recalculateReportScores(
       if (removedCount > 0) {
         console.log(`[recalculateScores] Removed ${removedCount} recommendation(s) related to fixed finding: "${findingTitle}"`)
 
-        // Backfill: fetch remaining open findings sorted by severity to get replacement recs
+        // Backfill from next highest-severity open findings
         if (updatedTopRecs.length < 3) {
           try {
             const severityOrder = ['critical', 'high', 'medium', 'low']
@@ -153,18 +154,15 @@ async function recalculateReportScores(
               .neq('id', findingId)
 
             if (openFindings && openFindings.length > 0) {
-              // Sort by severity priority
               const sorted = openFindings.sort((a: any, b: any) =>
                 severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity)
               )
 
-              // Add recommendations from open findings that aren't already in the list
               for (const f of sorted) {
                 if (updatedTopRecs.length >= 3) break
                 const rec = (f as any).recommendation
                 if (!rec) continue
 
-                // Check this rec isn't already represented
                 const isDuplicate = updatedTopRecs.some(existing =>
                   isRecommendationRelated(existing, (f as any).title, rec)
                 )
@@ -178,7 +176,6 @@ async function recalculateReportScores(
           }
         }
 
-        // Update keyRecommendation to match the new top rec
         updatedKeyRec = updatedTopRecs[0] || 'Continue addressing open findings to improve your score.'
       }
     }
@@ -210,7 +207,7 @@ async function recalculateReportScores(
       return null
     }
 
-    console.log(`[recalculateScores] ${direction === 'up' ? 'Improved' : 'Reduced'} score: ${(report as any).overall_score} → ${newOverallScore} (severity=${findingSeverity})`)
+    console.log(`[recalculateScores] ${direction === 'up' ? 'Improved' : 'Reduced'} score: ${(report as any).overall_score} → ${newOverallScore} (severity=${findingSeverity}, impact=${impact})`)
     return { previousScore: (report as any).overall_score, newScore: newOverallScore }
   } catch (err) {
     console.error('[recalculateScores] Error:', err)
@@ -232,10 +229,11 @@ export async function PATCH(
 
     const db = createServiceSupabase()
 
-    // Verify the user owns this finding's audit — also fetch verification_status for score recalc
+    // ── Fetch finding — DO NOT include verification_status in select
+    // (column may not exist if migration 014 hasn't been run yet)
     const { data: finding } = await db
       .from('audit_findings')
-      .select('audit_id, title, severity, recommendation, verification_status')
+      .select('audit_id, title, severity, recommendation')
       .eq('id', findingId)
       .single()
 
@@ -300,11 +298,25 @@ export async function PATCH(
         return NextResponse.json({ error: updateErr.message }, { status: 500 })
       }
 
-      // ── Score recalculation for verified findings ──
-      // Also check raw_json verification results as fallback (when DB column isn't set)
-      let verificationStatus = (finding as any).verification_status as string | null
+      // ── Resolve verification status ──
+      // Always check report raw_json (works whether migration is run or not)
+      let verificationStatus: string | null = null
 
-      // Fallback: check report raw_json for verification data
+      // Try DB column first (if migration 014 was run)
+      try {
+        const { data: findingWithVer } = await db
+          .from('audit_findings')
+          .select('verification_status')
+          .eq('id', findingId)
+          .single()
+        if (findingWithVer) {
+          verificationStatus = (findingWithVer as any).verification_status || null
+        }
+      } catch {
+        // Column doesn't exist — that's fine, fall through to raw_json
+      }
+
+      // Fallback: check report raw_json (always reliable)
       if (!verificationStatus) {
         try {
           const { data: report } = await db
@@ -336,8 +348,6 @@ export async function PATCH(
       } else if (verificationStatus === 'poorly_fixed') {
         // AI flagged a bad fix — score was already penalized during verification,
         // but if user sets to fixed anyway, we don't penalize again.
-        // If user acknowledges by setting back to open/in_progress, no extra penalty needed.
-        // The penalty was applied when the poorly_fixed status was first detected.
       }
 
       return NextResponse.json({
