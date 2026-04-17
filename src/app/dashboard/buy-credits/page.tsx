@@ -67,7 +67,7 @@ export default function BuyCreditsPage() {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Coins size={28} className="text-[#22C55E]" />
         </div>
-        <h1 className="text-3xl font-bold font-heading text-text mb-2">
+        <h1 className="text-3xl font-bold font-body text-text mb-2">
           Buy Audit Credits
         </h1>
         <p className="text-muted max-w-md mx-auto">
@@ -102,7 +102,7 @@ export default function BuyCreditsPage() {
 
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-heading font-semibold text-lg text-text">
+                <h3 className="font-body font-semibold text-lg text-text">
                   {pack.credits} Credit{pack.credits !== 1 ? 's' : ''}
                 </h3>
                 <p className="text-xs text-muted">{pack.per} per audit</p>
@@ -115,7 +115,7 @@ export default function BuyCreditsPage() {
             </div>
 
             <div className="mb-4">
-              <span className="font-heading text-3xl font-semibold text-text">${pack.price.toLocaleString()}</span>
+              <span className="font-body text-3xl font-semibold text-text">${pack.price.toLocaleString()}</span>
             </div>
 
             <div className="space-y-1.5 mb-5">

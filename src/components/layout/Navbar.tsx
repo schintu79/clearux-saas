@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-base font-medium text-muted hover:text-text transition-colors"
+                className="text-sm font-medium text-text hover:opacity-60 transition-opacity"
               >
                 {link.label}
               </Link>

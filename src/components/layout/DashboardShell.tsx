@@ -68,7 +68,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -87,7 +87,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-[17px] text-text">
+            <span className="font-body font-semibold text-[17px] text-text">
               ClearUX
             </span>
           </Link>
@@ -235,7 +235,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading font-semibold text-[17px] text-text">
+          <span className="ml-3 font-body font-semibold text-[17px] text-text">
             ClearUX
           </span>
         </div>

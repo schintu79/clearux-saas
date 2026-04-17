@@ -136,7 +136,7 @@ export default function LoginPage() {
       {/* Brand wordmark — mobile + desktop form */}
       <Link href="/" className="inline-block mb-6 lg:hidden">
         <span className="text-2xl font-heading font-semibold text-text">
-          ClearUX
+          clear<span className="text-lime">UX</span>
         </span>
       </Link>
 
@@ -172,7 +172,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-card-hover transition-colors text-sm font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl bg-text/[0.03] hover:bg-text/[0.06] transition-colors text-sm font-medium text-text disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -299,11 +299,24 @@ export default function LoginPage() {
           {/* Left Panel — Welcome Back */}
           <div className="auth-left relative z-0">
             <div className="auth-glow" />
+
+            {/* Subtle lime scribble accent — top-right */}
+            <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="50" stroke="#B9FF66" strokeWidth="1.5" strokeDasharray="6 8" />
+              <circle cx="60" cy="60" r="30" stroke="#B9FF66" strokeWidth="1" strokeDasharray="4 6" />
+            </svg>
+
+            {/* Subtle lime scribble accent — bottom-left */}
+            <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <path d="M10 70 Q 40 10, 70 70" stroke="#B9FF66" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M20 65 Q 40 20, 60 65" stroke="#B9FF66" strokeWidth="1" fill="none" strokeLinecap="round" />
+            </svg>
+
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
                   <h1 className="text-3xl font-heading font-semibold text-white">
-                    ClearUX
+                    clear<span className="text-[#B9FF66]">UX</span>
                   </h1>
                 </Link>
               </div>
@@ -319,7 +332,7 @@ export default function LoginPage() {
                 <div className="mt-8 space-y-5">
                   {kspItems.map((item) => (
                     <div key={item.text} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-white/8 flex items-center justify-center flex-shrink-0">
+                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
                         <item.icon size={22} className="text-white/70" />
                       </div>
                       <p className="text-base font-medium text-white/80">{item.text}</p>
@@ -329,22 +342,22 @@ export default function LoginPage() {
               </div>
 
               <div className="flex gap-4 mt-8">
-                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">64</p>
                   <p className="text-xs text-white/55 uppercase tracking-wide">Checkpoints</p>
                 </div>
-                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">16</p>
                   <p className="text-xs text-white/55 uppercase tracking-wide">Categories</p>
                 </div>
-                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">&lt; 10 min</p>
                   <p className="text-xs text-white/55 uppercase tracking-wide">Per audit</p>
                 </div>
               </div>
 
               {/* Secondary CTA */}
-              <div className="mt-8 pt-6 border-t border-white/8">
+              <div className="mt-8 pt-6 border-t border-white/[0.06]">
                 <p className="text-xs text-white/35 mb-3">Not ready to sign in?</p>
                 <div className="flex flex-wrap items-center gap-3">
                   <Link href="/about" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">

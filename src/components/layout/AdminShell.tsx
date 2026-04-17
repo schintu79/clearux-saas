@@ -87,7 +87,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
   if (!authorized) return null;
 
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
@@ -105,7 +105,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-[17px] text-text">
+            <span className="font-body font-semibold text-[17px] text-text">
               ClearUX
             </span>
           </Link>
@@ -206,7 +206,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading font-semibold text-[17px] text-text">
+          <span className="ml-3 font-body font-semibold text-[17px] text-text">
             ClearUX
           </span>
           <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">

@@ -167,7 +167,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Globe size={18} className="text-muted flex-shrink-0" />
-            <h1 className="text-xl font-semibold font-heading text-text truncate">{domain}</h1>
+            <h1 className="text-xl font-semibold font-body text-text truncate">{domain}</h1>
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}

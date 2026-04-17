@@ -114,173 +114,115 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   /* Map reordered PILLAR_DATA indices to their original visual panel */
   const visualOrder = [3, 0, 1, 2]; // Future Readiness, Foundation, Human Experience, Inclusive Design
 
-  /* ── Visual panels — clean card style ── */
+  /* ── Visual panels — simplified, clean ── */
   const visuals = [
-    /* FOUNDATION — Score dashboard */
-    <aside key="v0" aria-label="Example audit output — illustrative demo, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="p-6 pb-0">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><Eye size={13} className="text-brand" /></div>
-            <span className="text-xs font-semibold text-text tracking-tight">Audit Overview</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
-          </div>
+    /* FOUNDATION — Score overview */
+    <aside key="v0" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Eye size={18} className="text-text" /></div>
+        <div>
+          <p className="text-sm font-semibold text-text">Audit Overview</p>
+          <p className="text-xs text-muted">clearux.ai</p>
         </div>
-        <div className="flex items-center gap-6 mb-6">
-          <div className="relative">
-            <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="5" className="stroke-border" />
-              <circle cx="50" cy="50" r="42" fill="none" strokeWidth="5" strokeLinecap="round" className="stroke-violet-500" style={{ strokeDasharray: `${2*Math.PI*42}`, strokeDashoffset: `${2*Math.PI*42*(1-0.78)}` }} />
-            </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-xl font-semibold text-text">78</span>
-          </div>
-          <div className="flex-1 space-y-2.5">
-            <p className="text-xs font-semibold text-text">Overall Score</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
-                <div key={d.l} className="flex items-center gap-2">
-                  <span className="text-xs text-muted w-14">{d.l}</span>
-                  <div className="flex-1 h-1 rounded-full bg-off dark:bg-white/[0.06]"><div className="h-full rounded-full bg-brand" style={{width:`${d.s}%`}} /></div>
-                  <span className="text-xs font-bold text-text w-5 text-right">{d.s}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <span className="ml-auto font-heading text-3xl font-bold text-text">78</span>
       </div>
-      <div className="px-6 pb-5 space-y-2.5">
-        {[{sev:'CRITICAL',c:'bg-red-500',t:'CTA button invisible on mobile viewport',imp:'+23% mobile conversions'},{sev:'HIGH',c:'bg-orange-400',t:'Value proposition buried below the fold',imp:'+15% engagement rate'}].map((f,i)=>(
-          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
-            <span className={`${f.c} text-white text-[11px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{f.sev}</span>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-text leading-snug">{f.t}</p>
-              <p className="text-xs text-accent mt-0.5">{f.imp}</p>
-            </div>
+      <div className="space-y-3">
+        {[{l:'UX & Design',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
+          <div key={d.l} className="flex items-center gap-3">
+            <span className="text-xs text-muted w-20">{d.l}</span>
+            <div className="flex-1 h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
+            <span className="text-xs font-bold text-text w-6 text-right">{d.s}</span>
           </div>
         ))}
       </div>
-      <div className="mx-6 mb-6 p-3 rounded-xl bg-brand/5 border border-brand/10">
-        <p className="text-xs font-bold text-brand mb-1">Recommendation</p>
-        <p className="text-xs text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
-      </div>
-    </aside>,
-
-    /* HUMAN EXPERIENCE — Dark patterns scan (airline checkout example) */
-    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection based on common airline checkout patterns" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-pink-500/10 flex items-center justify-center"><Heart size={13} className="text-pink-500" /></div>
-            <span className="text-xs font-semibold text-text tracking-tight">Human Experience Scan</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-500/15 px-2 py-0.5 rounded-full">Demo</span>
-          </div>
-          <span className="text-[10px] text-muted">example-airline.com</span>
-        </div>
-        <div className="space-y-2.5">
-          {[
-            {Icon:AlertTriangle,t:'Confirmshaming detected',d:'"No thanks, I\'ll risk paying more later" on fare-lock modal',pass:false},
-            {Icon:Clock,t:'Fake urgency pattern',d:'"Only 2 seats left at this price" resets on page refresh',pass:false},
-            {Icon:AlertTriangle,t:'Hidden fees',d:'Baggage fees disclosed only at final checkout step',pass:false},
-            {Icon:AlertTriangle,t:'Cancellation buried',d:'Refund requests require phone call — no self-serve option',pass:false},
-            {Icon:CheckCircle,t:'Cookie consent is fair',d:'Accept and Reject have equal visual weight',pass:true},
-          ].map((item,i)=>(
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
-              <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-emerald-500' : 'text-pink-500'}`} />
-              <div className="min-w-0">
-                <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-500' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
-                <p className="text-xs text-muted mt-0.5 leading-relaxed">{item.d}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 p-3 rounded-xl bg-pink-50/60 dark:bg-pink-900/10 border border-pink-200/40 dark:border-pink-800/20">
-          <p className="text-xs font-bold text-pink-700 dark:text-pink-400 mb-1">Recommendation</p>
-          <p className="text-xs text-muted leading-relaxed">Align disclosure timing to match the sign-up flow. Transparent pricing at step one increases completion rates by double digits in most retail benchmarks.</p>
+      <div className="mt-6 pt-5 border-t border-border/50">
+        <div className="flex items-start gap-2">
+          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">CRITICAL</span>
+          <p className="text-xs text-text">CTA invisible on mobile — fix for +23% conversions</p>
         </div>
       </div>
     </aside>,
 
-    /* INCLUSIVE DESIGN — Technical audit */
-    <aside key="v2" aria-label="Example audit output — illustrative demo of technical audit, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center"><Gauge size={13} className="text-amber-500" /></div>
-            <span className="text-xs font-semibold text-text tracking-tight">Technical Audit</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 rounded-full">Demo</span>
+    /* HUMAN EXPERIENCE — Dark pattern scan */
+    <aside key="v1" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Heart size={18} className="text-text" /></div>
+        <div>
+          <p className="text-sm font-semibold text-text">Dark Pattern Scan</p>
+          <p className="text-xs text-muted">4 issues found</p>
+        </div>
+      </div>
+      <div className="space-y-2.5">
+        {[
+          {t:'Confirmshaming detected',pass:false},
+          {t:'Fake urgency pattern',pass:false},
+          {t:'Hidden fees at checkout',pass:false},
+          {t:'Cookie consent is fair',pass:true},
+        ].map((item,i)=>(
+          <div key={i} className="flex items-center gap-3 py-2">
+            {item.pass
+              ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+              : <AlertTriangle size={16} className="text-text flex-shrink-0" />
+            }
+            <span className="text-sm text-text">{item.t}</span>
           </div>
+        ))}
+      </div>
+    </aside>,
+
+    /* INCLUSIVE DESIGN — Technical scores */
+    <aside key="v2" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Accessibility size={18} className="text-text" /></div>
+        <div>
+          <p className="text-sm font-semibold text-text">Accessibility Audit</p>
+          <p className="text-xs text-muted">WCAG 2.1 AA</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          {[{l:'Performance',s:92,c:'text-emerald-500',Icon:Zap},{l:'Mobile',s:78,c:'text-amber-500',Icon:Smartphone},{l:'Accessibility',s:64,c:'text-orange-500',Icon:Accessibility},{l:'SEO',s:86,c:'text-emerald-500',Icon:Search}].map(m=>(
-            <div key={m.l} className="p-3.5 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
-              <div className="flex items-center justify-between mb-2">
-                <m.Icon size={14} className="text-muted" />
-                <span className={`font-heading text-lg font-semibold ${m.c}`}>{m.s}</span>
-              </div>
-              <p className="text-xs font-semibold text-text">{m.l}</p>
-              <div className="mt-1.5 h-1 rounded-full bg-border/30 dark:bg-white/[0.06]">
-                <div className={`h-full rounded-full ${m.s>=80?'bg-emerald-400':m.s>=60?'bg-amber-400':'bg-orange-400'}`} style={{width:`${m.s}%`}} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="space-y-1.5">
-          {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
-            <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-off/50 dark:bg-white/[0.02]">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-500/10':'bg-orange-100 dark:bg-orange-900/30'}`}>
-                <span className="text-[11px]">{c.p?'✓':'✗'}</span>
-              </div>
-              <span className="text-[11px] text-text">{c.t}</span>
-              <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-500':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 p-3 rounded-xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-200/40 dark:border-amber-800/20">
-          <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">Recommendation</p>
-          <p className="text-xs text-muted leading-relaxed">Increase all interactive touch targets to at least 44×44px and add ARIA landmarks to main content areas. These two changes will fix 60% of accessibility failures.</p>
-        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        {[{l:'Performance',s:92},{l:'Mobile',s:78},{l:'A11y',s:64},{l:'SEO',s:86}].map(m=>(
+          <div key={m.l} className="text-center p-3 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+            <p className={`font-heading text-2xl font-bold ${m.s>=80?'text-text':'text-muted'}`}>{m.s}</p>
+            <p className="text-xs text-muted mt-1">{m.l}</p>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        {[{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast AA',p:false},{t:'Keyboard navigation',p:true}].map((c,i)=>(
+          <div key={i} className="flex items-center gap-2.5 py-1.5">
+            {c.p ? <CheckCircle size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-text" />}
+            <span className="text-xs text-text">{c.t}</span>
+          </div>
+        ))}
       </div>
     </aside>,
 
     /* FUTURE READINESS — AI readiness */
-    <aside key="v3" aria-label="Example audit output — illustrative demo of AI readiness check, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center"><Brain size={13} className="text-emerald-500" /></div>
-            <span className="text-xs font-semibold text-text tracking-tight">AI & Global Readiness</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Demo</span>
-          </div>
-          <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
+    <aside key="v3" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Brain size={18} className="text-text" /></div>
+        <div>
+          <p className="text-sm font-semibold text-text">AI Readiness</p>
+          <p className="text-xs text-muted">How AI sees your site</p>
         </div>
-        <div className="space-y-3 mb-5">
-          {[
-            {t:'LLM Discoverability',s:72,d:'Content is mostly parseable but key features are trapped in images'},
-            {t:'AI Agent Navigation',s:48,d:'Forms lack proper labels — AI agents cannot complete checkout flow'},
-            {t:'Cultural Readiness',s:62,d:'No RTL support, hardcoded date formats, USD-only pricing'},
-          ].map((item,i)=>(
-            <div key={i} className="p-3.5 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-text">{item.t}</span>
-                <span className={`text-xs font-bold ${item.s>=70?'text-emerald-500':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] mb-2">
-                <div className={`h-full rounded-full ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
-              </div>
-              <p className="text-xs text-muted leading-relaxed">{item.d}</p>
+        <span className="ml-auto font-heading text-2xl font-bold text-text">65</span>
+      </div>
+      <div className="space-y-3 mb-6">
+        {[{t:'LLM Discoverability',s:72},{t:'Agent Navigation',s:48},{t:'Cultural Readiness',s:62}].map((item,i)=>(
+          <div key={i}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-text">{item.t}</span>
+              <span className="text-xs font-bold text-text">{item.s}</span>
             </div>
-          ))}
-        </div>
-        <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-          <p className="text-xs font-semibold text-emerald-500 mb-1.5">Can an AI agent describe your business?</p>
-          <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/50 dark:border-white/[0.04]">
-            <p className="text-xs text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
+            <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]">
+              <div className="h-full rounded-full bg-text" style={{width:`${item.s}%`}} />
+            </div>
           </div>
-        </div>
-        <div className="mt-4 p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/15">
-          <p className="text-xs font-bold text-emerald-500 mb-1">Recommendation</p>
-          <p className="text-xs text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
-        </div>
+        ))}
+      </div>
+      <div className="p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+        <p className="text-xs text-muted italic leading-relaxed">&ldquo;I can identify this is a SaaS product but cannot determine pricing or features from structured data alone.&rdquo;</p>
+        <p className="text-[10px] text-muted/60 mt-2">— AI agent attempting to describe your site</p>
       </div>
     </aside>,
   ];
@@ -479,9 +421,9 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO — Sketch-style: clean, confident, generous space
           ═══════════════════════════════════════════════════════ */}
-      <section className="section-dark dark-forced relative pt-24 pb-24 sm:pt-36 sm:pb-32 px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden">
 
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className="max-w-5xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20">
 
           {/* Primary headline — price anchor, 2 rows */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-8 text-white" style={{ lineHeight: '1.12' }}>
@@ -498,7 +440,7 @@ export default function Home() {
           </p>
 
           {/* Single focal CTA — URL Input */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-6">
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-xl mx-auto mb-10">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -524,28 +466,37 @@ export default function Home() {
             </div>
           </form>
 
-        </div>
-      </section>
+          {/* Scroll indicator scribble */}
+          <button
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            className="animate-fade-up delay-600 mx-auto flex flex-col items-center gap-2 text-white/30 hover:text-white/60 transition-colors cursor-pointer mb-8"
+            aria-label="Scroll to features"
+          >
+            <svg width="28" height="40" viewBox="0 0 28 40" fill="none" className="animate-float">
+              <path d="M14 2C14 2 6 8 6 14C6 18 8 22 14 22C20 22 22 18 22 14C22 8 14 2 14 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+              <path d="M14 16V28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M10 24L14 28L18 24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
 
-      {/* ═══════════════════════════════════════════════════════
-          TRUST STRIP — Compact, visual break with doodle
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-5">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-muted">
-            <div className="flex items-center gap-2">
-              <Zap size={14} className="text-[#B9FF66]" />
-              <span className="text-xs font-semibold">Results in minutes</span>
+        </div>
+
+        {/* Trust KSPs at bottom of hero */}
+        <div className="relative z-10 pb-10 pt-4">
+          <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+            <div className="flex items-center gap-2.5">
+              <Zap size={18} className="text-white" />
+              <span className="text-sm font-semibold text-white">Results in minutes</span>
             </div>
-            <div className="w-px h-3 bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <Shield size={14} className="text-emerald-500" />
-              <span className="text-xs font-semibold">Your data is never stored — only your report</span>
+            <div className="w-px h-4 bg-white/15 hidden sm:block" />
+            <div className="flex items-center gap-2.5">
+              <Shield size={18} className="text-white" />
+              <span className="text-sm font-semibold text-white">Your data is never stored</span>
             </div>
-            <div className="w-px h-3 bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="text-blue-500" />
-              <span className="text-xs font-semibold">Credits never expire</span>
+            <div className="w-px h-4 bg-white/15 hidden sm:block" />
+            <div className="flex items-center gap-2.5">
+              <Clock size={18} className="text-white" />
+              <span className="text-sm font-semibold text-white">Credits never expire</span>
             </div>
           </div>
         </div>
@@ -593,7 +544,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-off dark:bg-surface-alt pt-28 sm:pt-36 pb-24">
+      <section className="relative pt-28 sm:pt-36 pb-24" style={{ background: 'var(--gradient-brand-subtle)' }}>
         <PillarScrollReveal categories={auditCategories} />
       </section>
 
@@ -618,9 +569,9 @@ export default function Home() {
             {/* ── Feature 1: Finding Status Tracking ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-5">
-                  <ListChecks size={14} className="text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-500">Finding Tracker</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
+                  <ListChecks size={16} className="text-text" />
+                  <span className="text-xs font-semibold text-text">Finding Tracker</span>
                 </div>
                 <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Track every fix from<br className="hidden sm:block" /> open to resolved
@@ -696,9 +647,9 @@ export default function Home() {
                 </div>
               </div>
               <div className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/10 border border-brand/20 mb-5">
-                  <RefreshCw size={14} className="text-brand" />
-                  <span className="text-xs font-semibold text-brand">Re-Audit</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
+                  <RefreshCw size={16} className="text-text" />
+                  <span className="text-xs font-semibold text-text">Re-Audit</span>
                 </div>
                 <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
@@ -714,9 +665,9 @@ export default function Home() {
 
             {/* ── Feature 2b: Two Audit Modes ── */}
             <div className="text-center mb-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/10 border border-brand/20 mb-5">
-                <BarChart3 size={14} className="text-brand" />
-                <span className="text-xs font-semibold text-brand">Two Audit Modes</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
+                <BarChart3 size={16} className="text-text" />
+                <span className="text-xs font-semibold text-text">Two Audit Modes</span>
               </div>
               <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
                 Consistent results you can trust
@@ -790,9 +741,9 @@ export default function Home() {
             {/* ── Feature 3: Share with Your Team ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 mb-5">
-                  <Share2 size={14} className="text-pink-500" />
-                  <span className="text-xs font-semibold text-pink-600 dark:text-pink-400">Team Sharing</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
+                  <Share2 size={16} className="text-text" />
+                  <span className="text-xs font-semibold text-text">Team Sharing</span>
                 </div>
                 <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Share results with anyone.<br className="hidden sm:block" /> No account needed.
@@ -801,11 +752,11 @@ export default function Home() {
                   Generate a read-only link for any completed audit. Stakeholders see the overall score, pillar breakdown, top 3 recommendations, and executive summary — without needing a ClearUX account. Revoke the link anytime.
                 </p>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-                  <div className="flex items-center gap-1.5"><Link2 size={14} className="text-brand" /> <span>Shareable link</span></div>
+                  <div className="flex items-center gap-1.5"><Link2 size={16} className="text-text" /> <span>Shareable link</span></div>
                   <span className="text-border">|</span>
-                  <div className="flex items-center gap-1.5"><Lock size={14} className="text-brand" /> <span>Revocable anytime</span></div>
+                  <div className="flex items-center gap-1.5"><Lock size={16} className="text-text" /> <span>Revocable anytime</span></div>
                   <span className="text-border hidden sm:block">|</span>
-                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-brand" /> <span>PDF & Word exports</span></div>
+                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={16} className="text-text" /> <span>PDF & Word exports</span></div>
                 </div>
               </div>
               {/* Visual mock — overall score + 4 pillar cards */}
@@ -927,7 +878,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PRICING — Clean, editorial
           ═══════════════════════════════════════════════════════ */}
-      <section id="pricing" className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-off dark:bg-surface-alt">
+      <section id="pricing" className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
         <div
           ref={priceRef.ref}
           className={`max-w-4xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}

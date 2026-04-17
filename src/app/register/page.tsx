@@ -30,34 +30,6 @@ function getPasswordChecks(pw: string) {
   ]
 }
 
-/* ── Rotating testimonials ────────────────────────────────── */
-const testimonials = [
-  {
-    text: "After running a ClearUX audit on our SaaS onboarding, we implemented four high-severity fixes over two sprints. Signup-to-activation improved noticeably within the first month.",
-    name: 'Sarah Chen',
-    role: 'Product Manager @ TechFlow',
-    context: 'B2B SaaS',
-  },
-  {
-    text: "The accessibility and cognitive load findings were things no other tool had flagged. It catches the blind spots automated scanners miss.",
-    name: 'James Kim',
-    role: 'CTO @ LaunchPad',
-    context: 'EdTech startup',
-  },
-  {
-    text: "We include ClearUX audits in every client proposal now. The white-label reports are professional enough to present directly to stakeholders.",
-    name: 'Diana Torres',
-    role: 'Agency Director @ PixelCraft',
-    context: 'Digital agency',
-  },
-  {
-    text: "The ethical UX and dark pattern detection caught things our design team had overlooked. It has become part of our release checklist.",
-    name: 'Elena Rodriguez',
-    role: 'Design Lead @ Creative Studio',
-    context: 'E-commerce',
-  },
-]
-
 const valueProps = [
   {
     icon: Search,
@@ -108,8 +80,6 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [activeTestimonial, setActiveTestimonial] = useState(0)
-
   const handleOAuth = async (provider: 'google' | 'apple') => {
     setError(null)
     setOauthLoading(provider)
@@ -132,12 +102,6 @@ export default function RegisterPage() {
       setOauthLoading(null)
     }
   }
-
-  // Rotate testimonials every 5s
-  useEffect(() => {
-    const t = setInterval(() => setActiveTestimonial((i) => (i + 1) % testimonials.length), 5000)
-    return () => clearInterval(t)
-  }, [])
 
   const passwordChecks = getPasswordChecks(formData.password)
 
@@ -220,7 +184,7 @@ export default function RegisterPage() {
       {/* Brand wordmark — mobile + desktop form */}
       <Link href="/" className="inline-block mb-6 lg:hidden">
         <span className="text-2xl font-heading font-semibold text-text">
-          ClearUX
+          clear<span className="text-lime">UX</span>
         </span>
       </Link>
 
@@ -258,7 +222,7 @@ export default function RegisterPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-sm font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl bg-text/[0.03] hover:bg-text/[0.06] transition-colors text-sm font-medium text-text disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -464,106 +428,92 @@ export default function RegisterPage() {
       {/* ── DESKTOP: classic 2-panel layout ──────────────────── */}
       <div className="hidden lg:block">
         <div className="auth-page">
-          {/* Left Panel — Value Props + Rotating Reviews */}
-          <div className="auth-left relative z-0 bg-dotgrid">
+          {/* Left Panel — Value Props */}
+          <div className="auth-left relative z-0">
             <div className="auth-glow" />
+
+            {/* Subtle lime scribble accent — top-right */}
+            <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="50" stroke="#B9FF66" strokeWidth="1.5" strokeDasharray="6 8" />
+              <circle cx="60" cy="60" r="30" stroke="#B9FF66" strokeWidth="1" strokeDasharray="4 6" />
+            </svg>
+
+            {/* Subtle lime scribble accent — bottom-left */}
+            <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <path d="M10 70 Q 40 10, 70 70" stroke="#B9FF66" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M20 65 Q 40 20, 60 65" stroke="#B9FF66" strokeWidth="1" fill="none" strokeLinecap="round" />
+            </svg>
+
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
                   <h1 className="text-3xl font-heading font-semibold text-white">
-                    ClearUX
+                    clear<span className="text-[#B9FF66]">UX</span>
                   </h1>
                 </Link>
               </div>
 
-              <div className="space-y-6 mb-auto">
-                {/* Free audit banner */}
-                <div className="rounded-xl bg-white/10 border border-white/10 p-5 backdrop-blur-sm">
-                  <h2 className="text-lg font-heading font-semibold text-white mb-1.5">
-                    {pendingUrl ? 'Your free audit is one step away' : 'Start Your Free Audit'}
-                  </h2>
-                  <p className="text-sm text-white/70 mb-3">
-                    No credit card required. Get consultant-grade UX insights in under 10 minutes.
-                  </p>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/50">
-                    <span>64-point analysis</span>
-                    <span className="opacity-40">·</span>
-                    <span>Actionable findings</span>
-                    <span className="opacity-40">·</span>
-                    <span>Impact-ranked recommendations</span>
+              <div className="mb-auto">
+                <h2 className="text-2xl font-heading font-semibold text-white mb-2">
+                  {pendingUrl ? 'Your free audit is one step away' : 'Start your free audit'}
+                </h2>
+                <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">
+                  No credit card required. Get consultant-grade UX insights in under 10 minutes.
+                </p>
+
+                {pendingUrl && (
+                  <div className="mt-4 rounded-lg bg-white/[0.04] px-4 py-2.5">
+                    <p className="text-[11px] text-white/50 font-medium truncate">Auditing: {pendingUrl}</p>
                   </div>
-                  {pendingUrl && (
-                    <div className="mt-3 pt-2.5 border-t border-white/10">
-                      <p className="text-[11px] text-white/60 font-medium truncate">Auditing: {pendingUrl}</p>
-                    </div>
-                  )}
-                </div>
+                )}
 
-                <h3 className="text-lg font-heading font-semibold text-white/80">
-                  Everything you get
-                </h3>
-
-                <div className="grid grid-cols-1 gap-5">
+                <div className="mt-8 space-y-5">
                   {valueProps.map((prop) => (
-                    <div key={prop.title} className="flex gap-4 items-start">
-                      <div className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <prop.icon size={22} className="text-white/80" />
+                    <div key={prop.title} className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                        <prop.icon size={22} className="text-white/70" />
                       </div>
                       <div>
-                        <p className="text-base font-bold text-white">{prop.title}</p>
-                        <p className="text-sm text-white/65 leading-relaxed mt-0.5">{prop.desc}</p>
+                        <p className="text-base font-medium text-white/80">{prop.title}</p>
+                        <p className="text-[13px] text-white/50 leading-relaxed mt-0.5">{prop.desc}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-8">
-                <div className="bg-white/8 border border-white/10 rounded-xl p-5 backdrop-blur-sm min-h-[140px] transition-all duration-500">
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="text-yellow-400 text-sm">&#9733;</div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-white/90 mb-3 leading-relaxed">
-                    &ldquo;{testimonials[activeTestimonial].text}&rdquo;
-                  </p>
-                  <p className="text-xs text-white/55">
-                    {testimonials[activeTestimonial].name}, {testimonials[activeTestimonial].role}
-                  </p>
-                  <p className="text-[10px] text-white/35 mt-0.5">{testimonials[activeTestimonial].context}</p>
+              <div className="flex gap-4 mt-8">
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">64</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Checkpoints</p>
                 </div>
-
-                <div className="flex justify-center gap-2 mt-3">
-                  {testimonials.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveTestimonial(i)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                        i === activeTestimonial ? 'bg-white w-4' : 'bg-white/30'
-                      }`}
-                    />
-                  ))}
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">16</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Categories</p>
+                </div>
+                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
+                  <p className="text-lg font-bold text-white">&lt; 10 min</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Per audit</p>
                 </div>
               </div>
 
-              {/* Secondary CTA for hesitant users */}
-              <div className="mt-6 pt-5 border-t border-white/10">
-                <p className="text-xs text-white/40 mb-3">Not ready to sign up?</p>
+              {/* Secondary CTA */}
+              <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                <p className="text-xs text-white/35 mb-3">Not ready to sign up?</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     How it works <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     Pricing <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     FAQ <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     Contact <ArrowRight size={14} />
                   </Link>
                 </div>
