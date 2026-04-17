@@ -388,11 +388,19 @@ Return a JSON array. Each issue:
   "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain."
 }
 
+CRITICAL — NO DUPLICATE FINDINGS:
+Each finding must be UNIQUE. Do NOT report an issue if it is essentially the same problem you would flag in another category. For example:
+- "Login page lacks brand identity" and "Register page lacks brand identity" are the SAME finding — report it ONCE covering both pages.
+- "FAQ lacks visual hierarchy" should be one finding, not repeated for each sub-aspect.
+- If a problem spans multiple pages, combine it into ONE finding and list all affected pages.
+Before adding a finding, ask yourself: "Could this be merged with another finding about the same underlying issue?" If yes, merge them.
+
 QUANTITY GUIDELINES:
-- Include 2-5 findings per category. Fewer, better findings beat many shallow ones.
+- Include 2-5 UNIQUE findings per category. Fewer, better findings beat many shallow ones.
 - It's OK to report only 1-2 findings if the site genuinely excels in this category.
 - Every finding must be genuinely worth the client's attention and effort to fix.
 - If you can't find real issues, report fewer findings rather than inventing problems.
+- NEVER repeat the same finding with slight rewording. Each finding must address a DISTINCT issue.
 
 ${pageContent.includes('PREVIOUS FINDINGS') ? `RE-AUDIT CONSISTENCY:
 A PREVIOUS AUDIT BASELINE is provided above. You MUST be consistent:

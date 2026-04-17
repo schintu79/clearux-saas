@@ -601,7 +601,99 @@ RULES FOR RE-AUDIT:
     }
 
     // ──────────────────────────────────────────────────────────
-    // Verify findings count
+    // Deduplicate findings — remove near-duplicate findings
+    // that were flagged across multiple categories
+    // ──────────────────────────────────────────────────────────
+    await step.run('deduplicate-findings', async () => {
+      const db = getDb()
+      const { data: allFindings } = await db
+        .from('audit_findings')
+        .select('id, title, severity, page_url, sort_order')
+        .eq('audit_id', auditId)
+        .order('sort_order', { ascending: true })
+
+      if (!allFindings || allFindings.length < 2) return
+
+      // Severity priority — when merging, keep the higher severity
+      const severityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+
+      // Normalize title for comparison: lowercase, strip punctuation, collapse whitespace
+      function normalizeTitle(title: string): string {
+        return title.toLowerCase()
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+      }
+
+      // Extract significant words (4+ chars) for fuzzy matching
+      function extractWords(text: string): Set<string> {
+        return new Set(
+          normalizeTitle(text)
+            .split(' ')
+            .filter(w => w.length >= 4)
+        )
+      }
+
+      // Calculate word overlap ratio between two titles
+      function titleSimilarity(a: string, b: string): number {
+        const wordsA = extractWords(a)
+        const wordsB = extractWords(b)
+        if (wordsA.size === 0 || wordsB.size === 0) return 0
+        let overlap = 0
+        for (const w of wordsA) {
+          if (wordsB.has(w)) overlap++
+        }
+        // Jaccard-like: overlap / smaller set size (more aggressive matching)
+        return overlap / Math.min(wordsA.size, wordsB.size)
+      }
+
+      // Group duplicates: findings with >= 70% word overlap are considered duplicates
+      const SIMILARITY_THRESHOLD = 0.7
+      const duplicateIds: string[] = []
+      const seen = new Set<number>()
+
+      for (let i = 0; i < allFindings.length; i++) {
+        if (seen.has(i)) continue
+        const group: number[] = [i]
+
+        for (let j = i + 1; j < allFindings.length; j++) {
+          if (seen.has(j)) continue
+          const sim = titleSimilarity((allFindings[i] as any).title, (allFindings[j] as any).title)
+          if (sim >= SIMILARITY_THRESHOLD) {
+            group.push(j)
+            seen.add(j)
+          }
+        }
+
+        if (group.length > 1) {
+          // Keep the one with highest severity (lowest rank), then earliest sort_order
+          group.sort((a, b) => {
+            const sevA = severityRank[(allFindings[a] as any).severity] ?? 2
+            const sevB = severityRank[(allFindings[b] as any).severity] ?? 2
+            if (sevA !== sevB) return sevA - sevB
+            return ((allFindings[a] as any).sort_order ?? 0) - ((allFindings[b] as any).sort_order ?? 0)
+          })
+
+          // Mark all but the first (best) as duplicates
+          for (let k = 1; k < group.length; k++) {
+            duplicateIds.push((allFindings[group[k]] as any).id)
+          }
+        }
+      }
+
+      if (duplicateIds.length > 0) {
+        // Delete duplicate findings
+        for (const id of duplicateIds) {
+          await db.from('audit_findings').delete().eq('id', id)
+        }
+        await auditLog(auditId, 'findings_deduped', 'info',
+          `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
+        console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${allFindings.length} findings`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // Verify findings count (post-dedup)
     // ──────────────────────────────────────────────────────────
     await step.run('verify-findings', async () => {
       const db = getDb()
