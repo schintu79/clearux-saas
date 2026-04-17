@@ -83,7 +83,7 @@ async function recalculateFromFindings(
       rawJson._baselineCategoryScores || originalCategoryScores
 
     const totalFindings = allFindings.length
-    const fixedFindings = allFindings.filter((f: any) => f.status === 'fixed' || f.dismissed)
+    const resolvedFindings = allFindings.filter((f: any) => f.status === 'fixed' || f.dismissed)
     const openFindings = allFindings.filter((f: any) => f.status !== 'fixed' && !f.dismissed)
 
     // Calculate total severity penalty of ALL findings
@@ -168,12 +168,12 @@ async function recalculateFromFindings(
     }
 
     const prevScore = (report as any).overall_score
-    console.log(`[recalculate] Score: ${prevScore} → ${newOverallScore} | Fixed: ${fixedFindings.length}/${totalFindings} | Open penalty: ${openPenalty.toFixed(1)}/${totalPenalty.toFixed(1)} | Improvement: ${(improvementRatio * 100).toFixed(1)}%`)
+    console.log(`[recalculate] Score: ${prevScore} → ${newOverallScore} | Resolved: ${resolvedFindings.length}/${totalFindings} | Open penalty: ${openPenalty.toFixed(1)}/${totalPenalty.toFixed(1)} | Improvement: ${(improvementRatio * 100).toFixed(1)}%`)
 
     return {
       previousScore: prevScore,
       newScore: newOverallScore,
-      fixedCount: fixedFindings.length,
+      resolvedCount: resolvedFindings.length,
       openCount: openFindings.length,
       totalCount: totalFindings,
     }

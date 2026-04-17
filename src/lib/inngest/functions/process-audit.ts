@@ -892,6 +892,13 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
       }
 
+      // Preserve original category scores as baseline for future recalculations
+      // (when user marks findings as fixed/dismissed, scores recalculate from this baseline)
+      const reportJsonWithBaseline = {
+        ...reportData,
+        _baselineCategoryScores: reportData.categoryScores,
+      }
+
       // Insert report
       await db.from('reports').insert({
         audit_id: auditId,
@@ -908,7 +915,7 @@ RULES FOR RE-AUDIT:
         mobile_score: reportData.mobileScore,
         ai_discoverability_score: reportData.aiDiscoverabilityScore,
         content_score: reportData.contentScore,
-        raw_json: reportData,
+        raw_json: reportJsonWithBaseline,
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
       } as any)
