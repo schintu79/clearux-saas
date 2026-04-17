@@ -382,36 +382,22 @@ QUANTITY GUIDELINES:
 - Every finding must be genuinely worth the client's attention and effort to fix.
 - If you can't find real issues, report fewer findings rather than inventing problems.
 
-RE-AUDIT CONSISTENCY:
-If a PREVIOUS AUDIT BASELINE is provided above, you MUST be consistent:
+${pageContent.includes('PREVIOUS FINDINGS') ? `RE-AUDIT CONSISTENCY:
+A PREVIOUS AUDIT BASELINE is provided above. You MUST be consistent:
 - Do NOT invent new issues for content that hasn't changed since the previous audit.
 - Do NOT assign a different severity to the same unchanged issue.
 - If a [SKIP] or [FIXED] finding is listed, do NOT re-report it unless the issue is CLEARLY still present.
 - If a [OPEN] finding from the previous audit is still present, re-report it with the SAME title and severity.
 - Only report genuinely NEW issues that were not covered in any previous finding.
 - Consistency between audits is CRITICAL. Random variation on unchanged content destroys user trust.
-${depthMode === 'baseline' ? `
-DEPTH MODE: BASELINE (RE-AUDIT VERIFICATION ONLY)
-═══════════════════════════════════════════════════
-This is a BASELINE re-audit. You are a VERIFICATION MACHINE, not an auditor.
 
-YOUR ONLY JOB: Check each previous finding and report whether it is STILL PRESENT or FIXED. That's it.
-
-ABSOLUTE RULES — ZERO EXCEPTIONS:
-1. Go through EVERY [OPEN] and [IN PROGRESS] finding from the PREVIOUS FINDINGS list above.
-2. For each one: look at the CURRENT website content. Is the issue STILL THERE?
-   → YES, still present: Re-report with the EXACT SAME title (copy-paste it) and EXACT SAME severity. Do NOT rephrase, rename, or reword.
-   → NO, it's fixed: Do NOT report it. It will disappear from the audit.
-3. [SKIP] findings: NEVER report. The client dismissed these.
-4. [FIXED] findings: ONLY re-report if the issue has CLEARLY REGRESSED (the fix was undone and the problem is back). If still fixed, do NOT report.
-5. DO NOT INVENT NEW FINDINGS. Zero. None. Not even if you spot something obvious. The client did not ask for new findings. This mode exists specifically to track fixes — nothing else.
-6. If NO [OPEN] or [IN PROGRESS] findings exist for this category, return [].
-7. Copy the EXACT title string from the previous finding. Do not change capitalization, wording, or punctuation.
-
-WHY THIS MATTERS: The client is tracking their progress. Same site + same issues = same findings. Fixed issue = finding disappears. Score goes up. This is the contract. Breaking it by inventing new findings or rewording old ones destroys trust.
-
-Return ONLY previously-identified findings that are STILL present. Return [] if everything in this category is fixed or dismissed.
-` : ''}
+DEEP MODE CONSTRAINTS:
+The user explicitly requested to find NEW issues beyond what was found before.
+However, you MUST respect these rules:
+1. NEVER contradict a previous recommendation. If a previous finding recommended action X, do NOT create a new finding that recommends the opposite of X. Your new findings must be ADDITIVE, not contradictory.
+2. NEVER re-report a previously [FIXED] or [SKIP] finding under a different title. If an issue was dismissed or fixed, it's done.
+3. Do NOT find issues for the sake of finding issues. Every new finding must be genuinely impactful — the kind of thing a $200/hour consultant would flag. If there are no new real issues to find, return fewer findings. Quality over quantity.
+4. New findings should explore DEEPER layers of analysis — things the first audit couldn't cover, subtle interaction patterns, advanced accessibility edge cases, nuanced content strategy gaps. Not surface-level issues that should have been caught the first time.` : ''}
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
   try {
@@ -512,8 +498,107 @@ export async function generateReport(
     previousCategoryScores: CategoryScore[]
     previousOverallScore: number
     previousTotalFindings: number
+    previousExecutiveSummary: string
+    previousReportJson: any
+    droppedFixed: number
+    droppedDismissed: number
   },
 ): Promise<ReportData> {
+  // ════════════════════════════════════════════════════════════════
+  // BASELINE MODE — 100% DETERMINISTIC, ZERO AI FOR SCORES
+  // Previous scores are the truth. We adjust only based on fixed/dismissed findings.
+  // No AI randomness. Same site + no changes = EXACT same score. Period.
+  // ════════════════════════════════════════════════════════════════
+  if (depthMode === 'baseline' && baselineData && baselineData.previousCategoryScores.length > 0) {
+    const prev = baselineData
+    const currentCount = findings.length
+    const prevCount = prev.previousTotalFindings
+    const fixedCount = prev.droppedFixed
+    const dismissedCount = prev.droppedDismissed
+    const nothingChanged = fixedCount === 0 && dismissedCount === 0 && currentCount === prevCount
+
+    // Calculate severity-weighted improvement
+    // Total "room for improvement" is the sum of (100 - score) across all categories
+    const prevTotalWeight = prev.previousCategoryScores.reduce((sum, c) => sum + (100 - c.score), 0)
+    const fixedWeight = fixedCount * 2.5 // Average severity weight for fixed findings
+
+    // Score improvement: proportional to what was fixed out of what was wrong
+    // If prevTotalWeight = 0, site was perfect, no improvement possible
+    const improvementRatio = prevTotalWeight > 0 ? fixedWeight / prevTotalWeight : 0
+    const maxPossibleImprovement = 15 // Cap at +15 per re-audit cycle
+
+    // Build category scores: start from previous, add proportional improvement
+    const categoryScores: CategoryScore[] = prev.previousCategoryScores.map((prevCat) => {
+      if (nothingChanged) {
+        // NOTHING CHANGED → exact same scores
+        return { name: prevCat.name, score: prevCat.score, summary: prevCat.summary }
+      }
+      // Something changed (fixes or dismissals)
+      const headroom = 100 - prevCat.score
+      const improvement = Math.round(improvementRatio * headroom * 2) // 2x multiplier to make fixes feel impactful
+      const cappedImprovement = Math.min(improvement, maxPossibleImprovement)
+      return {
+        name: prevCat.name,
+        score: Math.min(100, prevCat.score + cappedImprovement),
+        summary: prevCat.summary, // Keep previous summary
+      }
+    })
+
+    // Calculate pillar averages and overall from deterministic category scores
+    const pillarAvg = (start: number, end: number) => {
+      const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+      return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
+    }
+    const allScores = categoryScores.map(c => c.score)
+    const overallScore = allScores.length > 0
+      ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
+      : prev.previousOverallScore
+
+    // Build executive summary — deterministic, no AI
+    let executiveSummary: string
+    if (nothingChanged) {
+      executiveSummary = `This re-audit of ${auditData.product_url} shows no changes since the previous audit. ` +
+        `All ${currentCount} previously identified findings remain open. ` +
+        `The overall score remains at ${overallScore}/100. ` +
+        `To improve your score, address the open findings — starting with critical and high-severity issues — and run another re-audit to track your progress.`
+    } else {
+      const parts: string[] = []
+      parts.push(`This re-audit of ${auditData.product_url} shows progress since the previous audit.`)
+      if (fixedCount > 0) parts.push(`${fixedCount} issue${fixedCount > 1 ? 's have' : ' has'} been resolved.`)
+      if (dismissedCount > 0) parts.push(`${dismissedCount} finding${dismissedCount > 1 ? 's were' : ' was'} dismissed.`)
+      parts.push(`${currentCount} finding${currentCount !== 1 ? 's' : ''} remain open.`)
+      if (overallScore > prev.previousOverallScore) {
+        parts.push(`The overall score improved from ${prev.previousOverallScore} to ${overallScore}/100.`)
+      } else {
+        parts.push(`The overall score is ${overallScore}/100.`)
+      }
+      parts.push(`Continue addressing the remaining findings to further improve your score.`)
+      executiveSummary = parts.join(' ')
+    }
+
+    // Carry forward previous top recommendations (filtered to only still-open ones)
+    const prevTopRecs = prev.previousReportJson?.topRecommendations || []
+    const topRecs = Array.isArray(prevTopRecs) ? prevTopRecs.slice(0, 3) : []
+
+    console.log(`[generateReport] BASELINE: prev=${prev.previousOverallScore}, now=${overallScore}, fixed=${fixedCount}, dismissed=${dismissedCount}, nothingChanged=${nothingChanged}`)
+
+    return {
+      executiveSummary,
+      keyRecommendation: topRecs[0] || 'Continue addressing open findings to improve your score.',
+      topRecommendations: topRecs.length > 0 ? topRecs : ['Continue addressing open findings to improve your score.'],
+      overallScore,
+      uxScore: pillarAvg(0, 4),
+      conversionScore: pillarAvg(4, 8),
+      mobileScore: pillarAvg(8, 12),
+      aiDiscoverabilityScore: pillarAvg(12, 16),
+      contentScore: overallScore,
+      categoryScores,
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // DEEP MODE — Full AI analysis for scoring and executive summary
+  // ════════════════════════════════════════════════════════════════
   const criticalCount = findings.filter((f) => f.severity === 'critical').length
   const highCount = findings.filter((f) => f.severity === 'high').length
   const mediumCount = findings.filter((f) => f.severity === 'medium').length
@@ -615,15 +700,6 @@ If a PREVIOUS AUDIT BASELINE with category scores is provided in the content abo
 - Random variation of more than 5 points on unchanged content is UNACCEPTABLE — it destroys user trust.
 - In the executive summary, note what changed vs what stayed the same.
 - When in doubt, use the SAME score as the previous audit for that category.
-${depthMode === 'baseline' ? `
-DEPTH MODE: BASELINE RE-AUDIT
-This is a baseline re-audit. Scores are calculated DETERMINISTICALLY by the system based on which previous findings were resolved — your category scores will be IGNORED. Focus ONLY on writing an excellent executive summary that:
-- Notes which previous issues were FIXED (celebrate the client's progress)
-- Notes which issues are STILL OPEN (what to focus on next)
-- Highlights any regressions where a previously fixed issue has returned
-- Does NOT invent new issues or concerns not in the previous findings
-The client wants to see their improvement journey, not a fresh audit.
-` : ''}
 
 Return ONLY valid JSON:
 {
@@ -717,86 +793,6 @@ ${categoryExamples}
         }))
       : getDefaultCategoryScores()
 
-    // ── BASELINE MODE: FULLY DETERMINISTIC SCORING ──────────────────────
-    // The AI is NOT trusted with scores in baseline mode. Period.
-    // Previous scores are the immutable truth. We only adjust based on
-    // hard evidence: findings that disappeared (fixed) or appeared (regression).
-    //
-    // Same site + no changes = EXACT same score. We are not to be fooled.
-    // ──────────────────────────────────────────────────────────────────────
-    if (depthMode === 'baseline' && baselineData && baselineData.previousCategoryScores.length > 0) {
-      const prev = baselineData
-      const currentFindingCount = findings.length
-      const prevFindingCount = prev.previousTotalFindings
-
-      // How many findings disappeared (fixed) or appeared (regression)?
-      const delta = prevFindingCount - currentFindingCount // positive = improvement
-      const severityWeight: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 }
-
-      // Calculate weighted improvement from findings that are gone (fixed)
-      // and weighted regression from NEW findings that appeared
-      // We use total severity weight change as the adjustment signal
-      const prevTotalWeight = prevFindingCount > 0
-        ? prevFindingCount * 2.5 // average weight estimate for previous findings
-        : 0
-      const currentTotalWeight = findings.reduce((sum, f) => sum + (severityWeight[f.severity] || 2), 0)
-      const weightDelta = prevTotalWeight - currentTotalWeight // positive = fewer/lighter findings = improvement
-
-      // Score adjustment: proportional to severity-weighted change
-      // Max adjustment per re-audit: +/- 12 points on overall score
-      // Each unit of weight delta = ~0.5 score points
-      const rawAdjustment = prevTotalWeight > 0
-        ? (weightDelta / prevTotalWeight) * 20 // 20 = max swing for 100% improvement
-        : 0
-      const cappedAdjustment = Math.max(-12, Math.min(12, Math.round(rawAdjustment)))
-
-      // Apply adjustment to each previous category score proportionally
-      // Categories with lower scores get more improvement (more headroom)
-      const baselineCategoryScores: CategoryScore[] = prev.previousCategoryScores.map((prevCat, i) => {
-        let adjustment = cappedAdjustment
-        if (adjustment > 0) {
-          // Improvement: categories with more headroom get more boost
-          const headroom = 100 - prevCat.score
-          adjustment = Math.round(cappedAdjustment * (headroom / 50)) // normalize by typical headroom
-        } else if (adjustment < 0) {
-          // Regression: categories with higher scores lose more (more to lose)
-          adjustment = Math.round(cappedAdjustment * (prevCat.score / 70)) // normalize
-        }
-        const newScore = Math.min(100, Math.max(0, prevCat.score + adjustment))
-        return {
-          name: prevCat.name,
-          score: newScore,
-          summary: categoryScores[i]?.summary || prevCat.summary || '', // Use AI summary text (just the text, not the score)
-        }
-      })
-
-      // Calculate pillar and overall scores from deterministic category scores
-      const bPillarAvg = (start: number, end: number) => {
-        const cats = baselineCategoryScores.slice(start, Math.min(end, baselineCategoryScores.length))
-        return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
-      }
-      const bAllScores = baselineCategoryScores.map(c => c.score)
-      const bOverall = bAllScores.length > 0
-        ? Math.round(bAllScores.reduce((s, v) => s + v, 0) / bAllScores.length)
-        : prev.previousOverallScore
-
-      console.log(`[generateReport] BASELINE MODE: prev=${prev.previousOverallScore}, now=${bOverall}, delta=${cappedAdjustment}, findings ${prevFindingCount}→${currentFindingCount}`)
-
-      return {
-        executiveSummary: report.executiveSummary || '',
-        keyRecommendation: topRecs[0] || report.keyRecommendation || null,
-        topRecommendations: topRecs.length > 0 ? topRecs : ['Prioritize critical issues first, then address high-impact improvements.'],
-        overallScore: bOverall,
-        uxScore: bPillarAvg(0, 4),
-        conversionScore: bPillarAvg(4, 8),
-        mobileScore: bPillarAvg(8, 12),
-        aiDiscoverabilityScore: bPillarAvg(12, 16),
-        contentScore: bOverall, // Use overall as content proxy in baseline
-        categoryScores: baselineCategoryScores,
-      }
-    }
-
-    // ── DEEP MODE (or no baseline): Use AI-generated scores ──────────
     // CALCULATE scores from category data — don't trust AI's arbitrary top-level numbers
     // Pillars: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11), Future Readiness (12-15)
     const pillarAvg = (start: number, end: number) => {

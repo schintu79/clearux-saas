@@ -254,6 +254,13 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
       let previousCategoryScores: Array<{ name: string; score: number; summary: string }> = []
       let previousOverallScore = 0
       let previousTotalFindings = 0
+      let previousRawFindings: Array<{
+        title: string; severity: string; description: string; recommendation: string;
+        estimated_impact: string | null; target_element: string | null; page_url: string | null;
+        sort_order: number; status: string; dismissed: boolean; dismissal_reason: string | null;
+      }> = []
+      let previousExecutiveSummary = ''
+      let previousReportJson: any = null
       if (domain && userId) {
         // Fetch site notes + previous audit ID in parallel
         const [siteNotesRes, prevAuditsRes] = await Promise.all([
@@ -280,19 +287,21 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
         if (prevAuditsRes.data && prevAuditsRes.data.length > 0) {
           const prevAuditId = (prevAuditsRes.data[0] as any).id
 
-          // Fetch previous report scores + all findings in parallel
+          // Fetch previous report scores + all findings (FULL data for baseline copy)
           const [prevReportRes, prevFindingsRes] = await Promise.all([
-            noteDb.from('reports').select('overall_score, raw_json').eq('audit_id', prevAuditId).single(),
+            noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
-              .select('title, severity, status, dismissed, dismissal_reason')
+              .select('title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
           ])
 
-          // Previous category scores as baseline
+          // Previous category scores + full report as baseline
           if (prevReportRes.data) {
             const prevReport = prevReportRes.data as any
             previousOverallScore = prevReport.overall_score || 0
+            previousExecutiveSummary = prevReport.executive_summary || ''
+            previousReportJson = prevReport.raw_json || null
             const prevCatScores = prevReport.raw_json?.categoryScores
             if (Array.isArray(prevCatScores) && prevCatScores.length > 0) {
               // Store for deterministic baseline anchoring in generateReport
@@ -317,6 +326,13 @@ The scores above are from the client's PREVIOUS audit of this SAME site. Your ne
           // All previous findings with their current status
           if (prevFindingsRes.data && prevFindingsRes.data.length > 0) {
             previousTotalFindings = prevFindingsRes.data.length
+            previousRawFindings = (prevFindingsRes.data as any[]).map((f) => ({
+              title: f.title, severity: f.severity, description: f.description,
+              recommendation: f.recommendation, estimated_impact: f.estimated_impact,
+              target_element: f.target_element, page_url: f.page_url,
+              sort_order: f.sort_order, status: f.status, dismissed: f.dismissed,
+              dismissal_reason: f.dismissal_reason,
+            }))
             const findingLines = (prevFindingsRes.data as any[]).map((f) => {
               if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
               if (f.status === 'fixed') return `  [FIXED] "${f.title}" — Client says resolved`
@@ -350,109 +366,170 @@ RULES FOR RE-AUDIT:
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
-      return { context: fullContext, effectiveDepthMode, previousCategoryScores, previousOverallScore, previousTotalFindings }
+      return {
+        context: fullContext,
+        effectiveDepthMode,
+        previousCategoryScores,
+        previousOverallScore,
+        previousTotalFindings,
+        previousRawFindings,
+        previousExecutiveSummary,
+        previousReportJson,
+      }
     })
 
-    // ──────────────────────────────────────────────────────────
-    // STEP 4+: Analyze categories in batches of 4
-    // Each batch is a separate step → separate serverless call
-    // 4 categories run in PARALLEL within each step (4 × 15s = 60s typical)
-    // 16 categories / 4 = only 4 Inngest steps (was 8)
-    // ──────────────────────────────────────────────────────────
-    const BATCH_SIZE = 4
-    const batches = []
-    for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
-      batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
-    }
-
-    // Pre-build the content string ONCE (don't rebuild per category)
-    const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
     const effectiveDepthMode = siteContext.effectiveDepthMode
-
-    let totalFindingsCount = 0
 
     console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
     await step.run('log-depth-mode', async () => {
       await auditLog(auditId, 'depth_mode', 'info',
-        `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — only verifying previous findings' : ' — full analysis with new issue discovery'}`)
+        `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — re-audit: copying previous findings, no AI analysis' : ' — full AI analysis'}`)
     })
 
-    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
-      const batch = batches[batchIdx]
-
-      const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
+    if (effectiveDepthMode === 'baseline') {
+      // ════════════════════════════════════════════════════════════
+      // BASELINE RE-AUDIT — NO AI ANALYSIS
+      // Copy previous findings based on their status:
+      //   [OPEN]        → copy as-is (issue still stands)
+      //   [IN PROGRESS] → copy as-is (still being worked on)
+      //   [FIXED]       → drop (user says it's fixed)
+      //   [DISMISSED]   → drop (user dismissed it)
+      // Score is 100% deterministic from previous baseline.
+      // Same site + no status changes = EXACT same findings + EXACT same score.
+      // ════════════════════════════════════════════════════════════
+      await step.run('baseline-copy-findings', async () => {
         const db = getDb()
-        let sortOrder = totalFindingsCount
-        let findingsInBatch = 0
+        const prevFindings = siteContext.previousRawFindings
+        let sortOrder = 0
+        let copiedCount = 0
+        let droppedFixed = 0
+        let droppedDismissed = 0
 
-        // Run all categories in this batch IN PARALLEL
-        console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
-        const batchResults = await Promise.all(
-          batch.map((categoryName) =>
-            analyzeCategory(
-              contentWithContext,
-              categoryName,
-              [], // empty = use built-in checklist items
-              auditDetails.userFocus,
-              auditDetails.language,
-              effectiveDepthMode,
-            )
-          ),
-        )
-
-        for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
-          const findings = batchResults[catIdx]
-          const categoryName = batch[catIdx]
-
-          for (const finding of findings) {
-            // Validate pageUrl against actual crawled URLs
-            let resolvedPageUrl = crawlResult.firstPageUrl
-            const crawledUrls = crawlResult.crawledUrls || [crawlResult.firstPageUrl]
-            if (finding.pageUrl) {
-              // Check if it exactly matches a crawled URL
-              if (crawledUrls.includes(finding.pageUrl)) {
-                resolvedPageUrl = finding.pageUrl
-              } else {
-                // Try partial match (Claude might return with/without trailing slash)
-                const match = crawledUrls.find((u: string) =>
-                  u.replace(/\/$/, '') === finding.pageUrl!.replace(/\/$/, '') ||
-                  finding.pageUrl!.includes(new URL(u).pathname)
-                )
-                if (match) resolvedPageUrl = match
-              }
-            }
-
-            await db.from('audit_findings').insert({
-              audit_id: auditId,
-              checklist_item_id: null,
-              severity: finding.severity,
-              title: finding.title,
-              description: finding.description,
-              evidence: null,
-              page_url: resolvedPageUrl,
-              recommendation: finding.recommendation,
-              estimated_impact: finding.estimatedImpact || null,
-              target_element: finding.targetElement || null,
-              screenshot_url: null,
-              sort_order: sortOrder++,
-            } as any)
+        for (const pf of prevFindings) {
+          // Skip dismissed findings
+          if (pf.dismissed) {
+            droppedDismissed++
+            continue
           }
-
-          findingsInBatch += findings.length
-          await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
-            findings_count: findings.length,
-          })
+          // Skip fixed findings
+          if (pf.status === 'fixed') {
+            droppedFixed++
+            continue
+          }
+          // Copy [OPEN], [IN PROGRESS], [BACKLOG] findings as-is
+          await db.from('audit_findings').insert({
+            audit_id: auditId,
+            checklist_item_id: null,
+            severity: pf.severity,
+            title: pf.title,
+            description: pf.description,
+            evidence: null,
+            page_url: pf.page_url,
+            recommendation: pf.recommendation,
+            estimated_impact: pf.estimated_impact || null,
+            target_element: pf.target_element || null,
+            screenshot_url: null,
+            sort_order: sortOrder++,
+          } as any)
+          copiedCount++
         }
 
-        return { findingsInBatch, newSortOrder: sortOrder }
+        await auditLog(auditId, 'baseline_findings_copied', 'success',
+          `Baseline: ${copiedCount} findings carried forward, ${droppedFixed} fixed, ${droppedDismissed} dismissed`, {
+            copied: copiedCount,
+            dropped_fixed: droppedFixed,
+            dropped_dismissed: droppedDismissed,
+            total_previous: prevFindings.length,
+          })
+
+        return { copiedCount, droppedFixed, droppedDismissed }
       })
 
-      totalFindingsCount = batchResult.newSortOrder
+    } else {
+      // ════════════════════════════════════════════════════════════
+      // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
+      // ════════════════════════════════════════════════════════════
+      const BATCH_SIZE = 4
+      const batches = []
+      for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
+        batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
+      }
+
+      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
+      let totalFindingsCount = 0
+
+      for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+        const batch = batches[batchIdx]
+
+        const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
+          const db = getDb()
+          let sortOrder = totalFindingsCount
+          let findingsInBatch = 0
+
+          console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
+          const batchResults = await Promise.all(
+            batch.map((categoryName) =>
+              analyzeCategory(
+                contentWithContext,
+                categoryName,
+                [],
+                auditDetails.userFocus,
+                auditDetails.language,
+                'deep', // Always 'deep' here — baseline path doesn't call analyzeCategory
+              )
+            ),
+          )
+
+          for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
+            const findings = batchResults[catIdx]
+            const categoryName = batch[catIdx]
+
+            for (const finding of findings) {
+              let resolvedPageUrl = crawlResult.firstPageUrl
+              const crawledUrls = crawlResult.crawledUrls || [crawlResult.firstPageUrl]
+              if (finding.pageUrl) {
+                if (crawledUrls.includes(finding.pageUrl)) {
+                  resolvedPageUrl = finding.pageUrl
+                } else {
+                  const match = crawledUrls.find((u: string) =>
+                    u.replace(/\/$/, '') === finding.pageUrl!.replace(/\/$/, '') ||
+                    finding.pageUrl!.includes(new URL(u).pathname)
+                  )
+                  if (match) resolvedPageUrl = match
+                }
+              }
+
+              await db.from('audit_findings').insert({
+                audit_id: auditId,
+                checklist_item_id: null,
+                severity: finding.severity,
+                title: finding.title,
+                description: finding.description,
+                evidence: null,
+                page_url: resolvedPageUrl,
+                recommendation: finding.recommendation,
+                estimated_impact: finding.estimatedImpact || null,
+                target_element: finding.targetElement || null,
+                screenshot_url: null,
+                sort_order: sortOrder++,
+              } as any)
+            }
+
+            findingsInBatch += findings.length
+            await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
+              findings_count: findings.length,
+            })
+          }
+
+          return { findingsInBatch, newSortOrder: sortOrder }
+        })
+
+        totalFindingsCount = batchResult.newSortOrder
+      }
     }
 
     // ──────────────────────────────────────────────────────────
-    // CHECK: Verify we got meaningful results before continuing
-    // If zero findings were produced, the analysis failed — fail the audit and refund
+    // Verify findings count
     // ──────────────────────────────────────────────────────────
     await step.run('verify-findings', async () => {
       const db = getDb()
@@ -462,10 +539,8 @@ RULES FOR RE-AUDIT:
         .eq('audit_id', auditId)
 
       if ((findingsCount ?? 0) === 0) {
-        // Zero findings — log a warning but still continue to generate a report.
-        // The report will reflect that no issues were found (could be a clean site).
-        console.warn(`[inngest] Audit ${auditId}: zero findings after analysis — continuing anyway`)
-        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings produced — site may be clean or analysis had issues')
+        console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
+        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
       } else {
         await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
       }
@@ -585,6 +660,11 @@ RULES FOR RE-AUDIT:
         .single()
 
       const reportContentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
+
+      // Count fixed/dismissed from previous findings for baseline scoring
+      const droppedFixed = siteContext.previousRawFindings.filter((f: any) => f.status === 'fixed').length
+      const droppedDismissed = siteContext.previousRawFindings.filter((f: any) => f.dismissed).length
+
       const reportData = await generateReport(
         findings,
         audit as any,
@@ -596,6 +676,10 @@ RULES FOR RE-AUDIT:
           previousCategoryScores: siteContext.previousCategoryScores,
           previousOverallScore: siteContext.previousOverallScore,
           previousTotalFindings: siteContext.previousTotalFindings,
+          previousExecutiveSummary: siteContext.previousExecutiveSummary,
+          previousReportJson: siteContext.previousReportJson,
+          droppedFixed,
+          droppedDismissed,
         } : undefined,
       )
 

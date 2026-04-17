@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages, Building2, Upload, X, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages, Building2, Upload, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -33,7 +33,6 @@ const NewAuditInner: React.FC = () => {
   const [firstAuditFree, setFirstAuditFree] = useState(false);
 
   // White-label fields (Agency/Scale only)
-  const [whiteLabelOpen, setWhiteLabelOpen] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -285,107 +284,87 @@ const NewAuditInner: React.FC = () => {
         )}
       </div>
 
-      {/* ── White-label branding (Agency/Scale only) — collapsible ── */}
+      {/* ── White-label branding (Agency/Scale only) ────── */}
       {isWhiteLabelEligible && (
-        <div className="mb-6 rounded-xl border-2 border-dashed border-violet-300/40 dark:border-violet-500/20 bg-violet-50/30 dark:bg-violet-900/[0.06] overflow-hidden">
-          {/* Toggle header */}
-          <button
-            type="button"
-            onClick={() => setWhiteLabelOpen(!whiteLabelOpen)}
-            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Building2 size={15} className="text-violet-500" />
-              <span className="text-sm font-bold text-text">White-Label Branding</span>
-              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                {packageTier}
-              </span>
-              {!whiteLabelOpen && (companyName.trim() || logoPreview) && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Configured</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 text-muted">
-              {!whiteLabelOpen && <span className="text-xs">Optional</span>}
-              <ChevronDown size={14} className={`transition-transform duration-200 ${whiteLabelOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
+        <div className="mb-6 p-5 rounded-xl border-2 border-dashed border-violet-300/40 dark:border-violet-500/20 bg-violet-50/30 dark:bg-violet-900/[0.06]">
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 size={15} className="text-violet-500" />
+            <span className="text-sm font-bold text-text">White-Label Branding</span>
+            <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              {packageTier}
+            </span>
+          </div>
+          <p className="text-xs text-muted mb-4">
+            Optional — replace ClearUX branding with your own in the PDF &amp; Word reports.
+          </p>
 
-          {/* Collapsible content */}
-          {whiteLabelOpen && (
-            <div className="px-5 pb-5 border-t border-violet-200/30 dark:border-violet-500/10">
-              <p className="text-xs text-muted mt-3 mb-4">
-                Replace ClearUX branding with your own in the PDF &amp; Word reports.
-              </p>
+          {/* Company name */}
+          <div className="mb-4">
+            <label htmlFor="wl-company" className="block text-xs font-semibold text-text mb-1.5">
+              Company Name
+            </label>
+            <input
+              id="wl-company"
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Your Company Name (optional)"
+              className="w-full px-4 py-2.5 border border-border rounded-lg font-inter text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 focus:border-violet-500"
+            />
+          </div>
 
-              {/* Company name */}
-              <div className="mb-4">
-                <label htmlFor="wl-company" className="block text-xs font-semibold text-text mb-1.5">
-                  Company Name
-                </label>
-                <input
-                  id="wl-company"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your Company Name (optional)"
-                  className="w-full px-4 py-2.5 border border-border rounded-lg font-inter text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 focus:border-violet-500"
+          {/* Logo upload */}
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1.5">
+              Company Logo
+            </label>
+            {logoPreview ? (
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+                <img
+                  src={logoPreview}
+                  alt="Logo preview"
+                  className="h-10 w-auto max-w-[120px] object-contain rounded"
                 />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-text font-medium truncate">{logoFile?.name}</p>
+                  <p className="text-[10px] text-muted">{logoFile ? `${(logoFile.size / 1024).toFixed(1)} KB` : ''}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                  className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-colors"
+                  aria-label="Remove logo"
+                >
+                  <X size={14} />
+                </button>
               </div>
-
-              {/* Logo upload */}
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1.5">
-                  Company Logo
-                </label>
-                {logoPreview ? (
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
-                    <img
-                      src={logoPreview}
-                      alt="Logo preview"
-                      className="h-10 w-auto max-w-[120px] object-contain rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-text font-medium truncate">{logoFile?.name}</p>
-                      <p className="text-[10px] text-muted">{logoFile ? `${(logoFile.size / 1024).toFixed(1)} KB` : ''}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setLogoFile(null); setLogoPreview(null); }}
-                      className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-colors"
-                      aria-label="Remove logo"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted hover:text-text hover:border-violet-400 hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-all"
-                  >
-                    <Upload size={14} />
-                    Upload logo (PNG, JPG, SVG — optional)
-                  </button>
-                )}
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/svg+xml"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                      setGeneralError('Logo must be under 2 MB');
-                      return;
-                    }
-                    setLogoFile(file);
-                    setLogoPreview(URL.createObjectURL(file));
-                  }}
-                />
-              </div>
-            </div>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted hover:text-text hover:border-violet-400 hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-all"
+              >
+                <Upload size={14} />
+                Upload logo (PNG, JPG, SVG — optional)
+              </button>
+            )}
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) {
+                  setGeneralError('Logo must be under 2 MB');
+                  return;
+                }
+                setLogoFile(file);
+                setLogoPreview(URL.createObjectURL(file));
+              }}
+            />
+          </div>
         </div>
       )}
 

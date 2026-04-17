@@ -1324,6 +1324,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
+            {(audit as any).depth_mode === 'deep' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                <Search size={10} />
+                Deep Mode
+              </span>
+            )}
             <a
               href={audit.product_url}
               target="_blank"

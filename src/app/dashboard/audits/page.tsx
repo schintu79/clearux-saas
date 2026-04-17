@@ -217,6 +217,9 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
                       <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                      {(audit as any).depth_mode === 'deep' && (
+                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
+                      )}
                       {done && report?.overall_score != null && (
                         <><span className="text-border">·</span><span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span></>
                       )}
