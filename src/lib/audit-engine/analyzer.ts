@@ -56,6 +56,7 @@ export interface ReportData {
   categoryScores: CategoryScore[]
   verificationSummary?: {
     likelyFixed: number
+    poorlyFixed?: number
     confirmedOpen: number
     totalVerified: number
     nothingChanged: boolean
@@ -948,7 +949,7 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
 
 export interface VerificationResult {
   findingId: string
-  status: 'confirmed_open' | 'likely_fixed'
+  status: 'confirmed_open' | 'likely_fixed' | 'poorly_fixed'
   note: string
 }
 
@@ -994,17 +995,22 @@ export async function verifyFindings(
 
     const prompt = `You are an expert UX auditor verifying whether previously identified issues have been fixed on a live website. You are given the CURRENT crawled page content and a list of findings from a PREVIOUS audit.
 
-YOUR TASK: For each finding, determine whether the issue STILL EXISTS or has been FIXED on the current site.
+YOUR TASK: For each finding, determine whether the issue STILL EXISTS, has been FIXED, or was POORLY FIXED (attempted fix that made things worse or didn't properly address the issue).
 
 HOW TO DECIDE:
 1. Read each finding carefully — understand what the issue was and what the recommendation said to fix.
-2. Search the current website content for evidence that the issue persists OR has been addressed.
+2. Search the current website content for evidence that the issue persists, has been addressed, or was poorly addressed.
 3. Mark as "likely_fixed" if ANY of these are true:
    - The recommended fix appears to have been implemented (new content, changed text, added elements)
    - The problematic content/pattern described in the finding is no longer present
    - The page structure changed in a way that addresses the concern
    - New content exists that directly resolves what was flagged (e.g., trust signals added, CTAs improved, missing sections now present)
-4. Mark as "confirmed_open" ONLY if:
+4. Mark as "poorly_fixed" if:
+   - There is evidence of an attempted fix, BUT it introduced new problems (e.g., broken layout, confusing copy, inconsistent messaging)
+   - The fix partially addresses the issue but creates a worse user experience in another way
+   - The change contradicts UX best practices or makes the original problem worse
+   - Content was changed but is now lower quality, misleading, or poorly written
+5. Mark as "confirmed_open" ONLY if:
    - The exact issue described is clearly still present in the current content
    - You can point to specific text/patterns in the current site that match the original problem
 
@@ -1012,6 +1018,7 @@ IMPORTANT:
 - UX findings are often about content quality, messaging, trust signals, and structure — NOT just code. Look for content changes, new sections, improved copy, added elements.
 - If a finding said "missing X" and X now exists somewhere on the site, that is likely fixed.
 - If a finding criticised specific text/copy and that text has changed, that is likely fixed.
+- "poorly_fixed" should be rare — only use it when there's clear evidence of a regression or harmful fix attempt.
 - Do NOT default to "confirmed_open" out of caution. If the content shows improvement related to the finding, mark it "likely_fixed". The user will confirm.
 - You are comparing a PREVIOUS state (the finding) against the CURRENT state (the crawled content). Changes matter.
 ${langInstruction ? `- Write your verification notes in the same language as the findings. ${langInstruction}` : ''}
@@ -1024,7 +1031,7 @@ ${findingsList}
 
 Respond with a JSON array. Each entry must have:
 - "id": the finding id exactly as provided
-- "status": "confirmed_open" or "likely_fixed"
+- "status": "confirmed_open", "likely_fixed", or "poorly_fixed"
 - "note": a brief (1-2 sentence) explanation citing specific evidence from the current site
 
 Respond ONLY with the JSON array, no other text.`
@@ -1047,7 +1054,7 @@ Respond ONLY with the JSON array, no other text.`
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]) as Array<{ id: string; status: string; note: string }>
         for (const item of parsed) {
-          const validStatus = item.status === 'likely_fixed' ? 'likely_fixed' : 'confirmed_open'
+          const validStatus = item.status === 'likely_fixed' ? 'likely_fixed' : item.status === 'poorly_fixed' ? 'poorly_fixed' : 'confirmed_open'
           results.push({
             findingId: item.id,
             status: validStatus,

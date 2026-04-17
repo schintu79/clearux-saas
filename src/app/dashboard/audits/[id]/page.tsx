@@ -536,7 +536,7 @@ const FINDING_STATUSES = [
   { key: 'backlog', label: 'Backlog', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', dot: 'bg-blue-500' },
 ] as const;
 
-function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig> }) {
+function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(finding.status || 'open');
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -554,7 +554,13 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
+        const data = await res.json();
         setStatus(newStatus as any);
+        // If score was updated (likely_fixed confirmed as fixed, or poorly_fixed penalty),
+        // trigger parent to refresh the page data so scores update in real time
+        if (data.scoreUpdate && onScoreUpdate) {
+          onScoreUpdate();
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         console.error('Status update failed:', err);
@@ -614,6 +620,12 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
                 Likely Fixed
               </span>
             )}
+            {(finding as any).verification_status === 'poorly_fixed' && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                <AlertTriangle size={10} />
+                Poorly Fixed
+              </span>
+            )}
             {finding.page_url && (
               <a
                 href={finding.page_url}
@@ -650,7 +662,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
             {finding.description}
           </p>
 
-          {/* AI Verification Note */}
+          {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
             <div className="flex items-start gap-2.5 p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-lg border border-emerald-200/40 dark:border-emerald-800/20">
               <Eye size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -661,6 +673,22 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig }: { findin
                 </p>
                 <p className="text-[10px] text-muted mt-1">
                   Mark this finding as &quot;Fixed&quot; to confirm and update your score.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* AI Verification Note — Poorly Fixed */}
+          {(finding as any).verification_status === 'poorly_fixed' && (finding as any).verification_note && (
+            <div className="flex items-start gap-2.5 p-3 bg-red-50/60 dark:bg-red-950/20 rounded-lg border border-red-200/40 dark:border-red-800/20">
+              <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-bold text-text mb-0.5">Regression Detected</p>
+                <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed">
+                  {(finding as any).verification_note}
+                </p>
+                <p className="text-[10px] text-muted mt-1">
+                  The attempted fix introduced new issues. Review and address the regression to improve your score.
                 </p>
               </div>
             </div>
@@ -802,12 +830,14 @@ function PillarSection({
   categoryScores,
   findings,
   lang,
+  onScoreUpdate,
 }: {
   pillar: ReturnType<typeof buildPillarConfig>[number];
   pillarIndex: number;
   categoryScores: Array<{ name: string; score: number; summary: string }>;
   findings: AuditFinding[];
   lang: string;
+  onScoreUpdate?: () => void;
 }) {
   const L = getUILabels(lang);
   const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
@@ -916,7 +946,7 @@ function PillarSection({
             </div>
             <div className="space-y-2">
               {sorted.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} />
+                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
               ))}
             </div>
           </div>
@@ -1804,6 +1834,28 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </button>
                     </div>
                   )}
+
+                  {/* "Poorly fixed findings detected" alert */}
+                  {rawJson.verificationSummary.poorlyFixed > 0 && (
+                    <div className="mb-4 p-4 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200/40 dark:border-red-800/20 flex items-start gap-3">
+                      <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text mb-0.5">
+                          {rawJson.verificationSummary.poorlyFixed} finding{rawJson.verificationSummary.poorlyFixed > 1 ? 's' : ''} poorly fixed
+                        </p>
+                        <p className="text-xs text-muted leading-relaxed">
+                          Our AI detected that {rawJson.verificationSummary.poorlyFixed > 1 ? 'these fixes' : 'this fix'} may have introduced new issues or made things worse.
+                          Look for the &quot;Poorly Fixed&quot; badge on findings below and review the AI notes for guidance.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setVerificationAlertDismissed(true)}
+                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -1856,6 +1908,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   categoryScores={categoryScores}
                   findings={findingsByPillar[pillar.name] || []}
                   lang={auditLang}
+                  onScoreUpdate={() => fetchAuditDetail(true)}
                 />
               ))}
 
@@ -1893,7 +1946,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {findings.length > 0 && (
                     <div className="space-y-3">
                       {findings.map((finding) => (
-                        <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} />
+                        <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
                       ))}
                     </div>
                   )}
@@ -1929,7 +1982,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                       <div className="space-y-2">
                         {items.map((finding) => (
-                          <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} />
+                          <FindingCard key={finding.id} finding={finding} pillarColor="text-violet-500" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
                         ))}
                       </div>
                     </div>

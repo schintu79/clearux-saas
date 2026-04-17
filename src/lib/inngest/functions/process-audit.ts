@@ -386,7 +386,7 @@ RULES FOR RE-AUDIT:
         `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — re-audit: copying previous findings, no AI analysis' : ' — full AI analysis'}`)
     })
 
-    let verificationData: { verified: number; likelyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
+    let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
 
     if (effectiveDepthMode === 'baseline') {
       // ════════════════════════════════════════════════════════════
@@ -466,7 +466,7 @@ RULES FOR RE-AUDIT:
 
         if (!copiedFindings || copiedFindings.length === 0) {
           await auditLog(auditId, 'verification_skipped', 'info', 'No findings to verify')
-          return { verified: 0, likelyFixed: 0, results: [] as Array<{ findingId: string; status: string; note: string }> }
+          return { verified: 0, likelyFixed: 0, poorlyFixed: 0, results: [] as Array<{ findingId: string; status: string; note: string }> }
         }
 
         // Use the freshly crawled page content for verification
@@ -483,6 +483,7 @@ RULES FOR RE-AUDIT:
 
         // Try to update findings in DB (columns may not exist yet — graceful fallback)
         let likelyFixedCount = 0
+        let poorlyFixedCount = 0
         for (const result of verificationResults) {
           try {
             await db
@@ -497,18 +498,21 @@ RULES FOR RE-AUDIT:
           }
 
           if (result.status === 'likely_fixed') likelyFixedCount++
+          if (result.status === 'poorly_fixed') poorlyFixedCount++
         }
 
         await auditLog(auditId, 'verification_completed', 'success',
-          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed, ${verificationResults.length - likelyFixedCount} confirmed open`, {
+          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed, ${poorlyFixedCount} poorly fixed, ${verificationResults.length - likelyFixedCount - poorlyFixedCount} confirmed open`, {
             total_verified: verificationResults.length,
             likely_fixed: likelyFixedCount,
-            confirmed_open: verificationResults.length - likelyFixedCount,
+            poorly_fixed: poorlyFixedCount,
+            confirmed_open: verificationResults.length - likelyFixedCount - poorlyFixedCount,
           })
 
         return {
           verified: verificationResults.length,
           likelyFixed: likelyFixedCount,
+          poorlyFixed: poorlyFixedCount,
           results: verificationResults.map(r => ({ findingId: r.findingId, status: r.status, note: r.note })),
         }
       })
@@ -759,14 +763,16 @@ RULES FOR RE-AUDIT:
       }
 
       // Use verification data directly from the step (not from DB columns which may not exist)
-      const vData = effectiveDepthMode === 'baseline' ? (verificationData || { likelyFixed: 0, verified: 0, results: [] }) : null
+      const vData = effectiveDepthMode === 'baseline' ? (verificationData || { likelyFixed: 0, poorlyFixed: 0, verified: 0, results: [] }) : null
       if (vData) {
         const likelyFixedCount = vData.likelyFixed
-        const confirmedOpenCount = vData.verified - vData.likelyFixed
-        const nothingChanged = droppedFixed === 0 && droppedDismissed === 0 && likelyFixedCount === 0
+        const poorlyFixedCount = vData.poorlyFixed || 0
+        const confirmedOpenCount = vData.verified - likelyFixedCount - poorlyFixedCount
+        const nothingChanged = droppedFixed === 0 && droppedDismissed === 0 && likelyFixedCount === 0 && poorlyFixedCount === 0
 
         reportData.verificationSummary = {
           likelyFixed: likelyFixedCount,
+          poorlyFixed: poorlyFixedCount,
           confirmedOpen: confirmedOpenCount,
           totalVerified: vData.verified,
           nothingChanged,
@@ -779,6 +785,9 @@ RULES FOR RE-AUDIT:
         // Enrich executive summary with verification insights
         if (likelyFixedCount > 0) {
           reportData.executiveSummary += ` Our AI verification detected that ${likelyFixedCount} finding${likelyFixedCount > 1 ? 's appear' : ' appears'} to have been addressed on the live site. Review ${likelyFixedCount > 1 ? 'them' : 'it'} and confirm the fix to update your score.`
+        }
+        if (poorlyFixedCount > 0) {
+          reportData.executiveSummary += ` Warning: ${poorlyFixedCount} finding${poorlyFixedCount > 1 ? 's show' : ' shows'} signs of a poorly implemented fix that may have introduced new issues. Review ${poorlyFixedCount > 1 ? 'these findings' : 'this finding'} carefully.`
         }
       }
 

@@ -192,7 +192,7 @@ export interface AuditFinding {
   dismissed:         boolean
   dismissal_reason:  string | null
   dismissed_at:      string | null
-  verification_status: 'confirmed_open' | 'likely_fixed' | null
+  verification_status: 'confirmed_open' | 'likely_fixed' | 'poorly_fixed' | null
   verification_note:   string | null
   created_at:        string
 }
