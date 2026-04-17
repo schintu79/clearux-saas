@@ -109,7 +109,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               ClearUX
             </span>
           </Link>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#C0392B]/8 text-[#C0392B] border border-[#C0392B]/15">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
           </span>
         </div>
@@ -164,7 +164,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#1C1C1C] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#111111] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -209,7 +209,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
           <span className="ml-3 font-heading font-semibold text-[17px] text-text">
             ClearUX
           </span>
-          <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#C0392B]/8 text-[#C0392B] border border-[#C0392B]/15">
+          <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
           </span>
         </div>

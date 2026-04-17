@@ -73,7 +73,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -301,7 +301,7 @@ const NewAuditInner: React.FC = () => {
                 {packageTier}
               </span>
               {!whiteLabelOpen && (companyName.trim() || logoPreview) && (
-                <span className="text-[10px] text-[#2D7A4F] font-medium">Configured</span>
+                <span className="text-[10px] text-[#22C55E] font-medium">Configured</span>
               )}
             </div>
             <div className="flex items-center gap-1.5 text-muted">
@@ -398,7 +398,7 @@ const NewAuditInner: React.FC = () => {
         <div className="grid grid-cols-1 gap-1.5">
           {AUDIT_FEATURES.map((f, i) => (
             <div key={i} className="flex items-center gap-2">
-              <CheckCircle size={13} className="text-[#2D7A4F] flex-shrink-0" />
+              <CheckCircle size={13} className="text-[#22C55E] flex-shrink-0" />
               <span className="text-xs text-muted">{f}</span>
             </div>
           ))}
@@ -407,7 +407,7 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Free first audit banner ──────────────────────── */}
       {firstAuditFree && (
-        <div className="mb-6 p-4 rounded-xl bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15">
+        <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-brand">
               <Sparkles size={18} className="text-white" />
@@ -426,9 +426,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Credits banner ────────────────────────────────── */}
       {!firstAuditFree && credits !== null && hasCredits && (
-        <div className="mb-6 p-4 rounded-xl bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15">
+        <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#2D7A4F] flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#22C55E] flex items-center justify-center flex-shrink-0">
               <Coins size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -439,7 +439,7 @@ const NewAuditInner: React.FC = () => {
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-bold text-[#2D7A4F]">{credits}</span>
+            <span className="text-2xl font-bold text-[#22C55E]">{credits}</span>
           </div>
         </div>
       )}
@@ -472,7 +472,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1C1C1C] font-heading font-semibold text-lg py-4 px-8 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-lg py-4 px-8 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>

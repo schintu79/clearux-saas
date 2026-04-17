@@ -89,14 +89,14 @@ export default function AdminUsersPage() {
   const tierColors: Record<string, string> = {
     starter: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
     growth: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    agency: 'bg-[#6B5B95]/10 text-[#6B5B95]',
-    scale: 'bg-[#2D7A4F]/10 text-[#2D7A4F]',
+    agency: 'bg-[#6366F1]/10 text-[#6366F1]',
+    scale: 'bg-[#22C55E]/10 text-[#22C55E]',
   }
 
   const roleColors: Record<string, string> = {
     user: '',
     admin: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    super_admin: 'bg-[#C0392B]/10 text-[#C0392B]',
+    super_admin: 'bg-[#EF4444]/10 text-[#EF4444]',
   }
 
   return (
@@ -162,7 +162,7 @@ export default function AdminUsersPage() {
                       <p className="text-[11px] text-muted truncate max-w-[200px]">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[13px] font-bold text-[#2D7A4F] tabular-nums">{u.credits}</span>
+                      <span className="text-[13px] font-bold text-[#22C55E] tabular-nums">{u.credits}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-[13px] text-text tabular-nums">{u.audit_count}</span>
@@ -186,14 +186,14 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setCreditModal({ user: u, amount: '', reason: '', type: 'add' })}
-                          className="p-1.5 rounded-lg hover:bg-[#2D7A4F]/10 text-muted hover:text-[#2D7A4F] transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[#22C55E]/10 text-muted hover:text-[#22C55E] transition-colors"
                           title="Add credits"
                         >
                           <Plus size={14} />
                         </button>
                         <button
                           onClick={() => setCreditModal({ user: u, amount: '', reason: '', type: 'remove' })}
-                          className="p-1.5 rounded-lg hover:bg-[#C0392B]/10 text-muted hover:text-[#C0392B] transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[#EF4444]/10 text-muted hover:text-[#EF4444] transition-colors"
                           title="Remove credits"
                         >
                           <Minus size={14} />
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
               {creditModal.type === 'add' ? 'Adding credits to' : 'Removing credits from'}{' '}
               <span className="font-medium text-text">{creditModal.user.full_name || creditModal.user.email}</span>
               <br />
-              <span className="text-[12px]">Current balance: <span className="font-bold text-[#2D7A4F]">{creditModal.user.credits}</span></span>
+              <span className="text-[12px]">Current balance: <span className="font-bold text-[#22C55E]">{creditModal.user.credits}</span></span>
             </p>
 
             <div className="space-y-3">
@@ -288,8 +288,8 @@ export default function AdminUsersPage() {
                 disabled={submitting || !creditModal.amount || parseInt(creditModal.amount) <= 0}
                 className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 ${
                   creditModal.type === 'add'
-                    ? 'bg-[#2D7A4F] hover:bg-[#246B43]'
-                    : 'bg-[#C0392B] hover:bg-[#A93226]'
+                    ? 'bg-[#22C55E] hover:bg-[#246B43]'
+                    : 'bg-[#EF4444] hover:bg-[#A93226]'
                 }`}
               >
                 {submitting ? 'Processing...' : creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}

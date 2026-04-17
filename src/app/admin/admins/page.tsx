@@ -102,7 +102,7 @@ export default function AdminManagementPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#1C1C1C] rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#111111] rounded-lg transition-all hover:brightness-110"
         >
           <UserPlus size={15} />
           Add Admin
@@ -140,7 +140,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1C1C1C] bg-brand flex-shrink-0"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#111111] bg-brand flex-shrink-0"
                         >
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
@@ -153,7 +153,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
                         admin.role === 'super_admin'
-                          ? 'bg-[#C0392B]/10 text-[#C0392B] border border-[#C0392B]/20'
+                          ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
                           : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                       }`}>
                         {admin.role === 'super_admin' ? <Crown size={12} /> : <Shield size={12} />}
@@ -166,7 +166,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleRemoveAdmin(admin.id)}
-                        className="text-[12px] text-[#C0392B] hover:text-[#A93226] font-medium hover:underline transition-colors"
+                        className="text-[12px] text-[#EF4444] hover:text-[#A93226] font-medium hover:underline transition-colors"
                       >
                         Remove
                       </button>
@@ -182,14 +182,14 @@ export default function AdminManagementPage() {
       {/* Info card */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#6B5B95]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <ShieldCheck size={18} className="text-[#6B5B95]" />
+          <div className="w-9 h-9 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <ShieldCheck size={18} className="text-[#6366F1]" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-text mb-1">Role Permissions</h3>
             <div className="text-[13px] text-text/65 space-y-1">
               <p><span className="font-medium text-amber-500">Admin</span> — Can view all users, audits, and manage credits. Cannot promote or demote other admins.</p>
-              <p><span className="font-medium text-[#C0392B]">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
+              <p><span className="font-medium text-[#EF4444]">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
             </div>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function AdminManagementPage() {
               </div>
 
               {error && (
-                <p className="text-[13px] text-[#C0392B] bg-[#C0392B]/10 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-[13px] text-[#EF4444] bg-[#EF4444]/10 px-3 py-2 rounded-lg">{error}</p>
               )}
             </div>
 
@@ -245,7 +245,7 @@ export default function AdminManagementPage() {
               <button
                 onClick={handleAddAdmin}
                 disabled={submitting || !addEmail.trim()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#1C1C1C] transition-all disabled:opacity-40 hover:brightness-110"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#111111] transition-all disabled:opacity-40 hover:brightness-110"
               >
                 {submitting ? 'Adding...' : 'Add Admin'}
               </button>

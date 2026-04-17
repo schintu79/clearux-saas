@@ -10,15 +10,15 @@ import ScoreRing from '@/components/ui/ScoreRing';
 import type { Report, AuditFinding } from '@/types/database';
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#2D7A4F]';
+  if (s >= 70) return 'text-[#22C55E]';
   if (s >= 40) return 'text-amber-600 dark:text-amber-400';
-  return 'text-[#C0392B]';
+  return 'text-[#EF4444]';
 }
 
 function scoreBgClass(s: number) {
-  if (s >= 70) return 'bg-[#2D7A4F]';
+  if (s >= 70) return 'bg-[#22C55E]';
   if (s >= 40) return 'bg-amber-500';
-  return 'bg-[#C0392B]';
+  return 'bg-[#EF4444]';
 }
 
 function scoreLabel(s: number) {
@@ -30,10 +30,10 @@ function scoreLabel(s: number) {
 }
 
 const PILLAR_STYLE = [
-  { color: 'violet', gradient: 'from-[#6B5B95] to-[#5A4D80]', bg: 'bg-[#6B5B95]/10', text: 'text-[#6B5B95]', badgeBg: 'bg-[#6B5B95]', Icon: Scale },
+  { color: 'violet', gradient: 'from-[#6366F1] to-[#5A4D80]', bg: 'bg-[#6366F1]/10', text: 'text-[#6366F1]', badgeBg: 'bg-[#6366F1]', Icon: Scale },
   { color: 'pink', gradient: 'from-pink-500 to-pink-600', bg: 'bg-pink-500/10', text: 'text-pink-500', badgeBg: 'bg-pink-500', Icon: Heart },
   { color: 'amber', gradient: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10', text: 'text-amber-500', badgeBg: 'bg-amber-500', Icon: Accessibility },
-  { color: 'emerald', gradient: 'from-[#2D7A4F] to-[#246B43]', bg: 'bg-[#2D7A4F]/10', text: 'text-[#2D7A4F]', badgeBg: 'bg-[#2D7A4F]', Icon: Brain },
+  { color: 'emerald', gradient: 'from-[#22C55E] to-[#246B43]', bg: 'bg-[#22C55E]/10', text: 'text-[#22C55E]', badgeBg: 'bg-[#22C55E]', Icon: Brain },
 ];
 
 const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
@@ -103,7 +103,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <Lock size={40} className="text-muted mx-auto mb-4" />
             <h1 className="font-heading font-semibold text-2xl text-text mb-2">Link unavailable</h1>
             <p className="text-muted text-sm mb-6">{error || 'This shared audit link is invalid or has been revoked.'}</p>
-            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110">
+            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110">
               Go to ClearUX
             </Link>
           </div>
@@ -275,7 +275,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               <div className="text-center mt-10 mb-6 px-4">
                 <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
                 <p className="text-muted text-xs mb-5">64 checkpoints. 16 categories. Results in minutes. First audit free.</p>
-                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5">
+                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5">
                   <Sparkles size={16} />
                   Get Your Free Audit
                 </Link>

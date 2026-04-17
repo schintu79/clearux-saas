@@ -52,9 +52,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#2D7A4F]';
+  if (s >= 70) return 'text-[#22C55E]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-[#C0392B]';
+  return 'text-[#EF4444]';
 }
 
 function scoreBg(s: number) {
@@ -176,7 +176,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         </div>
         <Link
           href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110 flex-shrink-0"
+          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110 flex-shrink-0"
         >
           <RefreshCw size={13} />
           Re-audit
@@ -196,7 +196,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
             <TrendingUp size={13} className="text-brand" />
             <span className="text-xs font-medium text-text/60">Score Trend</span>
             {improvement !== 0 && (
-              <span className={`ml-auto text-xs font-semibold ${improvement > 0 ? 'text-[#2D7A4F]' : 'text-[#C0392B]'}`}>
+              <span className={`ml-auto text-xs font-semibold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                 {improvement > 0 ? '+' : ''}{improvement} pts
               </span>
             )}
@@ -211,11 +211,11 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                   <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
                   <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${s.score >= 70 ? 'bg-[#2D7A4F]' : s.score >= 40 ? 'bg-amber-400' : 'bg-[#C0392B]'}`}
+                      className={`h-full rounded-full ${s.score >= 70 ? 'bg-[#22C55E]' : s.score >= 40 ? 'bg-amber-400' : 'bg-[#EF4444]'}`}
                       style={{ width: `${s.score}%` }}
                     />
                   </div>
-                  <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-[#2D7A4F]' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#C0392B]'}`}>
+                  <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-[#22C55E]' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#EF4444]'}`}>
                     {s.score}
                   </span>
                   {isLatest && <span className="text-[8px] font-medium text-brand bg-brand/10 px-1 py-0.5 rounded">now</span>}
@@ -235,7 +235,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start an audit to analyze this site.</p>
           <Link
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
-            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
+            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start Audit
           </Link>

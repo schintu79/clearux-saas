@@ -65,7 +65,7 @@ export default function BuyCreditsPage() {
 
       <div className="text-center mb-10">
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <Coins size={28} className="text-[#2D7A4F]" />
+          <Coins size={28} className="text-[#22C55E]" />
         </div>
         <h1 className="text-3xl font-bold font-heading text-text mb-2">
           Buy Audit Credits
@@ -74,10 +74,10 @@ export default function BuyCreditsPage() {
           Every credit = one full deep audit across all 64 checkpoints. Buy more, save more.
         </p>
         {credits !== null && (
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2D7A4F]/10 border border-[#2D7A4F]/20">
-            <Coins size={14} className="text-[#2D7A4F]" />
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/20">
+            <Coins size={14} className="text-[#22C55E]" />
             <span className="text-sm font-semibold text-text">
-              Current balance: <span className="text-[#2D7A4F]">{credits} credit{credits !== 1 ? 's' : ''}</span>
+              Current balance: <span className="text-[#22C55E]">{credits} credit{credits !== 1 ? 's' : ''}</span>
             </span>
           </div>
         )}
@@ -95,7 +95,7 @@ export default function BuyCreditsPage() {
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-brand text-surface dark:text-[#1C1C1C] text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-2.5 right-4 bg-brand text-surface dark:text-[#111111] text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">
                 Customers Favourite
               </span>
             )}
@@ -108,7 +108,7 @@ export default function BuyCreditsPage() {
                 <p className="text-xs text-muted">{pack.per} per audit</p>
               </div>
               {pack.save && (
-                <span className="inline-flex items-center bg-[#2D7A4F] text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center bg-[#22C55E] text-white text-xs font-bold px-2.5 py-1 rounded-full">
                   Save {pack.save}
                 </span>
               )}
@@ -126,7 +126,7 @@ export default function BuyCreditsPage() {
                 'Credits never expire',
               ].map((f, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <CheckCircle size={13} className="text-[#2D7A4F] flex-shrink-0" />
+                  <CheckCircle size={13} className="text-[#22C55E] flex-shrink-0" />
                   <span className="text-xs text-muted">{f}</span>
                 </div>
               ))}
@@ -137,7 +137,7 @@ export default function BuyCreditsPage() {
               disabled={purchasing !== null}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
                 pack.popular
-                  ? 'bg-brand text-surface dark:text-[#1C1C1C] hover:brightness-110 shadow-sm'
+                  ? 'bg-brand text-surface dark:text-[#111111] hover:brightness-110 shadow-sm'
                   : 'bg-brand/10 text-brand hover:bg-brand/[0.18]'
               }`}
             >

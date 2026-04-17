@@ -297,7 +297,7 @@ export default function RegisterPage() {
             className={`input ${errors.fullName ? 'input-error' : ''}`}
             disabled={loading}
           />
-          {errors.fullName && <p className="text-xs text-[#C0392B] mt-1.5">{errors.fullName}</p>}
+          {errors.fullName && <p className="text-xs text-[#EF4444] mt-1.5">{errors.fullName}</p>}
         </div>
 
         {/* Email */}
@@ -315,7 +315,7 @@ export default function RegisterPage() {
             className={`input ${errors.email ? 'input-error' : ''}`}
             disabled={loading}
           />
-          {errors.email && <p className="text-xs text-[#C0392B] mt-1.5">{errors.email}</p>}
+          {errors.email && <p className="text-xs text-[#EF4444] mt-1.5">{errors.email}</p>}
         </div>
 
         {/* Password */}
@@ -357,7 +357,7 @@ export default function RegisterPage() {
                       <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     )}
                   </div>
-                  <span className={`text-xs transition-colors ${check.met ? 'text-[#2D7A4F]' : 'text-muted'}`}>
+                  <span className={`text-xs transition-colors ${check.met ? 'text-[#22C55E]' : 'text-muted'}`}>
                     {check.label}
                   </span>
                 </div>
@@ -365,7 +365,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {errors.password && <p className="text-xs text-[#C0392B] mt-1.5">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-[#EF4444] mt-1.5">{errors.password}</p>}
         </div>
 
         {/* Confirm Password */}
@@ -404,13 +404,13 @@ export default function RegisterPage() {
                 )}
               </div>
               <span className={`text-xs transition-colors ${
-                formData.password === formData.confirmPassword ? 'text-[#2D7A4F]' : 'text-muted'
+                formData.password === formData.confirmPassword ? 'text-[#22C55E]' : 'text-muted'
               }`}>
                 {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
               </span>
             </div>
           )}
-          {errors.confirmPassword && <p className="text-xs text-[#C0392B] mt-1.5">{errors.confirmPassword}</p>}
+          {errors.confirmPassword && <p className="text-xs text-[#EF4444] mt-1.5">{errors.confirmPassword}</p>}
         </div>
 
         {/* Submit */}

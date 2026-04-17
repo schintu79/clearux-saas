@@ -118,7 +118,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -320,8 +320,8 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {messages.profileSuccess && (
-              <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
-                <p className="text-[#2D7A4F] text-sm">{messages.profileSuccess}</p>
+              <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
+                <p className="text-[#22C55E] text-sm">{messages.profileSuccess}</p>
               </div>
             )}
             {messages.profileError && (
@@ -374,8 +374,8 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {messages.billingSuccess && (
-              <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
-                <p className="text-[#2D7A4F] text-sm">{messages.billingSuccess}</p>
+              <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
+                <p className="text-[#22C55E] text-sm">{messages.billingSuccess}</p>
               </div>
             )}
             {messages.billingError && (
@@ -462,8 +462,8 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {messages.passwordSuccess && (
-                <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
-                  <p className="text-[#2D7A4F] text-sm">{messages.passwordSuccess}</p>
+                <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
+                  <p className="text-[#22C55E] text-sm">{messages.passwordSuccess}</p>
                 </div>
               )}
               {messages.passwordError && (

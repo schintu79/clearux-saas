@@ -29,13 +29,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        'bg-brand text-surface dark:text-[#1C1C1C] hover:bg-brand-hover focus:ring-brand/30 active:scale-[0.98]',
+        'bg-brand text-surface dark:text-[#111111] hover:bg-brand-hover focus:ring-brand/30 active:scale-[0.98]',
       secondary:
         'bg-transparent border border-border text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
       ghost:
         'bg-transparent text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
       danger:
-        'bg-[#C0392B] text-white hover:bg-[#A93226] focus:ring-[#C0392B]/30 active:scale-[0.98]',
+        'bg-[#EF4444] text-white hover:bg-[#A93226] focus:ring-[#EF4444]/30 active:scale-[0.98]',
     };
 
     const sizeStyles = {

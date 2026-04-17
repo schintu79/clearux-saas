@@ -48,9 +48,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#2D7A4F]';
+  if (s >= 70) return 'text-[#22C55E]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-[#C0392B]';
+  return 'text-[#EF4444]';
 }
 
 function scoreBg(s: number) {
@@ -140,7 +140,7 @@ function AuditSiteGroup({ domain, audits }: {
               {improvement !== 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={`font-semibold ${improvement > 0 ? 'text-[#2D7A4F]' : 'text-[#C0392B]'}`}>
+                  <span className={`font-semibold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 </>
@@ -235,7 +235,7 @@ export default function AuditsPage() {
           <h1 className="text-lg font-semibold text-text">All Audits</h1>
           <p className="text-muted text-xs mt-0.5">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110">
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -252,7 +252,7 @@ export default function AuditsPage() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110">
+          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110">
             <Sparkles size={13} /> Start Audit
           </Link>
         </div>

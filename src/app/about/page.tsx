@@ -23,7 +23,7 @@ export default function AboutPage() {
           {/* Ambient glows */}
           <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-brand/[0.06] blur-[160px] pointer-events-none" />
           <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-pink-500/[0.04] blur-[140px] pointer-events-none" />
-          <div className="absolute bottom-[10%] left-[40%] w-[350px] h-[350px] rounded-full bg-[#2D7A4F]/[0.04] blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[10%] left-[40%] w-[350px] h-[350px] rounded-full bg-[#22C55E]/[0.04] blur-[120px] pointer-events-none" />
 
           <div className="max-w-5xl mx-auto text-center relative">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
@@ -45,7 +45,7 @@ export default function AboutPage() {
             2. BEYOND TRADITIONAL AUDITS
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-          <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#2D7A4F]/[0.03] blur-[160px] pointer-events-none" />
+          <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#22C55E]/[0.03] blur-[160px] pointer-events-none" />
           <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-brand/[0.03] blur-[140px] pointer-events-none" />
 
           <div className="max-w-6xl mx-auto relative">
@@ -61,9 +61,9 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
               {/* Card 1 — AI Readiness */}
-              <div className="group relative rounded-xl border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-11 h-11 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-5">
-                  <BrainCircuit size={20} className="text-[#2D7A4F]" />
+              <div className="group relative rounded-xl border border-[#22C55E]/20 dark:border-[#22C55E]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-5">
+                  <BrainCircuit size={20} className="text-[#22C55E]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-text mb-2.5">AI Agent Readiness</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
@@ -72,9 +72,9 @@ export default function AboutPage() {
               </div>
 
               {/* Card 2 — Cognitive Accessibility & Neurodiversity */}
-              <div className="group relative rounded-xl border border-[#6B5B95]/20 dark:border-[#6B5B95]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-11 h-11 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-5">
-                  <Accessibility size={20} className="text-[#6B5B95]" />
+              <div className="group relative rounded-xl border border-[#6366F1]/20 dark:border-[#6366F1]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-5">
+                  <Accessibility size={20} className="text-[#6366F1]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Cognitive Accessibility & Neurodiversity</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
@@ -265,17 +265,17 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. The blind spots other tools miss.</p>
               </div>
 
-              <div className="rounded-xl border border-[#6B5B95]/30 dark:border-[#6B5B95]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-6">
-                  <Shield size={22} className="text-[#6B5B95]" />
+              <div className="rounded-xl border border-[#6366F1]/30 dark:border-[#6366F1]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-6">
+                  <Shield size={22} className="text-[#6366F1]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">We detect dark patterns — and refuse to use them</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.</p>
               </div>
 
-              <div className="rounded-xl border border-[#2D7A4F]/30 dark:border-[#2D7A4F]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-6">
-                  <Brain size={22} className="text-[#2D7A4F]" />
+              <div className="rounded-xl border border-[#22C55E]/30 dark:border-[#22C55E]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-6">
+                  <Brain size={22} className="text-[#22C55E]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Future-ready, not just backward-looking</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">We&apos;re the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.</p>
@@ -309,9 +309,9 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-xl border border-[#6B5B95]/30 dark:border-[#6B5B95]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-6">
-                  <BarChart3 size={22} className="text-[#6B5B95]" />
+              <div className="rounded-xl border border-[#6366F1]/30 dark:border-[#6366F1]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-6">
+                  <BarChart3 size={22} className="text-[#6366F1]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Product Managers</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Track findings from open to fixed, share results with stakeholders via read-only links, and re-audit to show measurable improvement over time.</p>
@@ -325,9 +325,9 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Can&apos;t afford a $15k consultancy but refuse to ship mediocre? Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks.</p>
               </div>
 
-              <div className="rounded-xl border border-[#2D7A4F]/30 dark:border-[#2D7A4F]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-6">
-                  <Tag size={22} className="text-[#2D7A4F]" />
+              <div className="rounded-xl border border-[#22C55E]/30 dark:border-[#22C55E]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-6">
+                  <Tag size={22} className="text-[#22C55E]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Agencies</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">White-label reports for your clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time. Upload your logo and deliver under your own banner.</p>
@@ -349,7 +349,7 @@ export default function AboutPage() {
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] rounded-full bg-brand/[0.06] blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-[#2D7A4F]/[0.05] blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-[#22C55E]/[0.05] blur-[120px] pointer-events-none" />
 
           <div className="max-w-3xl mx-auto text-center relative">
             <p className="text-sm font-semibold tracking-wide uppercase mb-6 text-brand">Start your audit today</p>
@@ -362,7 +362,7 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-surface dark:text-[#1C1C1C] rounded-lg font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-surface dark:text-[#111111] rounded-lg font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-md"
               >
                 Start an audit
                 <ArrowRight size={18} />

@@ -31,9 +31,9 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
 
   // Determine color based on score
   const getColor = (value: number) => {
-    if (value < 40) return '#C0392B'; // muted red
-    if (value < 70) return '#B8860B'; // muted amber
-    return '#2D7A4F'; // muted green
+    if (value < 40) return '#EF4444'; // muted red
+    if (value < 70) return '#EAB308'; // muted amber
+    return '#22C55E'; // muted green
   };
 
   const radius = (size - strokeWidth) / 2;

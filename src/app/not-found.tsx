@@ -21,7 +21,7 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold bg-brand text-surface dark:text-[#1C1C1C] rounded-lg transition-all hover:brightness-110 min-h-[44px]"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold bg-brand text-surface dark:text-[#111111] rounded-lg transition-all hover:brightness-110 min-h-[44px]"
             >
               Go to homepage
             </Link>

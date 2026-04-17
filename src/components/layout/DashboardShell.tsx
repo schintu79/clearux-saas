@@ -98,7 +98,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-semibold text-surface dark:text-[#1C1C1C] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-semibold text-surface dark:text-[#111111] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
           >
             <PlusCircle size={14} strokeWidth={2.5} />
             New Audit
@@ -127,12 +127,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     <span className="relative">
                       <Icon size={16} strokeWidth={active ? 2 : 1.75} />
                       {(item as any).badge && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#C0392B]" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EF4444]" />
                       )}
                     </span>
                     <span>{item.label}</span>
                     {(item as any).badge && (
-                      <span className="ml-auto text-[9px] font-bold text-white bg-[#C0392B] px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[9px] font-bold text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
                         {unreadNotifications}
                       </span>
                     )}
@@ -152,10 +152,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             <div className="rounded-lg border border-border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Coins size={13} className="text-[#2D7A4F]" />
+                  <Coins size={13} className="text-[#22C55E]" />
                   <span className="text-[11px] font-semibold text-text">Credits</span>
                 </div>
-                <span className="text-base font-bold text-[#2D7A4F] tabular-nums">{credits}</span>
+                <span className="text-base font-bold text-[#22C55E] tabular-nums">{credits}</span>
               </div>
               <p className="text-[10px] text-muted mb-2.5 leading-snug">
                 {credits === 0
@@ -181,7 +181,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#1C1C1C] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#111111] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -204,7 +204,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
             <Link
               href="/admin"
-              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#C0392B] hover:bg-[#C0392B]/5 transition-all"
+              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all"
             >
               <ShieldCheck size={15} strokeWidth={1.75} />
               Admin Panel

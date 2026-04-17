@@ -38,9 +38,9 @@ export default function ContactPage() {
             </p>
 
             {submitted ? (
-              <div className="rounded-xl p-8 text-center border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10">
-                <div className="w-14 h-14 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={28} className="text-[#2D7A4F]" />
+              <div className="rounded-xl p-8 text-center border border-[#22C55E]/20 dark:border-[#22C55E]/20 bg-[#22C55E]/5 dark:bg-[#22C55E]/10">
+                <div className="w-14 h-14 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={28} className="text-[#22C55E]" />
                 </div>
                 <p className="font-heading font-semibold text-lg text-text mb-1">Message sent!</p>
                 <p className="text-text/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
@@ -91,7 +91,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-lg bg-brand text-surface dark:text-[#1C1C1C] font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-md"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-lg bg-brand text-surface dark:text-[#111111] font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-md"
                 >
                   {loading ? (
                     <>
@@ -114,8 +114,8 @@ export default function ContactPage() {
             <div className="mt-12 pt-8 border-t border-border">
               <div className="flex flex-col sm:flex-row gap-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center flex-shrink-0">
-                    <Mail size={18} className="text-[#6B5B95]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
+                    <Mail size={18} className="text-[#6366F1]" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">Email us</p>

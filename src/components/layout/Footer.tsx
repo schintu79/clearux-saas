@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#1C1C1C] py-14 px-4 sm:px-6 lg:px-8">
+    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#111111] py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Top: Brand + Links */}
@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <span className="font-heading text-xl font-bold tracking-tight text-white mb-3 inline-block">clear<span className="text-[#f15a29]">UX</span></span>
+            <span className="font-heading text-xl font-bold tracking-tight text-white mb-3 inline-block">clear<span className="text-[#B9FF66]">UX</span></span>
             <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
               Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>

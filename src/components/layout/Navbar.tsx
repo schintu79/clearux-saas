@@ -13,7 +13,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
     : email ? email[0].toUpperCase() : '?';
 
   return (
-    <div className="w-7 h-7 rounded-full bg-brand text-surface flex items-center justify-center text-xs font-medium select-none dark:text-[#1C1C1C]">
+    <div className="w-7 h-7 rounded-full bg-brand text-surface flex items-center justify-center text-xs font-medium select-none dark:text-[#111111]">
       {initials}
     </div>
   );
@@ -72,12 +72,12 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-white/90 dark:bg-card/90 backdrop-blur-xl border-b border-border">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-xl font-bold tracking-tight text-text">clear<span className="text-[#f15a29]">UX</span></span>
+            <span className="font-heading text-xl font-bold tracking-tight text-text">clear<span className="text-lime">UX</span></span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -102,10 +102,10 @@ const Navbar: React.FC = () => {
               {credits !== null && (
                 <Link
                   href="/dashboard/buy-credits"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2D7A4F]/8 border border-[#2D7A4F]/15 hover:bg-[#2D7A4F]/12 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#22C55E]/8 border border-[#22C55E]/15 hover:bg-[#22C55E]/12 transition-colors"
                 >
-                  <Coins size={13} className="text-[#2D7A4F] dark:text-[#5CB87A]" />
-                  <span className="text-xs font-bold text-[#2D7A4F] dark:text-[#5CB87A]">{credits}</span>
+                  <Coins size={13} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{credits}</span>
                 </Link>
               )}
 
@@ -146,7 +146,7 @@ const Navbar: React.FC = () => {
                     <button
                       onClick={handleSignOut}
                       role="menuitem"
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#C0392B] hover:bg-surface-alt transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-surface-alt transition-colors"
                     >
                       <LogOut size={15} />
                       Sign out
@@ -165,7 +165,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-semibold text-surface dark:text-[#1C1C1C] bg-brand hover:bg-brand-hover rounded-lg px-5 py-2 transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-surface dark:text-[#111111] bg-brand hover:bg-brand-hover rounded-lg px-5 py-2 transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Get Started
                   <ArrowUpRight size={14} />
@@ -217,7 +217,7 @@ const Navbar: React.FC = () => {
                     <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Dashboard
                     </Link>
-                    <button onClick={handleSignOut} className="text-sm text-[#C0392B] px-3 py-3 min-h-[44px] text-left">
+                    <button onClick={handleSignOut} className="text-sm text-red-500 px-3 py-3 min-h-[44px] text-left">
                       Sign out
                     </button>
                   </>
@@ -226,7 +226,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-surface dark:text-[#1C1C1C] bg-brand rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-surface dark:text-[#111111] bg-brand rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
                       Get Started
                     </Link>
                   </>

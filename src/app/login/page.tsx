@@ -210,7 +210,7 @@ export default function LoginPage() {
             className={`input ${errors.email ? 'input-error' : ''}`}
             disabled={loading}
           />
-          {errors.email && <p className="text-xs text-[#C0392B] mt-1.5">{errors.email}</p>}
+          {errors.email && <p className="text-xs text-[#EF4444] mt-1.5">{errors.email}</p>}
         </div>
 
         <div>
@@ -238,7 +238,7 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-[#C0392B] mt-1.5">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-[#EF4444] mt-1.5">{errors.password}</p>}
         </div>
 
         <div className="text-right">

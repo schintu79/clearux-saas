@@ -69,8 +69,8 @@ export default function AdminAuditsPage() {
     crawling: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     analysing: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     generating_report: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    completed: 'bg-[#2D7A4F]/10 text-[#2D7A4F]',
-    failed: 'bg-[#C0392B]/10 text-[#C0392B]',
+    completed: 'bg-[#22C55E]/10 text-[#22C55E]',
+    failed: 'bg-[#EF4444]/10 text-[#EF4444]',
   }
 
   const getScore = (audit: AdminAudit) => {
@@ -81,9 +81,9 @@ export default function AdminAuditsPage() {
 
   const scoreColor = (score: number | null) => {
     if (score === null) return 'text-muted'
-    if (score >= 80) return 'text-[#2D7A4F]'
+    if (score >= 80) return 'text-[#22C55E]'
     if (score >= 60) return 'text-amber-500'
-    return 'text-[#C0392B]'
+    return 'text-[#EF4444]'
   }
 
   return (

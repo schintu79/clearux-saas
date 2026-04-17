@@ -3,113 +3,122 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════
-   ClearUX — Merrin-inspired design system
-   Warm, minimal, editorial — cream backgrounds, solid CTAs
+   ClearUX — Clean, modern design system
+   White backgrounds, lime green accent, generous spacing
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Light palette (default) — Warm & sophisticated ── */
+/* ── Light palette (default) — Clean & minimal ── */
 :root {
-  /* Brand accent — dark charcoal for CTAs */
-  --brand:       #1C1C1C;
+  /* Brand accent — dark for CTAs */
+  --brand:       #111111;
   --brand-hover: #333333;
-  --brand-light: #F0EDE6;
-  --hero-bg:     #F3F0FA;
+  --brand-light: #F0F0F0;
+  --hero-bg:     #111111;
 
-  /* Status/semantic colors — muted, sophisticated */
-  --color-success:  #2D7A4F;
-  --color-warning:  #B8860B;
-  --color-danger:   #C0392B;
-  --color-info:     #2E6B9E;
+  /* Lime green accent */
+  --lime:        #B9FF66;
+  --lime-hover:  #A8EE55;
+  --lime-soft:   #EEFFD6;
 
-  /* Pillar colors — softer, muted versions */
+  /* Status/semantic colors */
+  --color-success:  #22C55E;
+  --color-warning:  #EAB308;
+  --color-danger:   #EF4444;
+  --color-info:     #3B82F6;
+
+  /* Pillar colors */
   --color-foundation:  #6B5B95;
-  --color-human:       #D4786A;
-  --color-tech:        #C4973B;
-  --color-future:      #2D7A4F;
-  --color-trust:       #2E6B9E;
+  --color-human:       #EC4899;
+  --color-tech:        #F59E0B;
+  --color-future:      #22C55E;
+  --color-trust:       #3B82F6;
 
-  /* Primary accent — maps to brand charcoal */
-  --blue:        #1C1C1C;
-  --blue-dk:     #111111;
-  --blue-lt:     #F5F0E8;
-  --accent:      #1C1C1C;
-  --accent-dk:   #111111;
-  --accent-lt:   #F5F0E8;
+  /* Primary accent — maps to brand */
+  --blue:        #111111;
+  --blue-dk:     #000000;
+  --blue-lt:     #F7F7F8;
+  --accent:      #B9FF66;
+  --accent-dk:   #A8EE55;
+  --accent-lt:   #F0FFD6;
 
-  /* Brand gradient — replaced with solid dark or subtle warm gradient */
-  --gradient-brand: #1C1C1C;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(28,28,28,.02) 0%, rgba(107,91,149,.02) 50%, rgba(45,122,79,.02) 100%);
-  --gradient-brand-text: #1C1C1C;
+  /* Brand gradient */
+  --gradient-brand: #111111;
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(185,255,102,.03) 0%, rgba(17,17,17,.01) 100%);
+  --gradient-brand-text: #111111;
 
-  /* Neutral palette — Warm cream base */
-  --navy:        #1C1C1C;
-  --off:         #FFFFFF;
-  --muted:       #7A7A8E;
-  --border:      #E2DDD5;
-  --text:        #1C1C1C;
-  --surface:     #F5F0E8;
-  --surface-alt: #EDE8DF;
+  /* Neutral palette — Clean white base */
+  --navy:        #111111;
+  --off:         #F7F7F8;
+  --muted:       #6B7280;
+  --border:      #E5E7EB;
+  --text:        #111111;
+  --surface:     #FFFFFF;
+  --surface-alt: #F7F7F8;
   --card:        #FFFFFF;
-  --card-hover:  #FDFBF7;
+  --card-hover:  #FAFAFA;
   --input-bg:    #FFFFFF;
-  --placeholder: #A8A8B5;
+  --placeholder: #9CA3AF;
   --sidebar:     #FFFFFF;
-  --sidebar-text:#1C1C1C;
+  --sidebar-text:#111111;
 
   /* Spacing */
   --section-gap: 6rem;
   --section-gap-lg: 8rem;
 }
 
-/* ── Dark palette — neutral charcoal ─────────────────────── */
+/* ── Dark palette — clean, modern dark ─────────────────────── */
 .dark {
-  --brand:       #E8E4DC;
-  --brand-hover: #D4D0C8;
-  --brand-light: #2A2A2A;
-  --hero-bg:     #222222;
+  --brand:       #FFFFFF;
+  --brand-hover: #E5E5E5;
+  --brand-light: #1A1A1A;
+  --hero-bg:     #111111;
 
-  --color-success:  #5CB87A;
-  --color-warning:  #D4A84B;
-  --color-danger:   #E07B6E;
-  --color-info:     #6BAED6;
+  --lime:        #B9FF66;
+  --lime-hover:  #A8EE55;
+  --lime-soft:   rgba(185,255,102,0.08);
+
+  --color-success:  #4ADE80;
+  --color-warning:  #FACC15;
+  --color-danger:   #F87171;
+  --color-info:     #60A5FA;
 
   --color-foundation:  #9B8FBF;
-  --color-human:       #E09B8F;
-  --color-tech:        #D4B86A;
-  --color-future:      #5CB87A;
-  --color-trust:       #6BAED6;
+  --color-human:       #F472B6;
+  --color-tech:        #FBBF24;
+  --color-future:      #4ADE80;
+  --color-trust:       #60A5FA;
 
-  --blue:        #E8E4DC;
-  --blue-dk:     #F0ECE4;
-  --blue-lt:     #1E1E1E;
-  --accent:      #E8E4DC;
-  --accent-dk:   #F0ECE4;
-  --accent-lt:   #1E1E1E;
+  --blue:        #FFFFFF;
+  --blue-dk:     #FFFFFF;
+  --blue-lt:     #1A1A1A;
+  --accent:      #B9FF66;
+  --accent-dk:   #A8EE55;
+  --accent-lt:   rgba(185,255,102,0.06);
 
-  --gradient-brand: #E8E4DC;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(232,228,220,.03) 0%, rgba(155,143,191,.03) 50%, rgba(92,184,122,.03) 100%);
-  --gradient-brand-text: #E8E4DC;
+  --gradient-brand: #FFFFFF;
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(185,255,102,.04) 0%, rgba(255,255,255,.02) 100%);
+  --gradient-brand-text: #FFFFFF;
 
-  --navy:        #E8E4DC;
-  --off:         #161616;
-  --muted:       #8B8B8B;
-  --border:      #333333;
-  --text:        #E8E4DC;
-  --surface:     #1C1C1C;
-  --surface-alt: #262626;
-  --card:        #262626;
-  --card-hover:  #2E2E2E;
-  --input-bg:    #262626;
-  --placeholder: #5A5A5A;
-  --sidebar:     #1C1C1C;
-  --sidebar-text:#E8E4DC;
+  --navy:        #FFFFFF;
+  --off:         #0A0A0A;
+  --muted:       #9CA3AF;
+  --border:      #262626;
+  --text:        #F5F5F5;
+  --surface:     #111111;
+  --surface-alt: #1A1A1A;
+  --card:        #1A1A1A;
+  --card-hover:  #222222;
+  --input-bg:    #1A1A1A;
+  --placeholder: #4B5563;
+  --sidebar:     #111111;
+  --sidebar-text:#F5F5F5;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SECTION BACKGROUNDS — Clean, minimal warm washes
+   SECTION BACKGROUNDS — Clean, minimal
    ══════════════════════════════════════════════════════════════ */
 
-/* Subtle warm texture overlay */
+/* Subtle dot grid overlay */
 .bg-dotgrid {
   position: relative;
 }
@@ -119,7 +128,7 @@
   inset: 0;
   background-image: radial-gradient(circle, var(--border) 0.5px, transparent 0.5px);
   background-size: 32px 32px;
-  opacity: 0.25;
+  opacity: 0.3;
   mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 60%);
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 60%);
   pointer-events: none;
@@ -129,7 +138,6 @@
   opacity: 1;
 }
 
-/* No gradient wash — just clean warm background */
 .bg-dotgrid::after {
   content: '';
   position: absolute;
@@ -141,7 +149,7 @@
   background: linear-gradient(to bottom, transparent 70%, var(--surface-alt) 100%);
 }
 
-/* Cross-grid — minimal warm version */
+/* Cross-grid */
 .bg-crossgrid {
   position: relative;
 }
@@ -165,7 +173,6 @@
   opacity: 1;
 }
 
-/* Clean warm wash */
 .bg-crossgrid::after {
   content: '';
   position: absolute;
@@ -178,25 +185,24 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HERO — Warm cream with subtle depth
+   HERO — Dark, modern
    ═══════════════════════════════════════════════════════════════ */
 
 .hero-dark {
   position: relative;
-  background: var(--surface);
+  background: #111111;
   overflow: hidden;
 }
 
-/* Subtle warm grid */
 .hero-dark::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, var(--border) 0.5px, transparent 0.5px),
-    linear-gradient(to bottom, var(--border) 0.5px, transparent 0.5px);
+    linear-gradient(to right, rgba(255,255,255,0.03) 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 0.5px, transparent 0.5px);
   background-size: 64px 64px;
-  opacity: 0.15;
+  opacity: 0.5;
   mask-image:
     radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%);
   -webkit-mask-image:
@@ -204,18 +210,15 @@
   pointer-events: none;
 }
 
-/* Very subtle warm glow */
 .hero-dark::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(107,91,149,.04), transparent 60%),
-    radial-gradient(ellipse 50% 45% at 70% 30%, rgba(212,120,106,.03), transparent 55%);
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(185,255,102,.04), transparent 60%);
   pointer-events: none;
 }
 
-/* Bottom fade — warm */
 .hero-dark-fade {
   position: absolute;
   bottom: 0;
@@ -230,7 +233,7 @@
   background: linear-gradient(to bottom, transparent, var(--surface));
 }
 
-/* Subtle grid animations — toned down */
+/* Grid animation */
 @keyframes grid-breathe {
   0%, 100% { opacity: 0.8; }
   50%      { opacity: 1; }
@@ -241,7 +244,6 @@
   100% { transform: translate(8px, -5px) scale(1.02); }
 }
 
-/* Sweep animations — very subtle */
 .hero-grid-sweep {
   position: absolute;
   inset: 0;
@@ -255,7 +257,7 @@
   left: -20%;
   width: 15%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(107,91,149,.03), transparent);
+  background: linear-gradient(90deg, transparent, rgba(185,255,102,.03), transparent);
   animation: sweep-x 10s ease-in-out infinite;
 }
 .hero-grid-sweep::after { display: none; }
@@ -268,12 +270,12 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DARK SECTION — Now warm charcoal instead of black
+   DARK SECTION
    ═══════════════════════════════════════════════════════════════ */
 
 .section-dark {
   position: relative;
-  background: #1C1C1C;
+  background: #111111;
   overflow: hidden;
 }
 .section-dark::before {
@@ -295,26 +297,25 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 50% 50% at 30% 30%, rgba(107,91,149,.06), transparent 60%),
-    radial-gradient(ellipse 40% 40% at 70% 60%, rgba(45,122,79,.03), transparent 55%);
+    radial-gradient(ellipse 50% 50% at 50% 0%, rgba(185,255,102,.04), transparent 60%);
   pointer-events: none;
 }
 
 /* Force dark palette on any section */
 .dark-forced {
-  --text:        #E8E4DC;
-  --muted:       #8B8B8B;
-  --border:      #333333;
-  --card:        #262626;
-  --card-hover:  #2E2E2E;
-  --off:         #161616;
-  --surface:     #1C1C1C;
-  --surface-alt: #262626;
-  --input-bg:    #262626;
-  --placeholder: #5A5A5A;
-  --accent:      #E8E4DC;
-  --accent-dk:   #F0ECE4;
-  --gradient-brand-text: #E8E4DC;
+  --text:        #F5F5F5;
+  --muted:       #9CA3AF;
+  --border:      #262626;
+  --card:        #1A1A1A;
+  --card-hover:  #222222;
+  --off:         #0A0A0A;
+  --surface:     #111111;
+  --surface-alt: #1A1A1A;
+  --input-bg:    #1A1A1A;
+  --placeholder: #4B5563;
+  --accent:      #B9FF66;
+  --accent-dk:   #A8EE55;
+  --gradient-brand-text: #F5F5F5;
 }
 
 /* Content above gradient/grid layers */
@@ -325,7 +326,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   BASE TYPOGRAPHY — Clean, geometric, editorial
+   BASE TYPOGRAPHY — Clean, geometric
    ══════════════════════════════════════════════════════════════ */
 
 html { scroll-behavior: smooth; }
@@ -345,9 +346,9 @@ body {
 /* Heading defaults */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), system-ui, sans-serif;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
-  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -361,7 +362,7 @@ article, .prose {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUTH PAGES — Warm, inviting
+   AUTH PAGES
    ══════════════════════════════════════════════════════════════ */
 
 .auth-page {
@@ -371,7 +372,7 @@ article, .prose {
 }
 
 .auth-left {
-  background: var(--navy);
+  background: #111111;
   padding: 3rem 3.5rem;
   display: flex;
   flex-direction: column;
@@ -397,7 +398,7 @@ article, .prose {
   width: 520px;
   height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(107,91,149,.08) 0%, rgba(212,120,106,.04) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(185,255,102,.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -416,7 +417,7 @@ article, .prose {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   FORM INPUTS — Clean, warm, minimal
+   FORM INPUTS — Clean, minimal
    ══════════════════════════════════════════════════════════════ */
 
 .input {
@@ -439,12 +440,12 @@ article, .prose {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26,26,46,.06);
+  box-shadow: 0 0 0 3px rgba(185,255,102,.1);
 }
 
 .dark .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(232,228,220,.08);
+  box-shadow: 0 0 0 3px rgba(185,255,102,.1);
 }
 
 .input::placeholder {
@@ -453,11 +454,11 @@ article, .prose {
 
 .input-error {
   border-color: var(--color-danger) !important;
-  box-shadow: 0 0 0 3px rgba(192,57,43,.06) !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,.08) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   BUTTONS — Solid, confident, clean
+   BUTTONS — Clean, confident
    ══════════════════════════════════════════════════════════════ */
 
 .btn-primary {
@@ -480,12 +481,12 @@ article, .prose {
 }
 
 .dark .btn-primary {
-  color: #1C1C1C;
+  color: #111111;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--brand-hover);
-  box-shadow: 0 2px 8px rgba(26,26,46,.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
   transform: translateY(-1px);
 }
 
@@ -527,8 +528,8 @@ article, .prose {
 }
 
 .alert-error {
-  background: #FDF2F2;
-  border: 1px solid #F5D5D5;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
@@ -536,14 +537,14 @@ article, .prose {
 }
 
 .dark .alert-error {
-  background: rgba(192, 57, 43, 0.08);
-  border-color: rgba(192, 57, 43, 0.15);
-  color: #E07B6E;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.15);
+  color: #F87171;
 }
 
 .alert-success {
-  background: #F0F7F2;
-  border: 1px solid #C8E6D0;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
@@ -551,9 +552,9 @@ article, .prose {
 }
 
 .dark .alert-success {
-  background: rgba(45, 122, 79, 0.08);
-  border-color: rgba(45, 122, 79, 0.15);
-  color: #5CB87A;
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.15);
+  color: #4ADE80;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -573,7 +574,7 @@ article, .prose {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ══════════════════════════════════════════════════════════════
-   ANIMATIONS — Restrained, minimal
+   ANIMATIONS — Clean, restrained
    ══════════════════════════════════════════════════════════════ */
 
 @keyframes fade-up {

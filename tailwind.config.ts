@@ -36,6 +36,9 @@ const config: Config = {
         brand:      "var(--brand)",
         "brand-hover": "var(--brand-hover)",
         "brand-light": "var(--brand-light)",
+        lime:       "var(--lime)",
+        "lime-hover":"var(--lime-hover)",
+        "lime-soft": "var(--lime-soft)",
       },
       fontFamily: {
         body:    ["var(--font-body)", "system-ui", "sans-serif"],
