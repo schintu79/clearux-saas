@@ -1041,7 +1041,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               .eq('audit_id', auditId)
               .order('crawled_at', { ascending: true }),
           ]);
-          setFindings(findingsRes.data || []);
+          // Enrich findings with verification data from report raw_json
+          // (fallback for when DB columns don't exist yet)
+          let enrichedFindings = findingsRes.data || [];
+          const verResults = (reportData?.raw_json as any)?.verificationResults as Array<{ findingId: string; status: string; note: string }> | undefined;
+          if (verResults && verResults.length > 0) {
+            const verMap: Record<string, { findingId: string; status: string; note: string }> = {};
+            for (const v of verResults) verMap[v.findingId] = v;
+            enrichedFindings = enrichedFindings.map((f: any) => {
+              const vr = verMap[f.id];
+              if (vr && !f.verification_status) {
+                return { ...f, verification_status: vr.status, verification_note: vr.note };
+              }
+              return f;
+            });
+          }
+          setFindings(enrichedFindings);
           setAuditPages(pagesRes.data || []);
         }
 

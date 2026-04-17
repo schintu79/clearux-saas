@@ -60,6 +60,11 @@ export interface ReportData {
     totalVerified: number
     nothingChanged: boolean
   }
+  verificationResults?: Array<{
+    findingId: string
+    status: string
+    note: string
+  }>
 }
 
 // ── The 16 UX categories we evaluate ─────────────────────────
@@ -987,16 +992,31 @@ export async function verifyFindings(
       ? getLanguagePromptInstruction(language)
       : ''
 
-    const prompt = `You are a UX verification assistant. You are given previously identified UX issues and the CURRENT state of the website (freshly crawled). Your job is to check if each issue STILL EXISTS on the live site.
+    const prompt = `You are an expert UX auditor verifying whether previously identified issues have been fixed on a live website. You are given the CURRENT crawled page content and a list of findings from a PREVIOUS audit.
 
-IMPORTANT RULES:
-- You are NOT looking for new issues. Only verify the listed findings.
-- Be conservative: if you cannot clearly confirm the issue is fixed, mark it as "confirmed_open".
-- Only mark as "likely_fixed" if you see clear evidence the issue has been addressed (e.g., the problematic element was removed, the recommended fix was implemented, the page structure changed in a way that resolves the issue).
-- A finding should be "likely_fixed" ONLY if you are fairly confident — if in doubt, say "confirmed_open".
+YOUR TASK: For each finding, determine whether the issue STILL EXISTS or has been FIXED on the current site.
+
+HOW TO DECIDE:
+1. Read each finding carefully — understand what the issue was and what the recommendation said to fix.
+2. Search the current website content for evidence that the issue persists OR has been addressed.
+3. Mark as "likely_fixed" if ANY of these are true:
+   - The recommended fix appears to have been implemented (new content, changed text, added elements)
+   - The problematic content/pattern described in the finding is no longer present
+   - The page structure changed in a way that addresses the concern
+   - New content exists that directly resolves what was flagged (e.g., trust signals added, CTAs improved, missing sections now present)
+4. Mark as "confirmed_open" ONLY if:
+   - The exact issue described is clearly still present in the current content
+   - You can point to specific text/patterns in the current site that match the original problem
+
+IMPORTANT:
+- UX findings are often about content quality, messaging, trust signals, and structure — NOT just code. Look for content changes, new sections, improved copy, added elements.
+- If a finding said "missing X" and X now exists somewhere on the site, that is likely fixed.
+- If a finding criticised specific text/copy and that text has changed, that is likely fixed.
+- Do NOT default to "confirmed_open" out of caution. If the content shows improvement related to the finding, mark it "likely_fixed". The user will confirm.
+- You are comparing a PREVIOUS state (the finding) against the CURRENT state (the crawled content). Changes matter.
 ${langInstruction ? `- Write your verification notes in the same language as the findings. ${langInstruction}` : ''}
 
-CURRENT WEBSITE CONTENT:
+CURRENT WEBSITE CONTENT (freshly crawled):
 ${truncatedContent}
 
 FINDINGS TO VERIFY:
@@ -1005,7 +1025,7 @@ ${findingsList}
 Respond with a JSON array. Each entry must have:
 - "id": the finding id exactly as provided
 - "status": "confirmed_open" or "likely_fixed"
-- "note": a brief (1-2 sentence) explanation of why you made this determination
+- "note": a brief (1-2 sentence) explanation citing specific evidence from the current site
 
 Respond ONLY with the JSON array, no other text.`
 

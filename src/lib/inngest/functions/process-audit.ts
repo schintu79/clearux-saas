@@ -386,6 +386,8 @@ RULES FOR RE-AUDIT:
         `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — re-audit: copying previous findings, no AI analysis' : ' — full AI analysis'}`)
     })
 
+    let verificationData: { verified: number; likelyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
+
     if (effectiveDepthMode === 'baseline') {
       // ════════════════════════════════════════════════════════════
       // BASELINE RE-AUDIT — NO AI ANALYSIS
@@ -446,11 +448,13 @@ RULES FOR RE-AUDIT:
       })
 
       // ════════════════════════════════════════════════════════════
-      // VERIFICATION STEP — Lightweight AI check against live site
-      // Checks each copied finding against freshly crawled content.
-      // Does NOT affect scores — purely informational flags for the user.
+      // VERIFICATION STEP — AI check against freshly crawled live site
+      // Checks each copied finding to see if it's still present.
+      // Does NOT affect scores — flags findings for user confirmation.
+      // Results stored both in DB (if columns exist) and returned
+      // directly so the report step doesn't depend on DB columns.
       // ════════════════════════════════════════════════════════════
-      await step.run('ai-verify-findings', async () => {
+      verificationData = await step.run('ai-verify-findings', async () => {
         const db = getDb()
 
         // Fetch the findings we just copied
@@ -462,7 +466,7 @@ RULES FOR RE-AUDIT:
 
         if (!copiedFindings || copiedFindings.length === 0) {
           await auditLog(auditId, 'verification_skipped', 'info', 'No findings to verify')
-          return { verified: 0, likelyFixed: 0 }
+          return { verified: 0, likelyFixed: 0, results: [] as Array<{ findingId: string; status: string; note: string }> }
         }
 
         // Use the freshly crawled page content for verification
@@ -477,16 +481,20 @@ RULES FOR RE-AUDIT:
           auditDetails.language,
         )
 
-        // Update findings in DB with verification results
+        // Try to update findings in DB (columns may not exist yet — graceful fallback)
         let likelyFixedCount = 0
         for (const result of verificationResults) {
-          await db
-            .from('audit_findings')
-            .update({
-              verification_status: result.status,
-              verification_note: result.note,
-            } as any)
-            .eq('id', result.findingId)
+          try {
+            await db
+              .from('audit_findings')
+              .update({
+                verification_status: result.status,
+                verification_note: result.note,
+              } as any)
+              .eq('id', result.findingId)
+          } catch (e) {
+            // Columns may not exist yet — that's OK, results are carried in memory
+          }
 
           if (result.status === 'likely_fixed') likelyFixedCount++
         }
@@ -498,7 +506,11 @@ RULES FOR RE-AUDIT:
             confirmed_open: verificationResults.length - likelyFixedCount,
           })
 
-        return { verified: verificationResults.length, likelyFixed: likelyFixedCount }
+        return {
+          verified: verificationResults.length,
+          likelyFixed: likelyFixedCount,
+          results: verificationResults.map(r => ({ findingId: r.findingId, status: r.status, note: r.note })),
+        }
       })
 
     } else {
@@ -746,17 +758,23 @@ RULES FOR RE-AUDIT:
         low: findings.filter((f) => f.severity === 'low').length,
       }
 
-      // Count verification results for report metadata
-      const likelyFixedCount = findings.filter((f: any) => f.verification_status === 'likely_fixed').length
-      const confirmedOpenCount = findings.filter((f: any) => f.verification_status === 'confirmed_open').length
-      if (effectiveDepthMode === 'baseline') {
+      // Use verification data directly from the step (not from DB columns which may not exist)
+      const vData = effectiveDepthMode === 'baseline' ? (verificationData || { likelyFixed: 0, verified: 0, results: [] }) : null
+      if (vData) {
+        const likelyFixedCount = vData.likelyFixed
+        const confirmedOpenCount = vData.verified - vData.likelyFixed
         const nothingChanged = droppedFixed === 0 && droppedDismissed === 0 && likelyFixedCount === 0
+
         reportData.verificationSummary = {
           likelyFixed: likelyFixedCount,
           confirmedOpen: confirmedOpenCount,
-          totalVerified: likelyFixedCount + confirmedOpenCount,
+          totalVerified: vData.verified,
           nothingChanged,
         }
+
+        // Store per-finding verification in report raw_json so UI can read it
+        // even if DB columns don't exist yet
+        reportData.verificationResults = vData.results
 
         // Enrich executive summary with verification insights
         if (likelyFixedCount > 0) {
