@@ -837,7 +837,7 @@ export default function Home() {
             </div>
 
             {/* ── Feature 2b: Two Audit Modes ── */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-3">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-5">
                 <BarChart3 size={14} className="text-violet-500" />
                 <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Two Audit Modes</span>
