@@ -249,7 +249,7 @@ export default function FaqPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search FAQs..."
-                className="w-full pl-10 pr-16 py-2.5 rounded-full border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/40 transition-all"
+                className="w-full pl-10 pr-16 py-2.5 rounded-full border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40 transition-all"
               />
               {searchQuery && (
                 <button
@@ -349,7 +349,7 @@ export default function FaqPage() {
         {/* CTA */}
         <section className="px-4 sm:px-6 lg:px-8 pb-20">
           <div className="max-w-3xl mx-auto">
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-8 text-center">
+            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-8 text-center">
               <h2 className="font-heading font-semibold text-xl text-text mb-2">Still have questions?</h2>
               <p className="text-muted text-sm mb-6">
                 Reach out and we will get back to you within a business day.
@@ -357,14 +357,13 @@ export default function FaqPage() {
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <a
                   href="mailto:support@clearux.ai"
-                  className="inline-flex items-center justify-center gap-2 text-white font-semibold text-sm rounded-full px-6 py-3 hover:brightness-110 transition-all"
-                  style={{ background: 'var(--gradient-brand)' }}
+                  className="inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-semibold text-sm rounded-lg px-6 py-3 hover:brightness-110 transition-all"
                 >
                   Email Support
                 </a>
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-full px-6 py-3 border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-lg px-6 py-3 border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
                 >
                   Contact Us
                 </Link>
@@ -378,10 +377,9 @@ export default function FaqPage() {
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand"
                 >
-                  Start free audit <ArrowRight size={13} className="text-violet-500" />
+                  Start free audit <ArrowRight size={13} className="text-brand" />
                 </Link>
               </div>
             </div>

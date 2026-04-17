@@ -24,11 +24,11 @@ export default function ContactPage() {
       <main id="main-content" className="min-h-[70vh] bg-surface">
         {/* Hero area with subtle kaleidoscope glow */}
         <section className="relative overflow-hidden">
-          <div className="absolute top-[-10%] left-[20%] w-[400px] h-[350px] rounded-full bg-violet-500/[0.04] blur-[120px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[20%] w-[400px] h-[350px] rounded-full bg-brand/[0.04] blur-[120px] pointer-events-none" />
           <div className="absolute top-[20%] right-[15%] w-[300px] h-[300px] rounded-full bg-pink-500/[0.03] blur-[100px] pointer-events-none" />
 
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-16 relative">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Get in touch</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-4 text-brand">Get in touch</p>
             <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-3">
               Contact Us
             </h1>
@@ -38,9 +38,9 @@ export default function ContactPage() {
             </p>
 
             {submitted ? (
-              <div className="rounded-2xl p-8 text-center border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={28} className="text-emerald-500" />
+              <div className="rounded-xl p-8 text-center border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10">
+                <div className="w-14 h-14 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={28} className="text-[#2D7A4F]" />
                 </div>
                 <p className="font-heading font-semibold text-lg text-text mb-1">Message sent!</p>
                 <p className="text-text/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
@@ -91,8 +91,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-white font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-lg"
-                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-lg bg-brand text-surface dark:text-[#1A1A2E] font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-md"
                 >
                   {loading ? (
                     <>
@@ -115,12 +114,12 @@ export default function ContactPage() {
             <div className="mt-12 pt-8 border-t border-border">
               <div className="flex flex-col sm:flex-row gap-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                    <Mail size={18} className="text-violet-500" />
+                  <div className="w-10 h-10 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center flex-shrink-0">
+                    <Mail size={18} className="text-[#6B5B95]" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">Email us</p>
-                    <a href="mailto:support@clearux.ai" className="text-sm bg-clip-text text-transparent hover:underline" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>support@clearux.ai</a>
+                    <a href="mailto:support@clearux.ai" className="text-sm text-brand hover:underline">support@clearux.ai</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

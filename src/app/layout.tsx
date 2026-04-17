@@ -1,21 +1,23 @@
 import type { Metadata } from 'next'
-import { Inter, Manrope, Caveat } from 'next/font/google'
+import { DM_Sans, Caveat } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
 import './globals.css'
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-body',
+  weight: ['300', '400', '500', '600', '700'],
 })
 
-const manrope = Manrope({
+const dmSansHeading = DM_Sans({
   subsets: ['latin'],
   variable: '--font-heading',
   weight: ['400', '500', '600', '700'],
 })
+
 
 const caveat = Caveat({
   subsets: ['latin'],
@@ -88,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${inter.variable} ${manrope.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${dmSansHeading.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
@@ -120,7 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
       </head>
-      <body suppressHydrationWarning className="font-inter antialiased bg-surface text-text">
+      <body suppressHydrationWarning className="font-body antialiased bg-surface text-text">
         <ThemeProvider initialTheme={initialTheme}>
           <AuthProvider>
             {children}

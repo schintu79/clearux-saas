@@ -43,7 +43,7 @@ export default function CookieConsent() {
             We use essential cookies to keep ClearUX working. No tracking, no ads.{' '}
             <Link
               href="/cookies"
-              className="text-violet-500 hover:underline"
+              className="text-brand font-medium hover:underline"
             >
               See our Cookie Policy
             </Link>

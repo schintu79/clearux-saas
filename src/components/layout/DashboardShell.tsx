@@ -59,7 +59,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     signOut();
   };
 
-  // User initials for avatar
   const displayName = profile?.full_name
     || user?.user_metadata?.full_name
     || user?.user_metadata?.name
@@ -69,19 +68,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className="flex h-screen bg-surface-alt">
+    <div className="flex h-screen bg-surface">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed md:static inset-y-0 left-0 w-[220px] bg-surface border-r border-border flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
+          'fixed md:static inset-y-0 left-0 w-[220px] bg-card border-r border-border flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -89,7 +88,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="font-heading font-semibold text-[17px] text-text">
-              Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+              ClearUX
             </span>
           </Link>
         </div>
@@ -99,8 +98,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-semibold text-white rounded-lg transition-all hover:brightness-110 hover:shadow-md active:scale-[0.98]"
-            style={{ background: 'var(--gradient-brand)' }}
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-semibold text-surface dark:text-[#1A1A2E] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
           >
             <PlusCircle size={14} strokeWidth={2.5} />
             New Audit
@@ -122,19 +120,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     className={clsx(
                       'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-surface-alt text-text font-medium'
-                        : 'text-muted hover:text-text hover:bg-surface-alt/60'
+                        ? 'bg-surface text-text font-medium'
+                        : 'text-muted hover:text-text hover:bg-surface/60'
                     )}
                   >
                     <span className="relative">
                       <Icon size={16} strokeWidth={active ? 2 : 1.75} />
                       {(item as any).badge && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#C0392B]" />
                       )}
                     </span>
                     <span>{item.label}</span>
                     {(item as any).badge && (
-                      <span className="ml-auto text-[9px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[9px] font-bold text-white bg-[#C0392B] px-1.5 py-0.5 rounded-full leading-none">
                         {unreadNotifications}
                       </span>
                     )}
@@ -154,10 +152,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             <div className="rounded-lg border border-border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Coins size={13} className="text-emerald-500" />
+                  <Coins size={13} className="text-[#2D7A4F]" />
                   <span className="text-[11px] font-semibold text-text">Credits</span>
                 </div>
-                <span className="text-base font-bold text-emerald-500 tabular-nums">{credits}</span>
+                <span className="text-base font-bold text-[#2D7A4F] tabular-nums">{credits}</span>
               </div>
               <p className="text-[10px] text-muted mb-2.5 leading-snug">
                 {credits === 0
@@ -166,7 +164,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               </p>
               <Link
                 href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-semibold text-text border border-border rounded-md py-1.5 transition-all hover:bg-surface-alt"
+                className="block text-center text-[11px] font-semibold text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
               >
                 {credits === 0 ? 'Buy Credits' : 'Buy More'}
               </Link>
@@ -176,19 +174,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Bottom section */}
         <div className="px-3 py-3 border-t border-border space-y-1">
-          {/* Theme toggle */}
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-[11px] text-muted font-medium">Theme</span>
             <ThemeToggle variant="pill" />
           </div>
 
-          {/* User */}
           {!loading && user && (
-            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface-alt transition-colors">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                style={{ background: 'var(--gradient-brand)' }}
-              >
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#1A1A2E] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -207,21 +200,20 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </div>
           )}
 
-          {/* Admin link (only for admin/super_admin) */}
+          {/* Admin link */}
           {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
             <Link
               href="/admin"
-              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-red-500 hover:bg-red-500/5 transition-all"
+              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#C0392B] hover:bg-[#C0392B]/5 transition-all"
             >
               <ShieldCheck size={15} strokeWidth={1.75} />
               Admin Panel
             </Link>
           )}
 
-          {/* Sign out */}
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-text hover:bg-surface-alt transition-all"
+            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-text hover:bg-surface transition-all"
           >
             <LogOut size={15} strokeWidth={1.75} />
             Sign out
@@ -229,13 +221,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* ── Main Content ── */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden h-14 bg-surface border-b border-border flex items-center px-4">
+        <div className="md:hidden h-14 bg-card border-b border-border flex items-center px-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg hover:bg-surface-alt transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface transition-colors"
           >
             {sidebarOpen ? (
               <X size={20} className="text-text" />
@@ -244,7 +236,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3 font-heading font-semibold text-[17px] text-text">
-            Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+            ClearUX
           </span>
         </div>
 

@@ -41,9 +41,9 @@ export default function AdminOverviewPage() {
   if (!stats) return <p className="text-muted">Failed to load stats.</p>
 
   const statCards = [
-    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-violet-500', bg: 'bg-violet-500/10', href: '/admin/users' },
+    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-[#6B5B95]', bg: 'bg-[#6B5B95]/10', href: '/admin/users' },
     { label: 'Total Audits', value: stats.totalAudits, icon: FileSearch, color: 'text-pink-500', bg: 'bg-pink-500/10', href: '/admin/audits' },
-    { label: 'Credits in Circulation', value: stats.totalCreditsInCirculation, icon: Coins, color: 'text-emerald-500', bg: 'bg-emerald-500/10', href: '/admin/users' },
+    { label: 'Credits in Circulation', value: stats.totalCreditsInCirculation, icon: Coins, color: 'text-[#2D7A4F]', bg: 'bg-[#2D7A4F]/10', href: '/admin/users' },
     { label: 'Completed Audits', value: stats.auditsByStatus['completed'] || 0, icon: Activity, color: 'text-amber-500', bg: 'bg-amber-500/10', href: '/admin/audits' },
   ]
 
@@ -53,8 +53,8 @@ export default function AdminOverviewPage() {
     crawling: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     analysing: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     generating_report: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    failed: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    completed: 'bg-[#2D7A4F]/10 text-[#2D7A4F]',
+    failed: 'bg-[#C0392B]/10 text-[#C0392B]',
   }
 
   return (
@@ -110,7 +110,7 @@ export default function AdminOverviewPage() {
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-semibold text-sm text-text">Recent Users</h2>
-            <Link href="/admin/users" className="text-[12px] text-violet-500 hover:underline font-medium">View all</Link>
+            <Link href="/admin/users" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
           </div>
           <div className="space-y-2.5">
             {stats.recentUsers.map((u) => (
@@ -120,7 +120,7 @@ export default function AdminOverviewPage() {
                   <p className="text-[11px] text-muted truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-[11px] text-emerald-500 font-medium tabular-nums">{u.credits} cr</span>
+                  <span className="text-[11px] text-[#2D7A4F] font-medium tabular-nums">{u.credits} cr</span>
                   {(u.role === 'admin' || u.role === 'super_admin') && (
                     <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">{u.role === 'super_admin' ? 'Super' : 'Admin'}</span>
                   )}
@@ -134,7 +134,7 @@ export default function AdminOverviewPage() {
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-semibold text-sm text-text">Recent Audits</h2>
-            <Link href="/admin/audits" className="text-[12px] text-violet-500 hover:underline font-medium">View all</Link>
+            <Link href="/admin/audits" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
           </div>
           <div className="space-y-2.5">
             {stats.recentAudits.map((a) => (

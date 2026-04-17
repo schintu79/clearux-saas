@@ -118,7 +118,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <a href="/login" className="inline-flex items-center gap-2 text-white font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -272,7 +272,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl font-inter text-sm transition-all focus:outline-none focus:border-violet-500 focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder";
+  const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder";
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -320,8 +320,8 @@ const SettingsPage: React.FC = () => {
             </div>
 
             {messages.profileSuccess && (
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
-                <p className="text-emerald-700 dark:text-emerald-300 text-sm">{messages.profileSuccess}</p>
+              <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
+                <p className="text-[#2D7A4F] text-sm">{messages.profileSuccess}</p>
               </div>
             )}
             {messages.profileError && (
@@ -367,15 +367,15 @@ const SettingsPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Building2 size={18} className="text-violet-500" />
+                <Building2 size={18} className="text-brand" />
                 <h2 className="text-lg font-bold font-heading text-text">Company & Billing</h2>
               </div>
               <p className="text-sm text-muted">Optional — add company details for invoices and receipts</p>
             </div>
 
             {messages.billingSuccess && (
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
-                <p className="text-emerald-700 dark:text-emerald-300 text-sm">{messages.billingSuccess}</p>
+              <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
+                <p className="text-[#2D7A4F] text-sm">{messages.billingSuccess}</p>
               </div>
             )}
             {messages.billingError && (
@@ -432,16 +432,15 @@ const SettingsPage: React.FC = () => {
             {/* Stripe portal link */}
             <div className="pt-4 border-t border-border">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <CreditCard size={18} className="text-violet-500" />
+                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CreditCard size={18} className="text-brand" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-text mb-0.5">Payment History</p>
                   <p className="text-xs text-muted mb-2">View receipts and manage payment methods through Stripe.</p>
                   <a
                     href="/api/stripe/portal"
-                    className="text-xs font-semibold bg-clip-text text-transparent hover:underline"
-                    style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+                    className="text-xs font-semibold text-text hover:underline"
                   >
                     Open Stripe Portal &rarr;
                   </a>
@@ -463,8 +462,8 @@ const SettingsPage: React.FC = () => {
               </div>
 
               {messages.passwordSuccess && (
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
-                  <p className="text-emerald-700 dark:text-emerald-300 text-sm">{messages.passwordSuccess}</p>
+                <div className="bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 rounded-lg p-3">
+                  <p className="text-[#2D7A4F] text-sm">{messages.passwordSuccess}</p>
                 </div>
               )}
               {messages.passwordError && (

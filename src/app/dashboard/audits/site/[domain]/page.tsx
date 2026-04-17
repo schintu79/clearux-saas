@@ -52,9 +52,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-green-600 dark:text-green-400';
+  if (s >= 70) return 'text-[#2D7A4F]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-600 dark:text-red-400';
+  return 'text-[#C0392B]';
 }
 
 function scoreBg(s: number) {
@@ -167,7 +167,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Globe size={18} className="text-muted flex-shrink-0" />
-            <h1 className="text-xl font-semibold font-manrope text-text truncate">{domain}</h1>
+            <h1 className="text-xl font-semibold font-heading text-text truncate">{domain}</h1>
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}
@@ -176,8 +176,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         </div>
         <Link
           href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-          className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-3.5 py-2 rounded-md transition-all hover:brightness-110 flex-shrink-0"
-          style={{ background: 'var(--gradient-brand)' }}
+          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110 flex-shrink-0"
         >
           <RefreshCw size={13} />
           Re-audit
@@ -194,10 +193,10 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
       {scores.length >= 2 && (
         <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-4 mb-4">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={13} className="text-violet-400" />
+            <TrendingUp size={13} className="text-brand" />
             <span className="text-xs font-medium text-text/60">Score Trend</span>
             {improvement !== 0 && (
-              <span className={`ml-auto text-xs font-semibold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+              <span className={`ml-auto text-xs font-semibold ${improvement > 0 ? 'text-[#2D7A4F]' : 'text-[#C0392B]'}`}>
                 {improvement > 0 ? '+' : ''}{improvement} pts
               </span>
             )}
@@ -212,14 +211,14 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                   <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
                   <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-400' : s.score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
+                      className={`h-full rounded-full ${s.score >= 70 ? 'bg-[#2D7A4F]' : s.score >= 40 ? 'bg-amber-400' : 'bg-[#C0392B]'}`}
                       style={{ width: `${s.score}%` }}
                     />
                   </div>
-                  <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-[#2D7A4F]' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#C0392B]'}`}>
                     {s.score}
                   </span>
-                  {isLatest && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
+                  {isLatest && <span className="text-[8px] font-medium text-brand bg-brand/10 px-1 py-0.5 rounded">now</span>}
                   {isBaseline && !isLatest && <span className="text-[8px] text-muted/50">start</span>}
                 </div>
               );
@@ -236,8 +235,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start an audit to analyze this site.</p>
           <Link
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
-            className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2 rounded-md transition-all hover:brightness-110"
-            style={{ background: 'var(--gradient-brand)' }}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start Audit
           </Link>
@@ -253,7 +251,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
               const aLang = langCode((audit as any).language) || 'EN';
 
               return (
-                <div key={audit.id} className="flex items-center gap-2 hover:bg-violet-50/40 dark:hover:bg-violet-900/[0.06] transition-colors group/row">
+                <div key={audit.id} className="flex items-center gap-2 hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors group/row">
                   <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
                     <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
                       <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
@@ -262,7 +260,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                       <span className="text-border">·</span>
                       <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
                       {(audit as any).depth_mode === 'deep' && (
-                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
+                        <span className="text-[9px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
                       )}
                       {done && report?.overall_score != null && (
                         <>
@@ -271,7 +269,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                         </>
                       )}
                     </div>
-                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-violet-500 transition-colors flex-shrink-0" />
+                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-brand transition-colors flex-shrink-0" />
                   </Link>
                   <button
                     onClick={() => { if (confirm('Delete this audit?')) handleDelete(audit.id); }}

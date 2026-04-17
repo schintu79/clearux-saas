@@ -18,16 +18,16 @@ const Badge: React.FC<BadgeProps> = ({
   className,
 }) => {
   const variantStyles = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-    active: 'bg-blue-lt text-blue',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    danger: 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-200',
+    pending: 'bg-[#B8860B]/10 text-[#B8860B] dark:bg-[#D4A84B]/15 dark:text-[#D4A84B]',
+    active: 'bg-[#2E6B9E]/10 text-[#2E6B9E] dark:bg-[#6BAED6]/15 dark:text-[#6BAED6]',
+    completed: 'bg-[#2D7A4F]/10 text-[#2D7A4F] dark:bg-[#5CB87A]/15 dark:text-[#5CB87A]',
+    failed: 'bg-[#C0392B]/10 text-[#C0392B] dark:bg-[#E07B6E]/15 dark:text-[#E07B6E]',
+    danger: 'bg-[#C0392B]/15 text-[#C0392B] dark:bg-[#E07B6E]/20 dark:text-[#E07B6E]',
   };
 
   const sizeStyles = {
-    sm: 'px-2.5 py-1 text-xs font-medium rounded-lg',
-    default: 'px-3 py-1.5 text-sm font-medium rounded-lg',
+    sm: 'px-2.5 py-1 text-xs font-medium rounded-md',
+    default: 'px-3 py-1.5 text-sm font-medium rounded-md',
   };
 
   return (

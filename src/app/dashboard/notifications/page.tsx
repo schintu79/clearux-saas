@@ -18,11 +18,11 @@ const colorMap: Record<string, string> = {
   green: 'border-green-200/40 bg-green-50/60 dark:bg-green-900/10 dark:border-green-800/20',
   yellow: 'border-yellow-200/40 bg-yellow-50/60 dark:bg-yellow-900/10 dark:border-yellow-800/20',
   red: 'border-red-200/40 bg-red-50/60 dark:bg-red-900/10 dark:border-red-800/20',
-  violet: 'border-violet-200/40 bg-violet-50/60 dark:bg-violet-900/10 dark:border-violet-800/20',
+  violet: 'border-brand/20 bg-brand/5 dark:bg-brand/5 dark:border-brand/10',
 };
 
 const iconColorMap: Record<string, string> = {
-  blue: 'text-blue-500', green: 'text-green-500', yellow: 'text-yellow-500', red: 'text-red-500', violet: 'text-violet-500',
+  blue: 'text-blue-500', green: 'text-green-500', yellow: 'text-yellow-500', red: 'text-red-500', violet: 'text-brand',
 };
 
 const iconMap: Record<string, React.ElementType> = {
@@ -103,7 +103,7 @@ export default function NotificationsPage() {
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-bold text-text">{n.title}</p>
                       {!n.is_read && (
-                        <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-brand flex-shrink-0" />
                       )}
                     </div>
                     <p className="text-[11px] text-muted mt-0.5 leading-relaxed">{n.message}</p>

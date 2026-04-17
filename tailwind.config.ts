@@ -33,11 +33,15 @@ const config: Config = {
         "sidebar-text":"var(--sidebar-text)",
         background: "var(--surface)",
         foreground: "var(--text)",
+        brand:      "var(--brand)",
+        "brand-hover": "var(--brand-hover)",
+        "brand-light": "var(--brand-light)",
       },
       fontFamily: {
-        inter:   ["var(--font-inter)", "system-ui", "sans-serif"],
+        body:    ["var(--font-body)", "system-ui", "sans-serif"],
+        inter:   ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
         heading: ["var(--font-heading)", "system-ui", "sans-serif"],
-        manrope: ["var(--font-heading)", "system-ui", "sans-serif"], /* backward compat alias */
+        manrope: ["var(--font-heading)", "system-ui", "sans-serif"], /* backward compat */
         handwriting: ["var(--font-handwriting)", "cursive"],
       },
     },

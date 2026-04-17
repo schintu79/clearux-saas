@@ -25,17 +25,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'font-inter font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
+      'font-body font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
 
     const variantStyles = {
       primary:
-        'text-white hover:brightness-110 focus:ring-violet-500/50 active:scale-95',
+        'bg-brand text-surface dark:text-[#1A1A2E] hover:bg-brand-hover focus:ring-brand/30 active:scale-[0.98]',
       secondary:
-        'bg-transparent border-2 border-violet-500 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:ring-violet-500/50 active:scale-95',
+        'bg-transparent border border-border text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
       ghost:
-        'bg-transparent text-text hover:bg-off focus:ring-violet-500/50 active:scale-95',
+        'bg-transparent text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
       danger:
-        'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500/50 active:scale-95',
+        'bg-[#C0392B] text-white hover:bg-[#A93226] focus:ring-[#C0392B]/30 active:scale-[0.98]',
     };
 
     const sizeStyles = {
@@ -54,7 +54,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           sizeStyles[size],
           className
         )}
-        style={variant === 'primary' ? { background: 'var(--gradient-brand)' } : undefined}
         {...props}
       >
         {loading && (

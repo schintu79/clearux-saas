@@ -117,29 +117,26 @@ export default function LoginPage() {
     }
   }
 
-  // If already logged in, redirect to dashboard
   useEffect(() => {
     if (!authLoading && authUser) {
       router.replace(redirectTo)
     }
   }, [authLoading, authUser, redirectTo, router])
 
-  // Show loading while checking auth state
   if (authLoading || authUser) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-surface">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
-  /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
       {/* Brand wordmark — mobile + desktop form */}
       <Link href="/" className="inline-block mb-6 lg:hidden">
         <span className="text-2xl font-heading font-semibold text-text">
-          Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+          ClearUX
         </span>
       </Link>
 
@@ -169,13 +166,13 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* ── Social sign-in buttons ── */}
+      {/* Social sign-in */}
       <div className="space-y-3 mb-6">
         <button
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-sm font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-card-hover transition-colors text-sm font-medium text-text disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -191,7 +188,7 @@ export default function LoginPage() {
         </button>
       </div>
 
-      {/* ── Divider ── */}
+      {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-border" />
         <span className="text-xs text-muted font-medium">or sign in with email</span>
@@ -199,7 +196,6 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" aria-label="Sign in form">
-        {/* Email */}
         <div>
           <label htmlFor="email" className="label">Email</label>
           <input
@@ -214,10 +210,9 @@ export default function LoginPage() {
             className={`input ${errors.email ? 'input-error' : ''}`}
             disabled={loading}
           />
-          {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
+          {errors.email && <p className="text-xs text-[#C0392B] mt-1.5">{errors.email}</p>}
         </div>
 
-        {/* Password */}
         <div>
           <label htmlFor="password" className="label">Password</label>
           <div className="relative">
@@ -243,17 +238,15 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-[#C0392B] mt-1.5">{errors.password}</p>}
         </div>
 
-        {/* Forgot Password */}
         <div className="text-right">
           <Link href="/forgot-password" className="btn-ghost text-xs">
             Forgot password?
           </Link>
         </div>
 
-        {/* Submit */}
         <button type="submit" disabled={loading} className="btn-primary">
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -268,7 +261,7 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
-        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold hover:underline transition-colors bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold text-text hover:underline transition-colors">
           Sign up
         </Link>
       </div>
@@ -277,14 +270,13 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
+      {/* MOBILE / TABLET: Navbar + full-width form */}
       <div className="lg:hidden min-h-screen bg-surface flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {formContent}
         </div>
-        {/* Mobile footer nav */}
-        <div className="border-t border-border/30 dark:border-white/[0.06] px-4 py-4">
+        <div className="border-t border-border/30 px-4 py-4">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
             <Link href="/" className="hover:text-text transition-colors font-medium flex items-center gap-1">
               <ArrowLeft size={12} /> Back to Home
@@ -301,17 +293,17 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── DESKTOP: classic 2-panel layout ──────────────────── */}
+      {/* DESKTOP: classic 2-panel layout */}
       <div className="hidden lg:block">
         <div className="auth-page">
           {/* Left Panel — Welcome Back */}
-          <div className="auth-left relative z-0 bg-dotgrid">
+          <div className="auth-left relative z-0">
             <div className="auth-glow" />
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
                   <h1 className="text-3xl font-heading font-semibold text-white">
-                    Clear<span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX</span>
+                    ClearUX
                   </h1>
                 </Link>
               </div>
@@ -320,54 +312,54 @@ export default function LoginPage() {
                 <h2 className="text-2xl font-heading font-semibold text-white mb-2">
                   Welcome back
                 </h2>
-                <p className="text-sm text-white/70 leading-relaxed max-w-[320px]">
+                <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">
                   Pick up where you left off. Your UX insights, tracked fixes, and score trends are ready and waiting.
                 </p>
 
                 <div className="mt-8 space-y-5">
                   {kspItems.map((item) => (
                     <div key={item.text} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon size={22} className="text-white/80" />
+                      <div className="w-11 h-11 rounded-lg bg-white/8 flex items-center justify-center flex-shrink-0">
+                        <item.icon size={22} className="text-white/70" />
                       </div>
-                      <p className="text-base font-semibold text-white/85">{item.text}</p>
+                      <p className="text-base font-medium text-white/80">{item.text}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="flex gap-4 mt-8">
-                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">64</p>
-                  <p className="text-xs text-white/70 uppercase tracking-wide">Checkpoints</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Checkpoints</p>
                 </div>
-                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">16</p>
-                  <p className="text-xs text-white/70 uppercase tracking-wide">Categories</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Categories</p>
                 </div>
-                <div className="bg-white/8 border border-white/10 rounded-lg px-4 py-3 flex-1 text-center">
+                <div className="bg-white/6 border border-white/8 rounded-lg px-4 py-3 flex-1 text-center">
                   <p className="text-lg font-bold text-white">&lt; 10 min</p>
-                  <p className="text-xs text-white/70 uppercase tracking-wide">Per audit</p>
+                  <p className="text-xs text-white/55 uppercase tracking-wide">Per audit</p>
                 </div>
               </div>
 
-              {/* Secondary CTA for hesitant users */}
-              <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-xs text-white/40 mb-3">Not ready to sign in?</p>
+              {/* Secondary CTA */}
+              <div className="mt-8 pt-6 border-t border-white/8">
+                <p className="text-xs text-white/35 mb-3">Not ready to sign in?</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     How it works <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     Pricing <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     FAQ <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors">
+                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     Contact <ArrowRight size={14} />
                   </Link>
                 </div>

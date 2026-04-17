@@ -58,11 +58,11 @@ export default function PricingPage() {
         {/* ── Free Audit Banner ── */}
         <section className="pt-20 pb-4 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+            <div className="rounded-xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={18} className="text-violet-500" />
+                    <Sparkles size={18} className="text-brand" />
                     <h2 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h2>
                   </div>
                   <p className="text-sm text-text/70 max-w-md">
@@ -71,8 +71,7 @@ export default function PricingPage() {
                 </div>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
-                  style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.2)' }}
+                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -98,12 +97,12 @@ export default function PricingPage() {
         {/* ── Decision Framework ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-6 sm:p-8">
+            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-6 sm:p-8">
               <h2 className="font-heading font-semibold text-lg text-text mb-4">Which plan fits your workflow?</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                    <Search size={16} className="text-violet-500" />
+                  <div className="w-8 h-8 rounded-lg bg-[#6B5B95]/10 flex items-center justify-center flex-shrink-0">
+                    <Search size={16} className="text-[#6B5B95]" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Establish a baseline, then track improvement</p>
@@ -129,8 +128,8 @@ export default function PricingPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                    <Zap size={16} className="text-emerald-500" />
+                  <div className="w-8 h-8 rounded-lg bg-[#2D7A4F]/10 flex items-center justify-center flex-shrink-0">
+                    <Zap size={16} className="text-[#2D7A4F]" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text">Continuous auditing across teams</p>
@@ -149,7 +148,7 @@ export default function PricingPage() {
         {/* ── Hero card: Single Audit ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-4">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 relative overflow-hidden">
+            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 relative overflow-hidden">
               {/* Subtle warm gradient */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-accent/[0.03] dark:via-transparent dark:to-transparent pointer-events-none" />
 
@@ -167,7 +166,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-lg px-8 py-3.5 hover:opacity-90 transition-opacity"
                   >
                     Buy 1 audit
                   </Link>
@@ -186,7 +185,7 @@ export default function PricingPage() {
                     'Results in under 10 minutes',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-[#2D7A4F] flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
@@ -216,12 +215,12 @@ export default function PricingPage() {
               ].map((pack) => (
                 <div
                   key={pack.name}
-                  className={`group rounded-2xl border bg-card p-6 hover:shadow-lg hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-violet-400 dark:border-violet-500/40 shadow-lg shadow-violet-500/10 ring-1 ring-violet-400/30' : 'border-border/40 dark:border-white/[0.06] hover:border-border/70 dark:hover:border-white/[0.1]'}`}
+                  className={`group rounded-xl border bg-card p-6 hover:shadow-md hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-brand dark:border-brand/40 shadow-md shadow-brand/10 ring-1 ring-brand/30' : 'border-border/40 dark:border-white/[0.06] hover:border-border/70 dark:hover:border-white/[0.1]'}`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
                     {pack.popular ? (
-                      <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full shadow-sm" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>
+                      <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-3 py-1 rounded-full shadow-sm">Most Popular</span>
                     ) : (
                       <span className="text-xs font-bold text-text/60 px-2.5 py-1 rounded-full bg-surface-alt">
                         {pack.per}/audit
@@ -241,8 +240,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 text-white transition-all duration-200 hover:-translate-y-0.5"
-                    style={{ background: 'var(--gradient-brand)', boxShadow: '0 4px 16px rgba(124,58,237,.15), 0 2px 8px rgba(236,72,153,.08)' }}
+                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 bg-brand text-surface dark:text-[#1A1A2E] transition-all duration-200 hover:-translate-y-0.5"
                   >
                     {pack.cta}
                   </Link>
@@ -277,7 +275,7 @@ export default function PricingPage() {
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-heading font-semibold text-2xl text-text mb-6">Compare plans</h2>
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] overflow-hidden">
+            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -289,9 +287,9 @@ export default function PricingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/20 dark:divide-white/[0.04]">
-                    <tr className="bg-emerald-50/30 dark:bg-emerald-900/[0.04]">
+                    <tr className="bg-[#2D7A4F]/5">
                       <td className="px-5 py-3.5 font-semibold text-text">Free Audit</td>
-                      <td className="px-5 py-3.5 font-bold text-emerald-600 dark:text-emerald-400">$0</td>
+                      <td className="px-5 py-3.5 font-bold text-[#2D7A4F]">$0</td>
                       <td className="px-5 py-3.5 text-muted">Free (1 audit)</td>
                       <td className="px-5 py-3.5 text-muted">First-time users evaluating the platform</td>
                     </tr>
@@ -302,21 +300,21 @@ export default function PricingPage() {
                       <td className="px-5 py-3.5 text-muted">One-off baseline or pre-launch check</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full ml-1" style={{ background: 'var(--gradient-brand)' }}>Popular</span></td>
+                      <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-1.5 py-0.5 rounded-full ml-1">Popular</span></td>
                       <td className="px-5 py-3.5 font-bold text-text">$399</td>
-                      <td className="px-5 py-3.5 text-muted">$79.80 <span className="text-emerald-500 text-xs font-semibold">save 19%</span></td>
+                      <td className="px-5 py-3.5 text-muted">$79.80 <span className="text-[#2D7A4F] text-xs font-semibold">save 19%</span></td>
                       <td className="px-5 py-3.5 text-muted">Quarterly audits per release cycle</td>
                     </tr>
                     <tr>
                       <td className="px-5 py-3.5 font-semibold text-text">Agency</td>
                       <td className="px-5 py-3.5 font-bold text-text">$999</td>
-                      <td className="px-5 py-3.5 text-muted">$66.60 <span className="text-emerald-500 text-xs font-semibold">save 33%</span></td>
+                      <td className="px-5 py-3.5 text-muted">$66.60 <span className="text-[#2D7A4F] text-xs font-semibold">save 33%</span></td>
                       <td className="px-5 py-3.5 text-muted">Multiple client sites + white-label</td>
                     </tr>
                     <tr>
                       <td className="px-5 py-3.5 font-semibold text-text">Scale</td>
                       <td className="px-5 py-3.5 font-bold text-text">$2,499</td>
-                      <td className="px-5 py-3.5 text-muted">$49.98 <span className="text-emerald-500 text-xs font-semibold">save 50%</span></td>
+                      <td className="px-5 py-3.5 text-muted">$49.98 <span className="text-[#2D7A4F] text-xs font-semibold">save 50%</span></td>
                       <td className="px-5 py-3.5 text-muted">Continuous auditing across teams</td>
                     </tr>
                   </tbody>
@@ -343,7 +341,7 @@ export default function PricingPage() {
               {faqs.map((faq, i) => (
                 <details
                   key={i}
-                  className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden"
+                  className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-xl overflow-hidden"
                 >
                   <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                     <h3 className="font-medium text-text text-sm pr-4">{faq.question}</h3>
@@ -360,11 +358,10 @@ export default function PricingPage() {
             <div className="text-center mt-10">
               <Link
                 href="/about"
-                className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
-                style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:opacity-80 transition-opacity"
               >
                 Learn how ClearUX works
-                <ArrowRight size={14} className="text-violet-500" />
+                <ArrowRight size={14} className="text-brand" />
               </Link>
             </div>
           </div>

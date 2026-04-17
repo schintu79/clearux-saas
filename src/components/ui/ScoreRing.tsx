@@ -31,9 +31,9 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
 
   // Determine color based on score
   const getColor = (value: number) => {
-    if (value < 40) return '#EF4444'; // red
-    if (value < 70) return '#EAB308'; // yellow
-    return '#22C55E'; // green
+    if (value < 40) return '#C0392B'; // muted red
+    if (value < 70) return '#B8860B'; // muted amber
+    return '#2D7A4F'; // muted green
   };
 
   const radius = (size - strokeWidth) / 2;
@@ -70,7 +70,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
       {/* Score text in center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="font-inter font-bold text-center"
+          className="font-body font-bold text-center"
           style={{
             fontSize: `${size * 0.3}px`,
             color: getColor(animatedScore),

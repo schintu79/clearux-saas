@@ -8,7 +8,7 @@ export default function NotFound() {
       <Navbar />
       <main id="main-content" className="flex-1 flex items-center justify-center px-4 py-20">
         <div className="text-center max-w-md mx-auto">
-          <p className="text-6xl font-heading font-semibold bg-clip-text text-transparent mb-4" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>
+          <p className="text-6xl font-heading font-semibold text-text mb-4">
             404
           </p>
           <h1 className="text-2xl font-bold font-heading text-text mb-3">
@@ -21,14 +21,13 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white rounded-xl transition-all hover:brightness-110 min-h-[44px]"
-              style={{ background: 'var(--gradient-brand)' }}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold bg-brand text-surface dark:text-[#1A1A2E] rounded-lg transition-all hover:brightness-110 min-h-[44px]"
             >
               Go to homepage
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-text bg-card border border-border rounded-xl hover:bg-surface-alt transition-colors min-h-[44px]"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-text bg-card border border-border rounded-lg hover:bg-surface-alt transition-colors min-h-[44px]"
             >
               Contact support
             </Link>

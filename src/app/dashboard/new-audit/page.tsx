@@ -64,7 +64,7 @@ const NewAuditInner: React.FC = () => {
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -73,7 +73,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 text-white font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -197,8 +197,8 @@ const NewAuditInner: React.FC = () => {
 
       {/* Hero */}
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <Sparkles size={28} className="text-violet-500" />
+        <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
+          <Sparkles size={28} className="text-brand" />
         </div>
         <h1 className="text-3xl font-bold font-heading text-text mb-2">
           New Audit
@@ -233,10 +233,10 @@ const NewAuditInner: React.FC = () => {
               if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
             }}
             placeholder="example.com"
-            className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-inter bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
+            className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-body bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
               urlError
                 ? 'border-red-400 dark:border-red-500 focus:border-red-500'
-                : 'border-border focus:border-violet-500'
+                : 'border-border focus:border-brand'
             }`}
           />
           {url && !urlError && (
@@ -264,7 +264,7 @@ const NewAuditInner: React.FC = () => {
             name="language"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-border rounded-xl font-inter text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-violet-500 appearance-none cursor-pointer"
+            className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-brand appearance-none cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -287,21 +287,21 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── White-label branding (Agency/Scale only) — collapsible ── */}
       {isWhiteLabelEligible && (
-        <div className="mb-6 rounded-xl border-2 border-dashed border-violet-300/40 dark:border-violet-500/20 bg-violet-50/30 dark:bg-violet-900/[0.06] overflow-hidden">
+        <div className="mb-6 rounded-xl border-2 border-dashed border-brand/20 dark:border-brand/10 bg-brand/5 dark:bg-brand/[0.03] overflow-hidden">
           {/* Toggle header */}
           <button
             type="button"
             onClick={() => setWhiteLabelOpen(!whiteLabelOpen)}
-            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-brand/5 dark:hover:bg-brand/5 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Building2 size={15} className="text-violet-500" />
+              <Building2 size={15} className="text-brand" />
               <span className="text-sm font-bold text-text">White-Label Branding</span>
-              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="text-[10px] font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 {packageTier}
               </span>
               {!whiteLabelOpen && (companyName.trim() || logoPreview) && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Configured</span>
+                <span className="text-[10px] text-[#2D7A4F] font-medium">Configured</span>
               )}
             </div>
             <div className="flex items-center gap-1.5 text-muted">
@@ -312,7 +312,7 @@ const NewAuditInner: React.FC = () => {
 
           {/* Collapsible content */}
           {whiteLabelOpen && (
-            <div className="px-5 pb-5 border-t border-violet-200/30 dark:border-violet-500/10">
+            <div className="px-5 pb-5 border-t border-brand/10 dark:border-brand/10">
               <p className="text-xs text-muted mt-3 mb-4">
                 Replace ClearUX branding with your own in the PDF &amp; Word reports.
               </p>
@@ -328,7 +328,7 @@ const NewAuditInner: React.FC = () => {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Your Company Name (optional)"
-                  className="w-full px-4 py-2.5 border border-border rounded-lg font-inter text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 focus:border-violet-500"
+                  className="w-full px-4 py-2.5 border border-border rounded-lg font-body text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 focus:border-brand"
                 />
               </div>
 
@@ -361,7 +361,7 @@ const NewAuditInner: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => logoInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted hover:text-text hover:border-violet-400 hover:bg-violet-50/30 dark:hover:bg-violet-900/10 transition-all"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted hover:text-text hover:border-brand hover:bg-brand/5 dark:hover:bg-brand/5 transition-all"
                   >
                     <Upload size={14} />
                     Upload logo (PNG, JPG, SVG — optional)
@@ -392,13 +392,13 @@ const NewAuditInner: React.FC = () => {
       {/* ── What's included ────────────────────────────────── */}
       <div className="mb-6 p-4 rounded-xl bg-off border border-border">
         <div className="flex items-center gap-2 mb-3">
-          <Zap size={14} className="text-violet-500" />
+          <Zap size={14} className="text-brand" />
           <span className="text-sm font-bold text-text">Full Deep Audit</span>
         </div>
         <div className="grid grid-cols-1 gap-1.5">
           {AUDIT_FEATURES.map((f, i) => (
             <div key={i} className="flex items-center gap-2">
-              <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" />
+              <CheckCircle size={13} className="text-[#2D7A4F] flex-shrink-0" />
               <span className="text-xs text-muted">{f}</span>
             </div>
           ))}
@@ -407,9 +407,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Free first audit banner ──────────────────────── */}
       {firstAuditFree && (
-        <div className="mb-6 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30">
+        <div className="mb-6 p-4 rounded-xl bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--gradient-brand)' }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-brand">
               <Sparkles size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -426,9 +426,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Credits banner ────────────────────────────────── */}
       {!firstAuditFree && credits !== null && hasCredits && (
-        <div className="mb-6 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30">
+        <div className="mb-6 p-4 rounded-xl bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[#2D7A4F] flex items-center justify-center flex-shrink-0">
               <Coins size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -439,7 +439,7 @@ const NewAuditInner: React.FC = () => {
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{credits}</span>
+            <span className="text-2xl font-bold text-[#2D7A4F]">{credits}</span>
           </div>
         </div>
       )}
@@ -453,8 +453,7 @@ const NewAuditInner: React.FC = () => {
             </div>
             <Link
               href="/dashboard/buy-credits"
-              className="text-xs font-semibold bg-clip-text text-transparent hover:underline transition-colors whitespace-nowrap ml-3"
-              style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+              className="text-xs font-semibold text-text hover:underline transition-colors whitespace-nowrap ml-3"
             >
               Buy Credits &rarr;
             </Link>
@@ -473,8 +472,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 text-white font-heading font-semibold text-lg py-4 px-8 rounded-full hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ background: 'var(--gradient-brand)' }}
+        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1A1A2E] font-heading font-semibold text-lg py-4 px-8 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>

@@ -51,9 +51,9 @@ function formatUrl(url: string) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-green-600 dark:text-green-400';
+  if (s >= 70) return 'text-[#2D7A4F]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-600 dark:text-red-400';
+  return 'text-[#C0392B]';
 }
 
 function scoreBg(s: number) {
@@ -66,9 +66,9 @@ function scoreBg(s: number) {
 
 function OnboardingBanner() {
   return (
-    <div className="mb-5 rounded-xl border border-violet-200/40 dark:border-violet-800/20 p-5" style={{ background: 'var(--gradient-brand-subtle)' }}>
+    <div className="mb-5 rounded-xl border border-brand/20 dark:border-brand/10 p-5" style={{ background: 'var(--gradient-brand-subtle)' }}>
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles size={18} className="text-violet-500" />
+        <Sparkles size={18} className="text-brand" />
         <h2 className="font-heading font-semibold text-base text-text">Welcome to ClearUX</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -78,7 +78,7 @@ function OnboardingBanner() {
           { step: '3', title: 'Get your report', desc: 'PDF, Word, and dashboard', icon: FileSearch },
         ].map((s) => (
           <div key={s.step} className="flex items-start gap-3 p-3 rounded-lg bg-card/80 dark:bg-white/[0.04] border border-border/20 dark:border-white/[0.04]">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ background: 'var(--gradient-brand)' }}>
+            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1A1A2E] bg-brand">
               {s.step}
             </span>
             <div>
@@ -244,8 +244,8 @@ function DashboardInner() {
 
       {/* Credits purchased banner */}
       {creditsBanner && (
-        <div role="status" aria-live="polite" className="mb-4 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
-          <Coins size={16} className="text-emerald-500 flex-shrink-0" />
+        <div role="status" aria-live="polite" className="mb-4 p-3.5 rounded-xl bg-[#2D7A4F]/5 dark:bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/20 flex items-center gap-3">
+          <Coins size={16} className="text-[#2D7A4F] flex-shrink-0" />
           <div>
             <p className="text-xs font-semibold text-text">Credits added successfully!</p>
             <p className="text-[11px] text-muted">Your credits are ready to use.</p>
@@ -258,18 +258,18 @@ function DashboardInner() {
 
       {/* ── Quick Stats row ── */}
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-violet-400/30 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-            <FileSearch size={20} className="text-violet-500" />
+        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-brand/30 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
+            <FileSearch size={20} className="text-brand" />
           </div>
           <div>
             <p className="text-xl font-bold text-text leading-none">{completedCount}</p>
             <p className="text-[11px] text-muted mt-1">completed</p>
           </div>
         </Link>
-        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-emerald-400/30 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-            <Coins size={20} className="text-emerald-500" />
+        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-[#2D7A4F]/30 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center flex-shrink-0">
+            <Coins size={20} className="text-[#2D7A4F]" />
           </div>
           <div>
             <p className="text-xl font-bold text-text leading-none">{credits ?? '--'}</p>
@@ -290,7 +290,7 @@ function DashboardInner() {
 
       {/* ── New Audit CTA — full width, homepage style ── */}
       <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="w-full flex items-center justify-center gap-2.5 text-white font-heading font-semibold text-base py-4 px-8 rounded-full hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]" style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}>
+        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1A1A2E] font-heading font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
           <Sparkles size={18} />
           Run a New Audit
           <ArrowRight size={18} />
@@ -303,14 +303,14 @@ function DashboardInner() {
           pinnedNotification.color === 'green' ? 'border-green-200/40 bg-green-50/60 dark:bg-green-900/10 dark:border-green-800/20' :
           pinnedNotification.color === 'yellow' ? 'border-yellow-200/40 bg-yellow-50/60 dark:bg-yellow-900/10 dark:border-yellow-800/20' :
           pinnedNotification.color === 'red' ? 'border-red-200/40 bg-red-50/60 dark:bg-red-900/10 dark:border-red-800/20' :
-          pinnedNotification.color === 'violet' ? 'border-violet-200/40 bg-violet-50/60 dark:bg-violet-900/10 dark:border-violet-800/20' :
+          pinnedNotification.color === 'violet' ? 'border-brand/20 bg-brand/5 dark:bg-brand/5 dark:border-brand/10' :
           'border-blue-200/40 bg-blue-50/60 dark:bg-blue-900/10 dark:border-blue-800/20'
         }`}>
           <Bell size={14} className={`flex-shrink-0 mt-0.5 ${
             pinnedNotification.color === 'green' ? 'text-green-500' :
             pinnedNotification.color === 'yellow' ? 'text-yellow-500' :
             pinnedNotification.color === 'red' ? 'text-red-500' :
-            pinnedNotification.color === 'violet' ? 'text-violet-500' :
+            pinnedNotification.color === 'violet' ? 'text-brand' :
             'text-blue-500'
           }`} />
           <div className="flex-1 min-w-0">
@@ -355,16 +355,16 @@ function DashboardInner() {
               const Icon = meta.icon;
               return (
                 <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
-                  <div className="bg-card border border-border/40 dark:border-white/[0.06] rounded-xl px-4 py-3.5 hover:border-violet-400/30 transition-colors flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                      <Loader2 size={14} className="text-violet-500 animate-spin" />
+                  <div className="bg-card border border-border/40 dark:border-white/[0.06] rounded-xl px-4 py-3.5 hover:border-brand/30 transition-colors flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
+                      <Loader2 size={14} className="text-brand animate-spin" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
                       <div className="flex items-center gap-2 text-[10px] text-muted mt-0.5">
                         <span>{formatDate(audit.created_at)}</span>
                         <span className="text-border">·</span>
-                        <span className="flex items-center gap-0.5 text-violet-500 font-medium">
+                        <span className="flex items-center gap-0.5 text-brand font-medium">
                           <Icon size={10} />
                           {meta.label}
                         </span>
@@ -403,7 +403,7 @@ function DashboardInner() {
       {/* ── Empty state (only when no in-progress or failed) ── */}
       {!isNewUser && inProgressAudits.length === 0 && failedAudits.length === 0 && (
         <div className="text-center py-8 px-4">
-          <CheckCircle2 size={22} className="text-emerald-500 mx-auto mb-2" />
+          <CheckCircle2 size={22} className="text-[#2D7A4F] mx-auto mb-2" />
           <p className="text-sm font-medium text-text mb-0.5">All clear</p>
           <p className="text-xs text-muted max-w-xs mx-auto">
             No audits in progress. Your completed audits are in the Audits tab.

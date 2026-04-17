@@ -16,7 +16,7 @@ const COLOR_OPTIONS = [
   { value: 'green', label: 'Green (Success)', bg: 'bg-green-500' },
   { value: 'yellow', label: 'Yellow (Warning)', bg: 'bg-yellow-500' },
   { value: 'red', label: 'Red (Error)', bg: 'bg-red-500' },
-  { value: 'violet', label: 'Violet (Brand)', bg: 'bg-violet-500' },
+  { value: 'violet', label: 'Violet (Brand)', bg: 'bg-brand' },
 ];
 
 interface Notification {
@@ -105,7 +105,7 @@ export default function AdminNotificationsPage() {
     green: 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800/20',
     yellow: 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800/20',
     red: 'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800/20',
-    violet: 'border-violet-200 bg-violet-50 dark:bg-violet-900/10 dark:border-violet-800/20',
+    violet: 'border-brand/20 bg-brand/5 dark:bg-brand/10 dark:border-brand/20',
   };
 
   const iconColorMap: Record<string, string> = {
@@ -113,7 +113,7 @@ export default function AdminNotificationsPage() {
     green: 'text-green-500',
     yellow: 'text-yellow-500',
     red: 'text-red-500',
-    violet: 'text-violet-500',
+    violet: 'text-brand',
   };
 
   return (
@@ -125,8 +125,7 @@ export default function AdminNotificationsPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
-          style={{ background: 'var(--gradient-brand)' }}
+          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
         >
           <Plus size={14} />
           New Notification
@@ -191,7 +190,7 @@ export default function AdminNotificationsPage() {
                 type="checkbox"
                 checked={form.show_in_overview}
                 onChange={(e) => setForm(f => ({ ...f, show_in_overview: e.target.checked }))}
-                className="w-4 h-4 rounded border-border text-violet-500 focus:ring-violet-500"
+                className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
               />
               <div>
                 <span className="text-xs font-semibold text-text">Show in Dashboard Overview</span>
@@ -215,8 +214,7 @@ export default function AdminNotificationsPage() {
               <button
                 onClick={handleCreate}
                 disabled={sending || !form.title.trim() || !form.message.trim()}
-                className="inline-flex items-center gap-1.5 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
-                style={{ background: 'var(--gradient-brand)' }}
+                className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-semibold px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
               >
                 <Send size={13} />
                 {sending ? 'Sending...' : 'Send to all users'}
@@ -253,7 +251,7 @@ export default function AdminNotificationsPage() {
                   <div className="flex items-center gap-2 mb-0.5">
                     <p className="text-xs font-bold text-text">{n.title}</p>
                     {n.show_in_overview && (
-                      <span className="text-[9px] font-bold text-violet-600 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded">PINNED</span>
+                      <span className="text-[9px] font-bold text-brand bg-brand/10 dark:bg-brand/15 px-1.5 py-0.5 rounded">PINNED</span>
                     )}
                     {!n.is_active && (
                       <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">INACTIVE</span>
@@ -267,7 +265,7 @@ export default function AdminNotificationsPage() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => handleToggleOverview(n.id, n.show_in_overview)}
-                    className="p-1.5 rounded-md text-muted hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors"
+                    className="p-1.5 rounded-md text-muted hover:text-brand hover:bg-brand/5 dark:hover:bg-brand/10 transition-colors"
                     title={n.show_in_overview ? 'Unpin from overview' : 'Pin to overview'}
                   >
                     {n.show_in_overview ? <PinOff size={13} /> : <Pin size={13} />}
@@ -281,7 +279,7 @@ export default function AdminNotificationsPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="p-1.5 rounded-md text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                    className="p-1.5 rounded-md text-muted hover:text-[#C0392B] hover:bg-[#C0392B]/5 dark:hover:bg-[#C0392B]/10 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={13} />

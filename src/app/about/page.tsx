@@ -21,14 +21,14 @@ export default function AboutPage() {
             ═══════════════════════════════════════════════════════ */}
         <section className="relative overflow-hidden py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
           {/* Ambient glows */}
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-violet-500/[0.06] blur-[160px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-brand/[0.06] blur-[160px] pointer-events-none" />
           <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-pink-500/[0.04] blur-[140px] pointer-events-none" />
-          <div className="absolute bottom-[10%] left-[40%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.04] blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[10%] left-[40%] w-[350px] h-[350px] rounded-full bg-[#2D7A4F]/[0.04] blur-[120px] pointer-events-none" />
 
           <div className="max-w-5xl mx-auto text-center relative">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--gradient-brand)' }} />
-              <span className="text-sm font-semibold tracking-wide bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>About ClearUX</span>
+              <div className="w-2 h-2 rounded-full animate-pulse bg-brand" />
+              <span className="text-sm font-semibold tracking-wide text-brand">About ClearUX</span>
             </div>
 
             <h1 className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-text mb-6" style={{ lineHeight: '1.1' }}>
@@ -45,12 +45,12 @@ export default function AboutPage() {
             2. BEYOND TRADITIONAL AUDITS
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-          <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.03] blur-[160px] pointer-events-none" />
-          <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-violet-500/[0.03] blur-[140px] pointer-events-none" />
+          <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#2D7A4F]/[0.03] blur-[160px] pointer-events-none" />
+          <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-brand/[0.03] blur-[140px] pointer-events-none" />
 
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-8">
-              <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond traditional audits</p>
+              <p className="text-sm font-semibold tracking-wide uppercase mb-3 text-brand">Beyond traditional audits</p>
               <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-5">
                 Traditional audit tools still check the same<br className="hidden sm:block" /> boxes from 2015. We don&apos;t.
               </h2>
@@ -61,9 +61,9 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
               {/* Card 1 — AI Readiness */}
-              <div className="group relative rounded-2xl border border-emerald-400/20 dark:border-emerald-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5">
-                  <BrainCircuit size={20} className="text-emerald-500" />
+              <div className="group relative rounded-xl border border-[#2D7A4F]/20 dark:border-[#2D7A4F]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-5">
+                  <BrainCircuit size={20} className="text-[#2D7A4F]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-text mb-2.5">AI Agent Readiness</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
@@ -72,9 +72,9 @@ export default function AboutPage() {
               </div>
 
               {/* Card 2 — Cognitive Accessibility & Neurodiversity */}
-              <div className="group relative rounded-2xl border border-violet-400/20 dark:border-violet-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-11 h-11 rounded-xl bg-violet-500/10 flex items-center justify-center mb-5">
-                  <Accessibility size={20} className="text-violet-500" />
+              <div className="group relative rounded-xl border border-[#6B5B95]/20 dark:border-[#6B5B95]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-5">
+                  <Accessibility size={20} className="text-[#6B5B95]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-text mb-2.5">Cognitive Accessibility & Neurodiversity</h3>
                 <p className="text-text/60 text-[14px] leading-relaxed">
@@ -83,7 +83,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 3 — Psychological Safety */}
-              <div className="group relative rounded-2xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-5">
                   <ShieldCheck size={20} className="text-pink-500" />
                 </div>
@@ -94,7 +94,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 4 — Emotional Design */}
-              <div className="group relative rounded-2xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-5">
                   <HeartHandshake size={20} className="text-amber-500" />
                 </div>
@@ -105,7 +105,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 5 — Digital Wellbeing */}
-              <div className="group relative rounded-2xl border border-teal-400/20 dark:border-teal-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-xl border border-teal-400/20 dark:border-teal-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-11 h-11 rounded-xl bg-teal-500/10 flex items-center justify-center mb-5">
                   <Flower2 size={20} className="text-teal-500" />
                 </div>
@@ -116,7 +116,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 6 — Future-Proof Design */}
-              <div className="group relative rounded-2xl border border-indigo-400/20 dark:border-indigo-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-xl border border-indigo-400/20 dark:border-indigo-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-11 h-11 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5">
                   <Zap size={20} className="text-indigo-500" />
                 </div>
@@ -134,11 +134,10 @@ export default function AboutPage() {
               </p>
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
-                style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:opacity-80 transition-opacity"
               >
                 See pricing and plans
-                <ArrowRight size={14} className="text-violet-500" />
+                <ArrowRight size={14} className="text-brand" />
               </Link>
             </div>
           </div>
@@ -147,7 +146,7 @@ export default function AboutPage() {
         {/* ═══════════════════════════════════════════════════════
             3. MISSION — full width gradient band
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-24 overflow-hidden" style={{ background: 'var(--gradient-brand)' }}>
+        <section className="relative py-24 overflow-hidden bg-brand">
           <div className="absolute inset-0 bg-black/[0.06] pointer-events-none" />
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-6">
@@ -179,7 +178,7 @@ export default function AboutPage() {
               <div className="flex-shrink-0 w-full lg:w-auto flex flex-col items-center lg:items-start">
                 <div className="relative w-[260px] h-[340px] sm:w-[280px] sm:h-[370px] rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/40">
                   {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl p-[2px]" style={{ background: 'var(--gradient-brand)' }}>
+                  <div className="absolute inset-0 rounded-2xl p-[2px] bg-brand">
                     <div className="w-full h-full rounded-[14px] overflow-hidden bg-surface-alt">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -201,7 +200,7 @@ export default function AboutPage() {
                     href="https://www.linkedin.com/in/stefanoschintu"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline mt-2.5 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline mt-2.5 transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                     Connect on LinkedIn
@@ -211,12 +210,12 @@ export default function AboutPage() {
 
               {/* Story text */}
               <div className="flex-1 max-w-2xl">
-                <p className="text-sm font-semibold tracking-wide uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>The founding story</p>
+                <p className="text-sm font-semibold tracking-wide uppercase mb-4 text-brand">The founding story</p>
                 <h2 className="font-heading text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
                   Why ClearUX exists
                 </h2>
                 <div className="space-y-6 text-text/75 text-base sm:text-[17px] leading-relaxed">
-                  <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-violet-500 pl-5 py-2 italic">
+                  <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-brand pl-5 py-2 italic">
                     What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
                   </p>
 
@@ -251,14 +250,14 @@ export default function AboutPage() {
 
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">
-              <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Our approach</p>
+              <p className="text-sm font-semibold tracking-wide uppercase mb-3 text-brand">Our approach</p>
               <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text">
                 What makes us different
               </h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Heart size={22} className="text-pink-500" />
                 </div>
@@ -266,23 +265,23 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. The blind spots other tools miss.</p>
               </div>
 
-              <div className="rounded-2xl border border-violet-400/30 dark:border-violet-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
-                  <Shield size={22} className="text-violet-500" />
+              <div className="rounded-xl border border-[#6B5B95]/30 dark:border-[#6B5B95]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-6">
+                  <Shield size={22} className="text-[#6B5B95]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">We detect dark patterns — and refuse to use them</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.</p>
               </div>
 
-              <div className="rounded-2xl border border-emerald-400/30 dark:border-emerald-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
-                  <Brain size={22} className="text-emerald-500" />
+              <div className="rounded-xl border border-[#2D7A4F]/30 dark:border-[#2D7A4F]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-6">
+                  <Brain size={22} className="text-[#2D7A4F]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Future-ready, not just backward-looking</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">We&apos;re the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.</p>
               </div>
 
-              <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Eye size={22} className="text-amber-500" />
                 </div>
@@ -302,7 +301,7 @@ export default function AboutPage() {
 
           <div className="max-w-6xl mx-auto relative">
             <div className="text-center mb-16">
-              <p className="text-sm font-semibold tracking-wide uppercase mb-3 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Who we serve</p>
+              <p className="text-sm font-semibold tracking-wide uppercase mb-3 text-brand">Who we serve</p>
               <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-text">
                 Built for people who ship products
               </h2>
@@ -310,15 +309,15 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-violet-400/30 dark:border-violet-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
-                  <BarChart3 size={22} className="text-violet-500" />
+              <div className="rounded-xl border border-[#6B5B95]/30 dark:border-[#6B5B95]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#6B5B95]/10 flex items-center justify-center mb-6">
+                  <BarChart3 size={22} className="text-[#6B5B95]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Product Managers</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Track findings from open to fixed, share results with stakeholders via read-only links, and re-audit to show measurable improvement over time.</p>
               </div>
 
-              <div className="rounded-2xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Rocket size={22} className="text-pink-500" />
                 </div>
@@ -326,15 +325,15 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Can&apos;t afford a $15k consultancy but refuse to ship mediocre? Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks.</p>
               </div>
 
-              <div className="rounded-2xl border border-emerald-400/30 dark:border-emerald-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6">
-                  <Tag size={22} className="text-emerald-500" />
+              <div className="rounded-xl border border-[#2D7A4F]/30 dark:border-[#2D7A4F]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center mb-6">
+                  <Tag size={22} className="text-[#2D7A4F]" />
                 </div>
                 <h3 className="font-heading font-semibold text-xl text-text mb-3">Agencies</h3>
                 <p className="text-text/65 text-[15px] leading-relaxed">White-label reports for your clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time. Upload your logo and deliver under your own banner.</p>
               </div>
 
-              <div className="rounded-2xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Target size={22} className="text-amber-500" />
                 </div>
@@ -349,11 +348,11 @@ export default function AboutPage() {
             7. CTA — Start your audit today
             ═══════════════════════════════════════════════════════ */}
         <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] rounded-full bg-violet-500/[0.06] blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-emerald-500/[0.05] blur-[120px] pointer-events-none" />
+          <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] rounded-full bg-brand/[0.06] blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-[#2D7A4F]/[0.05] blur-[120px] pointer-events-none" />
 
           <div className="max-w-3xl mx-auto text-center relative">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-6 text-brand">Start your audit today</p>
             <h2 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-6" style={{ lineHeight: '1.1' }}>
               Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
             </h2>
@@ -363,15 +362,14 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-8 py-4 text-white rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-lg"
-                style={{ background: 'var(--gradient-brand)', boxShadow: '0 8px 24px rgba(124,58,237,.2), 0 4px 12px rgba(236,72,153,.1)' }}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-md"
               >
                 Start an audit
                 <ArrowRight size={18} />
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-border text-text rounded-xl font-semibold hover:bg-card transition-all"
+                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-border text-text rounded-lg font-semibold hover:bg-card transition-all"
               >
                 Contact us
               </Link>

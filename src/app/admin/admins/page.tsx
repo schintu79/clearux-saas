@@ -102,8 +102,7 @@ export default function AdminManagementPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:brightness-110"
-          style={{ background: 'var(--gradient-brand)' }}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#1A1A2E] rounded-lg transition-all hover:brightness-110"
         >
           <UserPlus size={15} />
           Add Admin
@@ -141,8 +140,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
-                          style={{ background: 'var(--gradient-brand)' }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1A1A2E] bg-brand flex-shrink-0"
                         >
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
@@ -155,7 +153,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
                         admin.role === 'super_admin'
-                          ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          ? 'bg-[#C0392B]/10 text-[#C0392B] border border-[#C0392B]/20'
                           : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                       }`}>
                         {admin.role === 'super_admin' ? <Crown size={12} /> : <Shield size={12} />}
@@ -168,7 +166,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleRemoveAdmin(admin.id)}
-                        className="text-[12px] text-red-500 hover:text-red-600 font-medium hover:underline transition-colors"
+                        className="text-[12px] text-[#C0392B] hover:text-[#A93226] font-medium hover:underline transition-colors"
                       >
                         Remove
                       </button>
@@ -184,14 +182,14 @@ export default function AdminManagementPage() {
       {/* Info card */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <ShieldCheck size={18} className="text-violet-500" />
+          <div className="w-9 h-9 rounded-lg bg-[#6B5B95]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <ShieldCheck size={18} className="text-[#6B5B95]" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-text mb-1">Role Permissions</h3>
             <div className="text-[13px] text-text/65 space-y-1">
               <p><span className="font-medium text-amber-500">Admin</span> — Can view all users, audits, and manage credits. Cannot promote or demote other admins.</p>
-              <p><span className="font-medium text-red-500">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
+              <p><span className="font-medium text-[#C0392B]">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
             </div>
           </div>
         </div>
@@ -216,7 +214,7 @@ export default function AdminManagementPage() {
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30"
                   autoFocus
                 />
               </div>
@@ -225,7 +223,7 @@ export default function AdminManagementPage() {
                 <select
                   value={addRole}
                   onChange={(e) => setAddRole(e.target.value as 'admin' | 'super_admin')}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
                 >
                   <option value="admin">Admin</option>
                   <option value="super_admin">Super Admin</option>
@@ -233,7 +231,7 @@ export default function AdminManagementPage() {
               </div>
 
               {error && (
-                <p className="text-[13px] text-red-500 bg-red-500/10 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-[13px] text-[#C0392B] bg-[#C0392B]/10 px-3 py-2 rounded-lg">{error}</p>
               )}
             </div>
 
@@ -247,8 +245,7 @@ export default function AdminManagementPage() {
               <button
                 onClick={handleAddAdmin}
                 disabled={submitting || !addEmail.trim()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 hover:brightness-110"
-                style={{ background: 'var(--gradient-brand)' }}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#1A1A2E] transition-all disabled:opacity-40 hover:brightness-110"
               >
                 {submitting ? 'Adding...' : 'Add Admin'}
               </button>

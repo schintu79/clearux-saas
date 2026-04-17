@@ -69,8 +69,8 @@ export default function AdminAuditsPage() {
     crawling: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     analysing: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     generating_report: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    failed: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    completed: 'bg-[#2D7A4F]/10 text-[#2D7A4F]',
+    failed: 'bg-[#C0392B]/10 text-[#C0392B]',
   }
 
   const getScore = (audit: AdminAudit) => {
@@ -81,9 +81,9 @@ export default function AdminAuditsPage() {
 
   const scoreColor = (score: number | null) => {
     if (score === null) return 'text-muted'
-    if (score >= 80) return 'text-emerald-500'
+    if (score >= 80) return 'text-[#2D7A4F]'
     if (score >= 60) return 'text-amber-500'
-    return 'text-red-500'
+    return 'text-[#C0392B]'
   }
 
   return (
@@ -103,7 +103,7 @@ export default function AdminAuditsPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by URL..."
-              className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
             />
           </div>
           <button
@@ -117,7 +117,7 @@ export default function AdminAuditsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-3 py-2 bg-card border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+          className="px-3 py-2 bg-card border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -190,7 +190,7 @@ export default function AdminAuditsPage() {
                             href={`/dashboard/audits/${a.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg hover:bg-violet-500/10 text-muted hover:text-violet-500 transition-colors inline-flex"
+                            className="p-1.5 rounded-lg hover:bg-brand/10 text-muted hover:text-brand transition-colors inline-flex"
                             title="View audit"
                           >
                             <ExternalLink size={14} />

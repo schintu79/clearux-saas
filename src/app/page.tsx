@@ -73,8 +73,7 @@ function RotatingWord() {
   }, []);
   return (
     <span
-      className={`transition-opacity duration-300 bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}
-      style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+      className={`transition-opacity duration-300 text-text ${fade ? 'opacity-100' : 'opacity-0'}`}
     >
       {HERO_WORDS[idx]}
     </span>
@@ -131,9 +130,9 @@ const PILLAR_DATA = [
     key: 'foundation',
     label: 'Foundation',
     color: 'from-violet-500 to-purple-600',
-    colorBg: 'bg-violet-500/10',
-    colorText: 'text-violet-600 dark:text-violet-400',
-    colorBorder: 'border-violet-500/20',
+    colorBg: 'bg-brand/10',
+    colorText: 'text-brand',
+    colorBorder: 'border-brand/20',
     headline: 'Stop losing users in the first 5 seconds.',
     subhead: 'First impressions, clear messaging, and friction-free navigation.',
     body: 'We evaluate visual design, value proposition clarity, information architecture, layout hierarchy, content quality, and conversion paths. These are the fundamentals that make or break user trust in the first 5 seconds.',
@@ -164,9 +163,9 @@ const PILLAR_DATA = [
     key: 'future',
     label: 'Future Readiness',
     color: 'from-emerald-500 to-teal-600',
-    colorBg: 'bg-emerald-500/10',
-    colorText: 'text-emerald-600 dark:text-emerald-400',
-    colorBorder: 'border-emerald-500/20',
+    colorBg: 'bg-[#2D7A4F]/10',
+    colorText: 'text-[#2D7A4F]',
+    colorBorder: 'border-[#2D7A4F]/20',
     headline: 'Ready for AI agents and global users.',
     subhead: 'AI discoverability, agent readiness, and global reach.',
     body: 'We evaluate how LLMs and AI agents understand your site, whether your content is structured for the AI era, and how well your design translates across cultures, languages, and regulations worldwide.',
@@ -179,13 +178,13 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   /* ── Visual panels — clean card style ── */
   const visuals = [
     /* FOUNDATION — Score dashboard */
-    <aside key="v0" aria-label="Example audit output — illustrative demo, not a real finding" data-demo="true" role="presentation" className="rounded-2xl border border-border bg-card overflow-hidden">
+    <aside key="v0" aria-label="Example audit output — illustrative demo, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="p-6 pb-0">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center"><Eye size={13} className="text-violet-500" /></div>
+            <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><Eye size={13} className="text-brand" /></div>
             <span className="text-xs font-semibold text-text tracking-tight">Audit Overview</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full">Demo</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
           </div>
         </div>
         <div className="flex items-center gap-6 mb-6">
@@ -202,7 +201,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
               {[{l:'UX',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
                 <div key={d.l} className="flex items-center gap-2">
                   <span className="text-xs text-muted w-14">{d.l}</span>
-                  <div className="flex-1 h-1 rounded-full bg-off dark:bg-white/[0.06]"><div className="h-full rounded-full bg-violet-400" style={{width:`${d.s}%`}} /></div>
+                  <div className="flex-1 h-1 rounded-full bg-off dark:bg-white/[0.06]"><div className="h-full rounded-full bg-brand" style={{width:`${d.s}%`}} /></div>
                   <span className="text-xs font-bold text-text w-5 text-right">{d.s}</span>
                 </div>
               ))}
@@ -221,14 +220,14 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           </div>
         ))}
       </div>
-      <div className="mx-6 mb-6 p-3 rounded-xl bg-violet-50/60 dark:bg-violet-900/10 border border-violet-200/40 dark:border-violet-800/20">
-        <p className="text-xs font-bold text-violet-700 dark:text-violet-400 mb-1">Recommendation</p>
+      <div className="mx-6 mb-6 p-3 rounded-xl bg-brand/5 border border-brand/10">
+        <p className="text-xs font-bold text-brand mb-1">Recommendation</p>
         <p className="text-xs text-muted leading-relaxed">Move the primary CTA above the fold and increase contrast ratio to at least 4.5:1. This single fix can recover up to 23% of lost mobile conversions.</p>
       </div>
     </aside>,
 
     /* HUMAN EXPERIENCE — Dark patterns scan */
-    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection, not a real finding on this site" data-demo="true" role="presentation" className="rounded-2xl border border-border bg-card overflow-hidden">
+    <aside key="v1" aria-label="Example audit output — illustrative demo of dark pattern detection, not a real finding on this site" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
@@ -245,10 +244,10 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             {Icon:AlertTriangle,t:'Cancellation flow buried (example)',d:'Example: 4-step process to unsubscribe vs 1-click to sign up on audited site',pass:false},
             {Icon:CheckCircle,t:'No hidden costs (example)',d:'Example: All fees disclosed upfront before payment on audited site',pass:true},
           ].map((item,i)=>(
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/20' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
-              <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-emerald-500' : 'text-pink-500'}`} />
+            <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${item.pass ? 'bg-[#2D7A4F]/5 border-[#2D7A4F]/15' : 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-200/50 dark:border-pink-800/20'}`}>
+              <item.Icon size={14} className={`mt-0.5 flex-shrink-0 ${item.pass ? 'text-[#2D7A4F]' : 'text-pink-500'}`} />
               <div className="min-w-0">
-                <p className={`text-xs font-semibold ${item.pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
+                <p className={`text-xs font-semibold ${item.pass ? 'text-[#2D7A4F]' : 'text-pink-700 dark:text-pink-400'}`}>{item.t}</p>
                 <p className="text-xs text-muted mt-0.5 leading-relaxed">{item.d}</p>
               </div>
             </div>
@@ -262,7 +261,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     </aside>,
 
     /* INCLUSIVE DESIGN — Technical audit */
-    <aside key="v2" aria-label="Example audit output — illustrative demo of technical audit, not a real finding" data-demo="true" role="presentation" className="rounded-2xl border border-border bg-card overflow-hidden">
+    <aside key="v2" aria-label="Example audit output — illustrative demo of technical audit, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
@@ -272,7 +271,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-5">
-          {[{l:'Performance',s:92,c:'text-emerald-500',Icon:Zap},{l:'Mobile',s:78,c:'text-amber-500',Icon:Smartphone},{l:'Accessibility',s:64,c:'text-orange-500',Icon:Accessibility},{l:'SEO',s:86,c:'text-emerald-500',Icon:Search}].map(m=>(
+          {[{l:'Performance',s:92,c:'text-[#2D7A4F]',Icon:Zap},{l:'Mobile',s:78,c:'text-amber-500',Icon:Smartphone},{l:'Accessibility',s:64,c:'text-orange-500',Icon:Accessibility},{l:'SEO',s:86,c:'text-[#2D7A4F]',Icon:Search}].map(m=>(
             <div key={m.l} className="p-3.5 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
               <div className="flex items-center justify-between mb-2">
                 <m.Icon size={14} className="text-muted" />
@@ -288,11 +287,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         <div className="space-y-1.5">
           {[{t:'Viewport meta tag',p:true},{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast WCAG AA',p:false},{t:'Structured data / schema',p:true},{t:'Keyboard navigation',p:true},{t:'ARIA landmarks',p:false}].map((c,i)=>(
             <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-off/50 dark:bg-white/[0.02]">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-emerald-100 dark:bg-emerald-900/30':'bg-orange-100 dark:bg-orange-900/30'}`}>
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${c.p?'bg-[#2D7A4F]/10':'bg-orange-100 dark:bg-orange-900/30'}`}>
                 <span className="text-[11px]">{c.p?'✓':'✗'}</span>
               </div>
               <span className="text-[11px] text-text">{c.t}</span>
-              <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-emerald-600 dark:text-emerald-400':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
+              <span className={`ml-auto text-[9px] font-semibold ${c.p?'text-[#2D7A4F]':'text-orange-600 dark:text-orange-400'}`}>{c.p?'Pass':'Fail'}</span>
             </div>
           ))}
         </div>
@@ -304,15 +303,15 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     </aside>,
 
     /* FUTURE READINESS — AI readiness */
-    <aside key="v3" aria-label="Example audit output — illustrative demo of AI readiness check, not a real finding" data-demo="true" role="presentation" className="rounded-2xl border border-border bg-card overflow-hidden">
+    <aside key="v3" aria-label="Example audit output — illustrative demo of AI readiness check, not a real finding" data-demo="true" role="presentation" className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center"><Brain size={13} className="text-emerald-500" /></div>
+            <div className="w-7 h-7 rounded-lg bg-[#2D7A4F]/10 flex items-center justify-center"><Brain size={13} className="text-[#2D7A4F]" /></div>
             <span className="text-xs font-semibold text-text tracking-tight">AI & Global Readiness</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full">Demo</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[#2D7A4F] bg-[#2D7A4F]/10 px-2 py-0.5 rounded-full">Demo</span>
           </div>
-          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">65/100</span>
+          <span className="text-xs font-bold text-[#2D7A4F] bg-[#2D7A4F]/10 px-2 py-0.5 rounded-full">65/100</span>
         </div>
         <div className="space-y-3 mb-5">
           {[
@@ -323,7 +322,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             <div key={i} className="p-3.5 rounded-xl bg-off dark:bg-white/[0.03] border border-border/50 dark:border-white/[0.04]">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-semibold text-text">{item.t}</span>
-                <span className={`text-xs font-bold ${item.s>=70?'text-emerald-500':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
+                <span className={`text-xs font-bold ${item.s>=70?'text-[#2D7A4F]':item.s>=50?'text-amber-500':'text-orange-500'}`}>{item.s}</span>
               </div>
               <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] mb-2">
                 <div className={`h-full rounded-full ${item.s>=70?'bg-emerald-400':item.s>=50?'bg-amber-400':'bg-orange-400'}`} style={{width:`${item.s}%`}} />
@@ -332,14 +331,14 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
             </div>
           ))}
         </div>
-        <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5">Can an AI agent describe your business?</p>
+        <div className="p-3.5 rounded-xl bg-[#2D7A4F]/5 border border-[#2D7A4F]/15">
+          <p className="text-xs font-semibold text-[#2D7A4F] mb-1.5">Can an AI agent describe your business?</p>
           <div className="bg-white dark:bg-surface rounded-lg p-2.5 border border-border/50 dark:border-white/[0.04]">
             <p className="text-xs text-muted italic leading-relaxed">&ldquo;Based on the site&apos;s markup, I can identify this is a SaaS product but cannot determine pricing, key features, or target audience from structured data alone.&rdquo;</p>
           </div>
         </div>
-        <div className="mt-4 p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/40 dark:border-emerald-800/20">
-          <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-1">Recommendation</p>
+        <div className="mt-4 p-3 rounded-xl bg-[#2D7A4F]/5 dark:bg-emerald-900/10 border border-[#2D7A4F]/15">
+          <p className="text-xs font-bold text-[#2D7A4F] mb-1">Recommendation</p>
           <p className="text-xs text-muted leading-relaxed">Add JSON-LD structured data for your product, pricing, and FAQ. This lets AI agents and LLMs accurately describe your business to potential customers.</p>
         </div>
       </div>
@@ -429,7 +428,7 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
         className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
       >
         <div className="text-center mb-12">
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>FAQ</p>
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">FAQ</p>
           <h2 className="font-heading text-3xl md:text-4xl font-semibold text-text tracking-tight">
             Frequently asked questions
           </h2>
@@ -452,11 +451,10 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
         <div className="text-center mt-8">
           <Link
             href="/faq"
-            className="inline-flex items-center gap-2 text-sm font-semibold bg-clip-text text-transparent hover:opacity-80 transition-opacity"
-            style={{ backgroundImage: 'var(--gradient-brand-text)' }}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-text hover:opacity-80 transition-opacity"
           >
             Read all FAQ
-            <ArrowRight size={14} className="text-violet-500" />
+            <ArrowRight size={14} className="text-brand" />
           </Link>
         </div>
       </div>
@@ -477,8 +475,7 @@ function ScrollToTop() {
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
-      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full text-white flex items-center justify-center transition-all hover:scale-105"
-      style={{ background: 'var(--gradient-brand)' }}
+      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-lg bg-brand text-surface dark:text-[#1A1A2E] flex items-center justify-center transition-all hover:scale-105"
     >
       <ArrowUp size={18} />
     </button>
@@ -589,7 +586,7 @@ export default function Home() {
 
           {/* Primary headline — outcome-first for cold traffic */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-4" style={{ lineHeight: '1.08' }}>
-            Consultant-Grade <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>UX Audits</span>
+            Consultant-Grade <span className="text-text">UX Audits</span>
           </h1>
           <p className="animate-fade-up delay-150 font-handwriting text-3xl sm:text-4xl md:text-5xl text-muted mb-6" style={{ lineHeight: '1.2' }}>
             in Minutes, Not{' '}
@@ -622,13 +619,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-lg bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
-                style={{ background: 'var(--gradient-brand)' }}
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -676,7 +672,7 @@ export default function Home() {
       <section id="features" className="relative bg-surface">
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-24">
           <div className="text-center max-w-3xl mx-auto">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Built for product managers, design teams &amp; agencies</p>
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Built for product managers, design teams &amp; agencies</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
               <span className="text-muted">The blind spots other tools miss.</span>
@@ -698,7 +694,7 @@ export default function Home() {
               const counter = (stat as { counter: typeof c1 }).counter;
               return (
                 <div key={idx} ref={counter.ref} className="text-center">
-                  <p className="font-heading text-5xl sm:text-6xl md:text-7xl font-semibold bg-clip-text text-transparent leading-none tracking-tight" style={{ backgroundImage: 'var(--gradient-brand-text)' }} suppressHydrationWarning>
+                  <p className="font-heading text-5xl sm:text-6xl md:text-7xl font-semibold text-text leading-none tracking-tight" suppressHydrationWarning>
                     {mounted ? `${stat.prefix}${counter.count}${stat.suffix}` : '\u00A0'}
                   </p>
                   <p className="text-sm text-muted mt-3 font-medium">{stat.label}</p>
@@ -725,7 +721,7 @@ export default function Home() {
       <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-24">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Beyond the report</p>
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Beyond the report</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
               An audit is just the beginning.<br className="hidden sm:block" />
               <span className="text-muted">What you do next is what matters.</span>
@@ -742,9 +738,9 @@ export default function Home() {
             {/* ── Feature 1: Finding Status Tracking ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-5">
-                  <ListChecks size={14} className="text-emerald-500" />
-                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Finding Tracker</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2D7A4F]/10 border border-[#2D7A4F]/20 mb-5">
+                  <ListChecks size={14} className="text-[#2D7A4F]" />
+                  <span className="text-xs font-semibold text-[#2D7A4F]">Finding Tracker</span>
                 </div>
                 <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Track every fix from<br className="hidden sm:block" /> open to resolved
@@ -754,7 +750,7 @@ export default function Home() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => {
-                    const colors = ['bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'];
+                    const colors = ['bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', 'bg-emerald-100 text-[#2D7A4F] dark:bg-emerald-900/30 dark:text-[#2D7A4F]', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'];
                     return (
                       <span key={s} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${colors[i]}`}>{s}</span>
                     );
@@ -762,20 +758,20 @@ export default function Home() {
                 </div>
               </div>
               {/* Visual mock — clean card */}
-              <div className="rounded-2xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="rounded-xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center"><ListChecks size={13} className="text-violet-500" /></div>
+                  <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><ListChecks size={13} className="text-brand" /></div>
                   <span className="text-xs font-semibold text-text">Issue Tracker</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full">Demo</span>
-                  <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">67% resolved</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
+                  <span className="ml-auto text-[10px] font-bold text-[#2D7A4F] bg-[#2D7A4F]/10 px-2 py-0.5 rounded-full">67% resolved</span>
                 </div>
                 <div className="space-y-2">
                   {[
-                    { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                    { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-[#2D7A4F] bg-[#2D7A4F]/8 dark:text-[#2D7A4F]' },
                     { title: 'Low colour contrast on CTA', severity: 'high', status: 'In Progress', statusColor: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
-                    { title: 'No skip-to-content link', severity: 'medium', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                    { title: 'No skip-to-content link', severity: 'medium', status: 'Fixed', statusColor: 'text-[#2D7A4F] bg-[#2D7A4F]/8 dark:text-[#2D7A4F]' },
                     { title: 'Form lacks error messaging', severity: 'high', status: 'Open', statusColor: 'text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400' },
-                    { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                    { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-[#2D7A4F] bg-[#2D7A4F]/8 dark:text-[#2D7A4F]' },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-off dark:bg-white/[0.03]">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
@@ -789,11 +785,11 @@ export default function Home() {
 
             {/* ── Feature 2: Re-audit & Score Comparison ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <div className="order-2 md:order-1 rounded-2xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="order-2 md:order-1 rounded-xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center"><TrendingUp size={13} className="text-violet-500" /></div>
+                  <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><TrendingUp size={13} className="text-brand" /></div>
                   <span className="text-xs font-semibold text-text">Score Trend</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 rounded-full">Demo</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
                   <span className="ml-auto text-[10px] text-muted">acme.com</span>
                 </div>
                 <div className="space-y-3">
@@ -807,22 +803,22 @@ export default function Home() {
                       <div className="flex-1 h-2.5 rounded-full bg-off dark:bg-white/[0.06] overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${item.score >= 70 ? 'bg-emerald-500' : item.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${item.score}%` }} />
                       </div>
-                      <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{item.score}</span>
+                      <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-[#2D7A4F]' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#C0392B]'}`}>{item.score}</span>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                   <span className="text-xs text-muted">Improvement</span>
-                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="text-sm font-bold text-[#2D7A4F] flex items-center gap-1">
                     <ArrowUp size={14} />
                     +36 points
                   </span>
                 </div>
               </div>
               <div className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-5">
-                  <RefreshCw size={14} className="text-violet-500" />
-                  <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Re-Audit</span>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/10 border border-brand/20 mb-5">
+                  <RefreshCw size={14} className="text-brand" />
+                  <span className="text-xs font-semibold text-brand">Re-Audit</span>
                 </div>
                 <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
                   Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
@@ -838,9 +834,9 @@ export default function Home() {
 
             {/* ── Feature 2b: Two Audit Modes ── */}
             <div className="text-center mb-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 mb-5">
-                <BarChart3 size={14} className="text-violet-500" />
-                <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">Two Audit Modes</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/10 border border-brand/20 mb-5">
+                <BarChart3 size={14} className="text-brand" />
+                <span className="text-xs font-semibold text-brand">Two Audit Modes</span>
               </div>
               <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
                 Consistent results you can trust
@@ -851,15 +847,15 @@ export default function Home() {
             </div>
             <div className="grid md:grid-cols-2 gap-6 md:gap-8">
               {/* Baseline Mode */}
-              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+              <div className="rounded-xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <RefreshCw size={18} className="text-emerald-500" />
+                  <div className="w-10 h-10 rounded-xl bg-[#2D7A4F]/10 flex items-center justify-center">
+                    <RefreshCw size={18} className="text-[#2D7A4F]" />
                   </div>
                   <div>
                     <h4 className="font-heading font-semibold text-lg text-text">Baseline Mode</h4>
-                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">Default on re-audits</span>
+                    <span className="text-[11px] font-semibold text-[#2D7A4F] bg-[#2D7A4F]/10 px-2 py-0.5 rounded-full">Default on re-audits</span>
                   </div>
                 </div>
                 <p className="text-muted text-sm leading-relaxed mb-5">
@@ -873,7 +869,7 @@ export default function Home() {
                     'Consistent, trustworthy results',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-[#2D7A4F] flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
@@ -881,15 +877,15 @@ export default function Home() {
               </div>
 
               {/* Deep Mode */}
-              <div className="rounded-2xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'var(--gradient-brand)' }} />
+              <div className="rounded-xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-brand" />
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                    <Search size={18} className="text-violet-500" />
+                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                    <Search size={18} className="text-brand" />
                   </div>
                   <div>
                     <h4 className="font-heading font-semibold text-lg text-text">Deep Mode</h4>
-                    <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
+                    <span className="text-[11px] font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
                   </div>
                 </div>
                 <p className="text-muted text-sm leading-relaxed mb-5">
@@ -903,7 +899,7 @@ export default function Home() {
                     'Expands your audit coverage over time',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-text">{item}</span>
                     </div>
                   ))}
@@ -925,26 +921,26 @@ export default function Home() {
                   Generate a read-only link for any completed audit. Stakeholders see the overall score, pillar breakdown, top 3 recommendations, and executive summary — without needing a ClearUX account. Revoke the link anytime.
                 </p>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-                  <div className="flex items-center gap-1.5"><Link2 size={14} className="text-violet-500" /> <span>Shareable link</span></div>
+                  <div className="flex items-center gap-1.5"><Link2 size={14} className="text-brand" /> <span>Shareable link</span></div>
                   <span className="text-border">|</span>
-                  <div className="flex items-center gap-1.5"><Lock size={14} className="text-violet-500" /> <span>Revocable anytime</span></div>
+                  <div className="flex items-center gap-1.5"><Lock size={14} className="text-brand" /> <span>Revocable anytime</span></div>
                   <span className="text-border hidden sm:block">|</span>
-                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-violet-500" /> <span>PDF & Word exports</span></div>
+                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={14} className="text-brand" /> <span>PDF & Word exports</span></div>
                 </div>
               </div>
               {/* Visual mock — overall score + 4 pillar cards */}
               <div aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="rounded-xl border border-border bg-card overflow-hidden mb-3">
-                  <div className="h-0.5" style={{ background: 'var(--gradient-brand)' }} />
+                  <div className="h-0.5 bg-brand" />
                   <div className="p-4 flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full border-2 border-emerald-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">93</span>
+                      <span className="text-lg font-bold text-[#2D7A4F]">93</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Eye size={12} className="text-muted" />
                         <span className="text-[10px] text-muted">Shared audit report</span>
-                        <span className="text-[8px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-500/15 px-1.5 py-0.5 rounded">DEMO</span>
+                        <span className="text-[8px] font-bold text-[#2D7A4F] bg-[#2D7A4F]/10 px-1.5 py-0.5 rounded">DEMO</span>
                       </div>
                       <p className="text-sm font-bold text-text">UX Audit: acme.com</p>
                       <p className="text-[11px] text-muted">Excellent | 6 issues found</p>
@@ -954,7 +950,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 gap-2.5">
                 {[
-                  { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-violet-500 to-violet-600', iconBg: 'bg-violet-500',
+                  { name: 'Foundation', score: 72, label: 'Decent', icon: Scale, gradient: 'from-brand to-brand', iconBg: 'bg-brand',
                     cats: [{ n: 'Visual Design & First Impression', s: 35 }, { n: 'Value Proposition & Messaging', s: 83 }, { n: 'Navigation & Info Architecture', s: 95 }, { n: 'Content Quality & Readability', s: 73 }] },
                   { name: 'Human Experience', score: 99, label: 'Excellent', icon: Heart, gradient: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-500',
                     cats: [{ n: 'Calls-to-Action & Conversion', s: 100 }, { n: 'Trust & Social Proof', s: 95 }, { n: 'Ethical UX & Dark Patterns', s: 100 }, { n: 'Emotional Design & Safety', s: 100 }] },
@@ -975,7 +971,7 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`text-lg font-bold leading-none ${pillar.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : pillar.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{pillar.score}</p>
+                        <p className={`text-lg font-bold leading-none ${pillar.score >= 70 ? 'text-[#2D7A4F]' : pillar.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#C0392B]'}`}>{pillar.score}</p>
                         <p className="text-[8px] text-muted">{pillar.label}</p>
                       </div>
                     </div>
@@ -986,7 +982,7 @@ export default function Home() {
                           <div className="w-12 h-1 rounded-full bg-off dark:bg-white/[0.06] overflow-hidden flex-shrink-0">
                             <div className={`h-full rounded-full ${cat.s >= 70 ? 'bg-emerald-500' : cat.s >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${cat.s}%` }} />
                           </div>
-                          <span className={`text-[10px] font-bold w-5 text-right flex-shrink-0 ${cat.s >= 70 ? 'text-emerald-600 dark:text-emerald-400' : cat.s >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{cat.s}</span>
+                          <span className={`text-[10px] font-bold w-5 text-right flex-shrink-0 ${cat.s >= 70 ? 'text-[#2D7A4F]' : cat.s >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#C0392B]'}`}>{cat.s}</span>
                         </div>
                       ))}
                     </div>
@@ -1010,11 +1006,11 @@ export default function Home() {
         >
           {/* Free Audit Banner */}
           {!user && (
-            <div className="rounded-2xl p-6 sm:p-8 mb-12 border border-border bg-card">
+            <div className="rounded-xl p-6 sm:p-8 mb-12 border border-border bg-card">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={18} className="text-violet-500" />
+                    <Sparkles size={18} className="text-brand" />
                     <h3 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h3>
                   </div>
                   <p className="text-sm text-muted max-w-md">
@@ -1023,8 +1019,7 @@ export default function Home() {
                 </div>
                 <Link
                   href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white text-sm font-semibold px-6 py-3 min-h-[48px] rounded-full transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
-                  style={{ background: 'var(--gradient-brand)' }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-6 py-3 min-h-[48px] rounded-lg transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -1046,7 +1041,7 @@ export default function Home() {
           </div>
 
           {/* Single Audit */}
-          <div className="rounded-2xl border border-border bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
+          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
             <div className="relative grid sm:grid-cols-2 gap-8 items-center">
               <div>
                 <h3 className="font-heading text-2xl font-semibold text-text mb-1">Single Audit</h3>
@@ -1058,7 +1053,7 @@ export default function Home() {
                 <p className="text-muted text-sm mb-8">One-time payment per audit</p>
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-full px-8 py-3.5 hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-lg px-8 py-3.5 hover:opacity-90 transition-opacity"
                 >
                   Buy 1 audit
                 </Link>
@@ -1073,7 +1068,7 @@ export default function Home() {
                   'Re-audit the same URL to measure your improvement over time',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-[#2D7A4F] flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-text">{item}</span>
                   </div>
                 ))}
@@ -1097,11 +1092,11 @@ export default function Home() {
             ].map((pack, idx) => (
               <div
                 key={idx}
-                className={`group rounded-2xl border bg-card p-6 hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 ${(pack as any).popular ? 'border-accent ring-1 ring-accent/20' : 'border-border'}`}
+                className={`group rounded-xl border bg-card p-6 hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 ${(pack as any).popular ? 'border-accent ring-1 ring-accent/20' : 'border-border'}`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
-                  {(pack as any).popular && <span className="text-[11px] font-bold text-white px-3 py-1 rounded-full" style={{ background: 'var(--gradient-brand)' }}>Most Popular</span>}
+                  {(pack as any).popular && <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-3 py-1 rounded-lg">Most Popular</span>}
                   {!(pack as any).popular && <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
                   </span>}
@@ -1118,7 +1113,7 @@ export default function Home() {
                   <div className="space-y-1.5 mb-5">
                     {(pack as any).perks.map((perk: string, pi: number) => (
                       <div key={pi} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-brand flex-shrink-0" />
                         <span className="text-xs text-muted">{perk}</span>
                       </div>
                     ))}
@@ -1126,7 +1121,7 @@ export default function Home() {
                 )}
                 <Link
                   href="/register"
-                  className="flex items-center justify-center gap-2 text-sm font-semibold rounded-full py-3 border border-border text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
+                  className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 border border-border text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
                 >
                   Buy {pack.credits} audits
                 </Link>
@@ -1165,7 +1160,7 @@ export default function Home() {
           <Sparkle className="hidden md:block absolute -left-8 top-4 lg:-left-16" color="var(--color-tech)" />
           <CircleScribble className="hidden lg:block absolute -right-12 top-24" color="var(--color-human)" />
           <div className="text-center mb-16">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Testimonials</p>
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Testimonials</p>
             <h2 className="font-heading text-3xl md:text-4xl font-semibold text-text mb-3 tracking-tight">
               Loved by product teams
             </h2>
@@ -1178,7 +1173,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {testimonials.slice(0, 3).map((t, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-6">
+              <div key={i} className="rounded-xl border border-border bg-card p-6">
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, j) => (
                     <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -1199,7 +1194,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
             {testimonials.slice(3, 5).map((t, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-6">
+              <div key={i} className="rounded-xl border border-border bg-card p-6">
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(5)].map((_, j) => (
                     <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -1235,7 +1230,7 @@ export default function Home() {
         <Squiggle className="hidden lg:block absolute bottom-28 right-[5%] rotate-3" color="var(--color-human)" />
 
         <div className="max-w-3xl mx-auto text-center relative">
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 bg-clip-text text-transparent" style={{ backgroundImage: 'var(--gradient-brand-text)' }}>Start your audit today</p>
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-6 text-text">Start your audit today</p>
 
           <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.08' }}>
             Ready to see what<br className="hidden sm:block" />
@@ -1259,13 +1254,12 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-full bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
+                  className="w-full px-5 py-4 text-base rounded-lg bg-card border border-border text-text placeholder:text-placeholder focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(124,58,237,0.08)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base text-white rounded-full font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
-                style={{ background: 'var(--gradient-brand)' }}
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />

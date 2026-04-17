@@ -48,9 +48,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-green-600 dark:text-green-400';
+  if (s >= 70) return 'text-[#2D7A4F]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-600 dark:text-red-400';
+  return 'text-[#C0392B]';
 }
 
 function scoreBg(s: number) {
@@ -83,7 +83,7 @@ function AuditSiteGroup({ domain, audits }: {
   // Single audit — entire card is clickable, goes directly to audit detail
   if (!hasMultiple) {
     return (
-      <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors group">
+      <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
         <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -118,7 +118,7 @@ function AuditSiteGroup({ domain, audits }: {
 
   // Multiple audits — navigate to dedicated domain page
   return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors group">
+    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
       <Link
         href={`/dashboard/audits/site/${encodeURIComponent(domain)}`}
         className="block px-4 py-3"
@@ -128,7 +128,7 @@ function AuditSiteGroup({ domain, audits }: {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Globe size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{domain}</p>
-              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
                 {audits.length} audits
               </span>
               {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
@@ -140,7 +140,7 @@ function AuditSiteGroup({ domain, audits }: {
               {improvement !== 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  <span className={`font-semibold ${improvement > 0 ? 'text-[#2D7A4F]' : 'text-[#C0392B]'}`}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 </>
@@ -235,7 +235,7 @@ export default function AuditsPage() {
           <h1 className="text-lg font-semibold text-text">All Audits</h1>
           <p className="text-muted text-xs mt-0.5">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-3.5 py-2 rounded-md transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -252,7 +252,7 @@ export default function AuditsPage() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2 rounded-md transition-all hover:brightness-110" style={{ background: 'var(--gradient-brand)' }}>
+          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110">
             <Sparkles size={13} /> Start Audit
           </Link>
         </div>
