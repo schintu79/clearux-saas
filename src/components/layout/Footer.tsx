@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+// Icons removed — none currently needed
 
 const Footer: React.FC = () => {
   const currentYear = 2026;
@@ -8,23 +8,6 @@ const Footer: React.FC = () => {
   return (
     <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#1C1C1C] py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-
-        {/* Re-engagement CTA banner */}
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.04] p-6 sm:p-8 mb-12">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-heading text-lg text-white mb-1">Ready to audit your site?</h3>
-              <p className="text-sm text-white/50">First audit is free. No credit card required. Results in minutes.</p>
-            </div>
-            <Link
-              href="/register"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold bg-white text-[#1C1C1C] px-6 py-3 rounded-lg transition-all hover:bg-white/90 hover:-translate-y-0.5 flex-shrink-0"
-            >
-              Start Free Audit
-              <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
 
         {/* Top: Brand + Links */}
         <div className="flex flex-col md:flex-row gap-12 md:gap-16 mb-12">
@@ -77,7 +60,6 @@ const Footer: React.FC = () => {
                   { label: 'How It Works', href: '/about' },
                   { label: 'Pricing', href: '/pricing' },
                   { label: 'FAQ', href: '/faq' },
-                  { label: 'Start Free Audit', href: '/register' },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="font-body text-sm text-white/55 hover:text-white transition-colors">
