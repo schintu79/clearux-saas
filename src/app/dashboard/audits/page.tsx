@@ -11,9 +11,6 @@ import {
   Zap,
   FileSearch,
   ExternalLink,
-  Trash2,
-  RefreshCw,
-  TrendingUp,
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -64,12 +61,10 @@ function scoreBg(s: number) {
 
 /* ── Site Group ───────────────────────────────────────────── */
 
-function AuditSiteGroup({ domain, audits, onDelete }: {
+function AuditSiteGroup({ domain, audits }: {
   domain: string;
   audits: AuditWithReport[];
-  onDelete: (id: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const hasMultiple = audits.length > 1;
   const latest = audits[0];
   const latestMeta = statusMeta[latest.status] || statusMeta.pending_payment;
@@ -85,7 +80,7 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
   const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
   const lang = langCode((latest as any).language);
 
-  // Single audit — entire card is clickable
+  // Single audit — entire card is clickable, goes directly to audit detail
   if (!hasMultiple) {
     return (
       <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors group">
@@ -121,134 +116,48 @@ function AuditSiteGroup({ domain, audits, onDelete }: {
     );
   }
 
-  // Multiple audits — grouped with expand
+  // Multiple audits — navigate to dedicated domain page
   return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
-      {/* Header */}
-      <div
-        className="px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors"
-        onClick={() => setExpanded(!expanded)}
+    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-violet-400/30 transition-colors group">
+      <Link
+        href={`/dashboard/audits/site/${encodeURIComponent(domain)}`}
+        className="block px-4 py-3"
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <Globe size={12} className="text-muted flex-shrink-0" />
-            <p className="font-medium text-sm text-text truncate">{domain}</p>
-            <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
-              {audits.length} audits
-            </span>
-            {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted">
-            <span>Latest: {formatDate(latest.created_at)}</span>
-            <span className="text-border">·</span>
-            <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
-            {improvement !== 0 && (
-              <>
-                <span className="text-border">·</span>
-                <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {improvement > 0 ? '+' : ''}{improvement} pts
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {latestScore != null && (
-            <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
-              <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Globe size={12} className="text-muted flex-shrink-0" />
+              <p className="font-medium text-sm text-text truncate">{domain}</p>
+              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full">
+                {audits.length} audits
+              </span>
+              {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
             </div>
-          )}
-          {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
-          <ChevronRight size={14} className={`text-muted transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`} />
-        </div>
-      </div>
-
-      {/* Expanded */}
-      {expanded && (
-        <div className="border-t border-border/30 dark:border-white/[0.04]">
-          {/* Score trend — clean, thin */}
-          {scores.length >= 2 && (
-            <div className="px-4 py-3">
-              <div className="flex items-center gap-2 mb-2.5">
-                <TrendingUp size={11} className="text-violet-400" />
-                <span className="text-[10px] font-medium text-text/60">Score Trend</span>
-                {improvement !== 0 && (
-                  <span className={`ml-auto text-[10px] font-semibold ${improvement > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            <div className="flex items-center gap-2 text-[10px] text-muted">
+              <span>Latest: {formatDate(latest.created_at)}</span>
+              <span className="text-border">·</span>
+              <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
+              {improvement !== 0 && (
+                <>
+                  <span className="text-border">·</span>
+                  <span className={`font-semibold ${improvement > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                {scores.map((s, i) => {
-                  const dateStr = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  const isLatest = i === scores.length - 1;
-                  const isBaseline = i === 0;
-                  return (
-                    <div key={i} className={`flex items-center gap-2.5 ${isLatest ? '' : 'opacity-55'}`}>
-                      <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
-                        <div className={`h-full rounded-full ${s.score >= 70 ? 'bg-emerald-400' : s.score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${s.score}%` }} />
-                      </div>
-                      <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{s.score}</span>
-                      {isLatest && <span className="text-[8px] font-medium text-violet-500 bg-violet-100 dark:bg-violet-500/15 px-1 py-0.5 rounded">now</span>}
-                      {isBaseline && !isLatest && <span className="text-[8px] text-muted/50">start</span>}
-                    </div>
-                  );
-                })}
-              </div>
+                </>
+              )}
             </div>
-          )}
-
-          {/* Individual audits */}
-          <div className="divide-y divide-border/20 dark:divide-white/[0.04]">
-            {audits.map((audit) => {
-              const meta = statusMeta[audit.status] || statusMeta.pending_payment;
-              const Icon = meta.icon;
-              const done = audit.status === 'completed';
-              const report = audit.report;
-              const aLang = langCode((audit as any).language) || 'EN';
-
-              return (
-                <div key={audit.id} className="flex items-center gap-2 hover:bg-violet-50/40 dark:hover:bg-violet-900/[0.06] transition-colors group/row">
-                  <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
-                      <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
-                      <span className="text-border">·</span>
-                      <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
-                      <span className="text-border">·</span>
-                      <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
-                      {(audit as any).depth_mode === 'deep' && (
-                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/15 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
-                      )}
-                      {done && report?.overall_score != null && (
-                        <><span className="text-border">·</span><span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span></>
-                      )}
-                    </div>
-                    <ChevronRight size={12} className="text-muted/40 group-hover/row:text-violet-500 transition-colors flex-shrink-0" />
-                  </Link>
-                  <button
-                    onClick={() => { if (confirm('Delete this audit?')) onDelete(audit.id); }}
-                    className="px-3 py-2 text-muted hover:text-red-500 transition-colors flex-shrink-0"
-                  >
-                    <Trash2 size={11} />
-                  </button>
-                </div>
-              );
-            })}
           </div>
-
-          {/* Re-audit button */}
-          <div className="px-4 py-2.5 border-t border-border/20 dark:border-white/[0.04]">
-            <Link
-              href={`/dashboard/new-audit?url=${encodeURIComponent(latest.product_url)}`}
-              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:underline"
-            >
-              <RefreshCw size={11} />
-              Re-audit {domain}
-            </Link>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {latestScore != null && (
+              <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
+                <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              </div>
+            )}
+            {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
+            <ChevronRight size={14} className="text-muted flex-shrink-0" />
           </div>
         </div>
-      )}
+      </Link>
     </div>
   );
 }
@@ -302,16 +211,6 @@ export default function AuditsPage() {
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 
-  const handleDelete = async (id: string) => {
-    try {
-      const supabase = createBrowserSupabase();
-      await supabase.from('audits').delete().eq('id', id);
-      setAudits((prev) => prev.filter((a) => a.id !== id));
-    } catch {
-      alert('Failed to delete audit');
-    }
-  };
-
   if (authLoading || (loading && user)) {
     return (
       <div className="max-w-2xl mx-auto py-6 space-y-3">
@@ -362,7 +261,7 @@ export default function AuditsPage() {
       {audits.length > 0 && (
         <div className="flex flex-col" style={{ gap: '12px' }}>
           {Object.keys(grouped).map((domain) => (
-            <AuditSiteGroup key={domain} domain={domain} audits={grouped[domain]} onDelete={handleDelete} />
+            <AuditSiteGroup key={domain} domain={domain} audits={grouped[domain]} />
           ))}
         </div>
       )}

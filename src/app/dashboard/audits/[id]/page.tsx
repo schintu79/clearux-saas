@@ -1307,9 +1307,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4">
-      {/* Back — if audit belongs to a domain group (siblings), go to audits list with domain expanded; otherwise just back to list */}
+      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
       <Link
-        href="/dashboard/audits"
+        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url))}` : '/dashboard/audits'}
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
