@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface DashboardShellProps {
@@ -87,9 +88,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-body font-semibold text-[17px] text-text">
-              ClearUX
-            </span>
+            <Logo height={18} variant="dark" />
           </Link>
         </div>
 

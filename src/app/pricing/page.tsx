@@ -160,7 +160,7 @@ export default function PricingPage() {
 
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-muted text-lg">$</span>
-                    <span className="font-heading text-6xl sm:text-7xl font-extrabold text-text tracking-tight">99</span>
+                    <span className="font-heading text-6xl sm:text-7xl font-bold text-text tracking-tight">99</span>
                   </div>
                   <p className="text-muted text-sm mb-8">One-time payment per audit</p>
 
@@ -230,7 +230,7 @@ export default function PricingPage() {
 
                   <div className="flex items-baseline gap-1 mb-0.5">
                     <span className="text-muted text-sm">$</span>
-                    <span className="font-heading text-4xl font-extrabold text-text">{pack.price.toLocaleString()}</span>
+                    <span className="font-heading text-4xl font-bold text-text">{pack.price.toLocaleString()}</span>
                   </div>
                   <p className="text-muted text-sm mb-5">
                     {pack.per} per audit <span className="text-muted/50">·</span> {pack.credits} audits

@@ -449,8 +449,8 @@ export default function Home() {
             64 checkpoints across accessibility, ethical UX, conversion, and AI-agent readiness — delivered in minutes.
           </p>
 
-          {/* Single focal CTA — URL Input (wider) */}
-          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-2xl mx-auto mb-6">
+          {/* Single focal CTA — URL Input (full width matching CTA) */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-400 max-w-3xl mx-auto mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -463,15 +463,15 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder="yourwebsite.com"
                   aria-label="Website URL to audit"
-                  className="w-full px-5 py-4 text-base rounded-xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:outline-none focus:border-[#B9FF66]/40 focus:shadow-[0_0_0_3px_rgba(185,255,102,0.08)] transition-all"
+                  className="w-full px-6 py-4.5 text-lg rounded-xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:outline-none focus:border-[#B9FF66]/40 focus:shadow-[0_0_0_3px_rgba(185,255,102,0.08)] transition-all"
                 />
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4.5 min-h-[56px] text-lg bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
-                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </form>
@@ -479,36 +479,38 @@ export default function Home() {
           {/* Lime scribbled arrow pointing down */}
           <button
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="animate-fade-up delay-600 mx-auto flex flex-col items-center gap-1 hover:scale-110 transition-transform cursor-pointer mb-8"
+            className="animate-fade-up delay-600 mx-auto flex flex-col items-center gap-1 hover:scale-110 transition-transform cursor-pointer mb-14"
             aria-label="Scroll to features"
           >
-            <svg width="32" height="48" viewBox="0 0 32 48" fill="none" className="animate-float">
-              <path d="M16 4C15 8 14 12 15 18C16 24 17 28 16 34" stroke="#B9FF66" strokeWidth="2" strokeLinecap="round" fill="none" style={{ filter: 'url(#scribble)' }} />
-              <path d="M8 28C11 31 14 35 16 38C18 35 21 31 24 28" stroke="#B9FF66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              <path d="M10 30C12 32 14 36 16 39C18 36 20 32 22 30" stroke="#B9FF66" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.4" />
+            <svg width="56" height="80" viewBox="0 0 56 80" fill="none" className="animate-float">
+              <path d="M28 6C26 12 25 20 26 30C27 40 29 50 28 58" stroke="#B9FF66" strokeWidth="2.5" strokeLinecap="round" fill="none" style={{ filter: 'url(#scribble)' }} />
+              <path d="M30 8C29 14 27 22 28 32C29 42 30 48 29 56" stroke="#B9FF66" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.3" style={{ filter: 'url(#scribble)' }} />
+              <path d="M12 52C17 56 22 62 28 68C34 62 39 56 44 52" stroke="#B9FF66" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path d="M15 54C19 57 23 63 28 69C33 63 37 57 41 54" stroke="#B9FF66" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.35" />
+              <path d="M18 50C21 54 25 60 28 65C31 60 35 54 38 50" stroke="#B9FF66" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.2" />
               <defs>
                 <filter id="scribble">
-                  <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
-                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+                  <feTurbulence type="turbulence" baseFrequency="0.04" numOctaves="3" result="noise" />
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" />
                 </filter>
               </defs>
             </svg>
           </button>
 
-          {/* Trust KSPs — visible without scrolling */}
-          <div className="animate-fade-up delay-700 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 mb-6">
+          {/* Trust KSPs — 50px from bottom */}
+          <div className="animate-fade-up delay-700 flex flex-wrap items-center justify-center gap-x-10 gap-y-4" style={{ paddingBottom: '50px' }}>
             <div className="flex items-center gap-2.5">
-              <Zap size={18} className="text-white" />
+              <Zap size={18} className="text-[#B9FF66]" />
               <span className="text-sm font-semibold text-white">Results in minutes</span>
             </div>
             <div className="w-px h-4 bg-white/15 hidden sm:block" />
             <div className="flex items-center gap-2.5">
-              <Shield size={18} className="text-white" />
+              <Shield size={18} className="text-[#B9FF66]" />
               <span className="text-sm font-semibold text-white">Your data is never stored</span>
             </div>
             <div className="w-px h-4 bg-white/15 hidden sm:block" />
             <div className="flex items-center gap-2.5">
-              <Clock size={18} className="text-white" />
+              <Clock size={18} className="text-[#B9FF66]" />
               <span className="text-sm font-semibold text-white">Credits never expire</span>
             </div>
           </div>

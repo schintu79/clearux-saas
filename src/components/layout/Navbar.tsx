@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import Logo from '@/components/ui/Logo';
 import { useAuth } from '@/context/AuthContext';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
@@ -77,7 +78,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-xl font-bold tracking-tight text-text">clear<span className="text-lime">UX</span></span>
+            <Logo height={20} variant="dark" />
           </Link>
 
           {/* Desktop Navigation */}

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-// Icons removed — none currently needed
+import Logo from '@/components/ui/Logo';
 
 const Footer: React.FC = () => {
   const currentYear = 2026;
@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <span className="font-heading text-xl font-bold tracking-tight text-white mb-3 inline-block">clear<span className="text-[#B9FF66]">UX</span></span>
+            <div className="mb-3"><Logo height={20} variant="light" /></div>
             <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
               Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>
