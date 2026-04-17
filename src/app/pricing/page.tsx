@@ -71,7 +71,7 @@ export default function PricingPage() {
                 </div>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -220,7 +220,7 @@ export default function PricingPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
                     {pack.popular ? (
-                      <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-3 py-1 rounded-full shadow-sm">Most Popular</span>
+                      <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1C1C1C] px-3 py-1 rounded-full shadow-sm">Most Popular</span>
                     ) : (
                       <span className="text-xs font-bold text-text/60 px-2.5 py-1 rounded-full bg-surface-alt">
                         {pack.per}/audit
@@ -240,7 +240,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 bg-brand text-surface dark:text-[#1A1A2E] transition-all duration-200 hover:-translate-y-0.5"
+                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 bg-brand text-surface dark:text-[#1C1C1C] transition-all duration-200 hover:-translate-y-0.5"
                   >
                     {pack.cta}
                   </Link>
@@ -300,7 +300,7 @@ export default function PricingPage() {
                       <td className="px-5 py-3.5 text-muted">One-off baseline or pre-launch check</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-1.5 py-0.5 rounded-full ml-1">Popular</span></td>
+                      <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold bg-brand text-surface dark:text-[#1C1C1C] px-1.5 py-0.5 rounded-full ml-1">Popular</span></td>
                       <td className="px-5 py-3.5 font-bold text-text">$399</td>
                       <td className="px-5 py-3.5 text-muted">$79.80 <span className="text-[#2D7A4F] text-xs font-semibold">save 19%</span></td>
                       <td className="px-5 py-3.5 text-muted">Quarterly audits per release cycle</td>

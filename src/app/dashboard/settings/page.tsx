@@ -118,7 +118,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>

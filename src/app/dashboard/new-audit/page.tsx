@@ -73,7 +73,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] font-medium px-6 py-3 rounded-lg transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -472,7 +472,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1A1A2E] font-heading font-semibold text-lg py-4 px-8 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1C1C1C] font-heading font-semibold text-lg py-4 px-8 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>

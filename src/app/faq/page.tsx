@@ -357,7 +357,7 @@ export default function FaqPage() {
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <a
                   href="mailto:support@clearux.ai"
-                  className="inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] font-semibold text-sm rounded-lg px-6 py-3 hover:brightness-110 transition-all"
+                  className="inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] font-semibold text-sm rounded-lg px-6 py-3 hover:brightness-110 transition-all"
                 >
                   Email Support
                 </a>

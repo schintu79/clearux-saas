@@ -415,7 +415,7 @@ function ScrollToTop() {
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
-      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-lg bg-brand text-surface dark:text-[#1A1A2E] flex items-center justify-center transition-all hover:scale-105"
+      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-lg bg-brand text-surface dark:text-[#1C1C1C] flex items-center justify-center transition-all hover:scale-105"
     >
       <ArrowUp size={18} />
     </button>
@@ -479,20 +479,22 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO — Sketch-style: clean, confident, generous space
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-off dark:bg-surface-alt bg-crossgrid">
+      <section className="relative pt-20 pb-20 sm:pt-32 sm:pb-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-crossgrid" style={{ background: 'var(--hero-bg)' }}>
 
         <div className="max-w-5xl mx-auto text-center relative">
           {/* Doodle accents */}
           <DoodleArrowDown className="animate-fade-up delay-500 hidden md:block absolute -right-2 top-[52%] lg:right-8" color="var(--color-human)" />
           <Sparkle className="animate-fade-up delay-500 hidden md:block absolute left-4 top-[28%] lg:left-12" color="var(--color-tech)" />
 
-          {/* Primary headline — price anchor */}
-          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-2" style={{ lineHeight: '1.08' }}>
-            The UX audit that used to cost $10K.
+          {/* Primary headline — price anchor, 2 rows */}
+          <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-8" style={{ lineHeight: '1.12' }}>
+            The UX audit that used to cost $10K.{' '}
+            <br className="hidden sm:block" />
+            For{' '}
+            <span className="bg-gradient-to-r from-[#6B5B95] via-[#D4786A] to-[#2D7A4F] bg-clip-text text-transparent">
+              $99.
+            </span>
           </h1>
-          <p className="animate-fade-up delay-150 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight text-text mb-8" style={{ lineHeight: '1.08' }}>
-            For $99.
-          </p>
 
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-muted mb-12 sm:mb-14 max-w-2xl mx-auto" style={{ lineHeight: '1.6' }}>
             64 checkpoints across accessibility, ethical UX, conversion, and AI-agent readiness — delivered in minutes.
@@ -517,7 +519,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1C1C1C] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
@@ -531,9 +533,24 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           TRUST STRIP — Compact, visual break with doodle
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative border-b border-border bg-surface">
+      <section className="relative border-b border-border bg-white dark:bg-card">
         <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-5">
-          <p className="text-center text-sm text-muted">Your website data is never stored — only your report.</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-muted">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-[#6B5B95]" />
+              <span className="text-xs font-semibold">Results in minutes</span>
+            </div>
+            <div className="w-px h-3 bg-border hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <Shield size={14} className="text-[#2D7A4F]" />
+              <span className="text-xs font-semibold">Your data is never stored — only your report</span>
+            </div>
+            <div className="w-px h-3 bg-border hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <Clock size={14} className="text-[#B8860B]" />
+              <span className="text-xs font-semibold">Credits never expire</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -907,7 +924,7 @@ export default function Home() {
 
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
           >
             Start free audit
             <ArrowRight size={16} />
@@ -938,7 +955,7 @@ export default function Home() {
                 </div>
                 <Link
                   href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-6 py-3 min-h-[48px] rounded-lg transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-6 py-3 min-h-[48px] rounded-lg transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -1015,7 +1032,7 @@ export default function Home() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
-                  {(pack as any).popular && <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1A1A2E] px-3 py-1 rounded-lg">Most Popular</span>}
+                  {(pack as any).popular && <span className="text-[11px] font-bold bg-brand text-surface dark:text-[#1C1C1C] px-3 py-1 rounded-lg">Most Popular</span>}
                   {!(pack as any).popular && <span className="text-xs font-bold text-white px-2.5 py-1 rounded-full bg-emerald-500">
                     Save {pack.save}%
                   </span>}
@@ -1085,7 +1102,7 @@ export default function Home() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
             >
               Start your free audit
               <ArrowRight size={16} />
@@ -1138,7 +1155,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-brand text-surface dark:text-[#1C1C1C] rounded-lg font-semibold transition-all hover:-translate-y-0.5 flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />

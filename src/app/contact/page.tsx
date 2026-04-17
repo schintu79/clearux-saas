@@ -91,7 +91,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-lg bg-brand text-surface dark:text-[#1A1A2E] font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-md"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-lg bg-brand text-surface dark:text-[#1C1C1C] font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60 shadow-md"
                 >
                   {loading ? (
                     <>

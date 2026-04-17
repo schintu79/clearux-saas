@@ -13,7 +13,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
     : email ? email[0].toUpperCase() : '?';
 
   return (
-    <div className="w-7 h-7 rounded-full bg-brand text-surface flex items-center justify-center text-xs font-medium select-none dark:text-[#1A1A2E]">
+    <div className="w-7 h-7 rounded-full bg-brand text-surface flex items-center justify-center text-xs font-medium select-none dark:text-[#1C1C1C]">
       {initials}
     </div>
   );
@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-white/90 dark:bg-card/90 backdrop-blur-xl border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -167,7 +167,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-semibold text-surface dark:text-[#1A1A2E] bg-brand hover:bg-brand-hover rounded-lg px-5 py-2 transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-surface dark:text-[#1C1C1C] bg-brand hover:bg-brand-hover rounded-lg px-5 py-2 transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Get Started
                   <ArrowUpRight size={14} />
@@ -228,7 +228,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-surface dark:text-[#1A1A2E] bg-brand rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-surface dark:text-[#1C1C1C] bg-brand rounded-lg px-4 py-3 text-center min-h-[44px] flex items-center justify-center mt-1">
                       Get Started
                     </Link>
                   </>

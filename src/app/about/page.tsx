@@ -362,7 +362,7 @@ export default function AboutPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-surface dark:text-[#1A1A2E] rounded-lg font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-brand text-surface dark:text-[#1C1C1C] rounded-lg font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all shadow-md"
               >
                 Start an audit
                 <ArrowRight size={18} />

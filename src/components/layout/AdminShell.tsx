@@ -164,7 +164,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#1A1A2E] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#1C1C1C] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">

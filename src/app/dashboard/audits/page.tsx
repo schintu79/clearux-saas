@@ -235,7 +235,7 @@ export default function AuditsPage() {
           <h1 className="text-lg font-semibold text-text">All Audits</h1>
           <p className="text-muted text-xs mt-0.5">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110">
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -252,7 +252,7 @@ export default function AuditsPage() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1A1A2E] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110">
+          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#1C1C1C] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110">
             <Sparkles size={13} /> Start Audit
           </Link>
         </div>

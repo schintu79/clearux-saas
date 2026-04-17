@@ -102,7 +102,7 @@ export default function AdminManagementPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#1A1A2E] rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#1C1C1C] rounded-lg transition-all hover:brightness-110"
         >
           <UserPlus size={15} />
           Add Admin
@@ -140,7 +140,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1A1A2E] bg-brand flex-shrink-0"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1C1C1C] bg-brand flex-shrink-0"
                         >
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
@@ -245,7 +245,7 @@ export default function AdminManagementPage() {
               <button
                 onClick={handleAddAdmin}
                 disabled={submitting || !addEmail.trim()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#1A1A2E] transition-all disabled:opacity-40 hover:brightness-110"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#1C1C1C] transition-all disabled:opacity-40 hover:brightness-110"
               >
                 {submitting ? 'Adding...' : 'Add Admin'}
               </button>

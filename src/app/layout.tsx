@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DM_Sans, Caveat } from 'next/font/google'
+import { DM_Sans, Caveat, Syne } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -12,10 +12,10 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const dmSansHeading = DM_Sans({
+const syne = Syne({
   subsets: ['latin'],
   variable: '--font-heading',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 
@@ -90,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${dmSansHeading.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${syne.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script

@@ -78,7 +78,7 @@ function OnboardingBanner() {
           { step: '3', title: 'Get your report', desc: 'PDF, Word, and dashboard', icon: FileSearch },
         ].map((s) => (
           <div key={s.step} className="flex items-start gap-3 p-3 rounded-lg bg-card/80 dark:bg-white/[0.04] border border-border/20 dark:border-white/[0.04]">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1A1A2E] bg-brand">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#1C1C1C] bg-brand">
               {s.step}
             </span>
             <div>
@@ -290,7 +290,7 @@ function DashboardInner() {
 
       {/* ── New Audit CTA — full width, homepage style ── */}
       <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1A1A2E] font-heading font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#1C1C1C] font-heading font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
           <Sparkles size={18} />
           Run a New Audit
           <ArrowRight size={18} />

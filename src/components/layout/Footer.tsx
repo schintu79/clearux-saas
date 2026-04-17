@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#1A1A2E] py-14 px-4 sm:px-6 lg:px-8">
+    <footer role="contentinfo" aria-label="Site footer" className="border-t border-border bg-[#1C1C1C] py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Re-engagement CTA banner */}
@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
             </div>
             <Link
               href="/register"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold bg-white text-[#1A1A2E] px-6 py-3 rounded-lg transition-all hover:bg-white/90 hover:-translate-y-0.5 flex-shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold bg-white text-[#1C1C1C] px-6 py-3 rounded-lg transition-all hover:bg-white/90 hover:-translate-y-0.5 flex-shrink-0"
             >
               Start Free Audit
               <ArrowRight size={15} />

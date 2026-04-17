@@ -10,9 +10,10 @@
 /* ── Light palette (default) — Warm & sophisticated ── */
 :root {
   /* Brand accent — dark charcoal for CTAs */
-  --brand:       #1A1A2E;
-  --brand-hover: #2D2D44;
+  --brand:       #1C1C1C;
+  --brand-hover: #333333;
   --brand-light: #F0EDE6;
+  --hero-bg:     #F3F0FA;
 
   /* Status/semantic colors — muted, sophisticated */
   --color-success:  #2D7A4F;
@@ -28,24 +29,24 @@
   --color-trust:       #2E6B9E;
 
   /* Primary accent — maps to brand charcoal */
-  --blue:        #1A1A2E;
-  --blue-dk:     #0F0F1E;
+  --blue:        #1C1C1C;
+  --blue-dk:     #111111;
   --blue-lt:     #F5F0E8;
-  --accent:      #1A1A2E;
-  --accent-dk:   #0F0F1E;
+  --accent:      #1C1C1C;
+  --accent-dk:   #111111;
   --accent-lt:   #F5F0E8;
 
   /* Brand gradient — replaced with solid dark or subtle warm gradient */
-  --gradient-brand: #1A1A2E;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(26,26,46,.02) 0%, rgba(107,91,149,.02) 50%, rgba(45,122,79,.02) 100%);
-  --gradient-brand-text: #1A1A2E;
+  --gradient-brand: #1C1C1C;
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(28,28,28,.02) 0%, rgba(107,91,149,.02) 50%, rgba(45,122,79,.02) 100%);
+  --gradient-brand-text: #1C1C1C;
 
   /* Neutral palette — Warm cream base */
-  --navy:        #1A1A2E;
+  --navy:        #1C1C1C;
   --off:         #FFFFFF;
   --muted:       #7A7A8E;
   --border:      #E2DDD5;
-  --text:        #1A1A2E;
+  --text:        #1C1C1C;
   --surface:     #F5F0E8;
   --surface-alt: #EDE8DF;
   --card:        #FFFFFF;
@@ -53,18 +54,19 @@
   --input-bg:    #FFFFFF;
   --placeholder: #A8A8B5;
   --sidebar:     #FFFFFF;
-  --sidebar-text:#1A1A2E;
+  --sidebar-text:#1C1C1C;
 
   /* Spacing */
   --section-gap: 6rem;
   --section-gap-lg: 8rem;
 }
 
-/* ── Dark palette ─────────────────────────────────────────── */
+/* ── Dark palette — neutral charcoal ─────────────────────── */
 .dark {
   --brand:       #E8E4DC;
   --brand-hover: #D4D0C8;
-  --brand-light: #2A2A3E;
+  --brand-light: #2A2A2A;
+  --hero-bg:     #222222;
 
   --color-success:  #5CB87A;
   --color-warning:  #D4A84B;
@@ -79,27 +81,27 @@
 
   --blue:        #E8E4DC;
   --blue-dk:     #F0ECE4;
-  --blue-lt:     #1E1E30;
+  --blue-lt:     #1E1E1E;
   --accent:      #E8E4DC;
   --accent-dk:   #F0ECE4;
-  --accent-lt:   #1E1E30;
+  --accent-lt:   #1E1E1E;
 
   --gradient-brand: #E8E4DC;
   --gradient-brand-subtle: linear-gradient(135deg, rgba(232,228,220,.03) 0%, rgba(155,143,191,.03) 50%, rgba(92,184,122,.03) 100%);
   --gradient-brand-text: #E8E4DC;
 
   --navy:        #E8E4DC;
-  --off:         #141422;
-  --muted:       #8B8B9E;
-  --border:      #2E2E42;
+  --off:         #161616;
+  --muted:       #8B8B8B;
+  --border:      #333333;
   --text:        #E8E4DC;
-  --surface:     #1A1A2E;
-  --surface-alt: #222236;
-  --card:        #222236;
-  --card-hover:  #2A2A40;
-  --input-bg:    #222236;
-  --placeholder: #5A5A6E;
-  --sidebar:     #1A1A2E;
+  --surface:     #1C1C1C;
+  --surface-alt: #262626;
+  --card:        #262626;
+  --card-hover:  #2E2E2E;
+  --input-bg:    #262626;
+  --placeholder: #5A5A5A;
+  --sidebar:     #1C1C1C;
   --sidebar-text:#E8E4DC;
 }
 
@@ -271,7 +273,7 @@
 
 .section-dark {
   position: relative;
-  background: #1A1A2E;
+  background: #1C1C1C;
   overflow: hidden;
 }
 .section-dark::before {
@@ -301,15 +303,15 @@
 /* Force dark palette on any section */
 .dark-forced {
   --text:        #E8E4DC;
-  --muted:       #8B8B9E;
-  --border:      #2E2E42;
-  --card:        #222236;
-  --card-hover:  #2A2A40;
-  --off:         #141422;
-  --surface:     #1A1A2E;
-  --surface-alt: #222236;
-  --input-bg:    #222236;
-  --placeholder: #5A5A6E;
+  --muted:       #8B8B8B;
+  --border:      #333333;
+  --card:        #262626;
+  --card-hover:  #2E2E2E;
+  --off:         #161616;
+  --surface:     #1C1C1C;
+  --surface-alt: #262626;
+  --input-bg:    #262626;
+  --placeholder: #5A5A5A;
   --accent:      #E8E4DC;
   --accent-dk:   #F0ECE4;
   --gradient-brand-text: #E8E4DC;
@@ -478,7 +480,7 @@ article, .prose {
 }
 
 .dark .btn-primary {
-  color: #1A1A2E;
+  color: #1C1C1C;
 }
 
 .btn-primary:hover:not(:disabled) {

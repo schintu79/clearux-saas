@@ -103,7 +103,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <Lock size={40} className="text-muted mx-auto mb-4" />
             <h1 className="font-heading font-semibold text-2xl text-text mb-2">Link unavailable</h1>
             <p className="text-muted text-sm mb-6">{error || 'This shared audit link is invalid or has been revoked.'}</p>
-            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110">
+            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110">
               Go to ClearUX
             </Link>
           </div>
@@ -275,7 +275,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               <div className="text-center mt-10 mb-6 px-4">
                 <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
                 <p className="text-muted text-xs mb-5">64 checkpoints. 16 categories. Results in minutes. First audit free.</p>
-                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1A1A2E] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5">
+                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#1C1C1C] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5">
                   <Sparkles size={16} />
                   Get Your Free Audit
                 </Link>
