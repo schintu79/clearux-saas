@@ -501,7 +501,7 @@ export default function Home() {
             aria-label="Scroll to features"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/scribble-arrow.svg" alt="" width={320} height={480} className="animate-float" style={{ filter: 'brightness(0) invert(1) sepia(1) saturate(50) hue-rotate(30deg) brightness(1.5)' }} />
+            <img src="/scribble-arrow.svg" alt="" width={133} height={200} className="animate-float" style={{ filter: 'brightness(0) invert(1) sepia(1) saturate(50) hue-rotate(30deg) brightness(1.5)' }} />
           </button>
 
         </div>

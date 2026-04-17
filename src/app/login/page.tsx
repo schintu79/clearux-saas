@@ -136,7 +136,7 @@ export default function LoginPage() {
     <div className="w-full max-w-[380px]">
       {/* Brand wordmark — mobile + desktop form */}
       <Link href="/" className="inline-block mb-6 lg:hidden">
-        <Logo height={22} variant="dark" />
+        <Logo height={44} variant="dark" />
       </Link>
 
       <div className="mb-6">
@@ -314,7 +314,7 @@ export default function LoginPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <Logo height={28} variant="light" />
+                  <Logo height={56} variant="light" />
                 </Link>
               </div>
 
