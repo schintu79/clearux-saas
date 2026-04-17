@@ -27,7 +27,7 @@ const Logo: React.FC<LogoProps> = ({ className = '', height = 22, variant = 'dar
     <Image
       src="/logo.svg"
       alt="ClearUX"
-      width={Math.round(height * (710 / 105))}
+      width={Math.round(height * (792 / 210))}
       height={height}
       className={className}
       style={filterStyle}
