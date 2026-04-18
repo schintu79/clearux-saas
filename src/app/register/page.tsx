@@ -8,7 +8,6 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
-import Logo from '@/components/ui/Logo'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -184,7 +183,7 @@ export default function RegisterPage() {
     <div className="w-full max-w-[380px]">
       {/* Brand wordmark — mobile + desktop form */}
       <Link href="/" className="inline-block mb-6 lg:hidden">
-        <Logo height={44} variant="dark" />
+        <span className="font-heading text-2xl font-bold tracking-tight text-text">ClearUX</span>
       </Link>
 
       <div className="mb-6">
@@ -446,7 +445,7 @@ export default function RegisterPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <Logo height={56} variant="light" />
+                  <span className="font-heading text-3xl font-bold tracking-tight text-white">ClearUX</span>
                 </Link>
               </div>
 

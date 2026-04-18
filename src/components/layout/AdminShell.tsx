@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
-import Logo from '@/components/ui/Logo';
+
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface AdminShellProps {
@@ -106,7 +106,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
-            <Logo height={36} variant="dark" />
+            <span className="font-heading text-lg font-bold tracking-tight text-text">ClearUX</span>
           </Link>
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
