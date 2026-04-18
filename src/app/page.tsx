@@ -468,7 +468,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-5 min-h-[60px] text-lg bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base sm:px-10 sm:py-5 sm:min-h-[60px] sm:text-lg bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
               >
                 {user ? 'Run My Audit' : 'Start Free Audit'}
                 <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
@@ -893,7 +893,7 @@ export default function Home() {
 
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
             >
               Start free audit
               <ArrowRight size={16} />
@@ -925,7 +925,7 @@ export default function Home() {
                 </div>
                 <Link
                   href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#111] text-sm font-semibold px-6 py-3 min-h-[48px] rounded-lg transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -1071,7 +1071,7 @@ export default function Home() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-sm font-semibold px-8 py-3.5 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
             >
               Start your free audit
               <ArrowRight size={16} />
@@ -1120,7 +1120,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-[#111111] text-[#B9FF66] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#222222] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] text-[15px] sm:px-8 sm:py-4 sm:text-base bg-[#111111] text-[#B9FF66] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#222222] flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Get Your Free UX Audit'}
                 <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />

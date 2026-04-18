@@ -71,7 +71,7 @@ export default function PricingPage() {
                 </div>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-sm font-semibold px-6 py-3 rounded-lg transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
