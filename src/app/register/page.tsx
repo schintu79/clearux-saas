@@ -181,11 +181,6 @@ export default function RegisterPage() {
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
-      {/* Brand wordmark — mobile + desktop form */}
-      <Link href="/" className="inline-block mb-6 lg:hidden">
-        <span className="font-heading text-2xl font-bold tracking-tight text-text">ClearUX</span>
-      </Link>
-
       <div className="mb-6">
         <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
           Start Your Free UX Audit

@@ -815,43 +815,59 @@ export default function Home() {
       <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-          {/* Left — Comparison visual */}
+          {/* Left — Comparison table */}
           <div className="hidden lg:block">
-            <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Gauge size={18} className="text-text" /></div>
-                <div>
-                  <p className="text-sm font-semibold text-text">Coverage Comparison</p>
-                  <p className="text-xs text-muted">What other tools miss</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {[
-                  { label: 'Ethical UX & dark patterns', others: false, clearux: true },
-                  { label: 'Cognitive accessibility', others: false, clearux: true },
-                  { label: 'AI agent readiness', others: false, clearux: true },
-                  { label: 'Conversion psychology', others: false, clearux: true },
-                  { label: 'WCAG accessibility', others: true, clearux: true },
-                  { label: 'Performance metrics', others: true, clearux: true },
-                ].map((row, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xs text-text flex-1">{row.label}</span>
-                    <div className="w-20 flex justify-center">
-                      {row.others
-                        ? <CheckCircle size={14} className="text-muted/40" />
-                        : <span className="w-3.5 h-[2px] rounded bg-border" />
-                      }
-                    </div>
-                    <div className="w-20 flex justify-center">
-                      <CheckCircle size={14} className="text-emerald-500" />
-                    </div>
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] overflow-hidden" style={{ background: 'linear-gradient(160deg, #f8faf5 0%, #f3f4f0 50%, #f0f2ed 100%)' }}>
+              <div className="dark:hidden absolute inset-0" />
+              <div className="relative dark:bg-card dark:rounded-2xl">
+                {/* Header */}
+                <div className="px-8 pt-8 pb-6">
+                  <div className="flex items-center gap-3 mb-1">
+                    <Gauge size={20} className="text-text" />
+                    <h3 className="text-lg font-semibold text-text font-heading">Coverage Comparison</h3>
                   </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-3 mt-2 pt-4 border-t border-border/50">
-                <span className="text-xs text-muted flex-1" />
-                <span className="w-20 text-center text-[10px] font-semibold text-muted uppercase tracking-wider">Others</span>
-                <span className="w-20 text-center text-[10px] font-semibold text-[#B9FF66] uppercase tracking-wider">ClearUX</span>
+                  <p className="text-sm text-muted ml-8">What other tools miss</p>
+                </div>
+
+                {/* Table */}
+                <div className="px-8 pb-8">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/40 dark:border-white/[0.06]">
+                        <th className="text-left pb-4 text-sm font-semibold text-text">Capability</th>
+                        <th className="pb-4 text-center w-28">
+                          <span className="text-xs font-semibold text-muted uppercase tracking-wider">Others</span>
+                        </th>
+                        <th className="pb-4 text-center w-28">
+                          <span className="text-xs font-bold text-[#4a7a20] dark:text-[#B9FF66] uppercase tracking-wider">ClearUX</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'Ethical UX & dark patterns', others: false, clearux: true },
+                        { label: 'Cognitive accessibility', others: false, clearux: true },
+                        { label: 'AI agent readiness', others: false, clearux: true },
+                        { label: 'Conversion psychology', others: false, clearux: true },
+                        { label: 'WCAG accessibility', others: true, clearux: true },
+                        { label: 'Performance metrics', others: true, clearux: true },
+                      ].map((row, i) => (
+                        <tr key={i} className="border-b border-border/20 dark:border-white/[0.04] last:border-0">
+                          <td className="py-4 text-sm text-text">{row.label}</td>
+                          <td className="py-4 text-center">
+                            {row.others
+                              ? <CheckCircle size={18} className="text-muted/30 mx-auto" />
+                              : <span className="inline-block w-5 h-[2px] rounded bg-border/60" />
+                            }
+                          </td>
+                          <td className="py-4 text-center">
+                            <CheckCircle size={18} className="text-emerald-500 mx-auto" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
