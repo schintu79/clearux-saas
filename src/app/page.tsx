@@ -433,17 +433,56 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden">
 
-        {/* Animated grid background */}
+        {/* Animated kaleidoscope background — pillar colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Emerald — Future Readiness */}
+          <div className="absolute w-[500px] h-[500px] rounded-full opacity-[0.07] blur-[120px]" style={{
+            background: 'radial-gradient(circle, #22C55E 0%, transparent 70%)',
+            top: '10%', left: '-5%',
+            animation: 'kaleidoFloat1 18s ease-in-out infinite',
+          }} />
+          {/* Violet — Foundation */}
+          <div className="absolute w-[450px] h-[450px] rounded-full opacity-[0.06] blur-[100px]" style={{
+            background: 'radial-gradient(circle, #6366F1 0%, transparent 70%)',
+            top: '60%', right: '-8%',
+            animation: 'kaleidoFloat2 22s ease-in-out infinite',
+          }} />
+          {/* Pink — Human Experience */}
+          <div className="absolute w-[400px] h-[400px] rounded-full opacity-[0.06] blur-[110px]" style={{
+            background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)',
+            bottom: '5%', left: '20%',
+            animation: 'kaleidoFloat3 20s ease-in-out infinite',
+          }} />
+          {/* Amber — Inclusive Design */}
+          <div className="absolute w-[350px] h-[350px] rounded-full opacity-[0.05] blur-[100px]" style={{
+            background: 'radial-gradient(circle, #F59E0B 0%, transparent 70%)',
+            top: '15%', right: '15%',
+            animation: 'kaleidoFloat4 16s ease-in-out infinite',
+          }} />
+          {/* Lime accent glow */}
+          <div className="absolute w-[300px] h-[300px] rounded-full opacity-[0.04] blur-[80px]" style={{
+            background: 'radial-gradient(circle, #B9FF66 0%, transparent 70%)',
+            top: '40%', left: '40%',
+            animation: 'kaleidoFloat1 24s ease-in-out infinite reverse',
+          }} />
+          {/* Subtle grid overlay */}
           <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(185,255,102,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.04) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(185,255,102,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.03) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
             animation: 'gridMove 20s linear infinite',
           }} />
+          {/* Edge vignette */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#111111] via-transparent to-[#111111]" />
         </div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20">
+
+          {/* Label badge */}
+          <div className="animate-fade-up delay-50 mb-6">
+            <span className="inline-flex items-center gap-2 bg-[#B9FF66] text-[#111111] text-xs sm:text-sm font-semibold px-4 py-2 rounded-full">
+              Professional AI-powered UX audit in under 10 min
+            </span>
+          </div>
 
           {/* Primary headline — problem-outcome first, then price */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-8 text-white" style={{ lineHeight: '1.12' }}>
