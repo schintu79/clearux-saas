@@ -236,7 +236,7 @@ function DashboardInner() {
     <div className="max-w-3xl mx-auto py-2">
       {/* Header */}
       <div className="mb-5">
-        <h1 className="text-lg font-semibold text-text">Hey {name}</h1>
+        <h1 className="font-heading text-lg font-semibold text-text">Hey {name}</h1>
         <p className="text-muted text-xs mt-0.5">
           {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}
         </p>
@@ -290,7 +290,7 @@ function DashboardInner() {
 
       {/* ── New Audit CTA — full width, homepage style ── */}
       <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-base py-4 px-8 rounded-lg hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
+        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-[15px] py-3 px-6 rounded-xl hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
           <Sparkles size={18} />
           Run a New Audit
           <ArrowRight size={18} />

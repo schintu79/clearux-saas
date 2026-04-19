@@ -593,15 +593,17 @@ export default function Home() {
                   })}
                 </div>
               </div>
-              {/* Visual mock — clean card */}
-              <div className="rounded-xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><ListChecks size={13} className="text-brand" /></div>
-                  <span className="text-xs font-semibold text-text">Issue Tracker</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
-                  <span className="ml-auto text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">67% resolved</span>
+              {/* Visual mock */}
+              <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><ListChecks size={18} className="text-text" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Issue Tracker</p>
+                    <p className="text-xs text-muted">acme.com</p>
+                  </div>
+                  <span className="ml-auto text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">67% resolved</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {[
                     { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-500 bg-emerald-500/8 dark:text-emerald-500' },
                     { title: 'Low colour contrast on CTA', severity: 'high', status: 'In Progress', statusColor: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
@@ -609,10 +611,10 @@ export default function Home() {
                     { title: 'Form lacks error messaging', severity: 'high', status: 'Open', statusColor: 'text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400' },
                     { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-500 bg-emerald-500/8 dark:text-emerald-500' },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-off dark:bg-white/[0.03]">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
-                      <span className="text-xs text-text flex-1 truncate">{item.title}</span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${item.statusColor}`}>{item.status}</span>
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-off/50 dark:bg-white/[0.03]">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
+                      <span className="text-sm text-text flex-1 truncate">{item.title}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 ${item.statusColor}`}>{item.status}</span>
                     </div>
                   ))}
                 </div>
@@ -621,30 +623,31 @@ export default function Home() {
 
             {/* ── Feature 2: Re-audit & Score Comparison ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <div className="order-2 md:order-1 rounded-xl border border-border bg-card p-5" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center"><TrendingUp size={13} className="text-brand" /></div>
-                  <span className="text-xs font-semibold text-text">Score Trend</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
-                  <span className="ml-auto text-[10px] text-muted">acme.com</span>
+              <div className="order-2 md:order-1 rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><TrendingUp size={18} className="text-text" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-text">Score Trend</p>
+                    <p className="text-xs text-muted">acme.com</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {[
                     { date: 'Jan 15', score: 42, label: 'Baseline' },
                     { date: 'Feb 28', score: 61, label: 'After sprint 1' },
                     { date: 'Apr 10', score: 78, label: 'Current' },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <span className="text-[11px] text-muted w-12 flex-shrink-0">{item.date}</span>
-                      <div className="flex-1 h-2.5 rounded-full bg-off dark:bg-white/[0.06] overflow-hidden">
+                      <span className="text-xs text-muted w-14 flex-shrink-0">{item.date}</span>
+                      <div className="flex-1 h-2.5 rounded-full bg-off/50 dark:bg-white/[0.06] overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${item.score >= 70 ? 'bg-emerald-500' : item.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${item.score}%` }} />
                       </div>
                       <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-emerald-500' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'}`}>{item.score}</span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                  <span className="text-xs text-muted">Improvement</span>
+                <div className="mt-6 pt-5 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-sm text-muted">Improvement</span>
                   <span className="text-sm font-bold text-emerald-500 flex items-center gap-1">
                     <ArrowUp size={14} />
                     +36 points
