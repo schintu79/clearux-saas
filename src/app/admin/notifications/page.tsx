@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Plus, Trash2, Eye, EyeOff, Pin, PinOff, Send } from 'lucide-react';
+import { Bell, Plus, Trash2, Eye, EyeOff, Pin, PinOff, Send, Info, CheckCircle2, AlertTriangle, Megaphone, type LucideIcon } from 'lucide-react';
+
+const ICON_COMPONENT_MAP: Record<string, LucideIcon> = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: AlertTriangle,
+  announcement: Megaphone,
+};
+
+function getNotificationIcon(iconType: string): LucideIcon {
+  return ICON_COMPONENT_MAP[iconType] || Bell;
+}
 
 const ICON_OPTIONS = [
   { value: 'info', label: 'Info' },
@@ -202,7 +214,7 @@ export default function AdminNotificationsPage() {
             <div>
               <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-2">Preview</p>
               <div className={`p-3.5 rounded-xl border flex items-start gap-3 ${colorMap[form.color] || colorMap.blue}`}>
-                <Bell size={15} className={`flex-shrink-0 mt-0.5 ${iconColorMap[form.color] || iconColorMap.blue}`} />
+                {(() => { const IconComp = getNotificationIcon(form.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${iconColorMap[form.color] || iconColorMap.blue}`} />; })()}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-text">{form.title || 'Notification title'}</p>
                   <p className="text-[11px] text-muted mt-0.5">{form.message || 'Notification message...'}</p>
@@ -246,7 +258,7 @@ export default function AdminNotificationsPage() {
           {notifications.map((n) => (
             <div key={n.id} className={`rounded-xl border p-4 ${n.is_active ? colorMap[n.color] || colorMap.blue : 'border-border/30 bg-off/30 opacity-50'}`}>
               <div className="flex items-start gap-3">
-                <Bell size={15} className={`flex-shrink-0 mt-0.5 ${n.is_active ? iconColorMap[n.color] || iconColorMap.blue : 'text-muted'}`} />
+                {(() => { const IconComp = getNotificationIcon(n.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${n.is_active ? iconColorMap[n.color] || iconColorMap.blue : 'text-muted'}`} />; })()}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <p className="text-xs font-bold text-text">{n.title}</p>
