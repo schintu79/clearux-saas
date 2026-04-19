@@ -433,44 +433,55 @@ export default function Home() {
           ═══════════════════════════════════════════════════════ */}
       <section className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden">
 
-        {/* Animated kaleidoscope background — pillar colors */}
+        {/* Aurora background — subtle color bands + grid + scan lines */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Emerald — Future Readiness */}
-          <div className="absolute w-[500px] h-[500px] rounded-full opacity-[0.07] blur-[120px]" style={{
-            background: 'radial-gradient(circle, #22C55E 0%, transparent 70%)',
-            top: '10%', left: '-5%',
-            animation: 'kaleidoFloat1 18s ease-in-out infinite',
+          {/* Aurora band 1 — emerald/lime sweep across top */}
+          <div className="absolute w-[120%] h-[200px] -left-[10%] top-[15%] blur-[100px] rounded-full" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #22C55E 20%, #B9FF66 40%, #22C55E 60%, transparent 100%)',
+            animation: 'auroraDrift 20s ease-in-out infinite',
           }} />
-          {/* Violet — Foundation */}
-          <div className="absolute w-[450px] h-[450px] rounded-full opacity-[0.06] blur-[100px]" style={{
-            background: 'radial-gradient(circle, #6366F1 0%, transparent 70%)',
-            top: '60%', right: '-8%',
-            animation: 'kaleidoFloat2 22s ease-in-out infinite',
+          {/* Aurora band 2 — violet/indigo band center */}
+          <div className="absolute w-[110%] h-[180px] -left-[5%] top-[40%] blur-[90px] rounded-full" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #6366F1 25%, #818CF8 50%, #6366F1 75%, transparent 100%)',
+            animation: 'auroraDrift2 25s ease-in-out infinite',
           }} />
-          {/* Pink — Human Experience */}
-          <div className="absolute w-[400px] h-[400px] rounded-full opacity-[0.06] blur-[110px]" style={{
-            background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)',
-            bottom: '5%', left: '20%',
-            animation: 'kaleidoFloat3 20s ease-in-out infinite',
+          {/* Aurora band 3 — amber/warm glow lower */}
+          <div className="absolute w-[100%] h-[160px] left-0 top-[60%] blur-[80px] rounded-full" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #F59E0B 30%, #EF4444 50%, #EC4899 70%, transparent 100%)',
+            animation: 'auroraDrift 22s ease-in-out infinite reverse',
           }} />
-          {/* Amber — Inclusive Design */}
-          <div className="absolute w-[350px] h-[350px] rounded-full opacity-[0.05] blur-[100px]" style={{
-            background: 'radial-gradient(circle, #F59E0B 0%, transparent 70%)',
-            top: '15%', right: '15%',
-            animation: 'kaleidoFloat4 16s ease-in-out infinite',
-          }} />
-          {/* Lime accent glow */}
-          <div className="absolute w-[300px] h-[300px] rounded-full opacity-[0.04] blur-[80px]" style={{
-            background: 'radial-gradient(circle, #B9FF66 0%, transparent 70%)',
-            top: '40%', left: '40%',
-            animation: 'kaleidoFloat1 24s ease-in-out infinite reverse',
-          }} />
-          {/* Subtle grid overlay */}
+          {/* Global pulse overlay for breathing */}
           <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(185,255,102,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.03) 1px, transparent 1px)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% 40%, rgba(185,255,102,0.02) 0%, transparent 70%)',
+            animation: 'auroraPulse 8s ease-in-out infinite',
+          }} />
+
+          {/* Grid overlay */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(185,255,102,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.04) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
             animation: 'gridMove 20s linear infinite',
           }} />
+
+          {/* Moving scan lines — horizontal */}
+          <div className="absolute left-0 w-full h-[1px]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(185,255,102,0.15) 20%, rgba(185,255,102,0.25) 50%, rgba(185,255,102,0.15) 80%, transparent 100%)',
+            animation: 'scanLineH 8s linear infinite',
+          }} />
+          <div className="absolute left-0 w-full h-[1px]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.12) 30%, rgba(99,102,241,0.2) 50%, rgba(99,102,241,0.12) 70%, transparent 100%)',
+            animation: 'scanLineH 12s linear infinite 4s',
+          }} />
+          {/* Moving scan lines — vertical */}
+          <div className="absolute top-0 h-full w-[1px]" style={{
+            background: 'linear-gradient(transparent 0%, rgba(185,255,102,0.15) 20%, rgba(185,255,102,0.25) 50%, rgba(185,255,102,0.15) 80%, transparent 100%)',
+            animation: 'scanLineV 10s linear infinite 2s',
+          }} />
+          <div className="absolute top-0 h-full w-[1px]" style={{
+            background: 'linear-gradient(transparent 0%, rgba(236,72,153,0.1) 30%, rgba(236,72,153,0.18) 50%, rgba(236,72,153,0.1) 70%, transparent 100%)',
+            animation: 'scanLineV 14s linear infinite 6s',
+          }} />
+
           {/* Edge vignette */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#111111] via-transparent to-[#111111]" />
         </div>

@@ -629,32 +629,36 @@ article, .prose {
   to   { transform: translate(60px, 60px); }
 }
 
-@keyframes kaleidoFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(80px, -60px) scale(1.15); }
-  50% { transform: translate(-40px, 80px) scale(0.9); }
-  75% { transform: translate(60px, 40px) scale(1.1); }
+@keyframes auroraDrift {
+  0%, 100% { transform: translateX(0) scaleX(1) scaleY(1); opacity: 0.035; }
+  25% { transform: translateX(40px) scaleX(1.1) scaleY(0.9); opacity: 0.055; }
+  50% { transform: translateX(-30px) scaleX(0.95) scaleY(1.1); opacity: 0.04; }
+  75% { transform: translateX(20px) scaleX(1.05) scaleY(0.95); opacity: 0.05; }
 }
 
-@keyframes kaleidoFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-70px, 50px) scale(1.1); }
-  50% { transform: translate(50px, -70px) scale(0.85); }
-  75% { transform: translate(-30px, -40px) scale(1.05); }
+@keyframes auroraDrift2 {
+  0%, 100% { transform: translateX(0) scaleX(1) rotate(0deg); opacity: 0.03; }
+  33% { transform: translateX(-50px) scaleX(1.15) rotate(2deg); opacity: 0.05; }
+  66% { transform: translateX(30px) scaleX(0.9) rotate(-1deg); opacity: 0.035; }
 }
 
-@keyframes kaleidoFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(60px, -80px) scale(1.2); }
-  66% { transform: translate(-80px, 30px) scale(0.9); }
+@keyframes auroraPulse {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
 }
 
-@keyframes kaleidoFloat4 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  20% { transform: translate(-50px, -60px) scale(1.1); }
-  40% { transform: translate(70px, 20px) scale(0.95); }
-  60% { transform: translate(-20px, 70px) scale(1.15); }
-  80% { transform: translate(40px, -30px) scale(0.9); }
+@keyframes scanLineH {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes scanLineV {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100vw); opacity: 0; }
 }
 
 @keyframes gridSweepX {
