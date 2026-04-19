@@ -439,21 +439,21 @@ export default function Home() {
           <div className="absolute w-[120%] h-[250px] -left-[10%] top-[12%]" style={{
             background: 'linear-gradient(90deg, transparent 0%, #22C55E 15%, #B9FF66 35%, #22C55E 55%, transparent 80%)',
             filter: 'blur(70px)',
-            opacity: 0.15,
+            opacity: 0.22,
             animation: 'auroraDrift 20s ease-in-out infinite',
           }} />
           {/* Aurora band 2 — violet/indigo band center */}
           <div className="absolute w-[110%] h-[220px] -left-[5%] top-[38%]" style={{
             background: 'linear-gradient(90deg, transparent 0%, #6366F1 20%, #818CF8 45%, #6366F1 70%, transparent 100%)',
             filter: 'blur(65px)',
-            opacity: 0.12,
+            opacity: 0.18,
             animation: 'auroraDrift2 25s ease-in-out infinite',
           }} />
           {/* Aurora band 3 — amber/pink/warm glow lower */}
           <div className="absolute w-[100%] h-[200px] left-0 top-[62%]" style={{
             background: 'linear-gradient(90deg, transparent 0%, #F59E0B 25%, #EF4444 45%, #EC4899 65%, transparent 100%)',
             filter: 'blur(70px)',
-            opacity: 0.12,
+            opacity: 0.18,
             animation: 'auroraDrift 22s ease-in-out infinite reverse',
           }} />
           {/* Global pulse overlay for breathing */}
