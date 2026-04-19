@@ -436,23 +436,29 @@ export default function Home() {
         {/* Aurora background — subtle color bands + grid + scan lines */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Aurora band 1 — emerald/lime sweep across top */}
-          <div className="absolute w-[120%] h-[200px] -left-[10%] top-[15%] blur-[100px] rounded-full" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #22C55E 20%, #B9FF66 40%, #22C55E 60%, transparent 100%)',
+          <div className="absolute w-[120%] h-[250px] -left-[10%] top-[12%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #22C55E 15%, #B9FF66 35%, #22C55E 55%, transparent 80%)',
+            filter: 'blur(70px)',
+            opacity: 0.12,
             animation: 'auroraDrift 20s ease-in-out infinite',
           }} />
           {/* Aurora band 2 — violet/indigo band center */}
-          <div className="absolute w-[110%] h-[180px] -left-[5%] top-[40%] blur-[90px] rounded-full" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #6366F1 25%, #818CF8 50%, #6366F1 75%, transparent 100%)',
+          <div className="absolute w-[110%] h-[220px] -left-[5%] top-[38%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #6366F1 20%, #818CF8 45%, #6366F1 70%, transparent 100%)',
+            filter: 'blur(65px)',
+            opacity: 0.1,
             animation: 'auroraDrift2 25s ease-in-out infinite',
           }} />
-          {/* Aurora band 3 — amber/warm glow lower */}
-          <div className="absolute w-[100%] h-[160px] left-0 top-[60%] blur-[80px] rounded-full" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #F59E0B 30%, #EF4444 50%, #EC4899 70%, transparent 100%)',
+          {/* Aurora band 3 — amber/pink/warm glow lower */}
+          <div className="absolute w-[100%] h-[200px] left-0 top-[62%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #F59E0B 25%, #EF4444 45%, #EC4899 65%, transparent 100%)',
+            filter: 'blur(70px)',
+            opacity: 0.1,
             animation: 'auroraDrift 22s ease-in-out infinite reverse',
           }} />
           {/* Global pulse overlay for breathing */}
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse 80% 50% at 50% 40%, rgba(185,255,102,0.02) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 80% 50% at 50% 40%, rgba(185,255,102,0.04) 0%, transparent 70%)',
             animation: 'auroraPulse 8s ease-in-out infinite',
           }} />
 
