@@ -840,77 +840,54 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── Feature 2b: Two Audit Modes ── */}
-            <div className="text-center mb-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
-                <BarChart3 size={16} className="text-text" />
-                <span className="text-xs font-semibold text-text">Two Audit Modes</span>
-              </div>
-              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
-                Consistent results you can trust
-              </h3>
-              <p className="text-muted text-base leading-relaxed max-w-2xl mx-auto">
-                Re-audits verify your fixes — they don&apos;t invent new problems. When you&apos;re ready to go deeper, one click unlocks the next layer.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-              {/* Baseline Mode */}
-              <div className="rounded-xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <RefreshCw size={18} className="text-emerald-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-heading font-semibold text-lg text-text">Baseline Mode</h4>
-                    <span className="text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Default on re-audits</span>
-                  </div>
-                </div>
-                <p className="text-muted text-sm leading-relaxed mb-5">
-                  When you re-audit, ClearUX focuses on verifying your previous findings. Are they fixed? Still present? Dismissed? No new issues are introduced — your score improves predictably as you resolve each finding.
+            {/* ── Feature 2b: After re-audit — two paths ── */}
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-10">
+                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
+                  After every re-audit, you choose
+                </h3>
+                <p className="text-muted text-base leading-relaxed max-w-xl mx-auto">
+                  Fix what you found, or go deeper. Both options use the same credit.
                 </p>
-                <div className="space-y-2.5">
-                  {[
-                    'Checks status of every previous finding',
-                    'Score improves as fixes land',
-                    'No surprise new issues between runs',
-                    'Consistent, trustworthy results',
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-text">{item}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* Deep Mode */}
-              <div className="rounded-xl border border-border bg-card p-7 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-brand" />
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                    <Search size={18} className="text-brand" />
-                  </div>
-                  <div>
-                    <h4 className="font-heading font-semibold text-lg text-text">Deep Mode</h4>
-                    <span className="text-[11px] font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded-full">First audit &amp; Dig Deeper</span>
-                  </div>
-                </div>
-                <p className="text-muted text-sm leading-relaxed mb-5">
-                  Your first audit always runs in Deep mode — discovering every issue across all 64 checkpoints. Want to go beyond the baseline later? Hit &ldquo;Dig Deeper&rdquo; to uncover new issues that weren&apos;t in the original scope.
-                </p>
-                <div className="space-y-2.5">
-                  {[
-                    'Full discovery across 64 checkpoints',
-                    'Finds new issues beyond the baseline',
-                    'Triggered on first audit or on demand',
-                    'Expands your audit coverage over time',
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-brand flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-text">{item}</span>
+              {/* Two-path visual */}
+              <div className="relative">
+                {/* Connecting line */}
+                <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-[70%] bg-border" />
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Path A — Verify fixes */}
+                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-card p-6 sm:p-7 text-center">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                      <RefreshCw size={20} className="text-emerald-500" />
                     </div>
-                  ))}
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Default</span>
+                    <h4 className="font-heading font-semibold text-lg text-text mt-1 mb-3">Verify your fixes</h4>
+                    <p className="text-muted text-sm leading-relaxed mb-5">
+                      ClearUX checks every previous finding: fixed, still present, or dismissed. No new issues are introduced — your score improves predictably.
+                    </p>
+                    <div className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                      <TrendingUp size={15} />
+                      <span>Score goes up as you fix</span>
+                    </div>
+                  </div>
+
+                  {/* Path B — Dig deeper */}
+                  <div className="rounded-xl border border-border bg-card p-6 sm:p-7 text-center">
+                    <div className="w-12 h-12 rounded-full bg-text/5 flex items-center justify-center mx-auto mb-4">
+                      <Search size={20} className="text-text" />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted">On demand</span>
+                    <h4 className="font-heading font-semibold text-lg text-text mt-1 mb-3">Dig deeper</h4>
+                    <p className="text-muted text-sm leading-relaxed mb-5">
+                      Ready for a fresh look? A deep audit re-scans all 64 checkpoints and finds new issues that weren&apos;t in the original scope.
+                    </p>
+                    <div className="inline-flex items-center gap-2 text-sm font-medium text-text">
+                      <Layers size={15} />
+                      <span>Expands coverage over time</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
