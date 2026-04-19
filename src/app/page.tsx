@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { Brain, CheckCircle, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
+import { Brain, CheckCircle, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, Layers, Accessibility, Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, AlertTriangle, Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 /* Doodle components available but not used in current design */
@@ -354,25 +354,6 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
   );
 }
 
-/* ── Scroll-to-top button ───────────────────────────────── */
-function ScrollToTop() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 400);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  if (!show) return null;
-  return (
-    <button
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      aria-label="Back to top"
-      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-xl bg-[#B9FF66] text-[#111111] flex items-center justify-center transition-all hover:scale-105"
-    >
-      <ArrowUp size={18} />
-    </button>
-  );
-}
 
 export default function Home() {
   const router = useRouter();
@@ -1201,7 +1182,6 @@ export default function Home() {
 
       </main>
       <Footer />
-      <ScrollToTop />
     </div>
   );
 }

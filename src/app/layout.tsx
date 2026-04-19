@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
+import ScrollToTop from '@/components/ui/ScrollToTop'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -126,6 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider initialTheme={initialTheme}>
           <AuthProvider>
             {children}
+            <ScrollToTop />
             <CookieConsent />
           </AuthProvider>
         </ThemeProvider>
