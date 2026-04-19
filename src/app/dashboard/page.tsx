@@ -229,13 +229,24 @@ function DashboardInner() {
     ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(a.status)
   );
   const failedAudits = audits.filter(a => a.status === 'failed');
-  const completedCount = audits.filter(a => a.status === 'completed').length;
+  const completedAudits = audits.filter(a => a.status === 'completed');
+  const completedCount = completedAudits.length;
+  const latestCompleted = completedAudits[0] || null;
   const totalAudits = audits.length;
 
+  // Score trend data
+  const scoreTrendData = completedAudits
+    .filter(a => a.report?.overall_score != null)
+    .slice(0, 5)
+    .reverse();
+  const avgScore = scoreTrendData.length > 0
+    ? Math.round(scoreTrendData.reduce((s, a) => s + (a.report?.overall_score ?? 0), 0) / scoreTrendData.length)
+    : null;
+
   return (
-    <div className="max-w-3xl mx-auto py-2">
+    <div className="max-w-4xl mx-auto py-2">
       {/* Header */}
-      <div className="mb-5">
+      <div className="mb-6">
         <h1 className="font-heading text-lg font-semibold text-text">Hey {name}</h1>
         <p className="text-muted text-xs mt-0.5">
           {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}
@@ -256,53 +267,9 @@ function DashboardInner() {
       {/* Onboarding for new users */}
       {isNewUser && <OnboardingBanner />}
 
-      {/* ── Quick Stats row ── */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
-        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-brand/30 transition-colors">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
-            <FileSearch size={18} className="text-brand sm:hidden" />
-            <FileSearch size={20} className="text-brand hidden sm:block" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-lg sm:text-xl font-bold text-text leading-none">{completedCount}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">completed</p>
-          </div>
-        </Link>
-        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-[#22C55E]/30 transition-colors">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center flex-shrink-0">
-            <Coins size={18} className="text-[#22C55E] sm:hidden" />
-            <Coins size={20} className="text-[#22C55E] hidden sm:block" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-lg sm:text-xl font-bold text-text leading-none">{credits ?? '--'}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">credits</p>
-          </div>
-        </Link>
-        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-amber-400/30 transition-colors">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 relative">
-            <Bell size={18} className="text-amber-500 sm:hidden" />
-            <Bell size={20} className="text-amber-500 hidden sm:block" />
-            {pinnedNotification && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-card" />}
-          </div>
-          <div className="min-w-0">
-            <p className="text-lg sm:text-xl font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">new</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* ── New Audit CTA — full width, homepage style ── */}
-      <Link href="/dashboard/new-audit" className="block mb-5">
-        <div className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-[15px] py-3 px-6 rounded-xl hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.98] transition-all min-h-[48px]">
-          <Sparkles size={18} />
-          Run a New Audit
-          <ArrowRight size={18} />
-        </div>
-      </Link>
-
       {/* ── Pinned notification from admin ── */}
       {pinnedNotification && (
-        <div className={`mb-4 p-3.5 rounded-xl border flex items-start gap-3 ${
+        <div className={`mb-5 p-3.5 rounded-xl border flex items-start gap-3 ${
           pinnedNotification.color === 'green' ? 'border-green-200/40 bg-green-50/60 dark:bg-green-900/10 dark:border-green-800/20' :
           pinnedNotification.color === 'yellow' ? 'border-yellow-200/40 bg-yellow-50/60 dark:bg-yellow-900/10 dark:border-yellow-800/20' :
           pinnedNotification.color === 'red' ? 'border-red-200/40 bg-red-50/60 dark:bg-red-900/10 dark:border-red-800/20' :
@@ -324,7 +291,7 @@ function DashboardInner() {
             onClick={async () => {
               await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notification_id: pinnedNotification.id }) });
               setPinnedNotification(null);
-              window.dispatchEvent(new Event('focus')); // triggers sidebar to re-fetch unread count
+              window.dispatchEvent(new Event('focus'));
             }}
             className="p-1 rounded-md text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/[0.05] transition-colors flex-shrink-0"
             aria-label="Dismiss"
@@ -334,13 +301,6 @@ function DashboardInner() {
         </div>
       )}
 
-      {/* ── Notifications / Tips ── */}
-      {!isNewUser && (
-        <DismissableTip id="track">
-          <span className="font-semibold">Track your improvement</span> — fix the issues, then re-audit the same URL to compare your scores over time.
-        </DismissableTip>
-      )}
-
       {/* Error */}
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -348,10 +308,83 @@ function DashboardInner() {
         </div>
       )}
 
-      {/* ── In-Progress Audits ── */}
-      {inProgressAudits.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-xs font-semibold text-text mb-3">Processing</h2>
+      {/* ════════════════════════════════════════════════════════
+          SECTION 1: Quick Actions
+          ════════════════════════════════════════════════════════ */}
+      <section className="mb-8">
+        <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Quick actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link href="/dashboard/new-audit" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 hover:border-brand/30 transition-colors group">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center mb-3">
+              <Sparkles size={20} className="text-brand" />
+            </div>
+            <p className="text-sm font-semibold text-text mb-0.5">Run new audit</p>
+            <p className="text-xs text-muted leading-relaxed">Paste a URL and get results in minutes</p>
+          </Link>
+          <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 hover:border-brand/30 transition-colors group">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center mb-3">
+              <FileSearch size={20} className="text-brand" />
+            </div>
+            <p className="text-sm font-semibold text-text mb-0.5">View reports</p>
+            <p className="text-xs text-muted leading-relaxed">{completedCount} completed audit{completedCount !== 1 ? 's' : ''}</p>
+          </Link>
+          <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 hover:border-[#22C55E]/30 transition-colors group">
+            <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-3">
+              <Coins size={20} className="text-[#22C55E]" />
+            </div>
+            <p className="text-sm font-semibold text-text mb-0.5">Buy credits</p>
+            <p className="text-xs text-muted leading-relaxed">{credits ?? '--'} credit{credits !== 1 ? 's' : ''} remaining</p>
+          </Link>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════
+          SECTION 2: Your Latest Audit
+          ════════════════════════════════════════════════════════ */}
+      {latestCompleted && latestCompleted.report && (
+        <section className="mb-8">
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Your latest audit</h2>
+          {(() => {
+            const latestScore = latestCompleted.report!.overall_score ?? 0;
+            return (
+          <Link href={`/dashboard/audits/${latestCompleted.id}`}>
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 hover:border-brand/30 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                  latestScore >= 70 ? 'border-[#22C55E]/20 bg-[#22C55E]/5' :
+                  latestScore >= 40 ? 'border-amber-500/20 bg-amber-500/5' :
+                  'border-red-500/20 bg-red-500/5'
+                }`}>
+                  <span className={`font-heading text-2xl font-bold ${scoreColor(latestScore)}`}>
+                    {latestScore}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text truncate">{formatUrl(latestCompleted.product_url)}</p>
+                  <p className="text-xs text-muted mt-0.5">{formatDate(latestCompleted.created_at)} · {latestScore >= 70 ? 'Good' : latestScore >= 40 ? 'Needs work' : 'Poor'}</p>
+                  {latestCompleted.report.key_recommendation && (
+                    <p className="text-xs text-muted mt-1.5 leading-relaxed line-clamp-2">
+                      {latestCompleted.report.key_recommendation}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight size={16} className="text-muted flex-shrink-0" />
+              </div>
+            </div>
+          </Link>
+            );
+          })()}
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          SECTION 3: In Progress / Failed
+          ════════════════════════════════════════════════════════ */}
+      {(inProgressAudits.length > 0 || failedAudits.length > 0) && (
+        <section className="mb-8">
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
+            {inProgressAudits.length > 0 ? 'Processing' : 'Attention needed'}
+          </h2>
           <div className="space-y-2.5">
             {inProgressAudits.map((audit) => {
               const meta = statusMeta[audit.status] || statusMeta.payment_received;
@@ -378,15 +411,6 @@ function DashboardInner() {
                 </Link>
               );
             })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Failed Audits ── */}
-      {failedAudits.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-xs font-semibold text-text mb-3">Failed</h2>
-          <div className="space-y-2.5">
             {failedAudits.map((audit) => (
               <Link key={audit.id} href={`/dashboard/audits/${audit.id}`}>
                 <div className="bg-card border border-red-200/40 dark:border-red-800/20 rounded-xl px-4 py-3.5 hover:border-red-400/30 transition-colors flex items-center gap-3">
@@ -400,18 +424,85 @@ function DashboardInner() {
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── Empty state (only when no in-progress or failed) ── */}
-      {!isNewUser && inProgressAudits.length === 0 && failedAudits.length === 0 && (
+      {/* ════════════════════════════════════════════════════════
+          SECTION 4: Your Progress
+          ════════════════════════════════════════════════════════ */}
+      {completedCount > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Your progress</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={14} className="text-brand" />
+                <p className="text-xs font-semibold text-muted">Average score</p>
+              </div>
+              <p className={`font-heading text-3xl font-bold ${avgScore ? scoreColor(avgScore) : 'text-text'}`}>
+                {avgScore ?? '--'}
+              </p>
+              <p className="text-[11px] text-muted mt-1">across {completedCount} audit{completedCount !== 1 ? 's' : ''}</p>
+            </div>
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 size={14} className="text-[#22C55E]" />
+                <p className="text-xs font-semibold text-muted">Completed</p>
+              </div>
+              <p className="font-heading text-3xl font-bold text-text">{completedCount}</p>
+              <p className="text-[11px] text-muted mt-1">total audit{completedCount !== 1 ? 's' : ''} run</p>
+            </div>
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <RefreshCw size={14} className="text-amber-500" />
+                <p className="text-xs font-semibold text-muted">Re-audits</p>
+              </div>
+              <p className="font-heading text-3xl font-bold text-text">
+                {audits.filter(a => a.status === 'completed' && (a as any).is_reaudit).length}
+              </p>
+              <p className="text-[11px] text-muted mt-1">improvement checks</p>
+            </div>
+          </div>
+
+          {/* Score trend mini-chart */}
+          {scoreTrendData.length >= 2 && (
+            <div className="mt-3 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4">
+              <p className="text-xs font-semibold text-muted mb-3">Score trend</p>
+              <div className="flex items-end gap-1.5 h-16">
+                {scoreTrendData.map((a, i) => {
+                  const score = a.report?.overall_score ?? 0;
+                  return (
+                    <div key={a.id} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] font-bold text-text">{score}</span>
+                      <div
+                        className={`w-full rounded-t-md ${score >= 70 ? 'bg-[#22C55E]' : score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        style={{ height: `${Math.max(score * 0.5, 4)}px` }}
+                      />
+                      <span className="text-[9px] text-muted truncate w-full text-center">{formatDate(a.created_at)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── Tips ── */}
+      {!isNewUser && inProgressAudits.length === 0 && failedAudits.length === 0 && !latestCompleted && (
         <div className="text-center py-8 px-4">
           <CheckCircle2 size={22} className="text-[#22C55E] mx-auto mb-2" />
           <p className="text-sm font-medium text-text mb-0.5">All clear</p>
-          <p className="text-xs text-muted max-w-xs mx-auto">
+          <p className="text-xs text-muted max-w-xs mx-auto leading-relaxed">
             No audits in progress. Your completed audits are in the Audits tab.
           </p>
         </div>
+      )}
+
+      {!isNewUser && (
+        <DismissableTip id="track">
+          <span className="font-semibold">Track your improvement</span> — fix the issues, then re-audit the same URL to compare your scores over time.
+        </DismissableTip>
       )}
 
       {/* ── New user empty state ── */}
@@ -419,7 +510,7 @@ function DashboardInner() {
         <div className="text-center py-8">
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
-          <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
+          <p className="text-muted text-xs mb-4 max-w-xs mx-auto leading-relaxed">
             Create your first audit to see how your website scores across 64 UX checkpoints.
           </p>
         </div>

@@ -196,71 +196,6 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                 </div>
               </div>
 
-              {/* ── Top 3 Recommendations ─────────────────── */}
-              {topRecs.length > 0 && (
-                <div className="mb-6 p-5 rounded-xl border border-brand/20 dark:border-brand/10" style={{ background: 'var(--gradient-brand-subtle)' }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
-                      <Zap size={14} className="text-white" />
-                    </div>
-                    <p className="text-sm font-bold text-text">Top Priority Recommendations</p>
-                  </div>
-                  <div className="space-y-3">
-                    {topRecs.slice(0, 3).map((rec, i) => (
-                      <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5 bg-brand">
-                          {i + 1}
-                        </span>
-                        <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── 4 Pillar Cards ────────────────────────── */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {pillarData.map((pillar, i) => {
-                  const PillarIcon = pillar.Icon;
-                  return (
-                    <div key={i} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
-                      {/* Pillar header */}
-                      <div className={`px-5 py-4 bg-gradient-to-r from-${pillar.color}-50/50 to-transparent dark:from-${pillar.color}-950/20`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
-                              <PillarIcon size={16} className="text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-text">{pillar.name}</p>
-                              <p className="text-[11px] text-muted">{pillar.cats.length} categories</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-2xl font-bold font-heading ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
-                            <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Category scores */}
-                      <div className="px-5 py-3 space-y-2">
-                        {pillar.cats.map((cat, j) => (
-                          <div key={j} className="flex items-center justify-between gap-2">
-                            <span className="text-xs text-muted truncate flex-1">{cat.name}</span>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="w-16 h-1.5 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden">
-                                <div className={`h-full rounded-full ${scoreBgClass(cat.score)}`} style={{ width: `${cat.score}%` }} />
-                              </div>
-                              <span className={`text-xs font-bold w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
               {/* ── Executive Summary ─────────────────────── */}
               {report.executive_summary && (
                 <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 sm:p-6 mb-6">
@@ -270,6 +205,80 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                   </div>
                 </div>
               )}
+
+              {/* ── Top 3 Recommendations ─────────────────── */}
+              {topRecs.length > 0 && (
+                <div className="mb-6 p-5 rounded-xl border border-brand/20 dark:border-brand/10" style={{ background: 'var(--gradient-brand-subtle)' }}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
+                      <Zap size={14} className="text-white" />
+                    </div>
+                    <p className="text-sm font-bold text-text">Top Priority Recommendations</p>
+                  </div>
+                  <div className="space-y-4">
+                    {topRecs.slice(0, 3).map((rec, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white mt-0.5 bg-brand">
+                          {i + 1}
+                        </span>
+                        <p className="text-sm text-text leading-relaxed">{rec}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── 4 Pillar Cards ────────────────────────── */}
+              <div className="space-y-4 mb-6">
+                {pillarData.map((pillar, i) => {
+                  const PillarIcon = pillar.Icon;
+                  const pillarDescriptions: Record<string, string> = {
+                    'Foundation': 'First impressions, messaging clarity, navigation flow, and conversion paths.',
+                    'Human Experience': 'Ethical UX, dark pattern detection, psychological safety, and cognitive accessibility.',
+                    'Inclusive Design': 'WCAG compliance, mobile responsiveness, keyboard navigation, and universal access.',
+                    'Future Readiness': 'AI discoverability, agent navigation, cultural sensitivity, and global reach.',
+                  };
+                  return (
+                    <div key={i} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
+                      {/* Pillar header */}
+                      <div className="px-5 py-4 border-b border-border/20 dark:border-white/[0.04]">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
+                              <PillarIcon size={18} className="text-white" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-text">{pillar.name}</p>
+                              <p className="text-xs text-muted leading-relaxed max-w-xs">{pillarDescriptions[pillar.name]}</p>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-4">
+                            <p className={`text-3xl font-bold font-heading ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
+                            <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Category scores with summaries */}
+                      <div className="px-5 py-4 space-y-3">
+                        {pillar.cats.map((cat, j) => (
+                          <div key={j}>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="text-sm font-medium text-text truncate flex-1">{cat.name}</span>
+                              <span className={`text-sm font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden mb-1">
+                              <div className={`h-full rounded-full ${scoreBgClass(cat.score)}`} style={{ width: `${cat.score}%` }} />
+                            </div>
+                            {cat.summary && (
+                              <p className="text-xs text-muted leading-relaxed">{cat.summary}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
               {/* ── CTA ──────────────────────────────────── */}
               <div className="text-center mt-10 mb-6 px-4">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowRight, ArrowLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Search, BarChart3, Zap, FileText, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
@@ -178,17 +178,37 @@ export default function RegisterPage() {
     )
   }
 
+  const [faqOpen, setFaqOpen] = useState(false)
+
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
+      {/* Progress steps */}
+      <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-center gap-1.5">
+          <span className="w-6 h-6 rounded-full bg-brand text-[#111] text-[11px] font-bold flex items-center justify-center">1</span>
+          <span className="text-xs font-semibold text-text">Create account</span>
+        </div>
+        <div className="flex-1 h-px bg-border/50" />
+        <div className="flex items-center gap-1.5">
+          <span className="w-6 h-6 rounded-full bg-border/40 text-muted text-[11px] font-bold flex items-center justify-center">2</span>
+          <span className="text-xs text-muted">Enter URL</span>
+        </div>
+        <div className="flex-1 h-px bg-border/50" />
+        <div className="flex items-center gap-1.5">
+          <span className="w-6 h-6 rounded-full bg-border/40 text-muted text-[11px] font-bold flex items-center justify-center">3</span>
+          <span className="text-xs text-muted">Get report</span>
+        </div>
+      </div>
+
       <div className="mb-6">
         <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
-          Start Your Free UX Audit
+          Create your account
         </h2>
-        <p className="text-sm text-muted">
+        <p className="text-sm text-muted leading-relaxed">
           {pendingUrl
-            ? 'Create your account to run your first audit \u2014 free, no credit card required.'
-            : 'Sign up to get consultant-grade UX insights in under 10 minutes.'}
+            ? 'Run your first UX audit in under 10 minutes. No credit card required.'
+            : 'Run your first UX audit in under 10 minutes. No credit card required.'}
         </p>
       </div>
 
@@ -384,6 +404,24 @@ export default function RegisterPage() {
         Your audit results are private and encrypted. We never share your data with competitors or the public.
       </p>
 
+      {/* FAQ toggle */}
+      <div className="mt-4">
+        <button
+          onClick={() => setFaqOpen(prev => !prev)}
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-muted hover:text-text transition-colors py-1.5"
+        >
+          What happens after I sign up?
+          <ChevronDown size={12} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {faqOpen && (
+          <div className="mt-2 p-3.5 rounded-xl bg-off/50 dark:bg-white/[0.03] border border-border/30">
+            <p className="text-xs text-muted leading-relaxed">
+              You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 64 UX checkpoints in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="mt-4 text-center text-sm text-muted">
         Already have an account?{' '}
         <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-semibold hover:underline transition-colors text-text">
@@ -447,10 +485,10 @@ export default function RegisterPage() {
 
               <div className="mb-auto">
                 <h2 className="text-2xl font-heading font-semibold text-white mb-2">
-                  {pendingUrl ? 'Your free audit is one step away' : 'Start your free audit'}
+                  {pendingUrl ? 'Your free audit is one step away' : 'Get started with ClearUX'}
                 </h2>
                 <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">
-                  No credit card required. Get consultant-grade UX insights in under 10 minutes.
+                  Run your first UX audit in under 10 minutes. No credit card required.
                 </p>
 
                 {pendingUrl && (
