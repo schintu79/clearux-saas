@@ -117,7 +117,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   /* ── Visual panels — simplified, clean ── */
   const visuals = [
     /* FOUNDATION — Score overview */
-    <aside key="v0" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v0" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Eye size={24} className="text-text" /></div>
         <div>
@@ -138,13 +138,16 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         ))}
       </div>
       <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;CTA button blends into the background on mobile — users can&apos;t find the next step.&rdquo;</p>
-        <p className="text-[10px] text-muted/60 mt-2">— Top finding by business impact</p>
+        <div className="flex items-start gap-2 mb-1.5">
+          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
+          <p className="text-xs font-semibold text-text">CTA invisible on mobile viewport</p>
+        </div>
+        <p className="text-[11px] text-muted leading-relaxed">Primary call-to-action blends into the background on screens under 768px — users can&apos;t find the next step.</p>
       </div>
     </aside>,
 
     /* HUMAN EXPERIENCE — Dark pattern scan */
-    <aside key="v1" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v1" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Heart size={24} className="text-text" /></div>
         <div>
@@ -165,13 +168,16 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         ))}
       </div>
       <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;Cancel flow uses confirmshaming — the opt-out label says &lsquo;No, I don&apos;t want to save money.&rsquo;&rdquo;</p>
-        <p className="text-[10px] text-muted/60 mt-2">— Dark pattern flagged as critical</p>
+        <div className="flex items-start gap-2 mb-1.5">
+          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
+          <p className="text-xs font-semibold text-text">Confirmshaming in cancel flow</p>
+        </div>
+        <p className="text-[11px] text-muted leading-relaxed">Opt-out label uses guilt language — &ldquo;No, I don&apos;t want to save money&rdquo; — a recognised dark pattern.</p>
       </div>
     </aside>,
 
     /* INCLUSIVE DESIGN — Accessibility */
-    <aside key="v2" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v2" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Accessibility size={24} className="text-text" /></div>
         <div>
@@ -192,13 +198,16 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         ))}
       </div>
       <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;Touch targets under 44px on checkout form — 18% of mobile users will misfire taps.&rdquo;</p>
-        <p className="text-[10px] text-muted/60 mt-2">— Accessibility finding ranked by severity</p>
+        <div className="flex items-start gap-2 mb-1.5">
+          <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
+          <p className="text-xs font-semibold text-text">Touch targets below minimum</p>
+        </div>
+        <p className="text-[11px] text-muted leading-relaxed">Checkout form buttons are 32px — below the 44px WCAG minimum. 18% of mobile users will misfire taps.</p>
       </div>
     </aside>,
 
     /* FUTURE READINESS — AI readiness */
-    <aside key="v3" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v3" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Brain size={24} className="text-text" /></div>
         <div>
@@ -219,8 +228,11 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
         ))}
       </div>
       <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;I can identify this is a SaaS product but cannot determine pricing or features from structured data alone.&rdquo;</p>
-        <p className="text-[10px] text-muted/60 mt-2">— AI agent attempting to describe your site</p>
+        <div className="flex items-start gap-2 mb-1.5">
+          <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
+          <p className="text-xs font-semibold text-text">Structured data incomplete</p>
+        </div>
+        <p className="text-[11px] text-muted leading-relaxed">AI agents can identify this is a SaaS product but cannot determine pricing or features from structured data alone.</p>
       </div>
     </aside>,
   ];
@@ -590,64 +602,72 @@ export default function Home() {
                 </div>
               </div>
               {/* Visual mock */}
-              <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><ListChecks size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Issue Tracker</p>
                     <p className="text-xs text-muted">acme.com</p>
                   </div>
-                  <span className="ml-auto text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">67% resolved</span>
+                  <span className="ml-auto font-heading text-4xl font-bold text-emerald-500">67<span className="text-lg">%</span></span>
                 </div>
-                <div className="space-y-2.5">
+                <div className="space-y-4">
                   {[
-                    { title: 'Missing alt text on hero image', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-500 bg-emerald-500/8 dark:text-emerald-500' },
-                    { title: 'Low colour contrast on CTA', severity: 'high', status: 'In Progress', statusColor: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400' },
-                    { title: 'No skip-to-content link', severity: 'medium', status: 'Fixed', statusColor: 'text-emerald-500 bg-emerald-500/8 dark:text-emerald-500' },
-                    { title: 'Form lacks error messaging', severity: 'high', status: 'Open', statusColor: 'text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400' },
-                    { title: 'Confirmshaming in cancel flow', severity: 'critical', status: 'Fixed', statusColor: 'text-emerald-500 bg-emerald-500/8 dark:text-emerald-500' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-off/50 dark:bg-white/[0.03]">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.severity === 'critical' ? 'bg-red-500' : item.severity === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}`} />
-                      <span className="text-sm text-text flex-1 truncate">{item.title}</span>
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 ${item.statusColor}`}>{item.status}</span>
+                    { t: 'Critical findings', s: 80, resolved: '4/5' },
+                    { t: 'High findings', s: 60, resolved: '3/5' },
+                    { t: 'Medium findings', s: 50, resolved: '2/4' },
+                  ].map((d, i) => (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-text">{d.t}</span>
+                        <span className="text-sm font-bold text-text">{d.resolved}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">IN PROGRESS</span>
+                    <p className="text-xs font-semibold text-text">Low colour contrast on CTA</p>
+                  </div>
+                  <p className="text-[11px] text-muted leading-relaxed">Button contrast ratio is 2.8:1 — below the 4.5:1 AA minimum. Affects 12% of users with low vision.</p>
                 </div>
               </div>
             </div>
 
             {/* ── Feature 2: Re-audit & Score Comparison ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <div className="order-2 md:order-1 rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="w-full order-2 md:order-1 rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><TrendingUp size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Score Trend</p>
-                    <p className="text-xs text-muted">acme.com</p>
+                    <p className="text-xs text-muted">acme.com over 3 audits</p>
                   </div>
+                  <span className="ml-auto font-heading text-4xl font-bold text-emerald-500">78</span>
                 </div>
                 <div className="space-y-4">
                   {[
-                    { date: 'Jan 15', score: 42, label: 'Baseline' },
-                    { date: 'Feb 28', score: 61, label: 'After sprint 1' },
-                    { date: 'Apr 10', score: 78, label: 'Current' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs text-muted w-14 flex-shrink-0">{item.date}</span>
-                      <div className="flex-1 h-2.5 rounded-full bg-off/50 dark:bg-white/[0.06] overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${item.score >= 70 ? 'bg-emerald-500' : item.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${item.score}%` }} />
+                    { t: 'Jan 15 — Baseline', s: 42 },
+                    { t: 'Feb 28 — After sprint 1', s: 61 },
+                    { t: 'Apr 10 — Current', s: 78 },
+                  ].map((d, i) => (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-text">{d.t}</span>
+                        <span className="text-sm font-bold text-text">{d.s}</span>
                       </div>
-                      <span className={`text-sm font-bold w-8 text-right ${item.score >= 70 ? 'text-emerald-500' : item.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'}`}>{item.score}</span>
+                      <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 pt-5 border-t border-border/50 flex items-center justify-between">
-                  <span className="text-sm text-muted">Improvement</span>
-                  <span className="text-sm font-bold text-emerald-500 flex items-center gap-1">
-                    <ArrowUp size={14} />
-                    +36 points
-                  </span>
+                <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">IMPROVED</span>
+                    <p className="text-xs font-semibold text-text">+36 points since baseline</p>
+                  </div>
+                  <p className="text-[11px] text-muted leading-relaxed">Score climbed from 42 to 78 across 3 audits. Foundation pillar saw the largest gain at +28 points.</p>
                 </div>
               </div>
               <div className="order-1 md:order-2">
@@ -764,42 +784,32 @@ export default function Home() {
                 </div>
               </div>
               {/* Visual mock — clean shared report card */}
-              <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Share2 size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Shared Report</p>
-                    <p className="text-xs text-muted">acme.com</p>
+                    <p className="text-xs text-muted">Read-only team view</p>
                   </div>
-                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-0.5 rounded-full">Demo</span>
+                  <span className="ml-auto font-heading text-4xl font-bold text-text">78</span>
                 </div>
-
-                <div className="flex items-center gap-5 mb-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-                  <div className="w-16 h-16 rounded-full border-[3px] border-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <span className="font-heading text-2xl font-bold text-emerald-500">78</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-text mb-1">Overall UX Score</p>
-                    <p className="text-xs text-muted">6 findings across 4 pillars</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  {[{l:'Foundation',s:72},{l:'Human Experience',s:95},{l:'Inclusive Design',s:64},{l:'Future Readiness',s:82}].map(p=>(
-                    <div key={p.l} className="flex items-center gap-3">
-                      <span className="text-xs text-muted w-[120px]">{p.l}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${p.s}%`}} /></div>
-                      <span className="text-xs font-bold text-text w-6 text-right">{p.s}</span>
+                <div className="space-y-4">
+                  {[{t:'Foundation',s:72},{t:'Human Experience',s:95},{t:'Inclusive Design',s:64},{t:'Future Readiness',s:82}].map((d,i)=>(
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-text">{d.t}</span>
+                        <span className="text-sm font-bold text-text">{d.s}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
                     </div>
                   ))}
                 </div>
-
-                <div className="flex items-center gap-3 pt-5 border-t border-border/50">
-                  <div className="flex items-center gap-1.5 text-xs text-muted"><Link2 size={12} /> Read-only link</div>
-                  <span className="text-border">|</span>
-                  <div className="flex items-center gap-1.5 text-xs text-muted"><Lock size={12} /> Revocable</div>
-                  <span className="text-border hidden sm:block">|</span>
-                  <div className="flex items-center gap-1.5 text-xs text-muted hidden sm:flex"><Download size={12} /> PDF export</div>
+                <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                  <div className="flex items-start gap-2 mb-1.5">
+                    <span className="bg-brand text-[#111] text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">SHARED</span>
+                    <p className="text-xs font-semibold text-text">Stakeholder-ready link</p>
+                  </div>
+                  <p className="text-[11px] text-muted leading-relaxed">Read-only view with score, pillar breakdown, and top 3 recommendations. No account needed. Revocable anytime.</p>
                 </div>
               </div>
             </div>
@@ -816,57 +826,45 @@ export default function Home() {
 
           {/* Left — Comparison table */}
           <div className="hidden lg:block">
-            <div className="rounded-2xl border border-border/40 dark:border-white/[0.06] overflow-hidden" style={{ background: 'linear-gradient(160deg, #f8faf5 0%, #f3f4f0 50%, #f0f2ed 100%)' }}>
-              <div className="dark:hidden absolute inset-0" />
-              <div className="relative dark:bg-card dark:rounded-2xl">
-                {/* Header */}
-                <div className="px-8 pt-8 pb-6">
-                  <div className="flex items-center gap-3 mb-1">
-                    <Gauge size={20} className="text-text" />
-                    <h3 className="text-lg font-semibold text-text font-heading">Coverage Comparison</h3>
+            <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Gauge size={24} className="text-text" /></div>
+                <div>
+                  <p className="text-sm font-semibold text-text">Coverage Comparison</p>
+                  <p className="text-xs text-muted">What other tools miss</p>
+                </div>
+                <span className="ml-auto font-heading text-4xl font-bold text-text">6<span className="text-lg">/6</span></span>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { t: 'Ethical UX & dark patterns', others: false, s: 100 },
+                  { t: 'Cognitive accessibility', others: false, s: 100 },
+                  { t: 'AI agent readiness', others: false, s: 100 },
+                  { t: 'Conversion psychology', others: false, s: 100 },
+                  { t: 'WCAG accessibility', others: true, s: 100 },
+                  { t: 'Performance metrics', others: true, s: 100 },
+                ].map((d, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm text-text">{d.t}</span>
+                      <div className="flex items-center gap-3">
+                        {d.others
+                          ? <span className="text-[10px] font-semibold text-muted/40 uppercase">Others</span>
+                          : <span className="text-[10px] font-semibold text-muted/40 uppercase">Exclusive</span>
+                        }
+                        <CheckCircle size={16} className="text-emerald-500" />
+                      </div>
+                    </div>
+                    <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
                   </div>
-                  <p className="text-sm text-muted ml-8">What other tools miss</p>
+                ))}
+              </div>
+              <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">UNIQUE</span>
+                  <p className="text-xs font-semibold text-text">4 categories no other tool covers</p>
                 </div>
-
-                {/* Table */}
-                <div className="px-8 pb-8">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border/40 dark:border-white/[0.06]">
-                        <th className="text-left pb-4 text-sm font-semibold text-text">Capability</th>
-                        <th className="pb-4 text-center w-28">
-                          <span className="text-xs font-semibold text-muted uppercase tracking-wider">Others</span>
-                        </th>
-                        <th className="pb-4 text-center w-28">
-                          <span className="text-xs font-bold text-[#4a7a20] dark:text-[#B9FF66] uppercase tracking-wider">ClearUX</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { label: 'Ethical UX & dark patterns', others: false, clearux: true },
-                        { label: 'Cognitive accessibility', others: false, clearux: true },
-                        { label: 'AI agent readiness', others: false, clearux: true },
-                        { label: 'Conversion psychology', others: false, clearux: true },
-                        { label: 'WCAG accessibility', others: true, clearux: true },
-                        { label: 'Performance metrics', others: true, clearux: true },
-                      ].map((row, i) => (
-                        <tr key={i} className="border-b border-border/20 dark:border-white/[0.04] last:border-0">
-                          <td className="py-4 text-sm text-text">{row.label}</td>
-                          <td className="py-4 text-center">
-                            {row.others
-                              ? <CheckCircle size={18} className="text-muted/30 mx-auto" />
-                              : <span className="inline-block w-5 h-[2px] rounded bg-border/60" />
-                            }
-                          </td>
-                          <td className="py-4 text-center">
-                            <CheckCircle size={18} className="text-emerald-500 mx-auto" />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <p className="text-[11px] text-muted leading-relaxed">Ethical UX, cognitive accessibility, AI readiness, and conversion psychology — audited in every report.</p>
               </div>
             </div>
           </div>
