@@ -618,7 +618,7 @@ export default function Home() {
 
           {/* Left — Comparison table */}
           <div className="hidden lg:block">
-            <div className="w-full rounded-2xl bg-white/60 border border-[#111]/10 p-6 sm:p-8">
+            <div className="w-full rounded-2xl bg-white border border-[#111]/10 p-6 sm:p-8 shadow-lg shadow-black/[0.05]">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#111]/5 flex items-center justify-center"><Gauge size={24} className="text-[#111]" /></div>
                 <div>
@@ -1087,7 +1087,7 @@ export default function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
               {[
                 { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
-                { title: 'Track and share progress', desc: 'Mark findings as fixed, share results with stakeholders, and re-audit to prove improvement.' },
+                { title: 'Available in 6 languages', desc: 'English, Spanish, French, German, Italian, and Portuguese. Findings and reports delivered in your chosen language.' },
                 { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
                 { title: 'Instant delivery', desc: 'Reports arrive within minutes. PDF, Word, and an interactive dashboard with improvement tracking.' },
               ].map((item, i) => (
