@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             {/* Social links */}
             <div className="flex items-center gap-3">
               <a
-                href="https://www.instagram.com/clearux.ai"
+                href="https://www.instagram.com/clear_ux"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Follow ClearUX on Instagram"
