@@ -159,7 +159,7 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-text hover:bg-surface-alt rounded-lg px-3 py-1.5 transition-colors"
+                  className="text-[16px] font-medium text-text hover:bg-surface-alt rounded-lg px-3 py-1.5 transition-colors"
                 >
                   Login
                 </Link>
@@ -223,7 +223,7 @@ const Navbar: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-sm font-medium text-text px-3 py-3 min-h-[44px] flex items-center">
+                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-muted hover:text-text transition-colors px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
                     <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-surface dark:text-[#111111] bg-brand rounded-xl px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">

@@ -363,7 +363,7 @@ export default function FaqPage() {
                 </a>
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-lg px-6 py-3 border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-6 py-3 min-h-[44px] border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
                 >
                   Contact Us
                 </Link>

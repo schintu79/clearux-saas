@@ -958,7 +958,7 @@ export default function Home() {
                 <p className="text-muted text-sm mb-8">One-time payment per audit</p>
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-lg px-8 py-3.5 hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:opacity-90 transition-opacity"
                 >
                   Buy 1 audit
                 </Link>
@@ -1026,7 +1026,7 @@ export default function Home() {
                 )}
                 <Link
                   href="/register"
-                  className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 border border-border text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
+                  className="flex items-center justify-center gap-2 text-sm font-semibold rounded-xl py-3 px-6 min-h-[44px] border border-border text-text hover:bg-text hover:text-white dark:hover:bg-white dark:hover:text-text transition-all duration-200"
                 >
                   Buy {pack.credits} audits
                 </Link>

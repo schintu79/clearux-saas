@@ -166,7 +166,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-lg px-8 py-3.5 hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center justify-center gap-2 bg-text dark:bg-white text-white dark:text-gray-900 font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:opacity-90 transition-opacity"
                   >
                     Buy 1 audit
                   </Link>
@@ -240,7 +240,7 @@ export default function PricingPage() {
 
                   <Link
                     href="/register"
-                    className="flex items-center justify-center gap-2 text-sm font-semibold rounded-lg py-3 bg-brand text-surface dark:text-[#111111] transition-all duration-200 hover:-translate-y-0.5"
+                    className="flex items-center justify-center gap-2 text-[15px] font-semibold rounded-xl py-3 px-6 min-h-[48px] bg-brand text-surface dark:text-[#111111] transition-all duration-200 hover:-translate-y-0.5"
                   >
                     {pack.cta}
                   </Link>

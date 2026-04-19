@@ -369,7 +369,7 @@ export default function AboutPage() {
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-border text-text rounded-lg font-semibold hover:bg-card transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-border text-text rounded-xl font-semibold hover:bg-card transition-all"
               >
                 Contact us
               </Link>
