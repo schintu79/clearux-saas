@@ -257,33 +257,36 @@ function DashboardInner() {
       {isNewUser && <OnboardingBanner />}
 
       {/* ── Quick Stats row ── */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-brand/30 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
-            <FileSearch size={20} className="text-brand" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+        <Link href="/dashboard/audits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-brand/30 transition-colors">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0">
+            <FileSearch size={18} className="text-brand sm:hidden" />
+            <FileSearch size={20} className="text-brand hidden sm:block" />
           </div>
-          <div>
-            <p className="text-xl font-bold text-text leading-none">{completedCount}</p>
-            <p className="text-[11px] text-muted mt-1">completed</p>
-          </div>
-        </Link>
-        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-[#22C55E]/30 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center flex-shrink-0">
-            <Coins size={20} className="text-[#22C55E]" />
-          </div>
-          <div>
-            <p className="text-xl font-bold text-text leading-none">{credits ?? '--'}</p>
-            <p className="text-[11px] text-muted mt-1">credits</p>
+          <div className="min-w-0">
+            <p className="text-lg sm:text-xl font-bold text-text leading-none">{completedCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">completed</p>
           </div>
         </Link>
-        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 sm:p-5 flex items-center gap-3 hover:border-amber-400/30 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 relative">
-            <Bell size={20} className="text-amber-500" />
+        <Link href="/dashboard/buy-credits" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-[#22C55E]/30 transition-colors">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#22C55E]/10 flex items-center justify-center flex-shrink-0">
+            <Coins size={18} className="text-[#22C55E] sm:hidden" />
+            <Coins size={20} className="text-[#22C55E] hidden sm:block" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-lg sm:text-xl font-bold text-text leading-none">{credits ?? '--'}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">credits</p>
+          </div>
+        </Link>
+        <Link href="/dashboard/notifications" className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-3 sm:p-5 flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 text-center sm:text-left hover:border-amber-400/30 transition-colors">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 relative">
+            <Bell size={18} className="text-amber-500 sm:hidden" />
+            <Bell size={20} className="text-amber-500 hidden sm:block" />
             {pinnedNotification && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-card" />}
           </div>
-          <div>
-            <p className="text-xl font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
-            <p className="text-[11px] text-muted mt-1">new</p>
+          <div className="min-w-0">
+            <p className="text-lg sm:text-xl font-bold text-text leading-none">{pinnedNotification ? '1' : '0'}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted mt-0.5 sm:mt-1">new</p>
           </div>
         </Link>
       </div>

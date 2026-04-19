@@ -205,7 +205,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-body font-semibold text-[17px] text-text">
+          <span className="ml-3 font-heading text-2xl font-bold tracking-tight text-text">
             ClearUX
           </span>
           <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">

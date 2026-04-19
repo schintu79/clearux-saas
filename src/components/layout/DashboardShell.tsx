@@ -234,7 +234,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-body font-semibold text-[17px] text-text">
+          <span className="ml-3 font-heading text-2xl font-bold tracking-tight text-text">
             ClearUX
           </span>
         </div>
