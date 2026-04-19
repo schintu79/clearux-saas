@@ -58,20 +58,20 @@ export default function PricingPage() {
         {/* ── Free Audit Banner ── */}
         <section className="pt-20 pb-4 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-xl p-6 sm:p-8 relative overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
+            <div className="rounded-xl p-6 sm:p-8 relative overflow-hidden" style={{ background: '#B9FF66' }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={18} className="text-brand" />
-                    <h2 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h2>
+                    <Sparkles size={18} className="text-[#111]" />
+                    <h2 className="font-heading font-semibold text-xl text-[#111]">Start with a Free Audit</h2>
                   </div>
-                  <p className="text-sm text-text/70 max-w-md">
+                  <p className="text-sm text-[#111]/60 max-w-md">
                     No credit card required. Sign up, enter a URL, and get your full report in minutes. Buy credits when you need more.
                   </p>
                 </div>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                  className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />

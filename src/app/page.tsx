@@ -982,20 +982,20 @@ export default function Home() {
         >
           {/* Free Audit Banner */}
           {!user && (
-            <div className="rounded-xl p-6 sm:p-8 mb-12 border border-border bg-card">
+            <div className="rounded-xl p-6 sm:p-8 mb-12" style={{ background: '#B9FF66' }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles size={18} className="text-brand" />
-                    <h3 className="font-heading font-semibold text-xl text-text">Start with a free audit</h3>
+                    <Sparkles size={18} className="text-[#111]" />
+                    <h3 className="font-heading font-semibold text-xl text-[#111]">Start with a free audit</h3>
                   </div>
-                  <p className="text-sm text-muted max-w-md">
+                  <p className="text-sm text-[#111]/60 max-w-md">
                     No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
                   </p>
                 </div>
                 <Link
                   href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-105 hover:-translate-y-0.5 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={16} />
@@ -1127,26 +1127,24 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           CASE STUDIES — Placeholder until real quotes exist
           ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 relative overflow-hidden bg-surface">
+      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 relative overflow-hidden" style={{ background: '#B9FF66' }}>
         <div
           ref={testRef.ref}
           className={`max-w-2xl mx-auto text-center transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
-          <div className="rounded-xl border border-border bg-card p-10 sm:p-14">
-            <h2 className="font-heading text-2xl sm:text-3xl font-semibold text-text mb-4 tracking-tight">
-              Case studies launching soon.
-            </h2>
-            <p className="text-muted text-base leading-relaxed mb-8 max-w-md mx-auto">
-              We&apos;d rather show you real client results than invent testimonials. Want to be one of the first?
-            </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
-            >
-              Start your free audit
-              <ArrowRight size={16} />
-            </Link>
-          </div>
+          <h2 className="font-heading text-2xl sm:text-3xl font-semibold text-[#111] mb-4 tracking-tight">
+            Case studies launching soon.
+          </h2>
+          <p className="text-[#111]/60 text-base leading-relaxed mb-8 max-w-md mx-auto">
+            We&apos;d rather show you real client results than invent testimonials. Want to be one of the first?
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
+          >
+            Start your free audit
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 

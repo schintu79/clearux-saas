@@ -146,21 +146,49 @@ export default function AboutPage() {
         {/* ═══════════════════════════════════════════════════════
             3. MISSION — full width gradient band
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-24 overflow-hidden bg-brand">
-          <div className="absolute inset-0 bg-black/[0.06] pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 mb-6">
-              <Sparkles size={24} className="text-white" />
+        <section className="relative py-28 sm:py-32 overflow-hidden" style={{ background: '#B9FF66' }}>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+              {/* Left — statement */}
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111]/10 mb-6">
+                  <Sparkles size={14} className="text-[#111]" />
+                  <span className="text-xs font-semibold text-[#111]">Our commitment</span>
+                </div>
+                <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-[#111] mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
+                  Better experiences<br className="hidden sm:block" /> should be the norm.
+                </h2>
+                <p className="text-[#111]/70 text-base sm:text-lg leading-relaxed mb-6">
+                  Make professional-grade UX auditing accessible to every team that builds digital products — so that better experiences become the norm, not the exception.
+                </p>
+                <p className="text-[#111]/70 text-base leading-relaxed">
+                  Ethical design is good business. Products that respect users build trust. Trust drives retention. Retention drives growth. We give you the evidence to prove it.
+                </p>
+              </div>
+              {/* Right — three value cards */}
+              <div className="space-y-4">
+                {[
+                  { icon: Shield, title: 'Ethical by default', desc: 'Every audit checks for dark patterns, manipulative design, and cognitive overload — not just compliance boxes.' },
+                  { icon: Eye, title: 'Evidence over opinion', desc: 'Scores are backed by 64 measurable checkpoints across 16 categories. No subjective hand-waving.' },
+                  { icon: Heart, title: 'Accessible to all', desc: 'A $99 audit delivers what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury.' },
+                ].map((item, i) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <div key={i} className="rounded-xl bg-white/50 border border-[#111]/[0.06] p-5 backdrop-blur-sm">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-[#111] flex items-center justify-center flex-shrink-0">
+                          <ItemIcon size={18} className="text-[#B9FF66]" />
+                        </div>
+                        <div>
+                          <p className="font-heading font-semibold text-[#111] mb-1">{item.title}</p>
+                          <p className="text-sm text-[#111]/60 leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <h2 className="font-heading font-semibold text-3xl sm:text-4xl text-white mb-6">
-              Our commitment
-            </h2>
-            <p className="text-white/90 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-4">
-              Make professional-grade UX auditing accessible to every team that builds digital products — so that better experiences become the norm, not the exception.
-            </p>
-            <p className="text-white/70 text-base leading-relaxed max-w-2xl mx-auto">
-              Ethical design is good business. Products that respect users build trust. Trust drives retention.<br className="hidden sm:block" /> Retention drives growth. We give you the evidence to prove it.
-            </p>
           </div>
         </section>
 
@@ -347,29 +375,26 @@ export default function AboutPage() {
         {/* ═══════════════════════════════════════════════════════
             7. CTA — Start your audit today
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] rounded-full bg-brand/[0.06] blur-[120px] pointer-events-none" />
-          <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] rounded-full bg-[#22C55E]/[0.05] blur-[120px] pointer-events-none" />
-
+        <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#B9FF66' }}>
           <div className="max-w-3xl mx-auto text-center relative">
-            <p className="text-sm font-semibold tracking-wide uppercase mb-6 text-brand">Start your audit today</p>
-            <h2 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-6" style={{ lineHeight: '1.1' }}>
+            <p className="text-sm font-semibold tracking-wide uppercase mb-6 text-[#111]/50">Start your audit today</p>
+            <h2 className="font-heading font-semibold text-4xl sm:text-5xl text-[#111] mb-6" style={{ lineHeight: '1.1' }}>
               Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
             </h2>
-            <p className="text-muted text-lg mb-10 max-w-lg mx-auto">
+            <p className="text-[#111]/60 text-lg mb-10 max-w-lg mx-auto">
               64 checkpoints. 16 categories. Results in minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-brand text-surface dark:text-[#111111] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-[#111] text-[#B9FF66] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
               >
                 Start an audit
                 <ArrowRight size={18} />
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-border text-text rounded-xl font-semibold hover:bg-card transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-[#111]/20 text-[#111] rounded-xl font-semibold hover:bg-white/30 transition-all"
               >
                 Contact us
               </Link>
