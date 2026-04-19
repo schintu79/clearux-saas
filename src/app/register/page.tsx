@@ -183,24 +183,6 @@ export default function RegisterPage() {
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
     <div className="w-full max-w-[380px]">
-      {/* Progress steps */}
-      <div className="flex items-center gap-2 mb-5">
-        <div className="flex items-center gap-1.5">
-          <span className="w-6 h-6 rounded-full bg-brand text-[#111] text-[11px] font-bold flex items-center justify-center">1</span>
-          <span className="text-xs font-semibold text-text">Create account</span>
-        </div>
-        <div className="flex-1 h-px bg-border/50" />
-        <div className="flex items-center gap-1.5">
-          <span className="w-6 h-6 rounded-full bg-border/40 text-muted text-[11px] font-bold flex items-center justify-center">2</span>
-          <span className="text-xs text-muted">Enter URL</span>
-        </div>
-        <div className="flex-1 h-px bg-border/50" />
-        <div className="flex items-center gap-1.5">
-          <span className="w-6 h-6 rounded-full bg-border/40 text-muted text-[11px] font-bold flex items-center justify-center">3</span>
-          <span className="text-xs text-muted">Get report</span>
-        </div>
-      </div>
-
       <div className="mb-6">
         <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
           Create your account
