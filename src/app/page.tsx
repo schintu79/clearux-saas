@@ -806,7 +806,7 @@ export default function Home() {
                 </div>
                 <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
                   <div className="flex items-start gap-2 mb-1.5">
-                    <span className="bg-brand text-[#111] text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">SHARED</span>
+                    <span className="bg-[#B9FF66] text-[#111111] text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">SHARED</span>
                     <p className="text-xs font-semibold text-text">Stakeholder-ready link</p>
                   </div>
                   <p className="text-[11px] text-muted leading-relaxed">Read-only view with score, pillar breakdown, and top 3 recommendations. No account needed. Revocable anytime.</p>
