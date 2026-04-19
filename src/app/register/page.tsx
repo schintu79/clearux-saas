@@ -190,9 +190,6 @@ export default function RegisterPage() {
             ? 'Create your account to run your first audit \u2014 free, no credit card required.'
             : 'Sign up to get consultant-grade UX insights in under 10 minutes.'}
         </p>
-        <p className="text-xs text-muted/60 mt-2">
-          64-point analysis · Actionable findings · Impact-ranked recommendations
-        </p>
       </div>
 
       {error && (
@@ -215,7 +212,7 @@ export default function RegisterPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl bg-text/[0.03] hover:bg-text/[0.06] transition-colors text-[15px] font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-[15px] font-medium text-text disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />

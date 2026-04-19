@@ -140,9 +140,6 @@ export default function LoginPage() {
         <p className="text-sm text-muted">
           Sign in to access your dashboard, track fixes, and run new audits.
         </p>
-        <p className="text-xs text-muted/60 mt-2">
-          64-point analysis · Actionable findings · Impact-ranked recommendations
-        </p>
       </div>
 
       {error && (
@@ -165,7 +162,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl bg-text/[0.03] hover:bg-text/[0.06] transition-colors text-[15px] font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-[15px] font-medium text-text disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
