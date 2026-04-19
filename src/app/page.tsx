@@ -611,6 +611,103 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
+          WHY CLEARUX — Competitor differentiation (lime bg)
+          ═══════════════════════════════════════════════════════ */}
+      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+          {/* Left — Comparison table */}
+          <div className="hidden lg:block">
+            <div className="w-full rounded-2xl bg-white/60 border border-[#111]/10 p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-[#111]/5 flex items-center justify-center"><Gauge size={24} className="text-[#111]" /></div>
+                <div>
+                  <p className="text-sm font-semibold text-[#111]">Coverage Comparison</p>
+                  <p className="text-xs text-[#111]/60">What other tools miss</p>
+                </div>
+                <span className="ml-auto font-heading text-4xl font-bold text-[#111]">6<span className="text-lg">/6</span></span>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { t: 'Ethical UX & dark patterns', others: false, s: 100 },
+                  { t: 'Cognitive accessibility', others: false, s: 100 },
+                  { t: 'AI agent readiness', others: false, s: 100 },
+                  { t: 'Conversion psychology', others: false, s: 100 },
+                  { t: 'WCAG accessibility', others: true, s: 100 },
+                  { t: 'Performance metrics', others: true, s: 100 },
+                ].map((d, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm text-[#111]">{d.t}</span>
+                      <div className="flex items-center gap-3">
+                        {d.others
+                          ? <span className="text-[10px] font-semibold text-[#111]/40 uppercase">Others</span>
+                          : <span className="text-[10px] font-semibold text-[#111]/40 uppercase">Exclusive</span>
+                        }
+                        <CheckCircle size={16} className="text-[#111]" />
+                      </div>
+                    </div>
+                    <div className="h-2 rounded-full bg-[#111]/10"><div className="h-full rounded-full bg-[#111]" style={{width:`${d.s}%`}} /></div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 p-4 rounded-xl bg-[#111]/5">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="bg-[#111] text-[#B9FF66] text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">UNIQUE</span>
+                  <p className="text-xs font-semibold text-[#111]">4 categories no other tool covers</p>
+                </div>
+                <p className="text-[11px] text-[#111]/70 leading-relaxed">Ethical UX, cognitive accessibility, AI readiness, and conversion psychology — audited in every report.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right — Text content */}
+          <div>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-[#111] mb-10 tracking-tight" style={{ lineHeight: '1.1' }}>
+              Why ClearUX
+            </h2>
+
+            <div className="space-y-6 mb-10">
+              <p className="text-[#111]/70 text-base leading-relaxed">
+                <span className="font-semibold text-[#111]">User-behavior tools</span> (Hotjar, Maze, FullStory) show you what users did. They don&apos;t tell you what&apos;s wrong with your design.
+              </p>
+              <p className="text-[#111]/70 text-base leading-relaxed">
+                <span className="font-semibold text-[#111]">Accessibility scanners</span> (axe, WAVE, Lighthouse) catch WCAG violations. They miss dark patterns, cognitive load, and AI-agent readiness entirely.
+              </p>
+              <p className="text-[#111]/70 text-base leading-relaxed">
+                <span className="font-semibold text-[#111]">UX consultants</span> deliver depth. They also cost $5K&ndash;15K and take weeks.
+              </p>
+            </div>
+
+            <p className="text-[#111] font-semibold text-lg mb-5">ClearUX is the only audit that combines:</p>
+            <div className="space-y-3 mb-10">
+              {[
+                'Ethical UX & dark-pattern detection',
+                'Cognitive accessibility & neurodiversity',
+                'AI discoverability & agent readiness',
+                'Conversion psychology',
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-[#111] flex-shrink-0" />
+                  <span className="text-[#111] text-base">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[#111] text-lg font-semibold mb-8">In minutes. For $99.</p>
+
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
+            >
+              Start free audit
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL
           ═══════════════════════════════════════════════════════ */}
       <section className="relative pt-28 sm:pt-36 pb-24" style={{ background: 'var(--gradient-brand-subtle)' }}>
@@ -874,102 +971,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          WHY CLEARUX — Competitor differentiation
-          ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-
-          {/* Left — Comparison table */}
-          <div className="hidden lg:block">
-            <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Gauge size={24} className="text-text" /></div>
-                <div>
-                  <p className="text-sm font-semibold text-text">Coverage Comparison</p>
-                  <p className="text-xs text-muted">What other tools miss</p>
-                </div>
-                <span className="ml-auto font-heading text-4xl font-bold text-text">6<span className="text-lg">/6</span></span>
-              </div>
-              <div className="space-y-4">
-                {[
-                  { t: 'Ethical UX & dark patterns', others: false, s: 100 },
-                  { t: 'Cognitive accessibility', others: false, s: 100 },
-                  { t: 'AI agent readiness', others: false, s: 100 },
-                  { t: 'Conversion psychology', others: false, s: 100 },
-                  { t: 'WCAG accessibility', others: true, s: 100 },
-                  { t: 'Performance metrics', others: true, s: 100 },
-                ].map((d, i) => (
-                  <div key={i}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm text-text">{d.t}</span>
-                      <div className="flex items-center gap-3">
-                        {d.others
-                          ? <span className="text-[10px] font-semibold text-muted/40 uppercase">Others</span>
-                          : <span className="text-[10px] font-semibold text-muted/40 uppercase">Exclusive</span>
-                        }
-                        <CheckCircle size={16} className="text-emerald-500" />
-                      </div>
-                    </div>
-                    <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-                <div className="flex items-start gap-2 mb-1.5">
-                  <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">UNIQUE</span>
-                  <p className="text-xs font-semibold text-text">4 categories no other tool covers</p>
-                </div>
-                <p className="text-[11px] text-muted leading-relaxed">Ethical UX, cognitive accessibility, AI readiness, and conversion psychology — audited in every report.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right — Text content */}
-          <div>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-10 tracking-tight" style={{ lineHeight: '1.1' }}>
-              Why ClearUX
-            </h2>
-
-            <div className="space-y-6 mb-10">
-              <p className="text-muted text-base leading-relaxed">
-                <span className="font-semibold text-text">User-behavior tools</span> (Hotjar, Maze, FullStory) show you what users did. They don&apos;t tell you what&apos;s wrong with your design.
-              </p>
-              <p className="text-muted text-base leading-relaxed">
-                <span className="font-semibold text-text">Accessibility scanners</span> (axe, WAVE, Lighthouse) catch WCAG violations. They miss dark patterns, cognitive load, and AI-agent readiness entirely.
-              </p>
-              <p className="text-muted text-base leading-relaxed">
-                <span className="font-semibold text-text">UX consultants</span> deliver depth. They also cost $5K&ndash;15K and take weeks.
-              </p>
-            </div>
-
-            <p className="text-text font-semibold text-lg mb-5">ClearUX is the only audit that combines:</p>
-            <div className="space-y-3 mb-10">
-              {[
-                'Ethical UX & dark-pattern detection',
-                'Cognitive accessibility & neurodiversity',
-                'AI discoverability & agent readiness',
-                'Conversion psychology',
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                  <span className="text-text text-base">{item}</span>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-text text-lg font-semibold mb-8">In minutes. For $99.</p>
-
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
-            >
-              Start free audit
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ═══════════════════════════════════════════════════════
           PRICING — Clean, editorial
