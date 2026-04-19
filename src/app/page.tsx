@@ -119,109 +119,107 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     /* FOUNDATION — Score overview */
     <aside key="v0" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Eye size={18} className="text-text" /></div>
+        <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Eye size={24} className="text-text" /></div>
         <div>
-          <p className="text-sm font-semibold text-text">Audit Overview</p>
-          <p className="text-xs text-muted">clearux.ai</p>
+          <p className="text-sm font-semibold text-text">Foundation</p>
+          <p className="text-xs text-muted">First impressions &amp; clarity</p>
         </div>
-        <span className="ml-auto font-heading text-3xl font-bold text-text">78</span>
+        <span className="ml-auto font-heading text-4xl font-bold text-text">78</span>
       </div>
-      <div className="space-y-3">
-        {[{l:'UX & Design',s:82},{l:'Content',s:75},{l:'Mobile',s:88},{l:'Conversion',s:70}].map(d=>(
-          <div key={d.l} className="flex items-center gap-3">
-            <span className="text-xs text-muted w-20">{d.l}</span>
-            <div className="flex-1 h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
-            <span className="text-xs font-bold text-text w-6 text-right">{d.s}</span>
+      <div className="space-y-4">
+        {[{t:'Visual Design',s:82},{t:'Messaging Clarity',s:75},{t:'Navigation',s:88},{t:'Conversion Paths',s:70}].map((d,i)=>(
+          <div key={i}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-text">{d.t}</span>
+              <span className="text-sm font-bold text-text">{d.s}</span>
+            </div>
+            <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
           </div>
         ))}
       </div>
-      <div className="mt-6 pt-5 border-t border-border/50">
-        <div className="flex items-start gap-2">
-          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5">CRITICAL</span>
-          <p className="text-xs text-text">CTA invisible on mobile — fix for +23% conversions</p>
-        </div>
+      <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;CTA button blends into the background on mobile — users can&apos;t find the next step.&rdquo;</p>
+        <p className="text-[10px] text-muted/60 mt-2">— Top finding by business impact</p>
       </div>
     </aside>,
 
     /* HUMAN EXPERIENCE — Dark pattern scan */
     <aside key="v1" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Heart size={18} className="text-text" /></div>
+        <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Heart size={24} className="text-text" /></div>
         <div>
-          <p className="text-sm font-semibold text-text">Dark Pattern Scan</p>
-          <p className="text-xs text-muted">4 issues found</p>
+          <p className="text-sm font-semibold text-text">Human Experience</p>
+          <p className="text-xs text-muted">Ethics &amp; psychological safety</p>
         </div>
+        <span className="ml-auto font-heading text-4xl font-bold text-text">54</span>
       </div>
-      <div className="space-y-2.5">
-        {[
-          {t:'Confirmshaming detected',pass:false},
-          {t:'Fake urgency pattern',pass:false},
-          {t:'Hidden fees at checkout',pass:false},
-          {t:'Cookie consent is fair',pass:true},
-        ].map((item,i)=>(
-          <div key={i} className="flex items-center gap-3 py-2">
-            {item.pass
-              ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
-              : <AlertTriangle size={16} className="text-text flex-shrink-0" />
-            }
-            <span className="text-sm text-text">{item.t}</span>
+      <div className="space-y-4">
+        {[{t:'Ethical UX Patterns',s:38},{t:'Emotional Safety',s:72},{t:'Cognitive Load',s:55}].map((d,i)=>(
+          <div key={i}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-text">{d.t}</span>
+              <span className="text-sm font-bold text-text">{d.s}</span>
+            </div>
+            <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
           </div>
         ))}
+      </div>
+      <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;Cancel flow uses confirmshaming — the opt-out label says &lsquo;No, I don&apos;t want to save money.&rsquo;&rdquo;</p>
+        <p className="text-[10px] text-muted/60 mt-2">— Dark pattern flagged as critical</p>
       </div>
     </aside>,
 
-    /* INCLUSIVE DESIGN — Technical scores */
+    /* INCLUSIVE DESIGN — Accessibility */
     <aside key="v2" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Accessibility size={18} className="text-text" /></div>
+        <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Accessibility size={24} className="text-text" /></div>
         <div>
-          <p className="text-sm font-semibold text-text">Accessibility Audit</p>
-          <p className="text-xs text-muted">WCAG 2.1 AA</p>
+          <p className="text-sm font-semibold text-text">Inclusive Design</p>
+          <p className="text-xs text-muted">Accessibility &amp; universal UX</p>
         </div>
+        <span className="ml-auto font-heading text-4xl font-bold text-text">71</span>
       </div>
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {[{l:'Performance',s:92},{l:'Mobile',s:78},{l:'A11y',s:64},{l:'SEO',s:86}].map(m=>(
-          <div key={m.l} className="text-center p-3 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-            <p className={`font-heading text-2xl font-bold ${m.s>=80?'text-text':'text-muted'}`}>{m.s}</p>
-            <p className="text-xs text-muted mt-1">{m.l}</p>
+      <div className="space-y-4">
+        {[{t:'WCAG Compliance',s:64},{t:'Mobile Responsiveness',s:82},{t:'Keyboard Navigation',s:68}].map((d,i)=>(
+          <div key={i}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-text">{d.t}</span>
+              <span className="text-sm font-bold text-text">{d.s}</span>
+            </div>
+            <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
           </div>
         ))}
       </div>
-      <div className="space-y-1.5">
-        {[{t:'Touch targets ≥ 44px',p:false},{t:'Colour contrast AA',p:false},{t:'Keyboard navigation',p:true}].map((c,i)=>(
-          <div key={i} className="flex items-center gap-2.5 py-1.5">
-            {c.p ? <CheckCircle size={14} className="text-emerald-500" /> : <AlertTriangle size={14} className="text-text" />}
-            <span className="text-xs text-text">{c.t}</span>
-          </div>
-        ))}
+      <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;Touch targets under 44px on checkout form — 18% of mobile users will misfire taps.&rdquo;</p>
+        <p className="text-[10px] text-muted/60 mt-2">— Accessibility finding ranked by severity</p>
       </div>
     </aside>,
 
     /* FUTURE READINESS — AI readiness */
     <aside key="v3" role="presentation" className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Brain size={18} className="text-text" /></div>
+        <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Brain size={24} className="text-text" /></div>
         <div>
           <p className="text-sm font-semibold text-text">AI Readiness</p>
           <p className="text-xs text-muted">How AI sees your site</p>
         </div>
-        <span className="ml-auto font-heading text-2xl font-bold text-text">65</span>
+        <span className="ml-auto font-heading text-4xl font-bold text-text">65</span>
       </div>
-      <div className="space-y-3 mb-6">
-        {[{t:'LLM Discoverability',s:72},{t:'Agent Navigation',s:48},{t:'Cultural Readiness',s:62}].map((item,i)=>(
+      <div className="space-y-4">
+        {[{t:'LLM Discoverability',s:72},{t:'Agent Navigation',s:48},{t:'Cultural Readiness',s:62}].map((d,i)=>(
           <div key={i}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-text">{item.t}</span>
-              <span className="text-xs font-bold text-text">{item.s}</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-text">{d.t}</span>
+              <span className="text-sm font-bold text-text">{d.s}</span>
             </div>
-            <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06]">
-              <div className="h-full rounded-full bg-text" style={{width:`${item.s}%`}} />
-            </div>
+            <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06]"><div className="h-full rounded-full bg-text" style={{width:`${d.s}%`}} /></div>
           </div>
         ))}
       </div>
-      <div className="p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-        <p className="text-xs text-muted italic leading-relaxed">&ldquo;I can identify this is a SaaS product but cannot determine pricing or features from structured data alone.&rdquo;</p>
+      <div className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+        <p className="text-xs text-muted italic leading-relaxed font-handwriting text-sm">&ldquo;I can identify this is a SaaS product but cannot determine pricing or features from structured data alone.&rdquo;</p>
         <p className="text-[10px] text-muted/60 mt-2">— AI agent attempting to describe your site</p>
       </div>
     </aside>,
@@ -594,7 +592,7 @@ export default function Home() {
               {/* Visual mock */}
               <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><ListChecks size={18} className="text-text" /></div>
+                  <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><ListChecks size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Issue Tracker</p>
                     <p className="text-xs text-muted">acme.com</p>
@@ -623,7 +621,7 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
               <div className="order-2 md:order-1 rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><TrendingUp size={18} className="text-text" /></div>
+                  <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><TrendingUp size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Score Trend</p>
                     <p className="text-xs text-muted">acme.com</p>
@@ -768,7 +766,7 @@ export default function Home() {
               {/* Visual mock — clean shared report card */}
               <div className="rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center"><Share2 size={18} className="text-text" /></div>
+                  <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Share2 size={24} className="text-text" /></div>
                   <div>
                     <p className="text-sm font-semibold text-text">Shared Report</p>
                     <p className="text-xs text-muted">acme.com</p>
