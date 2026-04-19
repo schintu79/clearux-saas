@@ -435,18 +435,16 @@ export default function Home() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20">
 
-          {/* Primary headline — price anchor, 2 rows */}
+          {/* Primary headline — problem-outcome first, then price */}
           <h1 className="animate-fade-up delay-100 font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-8 text-white" style={{ lineHeight: '1.12' }}>
-            The UX audit that used to cost $10K.{' '}
+            Find the UX issues costing{' '}
             <br className="hidden sm:block" />
-            For{' '}
-            <span className="text-[#B9FF66]">
-              $99.
-            </span>
+            you conversions.{' '}
+            <span className="text-[#B9FF66]">In minutes.</span>
           </h1>
 
           <p className="animate-fade-up delay-200 text-lg md:text-xl text-white/50 mb-12 sm:mb-14 max-w-2xl mx-auto" style={{ lineHeight: '1.6' }}>
-            64 checkpoints across accessibility, ethical UX, conversion, and AI-agent readiness — delivered in minutes.
+            Get a consultant-grade UX audit for $99 — covering accessibility, dark patterns, conversion psychology, and AI readiness across 64 checkpoints.
           </p>
 
           {/* Single focal CTA — URL Input (full width) */}

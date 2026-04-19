@@ -380,7 +380,11 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-muted">
+      <p className="mt-5 text-center text-[11px] text-muted/70 leading-relaxed">
+        Your audit results are private and encrypted. We never share your data with competitors or the public.
+      </p>
+
+      <div className="mt-4 text-center text-sm text-muted">
         Already have an account?{' '}
         <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-semibold hover:underline transition-colors text-text">
           Sign in

@@ -66,7 +66,7 @@ export default function PricingPage() {
                     <h2 className="font-heading font-semibold text-xl text-text">Start with a Free Audit</h2>
                   </div>
                   <p className="text-sm text-text/70 max-w-md">
-                    No credit card required. Run your first UX audit free, then choose a plan that scales with your team.
+                    No credit card required. Sign up, enter a URL, and get your full report in minutes. Buy credits when you need more.
                   </p>
                 </div>
                 <Link
@@ -88,8 +88,7 @@ export default function PricingPage() {
               Transparent pricing
             </h1>
             <p className="text-muted text-base md:text-lg max-w-lg">
-              Pay per audit. No subscription, no feature gates.
-              Every audit gets the full 64-checkpoint analysis — nothing locked behind tiers.
+              Pay per audit. No subscriptions, no feature gates. Every audit runs the same 64-checkpoint analysis — packs simply lower the per-audit cost.
             </p>
           </div>
         </section>
@@ -105,8 +104,8 @@ export default function PricingPage() {
                     <Search size={16} className="text-[#6366F1]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Establish a baseline, then track improvement</p>
-                    <p className="text-xs text-muted mt-0.5">Single Audit — one site, full report, shareable results, $99</p>
+                    <p className="text-sm font-semibold text-text">&ldquo;I need to know where my site stands&rdquo;</p>
+                    <p className="text-xs text-muted mt-0.5">Single Audit ($99) &mdash; full report, shareable link, re-audit to track improvement</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -114,8 +113,8 @@ export default function PricingPage() {
                     <BarChart3 size={16} className="text-pink-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Re-audit quarterly and prove progress to stakeholders</p>
-                    <p className="text-xs text-muted mt-0.5">Growth — 5 audits/year, score comparison over time, $79.80 each</p>
+                    <p className="text-sm font-semibold text-text">&ldquo;I want to prove improvement each quarter&rdquo;</p>
+                    <p className="text-xs text-muted mt-0.5">Growth (5 credits, $79.80 each) &mdash; re-audit quarterly, compare scores over time</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -123,8 +122,8 @@ export default function PricingPage() {
                     <Building2 size={16} className="text-amber-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Manage multiple client sites</p>
-                    <p className="text-xs text-muted mt-0.5">Agency — 15+ audits/year, white-label reports included</p>
+                    <p className="text-sm font-semibold text-text">&ldquo;I manage multiple client sites&rdquo;</p>
+                    <p className="text-xs text-muted mt-0.5">Agency (15 credits, $66.60 each) &mdash; white-label reports with your branding</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -132,14 +131,13 @@ export default function PricingPage() {
                     <Zap size={16} className="text-[#22C55E]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-text">Continuous auditing across teams</p>
-                    <p className="text-xs text-muted mt-0.5">Scale — 50+ audits/year, dedicated support</p>
+                    <p className="text-sm font-semibold text-text">&ldquo;We audit continuously across teams&rdquo;</p>
+                    <p className="text-xs text-muted mt-0.5">Scale (50 credits, $49.98 each) &mdash; lowest cost, priority support</p>
                   </div>
                 </div>
               </div>
               <p className="text-xs text-muted mt-5 pt-4 border-t border-border/20 dark:border-white/[0.04]">
-                <strong className="text-text">Every audit includes</strong> finding status tracking, shareable read-only links for your team, and re-audit comparison so you can prove improvement.
-                White-label reports let agencies add their own branding. Packs simply lower the per-audit cost.
+                <strong className="text-text">Every audit is identical</strong> &mdash; same 64 checkpoints, same depth. Packs lower the per-audit cost and let you re-audit to measure progress. No features are locked behind tiers.
               </p>
             </div>
           </div>
@@ -156,7 +154,7 @@ export default function PricingPage() {
                 {/* Left: Price */}
                 <div>
                   <h2 className="font-heading text-2xl font-semibold text-text mb-1">Single Audit</h2>
-                  <p className="text-muted text-sm mb-6">For individuals and small teams</p>
+                  <p className="text-muted text-sm mb-6">For founders and teams who need a one-time baseline</p>
 
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-muted text-lg">$</span>

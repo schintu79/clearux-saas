@@ -33,7 +33,7 @@ export default function AboutPage() {
 
             <h1 className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-text mb-6" style={{ lineHeight: '1.1' }}>
               Every product deserves<br className="hidden sm:block" />{' '}
-              <span className="text-muted">an honest audit.</span>
+              <span className="text-muted">an independent, unbiased review.</span>
             </h1>
             <p className="text-text/70 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
               ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets.

@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — The UX audit that used to cost $10K. For $99.',
+    default:  'ClearUX — Find the UX issues costing you conversions. In minutes.',
   },
-  description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
+  description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
@@ -52,14 +52,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'ClearUX',
-    title: 'ClearUX — The UX audit that used to cost $10K. For $99.',
-    description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — The UX audit that used to cost $10K. For $99.' }],
+    title: 'ClearUX — Find the UX issues costing you conversions. In minutes.',
+    description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — Find the UX issues costing you conversions. In minutes.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearUX — The UX audit that used to cost $10K. For $99.',
-    description: 'Professional UX audits automated. 64 checkpoints across accessibility, ethics, conversion, and AI readiness. Delivered in minutes.',
+    title: 'ClearUX — Find the UX issues costing you conversions. In minutes.',
+    description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
     images: ['/api/og'],
   },
   icons: {
