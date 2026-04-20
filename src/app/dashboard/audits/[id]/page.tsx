@@ -1181,9 +1181,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   useEffect(() => {
     const el = scoreCardRef.current;
     if (!el) return;
+    // The dashboard content scrolls inside <main id="main-content">, not the window
+    const scrollRoot = document.getElementById('main-content') || null;
     const observer = new IntersectionObserver(
       ([entry]) => setShowStickyScore(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-60px 0px 0px 0px' },
+      { root: scrollRoot, threshold: 0, rootMargin: '-10px 0px 0px 0px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -1397,7 +1399,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     <div className="max-w-4xl mx-auto py-4 px-4">
       {/* ── Sticky Score Bar — appears when hero card scrolls out of view ── */}
       {isCompleted && showStickyScore && (
-        <div className="fixed top-0 left-0 right-0 z-40 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="sticky top-0 z-30 -mx-4 sm:-mx-5 lg:-mx-6">
           <div className="border-b border-border/30 dark:border-white/[0.06] bg-card/95 backdrop-blur-md shadow-sm">
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
