@@ -185,9 +185,6 @@ export async function GET(
 
     // ── COVER PAGE ─────────────────────────────────────────
 
-    // Accent bar at top
-    doc.rect(0, 0, pageW, 6).fill(C.accent)
-
     // Logo — white-label or ClearUX default
     let logoLoaded = false
     if (wlLogoUrl) {
@@ -196,8 +193,7 @@ export async function GET(
         if (logoRes.ok) {
           const ab = await logoRes.arrayBuffer()
           const logoBuf = Buffer.from(ab)
-          // fit: preserves aspect ratio within bounding box (max 200w x 80h)
-          doc.image(logoBuf, (pageW - 200) / 2, 100, { fit: [200, 80], align: 'center', valign: 'center' })
+          doc.image(logoBuf, (pageW - 200) / 2, 120, { fit: [200, 80], align: 'center', valign: 'center' })
           logoLoaded = true
         }
       } catch {}
@@ -206,19 +202,14 @@ export async function GET(
       try {
         const logoPath = path.join(process.cwd(), 'public', 'logo-clearux.png')
         if (fs.existsSync(logoPath)) {
-          doc.image(logoPath, (pageW - 200) / 2, 100, { fit: [200, 80], align: 'center', valign: 'center' })
+          doc.image(logoPath, (pageW - 200) / 2, 120, { fit: [200, 80], align: 'center', valign: 'center' })
           logoLoaded = true
         }
       } catch {}
     }
     if (!logoLoaded) {
-      doc.fontSize(36).font('Helvetica-Bold')
-      if (wlCompany) {
-        doc.fillColor(C.text).text(wlCompany, leftM, 110, { align: 'center', width: contentW })
-      } else {
-        doc.fillColor(C.text).text('Clear', (pageW - 160) / 2, 110, { continued: true })
-          .fillColor(C.accent).text('UX')
-      }
+      doc.fontSize(36).font('Helvetica-Bold').fillColor(C.text)
+        .text(wlCompany || 'ClearUX', leftM, 130, { align: 'center', width: contentW })
     }
 
     // Subtitle
@@ -226,7 +217,7 @@ export async function GET(
       ? (wlCompany ? `${wlCompany} — ${UI.uxAuditReport}` : UI.uxAuditReport)
       : UI.reportSubtitle
     doc.fontSize(11).font('Helvetica').fillColor(C.textSec)
-      .text(pdfSubtitle, leftM, logoLoaded ? 155 : 160, { align: 'center', width: contentW })
+      .text(pdfSubtitle, leftM, logoLoaded ? 175 : 180, { align: 'center', width: contentW })
 
     // Large score
     doc.moveDown(3)
@@ -238,7 +229,7 @@ export async function GET(
       .text(getScoreLabel(overall, lang), leftM, undefined, { align: 'center', width: contentW })
 
     doc.moveDown(1)
-    doc.fontSize(12).font('Helvetica').fillColor(C.accent)
+    doc.fontSize(12).font('Helvetica').fillColor(C.textSec)
       .text(a.product_url, leftM, undefined, { align: 'center', width: contentW })
 
     doc.fontSize(10).font('Helvetica').fillColor(C.textSec)
@@ -265,7 +256,7 @@ export async function GET(
     const sectionHead = (title: string, y?: number) => {
       if (doc.y > 680) doc.addPage() // only add page if near bottom
       const sy = y ?? doc.y
-      doc.rect(leftM, sy, 4, 20).fill(C.accent)
+      doc.rect(leftM, sy, 4, 20).fill(C.text)
       doc.fontSize(18).font('Helvetica-Bold').fillColor(C.text)
         .text(title, leftM + 14, sy, { width: contentW - 14 })
       doc.moveDown(0.5)
@@ -287,10 +278,10 @@ export async function GET(
 
       for (let i = 0; i < topRecs.length; i++) {
         const recY = doc.y
-        // Light purple background
-        doc.rect(leftM, recY - 4, contentW, 36).fill(C.accentLight)
+        // Light grey background
+        doc.rect(leftM, recY - 4, contentW, 36).fill('#F9FAFB')
         // Number
-        doc.fontSize(12).font('Helvetica-Bold').fillColor(C.accent)
+        doc.fontSize(12).font('Helvetica-Bold').fillColor(C.text)
           .text(`${i + 1}`, leftM + 10, recY + 4)
         // Text
         doc.fontSize(10).font('Helvetica').fillColor(C.textBody)
@@ -422,7 +413,7 @@ export async function GET(
             const recY = doc.y
             // Measure text height first
             const recH = doc.heightOfString(finding.recommendation, { width: contentW - 24 })
-            doc.rect(leftM, recY - 4, contentW, recH + 28).fill(C.recBg)
+            doc.rect(leftM, recY - 4, contentW, recH + 28).fill('#F9FAFB')
             doc.fontSize(8).font('Helvetica-Bold').fillColor(C.text)
               .text(L.recommendation, leftM + 12, recY + 2)
             doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
@@ -457,16 +448,9 @@ export async function GET(
       doc.text(`Page ${i + 1}`, leftM + contentW / 2, 750, { width: contentW / 2, align: 'right', lineBreak: false })
       // Header
       if (i > 0) {
-        if (isWhiteLabel && wlCompany) {
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
-            .text(wlCompany, leftM + contentW - 120, 50, { continued: true })
-          doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
-        } else {
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
-            .text('Clear', leftM + contentW - 80, 50, { continued: true })
-          doc.fillColor(C.accent).text('UX', { continued: true })
-          doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
-        }
+        doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
+          .text(wlCompany || 'ClearUX', leftM + contentW - 120, 50, { continued: true })
+        doc.font('Helvetica').fillColor(C.textTert).text(`  |  ${domain}`)
       }
     }
 

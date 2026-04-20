@@ -262,23 +262,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     // COVER PAGE
     // ═══════════════════════════════════════════════════════
 
-    // Top accent bar
-    children.push(new Table({
-      width: { size: CONTENT_W, type: WidthType.DXA },
-      columnWidths: [CONTENT_W],
-      rows: [new TableRow({
-        height: { value: 80, rule: 'exact' as any },
-        children: [new TableCell({
-          borders: noBorders,
-          width: { size: CONTENT_W, type: WidthType.DXA },
-          shading: { fill: C.accent, type: ShadingType.CLEAR },
-          margins: { top: 0, bottom: 0, left: 0, right: 0 },
-          children: [new Paragraph({ children: [] })],
-        })],
-      })],
-    }))
-
-    children.push(new Paragraph({ spacing: { after: 600 }, children: [] }))
+    children.push(new Paragraph({ spacing: { after: 800 }, children: [] }))
 
     // Logo — white-label or ClearUX default
     let logoBuffer: Buffer | null = null
@@ -356,12 +340,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
-        children: wlCompany
-          ? [new TextRun({ text: wlCompany, font: 'Arial', size: 80, bold: true, color: C.text })]
-          : [
-              new TextRun({ text: 'Clear', font: 'Arial', size: 80, bold: true, color: C.text }),
-              new TextRun({ text: 'UX', font: 'Arial', size: 80, bold: true, color: C.accent }),
-            ],
+        children: [new TextRun({ text: wlCompany || 'ClearUX', font: 'Arial', size: 80, bold: true, color: C.text })],
       }))
     }
 
@@ -396,7 +375,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      children: [new TextRun({ text: a.product_url, font: 'Arial', size: 22, color: C.accent })],
+      children: [new TextRun({ text: a.product_url, font: 'Arial', size: 22, color: C.textSec })],
     }))
 
     // Date and issue count
@@ -453,7 +432,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     // Section title
     children.push(new Paragraph({
       spacing: { before: 100, after: 80 },
-      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.accent, space: 8 } },
+      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.text, space: 8 } },
       children: [new TextRun({ text: L.executiveSummary, font: 'Arial', size: 36, bold: true, color: C.text })],
     }))
 
@@ -473,7 +452,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     if (topRecs.length > 0) {
       children.push(new Paragraph({
         spacing: { before: 100, after: 120 },
-        border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.accent, space: 8 } },
+        border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.text, space: 8 } },
         children: [new TextRun({ text: L.topPriorityRecommendations, font: 'Arial', size: 30, bold: true, color: C.text })],
       }))
 
@@ -488,19 +467,19 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
               new TableCell({
                 borders: noBorders,
                 width: { size: 600, type: WidthType.DXA },
-                shading: { fill: C.accentLight, type: ShadingType.CLEAR },
+                shading: { fill: C.bg, type: ShadingType.CLEAR },
                 margins: { top: 120, bottom: 120, left: 120, right: 40 },
                 verticalAlign: 'center' as any,
                 children: [new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [new TextRun({ text: `${i + 1}`, font: 'Arial', size: 26, bold: true, color: C.accent })],
+                  children: [new TextRun({ text: `${i + 1}`, font: 'Arial', size: 26, bold: true, color: C.text })],
                 })],
               }),
               // Recommendation text
               new TableCell({
                 borders: noBorders,
                 width: { size: CONTENT_W - 600, type: WidthType.DXA },
-                shading: { fill: C.accentLight, type: ShadingType.CLEAR },
+                shading: { fill: C.bg, type: ShadingType.CLEAR },
                 margins: { top: 120, bottom: 120, left: 100, right: 160 },
                 children: [new Paragraph({
                   children: [new TextRun({ text: topRecs[i], font: 'Arial', size: 20, color: C.textBody })],
@@ -542,7 +521,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     children.push(new Paragraph({
       spacing: { before: 100, after: 60 },
-      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.accent, space: 8 } },
+      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.text, space: 8 } },
       children: [new TextRun({ text: L.scoreBreakdown, font: 'Arial', size: 36, bold: true, color: C.text })],
     }))
     children.push(new Paragraph({
@@ -651,7 +630,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     children.push(new Paragraph({
       spacing: { before: 100, after: 60 },
-      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.accent, space: 8 } },
+      border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.text, space: 8 } },
       children: [new TextRun({ text: L.detailedFindings, font: 'Arial', size: 36, bold: true, color: C.text })],
     }))
     children.push(new Paragraph({
@@ -738,7 +717,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
                 children: [new TableCell({
                   borders: noBorders,
                   width: { size: CONTENT_W, type: WidthType.DXA },
-                  shading: { fill: C.recBg, type: ShadingType.CLEAR },
+                  shading: { fill: C.bg, type: ShadingType.CLEAR },
                   margins: { top: 100, bottom: 100, left: 180, right: 180 },
                   children: [
                     new Paragraph({
@@ -795,7 +774,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
       children.push(new Paragraph({
         spacing: { before: 100, after: 60 },
-        border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.accent, space: 8 } },
+        border: { left: { style: BorderStyle.SINGLE, size: 16, color: C.text, space: 8 } },
         children: [new TextRun({ text: L.pagesAnalysed, font: 'Arial', size: 36, bold: true, color: C.text })],
       }))
       children.push(new Paragraph({
@@ -857,16 +836,10 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           default: new Header({
             children: [new Paragraph({
               alignment: AlignmentType.RIGHT,
-              children: isWhiteLabel && wlCompany
-                ? [
-                    new TextRun({ text: wlCompany, font: 'Arial', size: 16, bold: true, color: C.textTert }),
-                    new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
-                  ]
-                : [
-                    new TextRun({ text: 'Clear', font: 'Arial', size: 16, bold: true, color: C.textTert }),
-                    new TextRun({ text: 'UX', font: 'Arial', size: 16, bold: true, color: C.accent }),
-                    new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
-                  ],
+              children: [
+                new TextRun({ text: wlCompany || 'ClearUX', font: 'Arial', size: 16, bold: true, color: C.textTert }),
+                new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
+              ],
             })],
           }),
         },
