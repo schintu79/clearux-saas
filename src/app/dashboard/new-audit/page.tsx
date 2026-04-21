@@ -359,14 +359,14 @@ const NewAuditInner: React.FC = () => {
                 onClick={() => setSelectedPillars(isAllPillars ? [] : [0, 1, 2, 3])}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 mb-3 transition-all ${
                   isAllPillars
-                    ? 'border-brand bg-brand/5 dark:bg-brand/10'
+                    ? 'border-[#22C55E]/50 bg-[#22C55E]/5 dark:bg-[#22C55E]/10'
                     : 'border-border/60 dark:border-white/[0.08] hover:border-border'
                 }`}
               >
                 <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                  isAllPillars ? 'bg-brand' : 'border-2 border-border'
+                  isAllPillars ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
                 }`}>
-                  {isAllPillars && <Check size={12} className="text-[#111]" />}
+                  {isAllPillars && <Check size={12} className="text-white" />}
                 </div>
                 <div className="text-left flex-1">
                   <p className="text-sm font-semibold text-text">Complete audit</p>
@@ -392,14 +392,14 @@ const NewAuditInner: React.FC = () => {
                       }}
                       className={`flex items-start gap-3 px-3.5 py-3 rounded-lg border-2 transition-all text-left ${
                         selected
-                          ? 'border-brand/40 dark:border-brand/30 bg-brand/5 dark:bg-brand/[0.06]'
+                          ? 'border-[#22C55E]/40 dark:border-[#22C55E]/30 bg-[#22C55E]/5 dark:bg-[#22C55E]/[0.06]'
                           : 'border-border/40 dark:border-white/[0.06] hover:border-border opacity-60'
                       }`}
                     >
                       <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                        selected ? 'bg-brand' : 'border-2 border-border'
+                        selected ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
                       }`}>
-                        {selected && <Check size={12} className="text-[#111]" />}
+                        {selected && <Check size={12} className="text-white" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">

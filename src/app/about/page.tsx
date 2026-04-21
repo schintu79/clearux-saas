@@ -224,8 +224,8 @@ export default function AboutPage() {
             {/* Three story blocks */}
             <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
               <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/20 flex items-center justify-center mb-4">
-                  <Eye size={18} className="text-[#6366F1]" />
+                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/30 flex items-center justify-center mb-4">
+                  <Eye size={18} className="text-[#818CF8]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-white mb-3">The problem we saw</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
@@ -234,8 +234,8 @@ export default function AboutPage() {
               </div>
 
               <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4">
-                  <Shield size={18} className="text-pink-500" />
+                <div className="w-10 h-10 rounded-lg bg-pink-500/30 flex items-center justify-center mb-4">
+                  <Shield size={18} className="text-pink-400" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-white mb-3">What kept going wrong</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
@@ -244,8 +244,8 @@ export default function AboutPage() {
               </div>
 
               <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="w-10 h-10 rounded-lg bg-brand/20 flex items-center justify-center mb-4">
-                  <Sparkles size={18} className="text-brand" />
+                <div className="w-10 h-10 rounded-lg bg-[#B9FF66]/15 flex items-center justify-center mb-4">
+                  <Sparkles size={18} className="text-[#B9FF66]" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg text-white mb-3">What we built instead</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
@@ -256,7 +256,7 @@ export default function AboutPage() {
 
             {/* Bottom statement */}
             <div className="mt-14 text-center">
-              <p className="text-white/30 text-sm max-w-xl mx-auto">
+              <p className="text-white/70 text-base font-medium max-w-xl mx-auto">
                 ClearUX was founded to make professional-grade UX auditing accessible to every team that builds digital products.
               </p>
             </div>
