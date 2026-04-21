@@ -1183,12 +1183,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     if (!el) return;
     // The dashboard content scrolls inside <main id="main-content">, not the window
     const scrollRoot = document.getElementById('main-content') || null;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyScore(!entry.isIntersecting),
-      { root: scrollRoot, threshold: 0, rootMargin: '-10px 0px 0px 0px' },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    if (!scrollRoot) return;
+    // Use scroll event listener as a reliable fallback — IntersectionObserver
+    // with a non-viewport root inside nested overflow containers can be unreliable
+    const checkVisibility = () => {
+      const rootRect = scrollRoot.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      // Show sticky when the score card's bottom is above the scroll container's top
+      setShowStickyScore(elRect.bottom < rootRect.top + 10);
+    };
+    scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
+    checkVisibility(); // Initial check
+    return () => scrollRoot.removeEventListener('scroll', checkVisibility);
   }, [audit?.status]);
 
   // ── Handlers
@@ -1401,9 +1407,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4">
-      {/* ── Sticky Score Bar — appears when hero card scrolls out of view ── */}
+      {/* ── Sticky Score Bar — fixed to top of main content area ── */}
       {isCompleted && showStickyScore && (
-        <div className="sticky top-0 z-30 -mx-4 sm:-mx-5 lg:-mx-6">
+        <div className="fixed top-0 right-0 left-0 md:left-[220px] z-40">
           <div className="border-b border-border/30 dark:border-white/[0.06] bg-card/95 backdrop-blur-md shadow-sm">
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
@@ -1418,15 +1424,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               </div>
               <div className="hidden sm:flex items-center gap-3">
-                {PILLAR_CONFIG.map((pillar) => {
+                {PILLAR_CONFIG.map((pillar, pIdx) => {
                   const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
                   const avg = pillarCats.length > 0
                     ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                     : 0;
+                  const wasAudited = !isPartialAudit || (auditSelectedPillars?.includes(pIdx) ?? true);
                   return (
-                    <div key={pillar.name} className="flex items-center gap-1">
+                    <div key={pillar.name} className={`flex items-center gap-1 ${!wasAudited ? 'opacity-30' : ''}`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${pillar.badgeBg}`} />
-                      <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                      {wasAudited ? (
+                        <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                      ) : (
+                        <span className="text-xs text-muted">--</span>
+                      )}
                     </div>
                   );
                 })}
