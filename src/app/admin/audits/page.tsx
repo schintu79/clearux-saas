@@ -185,17 +185,13 @@ export default function AdminAuditsPage() {
                         <span className="text-[12px] text-muted">{new Date(a.created_at).toLocaleDateString()}</span>
                       </td>
                       <td className="px-4 py-3">
-                        {a.status === 'completed' && (
-                          <a
-                            href={`/dashboard/audits/${a.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg hover:bg-brand/10 text-muted hover:text-brand transition-colors inline-flex"
-                            title="View audit"
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
+                        <a
+                          href={`/admin/audits/${a.id}`}
+                          className="p-1.5 rounded-lg hover:bg-brand/10 text-muted hover:text-brand transition-colors inline-flex"
+                          title="View audit"
+                        >
+                          <ExternalLink size={14} />
+                        </a>
                       </td>
                     </tr>
                   )
