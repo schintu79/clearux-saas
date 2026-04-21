@@ -821,112 +821,62 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── Feature 2b: After re-audit — two paths ── */}
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-10">
-                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
-                  After every re-audit, you choose
-                </h3>
-                <p className="text-muted text-base leading-relaxed max-w-xl mx-auto">
-                  Fix what you found, or go deeper. Both options use the same credit.
-                </p>
-              </div>
-
-              {/* Two-path visual */}
-              <div className="relative">
-                {/* Connecting line */}
-                <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-[70%] bg-border" />
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Path A — Verify fixes */}
-                  <div className="rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-card p-6 sm:p-7 text-center">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-                      <RefreshCw size={20} className="text-emerald-500" />
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Default</span>
-                    <h4 className="font-heading font-semibold text-lg text-text mt-1 mb-3">Verify your fixes</h4>
-                    <p className="text-muted text-sm leading-relaxed mb-5">
-                      ClearUX checks every previous finding: fixed, still present, or dismissed. No new issues are introduced — your score improves predictably.
-                    </p>
-                    <div className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      <TrendingUp size={15} />
-                      <span>Score goes up as you fix</span>
-                    </div>
-                  </div>
-
-                  {/* Path B — Dig deeper */}
-                  <div className="rounded-xl border border-border bg-card p-6 sm:p-7 text-center">
-                    <div className="w-12 h-12 rounded-full bg-text/5 flex items-center justify-center mx-auto mb-4">
-                      <Search size={20} className="text-text" />
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted">On demand</span>
-                    <h4 className="font-heading font-semibold text-lg text-text mt-1 mb-3">Dig deeper</h4>
-                    <p className="text-muted text-sm leading-relaxed mb-5">
-                      Ready for a fresh look? A deep audit re-scans all 64 checkpoints and finds new issues that weren&apos;t in the original scope.
-                    </p>
-                    <div className="inline-flex items-center gap-2 text-sm font-medium text-text">
-                      <Layers size={15} />
-                      <span>Expands coverage over time</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {/* ── Feature 2b: Three re-audit modes ── */}
+            <div className="text-center mb-10">
+              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
+                After every re-audit, you choose
+              </h3>
+              <p className="text-muted text-base leading-relaxed max-w-xl mx-auto">
+                Three ways to use your re-audit. Same credit, different focus.
+              </p>
             </div>
 
-            {/* ── Feature 2c: Focused Pillar Re-audits ── */}
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
-                  <Target size={16} className="text-text" />
-                  <span className="text-xs font-semibold text-text">Focused Re-audit</span>
+            <div className="grid md:grid-cols-3 gap-5">
+              {/* Column 1 — Verify fixes */}
+              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+                <div className="w-11 h-11 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mx-auto mb-4">
+                  <RefreshCw size={18} className="text-[#22C55E]" />
                 </div>
-                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
-                  Re-audit only the pillars<br className="hidden sm:block" /> that matter right now.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Scored low on Inclusive Design? Re-audit just that pillar after your fixes. No need to re-run all 64 checkpoints when you know exactly what you changed. Your previous scores stay intact for unaudited pillars.
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#22C55E] mb-1">Default</span>
+                <h4 className="font-heading font-semibold text-lg text-text mb-2">Verify your fixes</h4>
+                <p className="text-muted text-sm leading-relaxed mb-5 flex-1">
+                  Re-checks every previous finding. Fixed, still present, or dismissed. Your score improves predictably.
                 </p>
-                <p className="text-sm text-muted/80 font-medium">
-                  Available on re-audits for paying users. First audit always covers all 4 pillars for a complete baseline.
-                </p>
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-[#22C55E] justify-center">
+                  <TrendingUp size={14} />
+                  <span>Score goes up as you fix</span>
+                </div>
               </div>
-              {/* Visual — pillar selector mock */}
-              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-5">Audit scope</p>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Foundation', color: '#6366F1', checked: true, score: 82 },
-                    { name: 'Human Experience', color: '#EC4899', checked: false, score: 71 },
-                    { name: 'Inclusive Design', color: '#F59E0B', checked: true, score: 45 },
-                    { name: 'Future Readiness', color: '#10B981', checked: false, score: 68 },
-                  ].map((p, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
-                        p.checked
-                          ? 'border-brand/40 dark:border-brand/30 bg-brand/5 dark:bg-brand/[0.06]'
-                          : 'border-border/40 dark:border-white/[0.06] opacity-50'
-                      }`}
-                    >
-                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-                        p.checked ? 'bg-brand' : 'border-2 border-border'
-                      }`}>
-                        {p.checked && (
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6L5.5 8.5L9.5 3.5" stroke="#111" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        )}
-                      </div>
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: p.color }} />
-                      <span className="text-sm font-medium text-text flex-1">{p.name}</span>
-                      <span className={`text-sm font-bold ${p.score >= 70 ? 'text-emerald-500' : p.score >= 40 ? 'text-amber-500' : 'text-red-500'}`}>{p.score}</span>
-                    </div>
-                  ))}
+
+              {/* Column 2 — Dig deeper */}
+              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+                <div className="w-11 h-11 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mx-auto mb-4">
+                  <Search size={18} className="text-[#6366F1]" />
                 </div>
-                <div className="mt-5 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-brand text-[#111] text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">FOCUSED</span>
-                    <p className="text-xs font-semibold text-text">2 pillars selected</p>
-                  </div>
-                  <p className="text-[11px] text-muted leading-relaxed">Re-auditing Foundation and Inclusive Design. Previous scores for Human Experience and Future Readiness will carry forward.</p>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6366F1] mb-1">On demand</span>
+                <h4 className="font-heading font-semibold text-lg text-text mb-2">Dig deeper</h4>
+                <p className="text-muted text-sm leading-relaxed mb-5 flex-1">
+                  Fresh scan of all 64 checkpoints. Finds new issues beyond the original scope.
+                </p>
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-[#6366F1] justify-center">
+                  <Layers size={14} />
+                  <span>Expands coverage over time</span>
+                </div>
+              </div>
+
+              {/* Column 3 — Focused re-audit */}
+              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+                <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center mx-auto mb-4">
+                  <Target size={18} className="text-brand" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-brand mb-1">Paying users</span>
+                <h4 className="font-heading font-semibold text-lg text-text mb-2">Focus on pillars</h4>
+                <p className="text-muted text-sm leading-relaxed mb-5 flex-1">
+                  Pick 1-3 pillars to re-audit. Previous scores stay intact for the rest. Faster, targeted results.
+                </p>
+                <div className="inline-flex items-center gap-2 text-sm font-medium text-brand justify-center">
+                  <Target size={14} />
+                  <span>Audit only what changed</span>
                 </div>
               </div>
             </div>
