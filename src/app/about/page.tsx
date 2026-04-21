@@ -3,11 +3,11 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { ArrowRight, Sparkles, Heart, Shield, Brain, Eye, Users, BarChart3, Rocket, Tag, Target, Accessibility, HeartHandshake, BrainCircuit, Zap, ShieldCheck, Flower2 } from 'lucide-react'
-import { ArrowCurvy, Sparkle, Spiral, Squiggle } from '@/components/ui/Doodles'
+import { Spiral, Squiggle } from '@/components/ui/Doodles'
 
 export const metadata: Metadata = {
   title: 'About ClearUX — Human-Centered AI Audit Platform',
-  description: 'ClearUX was built by a team that spent 20+ years watching companies ship products that ignored their users. Learn why we exist and what drives us.',
+  description: 'ClearUX was born from 20+ years of watching companies ship products that ignored their users. Learn why we exist and what drives us.',
 }
 
 export default function AboutPage() {
@@ -193,79 +193,72 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════════════
-            4. FOUNDER STORY — full width, side-by-side
+            4. ORIGIN STORY — dark theme, full width
             ═══════════════════════════════════════════════════════ */}
-        <section className="relative py-24 sm:py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden bg-dotgrid">
-          <ArrowCurvy className="hidden lg:block absolute top-12 right-[7%] rotate-6" color="var(--color-foundation)" />
-          <Sparkle className="hidden lg:block absolute bottom-16 left-[4%]" color="var(--color-tech)" />
+        <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#111111' }}>
+          {/* Ambient glows */}
+          <div className="absolute top-[-5%] left-[20%] w-[500px] h-[500px] rounded-full bg-brand/[0.06] blur-[180px] pointer-events-none" />
+          <div className="absolute bottom-[10%] right-[15%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[160px] pointer-events-none" />
 
-          <div className="max-w-6xl mx-auto relative">
-            <div className="flex flex-col lg:flex-row gap-14 lg:gap-20 items-center">
+          <div className="max-w-4xl mx-auto relative">
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.08] mb-6">
+                <div className="w-2 h-2 rounded-full bg-brand" />
+                <span className="text-xs font-semibold text-white/60">The origin story</span>
+              </div>
+              <h2 className="font-heading font-semibold text-3xl sm:text-4xl md:text-5xl text-white mb-6" style={{ lineHeight: '1.1' }}>
+                Why ClearUX exists
+              </h2>
+              <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed">
+                Born from frustration. Built with purpose.
+              </p>
+            </div>
 
-              {/* Photo column */}
-              <div className="flex-shrink-0 w-full lg:w-auto flex flex-col items-center lg:items-start">
-                <div className="relative w-[260px] h-[340px] sm:w-[280px] sm:h-[370px] rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/40">
-                  {/* Gradient border effect */}
-                  <div className="absolute inset-0 rounded-2xl p-[2px] bg-brand">
-                    <div className="w-full h-full rounded-[14px] overflow-hidden bg-surface-alt">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/team-stefano.jpg"
-                        alt="Stefano Schintu — Founder of ClearUX"
-                        className="w-full h-full object-cover object-top relative z-10"
-                      />
-                      {/* Fallback initials shown behind image if it fails to load */}
-                      <div className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-muted/30">
-                        SS
-                      </div>
-                    </div>
-                  </div>
+            {/* Quote highlight */}
+            <div className="mb-14 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+              <p className="text-white/90 font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
+                &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
+              </p>
+            </div>
+
+            {/* Three story blocks */}
+            <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-10 h-10 rounded-lg bg-[#6366F1]/20 flex items-center justify-center mb-4">
+                  <Eye size={18} className="text-[#6366F1]" />
                 </div>
-                <div className="text-center lg:text-left mt-6">
-                  <h3 className="font-heading font-semibold text-xl text-text">Stefano Schintu</h3>
-                  <p className="text-sm text-muted mt-0.5">Founder &amp; CEO</p>
-                  <a
-                    href="https://www.linkedin.com/in/stefanoschintu"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline mt-2.5 transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-                    Connect on LinkedIn
-                  </a>
-                </div>
+                <h3 className="font-heading font-semibold text-lg text-white mb-3">The problem we saw</h3>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  After 20+ years in digital, the pattern was clear: companies that needed UX audits the most couldn&apos;t afford them. Enterprise got $15K consultants. Everyone else was left guessing.
+                </p>
               </div>
 
-              {/* Story text */}
-              <div className="flex-1 max-w-2xl">
-                <p className="text-sm font-semibold tracking-wide uppercase mb-4 text-brand">The founding story</p>
-                <h2 className="font-heading text-3xl sm:text-4xl text-text mb-8" style={{ lineHeight: '1.15' }}>
-                  Why ClearUX exists
-                </h2>
-                <div className="space-y-6 text-text/75 text-base sm:text-[17px] leading-relaxed">
-                  <p className="text-text font-medium text-lg sm:text-xl border-l-4 border-brand pl-5 py-2 italic">
-                    What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?
-                  </p>
-
-                  <h3 className="font-heading text-lg text-text pt-2">The problem we kept seeing</h3>
-                  <p>
-                    After 20+ years designing digital experiences across industries and continents, we kept running into the same problem: the companies that needed UX audits the most were the ones that couldn&apos;t afford them.
-                  </p>
-                  <p>
-                    Enterprise clients would commission $15,000 consultancy engagements and get genuine insights. Startups, agencies, and growing teams? They were stuck guessing — or relying on automated tools that counted errors without understanding people.
-                  </p>
-
-                  <h3 className="font-heading text-lg text-text pt-2">What we saw going wrong</h3>
-                  <p>
-                    We&apos;d seen firsthand how dark patterns erode trust, how inaccessible interfaces exclude real users, and how products that ignore emotional design fail to connect. These aren&apos;t abstract problems — they cost businesses revenue and cost users their time, dignity, and confidence.
-                  </p>
-
-                  <h3 className="font-heading text-lg text-text pt-2">What we built instead</h3>
-                  <p>
-                    Not a checklist tool. Not another automated scanner. A genuine, human-centered audit framework — 16 categories, 4 pillars — that examines your product the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
-                  </p>
+              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4">
+                  <Shield size={18} className="text-pink-500" />
                 </div>
+                <h3 className="font-heading font-semibold text-lg text-white mb-3">What kept going wrong</h3>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products that ignore emotional design failing to connect. These cost businesses revenue and cost users their dignity.
+                </p>
               </div>
+
+              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-10 h-10 rounded-lg bg-brand/20 flex items-center justify-center mb-4">
+                  <Sparkles size={18} className="text-brand" />
+                </div>
+                <h3 className="font-heading font-semibold text-lg text-white mb-3">What we built instead</h3>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom statement */}
+            <div className="mt-14 text-center">
+              <p className="text-white/30 text-sm max-w-xl mx-auto">
+                ClearUX was founded to make professional-grade UX auditing accessible to every team that builds digital products.
+              </p>
             </div>
           </div>
         </section>

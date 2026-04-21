@@ -130,6 +130,12 @@ export const processAuditFn = inngest.createFunction(
 
       if (error || !audit) throw new Error(`Audit not found: ${error?.message}`)
 
+      // Parse selected_pillars: null = all pillars, array of indices = partial
+      const rawPillars = (audit as any).selected_pillars
+      const selectedPillars: number[] | null = Array.isArray(rawPillars) && rawPillars.length > 0
+        ? rawPillars.filter((v: any) => typeof v === 'number' && v >= 0 && v <= 3)
+        : null
+
       return {
         userEmail: (audit as any).profiles?.email || '',
         productUrl: (audit as any).product_url as string,
@@ -137,6 +143,7 @@ export const processAuditFn = inngest.createFunction(
         userFocus: (audit as any).ux_concern as string | null,
         language: ((audit as any).language as string) || 'en',
         depthMode: ((audit as any).depth_mode as string) || 'standard',
+        selectedPillars, // null = all, [0,2] = Foundation + Inclusive Design only
       }
     })
 
@@ -521,10 +528,23 @@ RULES FOR RE-AUDIT:
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
       // ════════════════════════════════════════════════════════════
+      // Filter categories based on selected pillars (null = all)
+      // Each pillar = 4 categories: pillar 0 → cats 0-3, pillar 1 → cats 4-7, etc.
+      let categoriesToAnalyze = [...UX_CATEGORY_NAMES]
+      if (auditDetails.selectedPillars) {
+        const selectedIndices = new Set<number>()
+        for (const pillarIdx of auditDetails.selectedPillars) {
+          for (let c = pillarIdx * 4; c < pillarIdx * 4 + 4; c++) {
+            if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
+          }
+        }
+        categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
+      }
+
       const BATCH_SIZE = 4
       const batches = []
-      for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
-        batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
+      for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
+        batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
       }
 
       const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
@@ -897,6 +917,7 @@ RULES FOR RE-AUDIT:
       const reportJsonWithBaseline = {
         ...reportData,
         _baselineCategoryScores: reportData.categoryScores,
+        selectedPillars: auditDetails.selectedPillars, // null = all, array = partial
       }
 
       // Insert report

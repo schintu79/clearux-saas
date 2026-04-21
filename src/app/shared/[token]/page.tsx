@@ -117,6 +117,8 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   const rawJson = report?.raw_json as any;
   const categoryScores: Array<{ name: string; score: number; summary: string }> = rawJson?.categoryScores || [];
   const topRecs: string[] = rawJson?.topRecommendations || (rawJson?.keyRecommendation ? [rawJson.keyRecommendation] : []);
+  const selectedPillars: number[] | null = rawJson?.selectedPillars ?? null;
+  const isPartialAudit = Array.isArray(selectedPillars) && selectedPillars.length < 4;
 
   const severityCounts = {
     critical: findings.filter(f => f.severity === 'critical').length,
@@ -171,6 +173,12 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                         <span className={`font-semibold ${scoreColor(overall)}`}>{scoreLabel(overall)}</span>
                         <span className="text-border">|</span>
                         <span className="text-muted">{report.total_issues} issues found</span>
+                        {isPartialAudit && (
+                          <>
+                            <span className="text-border">|</span>
+                            <span className="text-[11px] text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{selectedPillars!.length} of 4 pillars</span>
+                          </>
+                        )}
                       </div>
                       {/* Severity pills */}
                       <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 mt-3">

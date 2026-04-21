@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages, Building2, Upload, X, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages, Building2, Upload, X, ChevronDown, Scale, Heart, Accessibility, Brain, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -14,6 +14,13 @@ const AUDIT_FEATURES = [
   'AI discoverability check',
   'PDF + DOCX professional reports',
   'Prioritised findings & recommendations',
+];
+
+const PILLARS = [
+  { idx: 0, name: 'Foundation', desc: 'Visual design, messaging, navigation, content', Icon: Scale, color: '#6366F1', bg: 'bg-[#6366F1]/10' },
+  { idx: 1, name: 'Human Experience', desc: 'Conversion, trust, ethics, psychology', Icon: Heart, color: '#EC4899', bg: 'bg-pink-500/10' },
+  { idx: 2, name: 'Inclusive Design', desc: 'Accessibility, cognitive, wellbeing, mobile', Icon: Accessibility, color: '#F59E0B', bg: 'bg-amber-500/10' },
+  { idx: 3, name: 'Future Readiness', desc: 'Performance, AI, agents, global', Icon: Brain, color: '#10B981', bg: 'bg-[#10B981]/10' },
 ];
 
 const NewAuditInner: React.FC = () => {
@@ -32,6 +39,12 @@ const NewAuditInner: React.FC = () => {
   const [packageTier, setPackageTier] = useState<string>('starter');
   const [firstAuditFree, setFirstAuditFree] = useState(false);
 
+  // Pillar selection (only for re-audits by paying users)
+  const [selectedPillars, setSelectedPillars] = useState<number[]>([0, 1, 2, 3]); // all selected by default
+  const [showPillarPicker, setShowPillarPicker] = useState(false);
+  const [hasPriorAudit, setHasPriorAudit] = useState(false);
+  const isAllPillars = selectedPillars.length === 4;
+
   // White-label fields (Agency/Scale only)
   const [whiteLabelOpen, setWhiteLabelOpen] = useState(false);
   const [companyName, setCompanyName] = useState('');
@@ -47,6 +60,29 @@ const NewAuditInner: React.FC = () => {
       urlInputRef.current.focus();
     }
   }, [userLoading, user]);
+
+  // Check if this URL already has a completed audit (enables pillar picker for re-audits)
+  useEffect(() => {
+    if (!user || !url.trim()) { setHasPriorAudit(false); return; }
+    const checkPrior = async () => {
+      try {
+        const supabase = createBrowserSupabase();
+        const productUrl = url.startsWith('http') ? url : `https://${url}`;
+        let hostname = '';
+        try { hostname = new URL(productUrl).hostname.replace(/^www\./, ''); } catch { return; }
+        const { data } = await supabase
+          .from('audits')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'completed')
+          .ilike('product_url', `%${hostname}%`)
+          .limit(1);
+        setHasPriorAudit(!!(data && data.length > 0));
+      } catch { setHasPriorAudit(false); }
+    };
+    const timeout = setTimeout(checkPrior, 500); // debounce
+    return () => clearTimeout(timeout);
+  }, [user, url]);
 
   // Fetch credits + package tier
   useEffect(() => {
@@ -99,6 +135,10 @@ const NewAuditInner: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!validateUrl(url)) return;
+    if (hasPriorAudit && selectedPillars.length === 0) {
+      setGeneralError('Select at least one pillar to audit.');
+      return;
+    }
 
     setLoading(true);
     setGeneralError('');
@@ -137,6 +177,7 @@ const NewAuditInner: React.FC = () => {
           plan: 'full_audit',
           language: language,
           depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
+          ...(hasPriorAudit && !isAllPillars && selectedPillars.length > 0 ? { selected_pillars: selectedPillars } : {}),
           ...(isWhiteLabelEligible && companyName.trim() ? { white_label_company_name: companyName.trim() } : {}),
           ...(isWhiteLabelEligible && whitelabelLogoUrl ? { white_label_logo_url: whitelabelLogoUrl } : {}),
         })
@@ -285,6 +326,101 @@ const NewAuditInner: React.FC = () => {
         )}
       </div>
 
+      {/* ── Pillar Selection (re-audit only, paying users) ─────── */}
+      {hasPriorAudit && !firstAuditFree && (
+        <div className="mb-6 rounded-xl border-2 border-border/60 dark:border-white/[0.08] bg-card overflow-hidden">
+          {/* Toggle header */}
+          <button
+            type="button"
+            onClick={() => setShowPillarPicker(!showPillarPicker)}
+            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Zap size={15} className="text-brand" />
+              <span className="text-sm font-bold text-text">Audit Scope</span>
+              {!showPillarPicker && (
+                <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+                  {isAllPillars ? 'All 4 pillars' : `${selectedPillars.length} pillar${selectedPillars.length !== 1 ? 's' : ''}`}
+                </span>
+              )}
+            </div>
+            <ChevronDown size={14} className={`text-muted transition-transform duration-200 ${showPillarPicker ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showPillarPicker && (
+            <div className="px-5 pb-5 border-t border-border/40 dark:border-white/[0.04]">
+              <p className="text-xs text-muted mt-3 mb-4">
+                Focus your re-audit on specific pillars, or run all four for a complete analysis.
+              </p>
+
+              {/* Select All toggle */}
+              <button
+                type="button"
+                onClick={() => setSelectedPillars(isAllPillars ? [] : [0, 1, 2, 3])}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 mb-3 transition-all ${
+                  isAllPillars
+                    ? 'border-brand bg-brand/5 dark:bg-brand/10'
+                    : 'border-border/60 dark:border-white/[0.08] hover:border-border'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isAllPillars ? 'bg-brand' : 'border-2 border-border'
+                }`}>
+                  {isAllPillars && <Check size={12} className="text-[#111]" />}
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-semibold text-text">Complete audit</p>
+                  <p className="text-[11px] text-muted">All 4 pillars, 16 categories, 64 checkpoints</p>
+                </div>
+              </button>
+
+              {/* Individual pillar toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {PILLARS.map((p) => {
+                  const selected = selectedPillars.includes(p.idx);
+                  const PIcon = p.Icon;
+                  return (
+                    <button
+                      key={p.idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPillars(prev =>
+                          selected
+                            ? prev.filter(i => i !== p.idx)
+                            : [...prev, p.idx].sort()
+                        );
+                      }}
+                      className={`flex items-start gap-3 px-3.5 py-3 rounded-lg border-2 transition-all text-left ${
+                        selected
+                          ? 'border-brand/40 dark:border-brand/30 bg-brand/5 dark:bg-brand/[0.06]'
+                          : 'border-border/40 dark:border-white/[0.06] hover:border-border opacity-60'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                        selected ? 'bg-brand' : 'border-2 border-border'
+                      }`}>
+                        {selected && <Check size={12} className="text-[#111]" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <PIcon size={13} style={{ color: p.color }} />
+                          <span className="text-xs font-bold text-text">{p.name}</span>
+                        </div>
+                        <p className="text-[10px] text-muted leading-snug">{p.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedPillars.length === 0 && (
+                <p className="text-red-500 dark:text-red-400 text-xs mt-2">Select at least one pillar to audit.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── White-label branding (Agency/Scale only) — collapsible ── */}
       {isWhiteLabelEligible && (
         <div className="mb-6 rounded-xl border-2 border-dashed border-brand/20 dark:border-brand/10 bg-brand/5 dark:bg-brand/[0.03] overflow-hidden">
@@ -393,10 +529,16 @@ const NewAuditInner: React.FC = () => {
       <div className="mb-6 p-4 rounded-xl bg-off border border-border">
         <div className="flex items-center gap-2 mb-3">
           <Zap size={14} className="text-brand" />
-          <span className="text-sm font-bold text-text">Full Deep Audit</span>
+          <span className="text-sm font-bold text-text">
+            {isAllPillars ? 'Full Deep Audit' : `Focused Audit — ${selectedPillars.length} Pillar${selectedPillars.length !== 1 ? 's' : ''}`}
+          </span>
         </div>
         <div className="grid grid-cols-1 gap-1.5">
-          {AUDIT_FEATURES.map((f, i) => (
+          {(isAllPillars ? AUDIT_FEATURES : [
+            `${selectedPillars.length * 16}-point deep analysis`,
+            `${selectedPillars.length * 4} UX categories audited`,
+            ...AUDIT_FEATURES.slice(2),
+          ]).map((f, i) => (
             <div key={i} className="flex items-center gap-2">
               <CheckCircle size={13} className="text-[#22C55E] flex-shrink-0" />
               <span className="text-xs text-muted">{f}</span>

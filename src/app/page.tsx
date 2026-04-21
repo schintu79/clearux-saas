@@ -873,6 +873,64 @@ export default function Home() {
               </div>
             </div>
 
+            {/* ── Feature 2c: Focused Pillar Re-audits ── */}
+            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
+                  <Target size={16} className="text-text" />
+                  <span className="text-xs font-semibold text-text">Focused Re-audit</span>
+                </div>
+                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
+                  Re-audit only the pillars<br className="hidden sm:block" /> that matter right now.
+                </h3>
+                <p className="text-muted text-base leading-relaxed mb-4">
+                  Scored low on Inclusive Design? Re-audit just that pillar after your fixes. No need to re-run all 64 checkpoints when you know exactly what you changed. Your previous scores stay intact for unaudited pillars.
+                </p>
+                <p className="text-sm text-muted/80 font-medium">
+                  Available on re-audits for paying users. First audit always covers all 4 pillars for a complete baseline.
+                </p>
+              </div>
+              {/* Visual — pillar selector mock */}
+              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-5">Audit scope</p>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Foundation', color: '#6366F1', checked: true, score: 82 },
+                    { name: 'Human Experience', color: '#EC4899', checked: false, score: 71 },
+                    { name: 'Inclusive Design', color: '#F59E0B', checked: true, score: 45 },
+                    { name: 'Future Readiness', color: '#10B981', checked: false, score: 68 },
+                  ].map((p, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+                        p.checked
+                          ? 'border-brand/40 dark:border-brand/30 bg-brand/5 dark:bg-brand/[0.06]'
+                          : 'border-border/40 dark:border-white/[0.06] opacity-50'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                        p.checked ? 'bg-brand' : 'border-2 border-border'
+                      }`}>
+                        {p.checked && (
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6L5.5 8.5L9.5 3.5" stroke="#111" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        )}
+                      </div>
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: p.color }} />
+                      <span className="text-sm font-medium text-text flex-1">{p.name}</span>
+                      <span className={`text-sm font-bold ${p.score >= 70 ? 'text-emerald-500' : p.score >= 40 ? 'text-amber-500' : 'text-red-500'}`}>{p.score}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-brand text-[#111] text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">FOCUSED</span>
+                    <p className="text-xs font-semibold text-text">2 pillars selected</p>
+                  </div>
+                  <p className="text-[11px] text-muted leading-relaxed">Re-auditing Foundation and Inclusive Design. Previous scores for Human Experience and Future Readiness will carry forward.</p>
+                </div>
+              </div>
+            </div>
+
             {/* ── Feature 3: Share with Your Team ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
               <div>

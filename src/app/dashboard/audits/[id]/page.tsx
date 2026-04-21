@@ -1357,6 +1357,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const categoryScores: Array<{ name: string; score: number; summary: string }> =
     rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [];
 
+  // Selected pillars from report (null = all 4)
+  const auditSelectedPillars: number[] | null = rawJson?.selectedPillars ?? (audit as any)?.selected_pillars ?? null;
+  const isPartialAudit = Array.isArray(auditSelectedPillars) && auditSelectedPillars.length < 4;
+
   // ALWAYS calculate overall score from category data (don't trust stored value)
   const calculatedOverallScore = categoryScores.length > 0
     ? Math.round(categoryScores.reduce((s, c) => s + c.score, 0) / categoryScores.length)
@@ -1699,8 +1703,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
-                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
                     <h2 className="text-xl font-bold font-heading text-text">{L.overallScore}</h2>
+                    {isPartialAudit && (
+                      <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+                        {auditSelectedPillars!.length} of 4 pillars
+                      </span>
+                    )}
                     <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
                       (calculatedOverallScore) >= 70
                         ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
@@ -1714,16 +1723,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {/* Pillar mini-scores — 2-column grid on mobile, inline on desktop */}
                   <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                    {PILLAR_CONFIG.map((pillar) => {
+                    {PILLAR_CONFIG.map((pillar, pIdx) => {
                       const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
                       const avg = pillarCats.length > 0
                         ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                         : 0;
+                      const wasAudited = !isPartialAudit || (auditSelectedPillars?.includes(pIdx) ?? true);
                       return (
-                        <div key={pillar.name} className="flex items-center gap-1.5">
+                        <div key={pillar.name} className={`flex items-center gap-1.5 ${!wasAudited ? 'opacity-30' : ''}`}>
                           <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
                           <span className="text-xs text-muted">{pillar.name}</span>
-                          <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                          {wasAudited ? (
+                            <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                          ) : (
+                            <span className="text-xs text-muted">--</span>
+                          )}
                         </div>
                       );
                     })}

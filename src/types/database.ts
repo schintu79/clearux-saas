@@ -82,6 +82,8 @@ export interface Audit {
   share_enabled:      boolean
   // Depth mode: 'standard' = re-audit checks only baseline findings; 'deep' = find new issues
   depth_mode:         AuditDepthMode
+  // Pillar selection: null = all pillars (full audit), array of indices = partial audit
+  selected_pillars:   number[] | null
 }
 
 export interface ScheduledAudit {
