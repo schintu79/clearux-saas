@@ -53,6 +53,7 @@ export interface Profile {
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences
   marketing_emails: boolean
+  welcome_email_sent: boolean
 }
 
 export interface Audit {
