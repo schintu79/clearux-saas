@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
 import ScrollToTop from '@/components/ui/ScrollToTop'
+import CrispChat from '@/components/ui/CrispChat'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -129,6 +130,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
             <ScrollToTop />
             <CookieConsent />
+            <CrispChat />
           </AuthProvider>
         </ThemeProvider>
       </body>
