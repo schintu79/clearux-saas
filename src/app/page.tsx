@@ -565,7 +565,7 @@ export default function Home() {
             </h2>
             {/* Clean separator — no doodles */}
             <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              Most audit tools stop at performance and SEO. ClearUX goes deeper — ethical UX, cognitive accessibility, AI agent readiness, and conversion psychology. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.
+              Most audit tools stop at performance and SEO. ClearUX goes deeper — <strong className="text-text">ethical UX</strong>, <strong className="text-text">cognitive accessibility</strong>, <strong className="text-text">AI agent readiness</strong>, and <strong className="text-text">conversion psychology</strong>. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.
             </p>
           </div>
 
@@ -1071,20 +1071,26 @@ export default function Home() {
           </div>
 
           {/* All audits include */}
-          <div className="mt-14 pt-10 border-t border-border">
-            <h2 className="font-heading text-2xl font-semibold text-text mb-6">All audits include</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
+          <div className="mt-14 rounded-2xl border border-brand/20 dark:border-brand/10 p-6 sm:p-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
+            <h2 className="font-heading text-2xl font-semibold text-text mb-8 text-center">All audits include</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
-                { title: 'Available in 6 languages', desc: 'English, Spanish, French, German, Italian, and Portuguese. Findings and reports delivered in your chosen language.' },
-                { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
-                { title: 'Instant delivery', desc: 'Reports arrive within minutes. PDF, Word, and an interactive dashboard with improvement tracking.' },
-              ].map((item, i) => (
-                <div key={i}>
-                  <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
-                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
+                { Icon: CheckCircle, title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+                { Icon: Globe2, title: 'Available in 6 languages', desc: 'English, Spanish, French, German, Italian, and Portuguese.' },
+                { Icon: Clock, title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
+                { Icon: Zap, title: 'Instant delivery', desc: 'Reports within minutes. PDF, Word, and interactive dashboard included.' },
+              ].map((item, i) => {
+                const ItemIcon = item.Icon;
+                return (
+                  <div key={i} className="bg-card/80 dark:bg-card rounded-xl border border-border/30 dark:border-white/[0.06] p-5">
+                    <div className="w-10 h-10 rounded-xl bg-brand/15 dark:bg-brand/10 flex items-center justify-center mb-3">
+                      <ItemIcon size={18} className="text-brand" />
+                    </div>
+                    <p className="text-sm font-bold text-text mb-1.5">{item.title}</p>
+                    <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
