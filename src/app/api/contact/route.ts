@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const { error } = await resend.emails.send({
       from: `ClearUX Contact <hello@clearux.ai>`,
       to: CONTACT_TO,
-      replyTo: email,
+      reply_to: email,
       subject: `Contact form: ${name}`,
       html: `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto">
