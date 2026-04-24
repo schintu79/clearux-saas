@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
-import { sendPaymentConfirmation } from '@/lib/audit-engine/email'
+import { sendPaymentConfirmation, sendCreditsPurchased } from '@/lib/audit-engine/email'
 
 /**
  * POST /api/stripe/webhook
@@ -108,6 +108,27 @@ export async function POST(request: NextRequest) {
               console.log(`Updated tier for user ${userId}: ${newTier}, white_label: ${isWhiteLabel}`)
             } catch (tierErr) {
               console.warn(`Non-critical: failed to update tier for user ${userId}:`, tierErr)
+            }
+
+            // Send credits purchased email (non-blocking)
+            try {
+              const { data: userProf } = await supabase
+                .from('profiles')
+                .select('email, credits')
+                .eq('id', userId)
+                .single()
+              if (userProf && (userProf as any).email) {
+                const packNames: Record<string, string> = { starter: 'Starter', growth: 'Growth', agency: 'Agency', scale: 'Scale' }
+                await sendCreditsPurchased(
+                  (userProf as any).email,
+                  creditsToAdd,
+                  (userProf as any).credits ?? creditsToAdd,
+                  packNames[pack || 'starter'] || pack || 'Credit Pack',
+                  session.amount_total || 0,
+                )
+              }
+            } catch (emailErr) {
+              console.warn(`Non-critical: credits email failed for user ${userId}:`, emailErr)
             }
           }
           return NextResponse.json({ received: true }, { status: 200 })

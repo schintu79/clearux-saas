@@ -16,7 +16,7 @@ import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from '@/lib/audit-engine/crawler'
 import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
-import { sendAuditComplete } from '@/lib/audit-engine/email'
+import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
 import type { AuditFinding } from '@/types/database'
 
@@ -963,7 +963,12 @@ RULES FOR RE-AUDIT:
       // Send email notification
       if (auditDetails.userEmail) {
         try {
-          await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl)
+          const isFreeAudit = auditDetails.plan === 'free_preview'
+          if (isFreeAudit) {
+            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl)
+          } else {
+            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl)
+          }
         } catch (emailErr) {
           console.error('[inngest] Email error (non-fatal):', emailErr)
         }

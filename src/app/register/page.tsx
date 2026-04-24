@@ -73,6 +73,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
+  const [marketingEmails, setMarketingEmails] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOauthLoading] = useState<string | null>(null)
@@ -143,7 +144,7 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         options: {
-          data: { full_name: formData.fullName },
+          data: { full_name: formData.fullName, marketing_emails: marketingEmails },
           emailRedirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(postAuthRedirect)}`,
         },
       })
@@ -367,6 +368,31 @@ export default function RegisterPage() {
             </div>
           )}
           {errors.confirmPassword && <p className="text-xs text-[#EF4444] mt-1.5">{errors.confirmPassword}</p>}
+        </div>
+
+        {/* Marketing consent */}
+        <div className="flex items-start gap-3 pt-1">
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={marketingEmails}
+            onClick={() => setMarketingEmails(prev => !prev)}
+            className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+              marketingEmails
+                ? 'bg-[#22C55E] border-[#22C55E]'
+                : 'bg-white dark:bg-white/10 border-border'
+            }`}
+          >
+            {marketingEmails && (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6L5.5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            )}
+          </button>
+          <label
+            onClick={() => setMarketingEmails(prev => !prev)}
+            className="text-xs text-muted leading-relaxed cursor-pointer select-none"
+          >
+            Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
+          </label>
         </div>
 
         {/* Submit */}

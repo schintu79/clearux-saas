@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { sendAccountDeleted } from '@/lib/audit-engine/email'
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -16,7 +17,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = user.id
+    const userEmail = user.email
     const db = createServiceSupabase()
+
+    // Fetch profile for name before deletion
+    const { data: profile } = await db
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single()
 
     // 2. Delete all user data in order (respecting foreign keys)
     // audit_findings → audit_pages → audit_logs → reports → audits → profiles
@@ -75,6 +84,15 @@ export async function DELETE(request: NextRequest) {
         { error: 'Account data deleted but auth removal failed. Please contact support.' },
         { status: 500 }
       )
+    }
+
+    // Send deletion confirmation email (non-blocking)
+    if (userEmail) {
+      try {
+        await sendAccountDeleted(userEmail, (profile as any)?.full_name)
+      } catch (emailErr) {
+        console.warn('[delete-account] deletion email failed (non-fatal):', emailErr)
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Account permanently deleted' })

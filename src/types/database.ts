@@ -51,6 +51,8 @@ export interface Profile {
   package_tier:  string
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
+  // Email preferences
+  marketing_emails: boolean
 }
 
 export interface Audit {

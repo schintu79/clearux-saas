@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createServiceSupabase } from '@/lib/supabase-server'
+import { sendWelcomeEmail } from '@/lib/audit-engine/email'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -64,14 +65,17 @@ export async function GET(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
+      const isNewUser = !existingProfile?.full_name
+
       // If profile has no name, populate from OAuth provider metadata
-      if (!existingProfile?.full_name) {
+      if (isNewUser) {
         const fullName = user.user_metadata?.full_name
           || user.user_metadata?.name
           || null
         const avatarUrl = user.user_metadata?.avatar_url
           || user.user_metadata?.picture
           || null
+        const marketingEmails = user.user_metadata?.marketing_emails === true
 
         if (fullName || avatarUrl) {
           await db
@@ -81,7 +85,16 @@ export async function GET(request: NextRequest) {
               email: user.email,
               ...(fullName ? { full_name: fullName } : {}),
               ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+              marketing_emails: marketingEmails,
             } as any, { onConflict: 'id' })
+        }
+
+        // Send welcome email (non-blocking)
+        try {
+          const name = user.user_metadata?.full_name || user.user_metadata?.name || null
+          await sendWelcomeEmail(user.email!, name)
+        } catch (emailErr) {
+          console.warn('[auth/callback] welcome email failed (non-fatal):', emailErr)
         }
       }
     } catch (err) {
