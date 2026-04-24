@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Langua
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
+import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 
 const AUDIT_FEATURES = [
   '64-point deep analysis',
@@ -526,26 +527,7 @@ const NewAuditInner: React.FC = () => {
       )}
 
       {/* ── What's included ────────────────────────────────── */}
-      <div className="mb-6 p-4 rounded-xl bg-off border border-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap size={14} className="text-brand" />
-          <span className="text-sm font-bold text-text">
-            {isAllPillars ? 'Full Deep Audit' : `Focused Audit — ${selectedPillars.length} Pillar${selectedPillars.length !== 1 ? 's' : ''}`}
-          </span>
-        </div>
-        <div className="grid grid-cols-1 gap-1.5">
-          {(isAllPillars ? AUDIT_FEATURES : [
-            `${selectedPillars.length * 16}-point deep analysis`,
-            `${selectedPillars.length * 4} UX categories audited`,
-            ...AUDIT_FEATURES.slice(2),
-          ]).map((f, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <CheckCircle size={13} className="text-[#22C55E] flex-shrink-0" />
-              <span className="text-xs text-muted">{f}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <AllAuditsInclude compact className="mb-6" />
 
       {/* ── Free first audit banner ──────────────────────── */}
       {firstAuditFree && (

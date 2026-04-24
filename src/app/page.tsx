@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 /* Doodle components available but not used in current design */
 import { HomeJsonLd } from "@/components/seo/JsonLd";
+import AllAuditsInclude from "@/components/ui/AllAuditsInclude";
 import { useAuth } from '@/context/AuthContext';
 
 /* ── Animated counter ────────────────────────────────────── */
@@ -1071,28 +1072,7 @@ export default function Home() {
           </div>
 
           {/* All audits include */}
-          <div className="mt-14 rounded-2xl border border-brand/20 dark:border-brand/10 p-6 sm:p-8" style={{ background: 'var(--gradient-brand-subtle)' }}>
-            <h2 className="font-heading text-2xl font-semibold text-text mb-8 text-center">All audits include</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[
-                { Icon: CheckCircle, title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
-                { Icon: Globe2, title: 'Available in 6 languages', desc: 'English, Spanish, French, German, Italian, and Portuguese.' },
-                { Icon: Clock, title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
-                { Icon: Zap, title: 'Instant delivery', desc: 'Reports within minutes. PDF, Word, and interactive dashboard included.' },
-              ].map((item, i) => {
-                const ItemIcon = item.Icon;
-                return (
-                  <div key={i} className="bg-card/80 dark:bg-card rounded-xl border border-border/30 dark:border-white/[0.06] p-5">
-                    <div className="w-10 h-10 rounded-xl bg-brand/15 dark:bg-brand/10 flex items-center justify-center mb-3">
-                      <ItemIcon size={18} className="text-brand" />
-                    </div>
-                    <p className="text-sm font-bold text-text mb-1.5">{item.title}</p>
-                    <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <AllAuditsInclude className="mt-14" />
         </div>
       </section>
 

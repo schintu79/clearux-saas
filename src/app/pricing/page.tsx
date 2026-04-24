@@ -3,6 +3,7 @@ import { Sparkle, Spiral } from '@/components/ui/Doodles';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 
 export const metadata = {
   title: 'Pricing',
@@ -250,22 +251,8 @@ export default function PricingPage() {
 
         {/* ── All audits include strip ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="max-w-4xl mx-auto pt-10 border-t border-border/30 dark:border-white/[0.04]">
-            <div className="grid sm:grid-cols-4 gap-6 sm:gap-8">
-              <div>
-                <p className="font-heading text-lg font-semibold text-text mb-1 leading-snug">All audits<br />include</p>
-              </div>
-              {[
-                { title: 'Full 64-point analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
-                { title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
-                { title: 'Secure payments via Stripe', desc: 'SSL encrypted. Visa, Mastercard, Apple Pay, and Google Pay accepted.' },
-              ].map((item, i) => (
-                <div key={i}>
-                  <p className="text-sm font-semibold text-text mb-1">{item.title}</p>
-                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
+          <div className="max-w-4xl mx-auto">
+            <AllAuditsInclude />
           </div>
         </section>
 
