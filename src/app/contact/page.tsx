@@ -119,7 +119,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">Email us</p>
-                    <a href="mailto:support@clearux.ai" className="text-sm text-brand hover:underline">support@clearux.ai</a>
+                    <a href="mailto:support@clearux.ai" className="text-sm text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

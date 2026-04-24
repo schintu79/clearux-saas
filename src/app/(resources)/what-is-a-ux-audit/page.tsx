@@ -195,7 +195,7 @@ export default function WhatIsAUxAuditPage() {
               A traditional UX audit follows a predictable workflow. A
               consultant or internal team defines the scope, reviews the product
               against a{' '}
-              <Link href="/ux-audit-checklist" className="text-brand hover:underline">
+              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX audit checklist
               </Link>
               , documents findings, scores each area, and delivers a report with
@@ -212,7 +212,7 @@ export default function WhatIsAUxAuditPage() {
             </p>
             <p className="text-text/80 leading-relaxed">
               That&apos;s why more teams are turning to{' '}
-              <Link href="/best-ux-audit-tools" className="text-brand hover:underline">
+              <Link href="/best-ux-audit-tools" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX audit tools
               </Link>{' '}
               that can automate large parts of the process while maintaining
@@ -237,7 +237,7 @@ export default function WhatIsAUxAuditPage() {
               sprint, compare scores over time, and share interactive reports
               with stakeholders — no more 80-page PDFs that nobody reads.
               Because the entire{' '}
-              <Link href="/ux-audit-checklist" className="text-brand hover:underline">
+              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 checklist
               </Link>{' '}
               is built in, nothing gets missed.
@@ -277,7 +277,7 @@ export default function WhatIsAUxAuditPage() {
               <li>
                 <Link
                   href="/ux-audit-checklist"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   UX Audit Checklist <ArrowRight size={14} />
                 </Link>
@@ -285,7 +285,7 @@ export default function WhatIsAUxAuditPage() {
               <li>
                 <Link
                   href="/best-ux-audit-tools"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   Best UX Audit Tools <ArrowRight size={14} />
                 </Link>

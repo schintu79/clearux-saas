@@ -174,7 +174,7 @@ export default function UxAuditChecklistPage() {
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
             Running a{' '}
-            <Link href="/what-is-a-ux-audit" className="text-brand hover:underline">
+            <Link href="/what-is-a-ux-audit" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
               UX audit
             </Link>{' '}
             without a checklist is like performing a code review without
@@ -253,7 +253,7 @@ export default function UxAuditChecklistPage() {
               accountable. Explore how ClearUX compares to other{' '}
               <Link
                 href="/best-ux-audit-tools"
-                className="text-brand hover:underline"
+                className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
               >
                 UX audit tools
               </Link>{' '}
@@ -290,7 +290,7 @@ export default function UxAuditChecklistPage() {
               <li>
                 <Link
                   href="/what-is-a-ux-audit"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   What Is a UX Audit? <ArrowRight size={14} />
                 </Link>
@@ -298,7 +298,7 @@ export default function UxAuditChecklistPage() {
               <li>
                 <Link
                   href="/best-ux-audit-tools"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   Best UX Audit Tools <ArrowRight size={14} />
                 </Link>

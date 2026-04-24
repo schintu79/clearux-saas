@@ -76,12 +76,12 @@ export default function BestUxAuditToolsPage() {
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
               The traditional approach to{' '}
-              <Link href="/what-is-a-ux-audit" className="text-brand hover:underline">
+              <Link href="/what-is-a-ux-audit" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX auditing
               </Link>{' '}
               involves hiring a consultancy or freelance UX researcher to
               review your product against a{' '}
-              <Link href="/ux-audit-checklist" className="text-brand hover:underline">
+              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 checklist
               </Link>{' '}
               of heuristics and best practices. The consultant typically
@@ -193,7 +193,7 @@ export default function BestUxAuditToolsPage() {
               Accessibility scanners are essential — every team should run
               Lighthouse and axe as part of their development workflow. But
               they cover only one of the{' '}
-              <Link href="/ux-audit-checklist" className="text-brand hover:underline">
+              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 four pillars of a complete UX audit
               </Link>
               . Treating them as a full audit solution leaves usability
@@ -372,7 +372,7 @@ export default function BestUxAuditToolsPage() {
               <li>
                 <Link
                   href="/what-is-a-ux-audit"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   What Is a UX Audit? <ArrowRight size={14} />
                 </Link>
@@ -380,7 +380,7 @@ export default function BestUxAuditToolsPage() {
               <li>
                 <Link
                   href="/ux-audit-checklist"
-                  className="inline-flex items-center gap-1 text-brand hover:underline"
+                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   UX Audit Checklist <ArrowRight size={14} />
                 </Link>
