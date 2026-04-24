@@ -3,5 +3,11 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /dashboard/
+Disallow: /admin/
 
 Sitemap: https://clearux.ai/sitemap.xml
+
+# AI / LLM discoverability
+# See https://llmstxt.org for the specification
+# llms.txt: concise summary for AI systems
+# llms-full.txt: detailed product documentation
