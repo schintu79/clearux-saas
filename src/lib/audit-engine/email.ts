@@ -24,7 +24,7 @@ function emailLayout(content: string, preheader?: string): string {
     .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .header { background: #111111; padding: 32px 32px 28px; text-align: center; }
     .header h1 { margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; }
-    .header .logo { font-size: 28px; font-weight: 800; color: #B9FF66; letter-spacing: -0.5px; margin-bottom: 16px; }
+    .header .logo { margin-bottom: 16px; }
     .body { padding: 32px; }
     .body p { margin: 0 0 16px; font-size: 15px; line-height: 1.65; color: #3f3f46; }
     .body h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: #111111; }
@@ -49,7 +49,7 @@ function emailLayout(content: string, preheader?: string): string {
   <div class="outer">
     <div class="container">
       <div class="header">
-        <div class="logo">ClearUX</div>
+        <div class="logo"><a href="${APP_URL}"><img src="${APP_URL}/email-logo.png" alt="ClearUX" width="56" height="56" style="display:block;margin:0 auto;border-radius:12px;border:0" /></a></div>
         ${content.split('<!--HEADER-->')[0]}
       </div>
       <div class="body">
