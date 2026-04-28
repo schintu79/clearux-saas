@@ -519,7 +519,7 @@ function ScoreTrend({ productUrl, currentAuditId }: { productUrl: string; curren
               href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
               className="text-xs font-semibold text-brand hover:text-brand/80 transition-colors"
             >
-              Re-audit →
+              Re-audit (1 credit) →
             </Link>
           </div>
         </div>
@@ -1519,6 +1519,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <RefreshCw size={13} className="text-muted" />
                 Re-audit this site
+                <span className="ml-auto text-[10px] text-muted">1 credit</span>
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
@@ -1527,6 +1528,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <Search size={13} className="text-muted" />
                 Dig Deeper (find new issues)
+                <span className="ml-auto text-[10px] text-muted">1 credit</span>
               </Link>
               <button
                 onClick={() => { handleRestart(); setMenuOpen(false); }}
@@ -1782,6 +1784,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
                     </button>
                   </div>
+                  <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
                 </div>
               </div>
 
@@ -2142,6 +2145,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {shareCopied ? <><Check size={14} className="text-emerald-500" /> Copied</> : <><Share2 size={14} /> Share</>}
               </button>
             </div>
+            <p className="text-center text-[11px] text-muted mt-2">1 credit per audit</p>
             {shareUrl && (
               <p className="text-center text-[11px] text-muted">
                 Share link: <span className="font-mono text-brand">{shareUrl}</span>
