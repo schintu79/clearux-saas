@@ -245,7 +245,7 @@ export function HeuristicRadarChart({ pillarScores }: {
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 200, cy = 150, R = 80;
+  const cx = 250, cy = 155, R = 95;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -268,14 +268,14 @@ export function HeuristicRadarChart({ pillarScores }: {
   // Labels placed further out with score underneath
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 36;
+    const r = R + 42;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 400 310" className="w-full h-auto mx-auto">
+      <svg viewBox="0 0 500 330" className="w-full h-auto mx-auto" style={{ maxWidth: 420 }}>
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
 
@@ -346,10 +346,10 @@ export function HeuristicRadarChart({ pillarScores }: {
           const color = PILLAR_COLORS[i] || '#6366F1';
           return (
             <g key={i}>
-              <text x={lp.x} y={isTop ? lp.y - 2 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="10" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
+              <text x={lp.x} y={isTop ? lp.y - 2 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="12" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
                 {lp.name}
               </text>
-              <text x={lp.x} y={isTop ? lp.y + 10 : lp.y + 12} textAnchor={anchor} dominantBaseline="middle" fontSize="11" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
+              <text x={lp.x} y={isTop ? lp.y + 12 : lp.y + 14} textAnchor={anchor} dominantBaseline="middle" fontSize="13" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
                 {lp.score}
               </text>
             </g>
@@ -560,14 +560,9 @@ export function AuditDashboardOverview({
         onCardClick={onStatCardClick}
       />
 
-      {/* Row 3: Top Issues + Heuristic Breakdown — equal 50/50 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
-          <TopIssuesPanel findings={findings} auditId={latestAuditId} />
-        </div>
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
-          <HeuristicRadarChart pillarScores={pillarScores} />
-        </div>
+      {/* Row 3: Heuristic Breakdown — full width */}
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm mb-6">
+        <HeuristicRadarChart pillarScores={pillarScores} />
       </div>
 
       {/* Row 4: Benchmarks */}
