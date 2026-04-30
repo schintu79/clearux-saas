@@ -78,6 +78,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
   const [error, setError] = useState<string | null>(null);
   const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
   const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
+  const [detectingCompetitors, setDetectingCompetitors] = useState(false);
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {
@@ -309,6 +310,19 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           productUrl={productUrl}
           latestAuditId={latestCompleted.id}
           competitors={competitors.length > 0 ? competitors : undefined}
+          detecting={detectingCompetitors}
+          onDetectCompetitors={() => {
+            setDetectingCompetitors(true);
+            fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
+              .then(r => r.json())
+              .then(d => {
+                if (d.competitors && d.competitors.length > 0) {
+                  setCompetitors(d.competitors);
+                }
+              })
+              .catch(() => {})
+              .finally(() => setDetectingCompetitors(false));
+          }}
           onStatCardClick={handleStatCardClick}
         />
       )}

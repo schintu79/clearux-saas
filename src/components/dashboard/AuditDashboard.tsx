@@ -10,6 +10,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import ScoreRing from '@/components/ui/ScoreRing';
 import type { AuditFinding } from '@/types/database';
@@ -80,7 +82,6 @@ export function ScoreOverTimeChart({ trend }: {
           const showLabel = isHovered || isLast;
           return (
             <g key={i}>
-              {/* Invisible larger hit area for hover + click */}
               <circle
                 cx={p.x} cy={p.y} r="14" fill="transparent"
                 onMouseEnter={() => setHoveredIdx(i)}
@@ -88,7 +89,6 @@ export function ScoreOverTimeChart({ trend }: {
                 onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
                 style={{ cursor: 'pointer' }}
               />
-              {/* Visible dot */}
               <circle
                 cx={p.x} cy={p.y}
                 r={isHovered ? 5 : 3.5}
@@ -98,7 +98,6 @@ export function ScoreOverTimeChart({ trend }: {
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
-              {/* Score label on hover or for latest */}
               {showLabel && (
                 <g style={{ pointerEvents: 'none' }}>
                   <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="#6366F1" />
@@ -180,9 +179,15 @@ export function TopIssuesPanel({ findings, auditId }: {
 
   if (sorted.length === 0) {
     return (
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 h-full flex flex-col">
         <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
-        <p className="text-xs text-muted py-4 text-center">No issues found — great job!</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-3">
+            <CheckCircle2 size={22} className="text-[#22C55E]" />
+          </div>
+          <p className="text-base font-semibold text-text mb-1">No issues found</p>
+          <p className="text-sm text-muted">Great job! Your site passed all checks.</p>
+        </div>
       </div>
     );
   }
@@ -231,6 +236,8 @@ export function TopIssuesPanel({ findings, auditId }: {
 
 /* ── Heuristic Breakdown Radar Chart ─────────────────────── */
 
+const PILLAR_COLORS = ['#6366F1', '#EC4899', '#F59E0B', '#22C55E'];
+
 export function HeuristicRadarChart({ pillarScores }: {
   pillarScores: Array<{ name: string; score: number }>;
 }) {
@@ -238,7 +245,7 @@ export function HeuristicRadarChart({ pillarScores }: {
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 140, cy = 130, R = 80;
+  const cx = 150, cy = 140, R = 90;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -258,49 +265,60 @@ export function HeuristicRadarChart({ pillarScores }: {
   });
   const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
 
+  // Labels placed further out with score underneath
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 28;
+    const r = R + 32;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
-    <div className="flex-shrink-0">
+    <div className="flex-1 min-w-0">
       <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 280 270" className="w-full max-w-[280px] h-auto mx-auto">
+      <svg viewBox="0 0 300 290" className="w-full h-auto mx-auto">
+        {/* Background fill for innermost area */}
+        <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
+
         {/* Grid polygons */}
         {levelPolygons.map((polygon, i) => (
-          <polygon key={i} points={polygon} fill="none" stroke="var(--border)" strokeWidth="0.5" opacity={0.4 + i * 0.15} />
+          <polygon key={i} points={polygon} fill="none" stroke="var(--border)" strokeWidth="0.6" opacity={0.3 + i * 0.12} />
         ))}
 
         {/* Axis lines */}
         {Array.from({ length: n }, (_, i) => {
           const angle = startAngle + i * angleStep;
           return (
-            <line key={i} x1={cx} y1={cy} x2={cx + R * Math.cos(angle)} y2={cy + R * Math.sin(angle)} stroke="var(--border)" strokeWidth="0.5" opacity="0.4" />
+            <line key={i} x1={cx} y1={cy} x2={cx + R * Math.cos(angle)} y2={cy + R * Math.sin(angle)} stroke="var(--border)" strokeWidth="0.5" opacity="0.3" />
           );
         })}
 
-        {/* Data polygon */}
-        <polygon points={dataPolygon} fill="#6366F1" fillOpacity="0.12" stroke="#6366F1" strokeWidth="1.5" strokeLinejoin="round" />
+        {/* Data polygon — gradient fill */}
+        <defs>
+          <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#6366F1" stopOpacity="0.08" />
+          </linearGradient>
+        </defs>
+        <polygon points={dataPolygon} fill="url(#radarFill)" stroke="#6366F1" strokeWidth="2" strokeLinejoin="round" />
 
         {/* Data points + hover areas */}
         {dataPoints.map((p, i) => {
           const isHovered = hoveredIdx === i;
+          const color = PILLAR_COLORS[i] || '#6366F1';
           return (
             <g key={i}>
               <circle
-                cx={p.x} cy={p.y} r="14" fill="transparent"
+                cx={p.x} cy={p.y} r="16" fill="transparent"
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
                 style={{ cursor: 'pointer' }}
               />
               <circle
                 cx={p.x} cy={p.y}
-                r={isHovered ? 5 : 3}
-                fill={isHovered ? '#6366F1' : '#6366F1'}
-                stroke="var(--card)"
-                strokeWidth={isHovered ? 2 : 1.5}
+                r={isHovered ? 6 : 4}
+                fill={isHovered ? color : 'var(--card)'}
+                stroke={color}
+                strokeWidth="2.5"
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
@@ -308,12 +326,12 @@ export function HeuristicRadarChart({ pillarScores }: {
               {isHovered && (
                 <g style={{ pointerEvents: 'none' }}>
                   <rect
-                    x={p.x - 40} y={p.y - 28}
-                    width="80" height="22"
-                    rx="5" fill="#1e1e2e" opacity="0.92"
+                    x={p.x - 50} y={p.y - 32}
+                    width="100" height="24"
+                    rx="6" fill="#1e1e2e" opacity="0.94"
                   />
-                  <text x={p.x} y={p.y - 14} textAnchor="middle" fontSize="8" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
-                    {pillarScores[i].name}: {pillarScores[i].score}
+                  <text x={p.x} y={p.y - 17} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
+                    {pillarScores[i].name}: {pillarScores[i].score}/100
                   </text>
                 </g>
               )}
@@ -321,23 +339,19 @@ export function HeuristicRadarChart({ pillarScores }: {
           );
         })}
 
-        {/* Labels — full names, multi-word wrapping */}
+        {/* Labels — full name + score below */}
         {labelPoints.map((lp, i) => {
           const anchor = Math.abs(lp.x - cx) < 5 ? 'middle' : lp.x > cx ? 'start' : 'end';
-          const words = lp.name.split(' ');
-          // Split into up to 2 lines
-          const line1 = words.length <= 2 ? lp.name : words.slice(0, Math.ceil(words.length / 2)).join(' ');
-          const line2 = words.length <= 2 ? null : words.slice(Math.ceil(words.length / 2)).join(' ');
+          const isTop = lp.y < cy;
+          const color = PILLAR_COLORS[i] || '#6366F1';
           return (
             <g key={i}>
-              <text x={lp.x} y={line2 ? lp.y - 5 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
-                {line1}
+              <text x={lp.x} y={isTop ? lp.y - 2 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="10" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
+                {lp.name}
               </text>
-              {line2 && (
-                <text x={lp.x} y={lp.y + 5} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
-                  {line2}
-                </text>
-              )}
+              <text x={lp.x} y={isTop ? lp.y + 10 : lp.y + 12} textAnchor={anchor} dominantBaseline="middle" fontSize="11" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
+                {lp.score}
+              </text>
             </g>
           );
         })}
@@ -348,10 +362,12 @@ export function HeuristicRadarChart({ pillarScores }: {
 
 /* ── Benchmarks Section ──────────────────────────────────── */
 
-export function BenchmarksSection({ overallScore, pillarScores, competitors }: {
+export function BenchmarksSection({ overallScore, pillarScores, competitors, detecting, onDetect }: {
   overallScore: number;
   pillarScores: Array<{ name: string; score: number }>;
   competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
+  detecting?: boolean;
+  onDetect?: () => void;
 }) {
   // Industry average baselines (static — based on ClearUX aggregated data)
   const industryAvg: Record<string, number> = {
@@ -379,7 +395,11 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors }: {
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
-        <span className="text-[10px] text-muted ml-auto">vs. industry average</span>
+        {hasCompetitors ? (
+          <span className="text-[10px] text-muted ml-auto">vs. top competitors</span>
+        ) : (
+          <span className="text-[10px] text-muted ml-auto">vs. industry average</span>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -436,10 +456,23 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors }: {
       </div>
 
       {!hasCompetitors && (
-        <div className="px-5 py-3 border-t border-border/15 dark:border-white/[0.03]">
-          <p className="text-[11px] text-muted">
-            Industry averages based on aggregated ClearUX audit data. Run audits on competitor sites to add them to this comparison.
+        <div className="px-5 py-3.5 border-t border-border/15 dark:border-white/[0.03] flex items-center justify-between gap-3">
+          <p className="text-[11px] text-muted flex-1">
+            Industry averages based on ClearUX aggregated data. Detect competitors to compare directly.
           </p>
+          {onDetect && (
+            <button
+              onClick={onDetect}
+              disabled={detecting}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition-colors disabled:opacity-50 flex-shrink-0"
+            >
+              {detecting ? (
+                <><Loader2 size={11} className="animate-spin" /> Detecting...</>
+              ) : (
+                'Detect Competitors'
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -457,6 +490,8 @@ export function AuditDashboardOverview({
   productUrl,
   latestAuditId,
   competitors,
+  detecting,
+  onDetectCompetitors,
   onStatCardClick,
 }: {
   overallScore: number;
@@ -467,6 +502,8 @@ export function AuditDashboardOverview({
   productUrl: string;
   latestAuditId: string;
   competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
+  detecting?: boolean;
+  onDetectCompetitors?: () => void;
   onStatCardClick?: (filter: string) => void;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed).length;
@@ -523,12 +560,12 @@ export function AuditDashboardOverview({
         onCardClick={onStatCardClick}
       />
 
-      {/* Row 3: Top Issues + Heuristic Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
-        <div className="sm:col-span-3 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+      {/* Row 3: Top Issues + Heuristic Breakdown — equal 50/50 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
           <TopIssuesPanel findings={findings} auditId={latestAuditId} />
         </div>
-        <div className="sm:col-span-2 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
           <HeuristicRadarChart pillarScores={pillarScores} />
         </div>
       </div>
@@ -538,6 +575,8 @@ export function AuditDashboardOverview({
         overallScore={overallScore}
         pillarScores={pillarScores}
         competitors={competitors}
+        detecting={detecting}
+        onDetect={onDetectCompetitors}
       />
     </>
   );
