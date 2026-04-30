@@ -109,7 +109,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
       if (latestCompleted) {
         // Findings
         const { data: findingsData } = await supabase
-          .from('findings')
+          .from('audit_findings')
           .select('*')
           .eq('audit_id', latestCompleted.id)
           .order('sort_order', { ascending: true });
