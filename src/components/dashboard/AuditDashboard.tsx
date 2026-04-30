@@ -245,7 +245,7 @@ export function HeuristicRadarChart({ pillarScores }: {
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 150, cy = 140, R = 90;
+  const cx = 200, cy = 150, R = 80;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -268,14 +268,14 @@ export function HeuristicRadarChart({ pillarScores }: {
   // Labels placed further out with score underneath
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 32;
+    const r = R + 36;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 300 290" className="w-full h-auto mx-auto">
+      <svg viewBox="0 0 400 310" className="w-full h-auto mx-auto">
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
 

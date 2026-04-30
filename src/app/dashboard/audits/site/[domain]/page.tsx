@@ -128,37 +128,8 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           .then(d => { if (d.trend) setScoreTrend(d.trend); })
           .catch(() => {});
 
-        // Competitors: other domains the user has audited (for benchmarking)
-        const otherDomainAudits = (rows || []).filter((a: any) => {
-          const d = formatUrl(a.product_url);
-          return d !== domain && a.status === 'completed';
-        });
-        // Group by domain, take latest per domain
-        const latestByDomain: Record<string, any> = {};
-        for (const a of otherDomainAudits) {
-          const d = formatUrl(a.product_url);
-          if (!latestByDomain[d]) latestByDomain[d] = a;
-        }
-        const compDomains = Object.values(latestByDomain).slice(0, 3);
-        if (compDomains.length > 0) {
-          const compIds = compDomains.map((a: any) => a.id);
-          const { data: compReports } = await supabase.from('reports').select('audit_id, overall_score, raw_json').in('audit_id', compIds);
-          const compData = compDomains.map((a: any) => {
-            const rep = (compReports || []).find((r: any) => r.audit_id === a.id);
-            const rawCatScores = (rep?.raw_json as any)?.categoryScores;
-            const compPillarScores = rawCatScores ? PILLAR_NAMES.map((name, pi) => {
-              const [s, e] = PILLAR_RANGES[pi];
-              const cats = rawCatScores.filter((_: any, idx: number) => idx >= s && idx < e);
-              return { name, score: cats.length > 0 ? Math.round(cats.reduce((sum: number, c: any) => sum + c.score, 0) / cats.length) : 0 };
-            }) : undefined;
-            return {
-              domain: formatUrl(a.product_url),
-              score: rep?.overall_score ?? 0,
-              pillarScores: compPillarScores,
-            };
-          }).filter(c => c.score > 0);
-          setCompetitors(compData);
-        }
+        // Competitors: loaded on-demand via "Detect Competitors" button
+        // (uses /api/audits/detect-competitors which auto-detects industry + top 3 competitors via AI)
       }
     } catch (err: any) {
       console.error('[DomainAudits] fetch error:', err);

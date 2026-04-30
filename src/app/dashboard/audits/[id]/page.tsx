@@ -438,12 +438,13 @@ function CheckpointHealth({ categoryScores, findings }: {
   );
 }
 
-/* ── Score Over Time — line chart (replaces old collapsible bar trend) ── */
+/* ── Score Over Time — collapsible line chart, closed by default ── */
 function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; currentAuditId: string }) {
   const router = useRouter();
   const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
   const [improvement, setImprovement] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   let domain = '';
@@ -464,7 +465,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
 
   if (loading || trend.length < 2) return null;
 
-  const W = 440, H = 180, PAD_L = 36, PAD_R = 20, PAD_T = 28, PAD_B = 32;
+  const W = 480, H = 140, PAD_L = 34, PAD_R = 16, PAD_T = 20, PAD_B = 26;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
 
@@ -483,92 +484,107 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`;
 
-  const gridLines = 4;
+  const gridLines = 3;
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
   return (
-    <div className="mb-6 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-sm p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <TrendingUp size={14} className="text-brand" />
-        <h3 className="text-sm font-semibold text-text">Score Over Time</h3>
-        <span className="text-[10px] text-muted ml-1">{trend.length} audits · {domain}</span>
+    <div className="mb-6 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-sm">
+      {/* Collapsed header — always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
+          <TrendingUp size={14} className="text-brand" />
+        </div>
+        <div className="flex-1 text-left">
+          <span className="text-sm font-semibold text-text">Score Over Time</span>
+          <span className="text-[10px] text-muted ml-2">{trend.length} audits · {domain}</span>
+        </div>
         {improvement !== 0 && (
-          <span className={`text-xs font-bold ml-auto ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+          <span className={`text-xs font-bold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-        {/* Grid */}
-        {gridScores.map((s, i) => {
-          const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
-          return (
-            <g key={i}>
-              <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
-              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="9" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
-            </g>
-          );
-        })}
+        <ChevronDown size={14} className={`text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
 
-        {/* Area fill */}
-        <defs>
-          <linearGradient id="auditScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#6366F1" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-        <path d={areaD} fill="url(#auditScoreAreaGrad)" />
-
-        {/* Line */}
-        <path d={pathD} fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-        {/* Hover hit areas + points */}
-        {points.map((p, i) => {
-          const isHovered = hoveredIdx === i;
-          const isCurrent = trend[i].auditId === currentAuditId;
-          const isLast = i === points.length - 1;
-          const showLabel = isHovered || isLast;
-          return (
-            <g key={i}>
-              <circle
-                cx={p.x} cy={p.y} r="16" fill="transparent"
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
-                style={{ cursor: 'pointer' }}
-              />
-              <circle
-                cx={p.x} cy={p.y}
-                r={isHovered ? 5.5 : isCurrent ? 4.5 : 3.5}
-                fill={isHovered ? '#6366F1' : isCurrent ? '#6366F1' : 'var(--card)'}
-                stroke="#6366F1"
-                strokeWidth="2"
-                className="transition-all duration-150"
-                style={{ pointerEvents: 'none' }}
-              />
-              {showLabel && (
-                <g style={{ pointerEvents: 'none' }}>
-                  <rect x={p.x - 14} y={p.y - 22} width="28" height="16" rx="4" fill="#6366F1" />
-                  <text x={p.x} y={p.y - 11.5} textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+      {/* Expanded chart */}
+      {expanded && (
+        <div className="px-4 pb-4 pt-1 border-t border-border/15 dark:border-white/[0.04]">
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+            {/* Grid */}
+            {gridScores.map((s, i) => {
+              const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
+              return (
+                <g key={i}>
+                  <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
+                  <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
                 </g>
-              )}
-              {isCurrent && !isHovered && (
-                <text x={p.x} y={p.y + 14} textAnchor="middle" fontSize="7.5" fontWeight="600" fill="#6366F1" fontFamily="var(--font-inter)">now</text>
-              )}
-            </g>
-          );
-        })}
+              );
+            })}
 
-        {/* X-axis date labels */}
-        {points.map((p, i) => {
-          if (trend.length > 6 && i !== 0 && i !== trend.length - 1 && i !== Math.floor(trend.length / 2)) return null;
-          const d = new Date(p.date);
-          const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
-          return (
-            <text key={i} x={p.x} y={H - 6} textAnchor="middle" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
-          );
-        })}
-      </svg>
+            {/* Area fill */}
+            <defs>
+              <linearGradient id="auditScoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6366F1" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="#6366F1" stopOpacity="0.02" />
+              </linearGradient>
+            </defs>
+            <path d={areaD} fill="url(#auditScoreAreaGrad)" />
+
+            {/* Line */}
+            <path d={pathD} fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+            {/* Hover hit areas + points */}
+            {points.map((p, i) => {
+              const isHovered = hoveredIdx === i;
+              const isCurrent = trend[i].auditId === currentAuditId;
+              const isLast = i === points.length - 1;
+              const showLabel = isHovered || isLast;
+              return (
+                <g key={i}>
+                  <circle
+                    cx={p.x} cy={p.y} r="14" fill="transparent"
+                    onMouseEnter={() => setHoveredIdx(i)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <circle
+                    cx={p.x} cy={p.y}
+                    r={isHovered ? 5 : isCurrent ? 4 : 3}
+                    fill={isHovered ? '#6366F1' : isCurrent ? '#6366F1' : 'var(--card)'}
+                    stroke="#6366F1"
+                    strokeWidth="2"
+                    className="transition-all duration-150"
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  {showLabel && (
+                    <g style={{ pointerEvents: 'none' }}>
+                      <rect x={p.x - 13} y={p.y - 20} width="26" height="14" rx="4" fill="#6366F1" />
+                      <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+                    </g>
+                  )}
+                  {isCurrent && !isHovered && (
+                    <text x={p.x} y={p.y + 12} textAnchor="middle" fontSize="7" fontWeight="600" fill="#6366F1" fontFamily="var(--font-inter)">now</text>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* X-axis date labels */}
+            {points.map((p, i) => {
+              if (trend.length > 6 && i !== 0 && i !== trend.length - 1 && i !== Math.floor(trend.length / 2)) return null;
+              const d = new Date(p.date);
+              const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+              return (
+                <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+              );
+            })}
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
