@@ -825,6 +825,253 @@ function ExpandableSummary({ text }: { text: string }) {
   );
 }
 
+/* ── Dashboard: Score Over Time Chart ────────────────────── */
+function ScoreOverTimeChart({ trend }: {
+  trend: Array<{ auditId: string; date: string; overallScore: number }>;
+}) {
+  if (trend.length === 0) return null;
+
+  const W = 320, H = 160, PAD_L = 32, PAD_R = 16, PAD_T = 20, PAD_B = 28;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  const minScore = Math.max(0, Math.min(...trend.map(t => t.overallScore)) - 10);
+  const maxScore = Math.min(100, Math.max(...trend.map(t => t.overallScore)) + 10);
+  const range = maxScore - minScore || 1;
+
+  const points = trend.map((t, i) => ({
+    x: PAD_L + (trend.length === 1 ? chartW / 2 : (i / (trend.length - 1)) * chartW),
+    y: PAD_T + chartH - ((t.overallScore - minScore) / range) * chartH,
+    score: t.overallScore,
+    date: t.date,
+  }));
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`;
+
+  // Grid lines
+  const gridLines = 4;
+  const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
+
+  return (
+    <div className="flex-1 min-w-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+        {/* Grid */}
+        {gridScores.map((s, i) => {
+          const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
+          return (
+            <g key={i}>
+              <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
+              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+            </g>
+          );
+        })}
+
+        {/* Area fill */}
+        <defs>
+          <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d={areaD} fill="url(#scoreGrad)" />
+
+        {/* Line */}
+        <path d={pathD} fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Points */}
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="3.5" fill="var(--card)" stroke="var(--brand)" strokeWidth="2" />
+            {i === points.length - 1 && (
+              <g>
+                <rect x={p.x - 12} y={p.y - 18} width="24" height="14" rx="4" fill="var(--brand)" />
+                <text x={p.x} y={p.y - 9} textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+              </g>
+            )}
+          </g>
+        ))}
+
+        {/* X-axis date labels */}
+        {points.map((p, i) => {
+          // Show first, last, and middle labels only if many points
+          if (trend.length > 5 && i !== 0 && i !== trend.length - 1 && i !== Math.floor(trend.length / 2)) return null;
+          const d = new Date(p.date);
+          const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+          return (
+            <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/* ── Dashboard: Stat Cards ───────────────────────────────── */
+function DashboardStatCards({ severityCounts, totalCheckpoints, totalFindings }: {
+  severityCounts: { critical: number; high: number; medium: number; low: number };
+  totalCheckpoints: number;
+  totalFindings: number;
+}) {
+  const passedChecks = Math.max(0, totalCheckpoints - totalFindings);
+  const cards = [
+    { label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500', bgColor: 'bg-red-50 dark:bg-red-950/20', borderColor: 'border-red-200/50 dark:border-red-800/20' },
+    { label: 'Major Issues', count: severityCounts.high, description: 'High impact issues to fix', color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-950/20', borderColor: 'border-orange-200/50 dark:border-orange-800/20' },
+    { label: 'Minor Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200/50 dark:border-amber-800/20' },
+    { label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', color: 'text-[#22C55E] dark:text-emerald-400', dotColor: 'bg-[#22C55E]', bgColor: 'bg-[#22C55E]/5 dark:bg-emerald-950/20', borderColor: 'border-[#22C55E]/20 dark:border-emerald-800/20' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      {cards.map((card) => (
+        <div key={card.label} className={`rounded-xl border ${card.borderColor} ${card.bgColor} p-4 transition-all hover:shadow-sm`}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
+            <span className={`text-xs font-semibold ${card.color}`}>{card.label}</span>
+          </div>
+          <p className={`text-2xl font-bold font-heading ${card.color}`}>{card.count}</p>
+          <p className="text-[11px] text-muted mt-1">{card.description}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Dashboard: Top Issues Panel ─────────────────────────── */
+function TopIssuesPanel({ findings, severityConfig }: {
+  findings: AuditFinding[];
+  severityConfig: ReturnType<typeof buildSeverityConfig>;
+}) {
+  // Show top 5 highest severity issues
+  const sorted = [...findings]
+    .filter(f => !f.dismissed)
+    .sort((a, b) => {
+      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+    })
+    .slice(0, 5);
+
+  if (sorted.length === 0) return null;
+
+  const sevBadgeColors: Record<string, string> = {
+    critical: 'bg-red-500 text-white',
+    high: 'bg-orange-500 text-white',
+    medium: 'bg-amber-400 text-amber-900',
+    low: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  };
+
+  return (
+    <div className="flex-1 min-w-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
+      <div className="space-y-0 divide-y divide-border/20 dark:divide-white/[0.04]">
+        {sorted.map((f) => {
+          const sev = severityConfig[f.severity] || severityConfig.medium;
+          const badgeColor = sevBadgeColors[f.severity] || sevBadgeColors.medium;
+          return (
+            <div key={f.id} className="flex items-center gap-3 py-2.5 group">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sev.dot}`} />
+              <span className="text-xs font-medium text-text flex-1 min-w-0 truncate group-hover:text-brand transition-colors">{f.title}</span>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wide ${badgeColor}`}>
+                {f.severity === 'critical' ? 'Critical' : f.severity === 'high' ? 'Major' : f.severity === 'medium' ? 'Medium' : 'Low'}
+              </span>
+              {f.page_url && (
+                <span className="text-[10px] text-muted flex-shrink-0">
+                  {(() => { try { return new URL(f.page_url).pathname.slice(0, 20); } catch { return ''; } })()}
+                </span>
+              )}
+              <ChevronDown size={12} className="text-muted flex-shrink-0 -rotate-90" />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Dashboard: Heuristic Breakdown Radar Chart ──────────── */
+function HeuristicRadarChart({ pillarConfig, categoryScores }: {
+  pillarConfig: ReturnType<typeof buildPillarConfig>;
+  categoryScores: Array<{ name: string; score: number; summary: string }>;
+}) {
+  const pillarScores = pillarConfig.map((pillar) => {
+    const cats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+    return {
+      name: pillar.name,
+      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0,
+      color: pillar.badgeBg,
+    };
+  });
+
+  const n = pillarScores.length;
+  const cx = 120, cy = 110, R = 80;
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2; // Start from top
+
+  // Compute vertices for each ring level
+  const levels = [25, 50, 75, 100];
+  const levelPolygons = levels.map((level) =>
+    Array.from({ length: n }, (_, i) => {
+      const angle = startAngle + i * angleStep;
+      const r = (level / 100) * R;
+      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+    }).join(' ')
+  );
+
+  // Data polygon
+  const dataPoints = pillarScores.map((ps, i) => {
+    const angle = startAngle + i * angleStep;
+    const r = (ps.score / 100) * R;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+  const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
+
+  // Label positions
+  const labelPoints = pillarScores.map((ps, i) => {
+    const angle = startAngle + i * angleStep;
+    const r = R + 22;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
+  });
+
+  return (
+    <div className="flex-shrink-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
+      <svg viewBox="0 0 240 230" className="w-full max-w-[240px] h-auto mx-auto">
+        {/* Grid polygons */}
+        {levelPolygons.map((polygon, i) => (
+          <polygon key={i} points={polygon} fill="none" stroke="var(--border)" strokeWidth="0.5" opacity={0.4 + i * 0.15} />
+        ))}
+
+        {/* Axis lines */}
+        {Array.from({ length: n }, (_, i) => {
+          const angle = startAngle + i * angleStep;
+          return (
+            <line key={i} x1={cx} y1={cy} x2={cx + R * Math.cos(angle)} y2={cy + R * Math.sin(angle)} stroke="var(--border)" strokeWidth="0.5" opacity="0.4" />
+          );
+        })}
+
+        {/* Data polygon */}
+        <polygon points={dataPolygon} fill="var(--brand)" fillOpacity="0.12" stroke="var(--brand)" strokeWidth="1.5" strokeLinejoin="round" />
+
+        {/* Data points */}
+        {dataPoints.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="3" fill="var(--brand)" stroke="var(--card)" strokeWidth="1.5" />
+        ))}
+
+        {/* Labels */}
+        {labelPoints.map((lp, i) => {
+          const anchor = Math.abs(lp.x - cx) < 5 ? 'middle' : lp.x > cx ? 'start' : 'end';
+          return (
+            <text key={i} x={lp.x} y={lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
+              {lp.name.split(' ')[0]}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 /* ── Pillar Section ───────────────────────────────────────── */
 const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain];
 
@@ -988,6 +1235,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const [showStickyScore, setShowStickyScore] = useState(false);
+  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number; totalIssues: number }>>([]);
 
   const isPaymentReturn = searchParams.get('payment') === 'success';
   const claimAuditId = searchParams.get('claim');
@@ -1116,6 +1364,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     if (!user) { setLoading(false); return; }
     fetchAuditDetail();
   }, [user, userLoading, fetchAuditDetail]);
+
+  // ── Fetch score trend for dashboard chart
+  useEffect(() => {
+    if (!audit?.product_url || audit.status !== 'completed') return;
+    fetch(`/api/audits/score-trend?url=${encodeURIComponent(audit.product_url)}`)
+      .then(r => r.json())
+      .then(d => { if (d.trend) setScoreTrend(d.trend); })
+      .catch(() => {});
+  }, [audit?.product_url, audit?.status]);
 
   // ── Payment verification + polling
   useEffect(() => {
@@ -1701,150 +1958,112 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           ═══════════════════════════════════════════════════════ */}
       {isCompleted && report && (
         <>
-          {/* ── Hero Score Card ─────────────────────────────── */}
-          <div ref={scoreCardRef} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden mb-6 shadow-lg shadow-black/[0.03]">
-            {/* Brand top accent */}
-            <div className="h-1.5 bg-brand" />
+          {/* ══════════════════════════════════════════════════
+              DASHBOARD LAYOUT
+              ══════════════════════════════════════════════════ */}
 
-            <div className="p-5 sm:p-6">
-              {/* Mobile: centered stack — Desktop: horizontal row */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                {/* Score ring */}
-                <div className="flex-shrink-0">
-                  <ScoreRing score={calculatedOverallScore} size={110} strokeWidth={7} />
-                </div>
+          {/* ── Row 1: UX Score + Score Over Time ──────────── */}
+          <div ref={scoreCardRef} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {/* UX Score Card */}
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-text mb-4">{L.overallScore}</h3>
+              <div className="flex flex-col items-center">
+                <ScoreRing score={calculatedOverallScore} size={130} strokeWidth={8} />
+                <p className="text-xs text-muted mt-2">/100</p>
+                <span className={`text-sm font-semibold mt-1 px-3 py-0.5 rounded-full ${
+                  calculatedOverallScore >= 70
+                    ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                    : calculatedOverallScore >= 40
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+                }`}>
+                  {getScoreLabel(calculatedOverallScore, auditLang)}
+                </span>
+                {isPartialAudit && (
+                  <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full mt-2">
+                    {auditSelectedPillars!.length} of 4 pillars
+                  </span>
+                )}
+              </div>
+            </div>
 
-                {/* Score details */}
-                <div className="flex-1 min-w-0 text-center sm:text-left">
-                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                    <h2 className="text-xl font-bold font-heading text-text">{L.overallScore}</h2>
-                    {isPartialAudit && (
-                      <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                        {auditSelectedPillars!.length} of 4 pillars
-                      </span>
-                    )}
-                    <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                      (calculatedOverallScore) >= 70
-                        ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
-                        : (calculatedOverallScore) >= 40
-                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                          : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
-                    }`}>
-                      {getScoreLabel(calculatedOverallScore, auditLang)}
-                    </span>
-                  </div>
-
-                  {/* Pillar mini-scores — 2-column grid on mobile, inline on desktop */}
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                    {PILLAR_CONFIG.map((pillar, pIdx) => {
-                      const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
-                      const avg = pillarCats.length > 0
-                        ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
-                        : 0;
-                      const wasAudited = !isPartialAudit || (auditSelectedPillars?.includes(pIdx) ?? true);
-                      return (
-                        <div key={pillar.name} className={`flex items-center gap-1.5 ${!wasAudited ? 'opacity-30' : ''}`}>
-                          <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
-                          <span className="text-xs text-muted">{pillar.name}</span>
-                          {wasAudited ? (
-                            <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
-                          ) : (
-                            <span className="text-xs text-muted">--</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Action buttons — all in one row, same style */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                      <Download size={12} /> PDF
-                    </a>
-                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                      <Download size={12} /> Word
-                    </a>
+            {/* Score Over Time Card */}
+            <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+              {scoreTrend.length >= 2 ? (
+                <ScoreOverTimeChart trend={scoreTrend} />
+              ) : (
+                <div className="h-full flex flex-col">
+                  <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center">
+                    <TrendingUp size={28} className="text-muted/30 mb-2" />
+                    <p className="text-xs text-muted">Re-audit to see your score trend</p>
                     <Link
                       href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
+                      className="text-xs font-semibold text-brand hover:text-brand/80 transition-colors mt-2"
                     >
-                      <RefreshCw size={12} /> Re-audit
+                      Re-audit (1 credit) →
                     </Link>
-                    <Link
-                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
-                    >
-                      <Search size={12} /> Dig Deeper
-                    </Link>
-                    <button
-                      onClick={handleShare}
-                      disabled={shareLoading}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
-                </div>
-              </div>
-
-              {/* Issue summary strip */}
-              {report.total_issues > 0 && (
-                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
-                  <span className="text-sm font-semibold text-text">
-                    {report.total_issues} {L.issuesFound}
-                  </span>
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                    {severityCounts.critical > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                        {severityCounts.critical} {L.severityCritical.toLowerCase()}
-                      </span>
-                    )}
-                    {severityCounts.high > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        {severityCounts.high} {L.severityHigh.toLowerCase()}
-                      </span>
-                    )}
-                    {severityCounts.medium > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.medium} {L.severityMedium.toLowerCase()}</span>
-                    )}
-                    {severityCounts.low > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.low} {L.severityLow.toLowerCase()}</span>
-                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Score Trend (shows when there are multiple audits of the same URL) ── */}
-          <ScoreTrend productUrl={audit.product_url} currentAuditId={auditId} />
+          {/* ── Row 2: Stat Cards (Critical, Major, Minor, Passed) ── */}
+          <DashboardStatCards
+            severityCounts={severityCounts}
+            totalCheckpoints={64}
+            totalFindings={findings.filter(f => !f.dismissed).length}
+          />
 
-          {/* ── Improvement tip ─────────────────────────────── */}
-          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
-            <RefreshCw size={15} className="text-brand flex-shrink-0" />
-            <p className="text-xs text-text/60 dark:text-text/50">
-              <span className="font-semibold text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
-            </p>
+          {/* ── Row 3: Top Issues + Heuristic Breakdown ───── */}
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+            {/* Top Issues — takes 3 cols */}
+            <div className="sm:col-span-3 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+              <TopIssuesPanel findings={findings} severityConfig={severityConfig} />
+            </div>
+
+            {/* Heuristic Breakdown Radar — takes 2 cols */}
+            <div className="sm:col-span-2 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+              <HeuristicRadarChart pillarConfig={PILLAR_CONFIG} categoryScores={categoryScores} />
+            </div>
           </div>
 
-          {/* ── Page Screenshot ────────────────────────────── */}
-          {auditPages[0]?.screenshot_url && (
-            <div className="mb-6 rounded-xl overflow-hidden border border-border/30 dark:border-white/[0.06] shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={auditPages[0].screenshot_url}
-                alt="Website overview"
-                className="w-full h-auto max-h-96 object-cover object-top"
-                loading="lazy"
-              />
-              <div className="px-4 py-2 bg-card border-t border-border/20 dark:border-white/[0.03]">
-                <p className="text-xs text-muted">{L.homepageCaptured}</p>
+          {/* ── Action bar (compact) ──────────────────────── */}
+          <div className="mb-6 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                  <Download size={12} /> PDF
+                </a>
+                <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                  <Download size={12} /> Word
+                </a>
+                <button
+                  onClick={handleShare}
+                  disabled={shareLoading}
+                  className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                  className="flex items-center justify-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-semibold px-4 py-2 rounded-lg hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                  <RefreshCw size={12} /> Re-audit
+                </Link>
+                <Link
+                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                  className="flex items-center justify-center gap-1.5 bg-brand/10 text-brand text-xs font-semibold px-4 py-2 rounded-lg hover:bg-brand/20 transition-colors whitespace-nowrap"
+                >
+                  <Search size={12} /> Dig Deeper
+                </Link>
               </div>
             </div>
-          )}
+            <p className="text-[11px] text-muted mt-2 text-right">1 credit per audit</p>
+          </div>
 
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="flex items-center gap-1 bg-off/80 dark:bg-white/[0.04] rounded-xl p-1 mb-6">
