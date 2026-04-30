@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Loader2,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import ScoreRing from '@/components/ui/ScoreRing';
 import type { AuditFinding } from '@/types/database';
@@ -490,7 +491,20 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
-        <span className="text-[10px] text-muted ml-auto">vs. {maxCompetitors.length} competitor{maxCompetitors.length !== 1 ? 's' : ''}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] text-muted">vs. {maxCompetitors.length} competitor{maxCompetitors.length !== 1 ? 's' : ''}</span>
+          {onBenchmark && (
+            <button
+              onClick={() => { setShowManual(false); onBenchmark('auto'); }}
+              disabled={detecting}
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted hover:text-brand transition-colors disabled:opacity-50"
+              title="Re-run benchmark with new competitors"
+            >
+              <RefreshCw size={11} className={detecting ? 'animate-spin' : ''} />
+              Re-run
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">

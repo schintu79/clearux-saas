@@ -128,8 +128,15 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           .then(d => { if (d.trend) setScoreTrend(d.trend); })
           .catch(() => {});
 
-        // Competitors: loaded on-demand via "Detect Competitors" button
-        // (uses /api/audits/detect-competitors which auto-detects industry + top 3 competitors via AI)
+        // Load stored competitor benchmarks (if any)
+        fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.competitors && d.competitors.length > 0) {
+              setCompetitors(d.competitors);
+            }
+          })
+          .catch(() => {});
       }
     } catch (err: any) {
       console.error('[DomainAudits] fetch error:', err);

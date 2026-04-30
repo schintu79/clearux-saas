@@ -1,18 +1,19 @@
 // ============================================================
 // ClearUX API — Competitor Benchmarking
 //
+// GET  /api/audits/detect-competitors?url=xxx
+//   → Load stored benchmarks for this domain
+//
 // POST /api/audits/detect-competitors
 //   body: { url: string, mode: 'auto' | 'manual', competitors?: string[] }
+//   → Run benchmark (auto-detect or manual), store results, return them
 //
-// 'auto'   → AI detects industry + top 3 competitors, then scores them
-// 'manual' → User provides up to 3 competitor domains, we score them
-//
-// Scoring: fetches each competitor's real HTML and uses Claude to
+// Scoring fetches each competitor's real HTML and uses Claude to
 // produce differentiated, content-aware UX scores.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
 
 let _anthropic: Anthropic | null = null
@@ -23,6 +24,11 @@ function getAnthropicClient(): Anthropic {
     _anthropic = new Anthropic({ apiKey, timeout: 45_000 })
   }
   return _anthropic
+}
+
+function normalizeDomain(url: string): string {
+  const full = url.startsWith('http') ? url : `https://${url}`
+  return new URL(full).hostname.replace(/^www\./, '')
 }
 
 /* ── Fetch real page signals ──────────────────────────────── */
@@ -83,7 +89,6 @@ async function fetchSiteSignals(url: string): Promise<SiteSignals> {
     const ariaCount = (html.match(/aria-/gi) || []).length
     const inputCount = (html.match(/<input[\s>]/gi) || []).length
 
-    // Extract visible text
     const bodyHtml = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i)?.[1] || ''
     const visibleText = bodyHtml
       .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -93,11 +98,9 @@ async function fetchSiteSignals(url: string): Promise<SiteSignals> {
       .trim()
 
     return {
-      title,
-      metaDescription,
-      h1Count, h2Count,
-      imgCount, imgsWithAlt,
-      linkCount, hasViewport, hasOpenGraph, hasStructuredData,
+      title, metaDescription,
+      h1Count, h2Count, imgCount, imgsWithAlt, linkCount,
+      hasViewport, hasOpenGraph, hasStructuredData,
       hasHttps: url.startsWith('https'),
       formCount, navCount, ariaCount, inputCount,
       bodyTextLength: visibleText.length,
@@ -216,7 +219,6 @@ JSON only, no explanation:
       name: p.name,
       score: Math.min(100, Math.max(0, Math.round(p.score))),
     }))
-    // Compute overall from pillar average (don't trust AI's overall)
     const avg = pillarScores.length > 0
       ? Math.round(pillarScores.reduce((s: number, p: any) => s + p.score, 0) / pillarScores.length)
       : Math.round(parsed.overallScore || 50)
@@ -234,7 +236,54 @@ JSON only, no explanation:
   }
 }
 
-/* ── API handler ──────────────────────────────────────────── */
+/* ── GET: Load stored benchmarks ─────────────────────────── */
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const url = request.nextUrl.searchParams.get('url')
+    if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
+
+    let domain: string
+    try { domain = normalizeDomain(url) } catch {
+      return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
+    }
+
+    const db = createServiceSupabase()
+    const { data: rows } = await db
+      .from('competitor_benchmarks')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('domain', domain)
+      .order('created_at', { ascending: true })
+
+    if (!rows || rows.length === 0) {
+      return NextResponse.json({ domain, competitors: [] })
+    }
+
+    const competitors = rows.map((r: any) => ({
+      domain: r.competitor_domain,
+      name: r.competitor_name || r.competitor_domain,
+      score: r.overall_score,
+      pillarScores: r.pillar_scores || [],
+    }))
+
+    return NextResponse.json({
+      domain,
+      industry: rows[0]?.industry || '',
+      competitors,
+      updatedAt: rows[0]?.updated_at,
+    })
+  } catch (err) {
+    console.error('GET /api/audits/detect-competitors error:', err)
+    return NextResponse.json({ error: 'Failed to load benchmarks' }, { status: 500 })
+  }
+}
+
+/* ── POST: Run benchmark + store results ─────────────────── */
 
 export async function POST(request: NextRequest) {
   try {
@@ -251,23 +300,22 @@ export async function POST(request: NextRequest) {
 
     if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
 
-    const fullUrl = url.startsWith('http') ? url : `https://${url}`
     let domain: string
-    try { domain = new URL(fullUrl).hostname.replace(/^www\./, '') } catch {
+    try { domain = normalizeDomain(url) } catch {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
     }
+
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`
 
     let competitorDomains: Array<{ domain: string; name: string }>
     let industry = ''
 
     if (mode === 'manual' && manualDomains && manualDomains.length > 0) {
-      // Manual mode: user provided domains
       competitorDomains = manualDomains.slice(0, 3).map(d => {
         const clean = d.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')
         return { domain: clean, name: clean }
       })
     } else {
-      // Auto mode: detect from site content
       const siteSignals = await fetchSiteSignals(fullUrl)
       const detection = await detectCompetitorDomains(siteSignals, domain)
       competitorDomains = detection.competitors
@@ -276,8 +324,7 @@ export async function POST(request: NextRequest) {
 
     if (competitorDomains.length === 0) {
       return NextResponse.json({
-        domain,
-        industry,
+        domain, industry,
         competitors: [],
         message: 'Could not identify competitors',
       })
@@ -296,6 +343,27 @@ export async function POST(request: NextRequest) {
         }
       })
     )
+
+    // Store results — delete old benchmarks for this domain, insert new ones
+    const db = createServiceSupabase()
+
+    await db
+      .from('competitor_benchmarks')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('domain', domain)
+
+    const inserts = results.map(r => ({
+      user_id: user.id,
+      domain,
+      competitor_domain: r.domain,
+      competitor_name: r.name,
+      overall_score: r.score,
+      pillar_scores: r.pillarScores,
+      industry,
+    }))
+
+    await db.from('competitor_benchmarks').insert(inserts)
 
     return NextResponse.json({
       domain,
