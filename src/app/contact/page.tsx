@@ -61,7 +61,7 @@ export default function ContactPage() {
             </p>
 
             {submitted ? (
-              <div className="rounded-xl p-8 text-center border border-[#22C55E]/20 dark:border-[#22C55E]/20 bg-[#22C55E]/5 dark:bg-[#22C55E]/10">
+              <div className="rounded-2xl p-9 text-center border border-[#22C55E]/15 dark:border-[#22C55E]/15 bg-[#22C55E]/5 dark:bg-[#22C55E]/10 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none">
                 <div className="w-14 h-14 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={28} className="text-[#22C55E]" />
                 </div>
@@ -69,7 +69,7 @@ export default function ContactPage() {
                 <p className="text-text/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5" aria-label="Contact form">
+              <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
                 {error && (
                   <div className="rounded-xl p-4 text-sm text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                     {error}
@@ -139,7 +139,7 @@ export default function ContactPage() {
               </form>
             )}
 
-            <div className="mt-12 pt-8 border-t border-border">
+            <div className="mt-14 pt-10 border-t border-border/30 dark:border-white/[0.05]">
               <div className="flex flex-col sm:flex-row gap-6">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">

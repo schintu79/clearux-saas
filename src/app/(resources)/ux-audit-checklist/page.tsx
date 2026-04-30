@@ -219,7 +219,7 @@ export default function UxAuditChecklistPage() {
                 {pillar.categories.map((cat) => (
                   <div
                     key={cat.name}
-                    className="p-5 rounded-xl border border-border bg-card"
+                    className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none"
                   >
                     <h3 className="font-heading font-semibold text-lg text-text mb-2 flex items-start gap-2">
                       <CheckCircle size={18} className="text-brand mt-1 shrink-0" />

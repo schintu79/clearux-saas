@@ -90,7 +90,7 @@ export default function BestUxAuditToolsPage() {
             </p>
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   Strengths
                 </h3>
@@ -109,7 +109,7 @@ export default function BestUxAuditToolsPage() {
                   </li>
                 </ul>
               </div>
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   Limitations
                 </h3>
@@ -150,7 +150,7 @@ export default function BestUxAuditToolsPage() {
             </p>
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   Strengths
                 </h3>
@@ -169,7 +169,7 @@ export default function BestUxAuditToolsPage() {
                   </li>
                 </ul>
               </div>
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   Limitations
                 </h3>
@@ -224,7 +224,7 @@ export default function BestUxAuditToolsPage() {
             </p>
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   What ClearUX covers
                 </h3>
@@ -247,7 +247,7 @@ export default function BestUxAuditToolsPage() {
                   </li>
                 </ul>
               </div>
-              <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <h3 className="font-heading font-semibold text-base text-text mb-2">
                   Honest limitations
                 </h3>
@@ -280,7 +280,7 @@ export default function BestUxAuditToolsPage() {
             <h2 className="font-heading font-semibold text-2xl text-text mb-4">
               UX Audit Tool Comparison at a Glance
             </h2>
-            <div className="overflow-x-auto rounded-xl border border-border">
+            <div className="overflow-x-auto rounded-2xl border border-border/20 dark:border-white/[0.05] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
               <table className="w-full text-sm text-left">
                 <thead className="bg-off">
                   <tr>

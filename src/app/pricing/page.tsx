@@ -97,7 +97,7 @@ export default function PricingPage() {
         {/* ── Decision Framework ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-8">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-6 sm:p-8">
+            <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] bg-surface-alt p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
               <h2 className="font-heading font-semibold text-lg text-text mb-4">Which plan fits your workflow?</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex gap-3">
@@ -147,7 +147,7 @@ export default function PricingPage() {
         {/* ── Hero card: Single Audit ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-4">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-8 sm:p-10 relative overflow-hidden">
+            <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card p-8 sm:p-10 relative overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none">
               {/* Subtle warm gradient */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-rose-50/30 dark:from-accent/[0.03] dark:via-transparent dark:to-transparent pointer-events-none" />
 
@@ -214,7 +214,7 @@ export default function PricingPage() {
               ].map((pack) => (
                 <div
                   key={pack.name}
-                  className={`group rounded-xl border bg-card p-6 hover:shadow-md hover:shadow-black/[0.03] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-brand dark:border-brand/40 shadow-md shadow-brand/10 ring-1 ring-brand/30' : 'border-border/40 dark:border-white/[0.06] hover:border-border/70 dark:hover:border-white/[0.1]'}`}
+                  className={`group rounded-2xl border bg-card p-7 hover:shadow-lg hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 ${pack.popular ? 'border-brand dark:border-brand/40 shadow-md shadow-brand/10 ring-1 ring-brand/30' : 'border-border/20 dark:border-white/[0.05] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none hover:border-border/40 dark:hover:border-white/[0.1]'}`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
@@ -260,7 +260,7 @@ export default function PricingPage() {
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-heading font-semibold text-2xl text-text mb-6">Compare plans</h2>
-            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] overflow-hidden">
+            <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -326,7 +326,7 @@ export default function PricingPage() {
               {faqs.map((faq, i) => (
                 <details
                   key={i}
-                  className="group bg-card border border-border/40 dark:border-white/[0.06] rounded-xl overflow-hidden"
+                  className="group bg-card border border-border/20 dark:border-white/[0.05] rounded-2xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none"
                 >
                   <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
                     <h3 className="font-medium text-text text-sm pr-4">{faq.question}</h3>

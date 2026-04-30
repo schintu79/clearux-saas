@@ -61,7 +61,7 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
               {/* Card 1 — AI Readiness */}
-              <div className="group relative rounded-xl border border-[#22C55E]/20 dark:border-[#22C55E]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-[#22C55E]/20 dark:border-[#22C55E]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-5">
                   <BrainCircuit size={20} className="text-[#22C55E]" />
                 </div>
@@ -72,7 +72,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 2 — Cognitive Accessibility & Neurodiversity */}
-              <div className="group relative rounded-xl border border-[#6366F1]/20 dark:border-[#6366F1]/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-[#6366F1]/20 dark:border-[#6366F1]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-5">
                   <Accessibility size={20} className="text-[#6366F1]" />
                 </div>
@@ -83,7 +83,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 3 — Psychological Safety */}
-              <div className="group relative rounded-xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-5">
                   <ShieldCheck size={20} className="text-pink-500" />
                 </div>
@@ -94,7 +94,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 4 — Emotional Design */}
-              <div className="group relative rounded-xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-5">
                   <HeartHandshake size={20} className="text-amber-500" />
                 </div>
@@ -105,7 +105,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 5 — Digital Wellbeing */}
-              <div className="group relative rounded-xl border border-teal-400/20 dark:border-teal-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-teal-400/20 dark:border-teal-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-teal-500/10 flex items-center justify-center mb-5">
                   <Flower2 size={20} className="text-teal-500" />
                 </div>
@@ -116,7 +116,7 @@ export default function AboutPage() {
               </div>
 
               {/* Card 6 — Future-Proof Design */}
-              <div className="group relative rounded-xl border border-indigo-400/20 dark:border-indigo-500/15 bg-card p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="group relative rounded-2xl border border-indigo-400/20 dark:border-indigo-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5">
                   <Zap size={20} className="text-indigo-500" />
                 </div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
                 ].map((item, i) => {
                   const ItemIcon = item.icon;
                   return (
-                    <div key={i} className="rounded-xl bg-white/50 border border-[#111]/[0.06] p-5 backdrop-blur-sm">
+                    <div key={i} className="rounded-2xl bg-white/50 border border-[#111]/[0.05] p-6 backdrop-blur-sm">
                       <div className="flex items-start gap-4">
                         <div className="w-10 h-10 rounded-xl bg-[#111] flex items-center justify-center flex-shrink-0">
                           <ItemIcon size={18} className="text-[#B9FF66]" />
@@ -215,7 +215,7 @@ export default function AboutPage() {
             </div>
 
             {/* Quote highlight */}
-            <div className="mb-14 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+            <div className="mb-14 p-8 sm:p-10 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
               <p className="text-white/90 font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
                 &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
               </p>
@@ -223,7 +223,7 @@ export default function AboutPage() {
 
             {/* Three story blocks */}
             <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
-              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="w-10 h-10 rounded-lg bg-[#6366F1]/30 flex items-center justify-center mb-4">
                   <Eye size={18} className="text-[#818CF8]" />
                 </div>
@@ -233,7 +233,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="w-10 h-10 rounded-lg bg-pink-500/30 flex items-center justify-center mb-4">
                   <Shield size={18} className="text-pink-400" />
                 </div>
@@ -243,7 +243,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="p-6 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="p-7 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="w-10 h-10 rounded-lg bg-[#B9FF66]/15 flex items-center justify-center mb-4">
                   <Sparkles size={18} className="text-[#B9FF66]" />
                 </div>
@@ -278,7 +278,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Heart size={22} className="text-pink-500" />
                 </div>
@@ -286,7 +286,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Most tools count errors. We look at how real people experience your product — emotional design, cognitive accessibility, digital wellbeing, age inclusivity. The blind spots other tools miss.</p>
               </div>
 
-              <div className="rounded-xl border border-[#6366F1]/30 dark:border-[#6366F1]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-[#6366F1]/20 dark:border-[#6366F1]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-6">
                   <Shield size={22} className="text-[#6366F1]" />
                 </div>
@@ -294,7 +294,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Our Human Experience pillar scans for confirmshaming, fake urgency, hidden costs, and manipulative flows. We hold ourselves to the same standard: no subscription traps, no pressure tactics.</p>
               </div>
 
-              <div className="rounded-xl border border-[#22C55E]/30 dark:border-[#22C55E]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-[#22C55E]/20 dark:border-[#22C55E]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-6">
                   <Brain size={22} className="text-[#22C55E]" />
                 </div>
@@ -302,7 +302,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">We&apos;re the first audit platform to evaluate AI discoverability and AI agent readiness. As LLMs become how people find products, your site needs to be readable by machines too.</p>
               </div>
 
-              <div className="rounded-xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Eye size={22} className="text-amber-500" />
                 </div>
@@ -330,7 +330,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="rounded-xl border border-[#6366F1]/30 dark:border-[#6366F1]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-[#6366F1]/20 dark:border-[#6366F1]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mb-6">
                   <BarChart3 size={22} className="text-[#6366F1]" />
                 </div>
@@ -338,7 +338,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Need to justify UX investment with data? Track findings from open to fixed, share results with stakeholders via read-only links, and re-audit to show measurable improvement over time.</p>
               </div>
 
-              <div className="rounded-xl border border-pink-400/30 dark:border-pink-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-pink-400/20 dark:border-pink-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center mb-6">
                   <Rocket size={22} className="text-pink-500" />
                 </div>
@@ -346,7 +346,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">Can&apos;t afford a $15k consultancy but refuse to ship mediocre? Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks.</p>
               </div>
 
-              <div className="rounded-xl border border-[#22C55E]/30 dark:border-[#22C55E]/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-[#22C55E]/20 dark:border-[#22C55E]/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-6">
                   <Tag size={22} className="text-[#22C55E]" />
                 </div>
@@ -354,7 +354,7 @@ export default function AboutPage() {
                 <p className="text-text/65 text-[15px] leading-relaxed">White-label reports for your clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time. Upload your logo and deliver under your own banner.</p>
               </div>
 
-              <div className="rounded-xl border border-amber-400/30 dark:border-amber-500/20 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="rounded-2xl border border-amber-400/20 dark:border-amber-500/15 bg-card p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6">
                   <Target size={22} className="text-amber-500" />
                 </div>

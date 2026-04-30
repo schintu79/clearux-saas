@@ -151,7 +151,7 @@ const TAB_ALL = 'All';
 
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="border border-border/40 dark:border-white/[0.06] rounded-xl overflow-hidden bg-card">
+    <div className="border border-border/20 dark:border-white/[0.05] rounded-2xl overflow-hidden bg-card shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
       <button
         onClick={onToggle}
         className="w-full flex items-start gap-3 p-5 text-left hover:bg-surface-alt/40 dark:hover:bg-white/[0.02] transition-colors"
@@ -327,7 +327,7 @@ export default function FaqPage() {
                 )}
 
                 {/* Accordion items */}
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {section.items.map((faq, i) => {
                     const key = `${section.title}-${i}`;
                     return (
@@ -349,7 +349,7 @@ export default function FaqPage() {
         {/* CTA */}
         <section className="px-4 sm:px-6 lg:px-8 pb-20">
           <div className="max-w-3xl mx-auto">
-            <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-surface-alt p-8 text-center">
+            <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] bg-surface-alt p-9 text-center shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
               <h2 className="font-heading font-semibold text-xl text-text mb-2">Still have questions?</h2>
               <p className="text-muted text-sm mb-6">
                 Reach out and we will get back to you within a business day.

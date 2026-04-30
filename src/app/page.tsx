@@ -118,7 +118,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
   /* ── Visual panels — simplified, clean ── */
   const visuals = [
     /* FOUNDATION — Score overview */
-    <aside key="v0" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v0" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/30 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Eye size={24} className="text-text" /></div>
         <div>
@@ -148,7 +148,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     </aside>,
 
     /* HUMAN EXPERIENCE — Dark pattern scan */
-    <aside key="v1" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v1" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/30 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Heart size={24} className="text-text" /></div>
         <div>
@@ -178,7 +178,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     </aside>,
 
     /* INCLUSIVE DESIGN — Accessibility */
-    <aside key="v2" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v2" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/30 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Accessibility size={24} className="text-text" /></div>
         <div>
@@ -208,7 +208,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
     </aside>,
 
     /* FUTURE READINESS — AI readiness */
-    <aside key="v3" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8">
+    <aside key="v3" role="presentation" className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/30 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Brain size={24} className="text-text" /></div>
         <div>
@@ -240,7 +240,7 @@ function PillarScrollReveal({ categories }: { categories: Array<{ pillar: string
 
   return (
     <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
-      <div className="space-y-20 lg:space-y-32">
+      <div className="space-y-24 lg:space-y-36">
         {PILLAR_DATA.map((pillar, idx) => {
           const pillarCats = categories.filter((c) => c.pillar === pillarNames[idx]);
           const isEven = idx % 2 === 0;
@@ -329,7 +329,7 @@ function FaqSection({ faqRef }: { faqRef: { ref: React.RefObject<HTMLDivElement>
 
         <div className="space-y-2">
           {TOP_FAQS.map((item, idx) => (
-            <details key={idx} className="group rounded-xl border border-border bg-card overflow-hidden">
+            <details key={idx} className="group rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
               <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-off dark:hover:bg-white/[0.02] transition-colors">
                 <h3 className="font-medium text-text text-[15px] pr-4">{item.q}</h3>
                 <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
@@ -699,7 +699,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           BEYOND THE REPORT
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-24">
             <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Beyond the report</p>
@@ -712,7 +712,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="space-y-28 md:space-y-36">
+          <div className="space-y-32 md:space-y-40">
 
             {/* ── Feature 1: Finding Status Tracking ── */}
             <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
@@ -737,7 +737,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Visual mock */}
-              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/20 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><ListChecks size={24} className="text-text" /></div>
                   <div>
@@ -834,7 +834,7 @@ export default function Home() {
 
             <div className="grid md:grid-cols-3 gap-5">
               {/* Column 1 — Verify fixes */}
-              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+              <div className="rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card p-7 text-center flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mx-auto mb-4">
                   <RefreshCw size={18} className="text-[#22C55E]" />
                 </div>
@@ -850,7 +850,7 @@ export default function Home() {
               </div>
 
               {/* Column 2 — Dig deeper */}
-              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+              <div className="rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card p-7 text-center flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-[#6366F1]/10 flex items-center justify-center mx-auto mb-4">
                   <Search size={18} className="text-[#6366F1]" />
                 </div>
@@ -866,7 +866,7 @@ export default function Home() {
               </div>
 
               {/* Column 3 — Focused re-audit */}
-              <div className="rounded-xl border border-border/50 dark:border-white/[0.06] bg-card p-6 text-center flex flex-col">
+              <div className="rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card p-7 text-center flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
                 <div className="w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center mx-auto mb-4">
                   <Target size={18} className="text-brand" />
                 </div>
@@ -904,7 +904,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Visual mock — clean shared report card */}
-              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/50 p-6 sm:p-8" aria-label="Illustrative example" data-demo="true" role="presentation">
+              <div className="w-full rounded-2xl bg-card/80 dark:bg-card border border-border/20 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none" aria-label="Illustrative example" data-demo="true" role="presentation">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Share2 size={24} className="text-text" /></div>
                   <div>
@@ -983,7 +983,7 @@ export default function Home() {
           </div>
 
           {/* Single Audit */}
-          <div className="rounded-xl border border-border bg-card p-8 sm:p-10 mb-4 relative overflow-hidden">
+          <div className="rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card p-8 sm:p-10 mb-4 relative overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none">
             <div className="relative grid sm:grid-cols-2 gap-8 items-center">
               <div>
                 <h3 className="font-heading text-2xl font-semibold text-text mb-1">Single audit</h3>
@@ -1034,7 +1034,7 @@ export default function Home() {
             ].map((pack, idx) => (
               <div
                 key={idx}
-                className={`group rounded-xl border bg-card p-6 hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 ${(pack as any).popular ? 'border-accent ring-1 ring-accent/20' : 'border-border'}`}
+                className={`group rounded-2xl border bg-card p-7 hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none ${(pack as any).popular ? 'border-accent ring-1 ring-accent/20' : 'border-border/30 dark:border-white/[0.05]'}`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-heading font-semibold text-lg text-text">{pack.name}</h3>
