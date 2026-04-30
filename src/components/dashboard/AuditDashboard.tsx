@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
-  ChevronDown,
   ChevronRight,
-  AlertTriangle,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
 } from 'lucide-react';
 import ScoreRing from '@/components/ui/ScoreRing';
 import type { AuditFinding } from '@/types/database';
@@ -16,6 +19,7 @@ import type { AuditFinding } from '@/types/database';
 export function ScoreOverTimeChart({ trend }: {
   trend: Array<{ auditId: string; date: string; overallScore: number }>;
 }) {
+  const router = useRouter();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (trend.length === 0) return null;
@@ -33,12 +37,12 @@ export function ScoreOverTimeChart({ trend }: {
     y: PAD_T + chartH - ((t.overallScore - minScore) / range) * chartH,
     score: t.overallScore,
     date: t.date,
+    auditId: t.auditId,
   }));
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`;
 
-  // Grid lines
   const gridLines = 4;
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
@@ -76,11 +80,12 @@ export function ScoreOverTimeChart({ trend }: {
           const showLabel = isHovered || isLast;
           return (
             <g key={i}>
-              {/* Invisible larger hit area for hover */}
+              {/* Invisible larger hit area for hover + click */}
               <circle
-                cx={p.x} cy={p.y} r="12" fill="transparent"
+                cx={p.x} cy={p.y} r="14" fill="transparent"
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
+                onClick={() => router.push(`/dashboard/audits/${p.auditId}`)}
                 style={{ cursor: 'pointer' }}
               />
               {/* Visible dot */}
@@ -91,10 +96,11 @@ export function ScoreOverTimeChart({ trend }: {
                 stroke="#6366F1"
                 strokeWidth="2"
                 className="transition-all duration-150"
+                style={{ pointerEvents: 'none' }}
               />
               {/* Score label on hover or for latest */}
               {showLabel && (
-                <g>
+                <g style={{ pointerEvents: 'none' }}>
                   <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="#6366F1" />
                   <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
                 </g>
@@ -172,7 +178,14 @@ export function TopIssuesPanel({ findings, auditId }: {
     })
     .slice(0, 5);
 
-  if (sorted.length === 0) return null;
+  if (sorted.length === 0) {
+    return (
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
+        <p className="text-xs text-muted py-4 text-center">No issues found — great job!</p>
+      </div>
+    );
+  }
 
   const sevBadgeColors: Record<string, string> = {
     critical: 'bg-red-500 text-white',
@@ -218,20 +231,14 @@ export function TopIssuesPanel({ findings, auditId }: {
 
 /* ── Heuristic Breakdown Radar Chart ─────────────────────── */
 
-interface PillarScore {
-  name: string;
-  score: number;
-  badgeBg: string;
-  range: [number, number];
-}
-
 export function HeuristicRadarChart({ pillarScores }: {
   pillarScores: Array<{ name: string; score: number }>;
 }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 120, cy = 110, R = 80;
+  const cx = 140, cy = 130, R = 80;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -253,14 +260,14 @@ export function HeuristicRadarChart({ pillarScores }: {
 
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 22;
+    const r = R + 28;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
     <div className="flex-shrink-0">
       <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 240 230" className="w-full max-w-[240px] h-auto mx-auto">
+      <svg viewBox="0 0 280 270" className="w-full max-w-[280px] h-auto mx-auto">
         {/* Grid polygons */}
         {levelPolygons.map((polygon, i) => (
           <polygon key={i} points={polygon} fill="none" stroke="var(--border)" strokeWidth="0.5" opacity={0.4 + i * 0.15} />
@@ -277,21 +284,164 @@ export function HeuristicRadarChart({ pillarScores }: {
         {/* Data polygon */}
         <polygon points={dataPolygon} fill="#6366F1" fillOpacity="0.12" stroke="#6366F1" strokeWidth="1.5" strokeLinejoin="round" />
 
-        {/* Data points */}
-        {dataPoints.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#6366F1" stroke="var(--card)" strokeWidth="1.5" />
-        ))}
+        {/* Data points + hover areas */}
+        {dataPoints.map((p, i) => {
+          const isHovered = hoveredIdx === i;
+          return (
+            <g key={i}>
+              <circle
+                cx={p.x} cy={p.y} r="14" fill="transparent"
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{ cursor: 'pointer' }}
+              />
+              <circle
+                cx={p.x} cy={p.y}
+                r={isHovered ? 5 : 3}
+                fill={isHovered ? '#6366F1' : '#6366F1'}
+                stroke="var(--card)"
+                strokeWidth={isHovered ? 2 : 1.5}
+                className="transition-all duration-150"
+                style={{ pointerEvents: 'none' }}
+              />
+              {/* Hover tooltip */}
+              {isHovered && (
+                <g style={{ pointerEvents: 'none' }}>
+                  <rect
+                    x={p.x - 40} y={p.y - 28}
+                    width="80" height="22"
+                    rx="5" fill="#1e1e2e" opacity="0.92"
+                  />
+                  <text x={p.x} y={p.y - 14} textAnchor="middle" fontSize="8" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
+                    {pillarScores[i].name}: {pillarScores[i].score}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
 
-        {/* Labels */}
+        {/* Labels — full names, multi-word wrapping */}
         {labelPoints.map((lp, i) => {
           const anchor = Math.abs(lp.x - cx) < 5 ? 'middle' : lp.x > cx ? 'start' : 'end';
+          const words = lp.name.split(' ');
+          // Split into up to 2 lines
+          const line1 = words.length <= 2 ? lp.name : words.slice(0, Math.ceil(words.length / 2)).join(' ');
+          const line2 = words.length <= 2 ? null : words.slice(Math.ceil(words.length / 2)).join(' ');
           return (
-            <text key={i} x={lp.x} y={lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
-              {lp.name.split(' ')[0]}
-            </text>
+            <g key={i}>
+              <text x={lp.x} y={line2 ? lp.y - 5 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
+                {line1}
+              </text>
+              {line2 && (
+                <text x={lp.x} y={lp.y + 5} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
+                  {line2}
+                </text>
+              )}
+            </g>
           );
         })}
       </svg>
+    </div>
+  );
+}
+
+/* ── Benchmarks Section ──────────────────────────────────── */
+
+export function BenchmarksSection({ overallScore, pillarScores, competitors }: {
+  overallScore: number;
+  pillarScores: Array<{ name: string; score: number }>;
+  competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
+}) {
+  // Industry average baselines (static — based on ClearUX aggregated data)
+  const industryAvg: Record<string, number> = {
+    'Overall': 52,
+    'Foundation': 58,
+    'Human Experience': 48,
+    'Inclusive Design': 42,
+    'Future Readiness': 45,
+  };
+
+  const rows = [
+    { label: 'Overall', yourScore: overallScore, avg: industryAvg['Overall'] },
+    ...pillarScores.map(ps => ({
+      label: ps.name,
+      yourScore: ps.score,
+      avg: industryAvg[ps.name] ?? 50,
+    })),
+  ];
+
+  const maxCompetitors = competitors?.slice(0, 3) || [];
+  const hasCompetitors = maxCompetitors.length > 0;
+
+  return (
+    <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
+      <div className="px-5 pt-5 pb-3 flex items-center gap-2">
+        <BarChart3 size={14} className="text-brand" />
+        <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
+        <span className="text-[10px] text-muted ml-auto">vs. industry average</span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-y border-border/20 dark:border-white/[0.04]">
+              <th className="text-left font-semibold text-muted py-2 px-5 w-[140px]">Category</th>
+              <th className="text-center font-semibold text-brand py-2 px-3">Your Score</th>
+              <th className="text-center font-semibold text-muted py-2 px-3">Avg</th>
+              {hasCompetitors && maxCompetitors.map((c, i) => (
+                <th key={i} className="text-center font-semibold text-muted py-2 px-3 truncate max-w-[80px]">
+                  {c.domain}
+                </th>
+              ))}
+              <th className="text-center font-semibold text-muted py-2 px-3">vs Avg</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/10 dark:divide-white/[0.03]">
+            {rows.map((row) => {
+              const diff = row.yourScore - row.avg;
+              const isOverall = row.label === 'Overall';
+              return (
+                <tr key={row.label} className={`hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors ${isOverall ? 'font-semibold' : ''}`}>
+                  <td className="py-2.5 px-5 text-text">{row.label}</td>
+                  <td className="py-2.5 px-3 text-center">
+                    <span className={`font-bold ${row.yourScore >= 70 ? 'text-[#22C55E]' : row.yourScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'}`}>
+                      {row.yourScore}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-center text-muted">{row.avg}</td>
+                  {hasCompetitors && maxCompetitors.map((c, ci) => {
+                    const compScore = row.label === 'Overall'
+                      ? c.score
+                      : c.pillarScores?.find(ps => ps.name === row.label)?.score ?? null;
+                    return (
+                      <td key={ci} className="py-2.5 px-3 text-center text-muted">
+                        {compScore != null ? compScore : '—'}
+                      </td>
+                    );
+                  })}
+                  <td className="py-2.5 px-3 text-center">
+                    <span className={`inline-flex items-center gap-0.5 font-semibold ${
+                      diff > 0 ? 'text-[#22C55E]' : diff < 0 ? 'text-red-500' : 'text-muted'
+                    }`}>
+                      {diff > 0 ? <ArrowUpRight size={10} /> : diff < 0 ? <ArrowDownRight size={10} /> : <Minus size={10} />}
+                      {diff > 0 ? '+' : ''}{diff}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {!hasCompetitors && (
+        <div className="px-5 py-3 border-t border-border/15 dark:border-white/[0.03]">
+          <p className="text-[11px] text-muted">
+            Industry averages based on aggregated ClearUX audit data. Run audits on competitor sites to add them to this comparison.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -306,6 +456,7 @@ export function AuditDashboardOverview({
   pillarScores,
   productUrl,
   latestAuditId,
+  competitors,
   onStatCardClick,
 }: {
   overallScore: number;
@@ -315,6 +466,7 @@ export function AuditDashboardOverview({
   pillarScores: Array<{ name: string; score: number }>;
   productUrl: string;
   latestAuditId: string;
+  competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   onStatCardClick?: (filter: string) => void;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed).length;
@@ -380,6 +532,13 @@ export function AuditDashboardOverview({
           <HeuristicRadarChart pillarScores={pillarScores} />
         </div>
       </div>
+
+      {/* Row 4: Benchmarks */}
+      <BenchmarksSection
+        overallScore={overallScore}
+        pillarScores={pillarScores}
+        competitors={competitors}
+      />
     </>
   );
 }
