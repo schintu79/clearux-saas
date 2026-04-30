@@ -195,12 +195,13 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
   const latest = audits[0] || null;
   const productUrl = latest?.product_url || '';
 
-  // Severity counts from latest audit findings
+  // Severity counts from latest audit findings (exclude fixed & dismissed)
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
   const severityCounts = {
-    critical: findings.filter((f) => f.severity === 'critical').length,
-    high: findings.filter((f) => f.severity === 'high').length,
-    medium: findings.filter((f) => f.severity === 'medium').length,
-    low: findings.filter((f) => f.severity === 'low').length,
+    critical: openFindings.filter((f) => f.severity === 'critical').length,
+    high: openFindings.filter((f) => f.severity === 'high').length,
+    medium: openFindings.filter((f) => f.severity === 'medium').length,
+    low: openFindings.filter((f) => f.severity === 'low').length,
   };
 
   // Pillar scores for radar chart

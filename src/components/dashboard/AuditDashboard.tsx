@@ -165,7 +165,7 @@ export function TopIssuesPanel({ findings, auditId }: {
   auditId?: string;
 }) {
   const sorted = [...findings]
-    .filter(f => !f.dismissed)
+    .filter(f => !f.dismissed && f.status !== 'fixed')
     .sort((a, b) => {
       const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
       return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
@@ -240,7 +240,7 @@ export function HeuristicRadarChart({ pillarScores }: {
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 250, cy = 160, R = 100;
+  const cx = 320, cy = 175, R = 100;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -262,14 +262,14 @@ export function HeuristicRadarChart({ pillarScores }: {
 
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 50;
+    const r = R + 55;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-sm font-semibold text-text mb-4">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 500 350" className="w-full h-auto mx-auto" style={{ maxWidth: 480 }}>
+      <svg viewBox="0 0 640 390" className="w-full h-auto mx-auto" style={{ maxWidth: 540 }}>
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.03" />
 
         {levelPolygons.map((polygon, i) => (
@@ -556,7 +556,7 @@ export function AuditDashboardOverview({
   onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
   onStatCardClick?: (filter: string) => void;
 }) {
-  const totalFindings = findings.filter(f => !f.dismissed).length;
+  const totalFindings = findings.filter(f => !f.dismissed && f.status !== 'fixed').length;
 
   return (
     <div className="space-y-8">
