@@ -268,14 +268,14 @@ export function HeuristicRadarChart({ pillarScores }: {
   // Labels placed further out with score underneath
   const labelPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
-    const r = R + 42;
+    const r = R + 48;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
   });
 
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
-      <svg viewBox="0 0 500 330" className="w-full h-auto mx-auto" style={{ maxWidth: 420 }}>
+      <svg viewBox="0 0 500 340" className="w-full h-auto mx-auto" style={{ maxWidth: 460 }}>
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
 
@@ -322,19 +322,23 @@ export function HeuristicRadarChart({ pillarScores }: {
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
-              {/* Hover tooltip */}
-              {isHovered && (
-                <g style={{ pointerEvents: 'none' }}>
-                  <rect
-                    x={p.x - 50} y={p.y - 32}
-                    width="100" height="24"
-                    rx="6" fill="#1e1e2e" opacity="0.94"
-                  />
-                  <text x={p.x} y={p.y - 17} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
-                    {pillarScores[i].name}: {pillarScores[i].score}/100
-                  </text>
-                </g>
-              )}
+              {/* Hover tooltip — dynamic width based on text length */}
+              {isHovered && (() => {
+                const tooltipText = `${pillarScores[i].name}: ${pillarScores[i].score}/100`;
+                const tooltipW = tooltipText.length * 7.5 + 20;
+                return (
+                  <g style={{ pointerEvents: 'none' }}>
+                    <rect
+                      x={p.x - tooltipW / 2} y={p.y - 36}
+                      width={tooltipW} height="28"
+                      rx="7" fill="#1e1e2e" opacity="0.94"
+                    />
+                    <text x={p.x} y={p.y - 19} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
+                      {tooltipText}
+                    </text>
+                  </g>
+                );
+              })()}
             </g>
           );
         })}
@@ -346,10 +350,10 @@ export function HeuristicRadarChart({ pillarScores }: {
           const color = PILLAR_COLORS[i] || '#6366F1';
           return (
             <g key={i}>
-              <text x={lp.x} y={isTop ? lp.y - 2 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="12" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
+              <text x={lp.x} y={isTop ? lp.y - 3 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="13.5" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
                 {lp.name}
               </text>
-              <text x={lp.x} y={isTop ? lp.y + 12 : lp.y + 14} textAnchor={anchor} dominantBaseline="middle" fontSize="13" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
+              <text x={lp.x} y={isTop ? lp.y + 13 : lp.y + 16} textAnchor={anchor} dominantBaseline="middle" fontSize="15" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
                 {lp.score}
               </text>
             </g>
