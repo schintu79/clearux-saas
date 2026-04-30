@@ -12,6 +12,7 @@ import {
   Minus,
   CheckCircle2,
   Loader2,
+  Search,
 } from 'lucide-react';
 import ScoreRing from '@/components/ui/ScoreRing';
 import type { AuditFinding } from '@/types/database';
@@ -373,37 +374,71 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
   detecting?: boolean;
   onDetect?: () => void;
 }) {
-  // Industry average baselines (static — based on ClearUX aggregated data)
-  const industryAvg: Record<string, number> = {
-    'Overall': 52,
-    'Foundation': 58,
-    'Human Experience': 48,
-    'Inclusive Design': 42,
-    'Future Readiness': 45,
-  };
-
-  const rows = [
-    { label: 'Overall', yourScore: overallScore, avg: industryAvg['Overall'] },
-    ...pillarScores.map(ps => ({
-      label: ps.name,
-      yourScore: ps.score,
-      avg: industryAvg[ps.name] ?? 50,
-    })),
-  ];
-
   const maxCompetitors = competitors?.slice(0, 3) || [];
   const hasCompetitors = maxCompetitors.length > 0;
+
+  // Empty state — no competitors yet
+  if (!hasCompetitors) {
+    return (
+      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
+        <div className="px-5 pt-5 pb-2 flex items-center gap-2">
+          <BarChart3 size={14} className="text-brand" />
+          <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
+        </div>
+        <div className="flex flex-col items-center justify-center text-center px-6 py-10">
+          <div className="w-14 h-14 rounded-2xl bg-brand/8 dark:bg-brand/10 flex items-center justify-center mb-4">
+            <BarChart3 size={26} className="text-brand" />
+          </div>
+          <p className="text-base font-semibold text-text mb-1.5">Compare against competitors</p>
+          <p className="text-sm text-muted max-w-xs mb-5">
+            Detect your top 3 industry competitors and benchmark your UX score against theirs across all pillars.
+          </p>
+          {onDetect && (
+            <button
+              onClick={onDetect}
+              disabled={detecting}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-brand px-5 py-2.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-60 shadow-sm"
+            >
+              {detecting ? (
+                <><Loader2 size={15} className="animate-spin" /> Analysing competitors...</>
+              ) : (
+                <>
+                  <Search size={15} />
+                  Detect Competitors
+                </>
+              )}
+            </button>
+          )}
+          {detecting && (
+            <p className="text-xs text-muted mt-3 animate-pulse">
+              Scanning your site, identifying industry, and scoring competitors...
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Competitors found — show comparison table
+  const rows = [
+    { label: 'Overall', yourScore: overallScore },
+    ...pillarScores.map(ps => ({ label: ps.name, yourScore: ps.score })),
+  ];
+
+  // Compute average across competitors for each row
+  const getCompAvg = (label: string) => {
+    const scores = maxCompetitors
+      .map(c => label === 'Overall' ? c.score : c.pillarScores?.find(ps => ps.name === label)?.score)
+      .filter((s): s is number => s != null);
+    return scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  };
 
   return (
     <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
-        {hasCompetitors ? (
-          <span className="text-[10px] text-muted ml-auto">vs. top competitors</span>
-        ) : (
-          <span className="text-[10px] text-muted ml-auto">vs. industry average</span>
-        )}
+        <span className="text-[10px] text-muted ml-auto">vs. top 3 competitors</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -411,10 +446,9 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
           <thead>
             <tr className="border-y border-border/20 dark:border-white/[0.04]">
               <th className="text-left font-semibold text-muted py-2 px-5 w-[140px]">Category</th>
-              <th className="text-center font-semibold text-brand py-2 px-3">Your Score</th>
-              <th className="text-center font-semibold text-muted py-2 px-3">Avg</th>
-              {hasCompetitors && maxCompetitors.map((c, i) => (
-                <th key={i} className="text-center font-semibold text-muted py-2 px-3 truncate max-w-[80px]">
+              <th className="text-center font-semibold text-brand py-2 px-3">You</th>
+              {maxCompetitors.map((c, i) => (
+                <th key={i} className="text-center font-semibold text-muted py-2 px-3 truncate max-w-[90px]">
                   {c.domain}
                 </th>
               ))}
@@ -423,7 +457,8 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
           </thead>
           <tbody className="divide-y divide-border/10 dark:divide-white/[0.03]">
             {rows.map((row) => {
-              const diff = row.yourScore - row.avg;
+              const avg = getCompAvg(row.label);
+              const diff = avg != null ? row.yourScore - avg : 0;
               const isOverall = row.label === 'Overall';
               return (
                 <tr key={row.label} className={`hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors ${isOverall ? 'font-semibold' : ''}`}>
@@ -433,8 +468,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
                       {row.yourScore}
                     </span>
                   </td>
-                  <td className="py-2.5 px-3 text-center text-muted">{row.avg}</td>
-                  {hasCompetitors && maxCompetitors.map((c, ci) => {
+                  {maxCompetitors.map((c, ci) => {
                     const compScore = row.label === 'Overall'
                       ? c.score
                       : c.pillarScores?.find(ps => ps.name === row.label)?.score ?? null;
@@ -445,12 +479,16 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
                     );
                   })}
                   <td className="py-2.5 px-3 text-center">
-                    <span className={`inline-flex items-center gap-0.5 font-semibold ${
-                      diff > 0 ? 'text-[#22C55E]' : diff < 0 ? 'text-red-500' : 'text-muted'
-                    }`}>
-                      {diff > 0 ? <ArrowUpRight size={10} /> : diff < 0 ? <ArrowDownRight size={10} /> : <Minus size={10} />}
-                      {diff > 0 ? '+' : ''}{diff}
-                    </span>
+                    {avg != null ? (
+                      <span className={`inline-flex items-center gap-0.5 font-semibold ${
+                        diff > 0 ? 'text-[#22C55E]' : diff < 0 ? 'text-red-500' : 'text-muted'
+                      }`}>
+                        {diff > 0 ? <ArrowUpRight size={10} /> : diff < 0 ? <ArrowDownRight size={10} /> : <Minus size={10} />}
+                        {diff > 0 ? '+' : ''}{diff}
+                      </span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
                   </td>
                 </tr>
               );
@@ -458,27 +496,6 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
           </tbody>
         </table>
       </div>
-
-      {!hasCompetitors && (
-        <div className="px-5 py-3.5 border-t border-border/15 dark:border-white/[0.03] flex items-center justify-between gap-3">
-          <p className="text-[11px] text-muted flex-1">
-            Industry averages based on ClearUX aggregated data. Detect competitors to compare directly.
-          </p>
-          {onDetect && (
-            <button
-              onClick={onDetect}
-              disabled={detecting}
-              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition-colors disabled:opacity-50 flex-shrink-0"
-            >
-              {detecting ? (
-                <><Loader2 size={11} className="animate-spin" /> Detecting...</>
-              ) : (
-                'Detect Competitors'
-              )}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
