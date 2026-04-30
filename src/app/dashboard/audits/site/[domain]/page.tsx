@@ -282,9 +282,13 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           latestAuditId={latestCompleted.id}
           competitors={competitors.length > 0 ? competitors : undefined}
           detecting={detectingCompetitors}
-          onDetectCompetitors={() => {
+          onBenchmark={(mode, domains) => {
             setDetectingCompetitors(true);
-            fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
+            fetch('/api/audits/detect-competitors', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url: productUrl, mode, competitors: domains }),
+            })
               .then(r => r.json())
               .then(d => {
                 if (d.competitors && d.competitors.length > 0) {

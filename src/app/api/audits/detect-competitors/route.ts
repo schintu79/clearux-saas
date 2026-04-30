@@ -1,8 +1,14 @@
 // ============================================================
-// ClearUX API — GET /api/audits/detect-competitors?url=xxx
-// Auto-detects industry from the site and returns top 3
-// competitors with estimated UX scores based on lightweight
-// analysis via Claude Haiku.
+// ClearUX API — Competitor Benchmarking
+//
+// POST /api/audits/detect-competitors
+//   body: { url: string, mode: 'auto' | 'manual', competitors?: string[] }
+//
+// 'auto'   → AI detects industry + top 3 competitors, then scores them
+// 'manual' → User provides up to 3 competitor domains, we score them
+//
+// Scoring: fetches each competitor's real HTML and uses Claude to
+// produce differentiated, content-aware UX scores.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,89 +20,126 @@ function getAnthropicClient(): Anthropic {
   if (!_anthropic) {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
-    _anthropic = new Anthropic({ apiKey, timeout: 30_000 })
+    _anthropic = new Anthropic({ apiKey, timeout: 45_000 })
   }
   return _anthropic
 }
 
-/** Lightweight page content fetcher — grabs title, meta, and some body text */
-async function fetchSiteSnippet(url: string): Promise<string> {
+/* ── Fetch real page signals ──────────────────────────────── */
+
+interface SiteSignals {
+  title: string
+  metaDescription: string
+  h1Count: number
+  h2Count: number
+  imgCount: number
+  imgsWithAlt: number
+  linkCount: number
+  hasViewport: boolean
+  hasOpenGraph: boolean
+  hasStructuredData: boolean
+  hasHttps: boolean
+  formCount: number
+  navCount: number
+  ariaCount: number
+  inputCount: number
+  bodyTextLength: number
+  bodyTextSnippet: string
+  loadedOk: boolean
+}
+
+async function fetchSiteSignals(url: string): Promise<SiteSignals> {
+  const empty: SiteSignals = {
+    title: '', metaDescription: '', h1Count: 0, h2Count: 0,
+    imgCount: 0, imgsWithAlt: 0, linkCount: 0, hasViewport: false,
+    hasOpenGraph: false, hasStructuredData: false, hasHttps: url.startsWith('https'),
+    formCount: 0, navCount: 0, ariaCount: 0, inputCount: 0,
+    bodyTextLength: 0, bodyTextSnippet: '', loadedOk: false,
+  }
+
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'ClearUX Bot/1.0 (UX Audit)' },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(12_000),
+      redirect: 'follow',
     })
-    if (!res.ok) return ''
+    if (!res.ok) return empty
     const html = await res.text()
 
-    // Extract useful bits
-    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-    const title = titleMatch?.[1]?.trim() || ''
+    const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || ''
+    const metaDescription = html.match(/<meta\s[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["']/i)?.[1]?.trim()
+      || html.match(/<meta\s[^>]*content=["']([\s\S]*?)["'][^>]*name=["']description["']/i)?.[1]?.trim() || ''
 
-    const metaDesc = html.match(/<meta\s+name=["']description["']\s+content=["']([\s\S]*?)["']/i)?.[1]?.trim() || ''
-    const metaKeywords = html.match(/<meta\s+name=["']keywords["']\s+content=["']([\s\S]*?)["']/i)?.[1]?.trim() || ''
+    const h1Count = (html.match(/<h1[\s>]/gi) || []).length
+    const h2Count = (html.match(/<h2[\s>]/gi) || []).length
+    const imgCount = (html.match(/<img[\s>]/gi) || []).length
+    const imgsWithAlt = (html.match(/<img\s[^>]*alt=["'][^"']+["']/gi) || []).length
+    const linkCount = (html.match(/<a[\s>]/gi) || []).length
+    const hasViewport = /<meta\s[^>]*name=["']viewport["']/i.test(html)
+    const hasOpenGraph = /<meta\s[^>]*property=["']og:/i.test(html)
+    const hasStructuredData = /application\/ld\+json/i.test(html) || /itemtype=["']https?:\/\/schema\.org/i.test(html)
+    const formCount = (html.match(/<form[\s>]/gi) || []).length
+    const navCount = (html.match(/<nav[\s>]/gi) || []).length
+    const ariaCount = (html.match(/aria-/gi) || []).length
+    const inputCount = (html.match(/<input[\s>]/gi) || []).length
 
-    // Strip tags from body, take first ~1500 chars of visible text
-    const bodyMatch = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i)?.[1] || ''
-    const visibleText = bodyMatch
+    // Extract visible text
+    const bodyHtml = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i)?.[1] || ''
+    const visibleText = bodyHtml
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 1500)
 
-    return `Title: ${title}\nDescription: ${metaDesc}\nKeywords: ${metaKeywords}\nContent: ${visibleText}`
+    return {
+      title,
+      metaDescription,
+      h1Count, h2Count,
+      imgCount, imgsWithAlt,
+      linkCount, hasViewport, hasOpenGraph, hasStructuredData,
+      hasHttps: url.startsWith('https'),
+      formCount, navCount, ariaCount, inputCount,
+      bodyTextLength: visibleText.length,
+      bodyTextSnippet: visibleText.slice(0, 2000),
+      loadedOk: true,
+    }
   } catch {
-    return ''
+    return empty
   }
 }
 
-/** Use Claude Haiku to identify industry + top 3 competitors */
-async function detectCompetitors(siteSnippet: string, domain: string): Promise<{
+/* ── Auto-detect competitors ──────────────────────────────── */
+
+async function detectCompetitorDomains(signals: SiteSignals, domain: string): Promise<{
   industry: string
-  competitors: Array<{
-    domain: string
-    name: string
-    description: string
-  }>
+  competitors: Array<{ domain: string; name: string }>
 }> {
   const anthropic = getAnthropicClient()
 
   const resp = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 800,
-    messages: [
-      {
-        role: 'user',
-        content: `Analyze this website and identify its industry and top 3 direct competitors.
+    max_tokens: 600,
+    messages: [{
+      role: 'user',
+      content: `Identify the industry and top 3 direct competitors for this website.
 
-Website domain: ${domain}
-Website content:
-${siteSnippet || `(Could not fetch content for ${domain} — use your knowledge of this domain)`}
+Domain: ${domain}
+Title: ${signals.title}
+Description: ${signals.metaDescription}
+Content preview: ${signals.bodyTextSnippet.slice(0, 800)}
 
-Respond in JSON only, no explanation:
-{
-  "industry": "brief industry label (e.g. 'E-commerce', 'SaaS', 'Finance', 'Healthcare')",
-  "competitors": [
-    { "domain": "competitor1.com", "name": "Competitor 1 Name", "description": "Brief one-line description" },
-    { "domain": "competitor2.com", "name": "Competitor 2 Name", "description": "Brief one-line description" },
-    { "domain": "competitor3.com", "name": "Competitor 3 Name", "description": "Brief one-line description" }
-  ]
-}
+JSON only:
+{"industry":"e.g. Online Trading","competitors":[{"domain":"example.com","name":"Example"}]}
 
 Rules:
-- Return exactly 3 competitors that are direct, well-known alternatives
-- Use the actual main domain (e.g. "shopify.com" not "www.shopify.com")
-- Competitors must be real, active websites
-- If the domain is not recognizable, make your best guess from the content`,
-      },
-    ],
+- 3 competitors, direct alternatives in the same market
+- Use main domain only (no www)
+- Must be real, well-known sites`,
+    }],
   })
 
   const text = resp.content[0]?.type === 'text' ? resp.content[0].text : ''
-
-  // Parse JSON — handle markdown code fences
   const jsonStr = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
   try {
     return JSON.parse(jsonStr)
@@ -105,8 +148,27 @@ Rules:
   }
 }
 
-/** Lightweight UX score estimation for a competitor using Claude Haiku */
-async function estimateCompetitorScores(domain: string, siteSnippet: string): Promise<{
+/* ── Score a competitor from real HTML signals ────────────── */
+
+function formatSignalsForPrompt(domain: string, s: SiteSignals): string {
+  return `SITE: ${domain}
+Title: ${s.title || '(none)'}
+Meta description: ${s.metaDescription || '(none)'}
+Loaded: ${s.loadedOk ? 'yes' : 'FAILED'}
+HTTPS: ${s.hasHttps ? 'yes' : 'no'}
+
+STRUCTURE: ${s.h1Count} H1s, ${s.h2Count} H2s, ${s.navCount} nav elements, ${s.linkCount} links
+IMAGES: ${s.imgCount} total, ${s.imgsWithAlt} with alt text (${s.imgCount > 0 ? Math.round(s.imgsWithAlt / s.imgCount * 100) : 0}% coverage)
+FORMS: ${s.formCount} forms, ${s.inputCount} inputs
+ACCESSIBILITY: ${s.ariaCount} ARIA attributes
+SEO: viewport=${s.hasViewport}, OpenGraph=${s.hasOpenGraph}, structured-data=${s.hasStructuredData}
+TEXT LENGTH: ${s.bodyTextLength} chars
+
+CONTENT PREVIEW:
+${s.bodyTextSnippet.slice(0, 1200)}`
+}
+
+async function scoreCompetitor(domain: string, signals: SiteSignals): Promise<{
   overallScore: number
   pillarScores: Array<{ name: string; score: number }>
 }> {
@@ -114,108 +176,121 @@ async function estimateCompetitorScores(domain: string, siteSnippet: string): Pr
 
   const resp = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 400,
-    messages: [
-      {
-        role: 'user',
-        content: `Based on your knowledge of ${domain} and this content snippet, estimate UX scores (0-100) for this website.
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `You are a UX auditor scoring a website based on real HTML signals. Analyze the ACTUAL data below — do NOT use generic scores. Each site is different.
 
-Content: ${siteSnippet.slice(0, 800) || '(no content available — use your general knowledge)'}
+${formatSignalsForPrompt(domain, signals)}
 
-Score these 4 UX pillars and an overall score. Be realistic — most sites score 40-75.
+Score 0-100 for each pillar based on the EVIDENCE above. Use these specific rules:
 
-Respond in JSON only:
-{
-  "overallScore": 65,
-  "pillarScores": [
-    { "name": "Foundation", "score": 70 },
-    { "name": "Human Experience", "score": 60 },
-    { "name": "Inclusive Design", "score": 55 },
-    { "name": "Future Readiness", "score": 65 }
-  ]
-}
+FOUNDATION (visual clarity, IA, navigation, typography):
+- Good: multiple H2s for structure, nav elements present, clear title, ~1 H1
+- Bad: missing H1, no nav, missing title, excessive H1s
 
-Pillars:
-- Foundation: visual clarity, information architecture, navigation, typography
-- Human Experience: interaction design, trust signals, error handling, emotional design
-- Inclusive Design: accessibility, cognitive load, personalization, mobile experience
-- Future Readiness: performance, discoverability, technical health, global readiness`,
-      },
-    ],
+HUMAN EXPERIENCE (interaction, trust, error handling, emotional):
+- Good: forms present, many links (interactive), rich text content
+- Bad: very short content, no forms/interactivity, no meta description
+
+INCLUSIVE DESIGN (accessibility, cognitive load, mobile, personalization):
+- Good: high ARIA count, viewport meta, good alt-text coverage
+- Bad: no ARIA, missing viewport, images without alt text
+
+FUTURE READINESS (performance, SEO, technical health):
+- Good: HTTPS, OpenGraph, structured data, viewport
+- Bad: no HTTPS, missing OG tags, no structured data
+
+CRITICAL: Vary scores significantly between pillars based on the evidence. A site can have great Foundation (85) but poor Inclusive Design (35). DO NOT give similar scores to all pillars.
+
+JSON only, no explanation:
+{"overallScore":62,"pillarScores":[{"name":"Foundation","score":71},{"name":"Human Experience","score":58},{"name":"Inclusive Design","score":44},{"name":"Future Readiness","score":68}]}`,
+    }],
   })
 
   const text = resp.content[0]?.type === 'text' ? resp.content[0].text : ''
   const jsonStr = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
   try {
     const parsed = JSON.parse(jsonStr)
-    return {
-      overallScore: Math.min(100, Math.max(0, parsed.overallScore || 50)),
-      pillarScores: (parsed.pillarScores || []).map((p: any) => ({
-        name: p.name,
-        score: Math.min(100, Math.max(0, p.score || 50)),
-      })),
-    }
+    const pillarScores = (parsed.pillarScores || []).map((p: any) => ({
+      name: p.name,
+      score: Math.min(100, Math.max(0, Math.round(p.score))),
+    }))
+    // Compute overall from pillar average (don't trust AI's overall)
+    const avg = pillarScores.length > 0
+      ? Math.round(pillarScores.reduce((s: number, p: any) => s + p.score, 0) / pillarScores.length)
+      : Math.round(parsed.overallScore || 50)
+    return { overallScore: avg, pillarScores }
   } catch {
     return {
-      overallScore: 55,
+      overallScore: 50,
       pillarScores: [
-        { name: 'Foundation', score: 58 },
-        { name: 'Human Experience', score: 52 },
-        { name: 'Inclusive Design', score: 48 },
-        { name: 'Future Readiness', score: 50 },
+        { name: 'Foundation', score: 55 },
+        { name: 'Human Experience', score: 48 },
+        { name: 'Inclusive Design', score: 40 },
+        { name: 'Future Readiness', score: 52 },
       ],
     }
   }
 }
 
-export async function GET(request: NextRequest) {
+/* ── API handler ──────────────────────────────────────────── */
+
+export async function POST(request: NextRequest) {
   try {
-    // Auth check
     const supabase = await createServerSupabase()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const url = request.nextUrl.searchParams.get('url')
+    const body = await request.json()
+    const { url, mode, competitors: manualDomains } = body as {
+      url: string
+      mode: 'auto' | 'manual'
+      competitors?: string[]
+    }
+
     if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
 
-    // Normalize
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
     let domain: string
     try { domain = new URL(fullUrl).hostname.replace(/^www\./, '') } catch {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
     }
 
-    // Step 1: Fetch the user's site content for industry detection
-    const siteSnippet = await fetchSiteSnippet(fullUrl)
+    let competitorDomains: Array<{ domain: string; name: string }>
+    let industry = ''
 
-    // Step 2: Detect industry + competitors via Claude Haiku
-    const detection = await detectCompetitors(siteSnippet, domain)
+    if (mode === 'manual' && manualDomains && manualDomains.length > 0) {
+      // Manual mode: user provided domains
+      competitorDomains = manualDomains.slice(0, 3).map(d => {
+        const clean = d.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')
+        return { domain: clean, name: clean }
+      })
+    } else {
+      // Auto mode: detect from site content
+      const siteSignals = await fetchSiteSignals(fullUrl)
+      const detection = await detectCompetitorDomains(siteSignals, domain)
+      competitorDomains = detection.competitors
+      industry = detection.industry
+    }
 
-    if (detection.competitors.length === 0) {
+    if (competitorDomains.length === 0) {
       return NextResponse.json({
         domain,
-        industry: detection.industry,
+        industry,
         competitors: [],
-        message: 'Could not detect competitors for this site',
+        message: 'Could not identify competitors',
       })
     }
 
-    // Step 3: Fetch content snippets for each competitor in parallel
-    const competitorSnippets = await Promise.all(
-      detection.competitors.map(async (c) => {
-        const snippet = await fetchSiteSnippet(`https://${c.domain}`)
-        return { ...c, snippet }
-      })
-    )
-
-    // Step 4: Estimate scores for each competitor in parallel
-    const competitorScores = await Promise.all(
-      competitorSnippets.map(async (c) => {
-        const scores = await estimateCompetitorScores(c.domain, c.snippet)
+    // Fetch real HTML signals + score each competitor in parallel
+    const results = await Promise.all(
+      competitorDomains.map(async (c) => {
+        const signals = await fetchSiteSignals(`https://${c.domain}`)
+        const scores = await scoreCompetitor(c.domain, signals)
         return {
           domain: c.domain,
           name: c.name,
-          description: c.description,
           score: scores.overallScore,
           pillarScores: scores.pillarScores,
         }
@@ -224,11 +299,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       domain,
-      industry: detection.industry,
-      competitors: competitorScores,
+      industry,
+      competitors: results,
     })
   } catch (err) {
-    console.error('GET /api/audits/detect-competitors error:', err)
-    return NextResponse.json({ error: 'Failed to detect competitors' }, { status: 500 })
+    console.error('POST /api/audits/detect-competitors error:', err)
+    return NextResponse.json({ error: 'Failed to benchmark competitors' }, { status: 500 })
   }
 }

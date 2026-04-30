@@ -367,15 +367,24 @@ export function HeuristicRadarChart({ pillarScores }: {
 
 /* ── Benchmarks Section ──────────────────────────────────── */
 
-export function BenchmarksSection({ overallScore, pillarScores, competitors, detecting, onDetect }: {
+export function BenchmarksSection({ overallScore, pillarScores, competitors, detecting, onBenchmark }: {
   overallScore: number;
   pillarScores: Array<{ name: string; score: number }>;
   competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting?: boolean;
-  onDetect?: () => void;
+  onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
 }) {
+  const [manualInputs, setManualInputs] = useState<string[]>(['', '', '']);
+  const [showManual, setShowManual] = useState(false);
   const maxCompetitors = competitors?.slice(0, 3) || [];
   const hasCompetitors = maxCompetitors.length > 0;
+
+  const handleManualSubmit = () => {
+    const domains = manualInputs.filter(d => d.trim().length > 0);
+    if (domains.length > 0 && onBenchmark) {
+      onBenchmark('manual', domains);
+    }
+  };
 
   // Empty state — no competitors yet
   if (!hasCompetitors) {
@@ -385,36 +394,80 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
           <BarChart3 size={14} className="text-brand" />
           <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
         </div>
-        <div className="flex flex-col items-center justify-center text-center px-6 py-10">
-          <div className="w-14 h-14 rounded-2xl bg-brand/8 dark:bg-brand/10 flex items-center justify-center mb-4">
-            <BarChart3 size={26} className="text-brand" />
-          </div>
-          <p className="text-base font-semibold text-text mb-1.5">Compare against competitors</p>
-          <p className="text-sm text-muted max-w-xs mb-5">
-            Detect your top 3 industry competitors and benchmark your UX score against theirs across all pillars.
-          </p>
-          {onDetect && (
-            <button
-              onClick={onDetect}
-              disabled={detecting}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-brand px-5 py-2.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-60 shadow-sm"
-            >
-              {detecting ? (
-                <><Loader2 size={15} className="animate-spin" /> Analysing competitors...</>
-              ) : (
-                <>
-                  <Search size={15} />
-                  Detect Competitors
-                </>
-              )}
-            </button>
-          )}
-          {detecting && (
-            <p className="text-xs text-muted mt-3 animate-pulse">
-              Scanning your site, identifying industry, and scoring competitors...
+
+        {detecting ? (
+          <div className="flex flex-col items-center justify-center text-center px-6 py-10">
+            <Loader2 size={28} className="text-brand animate-spin mb-3" />
+            <p className="text-sm font-semibold text-text mb-1">Analysing competitors...</p>
+            <p className="text-xs text-muted animate-pulse max-w-xs">
+              Fetching real HTML from each site and scoring their UX across all pillars. This takes 15–30 seconds.
             </p>
-          )}
-        </div>
+          </div>
+        ) : showManual ? (
+          /* Manual input form */
+          <div className="px-5 pb-5 pt-2">
+            <p className="text-xs text-muted mb-3">Enter up to 3 competitor domains to benchmark against:</p>
+            <div className="space-y-2 mb-4">
+              {manualInputs.map((val, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  value={val}
+                  onChange={e => {
+                    const updated = [...manualInputs];
+                    updated[i] = e.target.value;
+                    setManualInputs(updated);
+                  }}
+                  placeholder={`competitor${i + 1}.com`}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border/40 dark:border-white/[0.08] bg-off/50 dark:bg-white/[0.03] text-text placeholder:text-muted/40 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleManualSubmit}
+                disabled={manualInputs.every(d => !d.trim())}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-brand px-4 py-2 rounded-lg hover:brightness-110 transition-all disabled:opacity-40 shadow-sm"
+              >
+                <BarChart3 size={14} />
+                Run Benchmark
+              </button>
+              <button
+                onClick={() => setShowManual(false)}
+                className="text-sm text-muted hover:text-text px-3 py-2 transition-colors"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Choice: auto or manual */
+          <div className="flex flex-col items-center justify-center text-center px-6 py-8">
+            <div className="w-12 h-12 rounded-2xl bg-brand/8 dark:bg-brand/10 flex items-center justify-center mb-4">
+              <BarChart3 size={22} className="text-brand" />
+            </div>
+            <p className="text-base font-semibold text-text mb-1">Benchmark against competitors</p>
+            <p className="text-sm text-muted max-w-sm mb-6">
+              Compare your UX score against up to 3 competitors. We analyse their real website to produce accurate scores.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+              <button
+                onClick={() => onBenchmark?.('auto')}
+                className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-white bg-brand px-4 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm"
+              >
+                <Search size={15} />
+                Auto-detect
+              </button>
+              <button
+                onClick={() => setShowManual(true)}
+                className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand bg-brand/10 px-4 py-2.5 rounded-xl hover:bg-brand/20 transition-all"
+              >
+                <ChevronRight size={15} />
+                Enter manually
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -425,7 +478,6 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
     ...pillarScores.map(ps => ({ label: ps.name, yourScore: ps.score })),
   ];
 
-  // Compute average across competitors for each row
   const getCompAvg = (label: string) => {
     const scores = maxCompetitors
       .map(c => label === 'Overall' ? c.score : c.pillarScores?.find(ps => ps.name === label)?.score)
@@ -438,7 +490,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
-        <span className="text-[10px] text-muted ml-auto">vs. top 3 competitors</span>
+        <span className="text-[10px] text-muted ml-auto">vs. {maxCompetitors.length} competitor{maxCompetitors.length !== 1 ? 's' : ''}</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -512,7 +564,7 @@ export function AuditDashboardOverview({
   latestAuditId,
   competitors,
   detecting,
-  onDetectCompetitors,
+  onBenchmark,
   onStatCardClick,
 }: {
   overallScore: number;
@@ -524,7 +576,7 @@ export function AuditDashboardOverview({
   latestAuditId: string;
   competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting?: boolean;
-  onDetectCompetitors?: () => void;
+  onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
   onStatCardClick?: (filter: string) => void;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed).length;
@@ -592,7 +644,7 @@ export function AuditDashboardOverview({
         pillarScores={pillarScores}
         competitors={competitors}
         detecting={detecting}
-        onDetect={onDetectCompetitors}
+        onBenchmark={onBenchmark}
       />
     </>
   );
