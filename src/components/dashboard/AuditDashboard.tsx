@@ -460,7 +460,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
               </button>
               <button
                 onClick={() => setShowManual(true)}
-                className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-brand bg-brand/10 px-4 py-2.5 rounded-xl hover:bg-brand/20 transition-all"
+                className="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-text border border-border/50 dark:border-white/[0.1] bg-off/60 dark:bg-white/[0.04] px-4 py-2.5 rounded-xl hover:bg-off dark:hover:bg-white/[0.07] transition-all"
               >
                 <ChevronRight size={15} />
                 Enter manually
