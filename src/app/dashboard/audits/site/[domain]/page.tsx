@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Globe,
@@ -13,14 +14,15 @@ import {
   FileSearch,
   Trash2,
   RefreshCw,
-  TrendingUp,
+  Download,
   ChevronRight,
   Search,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import Badge from '@/components/ui/Badge';
-import type { Audit, Report } from '@/types/database';
+import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
+import type { Audit, Report, AuditFinding } from '@/types/database';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -57,22 +59,24 @@ function scoreColor(s: number) {
   return 'text-[#EF4444]';
 }
 
-function scoreBg(s: number) {
-  if (s >= 70) return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-  if (s >= 40) return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-  return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-}
+/* ── Pillar config (must match audit detail page) ────────── */
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16]];
 
 /* ── Main Component ───────────────────────────────────────── */
 
 export default function DomainAuditsPage({ params }: { params: Promise<{ domain: string }> }) {
   const { domain: rawDomain } = use(params);
   const domain = decodeURIComponent(rawDomain);
+  const router = useRouter();
 
   const { user, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
+  const [findings, setFindings] = useState<AuditFinding[]>([]);
+  const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {
@@ -95,7 +99,33 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         if (!repErr && reports) reportsMap = Object.fromEntries(reports.map((r: any) => [r.audit_id, r]));
       }
 
-      setAudits(domainRows.map((a: any) => ({ ...a, report: reportsMap[a.id] || null })));
+      const enrichedAudits = domainRows.map((a: any) => ({ ...a, report: reportsMap[a.id] || null }));
+      setAudits(enrichedAudits);
+
+      // Load findings + category scores from latest completed audit
+      const latestCompleted = enrichedAudits.find((a: AuditWithReport) => a.status === 'completed' && a.report);
+      if (latestCompleted) {
+        // Findings
+        const { data: findingsData } = await supabase
+          .from('findings')
+          .select('*')
+          .eq('audit_id', latestCompleted.id)
+          .order('sort_order', { ascending: true });
+        setFindings(findingsData || []);
+
+        // Category scores from raw_json
+        const rawJson = latestCompleted.report?.raw_json as any;
+        if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
+          setCategoryScores(rawJson.categoryScores);
+        }
+
+        // Score trend
+        const productUrl = latestCompleted.product_url;
+        fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
+          .then(r => r.json())
+          .then(d => { if (d.trend) setScoreTrend(d.trend); })
+          .catch(() => {});
+      }
     } catch (err: any) {
       console.error('[DomainAudits] fetch error:', err);
       setError(err?.message || 'Failed to load audits');
@@ -132,27 +162,53 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
   // Loading skeleton
   if (authLoading || (loading && user)) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 space-y-4">
+      <div className="max-w-4xl mx-auto py-6 px-4 space-y-4">
         <div className="h-4 w-28 bg-off rounded animate-pulse" />
         <div className="h-7 w-48 bg-off rounded animate-pulse" />
-        <div className="h-20 bg-off rounded-lg animate-pulse" />
-        {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-off rounded-lg animate-pulse" />)}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-48 bg-off rounded-xl animate-pulse" />
+          <div className="h-48 bg-off rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-off rounded-xl animate-pulse" />)}
+        </div>
       </div>
     );
   }
 
-  // Score data
-  const scores = audits
-    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
-    .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
-    .reverse();
-  const latestScore = scores.length > 0 ? scores[scores.length - 1].score : null;
-  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
+  // Derived data
+  const latestCompleted = audits.find(a => a.status === 'completed' && a.report);
+  const latestReport = latestCompleted?.report;
+  const latestScore = latestReport?.overall_score ?? 0;
   const latest = audits[0] || null;
   const productUrl = latest?.product_url || '';
 
+  // Severity counts from latest audit findings
+  const severityCounts = {
+    critical: findings.filter((f) => f.severity === 'critical').length,
+    high: findings.filter((f) => f.severity === 'high').length,
+    medium: findings.filter((f) => f.severity === 'medium').length,
+    low: findings.filter((f) => f.severity === 'low').length,
+  };
+
+  // Pillar scores for radar chart
+  const pillarScores = PILLAR_NAMES.map((name, i) => {
+    const [start, end] = PILLAR_RANGES[i];
+    const cats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+    return {
+      name,
+      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0,
+    };
+  });
+
+  const handleStatCardClick = (filter: string) => {
+    if (latestCompleted && filter !== 'passed') {
+      router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+    }
+  };
+
   return (
-    <div className="max-w-2xl mx-auto py-4 px-4">
+    <div className="max-w-4xl mx-auto py-4 px-4">
       {/* Back to all audits */}
       <Link
         href="/dashboard/audits"
@@ -168,19 +224,39 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           <div className="flex items-center gap-2 mb-1">
             <Globe size={18} className="text-muted flex-shrink-0" />
             <h1 className="text-xl font-semibold font-heading text-text truncate">{domain}</h1>
+            <a
+              href={productUrl || `https://${domain}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors"
+            >
+              <ExternalLink size={11} />
+            </a>
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}
-            {latestScore != null && <> · Latest score: <span className={`font-semibold ${scoreColor(latestScore)}`}>{latestScore}/100</span></>}
+            {latestScore > 0 && <> · Latest score: <span className={`font-semibold ${scoreColor(latestScore)}`}>{latestScore}/100</span></>}
           </p>
         </div>
-        <Link
-          href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110 flex-shrink-0"
-        >
-          <RefreshCw size={13} />
-          Re-audit
-        </Link>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {latestCompleted && (
+            <a
+              href={`/api/reports/${latestCompleted.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+            >
+              <Download size={12} /> Report
+            </a>
+          )}
+          <Link
+            href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+          >
+            <RefreshCw size={13} />
+            Re-audit
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -189,45 +265,23 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         </div>
       )}
 
-      {/* Score trend */}
-      {scores.length >= 2 && (
-        <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={13} className="text-brand" />
-            <span className="text-xs font-medium text-text/60">Score Trend</span>
-            {improvement !== 0 && (
-              <span className={`ml-auto text-xs font-semibold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                {improvement > 0 ? '+' : ''}{improvement} pts
-              </span>
-            )}
-          </div>
-          <div className="space-y-2">
-            {scores.map((s, i) => {
-              const dateStr = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              const isLatest = i === scores.length - 1;
-              const isBaseline = i === 0;
-              return (
-                <div key={i} className={`flex items-center gap-2.5 ${isLatest ? '' : 'opacity-55'}`}>
-                  <span className="text-[10px] text-muted w-11 flex-shrink-0">{dateStr}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-border/10 dark:bg-white/[0.04] overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${s.score >= 70 ? 'bg-[#22C55E]' : s.score >= 40 ? 'bg-amber-400' : 'bg-[#EF4444]'}`}
-                      style={{ width: `${s.score}%` }}
-                    />
-                  </div>
-                  <span className={`text-[11px] font-semibold w-6 text-right ${s.score >= 70 ? 'text-[#22C55E]' : s.score >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-[#EF4444]'}`}>
-                    {s.score}
-                  </span>
-                  {isLatest && <span className="text-[8px] font-medium text-brand bg-brand/10 px-1 py-0.5 rounded">now</span>}
-                  {isBaseline && !isLatest && <span className="text-[8px] text-muted/50">start</span>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      {/* ── Dashboard (only if there's a completed audit) ──── */}
+      {latestCompleted && latestReport && (
+        <AuditDashboardOverview
+          overallScore={latestScore}
+          scoreTrend={scoreTrend}
+          severityCounts={severityCounts}
+          findings={findings}
+          pillarScores={pillarScores}
+          productUrl={productUrl}
+          latestAuditId={latestCompleted.id}
+          onStatCardClick={handleStatCardClick}
+        />
       )}
 
-      {/* Audit list */}
+      {/* ── Audit History ────────────────────────────────────── */}
+      <h2 className="text-sm font-semibold text-text mb-3">Audit History</h2>
+
       {audits.length === 0 ? (
         <div className="text-center py-12">
           <FileSearch size={24} className="text-muted mx-auto mb-3" />

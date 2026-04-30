@@ -1,0 +1,385 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import {
+  TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
+} from 'lucide-react';
+import ScoreRing from '@/components/ui/ScoreRing';
+import type { AuditFinding } from '@/types/database';
+
+/* ── Score Over Time Chart ───────────────────────────────── */
+
+export function ScoreOverTimeChart({ trend }: {
+  trend: Array<{ auditId: string; date: string; overallScore: number }>;
+}) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  if (trend.length === 0) return null;
+
+  const W = 320, H = 160, PAD_L = 32, PAD_R = 16, PAD_T = 24, PAD_B = 28;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  const minScore = Math.max(0, Math.min(...trend.map(t => t.overallScore)) - 10);
+  const maxScore = Math.min(100, Math.max(...trend.map(t => t.overallScore)) + 10);
+  const range = maxScore - minScore || 1;
+
+  const points = trend.map((t, i) => ({
+    x: PAD_L + (trend.length === 1 ? chartW / 2 : (i / (trend.length - 1)) * chartW),
+    y: PAD_T + chartH - ((t.overallScore - minScore) / range) * chartH,
+    score: t.overallScore,
+    date: t.date,
+  }));
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`;
+
+  // Grid lines
+  const gridLines = 4;
+  const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
+
+  return (
+    <div className="flex-1 min-w-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+        {/* Grid */}
+        {gridScores.map((s, i) => {
+          const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
+          return (
+            <g key={i}>
+              <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
+              <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+            </g>
+          );
+        })}
+
+        {/* Area fill */}
+        <defs>
+          <linearGradient id="scoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#6366F1" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d={areaD} fill="url(#scoreAreaGrad)" />
+
+        {/* Line */}
+        <path d={pathD} fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Hover hit areas + points */}
+        {points.map((p, i) => {
+          const isHovered = hoveredIdx === i;
+          const isLast = i === points.length - 1;
+          const showLabel = isHovered || isLast;
+          return (
+            <g key={i}>
+              {/* Invisible larger hit area for hover */}
+              <circle
+                cx={p.x} cy={p.y} r="12" fill="transparent"
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{ cursor: 'pointer' }}
+              />
+              {/* Visible dot */}
+              <circle
+                cx={p.x} cy={p.y}
+                r={isHovered ? 5 : 3.5}
+                fill={isHovered ? '#6366F1' : 'var(--card)'}
+                stroke="#6366F1"
+                strokeWidth="2"
+                className="transition-all duration-150"
+              />
+              {/* Score label on hover or for latest */}
+              {showLabel && (
+                <g>
+                  <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="#6366F1" />
+                  <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        {/* X-axis date labels */}
+        {points.map((p, i) => {
+          if (trend.length > 5 && i !== 0 && i !== trend.length - 1 && i !== Math.floor(trend.length / 2)) return null;
+          const d = new Date(p.date);
+          const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+          return (
+            <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/* ── Stat Cards ──────────────────────────────────────────── */
+
+export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFindings, onCardClick }: {
+  severityCounts: { critical: number; high: number; medium: number; low: number };
+  totalCheckpoints: number;
+  totalFindings: number;
+  onCardClick?: (filter: string) => void;
+}) {
+  const passedChecks = Math.max(0, totalCheckpoints - totalFindings);
+  const cards = [
+    { key: 'critical', label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500', bgColor: 'bg-red-50 dark:bg-red-950/20', borderColor: 'border-red-200/50 dark:border-red-800/20' },
+    { key: 'high', label: 'High Issues', count: severityCounts.high, description: 'High impact issues to fix', color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-950/20', borderColor: 'border-orange-200/50 dark:border-orange-800/20' },
+    { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200/50 dark:border-amber-800/20' },
+    { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', color: 'text-[#22C55E] dark:text-emerald-400', dotColor: 'bg-[#22C55E]', bgColor: 'bg-[#22C55E]/5 dark:bg-emerald-950/20', borderColor: 'border-[#22C55E]/20 dark:border-emerald-800/20' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      {cards.map((card) => (
+        <button
+          key={card.key}
+          onClick={() => onCardClick?.(card.key)}
+          className={`rounded-xl border ${card.borderColor} ${card.bgColor} p-4 transition-all hover:shadow-md hover:-translate-y-0.5 text-left cursor-pointer group`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
+            <span className={`text-xs font-semibold ${card.color}`}>{card.label}</span>
+          </div>
+          <p className={`text-2xl font-bold font-heading ${card.color}`}>{card.count}</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-[11px] text-muted">{card.description}</p>
+            {card.key !== 'passed' && card.count > 0 && (
+              <ChevronRight size={12} className="text-muted group-hover:text-text transition-colors" />
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Top Issues Panel ────────────────────────────────────── */
+
+export function TopIssuesPanel({ findings, auditId }: {
+  findings: AuditFinding[];
+  auditId?: string;
+}) {
+  const sorted = [...findings]
+    .filter(f => !f.dismissed)
+    .sort((a, b) => {
+      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+      return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+    })
+    .slice(0, 5);
+
+  if (sorted.length === 0) return null;
+
+  const sevBadgeColors: Record<string, string> = {
+    critical: 'bg-red-500 text-white',
+    high: 'bg-orange-500 text-white',
+    medium: 'bg-amber-400 text-amber-900',
+    low: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  };
+
+  const sevDotColors: Record<string, string> = {
+    critical: 'bg-red-500',
+    high: 'bg-orange-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-blue-500',
+  };
+
+  return (
+    <div className="flex-1 min-w-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
+      <div className="space-y-0 divide-y divide-border/20 dark:divide-white/[0.04]">
+        {sorted.map((f) => {
+          const badgeColor = sevBadgeColors[f.severity] || sevBadgeColors.medium;
+          const dotColor = sevDotColors[f.severity] || 'bg-gray-400';
+          const sevLabel = f.severity.charAt(0).toUpperCase() + f.severity.slice(1);
+          return (
+            <Link
+              key={f.id}
+              href={auditId ? `/dashboard/audits/${auditId}?finding=${f.id}` : '#'}
+              className="flex items-center gap-3 py-2.5 group hover:bg-brand/5 dark:hover:bg-brand/[0.03] rounded-lg px-2 -mx-2 transition-colors"
+            >
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+              <span className="text-xs font-medium text-text flex-1 min-w-0 truncate group-hover:text-brand transition-colors">{f.title}</span>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wide ${badgeColor}`}>
+                {sevLabel}
+              </span>
+              <ChevronRight size={12} className="text-muted/40 group-hover:text-brand flex-shrink-0 transition-colors" />
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Heuristic Breakdown Radar Chart ─────────────────────── */
+
+interface PillarScore {
+  name: string;
+  score: number;
+  badgeBg: string;
+  range: [number, number];
+}
+
+export function HeuristicRadarChart({ pillarScores }: {
+  pillarScores: Array<{ name: string; score: number }>;
+}) {
+  const n = pillarScores.length;
+  if (n < 3) return null;
+
+  const cx = 120, cy = 110, R = 80;
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2;
+
+  const levels = [25, 50, 75, 100];
+  const levelPolygons = levels.map((level) =>
+    Array.from({ length: n }, (_, i) => {
+      const angle = startAngle + i * angleStep;
+      const r = (level / 100) * R;
+      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+    }).join(' ')
+  );
+
+  const dataPoints = pillarScores.map((ps, i) => {
+    const angle = startAngle + i * angleStep;
+    const r = (ps.score / 100) * R;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
+  const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
+
+  const labelPoints = pillarScores.map((ps, i) => {
+    const angle = startAngle + i * angleStep;
+    const r = R + 22;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
+  });
+
+  return (
+    <div className="flex-shrink-0">
+      <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
+      <svg viewBox="0 0 240 230" className="w-full max-w-[240px] h-auto mx-auto">
+        {/* Grid polygons */}
+        {levelPolygons.map((polygon, i) => (
+          <polygon key={i} points={polygon} fill="none" stroke="var(--border)" strokeWidth="0.5" opacity={0.4 + i * 0.15} />
+        ))}
+
+        {/* Axis lines */}
+        {Array.from({ length: n }, (_, i) => {
+          const angle = startAngle + i * angleStep;
+          return (
+            <line key={i} x1={cx} y1={cy} x2={cx + R * Math.cos(angle)} y2={cy + R * Math.sin(angle)} stroke="var(--border)" strokeWidth="0.5" opacity="0.4" />
+          );
+        })}
+
+        {/* Data polygon */}
+        <polygon points={dataPolygon} fill="#6366F1" fillOpacity="0.12" stroke="#6366F1" strokeWidth="1.5" strokeLinejoin="round" />
+
+        {/* Data points */}
+        {dataPoints.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#6366F1" stroke="var(--card)" strokeWidth="1.5" />
+        ))}
+
+        {/* Labels */}
+        {labelPoints.map((lp, i) => {
+          const anchor = Math.abs(lp.x - cx) < 5 ? 'middle' : lp.x > cx ? 'start' : 'end';
+          return (
+            <text key={i} x={lp.x} y={lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="8" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.7">
+              {lp.name.split(' ')[0]}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/* ── Full Dashboard Wrapper ──────────────────────────────── */
+
+export function AuditDashboardOverview({
+  overallScore,
+  scoreTrend,
+  severityCounts,
+  findings,
+  pillarScores,
+  productUrl,
+  latestAuditId,
+  onStatCardClick,
+}: {
+  overallScore: number;
+  scoreTrend: Array<{ auditId: string; date: string; overallScore: number }>;
+  severityCounts: { critical: number; high: number; medium: number; low: number };
+  findings: AuditFinding[];
+  pillarScores: Array<{ name: string; score: number }>;
+  productUrl: string;
+  latestAuditId: string;
+  onStatCardClick?: (filter: string) => void;
+}) {
+  const totalFindings = findings.filter(f => !f.dismissed).length;
+
+  return (
+    <>
+      {/* Row 1: UX Score + Score Over Time */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* UX Score Card */}
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-text mb-4">UX Score</h3>
+          <div className="flex flex-col items-center">
+            <ScoreRing score={overallScore} size={130} strokeWidth={8} />
+            <p className="text-xs text-muted mt-2">/100</p>
+            <span className={`text-sm font-semibold mt-1 px-3 py-0.5 rounded-full ${
+              overallScore >= 70
+                ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                : overallScore >= 40
+                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                  : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+            }`}>
+              {overallScore >= 70 ? 'Great UX' : overallScore >= 40 ? 'Needs Work' : 'Poor UX'}
+            </span>
+          </div>
+        </div>
+
+        {/* Score Over Time Card */}
+        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+          {scoreTrend.length >= 2 ? (
+            <ScoreOverTimeChart trend={scoreTrend} />
+          ) : (
+            <div className="h-full flex flex-col">
+              <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
+                <TrendingUp size={28} className="text-muted/30 mb-2" />
+                <p className="text-xs text-muted">Re-audit to track your score over time</p>
+                <Link
+                  href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
+                  className="text-xs font-semibold text-brand hover:text-brand/80 transition-colors mt-2"
+                >
+                  Re-audit (1 credit) →
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Row 2: Stat Cards */}
+      <DashboardStatCards
+        severityCounts={severityCounts}
+        totalCheckpoints={64}
+        totalFindings={totalFindings}
+        onCardClick={onStatCardClick}
+      />
+
+      {/* Row 3: Top Issues + Heuristic Breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-6">
+        <div className="sm:col-span-3 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+          <TopIssuesPanel findings={findings} auditId={latestAuditId} />
+        </div>
+        <div className="sm:col-span-2 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+          <HeuristicRadarChart pillarScores={pillarScores} />
+        </div>
+      </div>
+    </>
+  );
+}
