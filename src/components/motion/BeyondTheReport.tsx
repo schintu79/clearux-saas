@@ -12,6 +12,12 @@ import {
    "Beyond the Report" — 3 features, tight copy, animated visuals
    ═══════════════════════════════════════════════════════════════ */
 
+/* Shared card shell — consistent width, padding, border, shadow */
+const CARD_OUTER = 'w-full max-w-[400px] mx-auto'
+const CARD_INNER = 'rounded-2xl bg-card border border-border/30 dark:border-white/[0.06] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none'
+const CARD_HEADER = 'flex items-center justify-between mb-5'
+const CARD_ICON_BOX = 'w-7 h-7 rounded-lg bg-text/5 flex items-center justify-center'
+
 /* ── Visual 1: Live finding tracker ────────────────────────── */
 function TrackerVisual({ inView }: { inView: boolean }) {
   const [step, setStep] = useState(0)
@@ -55,12 +61,12 @@ function TrackerVisual({ inView }: { inView: boolean }) {
   const pct = Math.round((fixedCount / total) * 100)
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-card border border-border/30 dark:border-white/[0.06] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none">
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className={CARD_HEADER}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-text/5 flex items-center justify-center">
+            <div className={CARD_ICON_BOX}>
               <ListChecks size={14} className="text-text" />
             </div>
             <span className="text-xs font-semibold text-text">acme.com</span>
@@ -68,16 +74,16 @@ function TrackerVisual({ inView }: { inView: boolean }) {
           <motion.span
             className="text-lg font-heading font-bold text-emerald-500"
             key={pct}
-            initial={{ scale: 1.3, opacity: 0.5 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
             {pct}%
           </motion.span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] mb-4 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] mb-5 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-emerald-500"
             animate={{ width: `${pct}%` }}
@@ -94,12 +100,12 @@ function TrackerVisual({ inView }: { inView: boolean }) {
             return (
               <motion.div
                 key={i}
-                className="flex items-center gap-2 py-2 px-2.5 rounded-lg"
+                className="flex items-center gap-2.5 py-2 px-2.5 rounded-lg"
                 initial={{ opacity: 0, x: -10 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
               >
-                <span className={`${sevColor[f.severity]} text-white text-[8px] font-bold px-1 py-0.5 rounded flex-shrink-0 w-[50px] text-center`}>
+                <span className={`${sevColor[f.severity]} text-white text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 w-[52px] text-center`}>
                   {f.severity.toUpperCase()}
                 </span>
                 <span className="text-[11px] text-text flex-1 truncate">{f.label}</span>
@@ -144,12 +150,12 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-card border border-border/30 dark:border-white/[0.06] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none">
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className={CARD_HEADER}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-text/5 flex items-center justify-center">
+            <div className={CARD_ICON_BOX}>
               <TrendingUp size={14} className="text-text" />
             </div>
             <span className="text-xs font-semibold text-text">Score Trend</span>
@@ -165,7 +171,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
         </div>
 
         {/* Bar chart */}
-        <div className="flex items-end gap-3 h-36 mb-4">
+        <div className="flex items-end gap-4 h-36 mb-5">
           {audits.map((a, i) => {
             const isVisible = activeAudit >= i
             const barHeight = `${(a.score / 100) * 100}%`
@@ -256,14 +262,16 @@ function ShareVisual({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-card border border-border/30 dark:border-white/[0.06] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none">
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
         {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-text/5 flex items-center justify-center">
-            <Share2 size={14} className="text-text" />
+        <div className={CARD_HEADER}>
+          <div className="flex items-center gap-2">
+            <div className={CARD_ICON_BOX}>
+              <Share2 size={14} className="text-text" />
+            </div>
+            <span className="text-xs font-semibold text-text">Share Report</span>
           </div>
-          <span className="text-xs font-semibold text-text">Share Report</span>
         </div>
 
         {/* Link being generated */}
@@ -306,9 +314,9 @@ function ShareVisual({ inView }: { inView: boolean }) {
             <span className="text-[11px] font-semibold text-text">acme.com</span>
             <motion.span
               className="font-heading text-xl font-bold text-text"
-              initial={{ scale: 0 }}
-              animate={step >= 2 ? { scale: 1 } : {}}
-              transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
+              initial={{ opacity: 0 }}
+              animate={step >= 2 ? { opacity: 1 } : {}}
+              transition={{ duration: 0.4, delay: 0.2 }}
             >
               78
             </motion.span>
@@ -359,7 +367,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
             return (
               <motion.div
                 key={i}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border/30 dark:border-white/[0.06] flex-1 justify-center"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/30 dark:border-white/[0.06] flex-1 justify-center"
                 initial={{ opacity: 0, y: 5 }}
                 animate={step >= 3 ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: i * 0.1, duration: 0.3 }}
