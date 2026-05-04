@@ -7,8 +7,8 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import {
   Brain, CheckCircle, Eye, Target, Map, MousePointerClick, Zap,
   Smartphone, Shield, Type, ArrowRight, Layers, Accessibility,
-  Heart, Users, Globe2, Scale, Sparkles, Clock, Lock, AlertTriangle,
-  Search, RefreshCw, Share2, BarChart3, ListChecks, Download, TrendingUp, Link2,
+  Heart, Users, Globe2, Scale, Sparkles, Clock,
+  Search,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -17,9 +17,10 @@ import AllAuditsInclude from "@/components/ui/AllAuditsInclude";
 import { useAuth } from '@/context/AuthContext';
 import HowItWorks from '@/components/motion/HowItWorks';
 import WhyClearUX from '@/components/motion/WhyClearUX';
+import BeyondTheReport from '@/components/motion/BeyondTheReport';
 import {
   ScrollReveal, StaggerReveal, StaggerItem, ScaleReveal,
-  SlideReveal, AnimatedBar, AnimatedCounter, FloatingOrb, ParallaxFloat,
+  AnimatedBar, AnimatedCounter, FloatingOrb,
 } from '@/components/motion';
 
 /* ── Pillar data ────────────────────────────────────────────── */
@@ -284,94 +285,6 @@ const TOP_FAQS = [
   { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations.' },
   { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they only verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues beyond the baseline, hit "Dig Deeper" for a full Deep mode analysis.' },
 ];
-
-/* ── Animated feature card for Beyond the Report ────────────── */
-function AnimatedFeatureCard({
-  icon: Icon,
-  title,
-  subtitle,
-  score,
-  scoreColor,
-  bars,
-  finding,
-  className = '',
-}: {
-  icon: React.ElementType
-  title: string
-  subtitle: string
-  score: string
-  scoreColor?: string
-  bars: Array<{ t: string; s: number; resolved?: string }>
-  finding: { severity: string; color: string; label: string; desc: string }
-  className?: string
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-10%' })
-
-  return (
-    <motion.div
-      ref={ref}
-      className={`w-full rounded-2xl bg-card/80 dark:bg-card border border-border/20 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none ${className}`}
-      aria-label="Illustrative example"
-      data-demo="true"
-      role="presentation"
-      initial={{ opacity: 0, y: 30, scale: 0.96 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, margin: '-10%' }}
-      transition={{ duration: 0.7 }}
-    >
-      <motion.div
-        className="flex items-center gap-3 mb-6"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="w-12 h-12 rounded-xl bg-text/5 flex items-center justify-center"><Icon size={24} className="text-text" /></div>
-        <div>
-          <p className="text-sm font-semibold text-text">{title}</p>
-          <p className="text-xs text-muted">{subtitle}</p>
-        </div>
-        <motion.span
-          className={`ml-auto font-heading text-4xl font-bold ${scoreColor || 'text-text'}`}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
-        >
-          {score}
-        </motion.span>
-      </motion.div>
-      <div className="space-y-4">
-        {bars.map((d, i) => (
-          <div key={i}>
-            <motion.div
-              className="flex items-center justify-between mb-1.5"
-              initial={{ opacity: 0 }}
-              animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.3 + i * 0.1 }}
-            >
-              <span className="text-sm text-text">{d.t}</span>
-              <span className="text-sm font-bold text-text">{d.resolved || d.s}</span>
-            </motion.div>
-            <AnimatedBar value={d.s} delay={0.4 + i * 0.12} />
-          </div>
-        ))}
-      </div>
-      <motion.div
-        className="mt-6 p-4 rounded-xl bg-off/50 dark:bg-white/[0.03]"
-        initial={{ opacity: 0, y: 10 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.8, duration: 0.5 }}
-      >
-        <div className="flex items-start gap-2 mb-1.5">
-          <span className={`${finding.color} text-white text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>{finding.severity}</span>
-          <p className="text-xs font-semibold text-text">{finding.label}</p>
-        </div>
-        <p className="text-[11px] text-muted leading-relaxed">{finding.desc}</p>
-      </motion.div>
-    </motion.div>
-  )
-}
-
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
@@ -675,180 +588,9 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          BEYOND THE REPORT (animated feature cards)
+          BEYOND THE REPORT — Animated scroll-driven features
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-36 sm:py-44 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        <FloatingOrb className="top-[5%] left-[-3%]" size={300} color="rgba(185,255,102,0.03)" delay={2} />
-        <FloatingOrb className="bottom-[10%] right-[-5%]" size={350} color="rgba(236,72,153,0.02)" delay={5} />
-
-        <div className="max-w-6xl mx-auto relative">
-          <ScrollReveal className="text-center mb-24">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Beyond the report</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
-              An audit is just the beginning.<br className="hidden sm:block" />
-              <span className="text-muted">What you do next is what matters.</span>
-            </h2>
-            <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              ClearUX doesn&apos;t just find problems — it gives your team a system to track fixes, prove improvement, and share progress with stakeholders.
-            </p>
-          </ScrollReveal>
-
-          <div className="space-y-32 md:space-y-40">
-
-            {/* Feature 1: Finding Status Tracking */}
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <SlideReveal direction="left">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
-                  <ListChecks size={16} className="text-text" />
-                  <span className="text-xs font-semibold text-text">Finding Tracker</span>
-                </div>
-                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
-                  Track every fix from<br className="hidden sm:block" /> open to resolved
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-5">
-                  Every finding has a status: Open, In Progress, Fixed, or Backlog. Update them as your team works through the list. Your dashboard tracks the percentage resolved — proof that the investment is paying off.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => {
-                    const colors = ['bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', 'bg-emerald-100 text-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-500', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'];
-                    return (
-                      <span key={s} className={`text-xs font-semibold px-3 py-1.5 rounded-full ${colors[i]}`}>{s}</span>
-                    );
-                  })}
-                </div>
-              </SlideReveal>
-              <SlideReveal direction="right" delay={0.15}>
-                <AnimatedFeatureCard
-                  icon={ListChecks}
-                  title="Issue Tracker"
-                  subtitle="acme.com"
-                  score="67%"
-                  scoreColor="text-emerald-500"
-                  bars={[
-                    { t: 'Critical findings', s: 80, resolved: '4/5' },
-                    { t: 'High findings', s: 60, resolved: '3/5' },
-                    { t: 'Medium findings', s: 50, resolved: '2/4' },
-                  ]}
-                  finding={{ severity: 'IN PROGRESS', color: 'bg-amber-500', label: 'Low colour contrast on CTA', desc: 'Button contrast ratio is 2.8:1 — below the 4.5:1 AA minimum. Affects 12% of users with low vision.' }}
-                />
-              </SlideReveal>
-            </div>
-
-            {/* Feature 2: Re-audit & Score Comparison */}
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <SlideReveal direction="left" delay={0.15} className="order-2 md:order-1">
-                <AnimatedFeatureCard
-                  icon={TrendingUp}
-                  title="Score Trend"
-                  subtitle="acme.com over 3 audits"
-                  score="78"
-                  scoreColor="text-emerald-500"
-                  bars={[
-                    { t: 'Jan 15 — Baseline', s: 42 },
-                    { t: 'Feb 28 — After sprint 1', s: 61 },
-                    { t: 'Apr 10 — Current', s: 78 },
-                  ]}
-                  finding={{ severity: 'IMPROVED', color: 'bg-emerald-500', label: '+36 points since baseline', desc: 'Score climbed from 42 to 78 across 3 audits. Foundation pillar saw the largest gain at +28 points.' }}
-                />
-              </SlideReveal>
-              <SlideReveal direction="right" className="order-1 md:order-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
-                  <RefreshCw size={16} className="text-text" />
-                  <span className="text-xs font-semibold text-text">Re-Audit</span>
-                </div>
-                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
-                  Re-audit the same site.<br className="hidden sm:block" /> Watch your score climb.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Implement your fixes, then re-audit the same URL. ClearUX tracks every audit so you can compare scores over time. Show your team — or your client — exactly how much you improved.
-                </p>
-                <p className="text-sm text-muted/80 font-medium">
-                  Your dashboard shows re-audit badges and average score trends across all your audits. Every point of improvement is evidence.
-                </p>
-              </SlideReveal>
-            </div>
-
-            {/* Feature 2b: Three re-audit modes */}
-            <ScrollReveal className="text-center mb-10">
-              <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-3 tracking-tight">
-                After every re-audit, you choose
-              </h3>
-              <p className="text-muted text-base leading-relaxed max-w-xl mx-auto">
-                Three ways to use your re-audit. Same credit, different focus.
-              </p>
-            </ScrollReveal>
-
-            <StaggerReveal className="grid md:grid-cols-3 gap-5" staggerDelay={0.15}>
-              {[
-                { icon: RefreshCw, color: '#22C55E', label: 'Default', title: 'Verify your fixes', desc: 'Re-checks every previous finding. Fixed, still present, or dismissed. Your score improves predictably.', footIcon: TrendingUp, foot: 'Score goes up as you fix' },
-                { icon: Search, color: '#6366F1', label: 'On demand', title: 'Dig deeper', desc: 'Fresh scan of all 64 checkpoints. Finds new issues beyond the original scope.', footIcon: Layers, foot: 'Expands coverage over time' },
-                { icon: Target, color: 'var(--brand)', label: 'Paying users', title: 'Focus on pillars', desc: 'Pick 1-3 pillars to re-audit. Previous scores stay intact for the rest. Faster, targeted results.', footIcon: Target, foot: 'Audit only what changed' },
-              ].map((mode, i) => {
-                const ModeIcon = mode.icon
-                const FootIcon = mode.footIcon
-                return (
-                  <StaggerItem key={i}>
-                    <motion.div
-                      className="rounded-2xl border border-border/30 dark:border-white/[0.05] bg-card p-7 text-center flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none h-full"
-                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    >
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: `${mode.color}15` }}>
-                        <ModeIcon size={18} style={{ color: mode.color }} />
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: mode.color }}>{mode.label}</span>
-                      <h4 className="font-heading font-semibold text-lg text-text mb-2">{mode.title}</h4>
-                      <p className="text-muted text-sm leading-relaxed mb-5 flex-1">{mode.desc}</p>
-                      <div className="inline-flex items-center gap-2 text-sm font-medium justify-center" style={{ color: mode.color }}>
-                        <FootIcon size={14} />
-                        <span>{mode.foot}</span>
-                      </div>
-                    </motion.div>
-                  </StaggerItem>
-                )
-              })}
-            </StaggerReveal>
-
-            {/* Feature 3: Share with Your Team */}
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <SlideReveal direction="left">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-text/5 border border-border mb-5">
-                  <Share2 size={16} className="text-text" />
-                  <span className="text-xs font-semibold text-text">Team Sharing</span>
-                </div>
-                <h3 className="font-heading font-semibold text-2xl sm:text-3xl text-text mb-4 tracking-tight">
-                  Share results with anyone.<br className="hidden sm:block" /> No account needed.
-                </h3>
-                <p className="text-muted text-base leading-relaxed mb-4">
-                  Generate a read-only link for any completed audit. Stakeholders see the overall score, pillar breakdown, top 3 recommendations, and executive summary — without needing a ClearUX account. Revoke the link anytime.
-                </p>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-                  <div className="flex items-center gap-1.5"><Link2 size={16} className="text-text" /> <span>Shareable link</span></div>
-                  <span className="text-border">|</span>
-                  <div className="flex items-center gap-1.5"><Lock size={16} className="text-text" /> <span>Revocable anytime</span></div>
-                  <span className="text-border hidden sm:block">|</span>
-                  <div className="flex items-center gap-1.5 hidden sm:flex"><Download size={16} className="text-text" /> <span>PDF & Word exports</span></div>
-                </div>
-              </SlideReveal>
-              <SlideReveal direction="right" delay={0.15}>
-                <AnimatedFeatureCard
-                  icon={Share2}
-                  title="Shared Report"
-                  subtitle="Read-only team view"
-                  score="78"
-                  bars={[
-                    { t: 'Foundation', s: 72 },
-                    { t: 'Human Experience', s: 95 },
-                    { t: 'Inclusive Design', s: 64 },
-                    { t: 'Future Readiness', s: 82 },
-                  ]}
-                  finding={{ severity: 'SHARED', color: 'bg-[#B9FF66] text-[#111111]', label: 'Stakeholder-ready link', desc: 'Read-only view with score, pillar breakdown, and top 3 recommendations. No account needed. Revocable anytime.' }}
-                />
-              </SlideReveal>
-            </div>
-
-          </div>
-        </div>
-      </section>
+      <BeyondTheReport />
 
       {/* ═══════════════════════════════════════════════════════
           PRICING
