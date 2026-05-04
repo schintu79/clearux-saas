@@ -538,13 +538,21 @@ export default function Home() {
 
         <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-24">
           <ScrollReveal className="text-center max-w-3xl mx-auto">
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Built for product managers, design teams &amp; agencies</p>
+            {/* Audience pills */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+              {['Product Managers', 'Design Teams', 'Agencies'].map((audience, i) => (
+                <span key={i} className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold border border-border/40 dark:border-white/[0.08] bg-card text-text">
+                  {audience}
+                </span>
+              ))}
+            </div>
+
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
               Four pillars. 64 checkpoints.<br className="hidden sm:block" />
-              <span className="text-muted">Including the ones nobody else is auditing yet.</span>
+              <span className="text-muted">The ones nobody else audits.</span>
             </h2>
-            <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-              Most audit tools stop at performance and SEO. ClearUX goes deeper — <strong className="text-text">ethical UX</strong>, <strong className="text-text">cognitive accessibility</strong>, <strong className="text-text">AI agent readiness</strong>, and <strong className="text-text">conversion psychology</strong>. Every finding is ranked by business impact, trackable as your team fixes them, and comparable across re-audits so you can prove improvement to stakeholders.
+            <p className="text-muted text-base md:text-lg leading-relaxed max-w-xl mx-auto">
+              Most tools stop at performance and SEO. ClearUX covers ethical UX, cognitive accessibility, AI readiness, and conversion psychology — ranked by business impact.
             </p>
           </ScrollReveal>
 
