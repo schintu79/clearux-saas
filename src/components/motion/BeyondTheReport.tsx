@@ -154,16 +154,14 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
             </div>
             <span className="text-xs font-semibold text-text">Score Trend</span>
           </div>
-          {activeAudit >= 2 && (
-            <motion.span
-              className="text-xs font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-            >
-              +36 pts
-            </motion.span>
-          )}
+          <motion.span
+            className="text-xs font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full"
+            initial={{ opacity: 0 }}
+            animate={activeAudit >= 2 ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            +36 pts
+          </motion.span>
         </div>
 
         {/* Bar chart */}
@@ -206,26 +204,31 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
           })}
         </div>
 
-        {/* Re-audit modes — compact pills */}
-        <div className="pt-3 border-t border-border/30 dark:border-white/[0.06]">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted mb-2">Re-audit modes</p>
-          <div className="flex gap-1.5">
+        {/* Re-audit modes — Dig Deeper */}
+        <div className="pt-4 border-t border-border/30 dark:border-white/[0.06]">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">Choose how to dig deeper</p>
+          <div className="space-y-2">
             {[
-              { icon: RefreshCw, label: 'Verify', color: '#22C55E' },
-              { icon: Search, label: 'Deep scan', color: '#6366F1' },
-              { icon: Target, label: 'Focus', color: 'var(--brand)' },
+              { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: '#22C55E', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+              { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: '#6366F1', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+              { icon: Target, label: 'Focus on pillars', desc: 'Target specific areas to improve', color: 'var(--brand)', bg: 'bg-off dark:bg-white/[0.04]' },
             ].map((m, i) => {
               const Icon = m.icon
               return (
                 <motion.div
                   key={i}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/30 dark:border-white/[0.06] bg-off/50 dark:bg-white/[0.03] flex-1 justify-center"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={activeAudit >= 2 ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: 0.5 + i * 0.1, duration: 0.3 }}
+                  className={`flex items-start gap-3 px-3 py-2.5 rounded-xl border border-border/30 dark:border-white/[0.06] ${m.bg}`}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={activeAudit >= 2 ? { opacity: 1, x: 0 } : {}}
+                  transition={{ delay: 0.5 + i * 0.12, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
-                  <Icon size={10} style={{ color: m.color }} />
-                  <span className="text-[9px] font-semibold text-text">{m.label}</span>
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${m.color}15` }}>
+                    <Icon size={12} style={{ color: m.color }} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-text leading-tight">{m.label}</p>
+                    <p className="text-[10px] text-muted leading-snug mt-0.5">{m.desc}</p>
+                  </div>
                 </motion.div>
               )
             })}
@@ -381,8 +384,8 @@ const FEATURES = [
   },
   {
     number: '02',
-    title: 'Re-audit. Watch your score climb.',
-    description: 'Fix issues, re-audit the same URL. Compare scores across audits. Choose to verify fixes, run a deep scan, or focus on specific pillars.',
+    title: 'Dig deeper. Watch your score climb.',
+    description: 'Fix issues and re-audit the same URL to track real progress. Verify your fixes landed, run a full deep scan to surface new issues, or focus on specific pillars you want to improve. Every re-audit compares against your baseline so you can prove the impact.',
   },
   {
     number: '03',
