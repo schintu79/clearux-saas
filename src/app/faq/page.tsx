@@ -79,7 +79,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'What AI powers the audits?',
-        a: 'ClearUX uses Anthropic\u2019s Claude as its analysis engine. Each category is evaluated by a specialised prompt trained on UX best practices, WCAG accessibility guidelines, dark pattern databases, conversion research, and AI readiness standards. The AI analyses your actual page content \u2014 not just metadata \u2014 and produces findings that reference specific text, elements, and patterns on your site.',
+        a: 'ClearUX uses Anthropic\u2019s Claude as its core analysis engine \u2014 but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 64 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn\u2019t just ask the AI generic questions \u2014 it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
       },
       {
         q: 'What are the known limitations?',
