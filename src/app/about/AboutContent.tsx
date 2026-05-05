@@ -179,7 +179,7 @@ export default function AboutContent() {
 
                 <div className="space-y-4 text-muted text-[15px] leading-relaxed">
                   <p>
-                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across Europe and the UK — from early-stage MVPs to products serving millions.
+                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, unicorn companies, and enterprise teams across the world — exposed to cultural and market differences, from early-stage MVPs to products serving millions.
                   </p>
                   <p>
                     The frustration was always the same: brilliant teams shipping products without an unbiased, structured UX review — because the only option was a consultant charging five figures and taking six weeks. The teams that needed it most could never afford it.
