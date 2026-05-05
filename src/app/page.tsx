@@ -289,12 +289,55 @@ const TOP_FAQS = [
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
+/* ── Hero typewriter placeholder animation ─────────────────── */
+const PLACEHOLDER_EXAMPLES = ['acme.com', 'mystore.io', 'app.saas.co', 'brand.com']
+
+function useTypewriterPlaceholder() {
+  const [placeholder, setPlaceholder] = useState('')
+  const [isFocused, setIsFocused] = useState(false)
+  const started = useRef(false)
+
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+    let exIdx = 0, charIdx = 0, deleting = false, timer: ReturnType<typeof setTimeout>
+
+    const tick = () => {
+      const word = PLACEHOLDER_EXAMPLES[exIdx]
+      if (!deleting) {
+        charIdx++
+        setPlaceholder(word.slice(0, charIdx))
+        if (charIdx >= word.length) {
+          timer = setTimeout(() => { deleting = true; tick() }, 2000)
+          return
+        }
+        timer = setTimeout(tick, 90)
+      } else {
+        charIdx--
+        setPlaceholder(word.slice(0, charIdx))
+        if (charIdx <= 0) {
+          deleting = false
+          exIdx = (exIdx + 1) % PLACEHOLDER_EXAMPLES.length
+          timer = setTimeout(tick, 400)
+          return
+        }
+        timer = setTimeout(tick, 50)
+      }
+    }
+    timer = setTimeout(tick, 800)
+    return () => clearTimeout(timer)
+  }, [])
+
+  return { placeholder, isFocused, setIsFocused }
+}
+
 export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
   const [heroUrl, setHeroUrl] = useState('');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const { placeholder: typedPlaceholder, isFocused: inputFocused, setIsFocused: setInputFocused } = useTypewriterPlaceholder();
 
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,83 +386,88 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           HERO — Dark, cinematic, parallax content
           ═══════════════════════════════════════════════════════ */}
-      <section ref={heroRef} className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden">
+      <section ref={heroRef} className="section-dark dark-forced relative min-h-screen flex flex-col justify-center px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#080808' }}>
 
-        {/* Aurora background — kept from before */}
+        {/* Aurora background — high contrast, vivid */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute w-[120%] h-[250px] -left-[10%] top-[12%]" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #22C55E 15%, #B9FF66 35%, #22C55E 55%, transparent 80%)',
-            filter: 'blur(70px)',
-            opacity: 0.22,
+          {/* Primary lime aurora — strong */}
+          <div className="absolute w-[130%] h-[300px] -left-[15%] top-[8%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #22C55E 10%, #B9FF66 30%, #B9FF66 50%, #22C55E 70%, transparent 100%)',
+            filter: 'blur(80px)',
+            opacity: 0.30,
             animation: 'auroraDrift 20s ease-in-out infinite',
           }} />
-          <div className="absolute w-[110%] h-[220px] -left-[5%] top-[38%]" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #6366F1 20%, #818CF8 45%, #6366F1 70%, transparent 100%)',
-            filter: 'blur(65px)',
-            opacity: 0.18,
+          {/* Secondary indigo aurora */}
+          <div className="absolute w-[120%] h-[260px] -left-[10%] top-[35%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #6366F1 15%, #818CF8 40%, #6366F1 65%, transparent 100%)',
+            filter: 'blur(70px)',
+            opacity: 0.22,
             animation: 'auroraDrift2 25s ease-in-out infinite',
           }} />
-          <div className="absolute w-[100%] h-[200px] left-0 top-[62%]" style={{
-            background: 'linear-gradient(90deg, transparent 0%, #F59E0B 25%, #EF4444 45%, #EC4899 65%, transparent 100%)',
-            filter: 'blur(70px)',
-            opacity: 0.18,
+          {/* Warm accent aurora */}
+          <div className="absolute w-[110%] h-[240px] -left-[5%] top-[60%]" style={{
+            background: 'linear-gradient(90deg, transparent 0%, #F59E0B 20%, #EF4444 40%, #EC4899 60%, transparent 100%)',
+            filter: 'blur(75px)',
+            opacity: 0.20,
             animation: 'auroraDrift 22s ease-in-out infinite reverse',
           }} />
+          {/* Center spotlight — lime glow behind headline */}
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(ellipse 80% 50% at 50% 40%, rgba(185,255,102,0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 60% 40% at 50% 38%, rgba(185,255,102,0.08) 0%, transparent 60%)',
             animation: 'auroraPulse 8s ease-in-out infinite',
           }} />
 
           {/* Grid overlay */}
           <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(185,255,102,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.04) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(185,255,102,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(185,255,102,.03) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
             animation: 'gridMove 20s linear infinite',
           }} />
 
           {/* Scan lines */}
           <div className="absolute left-0 w-full h-[1px]" style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(185,255,102,0.15) 20%, rgba(185,255,102,0.25) 50%, rgba(185,255,102,0.15) 80%, transparent 100%)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(185,255,102,0.2) 20%, rgba(185,255,102,0.35) 50%, rgba(185,255,102,0.2) 80%, transparent 100%)',
             animation: 'scanLineH 8s linear infinite',
           }} />
           <div className="absolute left-0 w-full h-[1px]" style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.12) 30%, rgba(99,102,241,0.2) 50%, rgba(99,102,241,0.12) 70%, transparent 100%)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.15) 30%, rgba(99,102,241,0.25) 50%, rgba(99,102,241,0.15) 70%, transparent 100%)',
             animation: 'scanLineH 12s linear infinite 4s',
           }} />
           <div className="absolute top-0 h-full w-[1px]" style={{
-            background: 'linear-gradient(transparent 0%, rgba(185,255,102,0.15) 20%, rgba(185,255,102,0.25) 50%, rgba(185,255,102,0.15) 80%, transparent 100%)',
+            background: 'linear-gradient(transparent 0%, rgba(185,255,102,0.18) 20%, rgba(185,255,102,0.3) 50%, rgba(185,255,102,0.18) 80%, transparent 100%)',
             animation: 'scanLineV 10s linear infinite 2s',
           }} />
-          <div className="absolute top-0 h-full w-[1px]" style={{
-            background: 'linear-gradient(transparent 0%, rgba(236,72,153,0.1) 30%, rgba(236,72,153,0.18) 50%, rgba(236,72,153,0.1) 70%, transparent 100%)',
-            animation: 'scanLineV 14s linear infinite 6s',
-          }} />
 
-          {/* Edge vignette */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111111] via-transparent to-[#111111]" />
+          {/* Deep edge vignette — pushes black harder at edges */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(to bottom, #080808 0%, transparent 20%, transparent 80%, #080808 100%)',
+          }} />
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse 70% 70% at 50% 50%, transparent 40%, #080808 100%)',
+          }} />
         </div>
 
         {/* Hero content with parallax */}
         <motion.div
           style={{ opacity: heroOpacity, y: heroY }}
-          className="max-w-5xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20"
+          className="max-w-4xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20"
         >
           {/* Label badge */}
           <motion.div
-            className="mb-6"
+            className="mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <span className="inline-flex items-center gap-2 bg-[#B9FF66] text-[#111111] text-xs sm:text-sm font-semibold px-4 py-2 rounded-full">
+            <span className="inline-flex items-center gap-2 bg-[#B9FF66] text-[#080808] text-xs sm:text-sm font-bold px-5 py-2.5 rounded-full shadow-[0_0_30px_rgba(185,255,102,0.3)]">
               Professional AI-powered UX audit in under 10 min
             </span>
           </motion.div>
 
-          {/* Headline */}
+          {/* Headline — bigger, brighter */}
           <motion.h1
-            className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-semibold tracking-tight mb-8 text-white"
-            style={{ lineHeight: '1.12' }}
+            className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.75rem] font-bold tracking-tight mb-8 text-white"
+            style={{ lineHeight: '1.08' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
@@ -427,11 +475,11 @@ export default function Home() {
             Find the UX issues costing{' '}
             <br className="hidden sm:block" />
             you conversions.{' '}
-            <span className="text-[#B9FF66]">In minutes.</span>
+            <span className="text-[#B9FF66]" style={{ textShadow: '0 0 40px rgba(185,255,102,0.3)' }}>In minutes.</span>
           </motion.h1>
 
           <motion.p
-            className="text-lg md:text-xl text-white/50 mb-12 sm:mb-14 max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-white/60 mb-12 sm:mb-14 max-w-2xl mx-auto"
             style={{ lineHeight: '1.6' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -440,35 +488,52 @@ export default function Home() {
             Get a consultant-grade UX audit for $99 — covering accessibility, dark patterns, conversion psychology, and AI readiness across 64 checkpoints.
           </motion.p>
 
-          {/* CTA Form */}
+          {/* CTA Form — compact, with typewriter placeholder */}
           <motion.form
             onSubmit={handleHeroSubmit}
-            className="max-w-3xl w-full mx-auto mb-6"
+            className="max-w-2xl w-full mx-auto mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 p-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
               <div className="relative flex-1">
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
-                <input
-                  id="hero-url-input"
-                  type="text"
-                  name="url"
-                  autoComplete="url"
-                  value={heroUrl}
-                  onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder="yourwebsite.com"
-                  aria-label="Website URL to audit"
-                  className="w-full px-6 py-5 text-lg rounded-xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:outline-none focus:border-[#B9FF66]/40 focus:shadow-[0_0_0_3px_rgba(185,255,102,0.08)] transition-all"
-                />
+                <div className="relative">
+                  <input
+                    id="hero-url-input"
+                    type="text"
+                    name="url"
+                    autoComplete="url"
+                    value={heroUrl}
+                    onChange={(e) => setHeroUrl(e.target.value)}
+                    onFocus={() => setInputFocused(true)}
+                    onBlur={() => setInputFocused(false)}
+                    placeholder=""
+                    aria-label="Website URL to audit"
+                    className="w-full px-5 py-4 text-base rounded-xl bg-transparent text-white placeholder:text-white/30 focus:outline-none transition-all"
+                  />
+                  {/* Typewriter placeholder */}
+                  {!heroUrl && (
+                    <div className="absolute inset-0 flex items-center px-5 pointer-events-none">
+                      <span className="text-base text-white/25">{inputFocused ? '' : typedPlaceholder}</span>
+                      {!inputFocused && (
+                        <motion.span
+                          animate={{ opacity: [1, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity }}
+                          className="inline-block w-[2px] h-5 bg-[#B9FF66]/60 ml-0.5"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <button
                 type="submit"
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base sm:px-10 sm:py-5 sm:min-h-[60px] sm:text-lg bg-[#B9FF66] text-[#111111] rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:bg-[#A8EE55] flex-shrink-0"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 min-h-[48px] text-base bg-[#B9FF66] text-[#080808] rounded-xl font-bold transition-all hover:-translate-y-0.5 hover:bg-[#CDFF8C] hover:shadow-[0_0_30px_rgba(185,255,102,0.25)] flex-shrink-0"
               >
-                {user ? 'Run My Audit' : 'Start Free Audit'}
-                <ArrowRight size={20} className="group-hover:translate-x-0.5 transition-transform" />
+                {user ? 'Run My Audit' : 'Run My Audit'}
+                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
           </motion.form>
@@ -481,18 +546,18 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.65 }}
           >
             <div className="flex items-center gap-2.5">
-              <Zap size={18} className="text-[#B9FF66]" />
-              <span className="text-sm font-semibold text-white">Results in minutes</span>
+              <Zap size={16} className="text-[#B9FF66]" />
+              <span className="text-sm font-medium text-white/70">Results in minutes</span>
             </div>
-            <div className="w-px h-4 bg-white/15 hidden sm:block" />
+            <div className="w-px h-4 bg-white/10 hidden sm:block" />
             <div className="flex items-center gap-2.5">
-              <Shield size={18} className="text-[#B9FF66]" />
-              <span className="text-sm font-semibold text-white">Your data is never stored</span>
+              <Shield size={16} className="text-[#B9FF66]" />
+              <span className="text-sm font-medium text-white/70">Your data is never stored</span>
             </div>
-            <div className="w-px h-4 bg-white/15 hidden sm:block" />
+            <div className="w-px h-4 bg-white/10 hidden sm:block" />
             <div className="flex items-center gap-2.5">
-              <Clock size={18} className="text-[#B9FF66]" />
-              <span className="text-sm font-semibold text-white">Credits never expire</span>
+              <Clock size={16} className="text-[#B9FF66]" />
+              <span className="text-sm font-medium text-white/70">Credits never expire</span>
             </div>
           </motion.div>
 
@@ -506,7 +571,7 @@ export default function Home() {
             transition={{ delay: 1 }}
           >
             <motion.div
-              className="w-6 h-10 rounded-full border-2 border-white/20 flex justify-center pt-2"
+              className="w-6 h-10 rounded-full border-2 border-white/15 flex justify-center pt-2"
               animate={{ y: [0, 5, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
@@ -516,7 +581,7 @@ export default function Home() {
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
             </motion.div>
-            <span className="text-white/30 text-xs mt-3 font-medium">See how it works</span>
+            <span className="text-white/25 text-xs mt-3 font-medium">See how it works</span>
           </motion.button>
         </motion.div>
       </section>
