@@ -30,13 +30,13 @@ function DarkPatternVisual({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-white border border-[#111]/10 p-6 shadow-lg shadow-black/[0.05] overflow-hidden">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-[#111]/5 flex items-center justify-center">
-            <Scale size={16} className="text-[#111]" />
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-white border border-[#111]/10 p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-[#111]/5 flex items-center justify-center">
+            <Scale size={20} className="text-[#111]" />
           </div>
-          <p className="text-xs font-semibold text-[#111]">Dark Pattern Scanner</p>
+          <p className="text-sm font-semibold text-[#111]">Dark Pattern Scanner</p>
         </div>
 
         {/* Mock cancel flow */}
@@ -132,15 +132,15 @@ function CognitiveVisual({ inView }: { inView: boolean }) {
     s === 'good' ? 'bg-emerald-500' : s === 'warning' ? 'bg-amber-500' : 'bg-red-500'
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-white border border-[#111]/10 p-6 shadow-lg shadow-black/[0.05]">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-[#111]/5 flex items-center justify-center">
-            <Brain size={16} className="text-[#111]" />
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-white border border-[#111]/10 p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-[#111]/5 flex items-center justify-center">
+            <Brain size={20} className="text-[#111]" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-[#111]">Cognitive Analysis</p>
-            <p className="text-[10px] text-[#111]/40">ADHD, Dyslexia, Autism spectrum</p>
+            <p className="text-sm font-semibold text-[#111]">Cognitive Analysis</p>
+            <p className="text-xs text-[#111]/40">ADHD, Dyslexia, Autism spectrum</p>
           </div>
         </div>
 
@@ -223,19 +223,19 @@ function AIReadinessVisual({ inView }: { inView: boolean }) {
   ]
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-white border border-[#111]/10 p-6 shadow-lg shadow-black/[0.05]">
-        <div className="flex items-center gap-2 mb-5">
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-white border border-[#111]/10 p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-3 mb-6">
           <motion.div
-            className="w-8 h-8 rounded-lg bg-[#111]/5 flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-[#111]/5 flex items-center justify-center"
             animate={step >= 1 && step < 4 ? { rotate: [0, 5, -5, 0] } : {}}
             transition={{ duration: 0.5, repeat: step < 4 ? Infinity : 0, repeatDelay: 1 }}
           >
-            <Zap size={16} className="text-[#111]" />
+            <Zap size={20} className="text-[#111]" />
           </motion.div>
           <div>
-            <p className="text-xs font-semibold text-[#111]">AI Agent Readiness</p>
-            <p className="text-[10px] text-[#111]/40">How ChatGPT, Perplexity & agents see you</p>
+            <p className="text-sm font-semibold text-[#111]">AI Agent Readiness</p>
+            <p className="text-xs text-[#111]/40">How ChatGPT, Perplexity & agents see you</p>
           </div>
         </div>
 
@@ -325,15 +325,15 @@ function ConversionVisual({ inView }: { inView: boolean }) {
   ]
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="rounded-2xl bg-white border border-[#111]/10 p-6 shadow-lg shadow-black/[0.05]">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-[#111]/5 flex items-center justify-center">
-            <BarChart3 size={16} className="text-[#111]" />
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-white border border-[#111]/10 p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-[#111]/5 flex items-center justify-center">
+            <BarChart3 size={20} className="text-[#111]" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-[#111]">Conversion Psychology</p>
-            <p className="text-[10px] text-[#111]/40">Where users drop off & why</p>
+            <p className="text-sm font-semibold text-[#111]">Conversion Psychology</p>
+            <p className="text-xs text-[#111]/40">Where users drop off & why</p>
           </div>
         </div>
 

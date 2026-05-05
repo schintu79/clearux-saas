@@ -31,21 +31,21 @@ function TypewriterUrl({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full mx-auto">
       {/* Browser chrome mockup */}
-      <div className="rounded-t-xl bg-[#1a1a1a] border border-white/[0.08] border-b-0 px-4 py-3 flex items-center gap-2">
+      <div className="rounded-t-2xl bg-[#1a1a1a] border border-white/[0.08] border-b-0 px-5 py-3.5 flex items-center gap-2">
         <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
-          <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
-          <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+          <div className="w-3 h-3 rounded-full bg-white/10" />
+          <div className="w-3 h-3 rounded-full bg-white/10" />
+          <div className="w-3 h-3 rounded-full bg-white/10" />
         </div>
-        <div className="flex-1 mx-4 h-7 rounded-md bg-white/[0.06] flex items-center px-3">
-          <span className="text-[11px] text-white/30 font-mono">clearux.ai/audit</span>
+        <div className="flex-1 mx-4 h-8 rounded-lg bg-white/[0.06] flex items-center px-4">
+          <span className="text-xs text-white/30 font-mono">clearux.ai/audit</span>
         </div>
       </div>
       {/* Input area */}
-      <div className="rounded-b-xl bg-[#111111] border border-white/[0.08] border-t-0 p-8">
-        <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-4">Enter your website URL</p>
+      <div className="rounded-b-2xl bg-[#111111] border border-white/[0.08] border-t-0 p-7 sm:p-9">
+        <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-5">Enter your website URL</p>
         <div className="flex gap-3">
           <div className="flex-1 px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center">
             <span className="text-white text-base font-mono">
@@ -58,11 +58,11 @@ function TypewriterUrl({ inView }: { inView: boolean }) {
             </span>
           </div>
           <motion.div
-            className="px-5 py-3.5 rounded-xl bg-[#B9FF66] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+            className="px-6 py-3.5 rounded-xl bg-[#B9FF66] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
             animate={text.length >= fullText.length ? { scale: [1, 1.05, 1] } : {}}
             transition={{ duration: 0.3, delay: 0.3 }}
           >
-            <Search size={14} />
+            <Search size={16} />
             Audit
           </motion.div>
         </div>
@@ -100,13 +100,13 @@ function ScanningGrid({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="rounded-xl bg-[#111111] border border-white/[0.08] p-8">
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9">
         {/* Header with progress */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-10 h-10 rounded-lg bg-[#B9FF66]/10 flex items-center justify-center"
+              className="w-10 h-10 rounded-xl bg-[#B9FF66]/10 flex items-center justify-center"
               animate={inView ? { rotate: 360 } : {}}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
@@ -117,11 +117,11 @@ function ScanningGrid({ inView }: { inView: boolean }) {
               <p className="text-white/40 text-xs">64 checkpoints across 4 pillars</p>
             </div>
           </div>
-          <span className="text-[#B9FF66] font-heading text-2xl font-bold">{progress}%</span>
+          <span className="text-[#B9FF66] font-heading text-3xl font-bold">{progress}%</span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 rounded-full bg-white/[0.06] mb-6 overflow-hidden">
+        <div className="h-2 rounded-full bg-white/[0.06] mb-6 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-[#B9FF66]"
             style={{ width: `${progress}%` }}
@@ -129,7 +129,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
         </div>
 
         {/* Checkpoint grid */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-3">
           {CHECKPOINTS.map((cp, idx) => {
             const Icon = cp.icon
             const isActive = progress > (idx + 1) * 12
@@ -139,14 +139,14 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ duration: 0.4, delay: cp.delay }}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all duration-500 ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-500 ${
                   isActive
                     ? 'bg-[#B9FF66]/[0.08] border-[#B9FF66]/20'
                     : 'bg-white/[0.02] border-white/[0.06]'
                 }`}
               >
-                <Icon size={14} className={isActive ? 'text-[#B9FF66]' : 'text-white/30'} />
-                <span className={`text-xs font-medium ${isActive ? 'text-white' : 'text-white/30'}`}>
+                <Icon size={16} className={isActive ? 'text-[#B9FF66]' : 'text-white/30'} />
+                <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-white/30'}`}>
                   {cp.label}
                 </span>
                 {isActive && (
@@ -156,7 +156,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                     className="ml-auto"
                   >
-                    <CheckCircle size={12} className="text-[#B9FF66]" />
+                    <CheckCircle size={14} className="text-[#B9FF66]" />
                   </motion.div>
                 )}
               </motion.div>
@@ -194,24 +194,24 @@ function ResultsReveal({ inView }: { inView: boolean }) {
   ]
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="rounded-xl bg-[#111111] border border-white/[0.08] p-8">
+    <div className="w-full mx-auto">
+      <div className="rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9">
         {/* Score header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-1">Overall Score</p>
-            <p className="text-white/60 text-xs">acme.com</p>
+            <p className="text-white/60 text-sm">acme.com</p>
           </div>
           <motion.div
-            className="relative w-20 h-20"
+            className="relative w-24 h-24"
             initial={{ scale: 0, rotate: -90 }}
             animate={inView ? { scale: 1, rotate: 0 } : {}}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
             <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
               <motion.circle
-                cx="40" cy="40" r="34" fill="none" stroke="#B9FF66" strokeWidth="6"
+                cx="40" cy="40" r="34" fill="none" stroke="#B9FF66" strokeWidth="5"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 34}`}
                 initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
@@ -219,14 +219,14 @@ function ResultsReveal({ inView }: { inView: boolean }) {
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-bold text-white">
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-3xl font-bold text-white">
               {score}
             </span>
           </motion.div>
         </div>
 
         {/* Pillar mini bars */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-6">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-6">
           {[
             { label: 'Foundation', value: 78 },
             { label: 'Human Exp.', value: 54 },
@@ -239,9 +239,9 @@ function ResultsReveal({ inView }: { inView: boolean }) {
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ delay: 0.8 + i * 0.1, duration: 0.4 }}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] text-white/50">{p.label}</span>
-                <span className="text-[11px] font-bold text-white">{p.value}</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-white/50">{p.label}</span>
+                <span className="text-xs font-bold text-white">{p.value}</span>
               </div>
               <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <motion.div
@@ -256,21 +256,21 @@ function ResultsReveal({ inView }: { inView: boolean }) {
         </div>
 
         {/* Findings */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {findings.map((f, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 15 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 1.4 + i * 0.15, duration: 0.4 }}
-              className="flex items-start gap-2.5 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+              className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]"
             >
-              <span className={`${f.color} text-white text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0`}>
+              <span className={`${f.color} text-white text-[10px] font-bold px-2 py-1 rounded mt-0.5 flex-shrink-0`}>
                 {f.severity}
               </span>
               <div>
-                <p className="text-xs font-medium text-white leading-snug">{f.label}</p>
-                <p className="text-[10px] text-white/40 mt-0.5">{f.cat}</p>
+                <p className="text-sm font-medium text-white leading-snug">{f.label}</p>
+                <p className="text-xs text-white/40 mt-0.5">{f.cat}</p>
               </div>
             </motion.div>
           ))}
