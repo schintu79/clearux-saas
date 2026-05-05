@@ -152,22 +152,22 @@ const TAB_ALL = 'All';
 
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="border border-border/20 dark:border-white/[0.05] rounded-2xl overflow-hidden bg-card shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-none">
+    <div className="border border-white/[0.06] rounded-2xl overflow-hidden bg-white/[0.03]">
       <button
         onClick={onToggle}
-        className="w-full flex items-start gap-3 p-5 text-left hover:bg-surface-alt/40 dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-semibold text-text text-[15px] leading-snug">{q}</span>
+        <span className="flex-1 font-semibold text-white text-[15px] leading-snug">{q}</span>
         <ChevronDown
           size={16}
-          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && (
         <div className="px-5 pb-5 pt-0">
-          <div className="border-t border-border/20 dark:border-white/[0.04] pt-4">
-            <p className="text-muted text-sm leading-[1.8]">{a}</p>
+          <div className="border-t border-white/[0.04] pt-4">
+            <p className="text-white/50 text-sm leading-[1.8]">{a}</p>
           </div>
         </div>
       )}
@@ -224,14 +224,14 @@ export default function FaqPage() {
   const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface">
+    <div className="flex flex-col min-h-screen bg-[#080818]">
       <Navbar />
 
       <main id="main-content" className="flex-1">
         {/* Dark Hero */}
-        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
+        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080818' }}>
           {/* Aurora glows */}
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#10B981]/[0.05] blur-[160px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
           <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
 
           <div className="max-w-4xl mx-auto text-center relative">
@@ -241,7 +241,7 @@ export default function FaqPage() {
               transition={{ duration: 0.5 }}
             >
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-white/40 border border-white/[0.08] rounded-full px-4 py-1.5 mb-6">
-                <Sparkles size={12} className="text-[#34D399]" />
+                <Sparkles size={12} className="text-indigo-400" />
                 Support Centre
               </span>
             </motion.div>
@@ -279,7 +279,7 @@ export default function FaqPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#10B981]/30 focus:border-[#10B981]/40 transition-all backdrop-blur-sm"
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/40 transition-all backdrop-blur-sm"
                 />
                 {searchQuery && (
                   <button
@@ -317,8 +317,8 @@ export default function FaqPage() {
                     onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
                     className={`text-xs font-semibold px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
                       activeTab === tab
-                        ? 'text-white bg-text dark:bg-white dark:text-[#1D1D1F] shadow-sm'
-                        : 'text-muted bg-off/60 dark:bg-white/[0.04] hover:bg-off dark:hover:bg-white/[0.06]'
+                        ? 'text-[#080818] bg-white shadow-sm'
+                        : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
                     }`}
                   >
                     {SectionIcon && <SectionIcon size={12} />}
@@ -334,11 +334,11 @@ export default function FaqPage() {
         {visibleSections.length === 0 ? (
           <section className="px-4 sm:px-6 lg:px-8 pb-10">
             <div className="max-w-3xl mx-auto text-center py-12">
-              <Search size={24} className="text-muted mx-auto mb-3" />
-              <p className="text-text font-medium text-sm mb-1">No results found</p>
-              <p className="text-muted text-xs">
+              <Search size={24} className="text-white/50 mx-auto mb-3" />
+              <p className="text-white font-medium text-sm mb-1">No results found</p>
+              <p className="text-white/50 text-xs">
                 Try a different search term, or{' '}
-                <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-text transition-colors">
+                <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-white transition-colors">
                   browse all questions
                 </button>
               </p>
@@ -358,14 +358,14 @@ export default function FaqPage() {
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
                   <div className="flex items-center gap-3 mb-5">
-                    <section.icon size={20} className="text-text flex-shrink-0" />
-                    <h2 className="font-heading font-semibold text-xl sm:text-2xl text-text">
+                    <section.icon size={20} className="text-white flex-shrink-0" />
+                    <h2 className="font-heading font-semibold text-xl sm:text-2xl text-white">
                       {section.title}
                     </h2>
-                    <span className="text-[11px] font-semibold text-muted/50 bg-off dark:bg-white/[0.04] px-2.5 py-1 rounded-full">
+                    <span className="text-[11px] font-semibold text-white/30 bg-white/[0.04] px-2.5 py-1 rounded-full">
                       {section.items.length}
                     </span>
-                    <div className="flex-1 h-px bg-border/30 dark:bg-white/[0.04]" />
+                    <div className="flex-1 h-px bg-white/[0.06]" />
                   </div>
                 )}
 
@@ -390,7 +390,7 @@ export default function FaqPage() {
         )}
 
         {/* Lime CTA Band */}
-        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#10B981' }}>
+        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#4F46E5' }}>
           <motion.div
             className="text-center max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
@@ -407,7 +407,7 @@ export default function FaqPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                className="group inline-flex items-center gap-3 bg-white text-[#080818] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
               >
                 Email Support
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

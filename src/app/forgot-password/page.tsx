@@ -109,10 +109,10 @@ export default function ForgotPasswordPage() {
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="mb-8">
-            <h2 className="text-2xl font-heading font-semibold text-text mb-2">
+            <h2 className="text-2xl font-heading font-semibold text-white mb-2">
               Reset password
             </h2>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-white/50">
               Enter your email address and we'll send you a link to reset your password
             </p>
           </div>

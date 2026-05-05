@@ -30,7 +30,7 @@ export function ThemeProvider({
   children: React.ReactNode
   initialTheme?: Theme
 }) {
-  const [theme, setThemeState] = useState<Theme>(initialTheme ?? 'light')
+  const [theme, setThemeState] = useState<Theme>(initialTheme ?? 'dark')
 
   // On mount, reconcile cookie / system preference (client only)
   useEffect(() => {

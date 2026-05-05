@@ -12,9 +12,10 @@ export default function HowItWorksPage() {
   return (
     <>
       <Navbar />
-      <main id="main-content" className="min-h-[70vh] bg-surface">
+      <main id="main-content" className="min-h-[70vh] bg-[#080818]">
         <AboutContent />
       </main>
+
       <Footer />
     </>
   )

@@ -22,8 +22,8 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
-        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#10B981]/[0.05] blur-[160px] pointer-events-none" />
+      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080818' }}>
+        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
         <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative">
@@ -33,7 +33,7 @@ export default function AboutContent() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
-              <div className="w-2 h-2 rounded-full animate-pulse bg-[#10B981]" />
+              <div className="w-2 h-2 rounded-full animate-pulse bg-indigo-500" />
               <span className="text-sm font-semibold tracking-wide text-white/60">About ClearUX</span>
             </div>
           </motion.div>
@@ -62,8 +62,8 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#10B981]/[0.03] blur-[160px] pointer-events-none" />
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#080818] overflow-hidden">
+        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.03] blur-[160px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative">
           <motion.div
@@ -73,21 +73,21 @@ export default function AboutContent() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The origin story</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">The origin story</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
               Why ClearUX exists
             </h2>
           </motion.div>
 
           {/* Quote */}
           <motion.div
-            className="mb-14 p-6 sm:p-8 rounded-2xl bg-card border border-border/30"
+            className="mb-14 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06]"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-text font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
+            <p className="text-white font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
               &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
             </p>
           </motion.div>
@@ -109,7 +109,7 @@ export default function AboutContent() {
               },
               {
                 icon: Sparkles,
-                color: '#10B981',
+                color: '#818CF8',
                 title: 'What we built instead',
                 desc: 'Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.',
               },
@@ -118,7 +118,7 @@ export default function AboutContent() {
               return (
                 <motion.div
                   key={item.title}
-                  className="rounded-2xl bg-card border border-border/30 p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
+                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -130,8 +130,8 @@ export default function AboutContent() {
                   >
                     <ItemIcon size={20} style={{ color: item.color }} />
                   </div>
-                  <h3 className="font-heading font-semibold text-lg text-text mb-3">{item.title}</h3>
-                  <p className="text-muted text-[14px] leading-relaxed">{item.desc}</p>
+                  <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
+                  <p className="text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
                 </motion.div>
               )
             })}
@@ -142,7 +142,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. FOUNDER
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-off overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#0A0A1F] overflow-hidden">
         <div className="max-w-4xl mx-auto relative">
           <motion.div
             className="text-center mb-12"
@@ -151,14 +151,14 @@ export default function AboutContent() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The founder</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">The founder</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
               Built by someone who lived the problem
             </h2>
           </motion.div>
 
           <motion.div
-            className="rounded-2xl bg-card border border-border/30 p-8 sm:p-10"
+            className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -174,10 +174,10 @@ export default function AboutContent() {
               />
 
               <div className="flex-1">
-                <h3 className="font-heading font-semibold text-xl text-text mb-1">Stefano Schintu</h3>
-                <p className="text-muted text-sm mb-4">Founder &amp; Product Lead</p>
+                <h3 className="font-heading font-semibold text-xl text-white mb-1">Stefano Schintu</h3>
+                <p className="text-white/50 text-sm mb-4">Founder &amp; Product Lead</p>
 
-                <div className="space-y-4 text-muted text-[15px] leading-relaxed">
+                <div className="space-y-4 text-white/50 text-[15px] leading-relaxed">
                   <p>
                     20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, unicorn companies, and enterprise teams across the world — exposed to cultural and market differences, from early-stage MVPs to products serving millions.
                   </p>
@@ -193,7 +193,7 @@ export default function AboutContent() {
                   href="https://www.linkedin.com/in/stefanoschintu"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-text hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-white hover:opacity-70 transition-opacity"
                 >
                   <ExternalLink size={14} />
                   Connect on LinkedIn
@@ -207,7 +207,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           4. OUR VALUES — Simple, clear, reliable
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#080818] overflow-hidden">
         <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative">
@@ -218,11 +218,11 @@ export default function AboutContent() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Our commitment</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">Our commitment</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
               Clear, simple, and reliable
             </h2>
-            <p className="text-muted text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-white/50 text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
               We hold ourselves to the same standard we measure others by.
             </p>
           </motion.div>
@@ -252,7 +252,7 @@ export default function AboutContent() {
               return (
                 <motion.div
                   key={item.title}
-                  className="rounded-2xl bg-card border border-border/30 p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
+                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -264,8 +264,8 @@ export default function AboutContent() {
                   >
                     <ItemIcon size={20} style={{ color: item.color }} />
                   </div>
-                  <h3 className="font-heading font-semibold text-lg text-text mb-3">{item.title}</h3>
-                  <p className="text-muted text-[14px] leading-relaxed">{item.desc}</p>
+                  <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
+                  <p className="text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
                 </motion.div>
               )
             })}
@@ -276,7 +276,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. LIME CTA BAND
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#10B981' }}>
+      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#4F46E5' }}>
         <div className="max-w-3xl mx-auto text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -299,7 +299,7 @@ export default function AboutContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-[#111] text-[#34D399] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-white text-[#080818] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
               >
                 Start Free Audit
                 <ArrowRight size={18} />

@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // class on the very first render — no flash of wrong theme.
   const cookieStore = await cookies()
   const themeCookie = cookieStore.get('clearux-theme')?.value as 'light' | 'dark' | undefined
-  const initialTheme = themeCookie === 'dark' ? 'dark' : 'light'
+  const initialTheme = themeCookie === 'light' ? 'light' : 'dark'
 
   return (
     <html

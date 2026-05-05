@@ -173,7 +173,7 @@ export default function RegisterPage() {
   // Show loading while checking auth state
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface">
+      <div className="flex items-center justify-center min-h-screen bg-[#080818]">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -183,10 +183,10 @@ export default function RegisterPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h1 className="text-2xl font-heading font-semibold text-text mb-1.5">
+        <h1 className="text-2xl font-heading font-semibold text-white mb-1.5">
           Create your account
         </h1>
-        <p className="text-sm text-muted leading-relaxed">
+        <p className="text-sm text-white/50 leading-relaxed">
           {pendingUrl
             ? 'Run your first UX audit in under 10 minutes. No credit card required.'
             : 'Run your first UX audit in under 10 minutes. No credit card required.'}
@@ -213,7 +213,7 @@ export default function RegisterPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-[15px] font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-[#080818]-alt transition-colors text-[15px] font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -232,7 +232,7 @@ export default function RegisterPage() {
       {/* ── Divider ── */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-muted font-medium">or sign up with email</span>
+        <span className="text-xs text-white/50 font-medium">or sign up with email</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -292,7 +292,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPassword(prev => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors z-10 p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-10 p-1"
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
@@ -306,13 +306,13 @@ export default function RegisterPage() {
               {passwordChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
                   <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    check.met ? 'bg-emerald-500' : 'bg-border'
+                    check.met ? 'bg-indigo-500' : 'bg-border'
                   }`}>
                     {check.met && (
                       <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     )}
                   </div>
-                  <span className={`text-xs transition-colors ${check.met ? 'text-[#22C55E]' : 'text-muted'}`}>
+                  <span className={`text-xs transition-colors ${check.met ? 'text-indigo-400' : 'text-white/50'}`}>
                     {check.label}
                   </span>
                 </div>
@@ -342,7 +342,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(prev => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors z-10 p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-10 p-1"
               tabIndex={-1}
               aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
             >
@@ -352,14 +352,14 @@ export default function RegisterPage() {
           {formData.confirmPassword.length > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
               <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                formData.password === formData.confirmPassword ? 'bg-emerald-500' : 'bg-border'
+                formData.password === formData.confirmPassword ? 'bg-indigo-500' : 'bg-border'
               }`}>
                 {formData.password === formData.confirmPassword && (
                   <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 )}
               </div>
               <span className={`text-xs transition-colors ${
-                formData.password === formData.confirmPassword ? 'text-[#22C55E]' : 'text-muted'
+                formData.password === formData.confirmPassword ? 'text-indigo-400' : 'text-white/50'
               }`}>
                 {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
               </span>
@@ -377,8 +377,8 @@ export default function RegisterPage() {
             onClick={() => setMarketingEmails(prev => !prev)}
             className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
               marketingEmails
-                ? 'bg-[#22C55E] border-[#22C55E]'
-                : 'bg-white dark:bg-white/10 border-border'
+                ? 'bg-indigo-500 border-indigo-500'
+                : 'bg-white/10 border-white/[0.06]'
             }`}
           >
             {marketingEmails && (
@@ -387,7 +387,7 @@ export default function RegisterPage() {
           </button>
           <label
             onClick={() => setMarketingEmails(prev => !prev)}
-            className="text-xs text-muted leading-relaxed cursor-pointer select-none"
+            className="text-xs text-white/50 leading-relaxed cursor-pointer select-none"
           >
             Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
           </label>
@@ -406,7 +406,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-[11px] text-muted/70 leading-relaxed">
+      <p className="mt-5 text-center text-[11px] text-white/40 leading-relaxed">
         Your audit results are private and encrypted. We never share your data with competitors or the public.
       </p>
 
@@ -414,23 +414,23 @@ export default function RegisterPage() {
       <div className="mt-4">
         <button
           onClick={() => setFaqOpen(prev => !prev)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-muted hover:text-text transition-colors py-1.5"
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors py-1.5"
         >
           What happens after I sign up?
           <ChevronDown size={12} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
         </button>
         {faqOpen && (
-          <div className="mt-2 p-3.5 rounded-xl bg-off/50 dark:bg-white/[0.03] border border-border/30">
-            <p className="text-xs text-muted leading-relaxed">
+          <div className="mt-2 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <p className="text-xs text-white/50 leading-relaxed">
               You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 64 UX checkpoints in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
             </p>
           </div>
         )}
       </div>
 
-      <div className="mt-4 text-center text-sm text-muted">
+      <div className="mt-4 text-center text-sm text-white/50">
         Already have an account?{' '}
-        <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-semibold hover:underline transition-colors text-text">
+        <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-semibold hover:underline transition-colors text-white">
           Sign in
         </Link>
       </div>
@@ -440,25 +440,25 @@ export default function RegisterPage() {
   return (
     <>
       {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
-      <div className="lg:hidden min-h-screen bg-surface flex flex-col">
+      <div className="lg:hidden min-h-screen bg-[#080818] flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {formContent}
         </div>
         {/* Mobile footer nav */}
-        <div className="border-t border-border/30 dark:border-white/[0.06] px-4 py-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
-            <Link href="/" className="hover:text-text transition-colors font-medium flex items-center gap-1">
+        <div className="border-t border-white/[0.06] px-4 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
+            <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
               <ArrowLeft size={12} /> Back to Home
             </Link>
-            <span className="text-border">|</span>
-            <Link href="/pricing" className="hover:text-text transition-colors">Pricing</Link>
-            <span className="text-border">|</span>
-            <Link href="/about" className="hover:text-text transition-colors">About</Link>
-            <span className="text-border">|</span>
-            <Link href="/faq" className="hover:text-text transition-colors">FAQ</Link>
-            <span className="text-border">|</span>
-            <Link href="/contact" className="hover:text-text transition-colors">Contact</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
           </div>
         </div>
       </div>
@@ -472,14 +472,14 @@ export default function RegisterPage() {
 
             {/* Subtle lime scribble accent — top-right */}
             <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="50" stroke="#10B981" strokeWidth="1.5" strokeDasharray="6 8" />
-              <circle cx="60" cy="60" r="30" stroke="#10B981" strokeWidth="1" strokeDasharray="4 6" />
+              <circle cx="60" cy="60" r="50" stroke="#818CF8" strokeWidth="1.5" strokeDasharray="6 8" />
+              <circle cx="60" cy="60" r="30" stroke="#818CF8" strokeWidth="1" strokeDasharray="4 6" />
             </svg>
 
             {/* Subtle lime scribble accent — bottom-left */}
             <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <path d="M10 70 Q 40 10, 70 70" stroke="#10B981" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M20 65 Q 40 20, 60 65" stroke="#10B981" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <path d="M10 70 Q 40 10, 70 70" stroke="#818CF8" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M20 65 Q 40 20, 60 65" stroke="#818CF8" strokeWidth="1" fill="none" strokeLinecap="round" />
             </svg>
 
             <div className="relative z-10 flex flex-col h-full">

@@ -124,7 +124,7 @@ export default function LoginPage() {
 
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface">
+      <div className="flex items-center justify-center min-h-screen bg-[#080818]">
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -133,10 +133,10 @@ export default function LoginPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h1 className="text-2xl font-heading font-semibold text-text mb-1.5">
+        <h1 className="text-2xl font-heading font-semibold text-white mb-1.5">
           Welcome back
         </h1>
-        <p className="text-sm text-muted">
+        <p className="text-sm text-white/50">
           Sign in to access your dashboard, track fixes, and run new audits.
         </p>
       </div>
@@ -161,7 +161,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-border bg-card hover:bg-surface-alt transition-colors text-[15px] font-medium text-text disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-[#080818]-alt transition-colors text-[15px] font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -180,7 +180,7 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-muted font-medium">or sign in with email</span>
+        <span className="text-xs text-white/50 font-medium">or sign in with email</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -220,7 +220,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(prev => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors z-10 p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-10 p-1"
               tabIndex={-1}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
@@ -248,9 +248,9 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-muted">
+      <div className="mt-6 text-center text-sm text-white/50">
         Don&apos;t have an account?{' '}
-        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold text-text hover:underline transition-colors">
+        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold text-white hover:underline transition-colors">
           Sign up
         </Link>
       </div>
@@ -260,24 +260,24 @@ export default function LoginPage() {
   return (
     <>
       {/* MOBILE / TABLET: Navbar + full-width form */}
-      <div className="lg:hidden min-h-screen bg-surface flex flex-col">
+      <div className="lg:hidden min-h-screen bg-[#080818] flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {formContent}
         </div>
-        <div className="border-t border-border/30 px-4 py-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
-            <Link href="/" className="hover:text-text transition-colors font-medium flex items-center gap-1">
+        <div className="border-t border-white/[0.06] px-4 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
+            <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
               <ArrowLeft size={12} /> Back to Home
             </Link>
-            <span className="text-border">|</span>
-            <Link href="/pricing" className="hover:text-text transition-colors">Pricing</Link>
-            <span className="text-border">|</span>
-            <Link href="/about" className="hover:text-text transition-colors">About</Link>
-            <span className="text-border">|</span>
-            <Link href="/faq" className="hover:text-text transition-colors">FAQ</Link>
-            <span className="text-border">|</span>
-            <Link href="/contact" className="hover:text-text transition-colors">Contact</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+            <span className="text-white/15">|</span>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
           </div>
         </div>
       </div>
@@ -291,14 +291,14 @@ export default function LoginPage() {
 
             {/* Subtle lime scribble accent — top-right */}
             <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="50" stroke="#10B981" strokeWidth="1.5" strokeDasharray="6 8" />
-              <circle cx="60" cy="60" r="30" stroke="#10B981" strokeWidth="1" strokeDasharray="4 6" />
+              <circle cx="60" cy="60" r="50" stroke="#818CF8" strokeWidth="1.5" strokeDasharray="6 8" />
+              <circle cx="60" cy="60" r="30" stroke="#818CF8" strokeWidth="1" strokeDasharray="4 6" />
             </svg>
 
             {/* Subtle lime scribble accent — bottom-left */}
             <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <path d="M10 70 Q 40 10, 70 70" stroke="#10B981" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M20 65 Q 40 20, 60 65" stroke="#10B981" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <path d="M10 70 Q 40 10, 70 70" stroke="#818CF8" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M20 65 Q 40 20, 60 65" stroke="#818CF8" strokeWidth="1" fill="none" strokeLinecap="round" />
             </svg>
 
             <div className="relative z-10 flex flex-col h-full">

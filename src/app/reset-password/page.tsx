@@ -121,7 +121,7 @@ export default function ResetPasswordPage() {
           <div className="auth-form-wrap">
             <div className="flex items-center justify-center gap-2">
               <span className="spinner" />
-              <p className="text-sm text-muted">Verifying reset link...</p>
+              <p className="text-sm text-white/50">Verifying reset link...</p>
             </div>
           </div>
         </div>
@@ -161,10 +161,10 @@ export default function ResetPasswordPage() {
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="mb-8">
-            <h2 className="text-2xl font-heading font-semibold text-text mb-2">
+            <h2 className="text-2xl font-heading font-semibold text-white mb-2">
               Create new password
             </h2>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-white/50">
               Set a strong password to secure your account
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                     disabled={loading || !!success}
                   >
                     {showPassword ? (
@@ -240,7 +240,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-navy transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
                     disabled={loading || !!success}
                   >
                     {showConfirmPassword ? (

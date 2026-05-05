@@ -8,8 +8,8 @@ import {
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
-   Product Mockup — Polished UI cards that simulate the ClearUX
-   audit dashboard. Used as "product screenshots" on the homepage.
+   Product Mockup — Dark atmospheric glass-morphism cards
+   simulating the ClearUX audit dashboard.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Hero Report Card — Large floating mockup for the hero ──── */
@@ -34,7 +34,7 @@ export function HeroReportMockup() {
   }, [isInView])
 
   const pillars = [
-    { label: 'Foundation', score: 78, color: '#10B981' },
+    { label: 'Foundation', score: 78, color: '#6B5B95' },
     { label: 'Human Experience', score: 54, color: '#EC4899' },
     { label: 'Inclusive Design', score: 71, color: '#F59E0B' },
     { label: 'Future Readiness', score: 65, color: '#22C55E' },
@@ -58,26 +58,22 @@ export function HeroReportMockup() {
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
     >
-      {/* Glow behind the card */}
-      <div className="absolute inset-0 -inset-x-8 -inset-y-8 rounded-3xl pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(16,185,129,0.12) 0%, transparent 60%)',
-        filter: 'blur(40px)',
-      }} />
-
-      {/* Main card */}
-      <div className="relative rounded-2xl sm:rounded-3xl bg-[#111111] border border-white/[0.08] overflow-hidden shadow-2xl shadow-black/40">
-        {/* Top bar — fake browser/app chrome */}
-        <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-white/10" />
-            <div className="w-3 h-3 rounded-full bg-white/10" />
-            <div className="w-3 h-3 rounded-full bg-white/10" />
+      {/* Main card — dark glass with subtle indigo glow */}
+      <div className="relative rounded-2xl sm:rounded-3xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] overflow-hidden backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]">
+        {/* Top bar — browser chrome */}
+        <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E]/60" />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-white/30 font-mono hidden sm:block">clearux.ai/audit/acme-com</span>
+          <div className="flex-1 mx-8 hidden sm:block">
+            <div className="max-w-sm mx-auto px-4 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-center">
+              <span className="text-xs text-white/40 font-mono">clearux.ai/audit/acme-com</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.04]">
               <Download size={12} className="text-white/40" />
               <span className="text-[11px] text-white/40 font-medium">PDF</span>
             </div>
@@ -88,7 +84,6 @@ export function HeroReportMockup() {
         <div className="p-5 sm:p-8">
           {/* Header row */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
-            {/* Left: site info */}
             <div>
               <motion.p
                 className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-1"
@@ -116,9 +111,9 @@ export function HeroReportMockup() {
               </motion.p>
             </div>
 
-            {/* Right: score ring */}
+            {/* Score ring */}
             <motion.div
-              className="relative w-[130px] h-[130px] flex-shrink-0"
+              className="relative w-[120px] h-[120px] flex-shrink-0"
               initial={{ scale: 0, rotate: -90 }}
               animate={isInView ? { scale: 1, rotate: 0 } : {}}
               transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.8 }}
@@ -126,7 +121,7 @@ export function HeroReportMockup() {
               <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                 <motion.circle
-                  cx="60" cy="60" r="52" fill="none" stroke="#10B981" strokeWidth="6"
+                  cx="60" cy="60" r="52" fill="none" stroke="#818CF8" strokeWidth="6"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   initial={{ strokeDashoffset: circumference }}
@@ -135,23 +130,23 @@ export function HeroReportMockup() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-heading text-4xl font-bold text-white leading-none">{score}</span>
+                <span className="font-heading text-3xl font-bold text-white leading-none">{score}</span>
                 <span className="text-[10px] text-white/30 mt-1">/ 100</span>
               </div>
             </motion.div>
           </div>
 
-          {/* Pillar scores — horizontal bar grid */}
+          {/* Pillar scores */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
             {pillars.map((p, i) => (
               <motion.div
                 key={i}
-                className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3 sm:p-4"
+                className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] p-3 sm:p-4"
                 initial={{ opacity: 0, y: 15 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 1 + i * 0.1, duration: 0.4 }}
               >
-                <p className="text-[10px] sm:text-xs text-white/40 mb-2 truncate">{p.label}</p>
+                <p className="text-[10px] sm:text-xs text-white/30 mb-2 truncate">{p.label}</p>
                 <div className="flex items-end justify-between mb-2">
                   <span className="font-heading text-xl sm:text-2xl font-bold text-white">{Math.round(score * p.score / 72)}</span>
                 </div>
@@ -174,12 +169,12 @@ export function HeroReportMockup() {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 1.5, duration: 0.5 }}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/25 mb-3">Top findings by severity</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-3">Top findings by severity</p>
             <div className="space-y-2">
               {findings.map((f, i) => (
                 <motion.div
                   key={i}
-                  className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/[0.03] border border-white/[0.05]"
+                  className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06]"
                   initial={{ opacity: 0, x: -20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 1.6 + i * 0.1, duration: 0.35 }}
@@ -187,8 +182,8 @@ export function HeroReportMockup() {
                   <span className={`${f.color} text-white text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded flex-shrink-0`}>
                     {f.severity}
                   </span>
-                  <span className="text-xs sm:text-sm text-white/80 flex-1 truncate">{f.label}</span>
-                  <span className="text-[10px] text-white/25 hidden sm:block flex-shrink-0">{f.category}</span>
+                  <span className="text-xs sm:text-sm text-white/70 flex-1 truncate">{f.label}</span>
+                  <span className="text-[10px] text-white/30 hidden sm:block flex-shrink-0">{f.category}</span>
                 </motion.div>
               ))}
             </div>
@@ -199,39 +194,7 @@ export function HeroReportMockup() {
   )
 }
 
-/* ── Compact stat cards — for inline use ──────────────────────── */
-export function StatRow() {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {[
-        { value: '64', label: 'UX checkpoints', icon: Eye },
-        { value: '16', label: 'Categories', icon: FileText },
-        { value: '4', label: 'Audit pillars', icon: Shield },
-        { value: '<10', label: 'Minutes', icon: TrendingUp },
-      ].map((stat, i) => {
-        const Icon = stat.icon
-        return (
-          <motion.div
-            key={i}
-            className="flex items-center gap-3 rounded-xl bg-white/[0.04] border border-white/[0.06] px-4 py-3"
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.4 }}
-          >
-            <Icon size={16} className="text-[#34D399] flex-shrink-0" />
-            <div>
-              <span className="font-heading text-lg font-bold text-white">{stat.value}</span>
-              <p className="text-[10px] text-white/40">{stat.label}</p>
-            </div>
-          </motion.div>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ── Full Report Showcase — detailed report preview ────────── */
+/* ── Full Report Showcase — detailed report preview (dark) ──── */
 export function ReportShowcase() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-10%' })
@@ -254,9 +217,8 @@ export function ReportShowcase() {
 
   return (
     <div ref={ref} className="relative">
-      {/* Left card: Category breakdown */}
       <motion.div
-        className="rounded-2xl bg-[#111111] border border-white/[0.08] p-6 sm:p-8 shadow-2xl shadow-black/30"
+        className="rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] p-6 sm:p-8 backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]"
         initial={{ opacity: 0, y: 40 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -266,9 +228,9 @@ export function ReportShowcase() {
             <p className="text-sm font-semibold text-white">Category Breakdown</p>
             <p className="text-xs text-white/30">16 categories across 4 pillars</p>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#10B981]/10 border border-[#10B981]/20">
-            <TrendingUp size={12} className="text-[#34D399]" />
-            <span className="text-[11px] font-bold text-[#34D399]">6 categories improved</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <TrendingUp size={12} className="text-emerald-400" />
+            <span className="text-[11px] font-bold text-emerald-400">6 categories improved</span>
           </div>
         </div>
 
@@ -286,7 +248,7 @@ export function ReportShowcase() {
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusBg(cat.status)}`}>
                   <Icon size={14} className={statusColor(cat.status)} />
                 </div>
-                <span className="text-sm text-white/70 w-32 sm:w-40 flex-shrink-0">{cat.label}</span>
+                <span className="text-sm text-white/50 w-32 sm:w-40 flex-shrink-0">{cat.label}</span>
                 <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full ${barColor(cat.status)}`}
@@ -303,7 +265,7 @@ export function ReportShowcase() {
 
         {/* Finding detail card */}
         <motion.div
-          className="mt-6 rounded-xl bg-white/[0.03] border border-white/[0.06] p-4"
+          className="mt-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4"
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 1.2, duration: 0.5 }}
@@ -312,15 +274,15 @@ export function ReportShowcase() {
             <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white mb-1">Confirmshaming in cancel flow</p>
-              <p className="text-xs text-white/40 leading-relaxed mb-3">
+              <p className="text-xs text-white/50 leading-relaxed mb-3">
                 Guilt-based language in opt-out label manipulates user decision. The cancel button reads &quot;No, I don&apos;t want to save money&quot; — a recognised dark pattern.
               </p>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-medium text-white/30 bg-white/[0.06] px-2.5 py-1 rounded-lg">Ethical UX</span>
-                <span className="text-[10px] font-medium text-white/30 bg-white/[0.06] px-2.5 py-1 rounded-lg">High business impact</span>
+                <span className="text-[10px] font-medium text-white/50 bg-white/[0.06] px-2.5 py-1 rounded-lg">Ethical UX</span>
+                <span className="text-[10px] font-medium text-white/50 bg-white/[0.06] px-2.5 py-1 rounded-lg">High business impact</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-[#34D399]">
+            <div className="flex items-center gap-1.5 text-white/30">
               <ArrowUpRight size={14} />
             </div>
           </div>
