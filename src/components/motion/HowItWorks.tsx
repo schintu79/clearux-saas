@@ -375,6 +375,7 @@ export default function HowItWorks() {
   const stepRefs = [step1Ref, step2Ref, step3Ref]
 
   return (
+    <>
     <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
       {/* Decorative orbs */}
       <motion.div
@@ -456,29 +457,33 @@ export default function HowItWorks() {
           })}
         </div>
 
-        {/* Bottom CTA */}
+      </div>
+    </section>
+
+      {/* Full-width lime CTA band — visual break */}
+      <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
         <motion.div
-          className="text-center mt-32 sm:mt-40 max-w-2xl mx-auto"
+          className="text-center max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-text mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
             Ready to see what you&apos;re missing?
           </h3>
-          <p className="text-muted text-sm sm:text-base mb-8 max-w-md mx-auto">
+          <p className="text-[#111]/50 text-sm sm:text-base mb-8 max-w-md mx-auto">
             Your first audit is free. Results in under 10 minutes.
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-3 bg-[#111] dark:bg-white text-[#B9FF66] dark:text-[#111] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Run my free audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }
