@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight } from 'lucide-react';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   const initials = name
@@ -22,10 +22,16 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
 const Navbar: React.FC = () => {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
+  const { setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Public website is always dark mode
+  useEffect(() => {
+    setTheme('dark');
+  }, [setTheme]);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -95,8 +101,6 @@ const Navbar: React.FC = () => {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2">
-            <ThemeToggle variant="pill" />
-
             {isLoggedIn ? (
               <>
               {credits !== null && (
@@ -176,7 +180,6 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
-            <ThemeToggle variant="icon" />
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}

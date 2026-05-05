@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
-import ThemeToggle from '@/components/ui/ThemeToggle'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -560,9 +559,6 @@ export default function RegisterPage() {
 
           {/* Right Panel — Form */}
           <div className="auth-right">
-            <div className="absolute top-4 right-4">
-              <ThemeToggle variant="icon" />
-            </div>
             <div className="auth-form-wrap">
               {formContent}
             </div>
