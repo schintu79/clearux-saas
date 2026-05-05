@@ -243,7 +243,7 @@ function AIReadinessVisual({ inView }: { inView: boolean }) {
         <div className="rounded-xl border border-[#111]/10 p-4 mb-4 bg-[#FAFAFA]">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-5 h-5 rounded-full bg-[#111] flex items-center justify-center">
-              <Sparkles size={10} className="text-[#B9FF66]" />
+              <Sparkles size={10} className="text-[#34D399]" />
             </div>
             <span className="text-[10px] font-semibold text-[#111]/60">AI Agent parsing acme.com...</span>
           </div>
@@ -456,7 +456,7 @@ export default function WhyClearUX() {
   ]
 
   return (
-    <section className="py-32 sm:py-40 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+    <section className="py-32 sm:py-40 px-4 md:px-6 lg:px-8" style={{ background: '#10B981' }}>
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <motion.div
@@ -466,11 +466,11 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-[#111]/50">What others miss</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-[#111] mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
+          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">What others miss</p>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
             Why ClearUX
           </h2>
-          <p className="text-[#111]/60 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+          <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
             User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. ClearUX is the only audit that covers all four — in minutes, for $99.
           </p>
         </motion.div>
@@ -494,7 +494,7 @@ export default function WhyClearUX() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-bold text-[#111]/[0.06] mb-2 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-bold text-white/[0.06] mb-2 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -502,14 +502,14 @@ export default function WhyClearUX() {
                   >
                     {diff.number}
                   </motion.span>
-                  <p className="font-heading text-sm sm:text-base font-semibold text-[#111] mb-1 tracking-tight">{diff.subtitle}</p>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-[#111] mb-4 tracking-tight">
+                  <p className="font-heading text-sm sm:text-base font-semibold text-white mb-1 tracking-tight">{diff.subtitle}</p>
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight">
                     {diff.title}
                   </h3>
-                  <p className="text-[#111]/70 text-base leading-relaxed mb-4 max-w-md">
+                  <p className="text-white/80 text-base leading-relaxed mb-4 max-w-md">
                     {diff.description}
                   </p>
-                  <p className="text-[11px] font-medium text-[#111]/40 italic">
+                  <p className="text-[11px] font-medium text-white/50 italic">
                     {diff.competitors}
                   </p>
                 </motion.div>
@@ -537,15 +537,15 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
             All four. In every audit. For $99.
           </h3>
-          <p className="text-[#111]/50 text-sm sm:text-base mb-8 max-w-md mx-auto">
+          <p className="text-white/60 text-sm sm:text-base mb-8 max-w-md mx-auto">
             No credit card required for your first audit.
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Start free audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />

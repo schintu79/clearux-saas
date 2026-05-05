@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DM_Sans, Caveat, Syne } from 'next/font/google'
+import { DM_Sans, Caveat, Space_Grotesk } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -14,10 +14,10 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const syne = Syne({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-heading',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 })
 
 
@@ -92,14 +92,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // class on the very first render — no flash of wrong theme.
   const cookieStore = await cookies()
   const themeCookie = cookieStore.get('clearux-theme')?.value as 'light' | 'dark' | undefined
-  const initialTheme = themeCookie === 'light' ? 'light' : 'dark'
+  const initialTheme = themeCookie === 'dark' ? 'dark' : 'light'
 
   return (
     <html
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${syne.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${spaceGrotesk.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script

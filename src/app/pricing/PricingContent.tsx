@@ -12,8 +12,8 @@ export default function PricingContent() {
         {/* ── Dark Hero ── */}
         <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ background: '#080808' }}>
           {/* Aurora glows */}
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
-          <div className="absolute bottom-[-20%] right-[10%] w-[500px] h-[400px] rounded-full bg-[#B9FF66]/[0.03] blur-[120px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#10B981]/[0.05] blur-[160px] pointer-events-none" />
+          <div className="absolute bottom-[-20%] right-[10%] w-[500px] h-[400px] rounded-full bg-[#10B981]/[0.03] blur-[120px] pointer-events-none" />
 
           <div className="max-w-5xl mx-auto relative z-10">
             {/* Badge */}
@@ -24,7 +24,7 @@ export default function PricingContent() {
               className="mb-6"
             >
               <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/70 text-sm font-medium">
-                <Sparkles size={14} className="text-[#B9FF66]" />
+                <Sparkles size={14} className="text-[#34D399]" />
                 No subscriptions, no feature gates
               </span>
             </motion.div>
@@ -56,20 +56,20 @@ export default function PricingContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <div className="rounded-xl p-6 sm:p-8 relative overflow-hidden" style={{ background: '#B9FF66' }}>
+              <div className="rounded-xl p-6 sm:p-8 relative overflow-hidden" style={{ background: '#10B981' }}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Sparkles size={18} className="text-[#111]" />
-                      <h2 className="font-heading font-semibold text-xl text-[#111]">Start with a Free Audit</h2>
+                      <Sparkles size={18} className="text-white" />
+                      <h2 className="font-heading font-semibold text-xl text-white">Start with a Free Audit</h2>
                     </div>
-                    <p className="text-sm text-[#111]/60 max-w-md">
+                    <p className="text-sm text-white/70 max-w-md">
                       No credit card required. Sign up, enter a URL, and get your full report in minutes. Buy credits when you need more.
                     </p>
                   </div>
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                    className="inline-flex items-center gap-2 bg-white text-[#059669] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                   >
                     Start Free Audit
                     <ArrowRight size={16} />
@@ -326,11 +326,11 @@ export default function PricingContent() {
                         <td className="px-6 py-5 text-muted">$99.00</td>
                         <td className="px-6 py-5 text-muted">One-off baseline or pre-launch check</td>
                       </tr>
-                      <tr className="bg-[#B9FF66]/[0.06] dark:bg-[#B9FF66]/[0.03] border-b border-border/10 dark:border-white/[0.04] ring-1 ring-inset ring-[#B9FF66]/20 dark:ring-[#B9FF66]/10">
+                      <tr className="bg-[#10B981]/[0.06] dark:bg-[#10B981]/[0.03] border-b border-border/10 dark:border-white/[0.04] ring-1 ring-inset ring-[#10B981]/20 dark:ring-[#10B981]/10">
                         <td className="px-6 py-5 font-semibold text-text">
                           <span className="flex items-center gap-2">
                             Growth
-                            <span className="text-[10px] font-bold bg-[#B9FF66] text-[#111111] px-2 py-0.5 rounded-full leading-tight">Popular</span>
+                            <span className="text-[10px] font-bold bg-[#10B981] text-white px-2 py-0.5 rounded-full leading-tight">Popular</span>
                           </span>
                         </td>
                         <td className="px-6 py-5 font-bold text-text text-lg">$399</td>
@@ -371,7 +371,7 @@ export default function PricingContent() {
         </section>
 
         {/* ── Lime CTA Band ── */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+        <section className="py-20 px-4 sm:px-6 lg:px-8" style={{ background: '#10B981' }}>
           <div className="max-w-5xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -379,15 +379,15 @@ export default function PricingContent() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="font-heading font-semibold text-3xl sm:text-4xl md:text-[2.75rem] text-[#111] tracking-tight mb-4">
+              <h2 className="font-heading font-semibold text-3xl sm:text-4xl md:text-[2.75rem] text-white tracking-tight mb-4">
                 Start your audit today
               </h2>
-              <p className="text-[#111]/60 text-base md:text-lg max-w-md mx-auto mb-8">
+              <p className="text-white/70 text-base md:text-lg max-w-md mx-auto mb-8">
                 Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
               </p>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-8 py-4 min-h-[52px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 bg-[#111] text-[#34D399] text-[15px] font-semibold px-8 py-4 min-h-[52px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
               >
                 Start Free Audit
                 <ArrowRight size={16} />

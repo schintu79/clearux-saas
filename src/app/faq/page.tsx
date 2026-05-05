@@ -231,7 +231,7 @@ export default function FaqPage() {
         {/* Dark Hero */}
         <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
           {/* Aurora glows */}
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#10B981]/[0.05] blur-[160px] pointer-events-none" />
           <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
 
           <div className="max-w-4xl mx-auto text-center relative">
@@ -241,7 +241,7 @@ export default function FaqPage() {
               transition={{ duration: 0.5 }}
             >
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-white/40 border border-white/[0.08] rounded-full px-4 py-1.5 mb-6">
-                <Sparkles size={12} className="text-[#B9FF66]" />
+                <Sparkles size={12} className="text-[#34D399]" />
                 Support Centre
               </span>
             </motion.div>
@@ -279,7 +279,7 @@ export default function FaqPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#B9FF66]/30 focus:border-[#B9FF66]/40 transition-all backdrop-blur-sm"
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#10B981]/30 focus:border-[#10B981]/40 transition-all backdrop-blur-sm"
                 />
                 {searchQuery && (
                   <button
@@ -390,7 +390,7 @@ export default function FaqPage() {
         )}
 
         {/* Lime CTA Band */}
-        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#10B981' }}>
           <motion.div
             className="text-center max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
@@ -398,37 +398,37 @@ export default function FaqPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight">
+            <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
               Still have questions?
             </h3>
-            <p className="text-[#111]/50 text-sm sm:text-base mb-8">
+            <p className="text-white/70 text-sm sm:text-base mb-8">
               Reach out and we will get back to you within a business day.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
               >
                 Email Support
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
               </a>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[#111]/20 text-[#111] rounded-xl font-semibold hover:bg-white/30 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
               >
                 Contact Us
               </Link>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 mt-10">
-              <Link href="/pricing" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
+              <Link href="/pricing" className="text-sm font-medium text-white/60 hover:text-white transition-colors">
                 See pricing
               </Link>
-              <Link href="/how-it-works" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
+              <Link href="/how-it-works" className="text-sm font-medium text-white/60 hover:text-white transition-colors">
                 How it works
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#111]"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white"
               >
                 Start free audit <ArrowRight size={13} />
               </Link>

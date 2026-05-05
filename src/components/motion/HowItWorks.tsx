@@ -52,7 +52,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
         <div className={CARD_HEADER}>
           <div className="flex items-center gap-3">
             <div className={CARD_ICON_BOX}>
-              <ScanLine size={20} className="text-[#B9FF66]" />
+              <ScanLine size={20} className="text-[#34D399]" />
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Site Crawl</p>
@@ -63,7 +63,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-xs font-bold text-[#B9FF66] bg-[#B9FF66]/10 px-3 py-1.5 rounded-full"
+              className="text-xs font-bold text-[#34D399] bg-[#10B981]/10 px-3 py-1.5 rounded-full"
             >
               {pages.length} pages found
             </motion.span>
@@ -81,7 +81,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
             <span className="text-sm text-white/60 font-mono">acme.com</span>
           </div>
           <motion.div
-            className="px-5 py-3 rounded-xl bg-[#B9FF66] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+            className="px-5 py-3 rounded-xl bg-[#10B981] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
             animate={step >= 1 ? { scale: [1, 1.04, 1] } : {}}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
@@ -112,7 +112,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15, delay: i * 0.06 }}
                   >
-                    <CheckCircle size={14} className="text-[#B9FF66]" />
+                    <CheckCircle size={14} className="text-[#34D399]" />
                   </motion.div>
                 )}
               </motion.div>
@@ -163,20 +163,20 @@ function ScanningGrid({ inView }: { inView: boolean }) {
               animate={inView ? { rotate: 360 } : {}}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
-              <Brain size={20} className="text-[#B9FF66]" />
+              <Brain size={20} className="text-[#34D399]" />
             </motion.div>
             <div>
               <p className="text-sm font-semibold text-white">Analysing acme.com</p>
               <p className="text-xs text-white/40">64 checkpoints across 4 pillars</p>
             </div>
           </div>
-          <span className="text-[#B9FF66] font-heading text-3xl font-bold">{progress}%</span>
+          <span className="text-[#34D399] font-heading text-3xl font-bold">{progress}%</span>
         </div>
 
         {/* Progress bar */}
         <div className="h-2 rounded-full bg-white/[0.06] mb-6 overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-[#B9FF66]"
+            className="h-full rounded-full bg-[#10B981]"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -194,11 +194,11 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                 transition={{ duration: 0.4, delay: cp.delay }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-500 ${
                   isActive
-                    ? 'bg-[#B9FF66]/[0.08] border-[#B9FF66]/20'
+                    ? 'bg-[#10B981]/[0.08] border-[#10B981]/20'
                     : 'bg-white/[0.02] border-white/[0.06]'
                 }`}
               >
-                <Icon size={16} className={isActive ? 'text-[#B9FF66]' : 'text-white/30'} />
+                <Icon size={16} className={isActive ? 'text-[#34D399]' : 'text-white/30'} />
                 <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-white/30'}`}>
                   {cp.label}
                 </span>
@@ -209,7 +209,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                     className="ml-auto"
                   >
-                    <CheckCircle size={14} className="text-[#B9FF66]" />
+                    <CheckCircle size={14} className="text-[#34D399]" />
                   </motion.div>
                 )}
               </motion.div>
@@ -253,7 +253,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
         <div className={CARD_HEADER}>
           <div className="flex items-center gap-3">
             <div className={CARD_ICON_BOX}>
-              <BarChart3 size={20} className="text-[#B9FF66]" />
+              <BarChart3 size={20} className="text-[#34D399]" />
             </div>
             <div>
               <p className="text-sm font-semibold text-white">Audit Complete</p>
@@ -269,7 +269,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
             <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
               <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
               <motion.circle
-                cx="40" cy="40" r="34" fill="none" stroke="#B9FF66" strokeWidth="5"
+                cx="40" cy="40" r="34" fill="none" stroke="#10B981" strokeWidth="5"
                 strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 34}`}
                 initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
@@ -380,7 +380,7 @@ export default function HowItWorks() {
       {/* Decorative orbs */}
       <motion.div
         className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(185,255,102,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }}
+        style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }}
         animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       />
@@ -461,7 +461,7 @@ export default function HowItWorks() {
     </section>
 
       {/* Full-width lime CTA band — visual break */}
-      <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+      <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#10B981' }}>
         <motion.div
           className="text-center max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
@@ -469,15 +469,15 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
             Ready to see what you&apos;re missing?
           </h3>
-          <p className="text-[#111]/50 text-sm sm:text-base mb-8 max-w-md mx-auto">
+          <p className="text-white/70 text-sm sm:text-base mb-8 max-w-md mx-auto">
             Your first audit is free. Results in under 10 minutes.
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Start Free Audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />

@@ -34,7 +34,7 @@ export function HeroReportMockup() {
   }, [isInView])
 
   const pillars = [
-    { label: 'Foundation', score: 78, color: '#B9FF66' },
+    { label: 'Foundation', score: 78, color: '#10B981' },
     { label: 'Human Experience', score: 54, color: '#EC4899' },
     { label: 'Inclusive Design', score: 71, color: '#F59E0B' },
     { label: 'Future Readiness', score: 65, color: '#22C55E' },
@@ -60,7 +60,7 @@ export function HeroReportMockup() {
     >
       {/* Glow behind the card */}
       <div className="absolute inset-0 -inset-x-8 -inset-y-8 rounded-3xl pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(185,255,102,0.12) 0%, transparent 60%)',
+        background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(16,185,129,0.12) 0%, transparent 60%)',
         filter: 'blur(40px)',
       }} />
 
@@ -126,7 +126,7 @@ export function HeroReportMockup() {
               <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                 <motion.circle
-                  cx="60" cy="60" r="52" fill="none" stroke="#B9FF66" strokeWidth="6"
+                  cx="60" cy="60" r="52" fill="none" stroke="#10B981" strokeWidth="6"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   initial={{ strokeDashoffset: circumference }}
@@ -219,7 +219,7 @@ export function StatRow() {
             viewport={{ once: true }}
             transition={{ delay: i * 0.1, duration: 0.4 }}
           >
-            <Icon size={16} className="text-[#B9FF66] flex-shrink-0" />
+            <Icon size={16} className="text-[#34D399] flex-shrink-0" />
             <div>
               <span className="font-heading text-lg font-bold text-white">{stat.value}</span>
               <p className="text-[10px] text-white/40">{stat.label}</p>
@@ -266,9 +266,9 @@ export function ReportShowcase() {
             <p className="text-sm font-semibold text-white">Category Breakdown</p>
             <p className="text-xs text-white/30">16 categories across 4 pillars</p>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#B9FF66]/10 border border-[#B9FF66]/20">
-            <TrendingUp size={12} className="text-[#B9FF66]" />
-            <span className="text-[11px] font-bold text-[#B9FF66]">6 categories improved</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#10B981]/10 border border-[#10B981]/20">
+            <TrendingUp size={12} className="text-[#34D399]" />
+            <span className="text-[11px] font-bold text-[#34D399]">6 categories improved</span>
           </div>
         </div>
 
@@ -320,7 +320,7 @@ export function ReportShowcase() {
                 <span className="text-[10px] font-medium text-white/30 bg-white/[0.06] px-2.5 py-1 rounded-lg">High business impact</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-[#B9FF66]">
+            <div className="flex items-center gap-1.5 text-[#34D399]">
               <ArrowUpRight size={14} />
             </div>
           </div>

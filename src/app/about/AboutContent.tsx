@@ -23,7 +23,7 @@ export default function AboutContent() {
           1. HERO
           ═══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
-        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
+        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#10B981]/[0.05] blur-[160px] pointer-events-none" />
         <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative">
@@ -33,7 +33,7 @@ export default function AboutContent() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
-              <div className="w-2 h-2 rounded-full animate-pulse bg-[#B9FF66]" />
+              <div className="w-2 h-2 rounded-full animate-pulse bg-[#10B981]" />
               <span className="text-sm font-semibold tracking-wide text-white/60">About ClearUX</span>
             </div>
           </motion.div>
@@ -63,7 +63,7 @@ export default function AboutContent() {
           2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#B9FF66]/[0.03] blur-[160px] pointer-events-none" />
+        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#10B981]/[0.03] blur-[160px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto relative">
           <motion.div
@@ -109,7 +109,7 @@ export default function AboutContent() {
               },
               {
                 icon: Sparkles,
-                color: '#B9FF66',
+                color: '#10B981',
                 title: 'What we built instead',
                 desc: 'Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.',
               },
@@ -276,7 +276,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. LIME CTA BAND
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#B9FF66' }}>
+      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#10B981' }}>
         <div className="max-w-3xl mx-auto text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -284,29 +284,29 @@ export default function AboutContent() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-[#111]/50">
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">
               Start your audit today
             </p>
             <h2
-              className="font-heading font-semibold text-4xl sm:text-5xl text-[#111] mb-6"
+              className="font-heading font-semibold text-4xl sm:text-5xl text-white mb-6"
               style={{ lineHeight: '1.1' }}
             >
               Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
             </h2>
-            <p className="text-[#111]/60 text-lg mb-10 max-w-lg mx-auto">
+            <p className="text-white/70 text-lg mb-10 max-w-lg mx-auto">
               64 checkpoints. 16 categories. Results in minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-[#111] text-[#B9FF66] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-[#111] text-[#34D399] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
               >
                 Start Free Audit
                 <ArrowRight size={18} />
               </Link>
               <Link
                 href="/how-it-works"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-[#111]/20 text-[#111] rounded-xl font-semibold hover:bg-white/30 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
               >
                 See how it works
               </Link>

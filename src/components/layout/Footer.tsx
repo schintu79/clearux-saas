@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><span className="font-heading text-2xl font-bold tracking-tight text-[#B9FF66]">ClearUX</span></div>
+            <div className="mb-3"><span className="font-heading text-2xl font-bold tracking-tight text-[#34D399]">ClearUX</span></div>
             <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
               Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>

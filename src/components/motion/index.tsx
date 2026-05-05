@@ -290,7 +290,7 @@ export function SectionTransition({
 export function FloatingOrb({
   className = '',
   size = 300,
-  color = 'rgba(185,255,102,0.06)',
+  color = 'rgba(16,185,129,0.06)',
   delay = 0,
 }: {
   className?: string

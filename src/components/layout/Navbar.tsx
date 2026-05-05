@@ -28,9 +28,9 @@ const Navbar: React.FC = () => {
   const [credits, setCredits] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Public website is always dark mode
+  // Public website defaults to light mode for clean white design
   useEffect(() => {
-    setTheme('dark');
+    setTheme('light');
   }, [setTheme]);
 
   useEffect(() => {

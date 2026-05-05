@@ -472,14 +472,14 @@ export default function RegisterPage() {
 
             {/* Subtle lime scribble accent — top-right */}
             <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="50" stroke="#B9FF66" strokeWidth="1.5" strokeDasharray="6 8" />
-              <circle cx="60" cy="60" r="30" stroke="#B9FF66" strokeWidth="1" strokeDasharray="4 6" />
+              <circle cx="60" cy="60" r="50" stroke="#10B981" strokeWidth="1.5" strokeDasharray="6 8" />
+              <circle cx="60" cy="60" r="30" stroke="#10B981" strokeWidth="1" strokeDasharray="4 6" />
             </svg>
 
             {/* Subtle lime scribble accent — bottom-left */}
             <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <path d="M10 70 Q 40 10, 70 70" stroke="#B9FF66" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M20 65 Q 40 20, 60 65" stroke="#B9FF66" strokeWidth="1" fill="none" strokeLinecap="round" />
+              <path d="M10 70 Q 40 10, 70 70" stroke="#10B981" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              <path d="M20 65 Q 40 20, 60 65" stroke="#10B981" strokeWidth="1" fill="none" strokeLinecap="round" />
             </svg>
 
             <div className="relative z-10 flex flex-col h-full">

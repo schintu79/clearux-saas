@@ -28,7 +28,7 @@ function emailLayout(content: string, preheader?: string): string {
     .body { padding: 32px; }
     .body p { margin: 0 0 16px; font-size: 15px; line-height: 1.65; color: #3f3f46; }
     .body h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: #111111; }
-    .btn { display: inline-block; background: #B9FF66; color: #111111 !important; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 12px; text-decoration: none; margin: 8px 0 16px; }
+    .btn { display: inline-block; background: #10B981; color: #ffffff !important; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 12px; text-decoration: none; margin: 8px 0 16px; }
     .info-box { background: #f9fafb; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; margin: 20px 0; }
     .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
     .info-row:last-child { border-bottom: none; }
@@ -36,7 +36,7 @@ function emailLayout(content: string, preheader?: string): string {
     .info-value { font-weight: 600; color: #111111; }
     .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
     .pill-green { background: rgba(34,197,94,0.1); color: #16a34a; }
-    .pill-lime { background: rgba(185,255,102,0.15); color: #4d7c0f; }
+    .pill-lime { background: rgba(16,185,129,0.15); color: #065f46; }
     .divider { height: 1px; background: #e4e4e7; margin: 24px 0; }
     .footer { padding: 24px 32px; text-align: center; font-size: 12px; color: #a1a1aa; line-height: 1.5; border-top: 1px solid #f0f0f0; }
     .footer a { color: #71717a; text-decoration: underline; }

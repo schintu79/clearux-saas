@@ -442,7 +442,7 @@ export default function BeyondTheReport() {
       {/* Subtle floating orbs */}
       <motion.div
         className="absolute top-[8%] left-[-4%] w-[350px] h-[350px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(185,255,102,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }}
+        style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }}
         animate={{ y: [0, -25, 0], x: [0, 12, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
       />
