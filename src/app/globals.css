@@ -3,74 +3,74 @@
 @tailwind utilities;
 
 /* ══════════════════════════════════════════════════════════════
-   ClearUX — Dark atmospheric design system
-   Deep navy backgrounds, blue/purple aurora accents, glass cards
-   Inspired by DeepSeek V3 aesthetic
+   ClearUX — Dual-mode design system
+   Light palette (:root) for dashboard/admin
+   Dark atmospheric palette (.dark) for public website
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Dark atmospheric palette (default) ─────────────────────── */
+/* ── Light palette (dashboard / admin) ─────────────────────── */
 :root {
-  /* Brand accent — white for CTAs on dark bg */
-  --brand:       #FFFFFF;
-  --brand-hover: #E5E5E5;
-  --brand-light: #1A1A2E;
-  --hero-bg:     #080818;
+  /* Brand accent — dark for CTAs on light bg */
+  --brand:       #111111;
+  --brand-hover: #333333;
+  --brand-light: #F0F0F0;
+  --hero-bg:     #111111;
 
-  /* Accent — blue/indigo/purple spectrum */
-  --accent:      #818CF8;
-  --accent-dk:   #6366F1;
-  --accent-lt:   rgba(129,140,248,0.08);
-  --accent-glow: rgba(99,102,241,0.15);
+  /* Accent — indigo spectrum */
+  --accent:      #6366F1;
+  --accent-dk:   #4F46E5;
+  --accent-lt:   #EEF2FF;
+  --accent-glow: rgba(99,102,241,0.10);
 
   /* Legacy lime mapped to accent */
-  --lime:        #818CF8;
-  --lime-hover:  #6366F1;
-  --lime-soft:   rgba(129,140,248,0.08);
+  --lime:        #6366F1;
+  --lime-hover:  #4F46E5;
+  --lime-soft:   #EEF2FF;
 
   /* Status/semantic colors */
-  --color-success:  #4ADE80;
-  --color-warning:  #FACC15;
-  --color-danger:   #F87171;
-  --color-info:     #60A5FA;
+  --color-success:  #22C55E;
+  --color-warning:  #EAB308;
+  --color-danger:   #EF4444;
+  --color-info:     #3B82F6;
 
-  /* Pillar colors — luminous on dark */
-  --color-foundation:  #A78BFA;
-  --color-human:       #F472B6;
-  --color-tech:        #FBBF24;
-  --color-future:      #4ADE80;
-  --color-trust:       #60A5FA;
+  /* Pillar colors */
+  --color-foundation:  #6B5B95;
+  --color-human:       #EC4899;
+  --color-tech:        #F59E0B;
+  --color-future:      #22C55E;
+  --color-trust:       #3B82F6;
 
   /* Blue spectrum */
-  --blue:        #FFFFFF;
-  --blue-dk:     #FFFFFF;
-  --blue-lt:     #0D0D24;
+  --blue:        #111111;
+  --blue-dk:     #000000;
+  --blue-lt:     #F7F7F8;
 
   /* Brand gradient */
-  --gradient-brand: linear-gradient(135deg, #6366F1, #818CF8, #A78BFA);
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(99,102,241,.06) 0%, rgba(167,139,250,.04) 50%, rgba(99,102,241,.02) 100%);
-  --gradient-brand-text: #FFFFFF;
+  --gradient-brand: #111111;
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(99,102,241,.05) 0%, rgba(167,139,250,.03) 50%, rgba(99,102,241,.02) 100%);
+  --gradient-brand-text: #111111;
 
-  /* Neutral palette — deep navy base */
-  --navy:        #FFFFFF;
-  --off:         #0A0A1F;
-  --muted:       #8B8FA3;
-  --border:      rgba(255,255,255,0.08);
-  --text:        #F0F0F5;
-  --surface:     #080818;
-  --surface-alt: #0D0D24;
-  --card:        rgba(255,255,255,0.03);
-  --card-hover:  rgba(255,255,255,0.06);
-  --input-bg:    rgba(255,255,255,0.04);
-  --placeholder: #4B5066;
-  --sidebar:     #080818;
-  --sidebar-text:#F0F0F5;
+  /* Neutral palette — clean white base */
+  --navy:        #111111;
+  --off:         #F7F7F8;
+  --muted:       #6B7280;
+  --border:      #E5E7EB;
+  --text:        #111111;
+  --surface:     #FFFFFF;
+  --surface-alt: #F7F7F8;
+  --card:        #FFFFFF;
+  --card-hover:  #FAFAFA;
+  --input-bg:    #FFFFFF;
+  --placeholder: #9CA3AF;
+  --sidebar:     #FFFFFF;
+  --sidebar-text:#111111;
 
   /* Spacing */
   --section-gap: 6rem;
   --section-gap-lg: 8rem;
 }
 
-/* ── Dark class (dashboard / admin) — same dark palette ────── */
+/* ── Dark palette (public website + dashboard dark mode) ───── */
 .dark {
   --brand:       #FFFFFF;
   --brand-hover: #E5E5E5;
@@ -452,7 +452,7 @@ article, .prose {
   width: 100%;
   padding: 0.75rem 1rem;
   min-height: 48px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 1rem;
   color: var(--text);
@@ -465,6 +465,10 @@ article, .prose {
 .input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+}
+
+.dark .input:focus {
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
 }
 
 .input::placeholder {
@@ -488,7 +492,7 @@ article, .prose {
   padding: 0.875rem 1.5rem;
   min-height: 48px;
   background: var(--brand);
-  color: #080818;
+  color: var(--surface);
   border: none;
   border-radius: 12px;
   font-size: 0.9375rem;
@@ -545,20 +549,30 @@ article, .prose {
 }
 
 .alert-error {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
+  color: var(--color-danger);
+}
+.dark .alert-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.15);
   color: #F87171;
 }
 
 .alert-success {
-  background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.15);
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
+  color: var(--color-success);
+}
+.dark .alert-success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.15);
   color: #4ADE80;
 }
 
