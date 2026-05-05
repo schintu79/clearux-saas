@@ -2,26 +2,26 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowRight,
   Eye,
   Shield,
   Heart,
   Sparkles,
-  User,
   ExternalLink,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
    AboutContent — Why ClearUX exists, founder, values
-   ══════════════════════════════════════���════════════════════════ */
+   ═══════════════════════════════════════════════════════════════ */
 
 export default function AboutContent() {
   return (
     <>
       {/* ═══════════════════════════════════════════════════════
           1. HERO
-          ═══════════════════════════════════════════════���═══════ */}
+          ═══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
         <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
         <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
@@ -59,7 +59,7 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ══════════════════════��════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
@@ -139,7 +139,7 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ═════════��═════════════════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           3. FOUNDER
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-off overflow-hidden">
@@ -165,10 +165,13 @@ export default function AboutContent() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-              {/* Avatar placeholder */}
-              <div className="w-20 h-20 rounded-2xl bg-[#B9FF66]/10 border border-[#B9FF66]/20 flex items-center justify-center flex-shrink-0">
-                <User size={32} className="text-[#B9FF66]" />
-              </div>
+              <Image
+                src="/team-stefano.jpg"
+                alt="Stefano Schintu"
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
+              />
 
               <div className="flex-1">
                 <h3 className="font-heading font-semibold text-xl text-text mb-1">Stefano Schintu</h3>
@@ -176,7 +179,7 @@ export default function AboutContent() {
 
                 <div className="space-y-4 text-muted text-[15px] leading-relaxed">
                   <p>
-                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across Europe and the UK ��� from early-stage MVPs to products serving millions.
+                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across Europe and the UK — from early-stage MVPs to products serving millions.
                   </p>
                   <p>
                     The frustration was always the same: brilliant teams shipping products without an unbiased, structured UX review — because the only option was a consultant charging five figures and taking six weeks. The teams that needed it most could never afford it.
@@ -201,9 +204,9 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════���════════════════════
+      {/* ═══════════════════════════════════════════════════════
           4. OUR VALUES — Simple, clear, reliable
-          ═══════���═══════════════════��═══════════════════════════ */}
+          ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
         <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
 
@@ -270,9 +273,9 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ═══���═══════════════════════════════════════════════════
+      {/* ═══════════════════════════════════════════════════════
           5. LIME CTA BAND
-          ═════════��══════════════════���══════════════════════════ */}
+          ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#B9FF66' }}>
         <div className="max-w-3xl mx-auto text-center relative">
           <motion.div
