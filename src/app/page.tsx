@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
-  Search, BarChart3, FileText, Share2, RefreshCw, Plus,
+  Search, BarChart3, FileText, Share2, RefreshCw,
+  Sparkles, Target, ScanEye, ShieldAlert,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -56,7 +57,6 @@ export default function Home() {
   const { user } = useAuth();
   const [heroUrl, setHeroUrl] = useState('');
   const placeholder = useTypewriterPlaceholder();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,78 +190,119 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — OUTSMART THE COMPETITION (Accordion)
-          Left headline + right expandable features (DeepSeek style)
+          SECTION 3 — CORE FEATURES
+          Visual card grid with icons and accent colors
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 overflow-hidden">
         <AuroraBackground variant="section" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
-            {/* Left */}
-            <ScrollReveal>
-              <p className="text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-4">Core features</p>
-              <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-white tracking-tight mb-6" style={{ lineHeight: '1.1' }}>
-                What makes ClearUX <span className="italic font-normal text-white/50">unstoppable</span>
-              </h2>
-              <Link
-                href="/register"
-                className="group inline-flex items-center gap-2.5 bg-white text-[#080818] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-white/90"
-              >
-                Try It Out
-                <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </ScrollReveal>
+          <ScrollReveal className="text-center mb-16">
+            <p className="text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-3">Core features</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-white tracking-tight mb-4" style={{ lineHeight: '1.1' }}>
+              What makes ClearUX <span className="italic font-normal text-white/50">unstoppable</span>
+            </h2>
+            <p className="text-white/40 text-base md:text-lg max-w-2xl mx-auto">
+              Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
+            </p>
+          </ScrollReveal>
 
-            {/* Right — accordion features */}
-            <div className="space-y-0 border-t border-white/[0.06]">
-              {[
-                {
-                  title: 'Dark pattern detection',
-                  desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that no scanner looks for.',
-                },
-                {
-                  title: 'Cognitive accessibility',
-                  desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load, reading complexity, and sensory overload.',
-                },
-                {
-                  title: 'AI agent readiness',
-                  desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs and AI agents understand your site.',
-                },
-                {
-                  title: 'Conversion psychology',
-                  desc: 'CTA placement, friction points, trust signal positioning, and user decision psychology. Every finding ties back to revenue impact.',
-                },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  className="border-b border-white/[0.06]"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                >
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between py-5 text-left group"
+          <StaggerReveal className="grid sm:grid-cols-2 gap-5 lg:gap-6" staggerDelay={0.1}>
+            {[
+              {
+                icon: ShieldAlert,
+                color: '#F87171',
+                bgColor: 'rgba(248,113,113,0.08)',
+                borderColor: 'rgba(248,113,113,0.12)',
+                title: 'Dark pattern detection',
+                desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that erode trust and no other scanner looks for.',
+                highlights: ['Deceptive UI patterns', 'Manipulative copy', 'Hidden costs & traps'],
+              },
+              {
+                icon: Brain,
+                color: '#A78BFA',
+                bgColor: 'rgba(167,139,250,0.08)',
+                borderColor: 'rgba(167,139,250,0.12)',
+                title: 'Cognitive accessibility',
+                desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load, reading complexity, and sensory overload.',
+                highlights: ['Cognitive load scoring', 'Reading complexity', 'Sensory overload check'],
+              },
+              {
+                icon: Sparkles,
+                color: '#60A5FA',
+                bgColor: 'rgba(96,165,250,0.08)',
+                borderColor: 'rgba(96,165,250,0.12)',
+                title: 'AI agent readiness',
+                desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs and AI agents understand and interact with your site.',
+                highlights: ['LLM discoverability', 'Agent navigation', 'Structured data quality'],
+              },
+              {
+                icon: Target,
+                color: '#FBBF24',
+                bgColor: 'rgba(251,191,36,0.08)',
+                borderColor: 'rgba(251,191,36,0.12)',
+                title: 'Conversion psychology',
+                desc: 'CTA placement, friction points, trust signal positioning, and user decision psychology. Every finding ties back to revenue impact.',
+                highlights: ['Friction point mapping', 'Trust signal audit', 'CTA effectiveness'],
+              },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <StaggerItem key={i}>
+                  <div
+                    className="rounded-2xl p-7 sm:p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20 group"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${item.borderColor}`,
+                    }}
                   >
-                    <span className="text-[15px] font-medium text-white group-hover:text-white/80 transition-colors">{item.title}</span>
-                    <Plus
-                      size={16}
-                      className={`text-white/30 flex-shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-45' : ''}`}
-                    />
-                  </button>
-                  <motion.div
-                    initial={false}
-                    animate={{ height: openFaq === i ? 'auto' : 0, opacity: openFaq === i ? 1 : 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="text-sm text-white/40 leading-relaxed pb-5">{item.desc}</p>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                    {/* Icon + Title row */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: item.bgColor }}
+                      >
+                        <Icon size={22} style={{ color: item.color }} />
+                      </div>
+                      <div className="pt-1">
+                        <h3 className="font-heading text-lg font-semibold text-white">{item.title}</h3>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-white/45 leading-relaxed mb-5">{item.desc}</p>
+
+                    {/* Highlight tags */}
+                    <div className="flex flex-wrap gap-2">
+                      {item.highlights.map((tag, j) => (
+                        <span
+                          key={j}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+                          style={{
+                            background: item.bgColor,
+                            color: item.color,
+                          }}
+                        >
+                          <ScanEye size={11} style={{ color: item.color, opacity: 0.7 }} />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </StaggerItem>
+              );
+            })}
+          </StaggerReveal>
+
+          {/* CTA below the grid */}
+          <ScrollReveal delay={0.3} className="text-center mt-12">
+            <Link
+              href="/register"
+              className="group inline-flex items-center gap-2.5 bg-white text-[#080818] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-white/90"
+            >
+              Try It Out
+              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </ScrollReveal>
         </div>
       </section>
 
