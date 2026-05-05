@@ -81,6 +81,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [faqOpen, setFaqOpen] = useState(false)
   const handleOAuth = async (provider: 'google' | 'apple') => {
     setError(null)
     setOauthLoading(provider)
@@ -178,8 +179,6 @@ export default function RegisterPage() {
       </div>
     )
   }
-
-  const [faqOpen, setFaqOpen] = useState(false)
 
   /* ── Shared form JSX ─────────────────────────────────────── */
   const formContent = (
