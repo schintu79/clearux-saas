@@ -531,19 +531,24 @@ export default function WhyClearUX() {
 
         {/* Bottom CTA */}
         <motion.div
-          className="text-center mt-24"
-          initial={{ opacity: 0, y: 20 }}
+          className="text-center mt-32 sm:mt-40 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7 }}
         >
-          <p className="text-[#111] text-lg font-semibold mb-6">All four. In every audit. For $99.</p>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+            All four. In every audit. For $99.
+          </h3>
+          <p className="text-[#111]/50 text-sm sm:text-base mb-8 max-w-md mx-auto">
+            No credit card required for your first audit.
+          </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-8 py-4 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Start free audit
-            <ArrowRight size={16} />
+            <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>
       </div>

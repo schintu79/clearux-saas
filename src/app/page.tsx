@@ -622,7 +622,7 @@ export default function Home() {
           </ScrollReveal>
 
           {/* Stats — staggered count-up */}
-          <StaggerReveal className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-24 max-w-4xl mx-auto" staggerDelay={0.15}>
+          <StaggerReveal className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 mt-24 max-w-7xl mx-auto" staggerDelay={0.15}>
             {([
               { end: 64, suffix: '+', label: 'UX checkpoints' },
               { end: 16, suffix: '', label: 'Categories' },
