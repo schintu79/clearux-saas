@@ -601,7 +601,7 @@ export default function Home() {
         <FloatingOrb className="top-[10%] right-[-5%]" size={400} color="rgba(185,255,102,0.04)" delay={0} />
         <FloatingOrb className="bottom-[20%] left-[-8%]" size={350} color="rgba(99,102,241,0.03)" delay={4} />
 
-        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-24">
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-32 sm:pt-40 pb-32 sm:pb-40">
           <ScrollReveal className="text-center max-w-3xl mx-auto">
             {/* Audience pills */}
             <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
@@ -639,6 +639,17 @@ export default function Home() {
               </StaggerItem>
             ))}
           </StaggerReveal>
+
+          {/* CTA to pillars detail */}
+          <ScrollReveal className="text-center mt-16">
+            <button
+              onClick={() => document.getElementById('pillars')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group inline-flex items-center gap-3 bg-[#B9FF66] text-[#111] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(185,255,102,0.3)]"
+            >
+              Explore the four pillars
+              <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -650,7 +661,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           PILLAR SCROLL REVEAL (animated cards)
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative pt-28 sm:pt-36 pb-24" style={{ background: 'var(--gradient-brand-subtle)' }}>
+      <section id="pillars" className="relative pt-28 sm:pt-36 pb-24" style={{ background: 'var(--gradient-brand-subtle)' }}>
         <ScrollReveal className="text-center mb-20 px-4">
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The four pillars</p>
           <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
