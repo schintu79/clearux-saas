@@ -450,7 +450,7 @@ export default function Home() {
         {/* Hero content with parallax */}
         <motion.div
           style={{ opacity: heroOpacity, y: heroY }}
-          className="max-w-4xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20"
+          className="max-w-7xl mx-auto text-center relative z-10 flex-1 flex flex-col justify-center pt-20"
         >
           {/* Label badge */}
           <motion.div
