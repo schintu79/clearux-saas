@@ -1,70 +1,123 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { motion, useScroll, useTransform, useInView } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
+import Link from 'next/link'
 import {
-  Search, Brain, BarChart3, CheckCircle, AlertTriangle,
+  Search, Brain, BarChart3, CheckCircle,
   ArrowRight, Zap, Shield, Eye, Heart, Accessibility, Globe2,
+  MousePointerClick, Layout, ScanLine, FileText,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
    "How ClearUX Works" — Scroll-driven animated walkthrough
-   3 steps that animate as user scrolls through the section
+   3 steps with animated visuals. Dark UI cards mimic the app.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Step 1: Animated URL typing ───────────────────────────── */
-function TypewriterUrl({ inView }: { inView: boolean }) {
-  const [text, setText] = useState('')
-  const fullText = 'acme.com'
+/* ── Shared dark card shell ────────────────────────────────── */
+const CARD_OUTER = 'w-full mx-auto'
+const CARD_INNER = 'rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9'
+const CARD_HEADER = 'flex items-center justify-between mb-6'
+const CARD_ICON_BOX = 'w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center'
+
+/* ── Step 1: Page Capture — URL submitted, site pages detected ─ */
+function PageCaptureVisual({ inView }: { inView: boolean }) {
+  const [step, setStep] = useState(0)
   const started = useRef(false)
 
   useEffect(() => {
     if (!inView || started.current) return
     started.current = true
-    let i = 0
-    const interval = setInterval(() => {
-      i++
-      setText(fullText.slice(0, i))
-      if (i >= fullText.length) clearInterval(interval)
-    }, 100)
-    return () => clearInterval(interval)
+    const timers = [
+      setTimeout(() => setStep(1), 300),   // Show URL bar filled
+      setTimeout(() => setStep(2), 900),   // Show pages being discovered
+      setTimeout(() => setStep(3), 1500),  // All pages found
+      setTimeout(() => setStep(4), 2100),  // Crawl starting indicator
+    ]
+    return () => timers.forEach(clearTimeout)
   }, [inView])
 
+  const pages = [
+    { path: '/', label: 'Homepage', icon: Layout },
+    { path: '/pricing', label: 'Pricing', icon: FileText },
+    { path: '/signup', label: 'Sign Up', icon: MousePointerClick },
+    { path: '/checkout', label: 'Checkout', icon: BarChart3 },
+    { path: '/about', label: 'About', icon: Eye },
+  ]
+
   return (
-    <div className="w-full mx-auto">
-      {/* Browser chrome mockup */}
-      <div className="rounded-t-2xl bg-[#1a1a1a] border border-white/[0.08] border-b-0 px-5 py-3.5 flex items-center gap-2">
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-white/10" />
-          <div className="w-3 h-3 rounded-full bg-white/10" />
-          <div className="w-3 h-3 rounded-full bg-white/10" />
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
+        {/* Header */}
+        <div className={CARD_HEADER}>
+          <div className="flex items-center gap-3">
+            <div className={CARD_ICON_BOX}>
+              <ScanLine size={20} className="text-[#B9FF66]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Site Crawl</p>
+              <p className="text-xs text-white/40">Discovering pages</p>
+            </div>
+          </div>
+          {step >= 3 && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-xs font-bold text-[#B9FF66] bg-[#B9FF66]/10 px-3 py-1.5 rounded-full"
+            >
+              {pages.length} pages found
+            </motion.span>
+          )}
         </div>
-        <div className="flex-1 mx-4 h-8 rounded-lg bg-white/[0.06] flex items-center px-4">
-          <span className="text-xs text-white/30 font-mono">clearux.ai/audit</span>
-        </div>
-      </div>
-      {/* Input area */}
-      <div className="rounded-b-2xl bg-[#111111] border border-white/[0.08] border-t-0 p-7 sm:p-9">
-        <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-5">Enter your website URL</p>
-        <div className="flex gap-3">
-          <div className="flex-1 px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center">
-            <span className="text-white text-base font-mono">
-              {text}
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
-                className="inline-block w-[2px] h-5 bg-[#B9FF66] ml-0.5 align-middle"
-              />
-            </span>
+
+        {/* URL bar — already filled */}
+        <motion.div
+          className="flex gap-2 mb-6"
+          initial={{ opacity: 0 }}
+          animate={step >= 1 ? { opacity: 1 } : {}}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex-1 px-4 py-3 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center">
+            <span className="text-sm text-white/60 font-mono">acme.com</span>
           </div>
           <motion.div
-            className="px-6 py-3.5 rounded-xl bg-[#B9FF66] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
-            animate={text.length >= fullText.length ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 0.3, delay: 0.3 }}
+            className="px-5 py-3 rounded-xl bg-[#B9FF66] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+            animate={step >= 1 ? { scale: [1, 1.04, 1] } : {}}
+            transition={{ duration: 0.3, delay: 0.1 }}
           >
-            <Search size={16} />
+            <Search size={15} />
             Audit
           </motion.div>
+        </motion.div>
+
+        {/* Pages being discovered */}
+        <div className="space-y-2">
+          {pages.map((page, i) => {
+            const Icon = page.icon
+            const isVisible = step >= 2 && i <= (step === 2 ? 2 : pages.length - 1)
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -16 }}
+                animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.35, delay: i * 0.08 }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+              >
+                <Icon size={15} className="text-white/30 flex-shrink-0" />
+                <span className="text-sm text-white/50 font-mono">{page.path}</span>
+                <span className="text-xs text-white/30 ml-auto">{page.label}</span>
+                {step >= 4 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15, delay: i * 0.06 }}
+                  >
+                    <CheckCircle size={14} className="text-[#B9FF66]" />
+                  </motion.div>
+                )}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -100,21 +153,21 @@ function ScanningGrid({ inView }: { inView: boolean }) {
   }, [inView])
 
   return (
-    <div className="w-full mx-auto">
-      <div className="rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9">
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
         {/* Header with progress */}
-        <div className="flex items-center justify-between mb-6">
+        <div className={CARD_HEADER}>
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-10 h-10 rounded-xl bg-[#B9FF66]/10 flex items-center justify-center"
+              className={CARD_ICON_BOX}
               animate={inView ? { rotate: 360 } : {}}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
               <Brain size={20} className="text-[#B9FF66]" />
             </motion.div>
             <div>
-              <p className="text-white text-sm font-semibold">Scanning acme.com</p>
-              <p className="text-white/40 text-xs">64 checkpoints across 4 pillars</p>
+              <p className="text-sm font-semibold text-white">Analysing acme.com</p>
+              <p className="text-xs text-white/40">64 checkpoints across 4 pillars</p>
             </div>
           </div>
           <span className="text-[#B9FF66] font-heading text-3xl font-bold">{progress}%</span>
@@ -194,16 +247,21 @@ function ResultsReveal({ inView }: { inView: boolean }) {
   ]
 
   return (
-    <div className="w-full mx-auto">
-      <div className="rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9">
-        {/* Score header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-1">Overall Score</p>
-            <p className="text-white/60 text-sm">acme.com</p>
+    <div className={CARD_OUTER}>
+      <div className={CARD_INNER}>
+        {/* Header */}
+        <div className={CARD_HEADER}>
+          <div className="flex items-center gap-3">
+            <div className={CARD_ICON_BOX}>
+              <BarChart3 size={20} className="text-[#B9FF66]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Audit Complete</p>
+              <p className="text-xs text-white/40">acme.com</p>
+            </div>
           </div>
           <motion.div
-            className="relative w-24 h-24"
+            className="relative w-20 h-20"
             initial={{ scale: 0, rotate: -90 }}
             animate={inView ? { scale: 1, rotate: 0 } : {}}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
@@ -219,7 +277,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-3xl font-bold text-white">
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-bold text-white">
               {score}
             </span>
           </motion.div>
@@ -255,8 +313,9 @@ function ResultsReveal({ inView }: { inView: boolean }) {
           ))}
         </div>
 
-        {/* Findings */}
+        {/* Top findings */}
         <div className="space-y-2.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/30 mb-3">Top findings</p>
           {findings.map((f, i) => (
             <motion.div
               key={i}
@@ -284,23 +343,22 @@ function ResultsReveal({ inView }: { inView: boolean }) {
 const STEPS = [
   {
     number: '01',
-    title: 'Enter your URL',
-    description: 'Paste any website URL. No setup, no code snippets, no browser extensions.',
+    title: 'Paste your URL',
+    description: 'Enter any website. ClearUX crawls every key page automatically — no code, no setup.',
   },
   {
     number: '02',
-    title: 'AI scans 64 checkpoints',
-    description: 'Our AI crawls your site and evaluates every page against 4 pillars of UX quality.',
+    title: 'AI runs 64 checkpoints',
+    description: 'Each page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI readiness, and conversion psychology.',
   },
   {
     number: '03',
-    title: 'Get actionable findings',
-    description: 'Findings ranked by severity and business impact. Track fixes, re-audit to prove improvement.',
+    title: 'Get your report',
+    description: 'A ranked list of findings by severity and business impact — with clear, actionable fixes for each one.',
   },
 ]
 
 export default function HowItWorks() {
-  const sectionRef = useRef<HTMLDivElement>(null)
   const step1Ref = useRef<HTMLDivElement>(null)
   const step2Ref = useRef<HTMLDivElement>(null)
   const step3Ref = useRef<HTMLDivElement>(null)
@@ -310,15 +368,14 @@ export default function HowItWorks() {
   const step3InView = useInView(step3Ref, { once: true, margin: '-20%' })
 
   const stepVisuals = [
-    <TypewriterUrl key="s1" inView={step1InView} />,
+    <PageCaptureVisual key="s1" inView={step1InView} />,
     <ScanningGrid key="s2" inView={step2InView} />,
     <ResultsReveal key="s3" inView={step3InView} />,
   ]
   const stepRefs = [step1Ref, step2Ref, step3Ref]
-  const stepInView = [step1InView, step2InView, step3InView]
 
   return (
-    <section ref={sectionRef} className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+    <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
       {/* Decorative orbs */}
       <motion.div
         className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
@@ -398,6 +455,29 @@ export default function HowItWorks() {
             )
           })}
         </div>
+
+        {/* Bottom CTA */}
+        <motion.div
+          className="text-center mt-32 sm:mt-40 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+        >
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-text mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+            Ready to see what you&apos;re missing?
+          </h3>
+          <p className="text-muted text-sm sm:text-base mb-8 max-w-md mx-auto">
+            Your first audit is free. Results in under 10 minutes.
+          </p>
+          <Link
+            href="/register"
+            className="group inline-flex items-center gap-3 bg-[#111] dark:bg-white text-[#B9FF66] dark:text-[#111] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+          >
+            Run my free audit
+            <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </motion.div>
       </div>
     </section>
   )
