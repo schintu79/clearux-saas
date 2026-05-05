@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, ChevronDown, HelpCircle, BookOpen, Brain, CreditCard, ShieldCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Search, ChevronDown, HelpCircle, BookOpen, Brain, CreditCard, ShieldCheck, Sparkles } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -23,7 +24,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I audit any website?',
-        a: 'Yes. ClearUX works with any publicly accessible URL \u2014 dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn\u2019t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.',
+        a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn’t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.',
       },
       {
         q: 'What languages are supported?',
@@ -31,15 +32,15 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How does ClearUX compare to hiring a UX consultant?',
-        a: 'A traditional UX audit costs $5,000\u2013$15,000 and takes 2\u20134 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It\u2019s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
+        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It’s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
       },
       {
         q: 'Can I track which findings have been fixed?',
-        a: 'Yes. Every finding has a status you can update: Open, In Progress, Fixed, or Backlog. Your dashboard tracks how many issues you\u2019ve resolved over time, giving you a clear picture of progress.',
+        a: 'Yes. Every finding has a status you can update: Open, In Progress, Fixed, or Backlog. Your dashboard tracks how many issues you’ve resolved over time, giving you a clear picture of progress.',
       },
       {
         q: 'Can I share audit results with my team?',
-        a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown \u2014 no account needed. You can revoke the link at any time.',
+        a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown — no account needed. You can revoke the link at any time.',
       },
       {
         q: 'Can I re-audit the same website to measure improvement?',
@@ -53,7 +54,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How does the AI analysis work?',
-        a: 'Our engine crawls your site (5\u201325 pages depending on plan), then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each finding includes severity scoring, evidence, and a specific recommendation.',
+        a: 'Our engine crawls your site (5–25 pages depending on plan), then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each finding includes severity scoring, evidence, and a specific recommendation.',
       },
       {
         q: 'What format is the report?',
@@ -61,11 +62,11 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What should I know before running an audit?',
-        a: 'ClearUX analyses all publicly visible pages on your site. For the most comprehensive results, ensure your site is live and publicly accessible. The audit is designed to catch the issues that matter most to real users \u2014 the same issues a specialist consultant would prioritise.',
+        a: 'ClearUX analyses all publicly visible pages on your site. For the most comprehensive results, ensure your site is live and publicly accessible. The audit is designed to catch the issues that matter most to real users — the same issues a specialist consultant would prioritise.',
       },
       {
         q: 'What about white-label reports?',
-        a: 'Agency and Scale package customers can add their own company logo and name to reports. The ClearUX branding is replaced with yours in both PDF and Word exports \u2014 perfect for client-facing deliverables.',
+        a: 'Agency and Scale package customers can add their own company logo and name to reports. The ClearUX branding is replaced with yours in both PDF and Word exports — perfect for client-facing deliverables.',
       },
       {
         q: 'What is the free preview audit?',
@@ -79,19 +80,19 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'What AI powers the audits?',
-        a: 'ClearUX uses Anthropic\u2019s Claude as its core analysis engine \u2014 but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 64 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn\u2019t just ask the AI generic questions \u2014 it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
+        a: 'ClearUX uses Anthropic’s Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 64 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn’t just ask the AI generic questions — it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
       },
       {
         q: 'What are the known limitations?',
-        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience \u2014 that\u2019s why we built the dismiss-with-reason feature.',
+        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience — that’s why we built the dismiss-with-reason feature.',
       },
       {
         q: 'How does the AI improve over time?',
-        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked \u2014 the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
+        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked — the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
       },
       {
         q: 'Does ClearUX replace a human UX auditor?',
-        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes \u2014 the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
+        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
       },
     ],
   },
@@ -105,11 +106,11 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Is my data secure?',
-        a: 'We only analyse publicly visible content. Your website data is never stored or shared \u2014 only your report. Payments are processed securely via Stripe. We are GDPR compliant and use SSL encryption throughout.',
+        a: 'We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We are GDPR compliant and use SSL encryption throughout.',
       },
       {
         q: 'Can I get a refund?',
-        a: 'If you\u2019re unsatisfied with an audit, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.',
+        a: 'If you’re unsatisfied with an audit, contact support@clearux.ai and we’ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.',
       },
       {
         q: 'Can I buy more credits later?',
@@ -127,19 +128,19 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'Is ClearUX 100% accurate?',
-        a: 'No, and we believe honesty about this is important. Our AI catches issues that traditional tools miss \u2014 dark patterns, emotional design gaps, cognitive accessibility barriers, AI readiness gaps \u2014 but no automated system is perfect. We recommend human review for accessibility-critical and security-sensitive findings. That\u2019s why every finding includes a status tracker: your team can verify, dismiss with a reason, or mark as fixed. The AI learns from your feedback on re-audits.',
+        a: 'No, and we believe honesty about this is important. Our AI catches issues that traditional tools miss — dark patterns, emotional design gaps, cognitive accessibility barriers, AI readiness gaps — but no automated system is perfect. We recommend human review for accessibility-critical and security-sensitive findings. That’s why every finding includes a status tracker: your team can verify, dismiss with a reason, or mark as fixed. The AI learns from your feedback on re-audits.',
       },
       {
         q: 'What if the audit flags something incorrectly?',
-        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we\u2019ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
+        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we’ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
       },
       {
         q: 'Can I share the report with clients or my team?',
-        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary \u2014 no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
+        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
       },
       {
         q: 'How does ClearUX handle false positives?',
-        a: 'Our analysis engine uses cross-page awareness \u2014 it checks if content exists on other pages before flagging it as "missing" (e.g., it won\u2019t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
+        a: 'Our analysis engine uses cross-page awareness — it checks if content exists on other pages before flagging it as "missing" (e.g., it won’t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
       },
     ],
   },
@@ -227,49 +228,84 @@ export default function FaqPage() {
       <Navbar />
 
       <main id="main-content" className="flex-1">
-        {/* Header */}
-        <section className="pt-20 pb-4 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-heading font-semibold text-4xl sm:text-5xl text-text mb-4" style={{ lineHeight: '1.1' }}>
-              Frequently Asked Questions
-            </h1>
-            <p className="text-muted text-base md:text-lg max-w-lg mx-auto">
-              Everything you need to know about ClearUX audits, pricing, and reports.
-            </p>
-          </div>
-        </section>
+        {/* Dark Hero */}
+        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
+          {/* Aurora glows */}
+          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
+          <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
 
-        {/* Search Box */}
-        <section className="px-4 sm:px-6 lg:px-8 pb-4">
-          <div className="max-w-md mx-auto">
-            <div className="relative">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search FAQs..."
-                className="w-full pl-10 pr-16 py-2.5 rounded-full border border-border/40 dark:border-white/[0.06] bg-card text-text text-sm placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40 transition-all"
-              />
+          <div className="max-w-4xl mx-auto text-center relative">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-white/40 border border-white/[0.08] rounded-full px-4 py-1.5 mb-6">
+                <Sparkles size={12} className="text-[#B9FF66]" />
+                Support Centre
+              </span>
+            </motion.div>
+
+            <motion.h1
+              className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-white mb-6"
+              style={{ lineHeight: '1.1' }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              Frequently Asked Questions
+            </motion.h1>
+
+            <motion.p
+              className="text-white/50 text-lg max-w-lg mx-auto mb-10"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+            >
+              Everything you need to know about ClearUX audits, pricing, and reports.
+            </motion.p>
+
+            {/* Search Box in Hero */}
+            <motion.div
+              className="max-w-md mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.35 }}
+            >
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search FAQs..."
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#B9FF66]/30 focus:border-[#B9FF66]/40 transition-all backdrop-blur-sm"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-white/40 hover:text-white transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
-                >
-                  Clear
-                </button>
+                <p className="text-xs text-white/40 mt-2 text-center">
+                  {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
+                </p>
               )}
-            </div>
-            {searchQuery && (
-              <p className="text-xs text-muted mt-2 text-center">
-                {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
-              </p>
-            )}
+            </motion.div>
           </div>
         </section>
 
         {/* Category Tabs */}
-        <section className="px-4 sm:px-6 lg:px-8 pb-8">
+        <motion.section
+          className="px-4 sm:px-6 lg:px-8 py-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
           <div className="max-w-3xl mx-auto">
             <div className="flex flex-wrap items-center gap-2 justify-center">
               {tabs.map((tab) => {
@@ -292,7 +328,7 @@ export default function FaqPage() {
               })}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* FAQ Sections */}
         {visibleSections.length === 0 ? (
@@ -310,7 +346,14 @@ export default function FaqPage() {
           </section>
         ) : (
           visibleSections.map((section, sIdx) => (
-            <section key={section.title} className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}>
+            <motion.section
+              key={section.title}
+              className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5, delay: sIdx * 0.05 }}
+            >
               <div className="max-w-3xl mx-auto">
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
@@ -342,48 +385,55 @@ export default function FaqPage() {
                   })}
                 </div>
               </div>
-            </section>
+            </motion.section>
           ))
         )}
 
-        {/* CTA */}
-        <section className="px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="max-w-3xl mx-auto">
-            <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] bg-surface-alt p-9 text-center shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-              <h2 className="font-heading font-semibold text-xl text-text mb-2">Still have questions?</h2>
-              <p className="text-muted text-sm mb-6">
-                Reach out and we will get back to you within a business day.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <a
-                  href="mailto:support@clearux.ai"
-                  className="inline-flex items-center justify-center gap-2 bg-brand text-surface dark:text-[#111111] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:brightness-110 transition-all"
-                >
-                  Email Support
-                </a>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-xl px-6 py-3 min-h-[44px] border border-border/40 dark:border-white/[0.1] text-text hover:bg-card transition-all"
-                >
-                  Contact Us
-                </Link>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-border/30">
-                <Link href="/pricing" className="text-sm font-medium text-muted hover:text-text transition-colors">
-                  See pricing
-                </Link>
-                <Link href="/about" className="text-sm font-medium text-muted hover:text-text transition-colors">
-                  How it works
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand"
-                >
-                  Start free audit <ArrowRight size={13} className="text-brand" />
-                </Link>
-              </div>
+        {/* Lime CTA Band */}
+        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#B9FF66' }}>
+          <motion.div
+            className="text-center max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-[#111] mb-3 tracking-tight">
+              Still have questions?
+            </h3>
+            <p className="text-[#111]/50 text-sm sm:text-base mb-8">
+              Reach out and we will get back to you within a business day.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <a
+                href="mailto:support@clearux.ai"
+                className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+              >
+                Email Support
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              </a>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[#111]/20 text-[#111] rounded-xl font-semibold hover:bg-white/30 transition-all"
+              >
+                Contact Us
+              </Link>
             </div>
-          </div>
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-10">
+              <Link href="/pricing" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
+                See pricing
+              </Link>
+              <Link href="/about" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
+                How it works
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#111]"
+              >
+                Start free audit <ArrowRight size={13} />
+              </Link>
+            </div>
+          </motion.div>
         </section>
       </main>
       <Footer />
