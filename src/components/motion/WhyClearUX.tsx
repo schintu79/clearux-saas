@@ -502,8 +502,8 @@ export default function WhyClearUX() {
                   >
                     {diff.number}
                   </motion.span>
-                  <p className="font-heading text-lg sm:text-xl font-semibold text-[#111] mb-1 tracking-tight">{diff.subtitle}</p>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-[#111]/50 mb-4 tracking-tight">
+                  <p className="font-heading text-sm sm:text-base font-semibold text-[#111] mb-1 tracking-tight">{diff.subtitle}</p>
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-[#111] mb-4 tracking-tight">
                     {diff.title}
                   </h3>
                   <p className="text-[#111]/70 text-base leading-relaxed mb-4 max-w-md">

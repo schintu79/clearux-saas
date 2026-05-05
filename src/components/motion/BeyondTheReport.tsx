@@ -12,11 +12,12 @@ import {
    "Beyond the Report" — 3 features, tight copy, animated visuals
    ═══════════════════════════════════════════════════════════════ */
 
-/* Shared card shell — consistent width, padding, border, shadow */
-const CARD_OUTER = 'w-full max-w-[400px] mx-auto'
-const CARD_INNER = 'rounded-2xl bg-card border border-border/30 dark:border-white/[0.06] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-none'
-const CARD_HEADER = 'flex items-center justify-between mb-5'
-const CARD_ICON_BOX = 'w-7 h-7 rounded-lg bg-text/5 flex items-center justify-center'
+/* Shared card shell — consistent width, padding, border, shadow
+   Matches the pillar section's AnimatedMockCard sizing */
+const CARD_OUTER = 'w-full mx-auto'
+const CARD_INNER = 'rounded-2xl bg-card/80 dark:bg-card border border-border/30 dark:border-white/[0.05] p-7 sm:p-9 shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none'
+const CARD_HEADER = 'flex items-center justify-between mb-6'
+const CARD_ICON_BOX = 'w-10 h-10 rounded-xl bg-text/5 flex items-center justify-center'
 
 /* ── Visual 1: Live finding tracker ────────────────────────── */
 function TrackerVisual({ inView }: { inView: boolean }) {
@@ -65,14 +66,17 @@ function TrackerVisual({ inView }: { inView: boolean }) {
       <div className={CARD_INNER}>
         {/* Header */}
         <div className={CARD_HEADER}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className={CARD_ICON_BOX}>
-              <ListChecks size={14} className="text-text" />
+              <ListChecks size={20} className="text-text" />
             </div>
-            <span className="text-xs font-semibold text-text">acme.com</span>
+            <div>
+              <p className="text-sm font-semibold text-text">acme.com</p>
+              <p className="text-xs text-muted">Resolution tracker</p>
+            </div>
           </div>
           <motion.span
-            className="text-lg font-heading font-bold text-emerald-500"
+            className="font-heading text-3xl font-bold text-emerald-500"
             key={pct}
             initial={{ opacity: 0.5 }}
             animate={{ opacity: 1 }}
@@ -83,7 +87,7 @@ function TrackerVisual({ inView }: { inView: boolean }) {
         </div>
 
         {/* Progress bar */}
-        <div className="h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] mb-5 overflow-hidden">
+        <div className="h-2 rounded-full bg-border/30 dark:bg-white/[0.06] mb-6 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-emerald-500"
             animate={{ width: `${pct}%` }}
@@ -92,7 +96,7 @@ function TrackerVisual({ inView }: { inView: boolean }) {
         </div>
 
         {/* Finding rows */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {findings.map((f, i) => {
             const currentStatus = step > i ? f.final : f.initial
             const config = statusConfig[currentStatus]
@@ -100,17 +104,17 @@ function TrackerVisual({ inView }: { inView: boolean }) {
             return (
               <motion.div
                 key={i}
-                className="flex items-center gap-2.5 py-2 px-2.5 rounded-lg"
+                className="flex items-center gap-3 py-2.5 px-3 rounded-lg"
                 initial={{ opacity: 0, x: -10 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
               >
-                <span className={`${sevColor[f.severity]} text-white text-[8px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 w-[52px] text-center`}>
+                <span className={`${sevColor[f.severity]} text-white text-[9px] font-bold px-2 py-1 rounded flex-shrink-0 w-[56px] text-center`}>
                   {f.severity.toUpperCase()}
                 </span>
-                <span className="text-[11px] text-text flex-1 truncate">{f.label}</span>
+                <span className="text-sm text-text flex-1 truncate">{f.label}</span>
                 <motion.span
-                  className={`text-[9px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${config.bg} ${config.text}`}
+                  className={`text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${config.bg} ${config.text}`}
                   key={currentStatus}
                   initial={isTransitioning ? { scale: 0.8, opacity: 0 } : false}
                   animate={{ scale: 1, opacity: 1 }}
@@ -154,14 +158,17 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
       <div className={CARD_INNER}>
         {/* Header */}
         <div className={CARD_HEADER}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className={CARD_ICON_BOX}>
-              <TrendingUp size={14} className="text-text" />
+              <TrendingUp size={20} className="text-text" />
             </div>
-            <span className="text-xs font-semibold text-text">Score Trend</span>
+            <div>
+              <p className="text-sm font-semibold text-text">Score Trend</p>
+              <p className="text-xs text-muted">Across re-audits</p>
+            </div>
           </div>
           <motion.span
-            className="text-xs font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full"
+            className="text-sm font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full"
             initial={{ opacity: 0 }}
             animate={activeAudit >= 2 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -170,29 +177,33 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
           </motion.span>
         </div>
 
-        {/* Bar chart */}
-        <div className="flex items-end gap-4 h-36 mb-5">
-          {audits.map((a, i) => {
-            const isVisible = activeAudit >= i
-            const barHeight = `${(a.score / 100) * 100}%`
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center h-full justify-end">
-                <motion.div
-                  className="relative w-full"
-                  initial={{ opacity: 0 }}
-                  animate={isVisible ? { opacity: 1 } : {}}
-                  transition={{ duration: 0.3 }}
-                >
-                  {/* Score label */}
+        {/* Bar chart — score labels above, bars below, no overlap */}
+        <div className="mb-6">
+          {/* Score labels row */}
+          <div className="flex gap-4 mb-2">
+            {audits.map((a, i) => {
+              const isVisible = activeAudit >= i
+              return (
+                <div key={i} className="flex-1 text-center">
                   <motion.span
-                    className="block text-center text-sm font-heading font-bold text-text mb-1.5"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                    className="text-base font-heading font-bold text-text"
+                    initial={{ opacity: 0 }}
+                    animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.3, duration: 0.3 }}
                   >
                     {a.score}
                   </motion.span>
-                  {/* Bar */}
+                </div>
+              )
+            })}
+          </div>
+          {/* Bars row */}
+          <div className="flex items-end gap-4 h-40">
+            {audits.map((a, i) => {
+              const isVisible = activeAudit >= i
+              const barHeight = `${(a.score / 100) * 100}%`
+              return (
+                <div key={i} className="flex-1 h-full flex flex-col justify-end">
                   <motion.div
                     className={`w-full rounded-t-lg ${i === 2 ? 'bg-emerald-500' : i === 1 ? 'bg-text/60' : 'bg-text/25'}`}
                     initial={{ height: 0 }}
@@ -200,20 +211,25 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
                     transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.1 }}
                     style={{ minHeight: isVisible ? 8 : 0 }}
                   />
-                </motion.div>
-                <div className="mt-2 text-center">
-                  <p className="text-[10px] font-semibold text-text">{a.date}</p>
-                  <p className="text-[9px] text-muted">{a.label}</p>
                 </div>
+              )
+            })}
+          </div>
+          {/* Labels row */}
+          <div className="flex gap-4 mt-2">
+            {audits.map((a, i) => (
+              <div key={i} className="flex-1 text-center">
+                <p className="text-xs font-semibold text-text">{a.date}</p>
+                <p className="text-[10px] text-muted">{a.label}</p>
               </div>
-            )
-          })}
+            ))}
+          </div>
         </div>
 
         {/* Re-audit modes — Dig Deeper */}
-        <div className="pt-4 border-t border-border/30 dark:border-white/[0.06]">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">Choose how to dig deeper</p>
-          <div className="space-y-2">
+        <div className="pt-5 border-t border-border/30 dark:border-white/[0.06]">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Choose how to dig deeper</p>
+          <div className="space-y-2.5">
             {[
               { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: '#22C55E', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
               { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: '#6366F1', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
@@ -223,17 +239,17 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
               return (
                 <motion.div
                   key={i}
-                  className={`flex items-start gap-3 px-3 py-2.5 rounded-xl border border-border/30 dark:border-white/[0.06] ${m.bg}`}
+                  className={`flex items-start gap-3 px-4 py-3 rounded-xl border border-border/30 dark:border-white/[0.06] ${m.bg}`}
                   initial={{ opacity: 0, x: -12 }}
                   animate={activeAudit >= 2 ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 0.5 + i * 0.12, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${m.color}15` }}>
-                    <Icon size={12} style={{ color: m.color }} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${m.color}15` }}>
+                    <Icon size={16} style={{ color: m.color }} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-text leading-tight">{m.label}</p>
-                    <p className="text-[10px] text-muted leading-snug mt-0.5">{m.desc}</p>
+                    <p className="text-sm font-semibold text-text leading-tight">{m.label}</p>
+                    <p className="text-xs text-muted leading-snug mt-0.5">{m.desc}</p>
                   </div>
                 </motion.div>
               )
@@ -266,26 +282,29 @@ function ShareVisual({ inView }: { inView: boolean }) {
       <div className={CARD_INNER}>
         {/* Header */}
         <div className={CARD_HEADER}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className={CARD_ICON_BOX}>
-              <Share2 size={14} className="text-text" />
+              <Share2 size={20} className="text-text" />
             </div>
-            <span className="text-xs font-semibold text-text">Share Report</span>
+            <div>
+              <p className="text-sm font-semibold text-text">Share Report</p>
+              <p className="text-xs text-muted">One link, no account needed</p>
+            </div>
           </div>
         </div>
 
         {/* Link being generated */}
         <motion.div
-          className="rounded-xl border border-border/30 dark:border-white/[0.06] p-3.5 mb-3 bg-off/50 dark:bg-white/[0.03]"
+          className="rounded-xl border border-border/30 dark:border-white/[0.06] p-4 mb-4 bg-off/50 dark:bg-white/[0.03]"
           initial={{ opacity: 0 }}
           animate={step >= 1 ? { opacity: 1 } : {}}
           transition={{ duration: 0.4 }}
         >
-          <p className="text-[9px] text-muted uppercase tracking-wider font-semibold mb-1.5">Shareable link</p>
+          <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-2">Shareable link</p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 px-2.5 py-1.5 rounded-md bg-surface border border-border/30 dark:border-white/[0.06]">
+            <div className="flex-1 px-3 py-2 rounded-lg bg-surface border border-border/30 dark:border-white/[0.06]">
               <motion.span
-                className="text-[10px] font-mono text-text"
+                className="text-xs font-mono text-text"
                 initial={{ opacity: 0 }}
                 animate={step >= 1 ? { opacity: 1 } : {}}
               >
@@ -293,7 +312,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
               </motion.span>
             </div>
             <motion.div
-              className="px-2.5 py-1.5 rounded-md bg-text text-surface dark:text-[#111] text-[9px] font-semibold flex-shrink-0"
+              className="px-4 py-2 rounded-lg bg-text text-surface dark:text-[#111] text-xs font-semibold flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -304,16 +323,16 @@ function ShareVisual({ inView }: { inView: boolean }) {
 
         {/* What stakeholders see */}
         <motion.div
-          className="rounded-xl border border-border/30 dark:border-white/[0.06] p-3.5 bg-off/30 dark:bg-white/[0.02]"
+          className="rounded-xl border border-border/30 dark:border-white/[0.06] p-4 bg-off/30 dark:bg-white/[0.02]"
           initial={{ opacity: 0, y: 10 }}
           animate={step >= 2 ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-[9px] text-muted uppercase tracking-wider font-semibold mb-2">Stakeholder view</p>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-text">acme.com</span>
+          <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-3">Stakeholder view</p>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-semibold text-text">acme.com</span>
             <motion.span
-              className="font-heading text-xl font-bold text-text"
+              className="font-heading text-3xl font-bold text-text"
               initial={{ opacity: 0 }}
               animate={step >= 2 ? { opacity: 1 } : {}}
               transition={{ duration: 0.4, delay: 0.2 }}
@@ -322,7 +341,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
             </motion.span>
           </div>
           {/* Mini pillar bars */}
-          <div className="space-y-1.5">
+          <div className="space-y-3">
             {[
               { label: 'Foundation', value: 78 },
               { label: 'Human Exp.', value: 54 },
@@ -331,13 +350,13 @@ function ShareVisual({ inView }: { inView: boolean }) {
             ].map((p, i) => (
               <motion.div
                 key={i}
-                className="flex items-center gap-2"
+                className="flex items-center gap-3"
                 initial={{ opacity: 0 }}
                 animate={step >= 2 ? { opacity: 1 } : {}}
                 transition={{ delay: 0.3 + i * 0.08 }}
               >
-                <span className="text-[9px] text-muted w-16 flex-shrink-0">{p.label}</span>
-                <div className="flex-1 h-1 rounded-full bg-border/30 dark:bg-white/[0.06] overflow-hidden">
+                <span className="text-xs text-muted w-20 flex-shrink-0">{p.label}</span>
+                <div className="flex-1 h-1.5 rounded-full bg-border/30 dark:bg-white/[0.06] overflow-hidden">
                   <motion.div
                     className="h-full rounded-full bg-text/70"
                     initial={{ width: 0 }}
@@ -345,7 +364,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
                     transition={{ duration: 0.6, delay: 0.4 + i * 0.08 }}
                   />
                 </div>
-                <span className="text-[9px] font-bold text-text w-5 text-right">{p.value}</span>
+                <span className="text-xs font-bold text-text w-6 text-right">{p.value}</span>
               </motion.div>
             ))}
           </div>
@@ -353,7 +372,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
 
         {/* Export options */}
         <motion.div
-          className="flex gap-2 mt-3"
+          className="flex gap-3 mt-4"
           initial={{ opacity: 0 }}
           animate={step >= 3 ? { opacity: 1 } : {}}
           transition={{ duration: 0.4 }}
@@ -367,13 +386,13 @@ function ShareVisual({ inView }: { inView: boolean }) {
             return (
               <motion.div
                 key={i}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/30 dark:border-white/[0.06] flex-1 justify-center"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/30 dark:border-white/[0.06] flex-1 justify-center"
                 initial={{ opacity: 0, y: 5 }}
                 animate={step >= 3 ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: i * 0.1, duration: 0.3 }}
               >
-                <Icon size={10} className="text-muted" />
-                <span className="text-[9px] font-semibold text-text">{opt.label}</span>
+                <Icon size={14} className="text-muted" />
+                <span className="text-xs font-semibold text-text">{opt.label}</span>
               </motion.div>
             )
           })}
