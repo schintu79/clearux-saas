@@ -479,7 +479,7 @@ export default function HowItWorks() {
             href="/register"
             className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
-            Run my free audit
+            Start Free Audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>

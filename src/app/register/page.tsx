@@ -184,9 +184,9 @@ export default function RegisterPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
+        <h1 className="text-2xl font-heading font-semibold text-text mb-1.5">
           Create your account
-        </h2>
+        </h1>
         <p className="text-sm text-muted leading-relaxed">
           {pendingUrl
             ? 'Run your first UX audit in under 10 minutes. No credit card required.'

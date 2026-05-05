@@ -167,7 +167,7 @@ const Navbar: React.FC = () => {
                   href="/register"
                   className="text-[15px] font-semibold text-surface dark:text-[#111111] bg-brand hover:bg-brand-hover rounded-xl px-5 py-2.5 min-h-[44px] transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
-                  Get Started
+                  Start Free Audit
                   <ArrowUpRight size={14} />
                 </Link>
               </>
@@ -227,7 +227,7 @@ const Navbar: React.FC = () => {
                       Login
                     </Link>
                     <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-surface dark:text-[#111111] bg-brand rounded-xl px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">
-                      Get Started
+                      Start Free Audit
                     </Link>
                   </>
                 )}

@@ -301,7 +301,7 @@ export default function AboutContent() {
                 href="/register"
                 className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-[#111] text-[#B9FF66] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
               >
-                Run my free audit
+                Start Free Audit
                 <ArrowRight size={18} />
               </Link>
               <Link

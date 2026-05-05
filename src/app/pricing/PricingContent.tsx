@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Search, BarChart3, Building2, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { CheckCircle, Search, BarChart3, Building2, Zap, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
@@ -265,6 +265,29 @@ export default function PricingContent() {
           </div>
         </section>
 
+        {/* ── Money-Back Guarantee ── */}
+        <section className="px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border border-[#22C55E]/20 dark:border-[#22C55E]/10 bg-[#22C55E]/[0.04] p-8 sm:p-10 text-center"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#22C55E]/10 flex items-center justify-center mx-auto mb-5">
+                <ShieldCheck size={28} className="text-[#22C55E]" />
+              </div>
+              <h2 className="font-heading text-2xl sm:text-3xl font-semibold text-text tracking-tight mb-3">
+                30-day money-back guarantee
+              </h2>
+              <p className="text-muted text-base max-w-lg mx-auto leading-relaxed">
+                Not satisfied with your audit? We will refund your credits within 30 days, no questions asked. We stand behind the quality of every report.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
         {/* ── Pricing Comparison Table ── */}
         <section className="px-4 sm:px-6 lg:px-8 pb-16">
           <div className="max-w-5xl mx-auto">
@@ -366,7 +389,7 @@ export default function PricingContent() {
                 href="/register"
                 className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-8 py-4 min-h-[52px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
               >
-                Run my free audit
+                Start Free Audit
                 <ArrowRight size={16} />
               </Link>
             </motion.div>

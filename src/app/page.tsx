@@ -832,7 +832,7 @@ export default function Home() {
             href="/register"
             className="inline-flex items-center gap-2 bg-[#111] text-[#B9FF66] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
           >
-            Start your free audit
+            Start Free Audit
             <ArrowRight size={16} />
           </Link>
         </ScrollReveal>

@@ -231,7 +231,7 @@ export default function ContactPage() {
               href="/register"
               className="group inline-flex items-center gap-3 bg-[#111] text-[#B9FF66] text-base font-bold px-10 py-4 rounded-2xl transition-all hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
             >
-              Run my free audit
+              Start Free Audit
               <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>

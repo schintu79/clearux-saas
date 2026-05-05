@@ -134,9 +134,9 @@ export default function LoginPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h2 className="text-2xl font-heading font-semibold text-text mb-1.5">
-          Get Back to Your UX Insights
-        </h2>
+        <h1 className="text-2xl font-heading font-semibold text-text mb-1.5">
+          Welcome back
+        </h1>
         <p className="text-sm text-muted">
           Sign in to access your dashboard, track fixes, and run new audits.
         </p>
