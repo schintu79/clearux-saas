@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <>
       <Navbar />
-      <main id="main-content" className="min-h-[70vh] bg-[#080818]">
+      <main id="main-content" className="min-h-[70vh] bg-[#111114]">
         <AboutContent />
       </main>
       <Footer />

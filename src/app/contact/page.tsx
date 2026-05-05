@@ -48,7 +48,7 @@ export default function ContactPage() {
       <Navbar />
       <main id="main-content" className="min-h-[70vh]">
         {/* Dark Hero */}
-        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080818' }}>
+        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
           <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
           <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
           <div className="max-w-4xl mx-auto text-center relative">
@@ -79,7 +79,7 @@ export default function ContactPage() {
         </section>
 
         {/* Form Section */}
-        <section className="py-20 sm:py-28 px-4 md:px-6 lg:px-8 bg-[#080818]">
+        <section className="py-20 sm:py-28 px-4 md:px-6 lg:px-8 bg-[#111114]">
           <motion.div
             className="max-w-xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
@@ -229,7 +229,7 @@ export default function ContactPage() {
             </p>
             <Link
               href="/register"
-              className="group inline-flex items-center gap-3 bg-white text-[#080818] text-base font-bold px-10 py-4 rounded-2xl transition-all hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+              className="group inline-flex items-center gap-3 bg-white text-[#111114] text-base font-bold px-10 py-4 rounded-2xl transition-all hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
             >
               Start Free Audit
               <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />

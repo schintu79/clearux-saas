@@ -75,7 +75,7 @@
   --brand:       #FFFFFF;
   --brand-hover: #E5E5E5;
   --brand-light: #1A1A2E;
-  --hero-bg:     #080818;
+  --hero-bg:     #111114;
 
   --lime:        #818CF8;
   --lime-hover:  #6366F1;
@@ -94,7 +94,7 @@
 
   --blue:        #FFFFFF;
   --blue-dk:     #FFFFFF;
-  --blue-lt:     #0D0D24;
+  --blue-lt:     #18181C;
   --accent:      #818CF8;
   --accent-dk:   #6366F1;
   --accent-lt:   rgba(129,140,248,0.06);
@@ -104,17 +104,17 @@
   --gradient-brand-text: #FFFFFF;
 
   --navy:        #FFFFFF;
-  --off:         #0A0A1F;
+  --off:         #141418;
   --muted:       #8B8FA3;
   --border:      rgba(255,255,255,0.08);
   --text:        #F0F0F5;
-  --surface:     #080818;
-  --surface-alt: #0D0D24;
+  --surface:     #111114;
+  --surface-alt: #18181C;
   --card:        rgba(255,255,255,0.03);
   --card-hover:  rgba(255,255,255,0.06);
   --input-bg:    rgba(255,255,255,0.04);
   --placeholder: #4B5066;
-  --sidebar:     #080818;
+  --sidebar:     #111114;
   --sidebar-text:#F0F0F5;
 }
 
@@ -205,7 +205,7 @@
 
 .hero-dark {
   position: relative;
-  background: #080818;
+  background: #111114;
   overflow: hidden;
 }
 
@@ -287,7 +287,7 @@
 
 .section-dark {
   position: relative;
-  background: #080818;
+  background: #111114;
   overflow: hidden;
 }
 .section-dark::before {
@@ -320,9 +320,9 @@
   --border:      rgba(255,255,255,0.08);
   --card:        rgba(255,255,255,0.03);
   --card-hover:  rgba(255,255,255,0.06);
-  --off:         #0A0A1F;
-  --surface:     #080818;
-  --surface-alt: #0D0D24;
+  --off:         #141418;
+  --surface:     #111114;
+  --surface-alt: #18181C;
   --input-bg:    rgba(255,255,255,0.04);
   --placeholder: #4B5066;
   --accent:      #818CF8;
@@ -400,7 +400,7 @@ article, .prose {
 }
 
 .auth-left {
-  background: #060614;
+  background: #0C0C0F;
   padding: 3rem 3.5rem;
   display: flex;
   flex-direction: column;
@@ -432,7 +432,7 @@ article, .prose {
 
 .auth-right {
   position: relative;
-  background: #0D0D24;
+  background: #18181C;
   display: flex;
   align-items: center;
   justify-content: center;

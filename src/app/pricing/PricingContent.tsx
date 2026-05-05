@@ -7,10 +7,10 @@ import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 
 export default function PricingContent() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#080818]">
+    <div className="flex flex-col min-h-screen bg-[#111114]">
       <main id="main-content" className="flex-1">
         {/* ── Dark Hero ── */}
-        <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ background: '#080818' }}>
+        <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ background: '#111114' }}>
           {/* Aurora glows */}
           <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
           <div className="absolute bottom-[-20%] right-[10%] w-[500px] h-[400px] rounded-full bg-indigo-500/[0.03] blur-[120px] pointer-events-none" />
@@ -69,7 +69,7 @@ export default function PricingContent() {
                   </div>
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 bg-white text-[#080818] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
+                    className="inline-flex items-center gap-2 bg-white text-[#111114] text-[15px] font-semibold px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5 flex-shrink-0"
                   >
                     Start Free Audit
                     <ArrowRight size={16} />
@@ -163,7 +163,7 @@ export default function PricingContent() {
 
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 bg-white text-[#080818] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center justify-center gap-2 bg-white text-[#111114] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:opacity-90 transition-opacity"
                   >
                     Buy 1 audit
                   </Link>
@@ -306,7 +306,7 @@ export default function PricingContent() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-[#060614]">
+                      <tr className="bg-[#0C0C0F]">
                         <th className="text-left px-6 py-4 text-[11px] font-bold text-white/50 uppercase tracking-widest">Plan</th>
                         <th className="text-left px-6 py-4 text-[11px] font-bold text-white/50 uppercase tracking-widest">Price</th>
                         <th className="text-left px-6 py-4 text-[11px] font-bold text-white/50 uppercase tracking-widest">Per Audit</th>
@@ -387,7 +387,7 @@ export default function PricingContent() {
               </p>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 bg-white text-[#080818] text-[15px] font-semibold px-8 py-4 min-h-[52px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 bg-white text-[#111114] text-[15px] font-semibold px-8 py-4 min-h-[52px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5"
               >
                 Start Free Audit
                 <ArrowRight size={16} />

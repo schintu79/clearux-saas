@@ -102,7 +102,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO — dark full-width with ambient aurora
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080818' }}>
+      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
         {/* Ambient glows */}
         <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
         <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
@@ -144,7 +144,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           2. THREE-STEP PROCESS
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#080818] overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
         <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.03] blur-[160px] pointer-events-none" />
 
         <div className="max-w-5xl mx-auto relative">
@@ -196,7 +196,7 @@ export default function AboutContent() {
                   {/* Visual side — minimal dark card */}
                   <div className="flex-1 w-full max-w-sm">
                     <motion.div
-                      className="rounded-2xl bg-[#060614] border border-white/[0.08] p-8 flex flex-col items-center justify-center aspect-[4/3]"
+                      className="rounded-2xl bg-[#0C0C0F] border border-white/[0.08] p-8 flex flex-col items-center justify-center aspect-[4/3]"
                       initial={{ opacity: 0, x: isEven ? -30 : 30 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
@@ -218,7 +218,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. THE FOUR PILLARS
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#080818] overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
         <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto relative">
@@ -268,7 +268,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           4. BUILT FOR
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#0A0A1F] overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#141418] overflow-hidden">
         <div className="max-w-6xl mx-auto relative">
           <motion.div
             className="text-center mb-16"
@@ -339,7 +339,7 @@ export default function AboutContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-white text-[#080818] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-white text-[#111114] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
               >
                 Start Free Audit
                 <ArrowRight size={18} />

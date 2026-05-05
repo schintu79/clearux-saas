@@ -173,7 +173,7 @@ export default function RegisterPage() {
   // Show loading while checking auth state
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#080818]">
+      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
         <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -213,7 +213,7 @@ export default function RegisterPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-[#080818]-alt transition-colors text-[15px] font-medium text-white disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-[#111114]-alt transition-colors text-[15px] font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -440,7 +440,7 @@ export default function RegisterPage() {
   return (
     <>
       {/* ── MOBILE / TABLET: Navbar + full-width form ────────── */}
-      <div className="lg:hidden min-h-screen bg-[#080818] flex flex-col">
+      <div className="lg:hidden min-h-screen bg-[#111114] flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {formContent}

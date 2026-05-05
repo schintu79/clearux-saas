@@ -67,11 +67,11 @@ const Navbar: React.FC = () => {
     <>
     <a
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-[#080818] focus:shadow-lg focus:text-sm focus:font-semibold"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-[#111114] focus:shadow-lg focus:text-sm focus:font-semibold"
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#080818]/80 backdrop-blur-xl border-b border-white/[0.06]">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#111114]/80 backdrop-blur-xl border-b border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -120,7 +120,7 @@ const Navbar: React.FC = () => {
                 </button>
 
                 {menuOpen && (
-                  <div role="menu" className="absolute right-0 mt-2 w-48 bg-[#0D0D24] border border-white/[0.08] rounded-xl shadow-xl shadow-black/20 py-1.5 z-50">
+                  <div role="menu" className="absolute right-0 mt-2 w-48 bg-[#18181C] border border-white/[0.08] rounded-xl shadow-xl shadow-black/20 py-1.5 z-50">
                     <Link
                       href="/dashboard"
                       role="menuitem"
@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-[15px] font-semibold text-[#080818] bg-white hover:bg-white/90 rounded-xl px-5 py-2.5 min-h-[44px] transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-[15px] font-semibold text-[#111114] bg-white hover:bg-white/90 rounded-xl px-5 py-2.5 min-h-[44px] transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Start Free Audit
                   <ArrowUpRight size={14} />
@@ -222,7 +222,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-[#080818] bg-white rounded-xl px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-[#111114] bg-white rounded-xl px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">
                       Start Free Audit
                     </Link>
                   </>

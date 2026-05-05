@@ -67,7 +67,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-[#080818] text-white min-h-screen">
+    <div className="bg-[#111114] text-white min-h-screen">
       <HomeJsonLd />
       <Navbar />
       <main id="main-content">
@@ -112,7 +112,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#080818] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
+                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
                 >
                   {user ? 'Get My Audit' : 'Start Free Audit'}
                   <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -297,7 +297,7 @@ export default function Home() {
           <ScrollReveal delay={0.3} className="text-center mt-12">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 bg-white text-[#080818] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-white/90"
+              className="group inline-flex items-center gap-2.5 bg-white text-[#111114] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-white/90"
             >
               Try It Out
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -497,7 +497,7 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row items-start gap-3">
                     <Link
                       href="/register"
-                      className="inline-flex items-center gap-2 bg-white text-[#080818] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:bg-white/90 transition-opacity"
+                      className="inline-flex items-center gap-2 bg-white text-[#111114] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:bg-white/90 transition-opacity"
                     >
                       Start Free Audit
                       <ArrowRight size={16} />
@@ -602,7 +602,7 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-6 py-3 bg-white text-[#080818] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
+                className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Start Free Audit'}
                 <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

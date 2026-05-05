@@ -224,12 +224,12 @@ export default function FaqPage() {
   const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#080818]">
+    <div className="flex flex-col min-h-screen bg-[#111114]">
       <Navbar />
 
       <main id="main-content" className="flex-1">
         {/* Dark Hero */}
-        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080818' }}>
+        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
           {/* Aurora glows */}
           <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
           <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
@@ -317,7 +317,7 @@ export default function FaqPage() {
                     onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
                     className={`text-xs font-semibold px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
                       activeTab === tab
-                        ? 'text-[#080818] bg-white shadow-sm'
+                        ? 'text-[#111114] bg-white shadow-sm'
                         : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
                     }`}
                   >
@@ -407,7 +407,7 @@ export default function FaqPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-3 bg-white text-[#080818] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                className="group inline-flex items-center gap-3 bg-white text-[#111114] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
               >
                 Email Support
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
