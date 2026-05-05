@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -267,30 +266,6 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          GRADIENT BLOB DIVIDER — Full-width atmospheric break
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative h-[300px] sm:h-[400px] overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full h-full">
-            <Image
-              src="/gradients/blob-19.webp"
-              alt=""
-              fill
-              className="object-cover opacity-30"
-              style={{ filter: 'blur(40px)' }}
-            />
-            <Image
-              src="/gradients/blob-15.webp"
-              alt=""
-              fill
-              className="object-cover opacity-20 mix-blend-screen"
-              style={{ filter: 'blur(60px)', transform: 'translateX(-20%) scale(1.2)' }}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
           SECTION 4 — HOW IT WORKS
           3 steps, clean cards on dark
           ═══════════════════════════════════════════════════════ */}
@@ -395,28 +370,6 @@ export default function Home() {
               );
             })}
           </StaggerReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          GRADIENT BLOB DIVIDER 2
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative h-[250px] sm:h-[350px] overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-0">
-          <Image
-            src="/gradients/blob-30.webp"
-            alt=""
-            fill
-            className="object-cover opacity-25"
-            style={{ filter: 'blur(50px)' }}
-          />
-          <Image
-            src="/gradients/blob-42.webp"
-            alt=""
-            fill
-            className="object-cover opacity-15 mix-blend-screen"
-            style={{ filter: 'blur(40px)', transform: 'translateX(30%) scale(0.8)' }}
-          />
         </div>
       </section>
 
