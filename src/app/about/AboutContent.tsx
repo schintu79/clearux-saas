@@ -4,109 +4,27 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   ArrowRight,
-  BrainCircuit,
-  Accessibility,
-  ShieldCheck,
-  HeartHandshake,
-  BarChart3,
-  Rocket,
-  Tag,
-  Target,
-  Globe2,
-  Search,
-  FileText,
+  Eye,
+  Shield,
+  Heart,
+  Sparkles,
+  User,
+  ExternalLink,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
-   AboutContent — Animated "How It Works" page
-   ═══════════════════════════════════════════════════════════════ */
-
-const PILLARS = [
-  {
-    icon: ShieldCheck,
-    title: 'Ethical UX',
-    color: '#EC4899',
-    desc: 'Detects dark patterns, manipulative flows, confirmshaming, fake urgency, and guilt-driven copy. Ensures your product makes users feel safe, respected, and in control.',
-  },
-  {
-    icon: Accessibility,
-    title: 'Cognitive Accessibility',
-    color: '#6366F1',
-    desc: 'Evaluates cognitive load, sensory overwhelm, predictable navigation, and clear information hierarchy for users with ADHD, dyslexia, autism spectrum, and more.',
-  },
-  {
-    icon: BrainCircuit,
-    title: 'AI Readiness',
-    color: '#22C55E',
-    desc: 'Assesses whether your product is discoverable, navigable, and interpretable by LLMs and AI agents — structured data, semantic markup, and machine-readable content.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Conversion Psychology',
-    color: '#F59E0B',
-    desc: 'Analyzes tone, microcopy, error messaging, delight moments, and persuasion patterns. The emotional experience users remember long after they close the tab.',
-  },
-]
-
-const AUDIENCES = [
-  {
-    icon: BarChart3,
-    title: 'Product Managers',
-    color: '#6366F1',
-    desc: 'Justify UX investment with data. Track findings from open to fixed, share results with stakeholders, and re-audit to show measurable improvement.',
-  },
-  {
-    icon: Rocket,
-    title: 'Founders & Startups',
-    color: '#EC4899',
-    desc: 'Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks. No six-figure budget required.',
-  },
-  {
-    icon: Tag,
-    title: 'Agencies',
-    color: '#22C55E',
-    desc: 'White-label reports for clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time.',
-  },
-  {
-    icon: Target,
-    title: 'UX Designers',
-    color: '#F59E0B',
-    desc: 'An objective second opinion before launch. Comprehensive, evidence-based review across 16 categories that catches what fresh eyes would.',
-  },
-]
-
-const STEPS = [
-  {
-    num: '01',
-    title: 'Paste your URL',
-    desc: 'Enter your site URL and ClearUX automatically crawls every key page — homepage, pricing, sign-up, checkout, and more.',
-    icon: Search,
-  },
-  {
-    num: '02',
-    title: 'AI runs 64 checkpoints',
-    desc: 'Each page is analyzed across four UX pillars and 16 categories. No subjective hand-waving — every score is evidence-based.',
-    icon: Globe2,
-  },
-  {
-    num: '03',
-    title: 'Get your report',
-    desc: 'Ranked findings with severity levels, actionable fixes, and shareable links. Track progress as you resolve each issue.',
-    icon: FileText,
-  },
-]
+   AboutContent — Why ClearUX exists, founder, values
+   ══════════════════════════════════════���════════════════════════ */
 
 export default function AboutContent() {
   return (
     <>
       {/* ═══════════════════════════════════════════════════════
-          1. HERO — dark full-width with ambient aurora
-          ═══════════════════════════════════════════════════════ */}
+          1. HERO
+          ═══════════════════════════════════════════════���═══════ */}
       <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#080808' }}>
-        {/* Ambient glows */}
         <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-[#B9FF66]/[0.05] blur-[160px] pointer-events-none" />
         <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-[5%] left-[40%] w-[350px] h-[350px] rounded-full bg-[#EC4899]/[0.03] blur-[120px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative">
           <motion.div
@@ -116,7 +34,7 @@ export default function AboutContent() {
           >
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
               <div className="w-2 h-2 rounded-full animate-pulse bg-[#B9FF66]" />
-              <span className="text-sm font-semibold tracking-wide text-white/60">How It Works</span>
+              <span className="text-sm font-semibold tracking-wide text-white/60">About ClearUX</span>
             </div>
           </motion.div>
 
@@ -127,7 +45,7 @@ export default function AboutContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            How ClearUX Works
+            Every product deserves an independent, unbiased review.
           </motion.h1>
 
           <motion.p
@@ -136,92 +54,18 @@ export default function AboutContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25 }}
           >
-            A human-centered AI audit that evaluates your product the way a senior UX researcher would — with empathy, evidence, and actionable clarity.
+            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets.
           </motion.p>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          2. THREE-STEP PROCESS
+      {/* ══════════════════════��════════════════════════════════
+          2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
         <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-[#B9FF66]/[0.03] blur-[160px] pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto relative">
-          <motion.div
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The process</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
-              Three steps to clarity
-            </h2>
-          </motion.div>
-
-          <div className="space-y-20 sm:space-y-28">
-            {STEPS.map((step, idx) => {
-              const StepIcon = step.icon
-              const isEven = idx % 2 === 1
-              return (
-                <motion.div
-                  key={step.num}
-                  className={`flex flex-col ${isEven ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-10 md:gap-16`}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                >
-                  {/* Text side */}
-                  <div className="flex-1 text-center md:text-left">
-                    <motion.span
-                      className="font-heading text-7xl sm:text-8xl font-bold text-text/[0.05] mb-4 leading-none block"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
-                    >
-                      {step.num}
-                    </motion.span>
-                    <h3 className="font-heading text-2xl sm:text-3xl font-semibold text-text tracking-tight mb-4">
-                      {step.title}
-                    </h3>
-                    <p className="text-muted text-base sm:text-lg leading-relaxed max-w-md">
-                      {step.desc}
-                    </p>
-                  </div>
-
-                  {/* Visual side — minimal dark card */}
-                  <div className="flex-1 w-full max-w-sm">
-                    <motion.div
-                      className="rounded-2xl bg-[#111111] border border-white/[0.08] p-8 flex flex-col items-center justify-center aspect-[4/3]"
-                      initial={{ opacity: 0, x: isEven ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-[#B9FF66]/10 flex items-center justify-center mb-4">
-                        <StepIcon size={28} className="text-[#B9FF66]" />
-                      </div>
-                      <p className="text-white/60 text-sm font-medium text-center">{step.title}</p>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          3. THE FOUR PILLARS
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-        <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto relative">
+        <div className="max-w-4xl mx-auto relative">
           <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 40 }}
@@ -229,83 +73,65 @@ export default function AboutContent() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">What we evaluate</p>
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The origin story</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
-              Four pillars of modern UX
+              Why ClearUX exists
             </h2>
-            <p className="text-muted text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
-              64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
-            </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {PILLARS.map((pillar, idx) => {
-              const PillarIcon = pillar.icon
-              return (
-                <motion.div
-                  key={pillar.title}
-                  className="rounded-2xl bg-card border border-border/30 p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                    style={{ background: `${pillar.color}15` }}
-                  >
-                    <PillarIcon size={22} style={{ color: pillar.color }} />
-                  </div>
-                  <h3 className="font-heading font-semibold text-xl text-text mb-3">{pillar.title}</h3>
-                  <p className="text-muted text-[15px] leading-relaxed">{pillar.desc}</p>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          4. BUILT FOR
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-off overflow-hidden">
-        <div className="max-w-6xl mx-auto relative">
+          {/* Quote */}
           <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 40 }}
+            className="mb-14 p-6 sm:p-8 rounded-2xl bg-card border border-border/30"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.6 }}
           >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Who we serve</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
-              Built for people who ship products
-            </h2>
-            <p className="text-muted text-base mt-3 max-w-lg mx-auto">
-              Not another enterprise tool. Built for teams that move fast.
+            <p className="text-text font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
+              &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {AUDIENCES.map((item, idx) => {
+          {/* Three story blocks */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Eye,
+                color: '#6366F1',
+                title: 'The problem we saw',
+                desc: 'After 20+ years in digital, the pattern was clear: companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
+              },
+              {
+                icon: Shield,
+                color: '#EC4899',
+                title: 'What kept going wrong',
+                desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products that ignore emotional design failing to connect. These cost businesses revenue and cost users their dignity.',
+              },
+              {
+                icon: Sparkles,
+                color: '#B9FF66',
+                title: 'What we built instead',
+                desc: 'Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.',
+              },
+            ].map((item, idx) => {
               const ItemIcon = item.icon
               return (
                 <motion.div
                   key={item.title}
-                  className="rounded-2xl bg-card border border-border/30 p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
+                  className="rounded-2xl bg-card border border-border/30 p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: idx * 0.1 }}
                 >
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
                     style={{ background: `${item.color}15` }}
                   >
-                    <ItemIcon size={22} style={{ color: item.color }} />
+                    <ItemIcon size={20} style={{ color: item.color }} />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl text-text mb-3">{item.title}</h3>
-                  <p className="text-muted text-[15px] leading-relaxed">{item.desc}</p>
+                  <h3 className="font-heading font-semibold text-lg text-text mb-3">{item.title}</h3>
+                  <p className="text-muted text-[14px] leading-relaxed">{item.desc}</p>
                 </motion.div>
               )
             })}
@@ -313,9 +139,140 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          5. LIME CTA BAND
+      {/* ═════════��═════════════════════════════════════════════
+          3. FOUNDER
           ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-off overflow-hidden">
+        <div className="max-w-4xl mx-auto relative">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">The founder</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
+              Built by someone who lived the problem
+            </h2>
+          </motion.div>
+
+          <motion.div
+            className="rounded-2xl bg-card border border-border/30 p-8 sm:p-10"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
+              {/* Avatar placeholder */}
+              <div className="w-20 h-20 rounded-2xl bg-[#B9FF66]/10 border border-[#B9FF66]/20 flex items-center justify-center flex-shrink-0">
+                <User size={32} className="text-[#B9FF66]" />
+              </div>
+
+              <div className="flex-1">
+                <h3 className="font-heading font-semibold text-xl text-text mb-1">Stefano Schintu</h3>
+                <p className="text-muted text-sm mb-4">Founder &amp; Product Lead</p>
+
+                <div className="space-y-4 text-muted text-[15px] leading-relaxed">
+                  <p>
+                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across Europe and the UK ��� from early-stage MVPs to products serving millions.
+                  </p>
+                  <p>
+                    The frustration was always the same: brilliant teams shipping products without an unbiased, structured UX review — because the only option was a consultant charging five figures and taking six weeks. The teams that needed it most could never afford it.
+                  </p>
+                  <p>
+                    ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks, at a fraction of the cost.
+                  </p>
+                </div>
+
+                <a
+                  href="https://www.linkedin.com/in/stefanoschintu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-text hover:opacity-70 transition-opacity"
+                >
+                  <ExternalLink size={14} />
+                  Connect on LinkedIn
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════���════════════════════
+          4. OUR VALUES — Simple, clear, reliable
+          ═══════���═══════════════════��═══════════════════════════ */}
+      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+        <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto relative">
+          <motion.div
+            className="text-center mb-14"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Our commitment</p>
+            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">
+              Clear, simple, and reliable
+            </h2>
+            <p className="text-muted text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
+              We hold ourselves to the same standard we measure others by.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Shield,
+                color: '#6366F1',
+                title: 'Ethical by default',
+                desc: 'Every audit checks for dark patterns, manipulative design, and cognitive overload. We refuse to use them ourselves — no subscription traps, no pressure tactics, no hidden costs.',
+              },
+              {
+                icon: Eye,
+                color: '#22C55E',
+                title: 'Evidence over opinion',
+                desc: 'Scores are backed by 64 measurable checkpoints across 16 categories. No subjective hand-waving. Every finding links to evidence you can verify.',
+              },
+              {
+                icon: Heart,
+                color: '#EC4899',
+                title: 'Accessible to all',
+                desc: 'A $99 audit delivers what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
+              },
+            ].map((item, idx) => {
+              const ItemIcon = item.icon
+              return (
+                <motion.div
+                  key={item.title}
+                  className="rounded-2xl bg-card border border-border/30 p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                >
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+                    style={{ background: `${item.color}15` }}
+                  >
+                    <ItemIcon size={20} style={{ color: item.color }} />
+                  </div>
+                  <h3 className="font-heading font-semibold text-lg text-text mb-3">{item.title}</h3>
+                  <p className="text-muted text-[14px] leading-relaxed">{item.desc}</p>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══���═══════════════════════════════════════════════════
+          5. LIME CTA BAND
+          ═════════��══════════════════���══════════════════════════ */}
       <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#B9FF66' }}>
         <div className="max-w-3xl mx-auto text-center relative">
           <motion.div
@@ -345,10 +302,10 @@ export default function AboutContent() {
                 <ArrowRight size={18} />
               </Link>
               <Link
-                href="/contact"
+                href="/how-it-works"
                 className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-[#111]/20 text-[#111] rounded-xl font-semibold hover:bg-white/30 transition-all"
               >
-                Contact us
+                See how it works
               </Link>
             </div>
           </motion.div>

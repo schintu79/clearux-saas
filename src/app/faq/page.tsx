@@ -423,7 +423,7 @@ export default function FaqPage() {
               <Link href="/pricing" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
                 See pricing
               </Link>
-              <Link href="/about" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
+              <Link href="/how-it-works" className="text-sm font-medium text-[#111]/60 hover:text-[#111] transition-colors">
                 How it works
               </Link>
               <Link

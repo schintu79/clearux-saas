@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import AboutContent from './AboutContent'
+import AboutContent from './HowItWorksContent'
 
 export const metadata: Metadata = {
-  title: 'About ClearUX — Why We Exist',
-  description: 'ClearUX was born from 20+ years of watching companies ship products that ignored their users. Learn why we exist and who built it.',
+  title: 'How ClearUX Works — Human-Centered AI Audit Platform',
+  description: 'Three steps to a comprehensive UX audit. Paste your URL, AI runs 64 checkpoints across four pillars, and get ranked findings with actionable fixes.',
 }
 
-export default function AboutPage() {
+export default function HowItWorksPage() {
   return (
     <>
       <Navbar />

@@ -348,7 +348,7 @@ export default function LoginPage() {
               <div className="mt-8 pt-6 border-t border-white/[0.06]">
                 <p className="text-xs text-white/35 mb-3">Not ready to sign in?</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/about" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
+                  <Link href="/how-it-works" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
                     How it works <ArrowRight size={14} />
                   </Link>
                   <span className="text-white/15">|</span>
