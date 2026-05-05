@@ -274,55 +274,73 @@ export default function PricingContent() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="font-heading font-semibold text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight mb-6">Compare plans</h2>
-              <div className="rounded-2xl border border-border/20 dark:border-white/[0.05] overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
+              <div className="text-center mb-10">
+                <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">At a glance</p>
+                <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text tracking-tight">Compare plans</h2>
+              </div>
+
+              <div className="rounded-2xl border border-border/20 dark:border-white/[0.06] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-off/50 dark:bg-white/[0.03]">
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Plan</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Price</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Per Audit</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted uppercase tracking-wide">Best For</th>
+                      <tr className="bg-[#111111] dark:bg-white/[0.06]">
+                        <th className="text-left px-6 py-4 text-[11px] font-bold text-white/70 dark:text-white/50 uppercase tracking-widest">Plan</th>
+                        <th className="text-left px-6 py-4 text-[11px] font-bold text-white/70 dark:text-white/50 uppercase tracking-widest">Price</th>
+                        <th className="text-left px-6 py-4 text-[11px] font-bold text-white/70 dark:text-white/50 uppercase tracking-widest">Per Audit</th>
+                        <th className="text-left px-6 py-4 text-[11px] font-bold text-white/70 dark:text-white/50 uppercase tracking-widest">Best For</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/20 dark:divide-white/[0.04]">
-                      <tr className="bg-[#22C55E]/5">
-                        <td className="px-5 py-3.5 font-semibold text-text">Free Audit</td>
-                        <td className="px-5 py-3.5 font-bold text-[#22C55E]">$0</td>
-                        <td className="px-5 py-3.5 text-muted">Free (1 audit)</td>
-                        <td className="px-5 py-3.5 text-muted">First-time users evaluating the platform</td>
+                    <tbody>
+                      <tr className="bg-[#22C55E]/[0.06] dark:bg-[#22C55E]/[0.04] border-b border-border/10 dark:border-white/[0.04]">
+                        <td className="px-6 py-5 font-semibold text-text">Free Audit</td>
+                        <td className="px-6 py-5 font-bold text-[#22C55E] text-lg">$0</td>
+                        <td className="px-6 py-5 text-muted">Free (1 audit)</td>
+                        <td className="px-6 py-5 text-muted">First-time users evaluating the platform</td>
                       </tr>
-                      <tr>
-                        <td className="px-5 py-3.5 font-semibold text-text">Single Audit</td>
-                        <td className="px-5 py-3.5 font-bold text-text">$99</td>
-                        <td className="px-5 py-3.5 text-muted">$99.00</td>
-                        <td className="px-5 py-3.5 text-muted">One-off baseline or pre-launch check</td>
+                      <tr className="bg-card border-b border-border/10 dark:border-white/[0.04] hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-5 font-semibold text-text">Single Audit</td>
+                        <td className="px-6 py-5 font-bold text-text text-lg">$99</td>
+                        <td className="px-6 py-5 text-muted">$99.00</td>
+                        <td className="px-6 py-5 text-muted">One-off baseline or pre-launch check</td>
                       </tr>
-                      <tr>
-                        <td className="px-5 py-3.5 font-semibold text-text">Growth <span className="text-[9px] font-bold bg-brand text-surface dark:text-[#111111] px-1.5 py-0.5 rounded-full ml-1">Popular</span></td>
-                        <td className="px-5 py-3.5 font-bold text-text">$399</td>
-                        <td className="px-5 py-3.5 text-muted">$79.80 <span className="text-[#22C55E] text-xs font-semibold">save 19%</span></td>
-                        <td className="px-5 py-3.5 text-muted">Quarterly audits per release cycle</td>
+                      <tr className="bg-[#B9FF66]/[0.06] dark:bg-[#B9FF66]/[0.03] border-b border-border/10 dark:border-white/[0.04] ring-1 ring-inset ring-[#B9FF66]/20 dark:ring-[#B9FF66]/10">
+                        <td className="px-6 py-5 font-semibold text-text">
+                          <span className="flex items-center gap-2">
+                            Growth
+                            <span className="text-[10px] font-bold bg-[#B9FF66] text-[#111111] px-2 py-0.5 rounded-full leading-tight">Popular</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 font-bold text-text text-lg">$399</td>
+                        <td className="px-6 py-5">
+                          <span className="text-text font-medium">$79.80</span>
+                          <span className="ml-2 text-[11px] font-bold text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded-full">save 19%</span>
+                        </td>
+                        <td className="px-6 py-5 text-muted">Quarterly audits per release cycle</td>
                       </tr>
-                      <tr>
-                        <td className="px-5 py-3.5 font-semibold text-text">Agency</td>
-                        <td className="px-5 py-3.5 font-bold text-text">$999</td>
-                        <td className="px-5 py-3.5 text-muted">$66.60 <span className="text-[#22C55E] text-xs font-semibold">save 33%</span></td>
-                        <td className="px-5 py-3.5 text-muted">Multiple client sites + white-label</td>
+                      <tr className="bg-card border-b border-border/10 dark:border-white/[0.04] hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-5 font-semibold text-text">Agency</td>
+                        <td className="px-6 py-5 font-bold text-text text-lg">$999</td>
+                        <td className="px-6 py-5">
+                          <span className="text-text font-medium">$66.60</span>
+                          <span className="ml-2 text-[11px] font-bold text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded-full">save 33%</span>
+                        </td>
+                        <td className="px-6 py-5 text-muted">Multiple client sites + white-label</td>
                       </tr>
-                      <tr>
-                        <td className="px-5 py-3.5 font-semibold text-text">Scale</td>
-                        <td className="px-5 py-3.5 font-bold text-text">$2,499</td>
-                        <td className="px-5 py-3.5 text-muted">$49.98 <span className="text-[#22C55E] text-xs font-semibold">save 50%</span></td>
-                        <td className="px-5 py-3.5 text-muted">Continuous auditing across teams</td>
+                      <tr className="bg-card hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-5 font-semibold text-text">Scale</td>
+                        <td className="px-6 py-5 font-bold text-text text-lg">$2,499</td>
+                        <td className="px-6 py-5">
+                          <span className="text-text font-medium">$49.98</span>
+                          <span className="ml-2 text-[11px] font-bold text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded-full">save 50%</span>
+                        </td>
+                        <td className="px-6 py-5 text-muted">Continuous auditing across teams</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
               {/* Value anchor */}
-              <p className="text-xs text-muted mt-4 text-center">
+              <p className="text-sm text-muted mt-6 text-center">
                 At $99 per audit, that&apos;s <span className="font-semibold text-text">$1.55 per checkpoint</span> across 64 checks — compared to $100+ per checkpoint with traditional UX consultants.
               </p>
             </motion.div>
