@@ -317,7 +317,7 @@ export default function Home() {
             </p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 sm:gap-y-12 gap-x-8 sm:gap-x-0">
             {[
               { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
@@ -335,10 +335,10 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient"
+                  className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient"
                   duration={2}
                 />
-                <p className="text-sm font-semibold text-white/70 mt-3">{stat.label}</p>
+                <p className="text-sm font-semibold text-white/70 mt-2">{stat.label}</p>
                 <p className="text-xs text-white/40 mt-1">{stat.desc}</p>
               </motion.div>
             ))}
