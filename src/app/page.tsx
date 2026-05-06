@@ -233,23 +233,25 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-full p-1.5 focus-within:border-white/[0.2] transition-all">
-              <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
-              <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
-              <input
-                id="hero-url-input"
-                type="text"
-                name="url"
-                autoComplete="url"
-                value={heroUrl}
-                onChange={(e) => setHeroUrl(e.target.value)}
-                placeholder={placeholder}
-                aria-label="Website URL to audit"
-                className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/20 focus:outline-none"
-              />
+            <div className="flex items-center gap-4">
+              <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.04] border border-white/[0.10] rounded-full focus-within:border-white/[0.25] transition-all">
+                <Search size={16} className="ml-4 text-white/30 flex-shrink-0" />
+                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
+                <input
+                  id="hero-url-input"
+                  type="text"
+                  name="url"
+                  autoComplete="url"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder={placeholder}
+                  aria-label="Website URL to audit"
+                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-3 placeholder:text-white/25 focus:outline-none min-w-0"
+                />
+              </div>
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+                className="group flex items-center gap-2 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -367,7 +369,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -528,7 +530,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -685,14 +687,14 @@ export default function Home() {
               <div className="flex items-center gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -798,23 +800,25 @@ export default function Home() {
             </p>
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
-              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-full p-1.5 focus-within:border-white/[0.2] transition-all backdrop-blur-sm">
-                <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
-                <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
-                <input
-                  id="cta-url-input"
-                  type="text"
-                  name="url"
-                  autoComplete="url"
-                  value={heroUrl}
-                  onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder="yourwebsite.com"
-                  aria-label="Website URL to audit"
-                  className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/20 focus:outline-none"
-                />
+              <div className="flex items-center gap-4">
+                <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.04] border border-white/[0.10] rounded-full focus-within:border-white/[0.25] transition-all backdrop-blur-sm">
+                  <Search size={16} className="ml-4 text-white/30 flex-shrink-0" />
+                  <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
+                  <input
+                    id="cta-url-input"
+                    type="text"
+                    name="url"
+                    autoComplete="url"
+                    value={heroUrl}
+                    onChange={(e) => setHeroUrl(e.target.value)}
+                    placeholder="yourwebsite.com"
+                    aria-label="Website URL to audit"
+                    className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-3 placeholder:text-white/25 focus:outline-none min-w-0"
+                  />
+                </div>
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+                  className="group flex items-center gap-2 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
