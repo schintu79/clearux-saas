@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Shield, Clock, TrendingUp, ArrowRight, ArrowLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
@@ -13,12 +13,6 @@ const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
 })
-
-const kspItems = [
-  { icon: Shield, text: 'Your data is encrypted and never shared' },
-  { icon: Clock, text: 'Credits never expire — audit whenever you need' },
-  { icon: TrendingUp, text: 'Track fixes, re-audit, and prove improvement' },
-]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -296,35 +290,21 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
             </div>
 
-            <div className="relative z-10 flex flex-col h-full">
-              <div className="mb-10">
-                <Link href="/" className="inline-block">
-                  <span className="font-heading text-3xl font-medium tracking-[0.6px] text-white">clearux.ai</span>
-                </Link>
-              </div>
+            <div className="relative z-10 flex flex-col justify-between h-full">
+              <Link href="/" className="inline-block">
+                <span className="font-heading text-3xl font-medium tracking-[0.6px] text-white">clearux.ai</span>
+              </Link>
 
-              <div className="mb-auto">
-                <h2 className="text-2xl font-heading font-light text-white mb-2">
-                  Welcome back
+              <div>
+                <h2 className="font-heading text-[2rem] sm:text-[2.5rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
+                  Welcome back.
                 </h2>
-                <p className="text-sm text-white/50 leading-relaxed max-w-[320px]">
-                  Pick up where you left off. Your UX insights, tracked fixes, and score trends are ready and waiting.
+                <p className="text-sm text-white/40 leading-relaxed max-w-[280px]">
+                  Your audits, tracked fixes, and score trends are ready.
                 </p>
-
-                <div className="mt-8 space-y-5">
-                  {kspItems.map((item) => (
-                    <div key={item.text} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon size={22} className="text-[#84CC16]" />
-                      </div>
-                      <p className="text-base font-medium text-white/80">{item.text}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* Stats in glass cards */}
-              <div className="flex gap-3 mt-8">
+              <div className="flex gap-3">
                 {[
                   { num: '64', label: 'Checkpoints' },
                   { num: '16', label: 'Categories' },
@@ -332,22 +312,9 @@ export default function LoginPage() {
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3 flex-1 text-center">
                     <p className="text-lg font-medium text-white">{stat.num}</p>
-                    <p className="text-xs text-white/45 uppercase tracking-wide">{stat.label}</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-wider">{stat.label}</p>
                   </div>
                 ))}
-              </div>
-
-              {/* Footer links */}
-              <div className="mt-8 pt-6 border-t border-white/[0.06]">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How it works</Link>
-                  <span className="text-white/15">|</span>
-                  <Link href="/pricing" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Pricing</Link>
-                  <span className="text-white/15">|</span>
-                  <Link href="/faq" className="text-sm font-medium text-white/50 hover:text-white transition-colors">FAQ</Link>
-                  <span className="text-white/15">|</span>
-                  <Link href="/contact" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Contact</Link>
-                </div>
               </div>
             </div>
           </div>
