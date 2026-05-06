@@ -29,7 +29,7 @@ export default function AboutContent() {
 
           <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-6">
             Every product deserves an independent,{' '}
-            <em className="text-white/40">unbiased</em> review.
+            <span className="text-lime-gradient">unbiased</span> review.
           </h1>
 
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
@@ -52,7 +52,7 @@ export default function AboutContent() {
 
           {/* Quote */}
           <div className="mb-14 p-6 sm:p-8 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <p className="font-body text-white font-medium text-lg sm:text-xl leading-relaxed italic max-w-2xl">
+            <p className="font-body text-white font-medium text-lg sm:text-xl leading-relaxed max-w-2xl">
               &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
             </p>
           </div>
@@ -215,14 +215,14 @@ export default function AboutContent() {
           <div className="flex flex-col sm:flex-row items-start gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
             >
               Start Free Audit
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/how-it-works"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
             >
               See how it works
             </Link>

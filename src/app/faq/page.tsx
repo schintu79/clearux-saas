@@ -230,7 +230,7 @@ export default function FaqPage() {
             </p>
 
             <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
-              Frequently asked <em className="text-white/40 not-italic italic">questions.</em>
+              Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-lg mb-10">
@@ -361,14 +361,14 @@ export default function FaqPage() {
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Email Support
                 <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
               </a>
               <Link
                 href="/contact"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
               >
                 Contact Us
               </Link>

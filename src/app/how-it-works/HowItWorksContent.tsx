@@ -99,7 +99,7 @@ export default function AboutContent() {
             HOW IT WORKS
           </p>
           <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6">
-            How ClearUX <em className="text-white/40">works.</em>
+            How ClearUX <span className="text-lime-gradient">works.</span>
           </h1>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
             A human-centered AI audit that evaluates your product the way a senior UX researcher would — with empathy, evidence, and actionable clarity.
@@ -116,7 +116,7 @@ export default function AboutContent() {
             THE PROCESS
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-16">
-            Three steps to <em className="text-white/40">clarity.</em>
+            Three steps to <span className="text-lime-gradient">clarity.</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -133,7 +133,7 @@ export default function AboutContent() {
                   <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-5">
                     <StepIcon size={20} className="text-white/40" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {step.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -155,7 +155,7 @@ export default function AboutContent() {
             WHAT WE EVALUATE
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
-            Four pillars of <em className="text-white/40">modern UX.</em>
+            Four pillars of <span className="text-lime-gradient">modern UX.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
             64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
@@ -172,7 +172,7 @@ export default function AboutContent() {
                   <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
                     <PillarIcon size={20} className="text-white/40" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {pillar.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -194,7 +194,7 @@ export default function AboutContent() {
             WHO WE SERVE
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
-            Built for people who <em className="text-white/40">ship.</em>
+            Built for people who <span className="text-lime-gradient">ship.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
             Not another enterprise tool. Built for teams that move fast.
@@ -211,7 +211,7 @@ export default function AboutContent() {
                   <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
                     <ItemIcon size={20} className="text-white/40" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {item.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -233,7 +233,7 @@ export default function AboutContent() {
             START YOUR AUDIT TODAY
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
-            Ready to see what you&apos;re <em className="text-white/40">missing?</em>
+            Ready to see what you&apos;re <span className="text-lime-gradient">missing?</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">
             64 checkpoints. 16 categories. Results in minutes.
@@ -241,14 +241,14 @@ export default function AboutContent() {
           <div className="flex flex-col sm:flex-row items-start gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
             >
               Start Free Audit
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
             >
               Contact us
             </Link>

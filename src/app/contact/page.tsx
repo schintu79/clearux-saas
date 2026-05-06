@@ -53,7 +53,7 @@ export default function ContactPage() {
               GET IN TOUCH
             </span>
             <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mt-6">
-              Contact <em className="italic text-white/40">us.</em>
+              Contact <span className="text-lime-gradient">us.</span>
             </h1>
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6">
               Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
@@ -125,7 +125,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap disabled:opacity-60"
+                      className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] disabled:opacity-60"
                     >
                       {loading ? (
                         <>
@@ -180,14 +180,14 @@ export default function ContactPage() {
               GET STARTED
             </span>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mt-6">
-              Ready to see what you&rsquo;re <em className="italic text-white/40">missing?</em>
+              Ready to see what you&rsquo;re <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6 mb-10">
               Your first audit is free. Results in under 10 minutes.
             </p>
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
             >
               Start Free Audit
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
