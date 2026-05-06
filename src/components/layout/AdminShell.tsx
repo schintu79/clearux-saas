@@ -106,7 +106,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
-            <span className="font-heading text-2xl font-semibold text-text">Clear<span className="text-lime-gradient">UX</span><span className="opacity-50">.ai</span></span>
+            <span className="font-heading text-2xl font-semibold tracking-[0.2px] text-text">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
           </Link>
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
@@ -205,8 +205,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading text-2xl font-semibold text-text">
-            Clear<span className="text-lime-gradient">UX</span><span className="opacity-50">.ai</span>
+          <span className="ml-3 font-heading text-2xl font-semibold tracking-[0.2px] text-text">
+            Clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span>
           </span>
           <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin

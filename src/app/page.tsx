@@ -109,7 +109,7 @@ export default function Home() {
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           {/* Two columns of findings, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-1.5 opacity-[0.40]">
+          <div className="absolute top-1/2 -translate-y-1/2 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-[80%] flex gap-1.5 opacity-[0.40]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div

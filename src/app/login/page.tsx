@@ -292,7 +292,7 @@ export default function LoginPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <span className="font-heading text-3xl font-semibold text-white">Clear<span className="text-lime-gradient">UX</span><span className="opacity-50">.ai</span></span>
+                  <span className="font-heading text-3xl font-semibold tracking-[0.2px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
                 </Link>
               </div>
 

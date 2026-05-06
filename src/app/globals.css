@@ -434,6 +434,10 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text);
 }
 
+h3, h4, h5 {
+  letter-spacing: 0.2px;
+}
+
 p, li, td, th, label, span, a {
   line-height: 1.65;
 }
