@@ -76,7 +76,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
+            <span className="font-heading text-2xl font-bold tracking-[0.6px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
           </Link>
 
           {/* Desktop Navigation */}
