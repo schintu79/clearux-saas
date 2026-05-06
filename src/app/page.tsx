@@ -14,7 +14,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
-import { ReportShowcase } from '@/components/motion/ProductMockup';
+import { HeroReportMockup, ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 import AuroraBackground from '@/components/motion/AuroraBackground';
 
@@ -97,187 +97,136 @@ export default function Home() {
       <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO
-          Kaleidoscope aurora, rotating headlines, selling icons
+          SECTION 1 — HERO (Musicbed-inspired)
+          Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden min-h-[100vh] flex flex-col items-center justify-center">
+      <section className="relative overflow-hidden">
         <AuroraBackground variant="hero" />
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-8">
-          <div className="text-center">
-            {/* Rotating headline — wide, medium weight, gradient lime accent */}
-            <div className="h-[5.5rem] sm:h-[7rem] md:h-[8rem] lg:h-[9.5rem] relative mb-8 overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.h1
-                  key={headlineIdx}
-                  className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[3.75rem] lg:text-[4.5rem] font-medium tracking-tight text-white absolute inset-x-0"
-                  style={{ lineHeight: '1.15' }}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -50 }}
-                  transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  {HERO_HEADLINES[headlineIdx].main}<br />
-                  <span className="font-bold text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
-                </motion.h1>
-              </AnimatePresence>
-            </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-32 sm:pt-40 pb-16 sm:pb-20">
+          {/* Top label */}
+          <motion.p
+            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            AI-Powered UX Audit
+          </motion.p>
 
-            <motion.p
-              className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto mb-10"
-              style={{ lineHeight: '1.6' }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              AI-powered UX audit across 64 checkpoints — accessibility, dark patterns, conversion psychology, and AI readiness. Professional report in under 10 minutes.
-            </motion.p>
-
-            {/* Search bar */}
-            <motion.form
-              onSubmit={handleHeroSubmit}
-              className="max-w-xl mx-auto mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-            >
-              <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-[#84CC16]/30 focus-within:bg-white/[0.06] transition-all">
-                <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
-                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
-                <input
-                  id="hero-url-input"
-                  type="text"
-                  name="url"
-                  autoComplete="url"
-                  value={heroUrl}
-                  onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder={placeholder}
-                  aria-label="Website URL to audit"
-                  className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/25 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
-                >
-                  {user ? 'Get My Audit' : 'Start Free Audit'}
-                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            </motion.form>
-
-            {/* Small label */}
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#84CC16] animate-pulse" />
-              <span className="text-xs text-white/40">First audit free — no credit card required</span>
-            </motion.div>
-
-            {/* Selling point icons — stronger with lime highlights */}
-            <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.5 }}
-            >
-              {HERO_SELLING_POINTS.map((sp, i) => {
-                const Icon = sp.icon;
-                return (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center">
-                      <Icon size={16} className="text-[#84CC16]" />
-                    </div>
-                    <span className="text-sm text-white/60">{sp.label} <span className="font-semibold text-lime-gradient">{sp.highlight}</span></span>
-                  </div>
-                );
-              })}
-            </motion.div>
+          {/* Rotating headline — left-aligned, light weight, very large */}
+          <div className="h-[7rem] sm:h-[10rem] md:h-[13rem] lg:h-[16rem] relative mb-8 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.h1
+                key={headlineIdx}
+                className="font-heading text-[3rem] sm:text-[4.5rem] md:text-[6rem] lg:text-[7.5rem] font-light tracking-tight text-white absolute inset-x-0"
+                style={{ lineHeight: '1.05' }}
+                initial={{ opacity: 0, y: 60 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -60 }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {HERO_HEADLINES[headlineIdx].main}<br />
+                <span className="font-semibold text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
+              </motion.h1>
+            </AnimatePresence>
           </div>
+
+          {/* Description + CTA row — Musicbed style: text left, button right */}
+          <motion.div
+            className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+          >
+            <p className="text-white/40 text-base sm:text-lg max-w-xl" style={{ lineHeight: '1.7' }}>
+              We analyse websites across 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness. Fully automated and delivered in minutes.
+            </p>
+
+            <div className="flex items-center gap-5 flex-shrink-0">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center px-7 py-3.5 min-h-[48px] border border-white text-white text-sm font-semibold tracking-wide uppercase hover:bg-white hover:text-[#111114] transition-all"
+              >
+                Start Free Audit
+              </Link>
+              <span className="text-xs text-white/30 max-w-[140px] leading-snug">
+                No credit card required. Browse your full report instantly.
+              </span>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Discover more button */}
-        <motion.button
-          onClick={() => document.getElementById('trust-stats')?.scrollIntoView({ behavior: 'smooth' })}
-          className="relative z-10 mt-8 mb-8 group flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.1] hover:border-white/[0.15] transition-all"
+        {/* Divider line */}
+        <div className="relative z-10 border-t border-white/[0.06]" />
+
+        {/* Selling points row — horizontal strip like Musicbed's logo bar */}
+        <motion.div
+          className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          aria-label="See how it works"
+          transition={{ delay: 0.6 }}
         >
-          <span className="text-sm font-medium">See how it works</span>
-          <motion.div
-            animate={{ y: [0, 4, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <ChevronDown size={16} />
-          </motion.div>
-        </motion.button>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — TRUST STATS + AUDIENCE
-          Big animated numbers, sleek horizontal strip
-          ═══════════════════════════════════════════════════════ */}
-      <section id="trust-stats" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden border-t border-b border-white/[0.06]">
-        {/* Subtle lime glow behind stats */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, #84CC16, transparent 70%)' }} />
-
-        <div className="relative max-w-6xl mx-auto">
-          {/* Stats row — big numbers with animated counters */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8 mb-16">
-            {[
-              { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
-              { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
-              { end: 4, suffix: '', label: 'UX pillars', desc: 'for complete coverage' },
-              { end: 40, suffix: '+', label: 'Pages analysed', desc: 'per audit on avg.' },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                className="text-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.6, type: 'spring', stiffness: 100 }}
-              >
-                <AnimatedCounter
-                  end={stat.end}
-                  suffix={stat.suffix}
-                  className="font-heading text-6xl sm:text-7xl lg:text-8xl font-bold text-lime-gradient"
-                  duration={2}
-                />
-                <p className="text-sm font-semibold text-white mt-3">{stat.label}</p>
-                <p className="text-xs text-white/30 mt-1">{stat.desc}</p>
-              </motion.div>
-            ))}
+          <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
+            {HERO_SELLING_POINTS.map((sp, i) => {
+              const Icon = sp.icon;
+              return (
+                <div key={i} className="flex items-center gap-2.5">
+                  <Icon size={16} className="text-[#84CC16]" />
+                  <span className="text-[13px] text-white/40 tracking-wide">{sp.label} <span className="font-semibold text-white/70">{sp.highlight}</span></span>
+                </div>
+              );
+            })}
           </div>
+        </motion.div>
 
-          {/* Audience tags */}
+        {/* Divider line */}
+        <div className="relative z-10 border-t border-white/[0.06]" />
+
+        {/* Demo visual — large, edge-to-edge like Musicbed's image block */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
           <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
+            className="relative overflow-hidden rounded-2xl"
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.5 }}
+            transition={{ duration: 0.8 }}
           >
-            <p className="text-xs font-semibold tracking-widest uppercase text-white/20 mb-5">
-              Built for teams who care about user experience
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {['Product Managers', 'Design Teams', 'Agencies', 'Startups', 'Enterprise'].map((label, i) => (
-                <motion.span
-                  key={i}
-                  className="text-sm font-medium text-white/40 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]"
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.6 + i * 0.08 }}
-                >
-                  {label}
-                </motion.span>
-              ))}
+            <HeroReportMockup />
+
+            {/* Overlay stats — bottom-right, like Musicbed */}
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+              <div>
+                <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-2" style={{ lineHeight: '1.15' }}>
+                  Find what&apos;s costing you<br />
+                  <span className="font-semibold text-lime-gradient">users and revenue.</span>
+                </h2>
+                <p className="text-sm text-white/30 max-w-md leading-relaxed mt-3">
+                  From dark patterns eroding trust to inaccessible interfaces excluding real users — ClearUX finds the issues your team can act on. Prioritised by impact, trackable as you fix them.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-8 flex-shrink-0">
+                <div>
+                  <AnimatedCounter end={64} suffix="+" className="font-heading text-3xl sm:text-4xl font-semibold text-white" duration={1.5} />
+                  <p className="text-xs text-white/30 mt-1">UX checkpoints</p>
+                </div>
+                <div>
+                  <AnimatedCounter end={16} suffix="" className="font-heading text-3xl sm:text-4xl font-semibold text-white" duration={1.5} />
+                  <p className="text-xs text-white/30 mt-1">audit categories</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/how-it-works"
+                    className="inline-flex items-center justify-center px-5 py-2.5 border border-white/30 text-white text-xs font-semibold tracking-wide uppercase hover:bg-white hover:text-[#111114] transition-all"
+                  >
+                    See How It Works
+                  </Link>
+                  <span className="text-[11px] text-white/25 max-w-[120px] leading-snug hidden sm:block">
+                    Start with a free audit to see the full report.
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
