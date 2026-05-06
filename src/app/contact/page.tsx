@@ -58,9 +58,7 @@ export default function ContactPage() {
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6">
               Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
             </p>
-          </div>
-          <div className="mt-12">
-            <div className="max-w-xl">
+            <div className="max-w-xl mt-12">
               {submitted ? (
                 <div className="rounded-xl p-9 border border-white/[0.06] bg-white/[0.03]">
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
