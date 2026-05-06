@@ -3,7 +3,7 @@
 ## Design Rules
 - **No emojis** — Never use emojis anywhere in the UI. Use Lucide React icons instead.
 - Use the app's CSS variables for theming: `var(--gradient-brand)`, `var(--gradient-brand-text)`, `text-text`, `text-muted`, `bg-card`, `bg-off`, `border-border`, etc.
-- Font classes: `font-heading` (CCSGlyke) for headings, `font-body` (DM Sans) for body text.
+- Font classes: `font-heading` (Genova) for headings, `font-body` (DM Sans) for body text.
 - Follow the Vercel-style design language used throughout the app.
 
 ## Tech Stack

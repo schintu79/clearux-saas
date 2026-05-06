@@ -576,21 +576,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Blob glow wrapper — spans What You Get + Pricing + FAQ ── */}
-      <div className="relative overflow-hidden bg-[#0C0C0F]">
-        {/* Gradient blob — positioned to center on pricing but bleeds into neighbours */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <img
-            src="/gradients/pricing-blob.png"
-            alt=""
-            className="absolute top-[40%] left-[55%] -translate-x-1/2 -translate-y-1/3 w-[110%] max-w-[1600px] h-auto opacity-50 mix-blend-screen"
-          />
-        </div>
-
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
+      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#0C0C0F]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
@@ -669,9 +658,19 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Blob glow wrapper — spans Pricing + FAQ ── */}
+      <div className="relative overflow-hidden bg-[#141418]">
+        {/* Gradient blob — centered on pricing, bleeds into FAQ */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <img
+            src="/gradients/pricing-blob.png"
+            alt=""
+            className="absolute top-[30%] left-[55%] -translate-x-1/2 -translate-y-1/4 w-[110%] max-w-[1600px] h-auto opacity-50 mix-blend-screen"
+          />
+        </div>
+
       {/* ═══════════════════════════════════════════════════════
           SECTION 6 — PRICING
-          Dark bg with gradient blob background image
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">

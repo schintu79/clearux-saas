@@ -15,10 +15,18 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const glyke = localFont({
-  src: '../../public/fonts/CCSGlykeRegular.woff',
+const genova = localFont({
+  src: [
+    { path: '../../public/fonts/Genova-Thin.otf', weight: '100', style: 'normal' },
+    { path: '../../public/fonts/Genova-ThinItalic.otf', weight: '100', style: 'italic' },
+    { path: '../../public/fonts/Genova.otf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/Genova-Italic.otf', weight: '400', style: 'italic' },
+    { path: '../../public/fonts/Genova-Medium.otf', weight: '500', style: 'normal' },
+    { path: '../../public/fonts/Genova-MediumItalic.otf', weight: '500', style: 'italic' },
+    { path: '../../public/fonts/Genova-Black.otf', weight: '900', style: 'normal' },
+    { path: '../../public/fonts/Genova-BlackItalic.otf', weight: '900', style: 'italic' },
+  ],
   variable: '--font-heading',
-  weight: '400',
   display: 'swap',
 })
 
@@ -101,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${glyke.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${genova.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
