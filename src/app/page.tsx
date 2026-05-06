@@ -101,7 +101,7 @@ export default function Home() {
           SECTION 1 — HERO (Musicbed-inspired)
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[90vh]">
+      <section className="relative min-h-screen flex flex-col">
         <AuroraBackground variant="hero" />
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
@@ -267,6 +267,20 @@ export default function Home() {
           </motion.form>
         </div>
 
+        {/* Scroll indicator */}
+        <div className="relative z-10 flex-1" />
+        <motion.div
+          className="relative z-10 flex justify-center pb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+        >
+          <div className="flex flex-col items-center gap-2 animate-bounce-slow">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-white/25">Scroll</span>
+            <ChevronDown size={16} className="text-white/25" />
+          </div>
+        </motion.div>
+
         {/* Divider line */}
         <div className="relative z-10 border-t border-white/[0.06]" />
 
@@ -321,7 +335,7 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-5xl sm:text-6xl lg:text-7xl font-light text-[#111114]"
+                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-[#111114]"
                   duration={2}
                 />
                 <p className="text-sm font-semibold text-[#111114]/70 mt-3">{stat.label}</p>
@@ -398,7 +412,9 @@ export default function Home() {
                 <StaggerItem key={i}>
                   <div className="py-8 border-t border-white/[0.06]">
                     <div className="flex items-center gap-3 mb-4">
-                      <Icon size={18} className="text-white/50" strokeWidth={1.5} />
+                      <div className="w-9 h-9 rounded-lg bg-lime-gradient flex items-center justify-center flex-shrink-0">
+                        <Icon size={18} className="text-[#111114]" strokeWidth={2} />
+                      </div>
                       <h3 className="font-heading text-[15px] font-semibold text-white">{item.title}</h3>
                     </div>
                     <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
@@ -410,7 +426,7 @@ export default function Home() {
         </div>
 
         {/* ── Scrolling showcase gallery ── */}
-        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden">
+        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
@@ -430,9 +446,8 @@ export default function Home() {
                       className="relative w-[280px] sm:w-[340px] h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
-                      {/* Subtle gradient accent */}
                       <div
-                        className="absolute inset-0 opacity-[0.08]"
+                        className="absolute inset-0 opacity-30"
                         style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
@@ -474,7 +489,7 @@ export default function Home() {
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       <div
-                        className="absolute inset-0 opacity-[0.08]"
+                        className="absolute inset-0 opacity-30"
                         style={{ background: `radial-gradient(circle at 70% 60%, ${card.color} 0%, transparent 70%)` }}
                       />
                       <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
@@ -495,6 +510,10 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* Gradient fade on left and right edges — Musicbed style */}
+          <div className="absolute inset-y-0 left-0 w-32 sm:w-48 pointer-events-none" style={{ background: 'linear-gradient(to right, #141418 0%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 right-0 w-32 sm:w-48 pointer-events-none" style={{ background: 'linear-gradient(to left, #141418 0%, transparent 100%)' }} />
         </div>
       </section>
 
@@ -548,7 +567,7 @@ export default function Home() {
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-[#111114]/10 pt-8">
-                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-[#111114]/[0.06] leading-none block mb-4">
+                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-[#111114]/[0.06] leading-none block mb-4">
                     {item.step}
                   </span>
                   <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{item.title}</h3>
@@ -628,14 +647,14 @@ export default function Home() {
               return (
                 <div
                   key={i}
-                  className="relative w-[260px] min-w-[260px] rounded-xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.08] hover:border-[#111114]/[0.15] hover:shadow-lg hover:shadow-black/[0.04] transition-all group"
+                  className="relative w-[320px] min-w-[320px] rounded-xl p-8 flex-shrink-0 bg-white border border-[#111114]/[0.08] hover:border-[#111114]/[0.15] hover:shadow-lg hover:shadow-black/[0.04] transition-all group"
                 >
-                  <div className="w-12 h-12 rounded-lg bg-[#111114] flex items-center justify-center mb-6">
-                    <Icon size={20} className="text-white" strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-xl bg-lime-gradient flex items-center justify-center mb-6">
+                    <Icon size={24} className="text-[#111114]" strokeWidth={1.5} />
                   </div>
                   <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mb-3 block">{card.label}</span>
-                  <h3 className="font-heading text-[15px] font-semibold text-[#111114] mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-[13px] text-[#111114]/40 leading-relaxed">{card.desc}</p>
+                  <h3 className="font-heading text-base font-semibold text-[#111114] mb-3 leading-tight">{card.title}</h3>
+                  <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
@@ -694,7 +713,7 @@ export default function Home() {
                   'Credits never expire',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-4 h-4 text-white/20 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-[#84CC16] flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-white/50">{item}</span>
                   </div>
                 ))}
@@ -758,51 +777,91 @@ export default function Home() {
         {/* Aurora background — same as hero */}
         <AuroraBackground variant="hero" />
 
-        {/* Background visual cards — faded, like Musicbed album art */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          {/* Cards grid — positioned on the right side */}
-          <div className="absolute top-0 right-0 w-[65%] h-full opacity-[0.12]">
-            <div className="grid grid-cols-2 gap-3 p-4 h-full" style={{ gridAutoRows: 'minmax(160px, 1fr)' }}>
-              {[
-                { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171' },
-                { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA' },
-                { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA' },
-                { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24' },
-                { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16' },
-                { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE' },
-                { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899' },
-                { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B' },
-              ].map((card, j) => (
-                <div
-                  key={j}
-                  className="relative rounded-xl overflow-hidden"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <div
-                    className="absolute inset-0 opacity-30"
-                    style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <p className="text-[10px] text-white/40 mb-1">{card.subtitle}</p>
-                    <p className="text-xs font-semibold text-white/70">{card.label}</p>
+        {/* Background visual cards — scrolling columns like hero, Musicbed style */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          {/* Two columns of cards, scrolling vertically in opposite directions */}
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.15]">
+            {/* Column 1 — scrolls up */}
+            <div className="flex-1 overflow-hidden">
+              <div
+                className="flex flex-col gap-3"
+                style={{ animation: 'scroll-up-slow 60s linear infinite' }}
+              >
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-3">
+                    {[
+                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171' },
+                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA' },
+                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16' },
+                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full h-[200px] sm:h-[220px] rounded-xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-40"
+                          style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Column 2 — scrolls down */}
+            <div className="flex-1 overflow-hidden hidden sm:block">
+              <div
+                className="flex flex-col gap-3"
+                style={{ animation: 'scroll-down-slow 50s linear infinite' }}
+              >
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-3">
+                    {[
+                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA' },
+                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24' },
+                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE' },
+                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-40"
+                          style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Gradient overlay — fades cards from left to right, matching Musicbed style */}
+          {/* Gradient overlay — fades cards from left, Musicbed album art style */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to right, #111114 35%, rgba(17,17,20,0.85) 55%, rgba(17,17,20,0.4) 80%, rgba(17,17,20,0.2) 100%)',
+              background: 'linear-gradient(to right, #111114 30%, rgba(17,17,20,0.88) 45%, rgba(17,17,20,0.5) 65%, rgba(17,17,20,0.2) 85%, rgba(17,17,20,0.1) 100%)',
             }}
           />
-          {/* Top/bottom gradient fade for seamless blending */}
+          {/* Top/bottom fade */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to bottom, #111114 0%, transparent 20%, transparent 80%, #111114 100%)',
+              background: 'linear-gradient(to bottom, #111114 0%, transparent 15%, transparent 85%, #111114 100%)',
             }}
           />
         </div>
