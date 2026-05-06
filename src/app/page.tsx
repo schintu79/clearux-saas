@@ -107,7 +107,7 @@ export default function Home() {
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.07]">
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.35]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -124,16 +124,16 @@ export default function Home() {
                     ].map((card, j) => (
                       <div
                         key={j}
-                        className="relative w-full h-[200px] sm:h-[220px] rounded-xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-full h-[200px] sm:h-[220px] rounded-2xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                       >
                         <div
-                          className="absolute inset-0 opacity-40"
+                          className="absolute inset-0 opacity-50"
                           style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
                         />
                         <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
                         </div>
                       </div>
                     ))}
@@ -158,16 +158,16 @@ export default function Home() {
                     ].map((card, j) => (
                       <div
                         key={j}
-                        className="relative w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                       >
                         <div
-                          className="absolute inset-0 opacity-40"
+                          className="absolute inset-0 opacity-50"
                           style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
                         />
                         <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
                         </div>
                       </div>
                     ))}
@@ -177,18 +177,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Gradient overlay — fades cards from left, Musicbed album art style */}
+          {/* Gradient overlay — softer fade so cards are visible */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to right, #111114 30%, rgba(17,17,20,0.92) 45%, rgba(17,17,20,0.6) 65%, rgba(17,17,20,0.3) 85%, rgba(17,17,20,0.15) 100%)',
+              background: 'linear-gradient(to right, #111114 25%, rgba(17,17,20,0.85) 40%, rgba(17,17,20,0.4) 60%, rgba(17,17,20,0.1) 80%, transparent 100%)',
             }}
           />
           {/* Top/bottom fade */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to bottom, #111114 0%, transparent 15%, transparent 85%, #111114 100%)',
+              background: 'linear-gradient(to bottom, #111114 0%, transparent 12%, transparent 88%, #111114 100%)',
             }}
           />
         </div>
@@ -785,7 +785,7 @@ export default function Home() {
         {/* Background visual cards — scrolling columns like hero, Musicbed style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.15]">
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.35]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -802,16 +802,16 @@ export default function Home() {
                     ].map((card, j) => (
                       <div
                         key={j}
-                        className="relative w-full h-[200px] sm:h-[220px] rounded-xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-full h-[200px] sm:h-[220px] rounded-2xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                       >
                         <div
-                          className="absolute inset-0 opacity-40"
+                          className="absolute inset-0 opacity-50"
                           style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
                         />
                         <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
                         </div>
                       </div>
                     ))}
@@ -836,16 +836,16 @@ export default function Home() {
                     ].map((card, j) => (
                       <div
                         key={j}
-                        className="relative w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                       >
                         <div
-                          className="absolute inset-0 opacity-40"
+                          className="absolute inset-0 opacity-50"
                           style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
                         />
                         <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
                         </div>
                       </div>
                     ))}
@@ -855,18 +855,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Gradient overlay — fades cards from left, Musicbed album art style */}
+          {/* Gradient overlay — softer fade so cards are visible */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to right, #111114 30%, rgba(17,17,20,0.88) 45%, rgba(17,17,20,0.5) 65%, rgba(17,17,20,0.2) 85%, rgba(17,17,20,0.1) 100%)',
+              background: 'linear-gradient(to right, #111114 25%, rgba(17,17,20,0.85) 40%, rgba(17,17,20,0.4) 60%, rgba(17,17,20,0.1) 80%, transparent 100%)',
             }}
           />
           {/* Top/bottom fade */}
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to bottom, #111114 0%, transparent 15%, transparent 85%, #111114 100%)',
+              background: 'linear-gradient(to bottom, #111114 0%, transparent 12%, transparent 88%, #111114 100%)',
             }}
           />
         </div>
