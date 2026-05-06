@@ -467,7 +467,7 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
-          Light grey bg, editorial headline + scrolling cards
+          Light grey bg, editorial headline + scrollable cards
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 overflow-hidden" style={{ background: '#F7F7F8' }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -487,73 +487,65 @@ export default function Home() {
               <p className="text-[#111114]/40 text-base md:text-lg max-w-2xl leading-relaxed">
                 Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
               </p>
-              <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/30 flex-shrink-0">
-                64+ checkpoints across 16 categories
-              </p>
+              {/* Scroll arrows */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  aria-label="Scroll left"
+                  onClick={() => {
+                    const el = document.getElementById('feature-cards-scroll');
+                    if (el) el.scrollBy({ left: -400, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-[#111114]/15 flex items-center justify-center hover:border-[#111114]/30 transition-colors"
+                >
+                  <ArrowRight size={16} className="text-[#111114]/40 rotate-180" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Scroll right"
+                  onClick={() => {
+                    const el = document.getElementById('feature-cards-scroll');
+                    if (el) el.scrollBy({ left: 400, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-[#111114]/15 flex items-center justify-center hover:border-[#111114]/30 transition-colors"
+                >
+                  <ArrowRight size={16} className="text-[#111114]/40" />
+                </button>
+              </div>
             </div>
           </ScrollReveal>
-        </div>
 
-        {/* Scrolling feature cards — Musicbed image gallery style */}
-        <div className="space-y-5">
-          {/* Row 1 — scrolls left */}
-          <div className="relative">
-            <div
-              className="flex gap-5 w-max pl-6 sm:pl-10 lg:pl-16"
-              style={{ animation: 'scroll-left 50s linear infinite' }}
-            >
-              {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-5">
-                  {[
-                    { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first so you fix what matters most.' },
-                    { icon: FileText, title: 'PDF & Word Export', label: 'One-Click Reports', desc: 'Share professional reports with stakeholders. Branded and formatted.' },
-                    { icon: Share2, title: 'Team Sharing', label: 'Shareable Links', desc: 'One link gives anyone the score, breakdown, and recommendations.' },
-                  ].map((card, j) => (
-                    <div
-                      key={j}
-                      className="relative w-[300px] sm:w-[360px] rounded-2xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <card.icon size={22} className="text-[#111114]/30" strokeWidth={1.5} />
-                        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25">{card.label}</span>
-                      </div>
-                      <h3 className="font-heading text-lg font-semibold text-[#111114] mb-2">{card.title}</h3>
-                      <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
+          {/* Scrollable cards row */}
+          <div
+            id="feature-cards-scroll"
+            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {[
+              { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first so you fix what matters most. Every finding ranked by severity and business impact.' },
+              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click Reports', desc: 'Share professional reports with stakeholders in one click. Branded, formatted, and ready for any meeting.' },
+              { icon: Share2, title: 'Team Sharing', label: 'Shareable Links', desc: 'One link gives anyone the score, breakdown, and recommendations. Control access and revoke anytime.' },
+              { icon: CheckCircle, title: 'Track Every Fix', label: 'Status Dashboard', desc: 'Every finding gets a status — open, in progress, fixed. Your dashboard shows resolution progress in real-time.' },
+              { icon: RefreshCw, title: 'Re-Audit to Prove It', label: 'Baseline Mode', desc: 'Fix issues and re-audit the same URL. Verify your fixes, run deep scans, or focus on specific pillars.' },
+              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '16 categories across 4 pillars — each scored individually so you know exactly where to improve.' },
+            ].map((card, i) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={i}
+                  className="relative min-w-[320px] sm:min-w-[380px] rounded-2xl p-8 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="w-12 h-12 rounded-xl bg-[#111114] flex items-center justify-center">
+                      <Icon size={22} className="text-white" strokeWidth={1.5} />
                     </div>
-                  ))}
+                    <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mt-1">{card.label}</span>
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{card.title}</h3>
+                  <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Row 2 — scrolls right */}
-          <div className="relative">
-            <div
-              className="flex gap-5 w-max pl-6 sm:pl-10 lg:pl-16"
-              style={{ animation: 'scroll-right 55s linear infinite' }}
-            >
-              {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-5">
-                  {[
-                    { icon: CheckCircle, title: 'Track Every Fix', label: 'Status Dashboard', desc: 'Every finding gets a status — open, in progress, fixed. Track resolution in real-time.' },
-                    { icon: RefreshCw, title: 'Re-Audit to Prove It', label: 'Baseline Mode', desc: 'Fix issues and re-audit the same URL. Verify fixes or dig deeper for new issues.' },
-                    { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '16 categories across 4 pillars — each scored individually so you know where to improve.' },
-                  ].map((card, j) => (
-                    <div
-                      key={j}
-                      className="relative w-[300px] sm:w-[360px] rounded-2xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <card.icon size={22} className="text-[#111114]/30" strokeWidth={1.5} />
-                        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25">{card.label}</span>
-                      </div>
-                      <h3 className="font-heading text-lg font-semibold text-[#111114] mb-2">{card.title}</h3>
-                      <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
