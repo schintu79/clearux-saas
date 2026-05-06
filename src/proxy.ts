@@ -1,5 +1,5 @@
 // ============================================================
-// ClearUX — Edge Middleware
+// ClearUX — Proxy (formerly Middleware)
 // Rate limiting + route protection (auth guard)
 // ============================================================
 
@@ -67,7 +67,7 @@ function createMiddlewareClient(request: NextRequest, response: NextResponse) {
   )
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
 
