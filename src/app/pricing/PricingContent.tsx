@@ -8,8 +8,11 @@ export default function PricingContent() {
   return (
     <main id="main-content" className="flex-1">
       {/* ── Hero ── */}
-      <section className="py-24 sm:py-32 bg-[#111114]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative py-24 sm:py-32 bg-[#111114] overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             Transparent Pricing
           </p>
@@ -50,8 +53,8 @@ export default function PricingContent() {
             <h2 className="font-heading text-lg font-light text-white mb-6">Which plan fits your workflow?</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                  <Search size={16} className="text-white/50" />
+                <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                  <Search size={16} className="text-[#84CC16]" />
                 </div>
                 <div>
                   <p className="font-body text-sm font-semibold text-white">&ldquo;I need to know where my site stands&rdquo;</p>
@@ -59,8 +62,8 @@ export default function PricingContent() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                  <BarChart3 size={16} className="text-white/50" />
+                <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                  <BarChart3 size={16} className="text-[#84CC16]" />
                 </div>
                 <div>
                   <p className="font-body text-sm font-semibold text-white">&ldquo;I want to prove improvement each quarter&rdquo;</p>
@@ -68,8 +71,8 @@ export default function PricingContent() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                  <Building2 size={16} className="text-white/50" />
+                <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={16} className="text-[#84CC16]" />
                 </div>
                 <div>
                   <p className="font-body text-sm font-semibold text-white">&ldquo;I manage multiple client sites&rdquo;</p>
@@ -77,8 +80,8 @@ export default function PricingContent() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                  <Zap size={16} className="text-white/50" />
+                <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                  <Zap size={16} className="text-[#84CC16]" />
                 </div>
                 <div>
                   <p className="font-body text-sm font-semibold text-white">&ldquo;We audit continuously across teams&rdquo;</p>
@@ -211,8 +214,8 @@ export default function PricingContent() {
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-8 sm:p-10">
             <div className="flex items-start gap-5">
-              <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                <ShieldCheck size={24} className="text-white/40" />
+              <div className="w-12 h-12 rounded-xl bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck size={24} className="text-[#84CC16]" />
               </div>
               <div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-3">
@@ -303,8 +306,11 @@ export default function PricingContent() {
       </section>
 
       {/* ── Final CTA Band ── */}
-      <section className="py-24 sm:py-32 bg-[#141418]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative py-24 sm:py-32 bg-[#141418] overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">Get Started</p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
             Start your audit <span className="text-lime-gradient">today</span>

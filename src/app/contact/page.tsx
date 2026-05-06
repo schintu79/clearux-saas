@@ -59,16 +59,12 @@ export default function ContactPage() {
               Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
             </p>
           </div>
-        </section>
-
-        {/* Form Section */}
-        <section className="py-24 sm:py-32 bg-[#111114]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <div className="mt-12">
             <div className="max-w-xl">
               {submitted ? (
                 <div className="rounded-xl p-9 border border-white/[0.06] bg-white/[0.03]">
-                  <div className="w-14 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center mb-4">
-                    <CheckCircle size={28} className="text-white/60" />
+                  <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
+                    <CheckCircle size={28} className="text-[#84CC16]" />
                   </div>
                   <p className="font-heading font-semibold text-lg text-white mb-1">Message sent!</p>
                   <p className="font-body text-sm text-white/50">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
@@ -150,8 +146,8 @@ export default function ContactPage() {
               <div className="mt-14 pt-10 border-t border-white/[0.06]">
                 <div className="flex flex-col sm:flex-row gap-6">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                      <Mail size={18} className="text-white/50" />
+                    <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                      <Mail size={18} className="text-[#84CC16]" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold font-body text-white mb-0.5">Email us</p>
@@ -159,8 +155,8 @@ export default function ContactPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                      <MessageSquare size={18} className="text-white/50" />
+                    <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                      <MessageSquare size={18} className="text-[#84CC16]" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold font-body text-white mb-0.5">Response time</p>

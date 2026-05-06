@@ -21,8 +21,11 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#111114] py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative bg-[#111114] py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             About ClearUX
           </p>
@@ -82,8 +85,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-white/[0.05]">
-                    <ItemIcon size={20} className="text-white/60" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
+                    <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
@@ -186,8 +189,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-white/[0.05]">
-                    <ItemIcon size={20} className="text-white/60" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
+                    <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
@@ -201,8 +204,11 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. FINAL CTA BAND
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#141418] py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative bg-[#141418] py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             Start your audit today
           </p>

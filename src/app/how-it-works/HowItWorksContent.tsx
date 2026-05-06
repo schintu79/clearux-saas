@@ -93,8 +93,11 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#111114] py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative bg-[#111114] py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             HOW IT WORKS
           </p>
@@ -130,8 +133,8 @@ export default function AboutContent() {
                   <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.06] leading-none block mb-4">
                     {step.num}
                   </span>
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-5">
-                    <StepIcon size={20} className="text-white/40" />
+                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-5">
+                    <StepIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {step.title}
@@ -169,8 +172,8 @@ export default function AboutContent() {
                   key={pillar.title}
                   className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
-                    <PillarIcon size={20} className="text-white/40" />
+                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
+                    <PillarIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {pillar.title}
@@ -208,8 +211,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
-                    <ItemIcon size={20} className="text-white/40" />
+                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
+                    <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
                     {item.title}
@@ -227,8 +230,11 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#141418] py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative bg-[#141418] py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             START YOUR AUDIT TODAY
           </p>
