@@ -106,8 +106,8 @@ export default function Home() {
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.35]">
+          {/* Two columns of findings, scrolling vertically in opposite directions */}
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.40]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -117,26 +117,28 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171' },
-                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA' },
-                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16' },
-                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899' },
-                    ].map((card, j) => (
-                      <div
-                        key={j}
-                        className="relative w-full h-[200px] sm:h-[220px] rounded-2xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
-                      >
+                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171', icon: ShieldAlert },
+                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA', icon: Bot },
+                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16', icon: Shield },
+                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899', icon: Brain },
+                    ].map((card, j) => {
+                      const CardIcon = card.icon;
+                      return (
                         <div
-                          className="absolute inset-0 opacity-50"
-                          style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
+                          key={j}
+                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -151,33 +153,35 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA' },
-                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24' },
-                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE' },
-                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B' },
-                    ].map((card, j) => (
-                      <div
-                        key={j}
-                        className="relative w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
-                      >
+                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA', icon: Accessibility },
+                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24', icon: Target },
+                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE', icon: Eye },
+                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
+                    ].map((card, j) => {
+                      const CardIcon = card.icon;
+                      return (
                         <div
-                          className="absolute inset-0 opacity-50"
-                          style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
+                          key={j}
+                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Gradient overlay — softer fade so cards are visible */}
+          {/* Gradient overlay — softer fade so findings are visible */}
           <div
             className="absolute inset-0"
             style={{
@@ -205,7 +209,7 @@ export default function Home() {
           </motion.p>
 
           {/* Rotating headline — left-aligned, light weight */}
-          <div className="h-[9rem] sm:h-[11rem] md:h-[14rem] lg:h-[17rem] relative mb-10 sm:mb-14">
+          <div className="h-[7rem] sm:h-[8rem] md:h-[10.5rem] lg:h-[12rem] relative mb-8 sm:mb-10">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
@@ -782,10 +786,9 @@ export default function Home() {
         {/* Aurora background — same as hero */}
         <AuroraBackground variant="hero" />
 
-        {/* Background visual cards — scrolling columns like hero, Musicbed style */}
+        {/* Background findings — scrolling columns like hero */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.35]">
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.40]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -795,26 +798,28 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171' },
-                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA' },
-                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16' },
-                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899' },
-                    ].map((card, j) => (
-                      <div
-                        key={j}
-                        className="relative w-full h-[200px] sm:h-[220px] rounded-2xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
-                      >
+                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171', icon: ShieldAlert },
+                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA', icon: Bot },
+                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16', icon: Shield },
+                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899', icon: Brain },
+                    ].map((card, j) => {
+                      const CardIcon = card.icon;
+                      return (
                         <div
-                          className="absolute inset-0 opacity-50"
-                          style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
+                          key={j}
+                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -829,33 +834,35 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA' },
-                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24' },
-                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE' },
-                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B' },
-                    ].map((card, j) => (
-                      <div
-                        key={j}
-                        className="relative w-full h-[180px] sm:h-[200px] rounded-2xl overflow-hidden flex-shrink-0"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
-                      >
+                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA', icon: Accessibility },
+                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24', icon: Target },
+                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE', icon: Eye },
+                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
+                    ].map((card, j) => {
+                      const CardIcon = card.icon;
+                      return (
                         <div
-                          className="absolute inset-0 opacity-50"
-                          style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 p-5">
-                          <p className="text-[10px] text-white/60 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/90">{card.label}</p>
+                          key={j}
+                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Gradient overlay — softer fade so cards are visible */}
+          {/* Gradient overlay */}
           <div
             className="absolute inset-0"
             style={{
