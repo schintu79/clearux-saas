@@ -1,10 +1,10 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import {
   Eye, Heart, Accessibility, Brain, Shield,
-  CheckCircle, TrendingUp, ArrowUpRight, FileText, Download,
+  TrendingUp, ArrowUpRight, Download,
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -16,44 +16,17 @@ import {
 export function HeroReportMockup() {
   const ref = useRef<HTMLDivElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-5%' })
-  const [score, setScore] = useState(0)
-  const started = useRef(false)
-
-  useEffect(() => {
-    if (!isInView || started.current) return
-    started.current = true
-    const startTime = performance.now()
-    const tick = (now: number) => {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / 1800, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setScore(Math.round(eased * 72))
-      if (progress < 1) requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  }, [isInView])
-
-  const pillars = [
-    { label: 'Foundation', score: 78, color: '#6B5B95' },
-    { label: 'Human Experience', score: 54, color: '#EC4899' },
-    { label: 'Inclusive Design', score: 71, color: '#F59E0B' },
-    { label: 'Future Readiness', score: 65, color: '#22C55E' },
-  ]
 
   const findings = [
-    { severity: 'CRITICAL', color: 'bg-red-500', label: 'CTA invisible on mobile viewport', category: 'Foundation' },
-    { severity: 'CRITICAL', color: 'bg-red-500', label: 'Confirmshaming in cancel flow', category: 'Ethical UX' },
-    { severity: 'HIGH', color: 'bg-orange-500', label: 'Touch targets below 44px minimum', category: 'Accessibility' },
-    { severity: 'HIGH', color: 'bg-orange-500', label: 'No structured data for AI agents', category: 'AI Readiness' },
-    { severity: 'MEDIUM', color: 'bg-amber-500', label: 'Low contrast on form labels', category: 'Visual Design' },
+    { severity: 'CRITICAL', color: 'bg-red-500 text-white', label: 'CTA invisible on mobile viewport', category: 'Foundation', opacity: 1 },
+    { severity: 'HIGH', color: 'bg-orange-500 text-white', label: 'No structured data for AI agents', category: 'AI Readiness', opacity: 0.6 },
+    { severity: 'MEDIUM', color: 'bg-amber-500/80 text-white', label: 'Low contrast on form labels', category: 'Visual Design', opacity: 0.35 },
   ]
-
-  const circumference = 2 * Math.PI * 52
 
   return (
     <motion.div
       ref={ref}
-      className="relative w-full max-w-5xl mx-auto"
+      className="relative w-full max-w-3xl mx-auto"
       initial={{ opacity: 0, y: 60 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
@@ -80,114 +53,34 @@ export function HeroReportMockup() {
           </div>
         </div>
 
-        {/* Dashboard content */}
+        {/* Findings content */}
         <div className="p-5 sm:p-8">
-          {/* Header row */}
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8">
-            <div>
-              <motion.p
-                className="text-xs text-white/30 uppercase tracking-wider font-semibold mb-1"
-                initial={{ opacity: 0 }}
-                animate={isInView ? { opacity: 1 } : {}}
-                transition={{ delay: 0.5 }}
-              >
-                UX Audit Report
-              </motion.p>
-              <motion.h3
-                className="font-heading text-xl sm:text-2xl font-bold text-white mb-1"
-                initial={{ opacity: 0, y: 10 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                acme.com
-              </motion.h3>
-              <motion.p
-                className="text-xs text-white/30"
-                initial={{ opacity: 0 }}
-                animate={isInView ? { opacity: 1 } : {}}
-                transition={{ delay: 0.7 }}
-              >
-                5 pages analysed &middot; 64 checkpoints &middot; 4 pillars
-              </motion.p>
-            </div>
-
-            {/* Score ring */}
-            <motion.div
-              className="relative w-[120px] h-[120px] flex-shrink-0"
-              initial={{ scale: 0, rotate: -90 }}
-              animate={isInView ? { scale: 1, rotate: 0 } : {}}
-              transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.8 }}
-            >
-              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-                <motion.circle
-                  cx="60" cy="60" r="52" fill="none" stroke="#818CF8" strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  initial={{ strokeDashoffset: circumference }}
-                  animate={isInView ? { strokeDashoffset: circumference * (1 - score / 100) } : {}}
-                  transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-heading text-3xl font-bold text-white leading-none">{score}</span>
-                <span className="text-[10px] text-white/30 mt-1">/ 100</span>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Pillar scores */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
-            {pillars.map((p, i) => (
+          <motion.p
+            className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-4"
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.5, duration: 0.4 }}
+          >
+            Top findings by severity
+          </motion.p>
+          <div className="space-y-3">
+            {findings.map((f, i) => (
               <motion.div
                 key={i}
-                className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] p-3 sm:p-4"
-                initial={{ opacity: 0, y: 15 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 1 + i * 0.1, duration: 0.4 }}
+                className="flex items-center gap-3 px-5 py-4 rounded-xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06]"
+                style={{ opacity: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={isInView ? { opacity: f.opacity, x: 0 } : {}}
+                transition={{ delay: 0.7 + i * 0.15, duration: 0.4 }}
               >
-                <p className="text-[10px] sm:text-xs text-white/30 mb-2 truncate">{p.label}</p>
-                <div className="flex items-end justify-between mb-2">
-                  <span className="font-heading text-xl sm:text-2xl font-bold text-white">{Math.round(score * p.score / 72)}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: p.color }}
-                    initial={{ width: 0 }}
-                    animate={isInView ? { width: `${p.score}%` } : {}}
-                    transition={{ duration: 1, delay: 1.2 + i * 0.1, ease: 'easeOut' }}
-                  />
-                </div>
+                <span className={`${f.color} text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded flex-shrink-0`}>
+                  {f.severity}
+                </span>
+                <span className="text-sm sm:text-base text-white/70 flex-1 truncate">{f.label}</span>
+                <span className="text-[11px] text-white/30 hidden sm:block flex-shrink-0">{f.category}</span>
               </motion.div>
             ))}
           </div>
-
-          {/* Findings list */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ delay: 1.5, duration: 0.5 }}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-3">Top findings by severity</p>
-            <div className="space-y-2">
-              {findings.map((f, i) => (
-                <motion.div
-                  key={i}
-                  className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06]"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ delay: 1.6 + i * 0.1, duration: 0.35 }}
-                >
-                  <span className={`${f.color} text-white text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded flex-shrink-0`}>
-                    {f.severity}
-                  </span>
-                  <span className="text-xs sm:text-sm text-white/70 flex-1 truncate">{f.label}</span>
-                  <span className="text-[10px] text-white/30 hidden sm:block flex-shrink-0">{f.category}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </div>
     </motion.div>

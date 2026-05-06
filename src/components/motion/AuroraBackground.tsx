@@ -16,61 +16,66 @@ export default function AuroraBackground({ variant = 'section', className = '' }
   if (variant === 'hero') {
     return (
       <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
-        {/* Blue/purple blob — top center */}
+        {/* Foundation — purple orb, top-left */}
         <div
-          className="absolute -top-[20%] left-[10%] w-[70%] h-[80%] opacity-[0.35]"
-          style={{ animation: 'aurora-drift-1 20s ease-in-out infinite' }}
-        >
-          <Image
-            src="/gradients/blob-15.webp"
-            alt=""
-            fill
-            className="object-contain"
-            style={{ filter: 'blur(60px)' }}
-            priority
-          />
-        </div>
+          className="absolute -top-[15%] left-[5%] w-[55%] h-[65%] rounded-full opacity-[0.45]"
+          style={{
+            background: 'radial-gradient(circle at center, #6B5B95 0%, transparent 70%)',
+            filter: 'blur(60px)',
+            animation: 'aurora-drift-1 20s ease-in-out infinite',
+          }}
+        />
 
-        {/* Pink/purple/teal blob — right side */}
+        {/* Human Experience — pink orb, top-right */}
         <div
-          className="absolute top-[5%] -right-[5%] w-[55%] h-[70%] opacity-[0.25]"
-          style={{ animation: 'aurora-drift-2 25s ease-in-out infinite' }}
-        >
-          <Image
-            src="/gradients/blob-19.webp"
-            alt=""
-            fill
-            className="object-contain"
-            style={{ filter: 'blur(50px)' }}
-            priority
-          />
-        </div>
+          className="absolute -top-[5%] right-[0%] w-[50%] h-[60%] rounded-full opacity-[0.4]"
+          style={{
+            background: 'radial-gradient(circle at center, #EC4899 0%, transparent 70%)',
+            filter: 'blur(50px)',
+            animation: 'aurora-drift-2 25s ease-in-out infinite',
+          }}
+        />
 
-        {/* Cyan blob — left side, subtle */}
+        {/* Inclusive Design — amber orb, bottom-center */}
         <div
-          className="absolute top-[40%] -left-[10%] w-[40%] h-[50%] opacity-[0.2]"
-          style={{ animation: 'aurora-drift-3 18s ease-in-out infinite' }}
-        >
-          <Image
-            src="/gradients/blob-1.webp"
-            alt=""
-            fill
-            className="object-contain"
-            style={{ filter: 'blur(70px)' }}
-          />
-        </div>
+          className="absolute top-[35%] left-[20%] w-[50%] h-[60%] rounded-full opacity-[0.4]"
+          style={{
+            background: 'radial-gradient(circle at center, #F59E0B 0%, transparent 70%)',
+            filter: 'blur(70px)',
+            animation: 'aurora-drift-3 18s ease-in-out infinite',
+          }}
+        />
 
-        {/* Fine grid overlay */}
+        {/* Future Readiness — green orb, bottom-right */}
+        <div
+          className="absolute top-[30%] right-[5%] w-[45%] h-[55%] rounded-full opacity-[0.45]"
+          style={{
+            background: 'radial-gradient(circle at center, #22C55E 0%, transparent 70%)',
+            filter: 'blur(60px)',
+            animation: 'aurora-drift-1 22s ease-in-out infinite reverse',
+          }}
+        />
+
+        {/* Animated grid overlay with drifting lines */}
         <div
           className="absolute inset-0"
           style={{
             backgroundImage: `
-              linear-gradient(to right, rgba(255,255,255,0.015) 0.5px, transparent 0.5px),
-              linear-gradient(to bottom, rgba(255,255,255,0.015) 0.5px, transparent 0.5px)
+              linear-gradient(to right, rgba(255,255,255,0.03) 0.5px, transparent 0.5px),
+              linear-gradient(to bottom, rgba(255,255,255,0.03) 0.5px, transparent 0.5px)
             `,
             backgroundSize: '64px 64px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%)',
+            animation: 'grid-drift 20s linear infinite',
+            maskImage: 'radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)',
+          }}
+        />
+
+        {/* Radial vignette — fades edges to #111114 */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 70% 60% at 50% 45%, transparent 0%, #111114 100%)',
           }}
         />
       </div>

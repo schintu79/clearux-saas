@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
   Search, BarChart3, FileText, Share2, RefreshCw,
   Sparkles, Target, ScanEye, ShieldAlert,
+  Zap, Accessibility, Bot,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -24,6 +25,21 @@ const TOP_FAQS = [
   { q: 'Is ClearUX 100% accurate?', a: 'No automated tool is perfect, and we believe honesty about this builds trust. Our AI catches what other tools miss, but we recommend human review for critical accessibility findings. You can dismiss any finding with a reason, and the AI learns from your feedback on re-audits.' },
   { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations.' },
   { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they only verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues beyond the baseline, hit "Dig Deeper" for a full Deep mode analysis.' },
+];
+
+/* ── Rotating hero headlines ─────────────────────────────── */
+const HERO_HEADLINES = [
+  { main: 'Find the UX Issues', accent: 'Costing You Conversions' },
+  { main: 'See What Your Users', accent: "Won't Tell You" },
+  { main: '64 Checkpoints.', accent: 'Zero Guesswork.' },
+];
+
+/* ── Selling points below search bar ────────────────────── */
+const HERO_SELLING_POINTS = [
+  { icon: ShieldAlert, label: 'Dark patterns' },
+  { icon: Accessibility, label: 'Accessibility' },
+  { icon: Bot, label: 'AI readiness' },
+  { icon: Target, label: 'Conversion' },
 ];
 
 /* ── Typewriter placeholders ─────────────────────────────── */
@@ -57,6 +73,14 @@ export default function Home() {
   const { user } = useAuth();
   const [heroUrl, setHeroUrl] = useState('');
   const placeholder = useTypewriterPlaceholder();
+  const [headlineIdx, setHeadlineIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeadlineIdx((prev) => (prev + 1) % HERO_HEADLINES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,28 +98,49 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 1 — HERO
-          Deep dark with aurora gradient blobs, search bar
+          Kaleidoscope aurora, rotating headlines, selling icons
           ═══════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden min-h-[90vh] flex items-center">
         <AuroraBackground variant="hero" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-16">
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-bold tracking-tight text-white mb-6" style={{ lineHeight: '1.08' }}>
-              Find the UX Issues<br />
-              Costing You <span className="italic font-normal text-white/60">Conversions</span>
-            </h1>
-            <p className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ lineHeight: '1.6' }}>
-              AI-powered UX audit across 64 checkpoints — accessibility, dark patterns, conversion psychology, and AI readiness. Professional report in under 10 minutes.
-            </p>
+          <div className="text-center">
+            {/* Rotating headline */}
+            <div className="h-[5.5rem] sm:h-[7rem] md:h-[8.5rem] lg:h-[10rem] relative mb-6 overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.h1
+                  key={headlineIdx}
+                  className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-bold tracking-tight text-white absolute inset-x-0"
+                  style={{ lineHeight: '1.08' }}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -40 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  {HERO_HEADLINES[headlineIdx].main}<br />
+                  <span className="italic font-normal text-white/60">{HERO_HEADLINES[headlineIdx].accent}</span>
+                </motion.h1>
+              </AnimatePresence>
+            </div>
 
-            {/* Search bar — DeepSeek style */}
-            <form onSubmit={handleHeroSubmit} className="max-w-xl mx-auto mb-6">
+            <motion.p
+              className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto mb-10"
+              style={{ lineHeight: '1.6' }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+            >
+              AI-powered UX audit across 64 checkpoints — accessibility, dark patterns, conversion psychology, and AI readiness. Professional report in under 10 minutes.
+            </motion.p>
+
+            {/* Search bar */}
+            <motion.form
+              onSubmit={handleHeroSubmit}
+              className="max-w-xl mx-auto mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+            >
               <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-white/[0.15] focus-within:bg-white/[0.06] transition-all">
                 <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -118,18 +163,32 @@ export default function Home() {
                   <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
-            </form>
+            </motion.form>
 
-            <p className="text-sm text-white/30 mb-20">
-              First audit free. No credit card required.
-            </p>
-          </motion.div>
+            {/* Selling point icons */}
+            <motion.div
+              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+            >
+              {HERO_SELLING_POINTS.map((sp, i) => {
+                const Icon = sp.icon;
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <Icon size={16} className="text-[#84CC16]" />
+                    <span className="text-sm text-white/50">{sp.label}</span>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </div>
 
           {/* Product mockup */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
           >
             <HeroReportMockup />
           </motion.div>
