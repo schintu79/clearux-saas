@@ -417,8 +417,8 @@ export default function Home() {
                 <StaggerItem key={i}>
                   <div className="py-8 border-t border-white/[0.06]">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-9 h-9 rounded-lg bg-lime-gradient flex items-center justify-center flex-shrink-0">
-                        <Icon size={18} className="text-[#111114]" strokeWidth={2} />
+                      <div className="w-9 h-9 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                        <Icon size={18} className="text-[#84CC16]" strokeWidth={2} />
                       </div>
                       <h3 className="font-heading text-[15px] font-semibold text-white">{item.title}</h3>
                     </div>
@@ -516,9 +516,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Gradient fade on left and right edges — Musicbed style */}
-          <div className="absolute inset-y-0 left-0 w-32 sm:w-48 pointer-events-none" style={{ background: 'linear-gradient(to right, #141418 0%, transparent 100%)' }} />
-          <div className="absolute inset-y-0 right-0 w-32 sm:w-48 pointer-events-none" style={{ background: 'linear-gradient(to left, #141418 0%, transparent 100%)' }} />
+          {/* Gradient fade on left and right edges — seamless */}
+          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, #141418 0%, #141418 20%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, #141418 0%, #141418 20%, transparent 100%)' }} />
         </div>
       </section>
 
@@ -654,8 +654,8 @@ export default function Home() {
                   key={i}
                   className="relative w-[320px] min-w-[320px] rounded-xl p-8 flex-shrink-0 bg-white border border-[#111114]/[0.08] hover:border-[#111114]/[0.15] hover:shadow-lg hover:shadow-black/[0.04] transition-all group"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-lime-gradient flex items-center justify-center mb-6">
-                    <Icon size={24} className="text-[#111114]" strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
+                    <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
                   </div>
                   <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mb-3 block">{card.label}</span>
                   <h3 className="font-heading text-base font-semibold text-[#111114] mb-3 leading-tight">{card.title}</h3>
