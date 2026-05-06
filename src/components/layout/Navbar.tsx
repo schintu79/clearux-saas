@@ -71,7 +71,7 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#111114]/80 backdrop-blur-xl border-b border-white/[0.06]">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#111114]/95 backdrop-blur-xl border-b border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -99,10 +99,10 @@ const Navbar: React.FC = () => {
               {credits !== null && (
                 <Link
                   href="/dashboard/buy-credits"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/15 hover:bg-indigo-500/15 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] transition-colors"
                 >
-                  <Coins size={13} className="text-indigo-400" />
-                  <span className="text-xs font-bold text-indigo-400">{credits}</span>
+                  <Coins size={13} className="text-white/50" />
+                  <span className="text-xs font-bold text-white/70">{credits}</span>
                 </Link>
               )}
 

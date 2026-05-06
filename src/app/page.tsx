@@ -101,13 +101,102 @@ export default function Home() {
           SECTION 1 — HERO (Musicbed-inspired)
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative">
+      <section className="relative min-h-[90vh]">
         <AuroraBackground variant="hero" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-32 sm:pt-40 pb-16 sm:pb-20">
+        {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          {/* Two columns of cards, scrolling vertically in opposite directions */}
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.07]">
+            {/* Column 1 — scrolls up */}
+            <div className="flex-1 overflow-hidden">
+              <div
+                className="flex flex-col gap-3"
+                style={{ animation: 'scroll-up-slow 60s linear infinite' }}
+              >
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-3">
+                    {[
+                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171' },
+                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA' },
+                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16' },
+                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full h-[200px] sm:h-[220px] rounded-xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-40"
+                          style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Column 2 — scrolls down */}
+            <div className="flex-1 overflow-hidden hidden sm:block">
+              <div
+                className="flex flex-col gap-3"
+                style={{ animation: 'scroll-down-slow 50s linear infinite' }}
+              >
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-3">
+                    {[
+                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA' },
+                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24' },
+                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE' },
+                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-40"
+                          style={{ background: `radial-gradient(circle at 60% 50%, ${card.color} 0%, transparent 70%)` }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <p className="text-[10px] text-white/50 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Gradient overlay — fades cards from left, Musicbed album art style */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to right, #111114 30%, rgba(17,17,20,0.92) 45%, rgba(17,17,20,0.6) 65%, rgba(17,17,20,0.3) 85%, rgba(17,17,20,0.15) 100%)',
+            }}
+          />
+          {/* Top/bottom fade */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, #111114 0%, transparent 15%, transparent 85%, #111114 100%)',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
           {/* Top label */}
           <motion.p
-            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8"
+            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -116,7 +205,7 @@ export default function Home() {
           </motion.p>
 
           {/* Rotating headline — left-aligned, light weight */}
-          <div className="h-[4.5rem] sm:h-[5.5rem] md:h-[7rem] lg:h-[8.5rem] relative mb-12 sm:mb-16">
+          <div className="h-[4.5rem] sm:h-[5.5rem] md:h-[7rem] lg:h-[8.5rem] relative mb-14 sm:mb-20">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
@@ -135,7 +224,7 @@ export default function Home() {
 
           {/* Description */}
           <motion.p
-            className="text-white/35 text-base sm:text-lg max-w-xl mb-10 sm:mb-14"
+            className="text-white/35 text-base sm:text-lg max-w-xl mb-12 sm:mb-16"
             style={{ lineHeight: '1.7' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -524,29 +613,29 @@ export default function Home() {
           {/* Scrollable cards row */}
           <div
             id="feature-cards-scroll"
-            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
+            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {[
-              { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first. Ranked by severity and business impact.' },
-              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click', desc: 'Professional reports for stakeholders. Branded and formatted.' },
-              { icon: Share2, title: 'Team Sharing', label: 'Shareable', desc: 'One link for score, breakdown, and recommendations.' },
-              { icon: CheckCircle, title: 'Track Every Fix', label: 'Dashboard', desc: 'Status tracking — open, in progress, fixed. Real-time progress.' },
-              { icon: RefreshCw, title: 'Re-Audit', label: 'Baseline', desc: 'Re-audit the same URL. Verify fixes or dig deeper.' },
-              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '4 pillars, each scored individually.' },
+              { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first. Ranked by severity and business impact so your team knows exactly where to start.' },
+              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click', desc: 'Professional reports ready for stakeholders. Branded, formatted, and downloadable in seconds.' },
+              { icon: Share2, title: 'Team Sharing', label: 'Shareable', desc: 'One link for your full score, category breakdown, and prioritised recommendations. No account needed to view.' },
+              { icon: CheckCircle, title: 'Track Every Fix', label: 'Dashboard', desc: 'Status tracking for every finding — open, in progress, fixed. Real-time progress at a glance.' },
+              { icon: RefreshCw, title: 'Re-Audit', label: 'Baseline', desc: 'Re-audit the same URL to verify fixes or dig deeper. Track your score improvement over time.' },
+              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: 'Each of the 4 pillars and 16 categories scored individually. See exactly where you excel and where to improve.' },
             ].map((card, i) => {
               const Icon = card.icon;
               return (
                 <div
                   key={i}
-                  className="relative w-[180px] min-w-[180px] rounded-xl p-5 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors group"
+                  className="relative w-[260px] min-w-[260px] rounded-xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.08] hover:border-[#111114]/[0.15] hover:shadow-lg hover:shadow-black/[0.04] transition-all group"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#111114] flex items-center justify-center mb-5">
-                    <Icon size={18} className="text-white" strokeWidth={1.5} />
+                  <div className="w-12 h-12 rounded-lg bg-[#111114] flex items-center justify-center mb-6">
+                    <Icon size={20} className="text-white" strokeWidth={1.5} />
                   </div>
-                  <h3 className="font-heading text-[13px] font-semibold text-[#111114] mb-2 leading-tight">{card.title}</h3>
-                  <p className="text-[12px] text-[#111114]/35 leading-relaxed">{card.desc}</p>
-                  <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[#111114]/20 mt-4 block">{card.label}</span>
+                  <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mb-3 block">{card.label}</span>
+                  <h3 className="font-heading text-[15px] font-semibold text-[#111114] mb-3 leading-tight">{card.title}</h3>
+                  <p className="text-[13px] text-[#111114]/40 leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
