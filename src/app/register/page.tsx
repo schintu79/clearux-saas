@@ -473,7 +473,7 @@ export default function RegisterPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <span className="font-heading text-3xl font-bold tracking-[0.6px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
+                  <span className="font-heading text-3xl font-extrabold tracking-[0.6px] text-white">clearux.ai</span>
                 </Link>
               </div>
 

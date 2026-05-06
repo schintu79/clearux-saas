@@ -88,7 +88,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-heading text-2xl font-bold tracking-[0.6px] text-text">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span>
+            <span className="font-heading text-2xl font-extrabold tracking-[0.6px] text-text">clearux.ai</span>
           </Link>
         </div>
 
@@ -234,8 +234,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading text-2xl font-bold tracking-[0.6px] text-text">
-            Clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span>
+          <span className="ml-3 font-heading text-2xl font-extrabold tracking-[0.6px] text-text">
+            clearux.ai
           </span>
         </div>
 
