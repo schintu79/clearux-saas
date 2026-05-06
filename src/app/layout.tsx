@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import localFont from 'next/font/local'
 import { DM_Sans, Caveat } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
@@ -8,14 +9,17 @@ import ScrollToTop from '@/components/ui/ScrollToTop'
 import CrispChat from '@/components/ui/CrispChat'
 import './globals.css'
 
+const heuvelGrotesk = localFont({
+  src: '../../public/fonts/Heuvel Grotesk-VF.ttf',
+  variable: '--font-heading',
+  display: 'swap',
+})
+
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['300', '400', '500', '600', '700'],
 })
-
-/* DM Sans used for both heading and body — single font system */
-
 
 const caveat = Caveat({
   subsets: ['latin'],
@@ -95,7 +99,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${heuvelGrotesk.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
