@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
-  Search,
+  Search, FileText, Share2, RefreshCw, BarChart3, ListChecks,
   Sparkles, Target, ScanEye, ShieldAlert,
   Zap, Accessibility, Bot, ChevronDown,
 } from "lucide-react";
@@ -206,7 +206,7 @@ export default function Home() {
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-20 sm:py-28 px-6 sm:px-10 lg:px-16 bg-white">
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
         <div className="relative max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
             {[
@@ -242,7 +242,7 @@ export default function Home() {
           Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 overflow-hidden bg-[#141418]">
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -414,14 +414,14 @@ export default function Home() {
               Simple process
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-3xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
               How ClearUX <span className="italic text-[#111114]/40">works.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-[#111114]/40 text-base md:text-lg max-w-xl leading-relaxed">
-                Three steps. Under 10 minutes. Zero setup.
+              <p className="text-[#111114]/40 text-base md:text-lg max-w-2xl leading-relaxed">
+                No signup walls, no setup, no waiting. Paste a URL, let the AI do the heavy lifting, and get a prioritised report your team can act on immediately.
               </p>
               <Link
                 href="/register"
@@ -438,24 +438,24 @@ export default function Home() {
               {
                 step: '01',
                 title: 'Paste your URL',
-                desc: 'Enter any website. ClearUX crawls every key page automatically — no code, no setup, no browser extension.',
+                desc: 'Enter any website or specific page. ClearUX automatically crawls your key pages, identifies interactive elements, and maps the user journey — no code snippets, no browser extension, no tag manager required.',
               },
               {
                 step: '02',
-                title: 'AI runs 64 checkpoints',
-                desc: 'Each page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI readiness, and conversion psychology.',
+                title: 'AI analyses 64 checkpoints',
+                desc: 'Every page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI agent readiness, and conversion psychology. The AI scores each category, flags issues by severity, and ties findings to business impact.',
               },
               {
                 step: '03',
-                title: 'Get your report',
-                desc: 'A ranked list of findings by severity and business impact — with clear, actionable fixes for each one. Export PDF or Word.',
+                title: 'Get your prioritised report',
+                desc: 'A ranked report with critical issues first, clear explanations of what\'s wrong and why it matters, and actionable fixes for each finding. Export as PDF or Word, share with a link, or track fixes from your dashboard.',
               },
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-[#111114]/10 pt-8">
-                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/30 mb-5">
-                    Step {item.step}
-                  </p>
+                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-[#111114]/[0.06] leading-none block mb-4">
+                    {item.step}
+                  </span>
                   <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{item.title}</h3>
                   <p className="text-sm text-[#111114]/40 leading-relaxed">{item.desc}</p>
                 </div>
@@ -467,72 +467,94 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
-          Pure white, Musicbed editorial style with feature grid
+          Light grey bg, editorial headline + scrolling cards
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-24 sm:py-32 overflow-hidden" style={{ background: '#F7F7F8' }}>
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
               What you get
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
               A report your team{' '}
               <span className="italic text-[#111114]/40">can act on.</span>
             </h2>
-          </ScrollReveal>
-
-          {/* Sub-headline + stat on right */}
-          <ScrollReveal className="mb-16">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-[#111114]/10 pb-8">
-              <h3 className="font-heading text-xl sm:text-2xl font-semibold text-[#111114]">
-                Every finding ranked by impact.
-              </h3>
+              <p className="text-[#111114]/40 text-base md:text-lg max-w-2xl leading-relaxed">
+                Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
+              </p>
               <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/30 flex-shrink-0">
                 64+ checkpoints across 16 categories
               </p>
             </div>
           </ScrollReveal>
+        </div>
 
-          {/* Feature grid — 3 columns, Musicbed card style */}
-          <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-0" staggerDelay={0.08}>
-            {[
-              {
-                title: 'Prioritised findings',
-                desc: 'Critical issues surface first so you fix what matters most. Every finding ranked by severity and business impact.',
-              },
-              {
-                title: 'PDF & Word export',
-                desc: 'Share professional reports with stakeholders in one click. Branded, formatted, and ready for any meeting.',
-              },
-              {
-                title: 'Team sharing',
-                desc: 'One link gives anyone the score, breakdown, and recommendations. Control access and revoke anytime.',
-              },
-              {
-                title: 'Track every fix',
-                desc: 'Every finding gets a status — open, in progress, fixed. Your dashboard shows resolution progress in real-time.',
-              },
-              {
-                title: 'Re-audit to prove it',
-                desc: 'Fix issues and re-audit the same URL. Verify your fixes, run deep scans, or focus on specific pillars.',
-              },
-              {
-                title: 'Category scores',
-                desc: '16 categories across 4 pillars — each scored individually so you know exactly where to improve.',
-              },
-            ].map((item, i) => (
-              <StaggerItem key={i}>
-                <div className="py-8 border-t border-[#111114]/10">
-                  <h3 className="font-heading text-[15px] font-semibold text-[#111114] mb-3">{item.title}</h3>
-                  <p className="text-sm text-[#111114]/40 leading-relaxed">{item.desc}</p>
+        {/* Scrolling feature cards — Musicbed image gallery style */}
+        <div className="space-y-5">
+          {/* Row 1 — scrolls left */}
+          <div className="relative">
+            <div
+              className="flex gap-5 w-max pl-6 sm:pl-10 lg:pl-16"
+              style={{ animation: 'scroll-left 50s linear infinite' }}
+            >
+              {[...Array(2)].map((_, setIdx) => (
+                <div key={setIdx} className="flex gap-5">
+                  {[
+                    { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first so you fix what matters most.' },
+                    { icon: FileText, title: 'PDF & Word Export', label: 'One-Click Reports', desc: 'Share professional reports with stakeholders. Branded and formatted.' },
+                    { icon: Share2, title: 'Team Sharing', label: 'Shareable Links', desc: 'One link gives anyone the score, breakdown, and recommendations.' },
+                  ].map((card, j) => (
+                    <div
+                      key={j}
+                      className="relative w-[300px] sm:w-[360px] rounded-2xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <card.icon size={22} className="text-[#111114]/30" strokeWidth={1.5} />
+                        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25">{card.label}</span>
+                      </div>
+                      <h3 className="font-heading text-lg font-semibold text-[#111114] mb-2">{card.title}</h3>
+                      <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
+                    </div>
+                  ))}
                 </div>
-              </StaggerItem>
-            ))}
-          </StaggerReveal>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2 — scrolls right */}
+          <div className="relative">
+            <div
+              className="flex gap-5 w-max pl-6 sm:pl-10 lg:pl-16"
+              style={{ animation: 'scroll-right 55s linear infinite' }}
+            >
+              {[...Array(2)].map((_, setIdx) => (
+                <div key={setIdx} className="flex gap-5">
+                  {[
+                    { icon: CheckCircle, title: 'Track Every Fix', label: 'Status Dashboard', desc: 'Every finding gets a status — open, in progress, fixed. Track resolution in real-time.' },
+                    { icon: RefreshCw, title: 'Re-Audit to Prove It', label: 'Baseline Mode', desc: 'Fix issues and re-audit the same URL. Verify fixes or dig deeper for new issues.' },
+                    { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '16 categories across 4 pillars — each scored individually so you know where to improve.' },
+                  ].map((card, j) => (
+                    <div
+                      key={j}
+                      className="relative w-[300px] sm:w-[360px] rounded-2xl p-7 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <card.icon size={22} className="text-[#111114]/30" strokeWidth={1.5} />
+                        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25">{card.label}</span>
+                      </div>
+                      <h3 className="font-heading text-lg font-semibold text-[#111114] mb-2">{card.title}</h3>
+                      <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -540,14 +562,14 @@ export default function Home() {
           SECTION 7 — PRICING TEASER
           Glass card, simple
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-7xl mx-auto">
           <ScrollReveal>
-            <div className="glass-card rounded-2xl p-8 sm:p-12">
+            <div className="glass-card rounded-2xl p-8 sm:p-12 max-w-4xl">
               <div className="grid sm:grid-cols-2 gap-10 items-center">
                 <div>
-                  <p className="text-xs font-semibold tracking-widest uppercase text-white/30 mb-4">Simple pricing</p>
-                  <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">Simple pricing</p>
+                  <h2 className="font-heading text-3xl sm:text-4xl font-light text-white mb-3 tracking-tight">
                     $99 per audit.
                   </h2>
                   <p className="text-white/40 text-base mb-8 leading-relaxed">
@@ -606,15 +628,21 @@ export default function Home() {
           SECTION 8 — FAQ
           Clean accordion on dark
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mx-auto">
-          <ScrollReveal className="text-center mb-12">
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
-              Frequently asked questions
+      <section id="faq" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-7xl mx-auto">
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+              FAQ
+            </p>
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
+              style={{ lineHeight: '1.1' }}
+            >
+              Frequently asked <span className="italic text-white/40">questions.</span>
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal className="space-y-2" staggerDelay={0.08}>
+          <StaggerReveal className="space-y-2 max-w-2xl" staggerDelay={0.08}>
             {TOP_FAQS.map((item, idx) => (
               <StaggerItem key={idx}>
                 <details className="group rounded-2xl glass-card overflow-hidden">
@@ -630,7 +658,7 @@ export default function Home() {
             ))}
           </StaggerReveal>
 
-          <ScrollReveal delay={0.3} className="text-center mt-8">
+          <ScrollReveal delay={0.3} className="mt-8 max-w-2xl">
             <Link
               href="/faq"
               className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 hover:text-white transition-colors"
@@ -646,12 +674,12 @@ export default function Home() {
           SECTION 9 — FINAL CTA
           Aurora gradient background with URL input
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 overflow-hidden">
         <AuroraBackground variant="cta" />
         <ScrollReveal className="relative z-10 max-w-3xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
             Ready to see what<br className="hidden sm:block" />
-            you&apos;re <span className="text-[#84CC16]">missing</span>?
+            you&apos;re <span className="italic text-white/40">missing?</span>
           </h2>
           <p className="text-white/40 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
             Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
