@@ -8,7 +8,7 @@ import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
   Search, FileText, Share2, RefreshCw, BarChart3, ListChecks,
   Sparkles, Target, ScanEye, ShieldAlert,
-  Zap, Accessibility, Bot, ChevronDown,
+  Accessibility, Bot, ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -559,65 +559,60 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 7 — PRICING TEASER
-          Glass card, simple
+          SECTION 6 — PRICING
+          Dark bg, left-aligned editorial, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-[#141418]">
         <div className="max-w-7xl mx-auto">
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+              Simple pricing
+            </p>
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
+              style={{ lineHeight: '1.1' }}
+            >
+              $99 per audit.{' '}
+              <span className="italic text-white/40">First one free.</span>
+            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+                No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
+              </p>
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <Link
+                  href="/register"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                >
+                  Start Free Audit
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                >
+                  View All Plans
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {/* Feature list — horizontal strip */}
           <ScrollReveal>
-            <div className="glass-card rounded-2xl p-8 sm:p-12 max-w-4xl">
-              <div className="grid sm:grid-cols-2 gap-10 items-center">
-                <div>
-                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">Simple pricing</p>
-                  <h2 className="font-heading text-3xl sm:text-4xl font-light text-white mb-3 tracking-tight">
-                    $99 per audit.
-                  </h2>
-                  <p className="text-white/40 text-base mb-8 leading-relaxed">
-                    No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis. First audit is free.
-                  </p>
-                  <div className="space-y-3 mb-8">
-                    {[
-                      'All 16 categories, all 4 pillars',
-                      'PDF & Word reports included',
-                      'Track fixes and re-audit anytime',
-                      'Credits never expire',
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-2.5">
-                        <CheckCircle className="w-4 h-4 text-[#84CC16] flex-shrink-0" />
-                        <span className="text-sm text-white/70">{item}</span>
-                      </div>
-                    ))}
+            <div className="border-t border-white/[0.06] pt-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                {[
+                  'All 16 categories, all 4 pillars',
+                  'PDF & Word reports included',
+                  'Track fixes and re-audit anytime',
+                  'Credits never expire',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-4 h-4 text-white/20 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/50">{item}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-start gap-3">
-                    <Link
-                      href="/register"
-                      className="inline-flex items-center gap-2 bg-[#84CC16] text-[#111114] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:bg-[#95d825] transition-all"
-                    >
-                      Start Free Audit
-                      <ArrowRight size={16} />
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-white/40 hover:text-white transition-colors py-3 px-2"
-                    >
-                      View all plans
-                      <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </div>
-                <div className="hidden sm:flex flex-col items-center justify-center">
-                  <div className="text-center">
-                    <div className="flex items-baseline justify-center gap-1 mb-2">
-                      <span className="text-white/30 text-2xl">$</span>
-                      <span className="font-heading text-8xl font-bold text-white tracking-tight">99</span>
-                    </div>
-                    <p className="text-white/30 text-sm">per audit, one-time</p>
-                    <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#84CC16]/10 border border-[#84CC16]/15">
-                      <CheckCircle size={13} className="text-[#84CC16]" />
-                      <span className="text-xs font-semibold text-[#84CC16]">First audit free</span>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </ScrollReveal>
@@ -625,99 +620,99 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 8 — FAQ
-          Clean accordion on dark
+          SECTION 7 — FAQ
+          White bg, left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16">
+      <section id="faq" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
         <div className="max-w-7xl mx-auto">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
               FAQ
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl"
               style={{ lineHeight: '1.1' }}
             >
-              Frequently asked <span className="italic text-white/40">questions.</span>
+              Frequently asked <span className="italic text-[#111114]/40">questions.</span>
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal className="space-y-2 max-w-2xl" staggerDelay={0.08}>
+          <StaggerReveal className="max-w-3xl divide-y divide-[#111114]/10" staggerDelay={0.06}>
             {TOP_FAQS.map((item, idx) => (
               <StaggerItem key={idx}>
-                <details className="group rounded-2xl glass-card overflow-hidden">
-                  <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-white/[0.03] transition-colors">
-                    <h3 className="font-medium text-white text-[15px] pr-4">{item.q}</h3>
-                    <ArrowRight size={14} className="text-white/30 flex-shrink-0 transform group-open:rotate-90 transition-transform" />
+                <details className="group">
+                  <summary className="flex items-center justify-between py-6 cursor-pointer">
+                    <h3 className="font-heading text-[15px] sm:text-base font-semibold text-[#111114] pr-8">{item.q}</h3>
+                    <ChevronDown size={16} className="text-[#111114]/30 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
-                  <div className="mx-5 pb-5 pt-1 border-t border-white/[0.06]">
-                    <p className="text-white/40 text-sm leading-relaxed pt-4">{item.a}</p>
+                  <div className="pb-6">
+                    <p className="text-sm text-[#111114]/40 leading-relaxed">{item.a}</p>
                   </div>
                 </details>
               </StaggerItem>
             ))}
           </StaggerReveal>
 
-          <ScrollReveal delay={0.3} className="mt-8 max-w-2xl">
+          <ScrollReveal delay={0.3} className="mt-10 max-w-3xl">
             <Link
               href="/faq"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 hover:text-white transition-colors"
+              className="group inline-flex items-center gap-2.5 text-sm font-semibold text-[#111114]/40 hover:text-[#111114] transition-colors"
             >
               Read all FAQ
-              <ArrowRight size={14} />
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </ScrollReveal>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 9 — FINAL CTA
-          Aurora gradient background with URL input
+          SECTION 8 — FINAL CTA
+          Dark bg, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 overflow-hidden">
-        <AuroraBackground variant="cta" />
-        <ScrollReveal className="relative z-10 max-w-3xl mx-auto text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
-            Ready to see what<br className="hidden sm:block" />
-            you&apos;re <span className="italic text-white/40">missing?</span>
-          </h2>
-          <p className="text-white/40 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-            Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
-          </p>
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-[#111114]">
+        <div className="max-w-7xl mx-auto">
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+              Get started
+            </p>
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
+              style={{ lineHeight: '1.1' }}
+            >
+              Ready to see what you&apos;re{' '}
+              <span className="italic text-white/40">missing?</span>
+            </h2>
+            <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+              Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
+            </p>
 
-          <form onSubmit={handleHeroSubmit} className="max-w-lg mx-auto mb-6">
-            <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-[#84CC16]/30 transition-all">
-              <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
-              <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
-              <input
-                id="cta-url-input"
-                type="text"
-                name="url"
-                autoComplete="url"
-                value={heroUrl}
-                onChange={(e) => setHeroUrl(e.target.value)}
-                placeholder="yourwebsite.com"
-                aria-label="Website URL to audit"
-                className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/25 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="group flex items-center gap-2 px-6 py-3 bg-[#84CC16] text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-[#95d825] flex-shrink-0"
-              >
-                {user ? 'Get My Audit' : 'Start Free Audit'}
-                <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          </form>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/25">
-            <span>First audit free</span>
-            <span className="opacity-40">&middot;</span>
-            <span>No credit card needed</span>
-            <span className="opacity-40">&middot;</span>
-            <span>Results in minutes</span>
-          </div>
-        </ScrollReveal>
+            <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all">
+                <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
+                <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
+                <input
+                  id="cta-url-input"
+                  type="text"
+                  name="url"
+                  autoComplete="url"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder="yourwebsite.com"
+                  aria-label="Website URL to audit"
+                  className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/20 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+                >
+                  Start Free Audit
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+              <p className="text-[11px] text-white/20 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
+            </form>
+          </ScrollReveal>
+        </div>
       </section>
 
       </main>
