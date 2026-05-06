@@ -502,8 +502,8 @@ export default function Home() {
           SECTION 4 — HOW IT WORKS
           Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section id="how-it-works" className="relative py-24 sm:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
               Simple process
@@ -647,8 +647,8 @@ export default function Home() {
           SECTION 6 — PRICING
           Dark bg, left-aligned editorial, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-[#141418]">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-24 sm:py-32 bg-[#141418]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               Simple pricing
@@ -708,8 +708,8 @@ export default function Home() {
           SECTION 7 — FAQ
           White bg, left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section id="faq" className="relative py-24 sm:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
               FAQ

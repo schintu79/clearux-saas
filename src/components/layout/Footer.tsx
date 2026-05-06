@@ -4,8 +4,8 @@ const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="bg-[#0C0C0F] py-14 px-6 sm:px-10 lg:px-16 border-t border-white/[0.06]">
-      <div className="max-w-7xl mx-auto">
+    <footer role="contentinfo" aria-label="Site footer" className="bg-[#0C0C0F] py-14 border-t border-white/[0.06]">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
 
         {/* Top: Brand + Links */}
         <div className="flex flex-col md:flex-row gap-12 md:gap-16 mb-12">
