@@ -344,7 +344,7 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-white"
+                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient"
                   duration={2}
                 />
                 <p className="text-sm font-semibold text-white/70 mt-3">{stat.label}</p>
@@ -434,45 +434,39 @@ export default function Home() {
           </StaggerReveal>
         </div>
 
-        {/* ── Scrolling showcase gallery ── */}
-        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative">
+        {/* ── Scrolling showcase gallery — minimal finding rows ── */}
+        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
-              className="flex gap-4 w-max"
+              className="flex gap-3 w-max"
               style={{ animation: 'scroll-left 40s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-4">
+                <div key={setIdx} className="flex gap-3">
                   {[
-                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171' },
-                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA' },
-                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA' },
-                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24' },
-                  ].map((card, j) => (
-                    <div
-                      key={j}
-                      className="relative w-[280px] sm:w-[340px] h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                    >
+                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171', icon: ShieldAlert },
+                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA', icon: Brain },
+                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA', icon: Bot },
+                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24', icon: Target },
+                  ].map((card, j) => {
+                    const CardIcon = card.icon;
+                    return (
                       <div
-                        className="absolute inset-0 opacity-30"
-                        style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
-                        <div>
-                          <p className="text-xs text-white/30 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        key={j}
+                        className="relative w-[240px] sm:w-[280px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                          <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
                         </div>
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{ background: `${card.color}20` }}
-                        >
-                          <ScanEye size={14} style={{ color: card.color }} />
+                        <div className="min-w-0">
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -481,40 +475,34 @@ export default function Home() {
           {/* Row 2 — scrolls right */}
           <div className="relative">
             <div
-              className="flex gap-4 w-max"
+              className="flex gap-3 w-max"
               style={{ animation: 'scroll-right 45s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-4">
+                <div key={setIdx} className="flex gap-3">
                   {[
-                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16' },
-                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE' },
-                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899' },
-                    { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B' },
-                  ].map((card, j) => (
-                    <div
-                      key={j}
-                      className="relative w-[260px] sm:w-[300px] h-[160px] sm:h-[180px] rounded-xl overflow-hidden flex-shrink-0"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                    >
+                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16', icon: Shield },
+                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE', icon: Eye },
+                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899', icon: Accessibility },
+                    { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
+                  ].map((card, j) => {
+                    const CardIcon = card.icon;
+                    return (
                       <div
-                        className="absolute inset-0 opacity-30"
-                        style={{ background: `radial-gradient(circle at 70% 60%, ${card.color} 0%, transparent 70%)` }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
-                        <div>
-                          <p className="text-xs text-white/30 mb-1">{card.subtitle}</p>
-                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        key={j}
+                        className="relative w-[220px] sm:w-[260px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
+                          <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
                         </div>
-                        <div
-                          className="w-7 h-7 rounded-lg flex items-center justify-center"
-                          style={{ background: `${card.color}20` }}
-                        >
-                          <ScanEye size={12} style={{ color: card.color }} />
+                        <div className="min-w-0">
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -675,34 +663,34 @@ export default function Home() {
           SECTION 6 — PRICING
           Dark bg, left-aligned editorial, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 bg-[#141418]">
+      <section className="relative py-24 sm:py-32" style={{ background: 'linear-gradient(135deg, #84CC16, #65A30D)' }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/50 mb-8">
               Simple pricing
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
               $99 per audit.{' '}
-              <span className="italic text-white/40">First one free.</span>
+              <span className="italic text-[#111114]/40">First one free.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-[#111114]/60 text-base md:text-lg max-w-2xl leading-relaxed">
                 No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
               </p>
               <div className="flex items-center gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 whitespace-nowrap"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-[#111114]/30 text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:border-[#111114]/60 whitespace-nowrap"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -713,7 +701,7 @@ export default function Home() {
 
           {/* Feature list — horizontal strip */}
           <ScrollReveal>
-            <div className="border-t border-white/[0.06] pt-10">
+            <div className="border-t border-[#111114]/10 pt-10">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
                   'All 16 categories, all 4 pillars',
@@ -722,8 +710,8 @@ export default function Home() {
                   'Credits never expire',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#84CC16] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/50">{item}</span>
+                    <CheckCircle className="w-5 h-5 text-[#111114] flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-[#111114]/70 font-medium">{item}</span>
                   </div>
                 ))}
               </div>
