@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
-  Search, FileText, Share2, RefreshCw,
+  Search,
   Sparkles, Target, ScanEye, ShieldAlert,
   Zap, Accessibility, Bot, ChevronDown,
 } from "lucide-react";
@@ -14,7 +14,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
-import { ReportShowcase } from '@/components/motion/ProductMockup';
+// ProductMockup components available if needed
+// import { ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 import AuroraBackground from '@/components/motion/AuroraBackground';
 
@@ -465,94 +466,72 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 5 — PRODUCT SHOWCASE
-          Report mockup with glass card features below
+          SECTION 5 — WHAT YOU GET
+          Pure white, Musicbed editorial style with feature grid
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <AuroraBackground variant="subtle" />
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-4 text-[#84CC16]">What you get</p>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
-              A report your team can act on
-            </h2>
-            <p className="text-white/40 text-base md:text-lg max-w-xl mx-auto">
-              Every finding ranked by severity and business impact, with clear fixes and category scores.
+      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
+        <div className="max-w-7xl mx-auto">
+          {/* Editorial headline */}
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
+              What you get
             </p>
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl"
+              style={{ lineHeight: '1.1' }}
+            >
+              A report your team{' '}
+              <span className="italic text-[#111114]/40">can act on.</span>
+            </h2>
           </ScrollReveal>
 
-          <ReportShowcase />
-
-          {/* 3 feature highlights */}
-          <StaggerReveal className="grid sm:grid-cols-3 gap-8 mt-16" staggerDelay={0.1}>
-            {[
-              { icon: CheckCircle, title: 'Prioritised findings', desc: 'Critical issues surface first so you fix what matters most.' },
-              { icon: FileText, title: 'PDF & Word export', desc: 'Share professional reports with stakeholders in one click.' },
-              { icon: Share2, title: 'Team sharing', desc: 'One link gives anyone the score, breakdown, and recommendations.' },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <StaggerItem key={i}>
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#84CC16]/10 mb-4">
-                      <Icon size={18} className="text-[#84CC16]" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-white mb-1.5">{item.title}</h3>
-                    <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — BEYOND THE REPORT
-          Glass cards in a horizontal strip
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <ScrollReveal className="text-center mb-16">
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
-              Beyond the report
-            </h2>
-            <p className="text-white/40 text-base md:text-lg max-w-xl mx-auto">
-              Track fixes, measure improvement, share results — all from one dashboard.
-            </p>
+          {/* Sub-headline + stat on right */}
+          <ScrollReveal className="mb-16">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-[#111114]/10 pb-8">
+              <h3 className="font-heading text-xl sm:text-2xl font-semibold text-[#111114]">
+                Every finding ranked by impact.
+              </h3>
+              <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/30 flex-shrink-0">
+                64+ checkpoints across 16 categories
+              </p>
+            </div>
           </ScrollReveal>
 
-          <StaggerReveal className="grid md:grid-cols-3 gap-6 lg:gap-8" staggerDelay={0.12}>
+          {/* Feature grid — 3 columns, Musicbed card style */}
+          <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-0" staggerDelay={0.08}>
             {[
               {
-                icon: CheckCircle,
+                title: 'Prioritised findings',
+                desc: 'Critical issues surface first so you fix what matters most. Every finding ranked by severity and business impact.',
+              },
+              {
+                title: 'PDF & Word export',
+                desc: 'Share professional reports with stakeholders in one click. Branded, formatted, and ready for any meeting.',
+              },
+              {
+                title: 'Team sharing',
+                desc: 'One link gives anyone the score, breakdown, and recommendations. Control access and revoke anytime.',
+              },
+              {
                 title: 'Track every fix',
                 desc: 'Every finding gets a status — open, in progress, fixed. Your dashboard shows resolution progress in real-time.',
               },
               {
-                icon: RefreshCw,
                 title: 'Re-audit to prove it',
-                desc: 'Fix issues and re-audit the same URL. Verify your fixes, run deep scans for new issues, or focus on specific pillars.',
+                desc: 'Fix issues and re-audit the same URL. Verify your fixes, run deep scans, or focus on specific pillars.',
               },
               {
-                icon: Share2,
-                title: 'Share with anyone',
-                desc: 'One link gives stakeholders the score, pillar breakdown, and top recommendations. Export PDF or Word. Revoke anytime.',
+                title: 'Category scores',
+                desc: '16 categories across 4 pillars — each scored individually so you know exactly where to improve.',
               },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <StaggerItem key={i}>
-                  <div className="glass-card glass-card-hover rounded-2xl p-8 h-full transition-colors">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mb-5">
-                      <Icon size={20} className="text-white/60" />
-                    </div>
-                    <h3 className="font-heading text-lg font-semibold text-white mb-2">{item.title}</h3>
-                    <p className="text-sm text-white/40 leading-relaxed">{item.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
+            ].map((item, i) => (
+              <StaggerItem key={i}>
+                <div className="py-8 border-t border-[#111114]/10">
+                  <h3 className="font-heading text-[15px] font-semibold text-[#111114] mb-3">{item.title}</h3>
+                  <p className="text-sm text-[#111114]/40 leading-relaxed">{item.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
           </StaggerReveal>
         </div>
       </section>
