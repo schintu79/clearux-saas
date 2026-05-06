@@ -244,17 +244,17 @@ export default function AboutContent() {
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">
             64 checkpoints. 16 categories. Results in minutes.
           </p>
-          <div className="flex flex-col sm:flex-row items-start gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
             >
               Start Free Audit
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
             >
               Contact us
             </Link>

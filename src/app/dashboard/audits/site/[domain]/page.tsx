@@ -177,11 +177,11 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
       <div className="max-w-4xl mx-auto py-6 px-4 space-y-4">
         <div className="h-4 w-28 bg-off rounded animate-pulse" />
         <div className="h-7 w-48 bg-off rounded animate-pulse" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="h-48 bg-off rounded-xl animate-pulse" />
           <div className="h-48 bg-off rounded-xl animate-pulse" />
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-off rounded-xl animate-pulse" />)}
         </div>
       </div>

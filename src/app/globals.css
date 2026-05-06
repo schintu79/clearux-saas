@@ -484,7 +484,7 @@ article, .prose {
   width: 520px;
   height: 520px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(132,204,22,.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -522,11 +522,11 @@ article, .prose {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  box-shadow: 0 0 0 3px rgba(132,204,22,.10);
 }
 
 .dark .input:focus {
-  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+  box-shadow: 0 0 0 3px rgba(132,204,22,.12);
 }
 
 .input::placeholder {
@@ -796,6 +796,15 @@ article, .prose {
    MOBILE — Touch-friendly + iOS auto-zoom prevention
    ══════════════════════════════════════════════════════════════ */
 
+/* Hide scrollbar for horizontal scroll areas */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe area insets for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  footer { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+}
+
 @media (max-width: 768px) {
   input, select, textarea {
     font-size: 16px !important;
@@ -809,6 +818,10 @@ article, .prose {
     min-height: 48px;
     padding: 0.875rem 1.5rem;
     font-size: 0.9375rem;
+  }
+  /* Prevent horizontal overflow on any page */
+  body {
+    overflow-x: hidden;
   }
 }
 

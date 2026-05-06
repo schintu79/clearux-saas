@@ -147,7 +147,7 @@ export default function PricingContent() {
       <section className="bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex items-center gap-4">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 whitespace-nowrap">Need more audits? Save with packs</span>
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 text-center">Need more audits? Save with packs</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
       </section>
@@ -192,7 +192,7 @@ export default function PricingContent() {
 
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap w-full sm:w-auto"
                 >
                   {pack.cta}
                 </Link>
@@ -239,60 +239,60 @@ export default function PricingContent() {
           </h2>
 
           <div className="rounded-xl border border-white/[0.06] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <table className="w-full text-sm border-collapse min-w-[540px]">
                 <thead>
                   <tr className="bg-[#0C0C0F]">
-                    <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Plan</th>
-                    <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Price</th>
-                    <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Per Audit</th>
-                    <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Best For</th>
+                    <th className="text-left px-3 sm:px-6 py-3 sm:py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Plan</th>
+                    <th className="text-left px-3 sm:px-6 py-3 sm:py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Price</th>
+                    <th className="text-left px-3 sm:px-6 py-3 sm:py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Per Audit</th>
+                    <th className="text-left px-3 sm:px-6 py-3 sm:py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Best For</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-white/[0.02] border-b border-white/[0.04]">
-                    <td className="px-6 py-5 font-semibold text-white font-body">Free Audit</td>
-                    <td className="px-6 py-5 font-semibold text-white text-lg font-body">$0</td>
-                    <td className="px-6 py-5 text-white/50 font-body">Free (1 audit)</td>
-                    <td className="px-6 py-5 text-white/50 font-body">First-time users evaluating the platform</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Free Audit</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$0</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Free (1 audit)</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">First-time users evaluating the platform</td>
                   </tr>
                   <tr className="bg-white/[0.03] border-b border-white/[0.04]">
-                    <td className="px-6 py-5 font-semibold text-white font-body">Single Audit</td>
-                    <td className="px-6 py-5 font-semibold text-white text-lg font-body">$99</td>
-                    <td className="px-6 py-5 text-white/50 font-body">$99.00</td>
-                    <td className="px-6 py-5 text-white/50 font-body">One-off baseline or pre-launch check</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Single Audit</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$99</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">$99.00</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">One-off baseline or pre-launch check</td>
                   </tr>
                   <tr className="bg-white/[0.02] border-b border-white/[0.04]">
-                    <td className="px-6 py-5 font-semibold text-white font-body">
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">
                       <span className="flex items-center gap-3">
                         Growth
                         <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">Popular</span>
                       </span>
                     </td>
-                    <td className="px-6 py-5 font-semibold text-white text-lg font-body">$399</td>
-                    <td className="px-6 py-5 font-body">
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$399</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$79.80</span>
                       <span className="ml-2 text-[11px] font-semibold text-white/40">save 19%</span>
                     </td>
-                    <td className="px-6 py-5 text-white/50 font-body">Quarterly audits per release cycle</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Quarterly audits per release cycle</td>
                   </tr>
                   <tr className="bg-white/[0.03] border-b border-white/[0.04]">
-                    <td className="px-6 py-5 font-semibold text-white font-body">Agency</td>
-                    <td className="px-6 py-5 font-semibold text-white text-lg font-body">$999</td>
-                    <td className="px-6 py-5 font-body">
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Agency</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$999</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$66.60</span>
                       <span className="ml-2 text-[11px] font-semibold text-white/40">save 33%</span>
                     </td>
-                    <td className="px-6 py-5 text-white/50 font-body">Multiple client sites + white-label</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Multiple client sites + white-label</td>
                   </tr>
                   <tr className="bg-white/[0.02]">
-                    <td className="px-6 py-5 font-semibold text-white font-body">Scale</td>
-                    <td className="px-6 py-5 font-semibold text-white text-lg font-body">$2,499</td>
-                    <td className="px-6 py-5 font-body">
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Scale</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$2,499</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$49.98</span>
                       <span className="ml-2 text-[11px] font-semibold text-white/40">save 50%</span>
                     </td>
-                    <td className="px-6 py-5 text-white/50 font-body">Continuous auditing across teams</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Continuous auditing across teams</td>
                   </tr>
                 </tbody>
               </table>

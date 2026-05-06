@@ -306,13 +306,13 @@ export default function RegisterPage() {
               {passwordChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-2">
                   <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                    check.met ? 'bg-indigo-500' : 'bg-border'
+                    check.met ? 'bg-[#84CC16]' : 'bg-border'
                   }`}>
                     {check.met && (
                       <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     )}
                   </div>
-                  <span className={`text-xs transition-colors ${check.met ? 'text-indigo-400' : 'text-white/50'}`}>
+                  <span className={`text-xs transition-colors ${check.met ? 'text-[#84CC16]' : 'text-white/50'}`}>
                     {check.label}
                   </span>
                 </div>
@@ -352,14 +352,14 @@ export default function RegisterPage() {
           {formData.confirmPassword.length > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
               <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                formData.password === formData.confirmPassword ? 'bg-indigo-500' : 'bg-border'
+                formData.password === formData.confirmPassword ? 'bg-[#84CC16]' : 'bg-border'
               }`}>
                 {formData.password === formData.confirmPassword && (
                   <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 )}
               </div>
               <span className={`text-xs transition-colors ${
-                formData.password === formData.confirmPassword ? 'text-indigo-400' : 'text-white/50'
+                formData.password === formData.confirmPassword ? 'text-[#84CC16]' : 'text-white/50'
               }`}>
                 {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
               </span>
@@ -377,7 +377,7 @@ export default function RegisterPage() {
             onClick={() => setMarketingEmails(prev => !prev)}
             className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
               marketingEmails
-                ? 'bg-indigo-500 border-indigo-500'
+                ? 'bg-[#84CC16] border-[#84CC16]'
                 : 'bg-white/10 border-white/[0.06]'
             }`}
           >
@@ -494,8 +494,8 @@ export default function RegisterPage() {
                 <div className="mt-8 space-y-5">
                   {valueProps.map((prop) => (
                     <div key={prop.title} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                        <prop.icon size={22} className="text-white/70" />
+                      <div className="w-11 h-11 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                        <prop.icon size={22} className="text-[#84CC16]" />
                       </div>
                       <div>
                         <p className="text-base font-medium text-white/80">{prop.title}</p>

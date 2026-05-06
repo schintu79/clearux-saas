@@ -358,17 +358,17 @@ export default function FaqPage() {
               Reach out and we will get back to you within a business day.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Email Support
                 <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
               </a>
               <Link
                 href="/contact"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
               >
                 Contact Us
               </Link>

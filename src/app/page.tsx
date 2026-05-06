@@ -107,7 +107,7 @@ export default function Home() {
         </div>
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden sm:block" aria-hidden="true">
           {/* Two columns of findings, scrolling vertically in opposite directions */}
           <div className="absolute top-1/2 -translate-y-1/2 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-[80%] flex gap-1.5 opacity-[0.40]">
             {/* Column 1 — scrolls up */}
@@ -197,7 +197,7 @@ export default function Home() {
           </motion.p>
 
           {/* Rotating headline — left-aligned, light weight */}
-          <div className="h-[7rem] sm:h-[8rem] md:h-[10.5rem] lg:h-[12rem] relative mb-8 sm:mb-10">
+          <div className="h-[8.5rem] sm:h-[8rem] md:h-[10.5rem] lg:h-[12rem] relative mb-8 sm:mb-10">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
@@ -233,8 +233,8 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="flex items-center gap-4">
-              <div className="relative flex items-center w-full max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <div className="relative flex items-center w-full sm:max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
                 <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
@@ -251,7 +251,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -262,7 +262,7 @@ export default function Home() {
 
           {/* Selling points — inline below input */}
           <motion.div
-            className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-10"
+            className="flex flex-wrap items-center gap-x-5 sm:gap-x-8 gap-y-3 mt-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
@@ -637,7 +637,7 @@ export default function Home() {
               return (
                 <div
                   key={i}
-                  className="relative w-[320px] min-w-[320px] rounded-xl p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group"
+                  className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group"
                 >
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
@@ -689,17 +689,17 @@ export default function Home() {
               <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed">
                 No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
               </p>
-              <div className="flex items-center gap-4 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] w-full sm:w-auto"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px] w-full sm:w-auto"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -711,7 +711,7 @@ export default function Home() {
           {/* Feature list — horizontal strip */}
           <ScrollReveal>
             <div className="border-t border-white/[0.08] pt-10">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
                 {[
                   'All 16 categories, all 4 pillars',
                   'PDF & Word reports included',
@@ -805,8 +805,8 @@ export default function Home() {
             </p>
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
-              <div className="flex items-center gap-4">
-                <div className="relative flex items-center w-full max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                <div className="relative flex items-center w-full sm:max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all backdrop-blur-sm">
                   <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                   <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                   <input
@@ -823,7 +823,7 @@ export default function Home() {
                 </div>
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />

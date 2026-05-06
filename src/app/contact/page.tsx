@@ -60,7 +60,7 @@ export default function ContactPage() {
             </p>
             <div className="max-w-xl mt-12">
               {submitted ? (
-                <div className="rounded-xl p-9 border border-white/[0.06] bg-white/[0.03]">
+                <div className="rounded-xl p-6 sm:p-9 border border-white/[0.06] bg-white/[0.03]">
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
                     <CheckCircle size={28} className="text-[#84CC16]" />
                   </div>
@@ -68,7 +68,7 @@ export default function ContactPage() {
                   <p className="font-body text-sm text-white/50">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
                 </div>
               ) : (
-                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10">
+                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5 sm:p-8 md:p-10">
                   <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
                     {error && (
                       <div className="rounded-lg p-4 text-sm font-body text-red-400 border border-red-800 bg-red-900/20">

@@ -307,8 +307,8 @@ export default function LoginPage() {
                 <div className="mt-8 space-y-5">
                   {kspItems.map((item) => (
                     <div key={item.text} className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
-                        <item.icon size={22} className="text-white/70" />
+                      <div className="w-11 h-11 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
+                        <item.icon size={22} className="text-[#84CC16]" />
                       </div>
                       <p className="text-base font-medium text-white/80">{item.text}</p>
                     </div>
