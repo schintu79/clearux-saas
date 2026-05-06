@@ -185,10 +185,11 @@ export default function Home() {
 
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
+        {/* Hero content — vertically centered on all screens */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-24 sm:pt-44 sm:pb-28">
           {/* Top label */}
           <motion.p
-            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10"
+            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -197,12 +198,12 @@ export default function Home() {
           </motion.p>
 
           {/* Rotating headline — left-aligned, light weight */}
-          <div className="h-[8.5rem] sm:h-[8rem] md:h-[10.5rem] lg:h-[12rem] relative mb-8 sm:mb-10">
+          <div className="relative mb-5 sm:mb-10">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light text-white absolute inset-x-0"
-                style={{ lineHeight: '1.02' }}
+                className="font-heading text-[2.75rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light text-white"
+                style={{ lineHeight: '1.05' }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -50 }}
@@ -216,7 +217,7 @@ export default function Home() {
 
           {/* Description */}
           <motion.p
-            className="text-white/35 text-base sm:text-lg max-w-xl mb-12 sm:mb-16"
+            className="text-white/35 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
             style={{ lineHeight: '1.7' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -233,8 +234,8 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <div className="relative flex items-center w-full sm:max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="relative flex items-center flex-1 sm:flex-initial sm:w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
                 <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
@@ -246,14 +247,15 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder={placeholder}
                   aria-label="Website URL to audit"
-                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
+                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.1rem] sm:py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
                 />
               </div>
               <button
                 type="submit"
-                className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
-                Start Free Audit
+                <span className="sm:hidden">Start</span>
+                <span className="hidden sm:inline">Start Free Audit</span>
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -262,7 +264,7 @@ export default function Home() {
 
           {/* Selling points — inline below input */}
           <motion.div
-            className="flex flex-wrap items-center gap-x-5 sm:gap-x-8 gap-y-3 mt-10"
+            className="flex flex-wrap items-center gap-x-5 sm:gap-x-8 gap-y-3 mt-8 sm:mt-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
@@ -279,10 +281,9 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Scroll indicator — "Discover ClearUX" */}
-        <div className="relative z-10 flex-1" />
+        {/* Scroll indicator — "Discover ClearUX" — always at bottom */}
         <motion.div
-          className="relative z-10 flex justify-center pb-20 sm:pb-24"
+          className="relative z-10 flex justify-center pb-6 sm:pb-24 flex-shrink-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
@@ -293,7 +294,7 @@ export default function Home() {
               const el = document.getElementById('trust-stats');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="group flex flex-col items-center gap-3 animate-bounce-slow cursor-pointer"
+            className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
           >
             <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-semibold">Discover ClearUX</span>
             <div className="w-10 h-10 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
