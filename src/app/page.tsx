@@ -34,12 +34,11 @@ const HERO_HEADLINES = [
   { main: '64 Checkpoints.', accent: 'Zero Guesswork.' },
 ];
 
-/* ── Selling points below search bar ────────────────────── */
-const HERO_SELLING_POINTS = [
-  { icon: ShieldAlert, label: 'Dark Pattern', highlight: 'Detection' },
-  { icon: Accessibility, label: 'Cognitive', highlight: 'Accessibility' },
-  { icon: Bot, label: 'AI Agent', highlight: 'Readiness' },
-  { icon: Target, label: 'Conversion', highlight: 'Psychology' },
+/* ── Hero KSPs — outcome-focused, not feature-focused ──── */
+const HERO_KSPS = [
+  { text: '64 checkpoints' },
+  { text: 'Under 10 min' },
+  { text: 'No credit card' },
 ];
 
 /* ── Typewriter placeholders ─────────────────────────────── */
@@ -259,25 +258,21 @@ export default function Home() {
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
-            <p className="text-xs text-white/35 mt-3 tracking-wide">No credit card required</p>
           </motion.form>
 
-          {/* Selling points — inline below input */}
+          {/* KSPs — minimal proof points */}
           <motion.div
-            className="flex flex-wrap items-center gap-x-5 sm:gap-x-8 gap-y-3 mt-8 sm:mt-10"
+            className="flex items-center gap-3 sm:gap-4 mt-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            {HERO_SELLING_POINTS.map((sp, i) => {
-              const Icon = sp.icon;
-              return (
-                <div key={i} className="flex items-center gap-2.5">
-                  <Icon size={16} className="text-[#84CC16]" />
-                  <span className="text-[13px] text-white/40 tracking-wide">{sp.label} <span className="font-semibold text-white/70">{sp.highlight}</span></span>
-                </div>
-              );
-            })}
+            {HERO_KSPS.map((ksp, i) => (
+              <div key={i} className="flex items-center gap-3 sm:gap-4">
+                {i > 0 && <span className="text-white/15">·</span>}
+                <span className="text-[13px] text-white/45 tracking-wide">{ksp.text}</span>
+              </div>
+            ))}
           </motion.div>
         </div>
 
