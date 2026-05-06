@@ -234,8 +234,8 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.5 }}
           >
             <div className="flex items-center gap-4">
-              <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.04] border border-white/[0.10] rounded-full focus-within:border-white/[0.25] transition-all">
-                <Search size={16} className="ml-4 text-white/30 flex-shrink-0" />
+              <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.06] border border-white/[0.15] rounded-full focus-within:border-white/[0.25] transition-all">
+                <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
                   id="hero-url-input"
@@ -246,18 +246,18 @@ export default function Home() {
                   onChange={(e) => setHeroUrl(e.target.value)}
                   placeholder={placeholder}
                   aria-label="Website URL to audit"
-                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-3 placeholder:text-white/25 focus:outline-none min-w-0"
+                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
                 />
               </div>
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group flex items-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
-            <p className="text-[11px] text-white/20 mt-3 tracking-wide">No credit card required</p>
+            <p className="text-xs text-white/35 mt-3 tracking-wide">No credit card required</p>
           </motion.form>
 
           {/* Selling points — inline below input */}
@@ -369,7 +369,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -530,7 +530,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -687,14 +687,14 @@ export default function Home() {
               <div className="flex items-center gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -750,7 +750,7 @@ export default function Home() {
                 <details className="group">
                   <summary className="flex items-center justify-between py-6 cursor-pointer">
                     <h3 className="font-heading text-[15px] sm:text-base font-semibold text-white pr-8">{item.q}</h3>
-                    <ChevronDown size={16} className="text-white/30 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
+                    <ChevronDown size={16} className="text-white/40 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="pb-6">
                     <p className="text-sm text-white/40 leading-relaxed">{item.a}</p>
@@ -801,8 +801,8 @@ export default function Home() {
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
               <div className="flex items-center gap-4">
-                <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.04] border border-white/[0.10] rounded-full focus-within:border-white/[0.25] transition-all backdrop-blur-sm">
-                  <Search size={16} className="ml-4 text-white/30 flex-shrink-0" />
+                <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.06] border border-white/[0.15] rounded-full focus-within:border-white/[0.25] transition-all backdrop-blur-sm">
+                  <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                   <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                   <input
                     id="cta-url-input"
@@ -813,18 +813,18 @@ export default function Home() {
                     onChange={(e) => setHeroUrl(e.target.value)}
                     placeholder="yourwebsite.com"
                     aria-label="Website URL to audit"
-                    className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-3 placeholder:text-white/25 focus:outline-none min-w-0"
+                    className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-7 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group flex items-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
-              <p className="text-[11px] text-white/20 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
+              <p className="text-xs text-white/35 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
             </form>
           </ScrollReveal>
         </div>

@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-semibold text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-7 py-3 min-h-[48px] tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-7 py-[1.2rem] min-h-[48px] tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Start Free Audit
                   <ArrowUpRight size={14} />
@@ -201,7 +201,7 @@ const Navbar: React.FC = () => {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-3 min-h-[44px] flex items-center"
+                  className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -210,19 +210,19 @@ const Navbar: React.FC = () => {
               <div className="flex flex-col gap-1 pt-3 border-t border-white/[0.06] mt-2">
                 {isLoggedIn ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white px-3 py-3 min-h-[44px] flex items-center">
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Dashboard
                     </Link>
-                    <button onClick={handleSignOut} className="text-sm text-red-400 px-3 py-3 min-h-[44px] text-left">
+                    <button onClick={handleSignOut} className="text-sm text-red-400 px-3 py-[1.2rem] min-h-[44px] text-left">
                       Sign out
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-3 min-h-[44px] flex items-center">
+                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-[#111114] bg-lime-gradient rounded-full px-7 py-3 text-center min-h-[48px] tracking-wide uppercase flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-[#111114] bg-lime-gradient rounded-full px-7 py-[1.2rem] text-center min-h-[48px] tracking-wide uppercase flex items-center justify-center mt-1">
                       Start Free Audit
                     </Link>
                   </>
