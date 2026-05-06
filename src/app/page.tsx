@@ -234,7 +234,7 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.5 }}
           >
             <div className="flex items-center gap-4">
-              <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.06] border border-white/[0.15] rounded-full focus-within:border-white/[0.25] transition-all">
+              <div className="relative flex items-center w-full max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
                 <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
@@ -581,7 +581,7 @@ export default function Home() {
               What you get
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-10"
              
             >
               A report your team{' '}
@@ -662,7 +662,76 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 6 — PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36">
+      <section className="relative py-28 sm:py-36 overflow-hidden">
+        {/* Background image — same as hero */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+        </div>
+
+        {/* Scrolling cards — right side ambient decoration */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="absolute top-1/2 -translate-y-1/2 right-[2%] lg:right-[5%] w-[35%] lg:w-[30%] h-[90%] flex gap-1.5 opacity-[0.25]">
+            <div className="flex-1 overflow-hidden">
+              <div className="flex flex-col gap-1.5" style={{ animation: 'scroll-up-slow 55s linear infinite' }}>
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-1.5">
+                    {[
+                      { label: 'Full 64-Checkpoint Audit', subtitle: 'Complete' },
+                      { label: 'PDF & Word Reports', subtitle: 'Deliverables' },
+                      { label: 'Priority-Ranked Issues', subtitle: 'Actionable' },
+                      { label: 'Fix Tracking & Re-Audit', subtitle: 'Progress' },
+                      { label: 'AI Readiness Score', subtitle: 'Future-Proof' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                          <CheckCircle size={17} className="text-white/30" strokeWidth={1.5} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden hidden sm:block">
+              <div className="flex flex-col gap-1.5" style={{ animation: 'scroll-down-slow 45s linear infinite' }}>
+                {[...Array(2)].map((_, setIdx) => (
+                  <div key={setIdx} className="flex flex-col gap-1.5">
+                    {[
+                      { label: 'Dark Pattern Detection', subtitle: 'Ethics' },
+                      { label: 'Cognitive Accessibility', subtitle: 'Inclusion' },
+                      { label: 'Conversion Psychology', subtitle: 'Revenue' },
+                      { label: 'WCAG Compliance', subtitle: 'Standards' },
+                      { label: 'Mobile UX Analysis', subtitle: 'Responsive' },
+                    ].map((card, j) => (
+                      <div
+                        key={j}
+                        className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                          <CheckCircle size={17} className="text-white/30" strokeWidth={1.5} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -801,7 +870,7 @@ export default function Home() {
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
               <div className="flex items-center gap-4">
-                <div className="relative flex items-center w-full max-w-[300px] bg-white/[0.06] border border-white/[0.15] rounded-full focus-within:border-white/[0.25] transition-all backdrop-blur-sm">
+                <div className="relative flex items-center w-full max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all backdrop-blur-sm">
                   <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                   <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                   <input
