@@ -269,8 +269,8 @@ export default function Home() {
           >
             {HERO_KSPS.map((ksp, i) => (
               <div key={i} className="flex items-center gap-3 sm:gap-4">
-                {i > 0 && <span className="text-white/15">·</span>}
-                <span className="text-[13px] text-white/45 tracking-wide">{ksp.text}</span>
+                {i > 0 && <span className="text-[#84CC16]/30">·</span>}
+                <span className="text-[13px] font-semibold text-lime-gradient tracking-wide">{ksp.text}</span>
               </div>
             ))}
           </motion.div>
