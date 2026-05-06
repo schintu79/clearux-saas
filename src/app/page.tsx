@@ -17,7 +17,6 @@ import { useAuth } from '@/context/AuthContext';
 // ProductMockup components available if needed
 // import { ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
-import AuroraBackground from '@/components/motion/AuroraBackground';
 
 /* ── FAQ data ─────────────────────────────────────────────── */
 const TOP_FAQS = [
@@ -102,7 +101,10 @@ export default function Home() {
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
-        <AuroraBackground variant="hero" />
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+        </div>
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -181,20 +183,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Gradient overlay — softer fade so findings are visible */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to right, #111114 25%, rgba(17,17,20,0.85) 40%, rgba(17,17,20,0.4) 60%, rgba(17,17,20,0.1) 80%, transparent 100%)',
-            }}
-          />
-          {/* Top/bottom fade */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to bottom, #111114 0%, transparent 12%, transparent 88%, #111114 100%)',
-            }}
-          />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
@@ -359,7 +347,11 @@ export default function Home() {
           SECTION 3 — CORE FEATURES
           Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#141418]">
+      <section className="relative py-24 sm:py-32 overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
@@ -518,8 +510,12 @@ export default function Home() {
           SECTION 4 — HOW IT WORKS
           Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative py-24 sm:py-32 bg-[#111114]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section id="how-it-works" className="relative py-24 sm:py-32 overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               Simple process
@@ -658,15 +654,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Blob glow wrapper — spans Pricing + FAQ ── */}
-      <div className="relative overflow-hidden bg-[#141418]">
-        {/* Gradient blob — scaled up so the green fills the pricing area */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <img
-            src="/gradients/pricing-blob.png"
-            alt=""
-            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[15%] w-[180%] max-w-[2400px] h-auto opacity-80"
-          />
+      {/* ── Background wrapper — spans Pricing + FAQ ── */}
+      <div className="relative overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
       {/* ═══════════════════════════════════════════════════════
@@ -786,100 +778,10 @@ export default function Home() {
           SECTION 8 — FINAL CTA
           Dark bg with aurora + background visual cards, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#111114]">
-        {/* Aurora background — same as hero */}
-        <AuroraBackground variant="hero" />
-
-        {/* Background findings — scrolling columns like hero */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.40]">
-            {/* Column 1 — scrolls up */}
-            <div className="flex-1 overflow-hidden">
-              <div
-                className="flex flex-col gap-3"
-                style={{ animation: 'scroll-up-slow 60s linear infinite' }}
-              >
-                {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-3">
-                    {[
-                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171', icon: ShieldAlert },
-                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA', icon: Bot },
-                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16', icon: Shield },
-                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899', icon: Brain },
-                    ].map((card, j) => {
-                      const CardIcon = card.icon;
-                      return (
-                        <div
-                          key={j}
-                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2 — scrolls down */}
-            <div className="flex-1 overflow-hidden hidden sm:block">
-              <div
-                className="flex flex-col gap-3"
-                style={{ animation: 'scroll-down-slow 50s linear infinite' }}
-              >
-                {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-3">
-                    {[
-                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA', icon: Accessibility },
-                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24', icon: Target },
-                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE', icon: Eye },
-                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
-                    ].map((card, j) => {
-                      const CardIcon = card.icon;
-                      return (
-                        <div
-                          key={j}
-                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to right, #111114 25%, rgba(17,17,20,0.85) 40%, rgba(17,17,20,0.4) 60%, rgba(17,17,20,0.1) 80%, transparent 100%)',
-            }}
-          />
-          {/* Top/bottom fade */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(to bottom, #111114 0%, transparent 12%, transparent 88%, #111114 100%)',
-            }}
-          />
+      <section className="relative py-24 sm:py-32 overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
         {/* Content — left-aligned, above the background */}
