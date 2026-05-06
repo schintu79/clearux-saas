@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><span className="font-heading text-2xl font-semibold tracking-[0.2px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span></div>
+            <div className="mb-3"><span className="font-heading text-2xl font-medium tracking-[0.6px] text-white">clear<span className="text-lime-gradient">ux</span><span className="opacity-50">.ai</span></span></div>
             <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
               Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>
