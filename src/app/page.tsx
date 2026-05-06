@@ -203,10 +203,9 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 2 — TRUST STATS
-          Visual break with subtle background
+          Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-20 sm:py-28 px-6 sm:px-10 lg:px-16 overflow-hidden" style={{ background: 'rgba(132,204,22,0.04)' }}>
-        <div className="absolute inset-0 border-t border-b border-[#84CC16]/10 pointer-events-none" />
+      <section className="relative py-20 sm:py-28 px-6 sm:px-10 lg:px-16 bg-white">
         <div className="relative max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
             {[
@@ -217,7 +216,7 @@ export default function Home() {
             ].map((stat, i) => (
               <motion.div
                 key={i}
-                className="text-center"
+                className="text-left"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -226,11 +225,11 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-5xl sm:text-6xl lg:text-7xl font-light text-white"
+                  className="font-heading text-5xl sm:text-6xl lg:text-7xl font-light text-[#111114]"
                   duration={2}
                 />
-                <p className="text-sm font-semibold text-white/60 mt-3">{stat.label}</p>
-                <p className="text-xs text-white/25 mt-1">{stat.desc}</p>
+                <p className="text-sm font-semibold text-[#111114]/70 mt-3">{stat.label}</p>
+                <p className="text-xs text-[#111114]/40 mt-1">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
