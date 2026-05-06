@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-medium text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-7 py-[1.2rem] min-h-[48px] tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-xs font-medium text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-5 py-2.5 tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Start Free Audit
                   <ArrowUpRight size={14} />
