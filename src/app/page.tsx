@@ -119,10 +119,10 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', color: '#F87171', icon: ShieldAlert },
-                      { label: 'AI Discoverability', subtitle: 'Future Readiness', color: '#60A5FA', icon: Bot },
-                      { label: 'Trust Signal Audit', subtitle: 'Foundation', color: '#84CC16', icon: Shield },
-                      { label: 'Reading Complexity', subtitle: 'Cognitive', color: '#EC4899', icon: Brain },
+                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', icon: ShieldAlert },
+                      { label: 'AI Discoverability', subtitle: 'Future Readiness', icon: Bot },
+                      { label: 'Trust Signal Audit', subtitle: 'Foundation', icon: Shield },
+                      { label: 'Reading Complexity', subtitle: 'Cognitive', icon: Brain },
                     ].map((card, j) => {
                       const CardIcon = card.icon;
                       return (
@@ -131,12 +131,12 @@ export default function Home() {
                           className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
                           style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                         >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                            <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
                           </div>
                         </div>
                       );
@@ -155,10 +155,10 @@ export default function Home() {
                 {[...Array(2)].map((_, setIdx) => (
                   <div key={setIdx} className="flex flex-col gap-3">
                     {[
-                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', color: '#A78BFA', icon: Accessibility },
-                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', color: '#FBBF24', icon: Target },
-                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', color: '#22D3EE', icon: Eye },
-                      { label: 'Structured Data', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
+                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', icon: Accessibility },
+                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', icon: Target },
+                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', icon: Eye },
+                      { label: 'Structured Data', subtitle: 'AI Readiness', icon: ScanEye },
                     ].map((card, j) => {
                       const CardIcon = card.icon;
                       return (
@@ -167,12 +167,12 @@ export default function Home() {
                           className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
                           style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                         >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                            <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                            <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                            <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
                           </div>
                         </div>
                       );
@@ -347,12 +347,8 @@ export default function Home() {
           SECTION 3 — CORE FEATURES
           Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#141418]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -437,10 +433,10 @@ export default function Home() {
               {[...Array(2)].map((_, setIdx) => (
                 <div key={setIdx} className="flex gap-3">
                   {[
-                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171', icon: ShieldAlert },
-                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA', icon: Brain },
-                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA', icon: Bot },
-                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24', icon: Target },
+                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', icon: ShieldAlert },
+                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', icon: Brain },
+                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', icon: Bot },
+                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', icon: Target },
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
@@ -449,12 +445,12 @@ export default function Home() {
                         className="relative w-[240px] sm:w-[280px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
                         style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                       >
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                          <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                          <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -473,10 +469,10 @@ export default function Home() {
               {[...Array(2)].map((_, setIdx) => (
                 <div key={setIdx} className="flex gap-3">
                   {[
-                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16', icon: Shield },
-                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE', icon: Eye },
-                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899', icon: Accessibility },
-                    { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B', icon: ScanEye },
+                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', icon: Shield },
+                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', icon: Eye },
+                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', icon: Accessibility },
+                    { label: 'Structured Data Check', subtitle: 'AI Readiness', icon: ScanEye },
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
@@ -485,12 +481,12 @@ export default function Home() {
                         className="relative w-[220px] sm:w-[260px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
                         style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                       >
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}15` }}>
-                          <CardIcon size={17} style={{ color: card.color }} strokeWidth={1.5} />
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
+                          <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/20 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-bold text-white/50 leading-tight">{card.label}</p>
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -654,7 +650,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Background wrapper — spans Pricing + FAQ ── */}
+      {/* ── Background wrapper — Pricing only ── */}
       <div className="relative overflow-hidden">
         {/* Background image */}
         <div className="absolute inset-0" aria-hidden="true">
@@ -726,11 +722,13 @@ export default function Home() {
         </div>
       </section>
 
+      </div>{/* ── End Pricing wrapper ── */}
+
       {/* ═══════════════════════════════════════════════════════
           SECTION 7 — FAQ
           Dark bg (#111114), left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32">
+      <section id="faq" className="relative py-24 sm:py-32 bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -771,8 +769,6 @@ export default function Home() {
           </ScrollReveal>
         </div>
       </section>
-
-      </div>{/* ── End blob glow wrapper ── */}
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 8 — FINAL CTA
