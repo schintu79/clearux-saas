@@ -251,118 +251,156 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 3 — CORE FEATURES
-          Visual card grid with icons and accent colors
+          Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        <AuroraBackground variant="section" />
+      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#141418]">
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-[#84CC16] mb-3">Core features</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-white tracking-tight mb-4" style={{ lineHeight: '1.1' }}>
-              What makes ClearUX <span className="italic font-normal text-white/50">unstoppable</span>
+          {/* Editorial headline — left-aligned, large, Musicbed-style */}
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
+              style={{ lineHeight: '1.1' }}
+            >
+              Powerful features for{' '}
+              <span className="italic text-white/40">high-performing</span>{' '}
+              digital teams.
             </h2>
-            <p className="text-white/40 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="text-white/35 text-base md:text-lg max-w-2xl mt-6 leading-relaxed">
               Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
             </p>
           </ScrollReveal>
 
-          <StaggerReveal className="grid sm:grid-cols-2 gap-5 lg:gap-6" staggerDelay={0.1}>
+          {/* Feature grid — 3 columns top, 2 bottom, matching Musicbed layout */}
+          <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-0" staggerDelay={0.08}>
             {[
               {
                 icon: ShieldAlert,
-                color: '#F87171',
-                bgColor: 'rgba(248,113,113,0.08)',
-                borderColor: 'rgba(248,113,113,0.12)',
-                title: 'Dark pattern detection',
-                desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that erode trust and no other scanner looks for.',
-                highlights: ['Deceptive UI patterns', 'Manipulative copy', 'Hidden costs & traps'],
+                title: 'Dark Pattern Detection',
+                desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that erode trust.',
               },
               {
                 icon: Brain,
-                color: '#A78BFA',
-                bgColor: 'rgba(167,139,250,0.08)',
-                borderColor: 'rgba(167,139,250,0.12)',
-                title: 'Cognitive accessibility',
-                desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load, reading complexity, and sensory overload.',
-                highlights: ['Cognitive load scoring', 'Reading complexity', 'Sensory overload check'],
+                title: 'Cognitive Accessibility',
+                desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load and sensory overload.',
               },
               {
                 icon: Sparkles,
-                color: '#60A5FA',
-                bgColor: 'rgba(96,165,250,0.08)',
-                borderColor: 'rgba(96,165,250,0.12)',
-                title: 'AI agent readiness',
-                desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs and AI agents understand and interact with your site.',
-                highlights: ['LLM discoverability', 'Agent navigation', 'Structured data quality'],
+                title: 'AI Agent Readiness',
+                desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs interact with your site.',
               },
               {
                 icon: Target,
-                color: '#FBBF24',
-                bgColor: 'rgba(251,191,36,0.08)',
-                borderColor: 'rgba(251,191,36,0.12)',
-                title: 'Conversion psychology',
-                desc: 'CTA placement, friction points, trust signal positioning, and user decision psychology. Every finding ties back to revenue impact.',
-                highlights: ['Friction point mapping', 'Trust signal audit', 'CTA effectiveness'],
+                title: 'Conversion Psychology',
+                desc: 'CTA placement, friction points, trust signal positioning, and decision psychology. Every finding ties back to revenue impact.',
+              },
+              {
+                icon: Eye,
+                title: 'Visual & UX Audit',
+                desc: 'Colour contrast, typography hierarchy, layout consistency, and responsive design — the foundation every site needs right.',
               },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
                 <StaggerItem key={i}>
-                  <div
-                    className="rounded-2xl p-7 sm:p-8 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20 group"
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${item.borderColor}`,
-                    }}
-                  >
-                    {/* Icon + Title row */}
-                    <div className="flex items-start gap-4 mb-4">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: item.bgColor }}
-                      >
-                        <Icon size={22} style={{ color: item.color }} />
-                      </div>
-                      <div className="pt-1">
-                        <h3 className="font-heading text-lg font-semibold text-white">{item.title}</h3>
-                      </div>
+                  <div className="py-8 border-t border-white/[0.06]">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Icon size={18} className="text-white/50" strokeWidth={1.5} />
+                      <h3 className="font-heading text-[15px] font-semibold text-white">{item.title}</h3>
                     </div>
-
-                    {/* Description */}
-                    <p className="text-sm text-white/45 leading-relaxed mb-5">{item.desc}</p>
-
-                    {/* Highlight tags */}
-                    <div className="flex flex-wrap gap-2">
-                      {item.highlights.map((tag, j) => (
-                        <span
-                          key={j}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
-                          style={{
-                            background: item.bgColor,
-                            color: item.color,
-                          }}
-                        >
-                          <ScanEye size={11} style={{ color: item.color, opacity: 0.7 }} />
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
             })}
           </StaggerReveal>
+        </div>
 
-          {/* CTA below the grid */}
-          <ScrollReveal delay={0.3} className="text-center mt-12">
-            <Link
-              href="/register"
-              className="group inline-flex items-center gap-2.5 bg-[#84CC16] text-[#111114] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-[#95d825]"
+        {/* ── Scrolling showcase gallery ── */}
+        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden">
+          {/* Row 1 — scrolls left */}
+          <div className="relative">
+            <div
+              className="flex gap-4 w-max"
+              style={{ animation: 'scroll-left 40s linear infinite' }}
             >
-              Try It Out
-              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </ScrollReveal>
+              {[...Array(2)].map((_, setIdx) => (
+                <div key={setIdx} className="flex gap-4">
+                  {[
+                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171' },
+                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA' },
+                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA' },
+                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24' },
+                  ].map((card, j) => (
+                    <div
+                      key={j}
+                      className="relative w-[280px] sm:w-[340px] h-[180px] sm:h-[200px] rounded-xl overflow-hidden flex-shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      {/* Subtle gradient accent */}
+                      <div
+                        className="absolute inset-0 opacity-[0.08]"
+                        style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
+                        <div>
+                          <p className="text-xs text-white/30 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ background: `${card.color}20` }}
+                        >
+                          <ScanEye size={14} style={{ color: card.color }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2 — scrolls right */}
+          <div className="relative">
+            <div
+              className="flex gap-4 w-max"
+              style={{ animation: 'scroll-right 45s linear infinite' }}
+            >
+              {[...Array(2)].map((_, setIdx) => (
+                <div key={setIdx} className="flex gap-4">
+                  {[
+                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16' },
+                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE' },
+                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899' },
+                    { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B' },
+                  ].map((card, j) => (
+                    <div
+                      key={j}
+                      className="relative w-[260px] sm:w-[300px] h-[160px] sm:h-[180px] rounded-xl overflow-hidden flex-shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      <div
+                        className="absolute inset-0 opacity-[0.08]"
+                        style={{ background: `radial-gradient(circle at 70% 60%, ${card.color} 0%, transparent 70%)` }}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
+                        <div>
+                          <p className="text-xs text-white/30 mb-1">{card.subtitle}</p>
+                          <p className="text-sm font-semibold text-white/80">{card.label}</p>
+                        </div>
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center"
+                          style={{ background: `${card.color}20` }}
+                        >
+                          <ScanEye size={12} style={{ color: card.color }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
