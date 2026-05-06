@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, Search, ChevronDown, HelpCircle, BookOpen, Brain, CreditCard, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Search, ChevronDown } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -12,7 +11,6 @@ import Footer from '@/components/layout/Footer';
 const FAQ_SECTIONS = [
   {
     title: 'General',
-    icon: HelpCircle,
     items: [
       {
         q: 'How long does an audit take?',
@@ -24,7 +22,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I audit any website?',
-        a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn’t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.',
+        a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn\'t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.',
       },
       {
         q: 'What languages are supported?',
@@ -40,7 +38,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I share audit results with my team?',
-        a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown — no account needed. You can revoke the link at any time.',
+        a: 'Yes. Every completed audit has a “Share audit” button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown — no account needed. You can revoke the link at any time.',
       },
       {
         q: 'Can I re-audit the same website to measure improvement?',
@@ -50,7 +48,6 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Audit & AI',
-    icon: BookOpen,
     items: [
       {
         q: 'How does the AI analysis work?',
@@ -76,7 +73,6 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'How Our AI Works',
-    icon: Brain,
     items: [
       {
         q: 'What AI powers the audits?',
@@ -88,7 +84,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How does the AI improve over time?',
-        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked — the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
+        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as “fixed” are also tracked — the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
       },
       {
         q: 'Does ClearUX replace a human UX auditor?',
@@ -98,7 +94,6 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Account & Billing',
-    icon: CreditCard,
     items: [
       {
         q: 'How do credits work?',
@@ -124,7 +119,6 @@ const FAQ_SECTIONS = [
   },
   {
     title: 'Trust & Accuracy',
-    icon: ShieldCheck,
     items: [
       {
         q: 'Is ClearUX 100% accurate?',
@@ -132,15 +126,15 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What if the audit flags something incorrectly?',
-        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we’ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
+        a: 'Dismiss it directly from your dashboard with a reason (e.g., “This is intentional for our audience” or “Addressed on our About page”). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we’ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
       },
       {
         q: 'Can I share the report with clients or my team?',
-        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
+        a: 'Yes. Every completed audit has a “Share” button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
       },
       {
         q: 'How does ClearUX handle false positives?',
-        a: 'Our analysis engine uses cross-page awareness — it checks if content exists on other pages before flagging it as "missing" (e.g., it won’t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
+        a: 'Our analysis engine uses cross-page awareness — it checks if content exists on other pages before flagging it as “missing” (e.g., it won’t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
       },
     ],
   },
@@ -152,13 +146,13 @@ const TAB_ALL = 'All';
 
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="border border-white/[0.06] rounded-2xl overflow-hidden bg-white/[0.03]">
+    <div className="rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
       <button
         onClick={onToggle}
         className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-semibold text-white text-[15px] leading-snug">{q}</span>
+        <span className="flex-1 font-heading font-semibold text-white text-[15px] leading-snug">{q}</span>
         <ChevronDown
           size={16}
           className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -167,7 +161,7 @@ function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
       {isOpen && (
         <div className="px-5 pb-5 pt-0">
           <div className="border-t border-white/[0.04] pt-4">
-            <p className="text-white/50 text-sm leading-[1.8]">{a}</p>
+            <p className="font-body text-sm text-white/50 leading-[1.8]">{a}</p>
           </div>
         </div>
       )}
@@ -228,50 +222,23 @@ export default function FaqPage() {
       <Navbar />
 
       <main id="main-content" className="flex-1">
-        {/* Dark Hero */}
-        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
-          {/* Aurora glows */}
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
-          <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
+        {/* Hero */}
+        <section className="py-24 sm:py-32 bg-[#111114]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+              SUPPORT CENTRE
+            </p>
 
-          <div className="max-w-4xl mx-auto text-center relative">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-white/40 border border-white/[0.08] rounded-full px-4 py-1.5 mb-6">
-                <Sparkles size={12} className="text-indigo-400" />
-                Support Centre
-              </span>
-            </motion.div>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-6" style={{ lineHeight: '1.1' }}>
+              Frequently asked <em className="text-white/40 not-italic italic">questions.</em>
+            </h1>
 
-            <motion.h1
-              className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-white mb-6"
-              style={{ lineHeight: '1.1' }}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              Frequently Asked Questions
-            </motion.h1>
-
-            <motion.p
-              className="text-white/50 text-lg max-w-lg mx-auto mb-10"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-            >
+            <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-lg mb-10">
               Everything you need to know about ClearUX audits, pricing, and reports.
-            </motion.p>
+            </p>
 
-            {/* Search Box in Hero */}
-            <motion.div
-              className="max-w-md mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35 }}
-            >
+            {/* Search Box */}
+            <div className="max-w-md">
               <div className="relative">
                 <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
                 <input
@@ -279,7 +246,7 @@ export default function FaqPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.05] text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/40 transition-all backdrop-blur-sm"
+                  className="w-full pl-10 pr-16 py-3 rounded-lg border border-white/[0.1] bg-white/[0.05] text-white text-sm font-body placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -291,78 +258,65 @@ export default function FaqPage() {
                 )}
               </div>
               {searchQuery && (
-                <p className="text-xs text-white/40 mt-2 text-center">
+                <p className="font-body text-xs text-white/40 mt-2">
                   {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
                 </p>
               )}
-            </motion.div>
+            </div>
           </div>
         </section>
 
         {/* Category Tabs */}
-        <motion.section
-          className="px-4 sm:px-6 lg:px-8 py-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <div className="max-w-3xl mx-auto">
-            <div className="flex flex-wrap items-center gap-2 justify-center">
-              {tabs.map((tab) => {
-                const section = FAQ_SECTIONS.find(s => s.title === tab);
-                const SectionIcon = section?.icon;
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
-                    className={`text-xs font-semibold px-4 py-2 rounded-full transition-all flex items-center gap-1.5 ${
-                      activeTab === tab
-                        ? 'text-[#111114] bg-white shadow-sm'
-                        : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
-                    }`}
-                  >
-                    {SectionIcon && <SectionIcon size={12} />}
-                    {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
-                  </button>
-                );
-              })}
+        <section className="bg-[#111114]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12">
+            <div className="flex flex-wrap items-center gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
+                  className={`text-xs font-semibold px-4 py-2 rounded-lg transition-all ${
+                    activeTab === tab
+                      ? 'text-white bg-white/[0.08]'
+                      : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
+                  }`}
+                >
+                  {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
+                </button>
+              ))}
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* FAQ Sections */}
         {visibleSections.length === 0 ? (
-          <section className="px-4 sm:px-6 lg:px-8 pb-10">
-            <div className="max-w-3xl mx-auto text-center py-12">
-              <Search size={24} className="text-white/50 mx-auto mb-3" />
-              <p className="text-white font-medium text-sm mb-1">No results found</p>
-              <p className="text-white/50 text-xs">
-                Try a different search term, or{' '}
-                <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-white transition-colors">
-                  browse all questions
-                </button>
-              </p>
+          <section className="bg-[#111114]">
+            <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-10">
+              <div className="py-12">
+                <Search size={24} className="text-white/50 mb-3" />
+                <p className="font-heading text-white font-medium text-sm mb-1">No results found</p>
+                <p className="font-body text-white/50 text-xs">
+                  Try a different search term, or{' '}
+                  <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-white transition-colors">
+                    browse all questions
+                  </button>
+                </p>
+              </div>
             </div>
           </section>
         ) : (
           visibleSections.map((section, sIdx) => (
-            <motion.section
+            <section
               key={section.title}
-              className={`px-4 sm:px-6 lg:px-8 ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-50px' }}
-              transition={{ duration: 0.5, delay: sIdx * 0.05 }}
+              className={`bg-[#111114] ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}
             >
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
                   <div className="flex items-center gap-3 mb-5">
-                    <section.icon size={20} className="text-white flex-shrink-0" />
                     <h2 className="font-heading font-semibold text-xl sm:text-2xl text-white">
                       {section.title}
                     </h2>
-                    <span className="text-[11px] font-semibold text-white/30 bg-white/[0.04] px-2.5 py-1 rounded-full">
+                    <span className="font-body text-[11px] font-semibold text-white/30">
                       {section.items.length}
                     </span>
                     <div className="flex-1 h-px bg-white/[0.06]" />
@@ -370,7 +324,7 @@ export default function FaqPage() {
                 )}
 
                 {/* Accordion items */}
-                <div className="space-y-3">
+                <div className="space-y-3 max-w-3xl">
                   {section.items.map((faq, i) => {
                     const key = `${section.title}-${i}`;
                     return (
@@ -385,55 +339,41 @@ export default function FaqPage() {
                   })}
                 </div>
               </div>
-            </motion.section>
+            </section>
           ))
         )}
 
-        {/* Lime CTA Band */}
-        <section className="w-full py-24 sm:py-32 px-4 md:px-6 lg:px-8" style={{ background: '#4F46E5' }}>
-          <motion.div
-            className="text-center max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
-              Still have questions?
-            </h3>
-            <p className="text-white/70 text-sm sm:text-base mb-8">
+        {/* CTA Band */}
+        <section className="py-24 sm:py-32 bg-[#141418]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+              STILL HAVE QUESTIONS
+            </p>
+
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4" style={{ lineHeight: '1.1' }}>
+              We are here to help.
+            </h2>
+
+            <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-lg mb-10">
               Reach out and we will get back to you within a business day.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
+
+            <div className="flex flex-wrap items-center gap-4">
               <a
                 href="mailto:support@clearux.ai"
-                className="group inline-flex items-center gap-3 bg-white text-[#111114] text-base font-bold px-10 py-4 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
               >
                 Email Support
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
               </a>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
               >
                 Contact Us
               </Link>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-10">
-              <Link href="/pricing" className="text-sm font-medium text-white/60 hover:text-white transition-colors">
-                See pricing
-              </Link>
-              <Link href="/how-it-works" className="text-sm font-medium text-white/60 hover:text-white transition-colors">
-                How it works
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-white"
-              >
-                Start free audit <ArrowRight size={13} />
-              </Link>
-            </div>
-          </motion.div>
+          </div>
         </section>
       </main>
       <Footer />

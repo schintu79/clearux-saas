@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -18,32 +17,28 @@ import {
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
-   AboutContent — Animated "How It Works" page
+   HowItWorksContent — Musicbed-inspired design system
    ═══════════════════════════════════════════════════════════════ */
 
 const PILLARS = [
   {
     icon: ShieldCheck,
     title: 'Ethical UX',
-    color: '#EC4899',
     desc: 'Detects dark patterns, manipulative flows, confirmshaming, fake urgency, and guilt-driven copy. Ensures your product makes users feel safe, respected, and in control.',
   },
   {
     icon: Accessibility,
     title: 'Cognitive Accessibility',
-    color: '#6366F1',
     desc: 'Evaluates cognitive load, sensory overwhelm, predictable navigation, and clear information hierarchy for users with ADHD, dyslexia, autism spectrum, and more.',
   },
   {
     icon: BrainCircuit,
     title: 'AI Readiness',
-    color: '#22C55E',
     desc: 'Assesses whether your product is discoverable, navigable, and interpretable by LLMs and AI agents — structured data, semantic markup, and machine-readable content.',
   },
   {
     icon: HeartHandshake,
     title: 'Conversion Psychology',
-    color: '#F59E0B',
     desc: 'Analyzes tone, microcopy, error messaging, delight moments, and persuasion patterns. The emotional experience users remember long after they close the tab.',
   },
 ]
@@ -52,25 +47,21 @@ const AUDIENCES = [
   {
     icon: BarChart3,
     title: 'Product Managers',
-    color: '#6366F1',
     desc: 'Justify UX investment with data. Track findings from open to fixed, share results with stakeholders, and re-audit to show measurable improvement.',
   },
   {
     icon: Rocket,
     title: 'Founders & Startups',
-    color: '#EC4899',
     desc: 'Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks. No six-figure budget required.',
   },
   {
     icon: Tag,
     title: 'Agencies',
-    color: '#22C55E',
     desc: 'White-label reports for clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time.',
   },
   {
     icon: Target,
     title: 'UX Designers',
-    color: '#F59E0B',
     desc: 'An objective second opinion before launch. Comprehensive, evidence-based review across 16 categories that catches what fresh eyes would.',
   },
 ]
@@ -100,115 +91,55 @@ export default function AboutContent() {
   return (
     <>
       {/* ═══════════════════════════════════════════════════════
-          1. HERO — dark full-width with ambient aurora
+          1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
-        {/* Ambient glows */}
-        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
-        <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
-        <div className="absolute bottom-[5%] left-[40%] w-[350px] h-[350px] rounded-full bg-[#EC4899]/[0.03] blur-[120px] pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto text-center relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
-              <div className="w-2 h-2 rounded-full animate-pulse bg-indigo-500" />
-              <span className="text-sm font-semibold tracking-wide text-white/60">How It Works</span>
-            </div>
-          </motion.div>
-
-          <motion.h1
-            className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-white mb-6"
-            style={{ lineHeight: '1.1' }}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-          >
-            How ClearUX Works
-          </motion.h1>
-
-          <motion.p
-            className="text-white/50 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-          >
+      <section className="bg-[#111114] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            HOW IT WORKS
+          </p>
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-6">
+            How ClearUX <em className="text-white/40">works.</em>
+          </h1>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
             A human-centered AI audit that evaluates your product the way a senior UX researcher would — with empathy, evidence, and actionable clarity.
-          </motion.p>
+          </p>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           2. THREE-STEP PROCESS
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
-        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.03] blur-[160px] pointer-events-none" />
+      <section className="bg-[#141418] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            THE PROCESS
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-16">
+            Three steps to <em className="text-white/40">clarity.</em>
+          </h2>
 
-        <div className="max-w-5xl mx-auto relative">
-          <motion.div
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">The process</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Three steps to clarity
-            </h2>
-          </motion.div>
-
-          <div className="space-y-20 sm:space-y-28">
-            {STEPS.map((step, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {STEPS.map((step) => {
               const StepIcon = step.icon
-              const isEven = idx % 2 === 1
               return (
-                <motion.div
+                <div
                   key={step.num}
-                  className={`flex flex-col ${isEven ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-10 md:gap-16`}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
                 >
-                  {/* Text side */}
-                  <div className="flex-1 text-center md:text-left">
-                    <motion.span
-                      className="font-heading text-7xl sm:text-8xl font-bold text-white/[0.05] mb-4 leading-none block"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
-                    >
-                      {step.num}
-                    </motion.span>
-                    <h3 className="font-heading text-2xl sm:text-3xl font-semibold text-white tracking-tight mb-4">
-                      {step.title}
-                    </h3>
-                    <p className="text-white/50 text-base sm:text-lg leading-relaxed max-w-md">
-                      {step.desc}
-                    </p>
+                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.06] leading-none block mb-4">
+                    {step.num}
+                  </span>
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-5">
+                    <StepIcon size={20} className="text-white/40" />
                   </div>
-
-                  {/* Visual side — minimal dark card */}
-                  <div className="flex-1 w-full max-w-sm">
-                    <motion.div
-                      className="rounded-2xl bg-[#0C0C0F] border border-white/[0.08] p-8 flex flex-col items-center justify-center aspect-[4/3]"
-                      initial={{ opacity: 0, x: isEven ? -30 : 30 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-4">
-                        <StepIcon size={28} className="text-indigo-400" />
-                      </div>
-                      <p className="text-white/60 text-sm font-medium text-center">{step.title}</p>
-                    </motion.div>
-                  </div>
-                </motion.div>
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
               )
             })}
           </div>
@@ -218,47 +149,36 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. THE FOUR PILLARS
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
-        <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto relative">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">What we evaluate</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Four pillars of modern UX
-            </h2>
-            <p className="text-white/50 text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
-              64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
-            </p>
-          </motion.div>
+      <section className="bg-[#111114] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            WHAT WE EVALUATE
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+            Four pillars of <em className="text-white/40">modern UX.</em>
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
+            64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
+          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {PILLARS.map((pillar, idx) => {
+            {PILLARS.map((pillar) => {
               const PillarIcon = pillar.icon
               return (
-                <motion.div
+                <div
                   key={pillar.title}
-                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
                 >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                    style={{ background: `${pillar.color}15` }}
-                  >
-                    <PillarIcon size={22} style={{ color: pillar.color }} />
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
+                    <PillarIcon size={20} className="text-white/40" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl text-white mb-3">{pillar.title}</h3>
-                  <p className="text-white/50 text-[15px] leading-relaxed">{pillar.desc}</p>
-                </motion.div>
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                    {pillar.title}
+                  </h3>
+                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                    {pillar.desc}
+                  </p>
+                </div>
               )
             })}
           </div>
@@ -268,45 +188,36 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           4. BUILT FOR
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#141418] overflow-hidden">
-        <div className="max-w-6xl mx-auto relative">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">Who we serve</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Built for people who ship products
-            </h2>
-            <p className="text-white/50 text-base mt-3 max-w-lg mx-auto">
-              Not another enterprise tool. Built for teams that move fast.
-            </p>
-          </motion.div>
+      <section className="bg-[#141418] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            WHO WE SERVE
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+            Built for people who <em className="text-white/40">ship.</em>
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
+            Not another enterprise tool. Built for teams that move fast.
+          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {AUDIENCES.map((item, idx) => {
+            {AUDIENCES.map((item) => {
               const ItemIcon = item.icon
               return (
-                <motion.div
+                <div
                   key={item.title}
-                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
                 >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-                    style={{ background: `${item.color}15` }}
-                  >
-                    <ItemIcon size={22} style={{ color: item.color }} />
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center mb-6">
+                    <ItemIcon size={20} className="text-white/40" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl text-white mb-3">{item.title}</h3>
-                  <p className="text-white/50 text-[15px] leading-relaxed">{item.desc}</p>
-                </motion.div>
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
               )
             })}
           </div>
@@ -314,44 +225,34 @@ export default function AboutContent() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          5. LIME CTA BAND
+          5. FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#4F46E5' }}>
-        <div className="max-w-3xl mx-auto text-center relative">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">
-              Start your audit today
-            </p>
-            <h2
-              className="font-heading font-semibold text-4xl sm:text-5xl text-white mb-6"
-              style={{ lineHeight: '1.1' }}
+      <section className="bg-[#141418] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            START YOUR AUDIT TODAY
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+            Ready to see what you&apos;re <em className="text-white/40">missing?</em>
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">
+            64 checkpoints. 16 categories. Results in minutes.
+          </p>
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <Link
+              href="/register"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
             >
-              Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
-            </h2>
-            <p className="text-white/70 text-lg mb-10 max-w-lg mx-auto">
-              64 checkpoints. 16 categories. Results in minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-white text-[#111114] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
-              >
-                Start Free Audit
-                <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
-              >
-                Contact us
-              </Link>
-            </div>
-          </motion.div>
+              Start Free Audit
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="/contact"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+            >
+              Contact us
+            </Link>
+          </div>
         </div>
       </section>
     </>

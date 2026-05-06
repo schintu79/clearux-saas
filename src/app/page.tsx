@@ -524,31 +524,29 @@ export default function Home() {
           {/* Scrollable cards row */}
           <div
             id="feature-cards-scroll"
-            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide"
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {[
-              { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first so you fix what matters most. Every finding ranked by severity and business impact.' },
-              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click Reports', desc: 'Share professional reports with stakeholders in one click. Branded, formatted, and ready for any meeting.' },
-              { icon: Share2, title: 'Team Sharing', label: 'Shareable Links', desc: 'One link gives anyone the score, breakdown, and recommendations. Control access and revoke anytime.' },
-              { icon: CheckCircle, title: 'Track Every Fix', label: 'Status Dashboard', desc: 'Every finding gets a status — open, in progress, fixed. Your dashboard shows resolution progress in real-time.' },
-              { icon: RefreshCw, title: 'Re-Audit to Prove It', label: 'Baseline Mode', desc: 'Fix issues and re-audit the same URL. Verify your fixes, run deep scans, or focus on specific pillars.' },
-              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '16 categories across 4 pillars — each scored individually so you know exactly where to improve.' },
+              { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first. Ranked by severity and business impact.' },
+              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click', desc: 'Professional reports for stakeholders. Branded and formatted.' },
+              { icon: Share2, title: 'Team Sharing', label: 'Shareable', desc: 'One link for score, breakdown, and recommendations.' },
+              { icon: CheckCircle, title: 'Track Every Fix', label: 'Dashboard', desc: 'Status tracking — open, in progress, fixed. Real-time progress.' },
+              { icon: RefreshCw, title: 'Re-Audit', label: 'Baseline', desc: 'Re-audit the same URL. Verify fixes or dig deeper.' },
+              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: '4 pillars, each scored individually.' },
             ].map((card, i) => {
               const Icon = card.icon;
               return (
                 <div
                   key={i}
-                  className="relative min-w-[320px] sm:min-w-[380px] rounded-2xl p-8 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors"
+                  className="relative w-[180px] min-w-[180px] rounded-xl p-5 flex-shrink-0 bg-white border border-[#111114]/[0.06] hover:border-[#111114]/[0.12] transition-colors group"
                 >
-                  <div className="flex items-start justify-between mb-8">
-                    <div className="w-12 h-12 rounded-xl bg-[#111114] flex items-center justify-center">
-                      <Icon size={22} className="text-white" strokeWidth={1.5} />
-                    </div>
-                    <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mt-1">{card.label}</span>
+                  <div className="w-10 h-10 rounded-lg bg-[#111114] flex items-center justify-center mb-5">
+                    <Icon size={18} className="text-white" strokeWidth={1.5} />
                   </div>
-                  <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{card.title}</h3>
-                  <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
+                  <h3 className="font-heading text-[13px] font-semibold text-[#111114] mb-2 leading-tight">{card.title}</h3>
+                  <p className="text-[12px] text-[#111114]/35 leading-relaxed">{card.desc}</p>
+                  <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[#111114]/20 mt-4 block">{card.label}</span>
                 </div>
               );
             })}
@@ -665,10 +663,63 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 8 — FINAL CTA
-          Dark bg, left-aligned Musicbed style
+          Dark bg with aurora + background visual cards, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-[#111114]">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#111114]">
+        {/* Aurora background — same as hero */}
+        <AuroraBackground variant="hero" />
+
+        {/* Background visual cards — faded, like Musicbed album art */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {/* Cards grid — positioned on the right side */}
+          <div className="absolute top-0 right-0 w-[65%] h-full opacity-[0.12]">
+            <div className="grid grid-cols-2 gap-3 p-4 h-full" style={{ gridAutoRows: 'minmax(160px, 1fr)' }}>
+              {[
+                { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', color: '#F87171' },
+                { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', color: '#A78BFA' },
+                { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', color: '#60A5FA' },
+                { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', color: '#FBBF24' },
+                { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', color: '#84CC16' },
+                { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', color: '#22D3EE' },
+                { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', color: '#EC4899' },
+                { label: 'Structured Data Check', subtitle: 'AI Readiness', color: '#F59E0B' },
+              ].map((card, j) => (
+                <div
+                  key={j}
+                  className="relative rounded-xl overflow-hidden"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <div
+                    className="absolute inset-0 opacity-30"
+                    style={{ background: `radial-gradient(circle at 30% 40%, ${card.color} 0%, transparent 70%)` }}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-[10px] text-white/40 mb-1">{card.subtitle}</p>
+                    <p className="text-xs font-semibold text-white/70">{card.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Gradient overlay — fades cards from left to right, matching Musicbed style */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to right, #111114 35%, rgba(17,17,20,0.85) 55%, rgba(17,17,20,0.4) 80%, rgba(17,17,20,0.2) 100%)',
+            }}
+          />
+          {/* Top/bottom gradient fade for seamless blending */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, #111114 0%, transparent 20%, transparent 80%, #111114 100%)',
+            }}
+          />
+        </div>
+
+        {/* Content — left-aligned, above the background */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               Get started
@@ -685,7 +736,7 @@ export default function Home() {
             </p>
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
-              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all backdrop-blur-sm">
                 <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
                 <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                 <input

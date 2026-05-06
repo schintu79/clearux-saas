@@ -133,7 +133,7 @@ export default function LoginPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h1 className="text-2xl font-heading font-semibold text-white mb-1.5">
+        <h1 className="text-2xl font-heading font-light tracking-tight text-white mb-1.5">
           Welcome back
         </h1>
         <p className="text-sm text-white/50">
@@ -161,7 +161,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-[#111114]-alt transition-colors text-[15px] font-medium text-white disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-lg border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05] transition-colors text-[15px] font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -289,18 +289,6 @@ export default function LoginPage() {
           <div className="auth-left relative z-0">
             <div className="auth-glow" />
 
-            {/* Subtle lime scribble accent — top-right */}
-            <svg className="absolute top-16 right-10 opacity-[0.07] pointer-events-none" width="120" height="120" viewBox="0 0 120 120" fill="none">
-              <circle cx="60" cy="60" r="50" stroke="#818CF8" strokeWidth="1.5" strokeDasharray="6 8" />
-              <circle cx="60" cy="60" r="30" stroke="#818CF8" strokeWidth="1" strokeDasharray="4 6" />
-            </svg>
-
-            {/* Subtle lime scribble accent — bottom-left */}
-            <svg className="absolute bottom-20 left-8 opacity-[0.06] pointer-events-none" width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <path d="M10 70 Q 40 10, 70 70" stroke="#818CF8" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              <path d="M20 65 Q 40 20, 60 65" stroke="#818CF8" strokeWidth="1" fill="none" strokeLinecap="round" />
-            </svg>
-
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
@@ -309,7 +297,7 @@ export default function LoginPage() {
               </div>
 
               <div className="mb-auto">
-                <h2 className="text-2xl font-heading font-semibold text-white mb-2">
+                <h2 className="text-2xl font-heading font-light tracking-tight text-white mb-2">
                   Welcome back
                 </h2>
                 <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">

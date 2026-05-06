@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Mail, MessageSquare, Send, CheckCircle, ArrowRight } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
@@ -47,194 +46,153 @@ export default function ContactPage() {
     <>
       <Navbar />
       <main id="main-content" className="min-h-[70vh]">
-        {/* Dark Hero */}
-        <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
-          <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
-          <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
-          <div className="max-w-4xl mx-auto text-center relative">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
-                <div className="w-2 h-2 rounded-full animate-pulse bg-indigo-500" />
-                <span className="text-sm font-semibold tracking-wide text-white/60">Get in touch</span>
-              </div>
-            </motion.div>
-            <motion.h1
-              className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-white mb-6"
-              style={{ lineHeight: '1.1' }}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              Contact Us
-            </motion.h1>
-            <motion.p
-              className="text-white/50 text-lg max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-            >
+        {/* Hero */}
+        <section className="py-24 sm:py-32 bg-[#111114]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
+              GET IN TOUCH
+            </span>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mt-6">
+              Contact <em className="italic text-white/40">us.</em>
+            </h1>
+            <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6">
               Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
-            </motion.p>
+            </p>
           </div>
         </section>
 
         {/* Form Section */}
-        <section className="py-20 sm:py-28 px-4 md:px-6 lg:px-8 bg-[#111114]">
-          <motion.div
-            className="max-w-xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            {submitted ? (
-              <div className="rounded-2xl p-9 text-center border border-indigo-500/15 bg-indigo-500/10">
-                <div className="w-14 h-14 rounded-xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={28} className="text-indigo-400" />
+        <section className="py-24 sm:py-32 bg-[#111114]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+            <div className="max-w-xl">
+              {submitted ? (
+                <div className="rounded-xl p-9 border border-white/[0.06] bg-white/[0.03]">
+                  <div className="w-14 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center mb-4">
+                    <CheckCircle size={28} className="text-white/60" />
+                  </div>
+                  <p className="font-heading font-semibold text-lg text-white mb-1">Message sent!</p>
+                  <p className="font-body text-sm text-white/50">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
                 </div>
-                <p className="font-heading font-semibold text-lg text-white mb-1">Message sent!</p>
-                <p className="text-white/70 text-sm">Thanks for reaching out. We&rsquo;ll reply within 24 hours.</p>
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10">
-                <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
-                  {error && (
-                    <div className="rounded-xl p-4 text-sm text-red-400 border border-red-800 bg-red-900/20">
-                      {error}
-                    </div>
-                  )}
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-white mb-1.5">Name</label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      autoComplete="name"
-                      aria-required="true"
-                      required
-                      className="input"
-                      placeholder="Your name"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-white mb-1.5">Email</label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      aria-required="true"
-                      required
-                      className="input"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-white mb-1.5">Message</label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      rows={5}
-                      aria-required="true"
-                      required
-                      className="input resize-y"
-                      placeholder="How can we help?"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] text-[15px] rounded-xl bg-indigo-500 text-white font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-60"
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send size={16} />
-                        Send Message
-                      </>
+              ) : (
+                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10">
+                  <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
+                    {error && (
+                      <div className="rounded-lg p-4 text-sm font-body text-red-400 border border-red-800 bg-red-900/20">
+                        {error}
+                      </div>
                     )}
-                  </button>
-                </form>
-              </div>
-            )}
-          </motion.div>
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium font-body text-white mb-1.5">Name</label>
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        aria-required="true"
+                        required
+                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full"
+                        placeholder="Your name"
+                      />
+                    </div>
 
-          {/* Contact Info */}
-          <motion.div
-            className="max-w-xl mx-auto mt-14 pt-10 border-t border-white/[0.06]"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="flex flex-col sm:flex-row gap-6">
-              <motion.div
-                className="flex items-start gap-3"
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
-                  <Mail size={18} className="text-[#6366F1]" />
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium font-body text-white mb-1.5">Email</label>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        aria-required="true"
+                        required
+                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="message" className="block text-sm font-medium font-body text-white mb-1.5">Message</label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        rows={5}
+                        aria-required="true"
+                        required
+                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full resize-y"
+                        placeholder="How can we help?"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap disabled:opacity-60"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={16} />
+                          Send Message
+                        </>
+                      )}
+                    </button>
+                  </form>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white mb-0.5">Email us</p>
-                  <a href="mailto:support@clearux.ai" className="text-sm text-white font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>
+              )}
+
+              {/* Contact Info */}
+              <div className="mt-14 pt-10 border-t border-white/[0.06]">
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                      <Mail size={18} className="text-white/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold font-body text-white mb-0.5">Email us</p>
+                      <a href="mailto:support@clearux.ai" className="text-sm font-body text-white/50 hover:text-white/70 transition-colors">support@clearux.ai</a>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                      <MessageSquare size={18} className="text-white/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold font-body text-white mb-0.5">Response time</p>
+                      <p className="text-sm font-body text-white/50">Usually within 24 hours</p>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-              <motion.div
-                className="flex items-start gap-3"
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.45 }}
-              >
-                <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center flex-shrink-0">
-                  <MessageSquare size={18} className="text-pink-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white mb-0.5">Response time</p>
-                  <p className="text-sm text-white/50">Usually within 24 hours</p>
-                </div>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
-        {/* Lime CTA Band */}
-        <section className="w-full py-24 sm:py-32 px-4" style={{ background: '#4F46E5' }}>
-          <motion.div
-            className="text-center max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
-              Ready to see what you&rsquo;re missing?
-            </h3>
-            <p className="text-white/70 text-sm sm:text-base mb-8">
+        {/* Final CTA */}
+        <section className="py-24 sm:py-32 bg-[#141418]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
+              GET STARTED
+            </span>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light tracking-tight text-white mt-6">
+              Ready to see what you&rsquo;re <em className="italic text-white/40">missing?</em>
+            </h2>
+            <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6 mb-10">
               Your first audit is free. Results in under 10 minutes.
             </p>
             <Link
               href="/register"
-              className="group inline-flex items-center gap-3 bg-white text-[#111114] text-base font-bold px-10 py-4 rounded-2xl transition-all hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
             >
               Start Free Audit
-              <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </Link>
-          </motion.div>
+          </div>
         </section>
       </main>
       <Footer />

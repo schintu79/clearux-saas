@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -22,117 +21,73 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28 sm:py-36 px-4 md:px-6 lg:px-8" style={{ background: '#111114' }}>
-        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[500px] rounded-full bg-indigo-500/[0.05] blur-[160px] pointer-events-none" />
-        <div className="absolute top-[30%] right-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.04] blur-[140px] pointer-events-none" />
+      <section className="bg-[#111114] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            About ClearUX
+          </p>
 
-        <div className="max-w-4xl mx-auto text-center relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.06] border border-white/[0.08] mb-8">
-              <div className="w-2 h-2 rounded-full animate-pulse bg-indigo-500" />
-              <span className="text-sm font-semibold tracking-wide text-white/60">About ClearUX</span>
-            </div>
-          </motion.div>
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white leading-[1.1] mb-6">
+            Every product deserves an independent,{' '}
+            <em className="text-white/40">unbiased</em> review.
+          </h1>
 
-          <motion.h1
-            className="font-heading font-semibold text-4xl sm:text-5xl md:text-6xl text-white mb-6"
-            style={{ lineHeight: '1.1' }}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-          >
-            Every product deserves an independent, unbiased review.
-          </motion.h1>
-
-          <motion.p
-            className="text-white/50 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-          >
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
             ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets.
-          </motion.p>
+          </p>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
-        <div className="absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full bg-indigo-500/[0.03] blur-[160px] pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto relative">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">The origin story</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Why ClearUX exists
-            </h2>
-          </motion.div>
+      <section className="bg-[#111114] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            The origin story
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-14">
+            Why ClearUX exists
+          </h2>
 
           {/* Quote */}
-          <motion.div
-            className="mb-14 p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06]"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="text-white font-medium text-lg sm:text-xl leading-relaxed italic text-center max-w-2xl mx-auto">
+          <div className="mb-14 p-6 sm:p-8 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <p className="font-body text-white font-medium text-lg sm:text-xl leading-relaxed italic max-w-2xl">
               &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
             </p>
-          </motion.div>
+          </div>
 
           {/* Three story blocks */}
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 icon: Eye,
-                color: '#6366F1',
                 title: 'The problem we saw',
                 desc: 'After 20+ years in digital, the pattern was clear: companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
               },
               {
                 icon: Shield,
-                color: '#EC4899',
                 title: 'What kept going wrong',
                 desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products that ignore emotional design failing to connect. These cost businesses revenue and cost users their dignity.',
               },
               {
                 icon: Sparkles,
-                color: '#818CF8',
                 title: 'What we built instead',
                 desc: 'Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.',
               },
-            ].map((item, idx) => {
+            ].map((item) => {
               const ItemIcon = item.icon
               return (
-                <motion.div
+                <div
                   key={item.title}
-                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-7"
                 >
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-                    style={{ background: `${item.color}15` }}
-                  >
-                    <ItemIcon size={20} style={{ color: item.color }} />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-white/[0.05]">
+                    <ItemIcon size={20} className="text-white/60" />
                   </div>
                   <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
-                  <p className="text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
-                </motion.div>
+                  <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
+                </div>
               )
             })}
           </div>
@@ -142,42 +97,30 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. FOUNDER
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#141418] overflow-hidden">
-        <div className="max-w-4xl mx-auto relative">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">The founder</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Built by someone who lived the problem
-            </h2>
-          </motion.div>
+      <section className="bg-[#141418] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            The founder
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-12">
+            Built by someone who lived the problem
+          </h2>
 
-          <motion.div
-            className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8 sm:p-10">
             <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
               <Image
                 src="/team-stefano.jpg"
                 alt="Stefano Schintu"
                 width={80}
                 height={80}
-                className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
+                className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
               />
 
               <div className="flex-1">
                 <h3 className="font-heading font-semibold text-xl text-white mb-1">Stefano Schintu</h3>
-                <p className="text-white/50 text-sm mb-4">Founder &amp; Product Lead</p>
+                <p className="font-body text-white/50 text-sm mb-4">Founder &amp; Product Lead</p>
 
-                <div className="space-y-4 text-white/50 text-[15px] leading-relaxed">
+                <div className="space-y-4 font-body text-white/50 text-[15px] leading-relaxed">
                   <p>
                     20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, unicorn companies, and enterprise teams across the world — exposed to cultural and market differences, from early-stage MVPs to products serving millions.
                   </p>
@@ -200,73 +143,55 @@ export default function AboutContent() {
                 </a>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           4. OUR VALUES — Simple, clear, reliable
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-4 md:px-6 lg:px-8 bg-[#111114] overflow-hidden">
-        <div className="absolute bottom-[15%] left-[10%] w-[400px] h-[400px] rounded-full bg-[#6366F1]/[0.03] blur-[140px] pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto relative">
-          <motion.div
-            className="text-center mb-14"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white">Our commitment</p>
-            <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white tracking-tight">
-              Clear, simple, and reliable
-            </h2>
-            <p className="text-white/50 text-base sm:text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
-              We hold ourselves to the same standard we measure others by.
-            </p>
-          </motion.div>
+      <section className="bg-[#111114] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            Our commitment
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+            Clear, simple, and reliable
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-14">
+            We hold ourselves to the same standard we measure others by.
+          </p>
 
           <div className="grid sm:grid-cols-3 gap-6">
             {[
               {
                 icon: Shield,
-                color: '#6366F1',
                 title: 'Ethical by default',
                 desc: 'Every audit checks for dark patterns, manipulative design, and cognitive overload. We refuse to use them ourselves — no subscription traps, no pressure tactics, no hidden costs.',
               },
               {
                 icon: Eye,
-                color: '#22C55E',
                 title: 'Evidence over opinion',
                 desc: 'Scores are backed by 64 measurable checkpoints across 16 categories. No subjective hand-waving. Every finding links to evidence you can verify.',
               },
               {
                 icon: Heart,
-                color: '#EC4899',
                 title: 'Accessible to all',
                 desc: 'A $99 audit delivers what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
               },
-            ].map((item, idx) => {
+            ].map((item) => {
               const ItemIcon = item.icon
               return (
-                <motion.div
+                <div
                   key={item.title}
-                  className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-7 hover:shadow-xl hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-7"
                 >
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-                    style={{ background: `${item.color}15` }}
-                  >
-                    <ItemIcon size={20} style={{ color: item.color }} />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-white/[0.05]">
+                    <ItemIcon size={20} className="text-white/60" />
                   </div>
                   <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
-                  <p className="text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
-                </motion.div>
+                  <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
+                </div>
               )
             })}
           </div>
@@ -274,44 +199,34 @@ export default function AboutContent() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          5. LIME CTA BAND
+          5. FINAL CTA BAND
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 px-4 md:px-6 lg:px-8 overflow-hidden" style={{ background: '#4F46E5' }}>
-        <div className="max-w-3xl mx-auto text-center relative">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">
-              Start your audit today
-            </p>
-            <h2
-              className="font-heading font-semibold text-4xl sm:text-5xl text-white mb-6"
-              style={{ lineHeight: '1.1' }}
+      <section className="bg-[#141418] py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            Start your audit today
+          </p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-6">
+            Ready to see what you&apos;re missing?
+          </h2>
+          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">
+            64 checkpoints. 16 categories. Results in minutes.
+          </p>
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <Link
+              href="/register"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
             >
-              Ready to see what<br className="hidden sm:block" /> you&apos;re missing?
-            </h2>
-            <p className="text-white/70 text-lg mb-10 max-w-lg mx-auto">
-              64 checkpoints. 16 categories. Results in minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/register"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-white text-[#111114] text-[15px] rounded-xl font-semibold hover:brightness-110 hover:-translate-y-0.5 transition-all"
-              >
-                Start Free Audit
-                <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/how-it-works"
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] text-sm border-2 border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-all"
-              >
-                See how it works
-              </Link>
-            </div>
-          </motion.div>
+              Start Free Audit
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="/how-it-works"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+            >
+              See how it works
+            </Link>
+          </div>
         </div>
       </section>
     </>
