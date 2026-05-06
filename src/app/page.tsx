@@ -576,11 +576,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Blob glow wrapper — spans What You Get + Pricing + FAQ ── */}
+      <div className="relative overflow-hidden bg-[#0C0C0F]">
+        {/* Gradient blob — positioned to center on pricing but bleeds into neighbours */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <img
+            src="/gradients/pricing-blob.png"
+            alt=""
+            className="absolute top-[40%] left-[55%] -translate-x-1/2 -translate-y-1/3 w-[110%] max-w-[1600px] h-auto opacity-50 mix-blend-screen"
+          />
+        </div>
+
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
-          Dark bg (#0C0C0F), editorial headline + scrollable cards
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#0C0C0F]">
+      <section className="relative py-24 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
@@ -663,16 +673,7 @@ export default function Home() {
           SECTION 6 — PRICING
           Dark bg with gradient blob background image
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 overflow-hidden bg-[#111114]">
-        {/* Gradient blob background */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <img
-            src="/gradients/pricing-blob.png"
-            alt=""
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[1400px] h-auto opacity-60"
-          />
-        </div>
-
+      <section className="relative py-28 sm:py-36">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -738,7 +739,7 @@ export default function Home() {
           SECTION 7 — FAQ
           Dark bg (#111114), left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 bg-[#111114]">
+      <section id="faq" className="relative py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
@@ -779,6 +780,8 @@ export default function Home() {
           </ScrollReveal>
         </div>
       </section>
+
+      </div>{/* ── End blob glow wrapper ── */}
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 8 — FINAL CTA
