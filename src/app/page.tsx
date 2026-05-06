@@ -314,10 +314,10 @@ export default function Home() {
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section id="trust-stats" className="relative py-24 sm:py-32 bg-white">
+      <section id="trust-stats" className="relative py-24 sm:py-32 bg-[#0C0C0F]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-14">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
               ClearUX in numbers
             </p>
           </ScrollReveal>
@@ -331,7 +331,7 @@ export default function Home() {
             ].map((stat, i) => (
               <motion.div
                 key={i}
-                className={`text-left ${i > 0 ? 'lg:border-l lg:border-[#111114]/10 lg:pl-10' : ''}`}
+                className={`text-left ${i > 0 ? 'lg:border-l lg:border-white/[0.06] lg:pl-10' : ''}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -340,11 +340,11 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-[#111114]"
+                  className="font-heading text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-white"
                   duration={2}
                 />
-                <p className="text-sm font-semibold text-[#111114]/70 mt-3">{stat.label}</p>
-                <p className="text-xs text-[#111114]/40 mt-1">{stat.desc}</p>
+                <p className="text-sm font-semibold text-white/70 mt-3">{stat.label}</p>
+                <p className="text-xs text-white/40 mt-1">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -526,25 +526,25 @@ export default function Home() {
           SECTION 4 — HOW IT WORKS
           Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative py-24 sm:py-32 bg-white">
+      <section id="how-it-works" className="relative py-24 sm:py-32 bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               Simple process
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
-              How ClearUX <span className="italic text-[#111114]/40">works.</span>
+              How ClearUX <span className="italic text-white/40">works.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-[#111114]/40 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
                 No signup walls, no setup, no waiting. Paste a URL, let the AI do the heavy lifting, and get a prioritised report your team can act on immediately.
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 flex-shrink-0 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -571,12 +571,12 @@ export default function Home() {
               },
             ].map((item, i) => (
               <StaggerItem key={i}>
-                <div className="border-t border-[#111114]/10 pt-8">
-                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-[#111114]/[0.06] leading-none block mb-4">
+                <div className="border-t border-white/[0.06] pt-8">
+                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-white/[0.06] leading-none block mb-4">
                     {item.step}
                   </span>
-                  <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{item.title}</h3>
-                  <p className="text-sm text-[#111114]/40 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-heading text-xl font-semibold text-white mb-3">{item.title}</h3>
+                  <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -586,24 +586,24 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
-          Light grey bg, editorial headline + scrollable cards
+          Dark bg (#0C0C0F), editorial headline + scrollable cards
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden" style={{ background: '#F7F7F8' }}>
+      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#0C0C0F]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               What you get
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
               A report your team{' '}
-              <span className="italic text-[#111114]/40">can act on.</span>
+              <span className="italic text-white/40">can act on.</span>
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-[#111114]/10 pb-8">
-              <p className="text-[#111114]/40 text-base md:text-lg max-w-2xl leading-relaxed">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
+              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
                 Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
               </p>
               {/* Scroll arrows */}
@@ -615,9 +615,9 @@ export default function Home() {
                     const el = document.getElementById('feature-cards-scroll');
                     if (el) el.scrollBy({ left: -400, behavior: 'smooth' });
                   }}
-                  className="w-10 h-10 rounded-full border border-[#111114]/15 flex items-center justify-center hover:border-[#111114]/30 transition-colors"
+                  className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
                 >
-                  <ArrowRight size={16} className="text-[#111114]/40 rotate-180" />
+                  <ArrowRight size={16} className="text-white/40 rotate-180" />
                 </button>
                 <button
                   type="button"
@@ -626,9 +626,9 @@ export default function Home() {
                     const el = document.getElementById('feature-cards-scroll');
                     if (el) el.scrollBy({ left: 400, behavior: 'smooth' });
                   }}
-                  className="w-10 h-10 rounded-full border border-[#111114]/15 flex items-center justify-center hover:border-[#111114]/30 transition-colors"
+                  className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
                 >
-                  <ArrowRight size={16} className="text-[#111114]/40" />
+                  <ArrowRight size={16} className="text-white/40" />
                 </button>
               </div>
             </div>
@@ -652,14 +652,14 @@ export default function Home() {
               return (
                 <div
                   key={i}
-                  className="relative w-[320px] min-w-[320px] rounded-xl p-8 flex-shrink-0 bg-white border border-[#111114]/[0.08] hover:border-[#111114]/[0.15] hover:shadow-lg hover:shadow-black/[0.04] transition-all group"
+                  className="relative w-[320px] min-w-[320px] rounded-xl p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group"
                 >
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#111114]/25 mb-3 block">{card.label}</span>
-                  <h3 className="font-heading text-base font-semibold text-[#111114] mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-sm text-[#111114]/40 leading-relaxed">{card.desc}</p>
+                  <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/25 mb-3 block">{card.label}</span>
+                  <h3 className="font-heading text-base font-semibold text-white mb-3 leading-tight">{card.title}</h3>
+                  <p className="text-sm text-white/40 leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
@@ -730,32 +730,32 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 7 — FAQ
-          White bg, left-aligned, clean Musicbed style
+          Dark bg (#111114), left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 bg-white">
+      <section id="faq" className="relative py-24 sm:py-32 bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               FAQ
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
               style={{ lineHeight: '1.1' }}
             >
-              Frequently asked <span className="italic text-[#111114]/40">questions.</span>
+              Frequently asked <span className="italic text-white/40">questions.</span>
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal className="max-w-3xl divide-y divide-[#111114]/10" staggerDelay={0.06}>
+          <StaggerReveal className="max-w-3xl divide-y divide-white/[0.06]" staggerDelay={0.06}>
             {TOP_FAQS.map((item, idx) => (
               <StaggerItem key={idx}>
                 <details className="group">
                   <summary className="flex items-center justify-between py-6 cursor-pointer">
-                    <h3 className="font-heading text-[15px] sm:text-base font-semibold text-[#111114] pr-8">{item.q}</h3>
-                    <ChevronDown size={16} className="text-[#111114]/30 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
+                    <h3 className="font-heading text-[15px] sm:text-base font-semibold text-white pr-8">{item.q}</h3>
+                    <ChevronDown size={16} className="text-white/30 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="pb-6">
-                    <p className="text-sm text-[#111114]/40 leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-white/40 leading-relaxed">{item.a}</p>
                   </div>
                 </details>
               </StaggerItem>
@@ -765,7 +765,7 @@ export default function Home() {
           <ScrollReveal delay={0.3} className="mt-10 max-w-3xl">
             <Link
               href="/faq"
-              className="group inline-flex items-center gap-2.5 text-sm font-semibold text-[#111114]/40 hover:text-[#111114] transition-colors"
+              className="group inline-flex items-center gap-2.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
             >
               Read all FAQ
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
