@@ -114,13 +114,13 @@ export default function Home() {
             AI-Powered UX Audit
           </motion.p>
 
-          {/* Rotating headline — left-aligned, light weight, Musicbed-sized */}
-          <div className="h-[5rem] sm:h-[6.5rem] md:h-[8rem] lg:h-[10rem] relative mb-8">
+          {/* Rotating headline — left-aligned, light weight */}
+          <div className="h-[4.5rem] sm:h-[5.5rem] md:h-[7rem] lg:h-[8.5rem] relative mb-12 sm:mb-16">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[2.5rem] sm:text-[3.5rem] md:text-[4.5rem] lg:text-[5.5rem] font-light tracking-tight text-white absolute inset-x-0"
-                style={{ lineHeight: '1.08' }}
+                className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light tracking-tight text-white absolute inset-x-0"
+                style={{ lineHeight: '1.02' }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -50 }}
@@ -132,29 +132,16 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
-          {/* Description + CTA row */}
-          <motion.div
-            className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-12"
+          {/* Description */}
+          <motion.p
+            className="text-white/35 text-base sm:text-lg max-w-xl mb-10 sm:mb-14"
+            style={{ lineHeight: '1.7' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            <p className="text-white/40 text-base sm:text-lg max-w-xl" style={{ lineHeight: '1.7' }}>
-              We analyse websites across 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness. Fully automated and delivered in minutes.
-            </p>
-
-            <div className="flex items-center gap-5 flex-shrink-0">
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center px-7 py-3.5 min-h-[48px] border border-white text-white text-sm font-semibold tracking-wide uppercase hover:bg-white hover:text-[#111114] transition-all"
-              >
-                Start Free Audit
-              </Link>
-              <span className="text-xs text-white/30 max-w-[140px] leading-snug">
-                No credit card required. Browse your full report instantly.
-              </span>
-            </div>
-          </motion.div>
+            We analyse websites across 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness. Fully automated and delivered in minutes.
+          </motion.p>
 
           {/* URL input field */}
           <motion.form
@@ -182,10 +169,11 @@ export default function Home() {
                 type="submit"
                 className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
               >
-                {user ? 'Audit Now' : 'Audit Now'}
+                Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
+            <p className="text-[11px] text-white/20 mt-3 tracking-wide">No credit card required</p>
           </motion.form>
         </div>
 
