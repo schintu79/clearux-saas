@@ -661,36 +661,50 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 6 — PRICING
-          Dark bg, left-aligned editorial, Musicbed style
+          Dark bg with gradient blob background image
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32" style={{ background: 'linear-gradient(135deg, #84CC16, #65A30D)' }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative py-28 sm:py-36 overflow-hidden bg-[#111114]">
+        {/* Gradient blob background */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <img
+            src="/gradients/pricing-blob.png"
+            alt=""
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[1400px] h-auto opacity-60"
+          />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/50 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
               Simple pricing
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-4xl mb-10"
+              className="font-heading text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-light text-white tracking-tight max-w-4xl mb-6"
+              style={{ lineHeight: '1.05' }}
+            >
+              $99 per audit.
+            </h2>
+            <p
+              className="font-heading text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light italic text-white/40 tracking-tight mb-12"
               style={{ lineHeight: '1.1' }}
             >
-              $99 per audit.{' '}
-              <span className="italic text-[#111114]/40">First one free.</span>
-            </h2>
+              First one free.
+            </p>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-[#111114]/60 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed">
                 No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
               </p>
               <div className="flex items-center gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-[#111114]/30 text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:border-[#111114]/60 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -701,7 +715,7 @@ export default function Home() {
 
           {/* Feature list — horizontal strip */}
           <ScrollReveal>
-            <div className="border-t border-[#111114]/10 pt-10">
+            <div className="border-t border-white/[0.08] pt-10">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
                   'All 16 categories, all 4 pillars',
@@ -710,8 +724,8 @@ export default function Home() {
                   'Credits never expire',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#111114] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-[#111114]/70 font-medium">{item}</span>
+                    <CheckCircle className="w-5 h-5 text-[#84CC16] flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-white/60 font-medium">{item}</span>
                   </div>
                 ))}
               </div>
