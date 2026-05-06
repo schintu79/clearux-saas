@@ -14,7 +14,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
-import { HeroReportMockup, ReportShowcase } from '@/components/motion/ProductMockup';
+import { ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 import AuroraBackground from '@/components/motion/AuroraBackground';
 
@@ -103,22 +103,22 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-[100vh] flex flex-col items-center justify-center">
         <AuroraBackground variant="hero" />
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-8">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-8">
           <div className="text-center">
-            {/* Rotating headline — wider, slower */}
-            <div className="h-[6rem] sm:h-[7.5rem] md:h-[9rem] lg:h-[11rem] relative mb-6 overflow-hidden">
+            {/* Rotating headline — wide, medium weight, gradient lime accent */}
+            <div className="h-[5.5rem] sm:h-[7rem] md:h-[8rem] lg:h-[9.5rem] relative mb-8 overflow-hidden">
               <AnimatePresence mode="wait">
                 <motion.h1
                   key={headlineIdx}
-                  className="font-heading text-[2.5rem] sm:text-5xl md:text-6xl lg:text-[5rem] font-bold tracking-tight text-white absolute inset-x-0"
-                  style={{ lineHeight: '1.08' }}
+                  className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[3.75rem] lg:text-[4.5rem] font-medium tracking-tight text-white absolute inset-x-0"
+                  style={{ lineHeight: '1.15' }}
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -50 }}
                   transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   {HERO_HEADLINES[headlineIdx].main}<br />
-                  <span className="text-[#84CC16]">{HERO_HEADLINES[headlineIdx].accent}</span>
+                  <span className="font-bold text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
                 </motion.h1>
               </AnimatePresence>
             </div>
@@ -136,7 +136,7 @@ export default function Home() {
             {/* Search bar */}
             <motion.form
               onSubmit={handleHeroSubmit}
-              className="max-w-xl mx-auto mb-8"
+              className="max-w-xl mx-auto mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
@@ -157,7 +157,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 bg-[#84CC16] text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-[#95d825] flex-shrink-0"
+                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
                 >
                   {user ? 'Get My Audit' : 'Start Free Audit'}
                   <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -165,9 +165,20 @@ export default function Home() {
               </div>
             </motion.form>
 
+            {/* Small label */}
+            <motion.div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-[#84CC16] animate-pulse" />
+              <span className="text-xs text-white/40">First audit free — no credit card required</span>
+            </motion.div>
+
             {/* Selling point icons — stronger with lime highlights */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-6"
+              className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.5 }}
@@ -179,60 +190,44 @@ export default function Home() {
                     <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center">
                       <Icon size={16} className="text-[#84CC16]" />
                     </div>
-                    <span className="text-sm text-white/60">{sp.label} <span className="font-semibold text-[#84CC16]">{sp.highlight}</span></span>
+                    <span className="text-sm text-white/60">{sp.label} <span className="font-semibold text-lime-gradient">{sp.highlight}</span></span>
                   </div>
                 );
               })}
             </motion.div>
-
-            <motion.p
-              className="text-sm text-white/25 mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              First audit free. No credit card required.
-            </motion.p>
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Discover more button */}
         <motion.button
-          onClick={() => document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' })}
-          className="relative z-10 mb-8 flex flex-col items-center gap-2 text-white/30 hover:text-[#84CC16]/60 transition-colors"
+          onClick={() => document.getElementById('trust-stats')?.scrollIntoView({ behavior: 'smooth' })}
+          className="relative z-10 mt-8 mb-8 group flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.06] border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.1] hover:border-white/[0.15] transition-all"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          aria-label="Scroll to see more"
+          transition={{ delay: 1 }}
+          aria-label="See how it works"
         >
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
+          <span className="text-sm font-medium">See how it works</span>
           <motion.div
-            animate={{ y: [0, 6, 0] }}
+            animate={{ y: [0, 4, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <ChevronDown size={20} />
+            <ChevronDown size={16} />
           </motion.div>
         </motion.button>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1B — PRODUCT SHOWCASE (moved from hero)
-          ═══════════════════════════════════════════════════════ */}
-      <section id="showcase" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <ScrollReveal>
-            <HeroReportMockup />
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
           SECTION 2 — TRUST STATS + AUDIENCE
-          Lime background, prominent, confident
+          Big animated numbers, sleek horizontal strip
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ background: '#84CC16' }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 mb-14">
+      <section id="trust-stats" className="relative py-20 sm:py-28 px-4 sm:px-6 lg:px-8 overflow-hidden border-t border-b border-white/[0.06]">
+        {/* Subtle lime glow behind stats */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full opacity-[0.06] pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, #84CC16, transparent 70%)' }} />
+
+        <div className="relative max-w-6xl mx-auto">
+          {/* Stats row — big numbers with animated counters */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8 mb-16">
             {[
               { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
@@ -242,42 +237,49 @@ export default function Home() {
               <motion.div
                 key={i}
                 className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
+                transition={{ delay: i * 0.12, duration: 0.6, type: 'spring', stiffness: 100 }}
               >
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-5xl sm:text-6xl font-bold text-[#111114]"
-                  duration={1.5}
+                  className="font-heading text-6xl sm:text-7xl lg:text-8xl font-bold text-lime-gradient"
+                  duration={2}
                 />
-                <p className="text-sm font-bold text-[#111114] mt-2">{stat.label}</p>
-                <p className="text-xs text-[#111114]/50 mt-0.5">{stat.desc}</p>
+                <p className="text-sm font-semibold text-white mt-3">{stat.label}</p>
+                <p className="text-xs text-white/30 mt-1">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          <div className="text-center">
-            <p className="text-xs font-bold tracking-widest uppercase text-[#111114]/40 mb-5">
+          {/* Audience tags */}
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+          >
+            <p className="text-xs font-semibold tracking-widest uppercase text-white/20 mb-5">
               Built for teams who care about user experience
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            <div className="flex flex-wrap items-center justify-center gap-3">
               {['Product Managers', 'Design Teams', 'Agencies', 'Startups', 'Enterprise'].map((label, i) => (
                 <motion.span
                   key={i}
-                  className="text-sm font-semibold text-[#111114]/60 tracking-wide"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
+                  className="text-sm font-medium text-white/40 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: 0.6 + i * 0.08 }}
                 >
                   {label}
                 </motion.span>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 

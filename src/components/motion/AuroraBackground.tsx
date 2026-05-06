@@ -61,8 +61,8 @@ export default function AuroraBackground({ variant = 'section', className = '' }
           className="absolute inset-0"
           style={{
             backgroundImage: `
-              linear-gradient(to right, rgba(255,255,255,0.05) 0.5px, transparent 0.5px),
-              linear-gradient(to bottom, rgba(255,255,255,0.05) 0.5px, transparent 0.5px)
+              linear-gradient(to right, rgba(255,255,255,0.08) 0.5px, transparent 0.5px),
+              linear-gradient(to bottom, rgba(255,255,255,0.08) 0.5px, transparent 0.5px)
             `,
             backgroundSize: '64px 64px',
             animation: 'grid-drift 12s linear infinite',

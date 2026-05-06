@@ -354,6 +354,24 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
+   LIME GRADIENT TEXT
+   ══════════════════════════════════════════════════════════════ */
+
+.text-lime-gradient {
+  background: linear-gradient(135deg, #84CC16 0%, #BEF264 40%, #ECFCCB 70%, #84CC16 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: lime-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes lime-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ══════════════════════════════════════════════════════════════
    BASE TYPOGRAPHY — Clean, geometric
    ══════════════════════════════════════════════════════════════ */
 
