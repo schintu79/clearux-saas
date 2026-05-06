@@ -101,7 +101,7 @@ export default function Home() {
           SECTION 1 — HERO (Musicbed-inspired)
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col">
+      <section className="relative min-h-screen flex flex-col overflow-hidden">
         <AuroraBackground variant="hero" />
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
@@ -193,7 +193,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-36 sm:pt-44 pb-20 sm:pb-28">
           {/* Top label */}
           <motion.p
             className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10"
