@@ -105,10 +105,9 @@ export default function Home() {
         <AuroraBackground variant="hero" />
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center" aria-hidden="true">
-          <div className="relative w-full max-w-7xl px-6 sm:px-10 lg:px-16 h-full">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-0 w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.07]">
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.07]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -176,7 +175,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </div>
           </div>
 
           {/* Gradient overlay — fades cards from left, Musicbed album art style */}
@@ -303,9 +301,9 @@ export default function Home() {
             }}
             className="group flex flex-col items-center gap-3 animate-bounce-slow cursor-pointer"
           >
-            <span className="text-xs tracking-[0.2em] uppercase text-white/50 group-hover:text-white/80 transition-colors font-medium">Discover ClearUX</span>
-            <div className="w-10 h-10 rounded-full border border-white/20 group-hover:border-white/50 flex items-center justify-center transition-all group-hover:bg-white/[0.05]">
-              <ChevronDown size={18} className="text-white/50 group-hover:text-white/80 transition-colors" />
+            <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-semibold">Discover ClearUX</span>
+            <div className="w-10 h-10 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
+              <ChevronDown size={18} className="text-[#84CC16] group-hover:text-[#BEF264] transition-colors" />
             </div>
           </button>
         </motion.div>
