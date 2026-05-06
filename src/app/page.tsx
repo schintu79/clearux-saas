@@ -245,17 +245,28 @@ export default function Home() {
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+              For high-performing digital teams
+            </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
               style={{ lineHeight: '1.1' }}
             >
-              Powerful features for{' '}
-              <span className="italic text-white/40">high-performing</span>{' '}
-              digital teams.
+              What makes ClearUX{' '}
+              <span className="italic text-white/40">unstoppable.</span>
             </h2>
-            <p className="text-white/35 text-base md:text-lg max-w-2xl mt-6 leading-relaxed">
-              Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+                Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
+              </p>
+              <Link
+                href="/register"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
+              >
+                Start Your Audit Now
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
           </ScrollReveal>
 
           {/* Feature grid — 3 columns top, 2 bottom, matching Musicbed layout */}
