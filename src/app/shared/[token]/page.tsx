@@ -261,7 +261,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0 ml-4">
-                            <p className={`text-3xl font-bold font-heading ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
+                            <p className={`text-3xl font-semibold font-heading ${scoreColor(pillar.avg)}`}>{pillar.avg}</p>
                             <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>
                           </div>
                         </div>

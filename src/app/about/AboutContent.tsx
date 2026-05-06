@@ -27,7 +27,7 @@ export default function AboutContent() {
             About ClearUX
           </p>
 
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white leading-[1.1] mb-6">
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-6">
             Every product deserves an independent,{' '}
             <em className="text-white/40">unbiased</em> review.
           </h1>
@@ -46,7 +46,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             The origin story
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-14">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-14">
             Why ClearUX exists
           </h2>
 
@@ -102,7 +102,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             The founder
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-12">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-12">
             Built by someone who lived the problem
           </h2>
 
@@ -155,7 +155,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             Our commitment
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
             Clear, simple, and reliable
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-14">
@@ -206,7 +206,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             Start your audit today
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-6">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6">
             Ready to see what you&apos;re missing?
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">

@@ -52,7 +52,7 @@ export default function ContactPage() {
             <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
               GET IN TOUCH
             </span>
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mt-6">
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mt-6">
               Contact <em className="italic text-white/40">us.</em>
             </h1>
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6">
@@ -179,7 +179,7 @@ export default function ContactPage() {
             <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
               GET STARTED
             </span>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light tracking-tight text-white mt-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mt-6">
               Ready to see what you&rsquo;re <em className="italic text-white/40">missing?</em>
             </h2>
             <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mt-6 mb-10">

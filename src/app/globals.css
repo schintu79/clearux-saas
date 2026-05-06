@@ -428,9 +428,8 @@ body {
 
 /* Heading defaults */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-body), var(--font-heading), system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-family: var(--font-heading), var(--font-body), system-ui, sans-serif;
+  line-height: 1em;
   font-weight: 500;
   color: var(--text);
 }

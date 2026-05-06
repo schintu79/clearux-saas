@@ -14,7 +14,7 @@ export default function PricingContent() {
             Transparent Pricing
           </p>
 
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Pay per audit, <span className="italic text-white/40">no subscriptions</span>
           </h1>
 
@@ -105,7 +105,7 @@ export default function PricingContent() {
 
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-white/50 text-lg">$</span>
-                  <span className="font-heading text-6xl sm:text-7xl font-light text-white tracking-tight">99</span>
+                  <span className="font-heading text-6xl sm:text-7xl font-light text-white">99</span>
                 </div>
                 <p className="font-body text-white/50 text-sm mb-8">One-time payment per audit</p>
 
@@ -215,7 +215,7 @@ export default function PricingContent() {
                 <ShieldCheck size={24} className="text-white/40" />
               </div>
               <div>
-                <h2 className="font-heading text-2xl sm:text-3xl font-light text-white tracking-tight mb-3">
+                <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-3">
                   30-day money-back guarantee
                 </h2>
                 <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-lg">
@@ -231,7 +231,7 @@ export default function PricingContent() {
       <section className="py-24 sm:py-32 bg-[#141418]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">At a glance</p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-10">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
             Compare plans
           </h2>
 
@@ -306,7 +306,7 @@ export default function PricingContent() {
       <section className="py-24 sm:py-32 bg-[#141418]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">Get Started</p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
             Start your audit <span className="italic text-white/40">today</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-md mb-8">

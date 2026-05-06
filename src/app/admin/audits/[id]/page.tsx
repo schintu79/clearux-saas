@@ -254,7 +254,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
             {/* Score + severity summary */}
             {audit.status === 'completed' && report && (
               <div className="flex-shrink-0 text-right hidden sm:block">
-                <p className={`text-4xl font-bold font-heading ${scoreColor(overall)}`}>{overall}</p>
+                <p className={`text-4xl font-semibold font-heading ${scoreColor(overall)}`}>{overall}</p>
                 <p className="text-xs text-muted">{scoreLabel(overall)}</p>
                 <p className="text-xs text-muted mt-1">{report.total_issues} issues</p>
               </div>
@@ -371,7 +371,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className={`text-2xl font-bold font-heading ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
+                        <p className={`text-2xl font-semibold font-heading ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
                           {pillar.isAudited ? pillar.avg : '--'}
                         </p>
                         {pillar.isAudited && <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>}

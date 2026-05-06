@@ -133,7 +133,7 @@ export default function LoginPage() {
   const formContent = (
     <div className="w-full max-w-[380px]">
       <div className="mb-6">
-        <h1 className="text-2xl font-heading font-light tracking-tight text-white mb-1.5">
+        <h1 className="text-2xl font-heading font-light text-white mb-1.5">
           Welcome back
         </h1>
         <p className="text-sm text-white/50">
@@ -292,12 +292,12 @@ export default function LoginPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <span className="font-heading text-3xl font-bold tracking-tight text-white">ClearUX</span>
+                  <span className="font-heading text-3xl font-semibold text-white">Clear<span className="text-lime-gradient">UX</span><span className="opacity-50">.ai</span></span>
                 </Link>
               </div>
 
               <div className="mb-auto">
-                <h2 className="text-2xl font-heading font-light tracking-tight text-white mb-2">
+                <h2 className="text-2xl font-heading font-light text-white mb-2">
                   Welcome back
                 </h2>
                 <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">

@@ -19,7 +19,7 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
     <div
       className={`rounded-xl border border-white/[0.06] bg-white/[0.03] ${compact ? 'p-4 sm:p-5' : 'p-6 sm:p-8'} ${className}`}
     >
-      <p className={`font-heading font-light tracking-tight text-white ${compact ? 'text-base mb-4' : 'text-2xl mb-8'}`}>
+      <p className={`font-heading font-light text-white ${compact ? 'text-base mb-4' : 'text-2xl mb-8'}`}>
         All audits include
       </p>
       <div className={`grid gap-4 ${compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5'}`}>

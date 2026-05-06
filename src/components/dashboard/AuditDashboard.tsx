@@ -148,7 +148,7 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
             <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
             <span className={`text-xs font-semibold ${card.color}`}>{card.label}</span>
           </div>
-          <p className={`text-2xl font-bold font-heading ${card.color}`}>{card.count}</p>
+          <p className={`text-2xl font-semibold font-heading ${card.color}`}>{card.count}</p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-[11px] text-muted">{card.description}</p>
             {card.key !== 'passed' && card.count > 0 && (

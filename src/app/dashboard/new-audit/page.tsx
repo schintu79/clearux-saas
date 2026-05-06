@@ -242,7 +242,7 @@ const NewAuditInner: React.FC = () => {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Sparkles size={28} className="text-brand" />
         </div>
-        <h1 className="text-3xl font-bold font-heading text-text mb-2">
+        <h1 className="text-3xl font-semibold font-heading text-text mb-2">
           New Audit
         </h1>
         <p className="text-muted">

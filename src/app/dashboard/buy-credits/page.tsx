@@ -67,7 +67,7 @@ export default function BuyCreditsPage() {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Coins size={28} className="text-[#22C55E]" />
         </div>
-        <h1 className="text-3xl font-bold font-heading text-text mb-2">
+        <h1 className="text-3xl font-semibold font-heading text-text mb-2">
           Buy Audit Credits
         </h1>
         <p className="text-muted max-w-md mx-auto">

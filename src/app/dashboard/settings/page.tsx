@@ -284,7 +284,7 @@ const SettingsPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold font-heading text-text">Settings</h1>
+        <h1 className="text-2xl font-semibold font-heading text-text">Settings</h1>
         <p className="text-muted text-sm mt-1">Manage your account and preferences</p>
       </div>
 
@@ -315,7 +315,7 @@ const SettingsPage: React.FC = () => {
         <Card>
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-bold font-heading text-text">Profile Information</h2>
+              <h2 className="text-lg font-semibold font-heading text-text">Profile Information</h2>
               <p className="text-sm text-muted mt-1">Update your profile details</p>
             </div>
 
@@ -368,7 +368,7 @@ const SettingsPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Building2 size={18} className="text-brand" />
-                <h2 className="text-lg font-bold font-heading text-text">Company & Billing</h2>
+                <h2 className="text-lg font-semibold font-heading text-text">Company & Billing</h2>
               </div>
               <p className="text-sm text-muted">Optional — add company details for invoices and receipts</p>
             </div>
@@ -457,7 +457,7 @@ const SettingsPage: React.FC = () => {
           <Card>
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-bold font-heading text-text">Change Password</h2>
+                <h2 className="text-lg font-semibold font-heading text-text">Change Password</h2>
                 <p className="text-sm text-muted mt-1">Update your account password</p>
               </div>
 

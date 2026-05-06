@@ -76,7 +76,7 @@ function TrackerVisual({ inView }: { inView: boolean }) {
             </div>
           </div>
           <motion.span
-            className="font-heading text-3xl font-bold text-emerald-500"
+            className="font-heading text-3xl font-semibold text-emerald-500"
             key={pct}
             initial={{ opacity: 0.5 }}
             animate={{ opacity: 1 }}
@@ -186,7 +186,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
               return (
                 <div key={i} className="flex-1 text-center">
                   <motion.span
-                    className="text-base font-heading font-bold text-text"
+                    className="text-base font-heading font-semibold text-text"
                     initial={{ opacity: 0 }}
                     animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.3, duration: 0.3 }}
@@ -332,7 +332,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-text">acme.com</span>
             <motion.span
-              className="font-heading text-3xl font-bold text-text"
+              className="font-heading text-3xl font-semibold text-text"
               initial={{ opacity: 0 }}
               animate={step >= 2 ? { opacity: 1 } : {}}
               transition={{ duration: 0.4, delay: 0.2 }}
@@ -463,7 +463,7 @@ export default function BeyondTheReport() {
           transition={{ duration: 0.7 }}
         >
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Beyond the report</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5" style={{ lineHeight: '1.1' }}>
             Find it. Fix it. Prove it.
           </h2>
           <p className="text-muted text-base md:text-lg leading-relaxed max-w-xl mx-auto">
@@ -490,7 +490,7 @@ export default function BeyondTheReport() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-bold text-text/[0.05] mb-3 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-semibold text-text/[0.05] mb-3 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -498,7 +498,7 @@ export default function BeyondTheReport() {
                   >
                     {feat.number}
                   </motion.span>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4 tracking-tight">
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4">
                     {feat.title}
                   </h3>
                   <p className="text-muted text-lg leading-relaxed max-w-md">

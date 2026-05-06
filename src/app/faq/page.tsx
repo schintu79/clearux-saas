@@ -229,7 +229,7 @@ export default function FaqPage() {
               SUPPORT CENTRE
             </p>
 
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-6" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
               Frequently asked <em className="text-white/40 not-italic italic">questions.</em>
             </h1>
 
@@ -350,7 +350,7 @@ export default function FaqPage() {
               STILL HAVE QUESTIONS
             </p>
 
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light tracking-tight text-white mb-4" style={{ lineHeight: '1.1' }}>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
               We are here to help.
             </h2>
 

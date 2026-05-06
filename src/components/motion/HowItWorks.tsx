@@ -170,7 +170,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
               <p className="text-xs text-white/40">64 checkpoints across 4 pillars</p>
             </div>
           </div>
-          <span className="text-[#34D399] font-heading text-3xl font-bold">{progress}%</span>
+          <span className="text-[#34D399] font-heading text-3xl font-semibold">{progress}%</span>
         </div>
 
         {/* Progress bar */}
@@ -277,7 +277,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-bold text-white">
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-semibold text-white">
               {score}
             </span>
           </motion.div>
@@ -401,7 +401,7 @@ export default function HowItWorks() {
           transition={{ duration: 0.7 }}
         >
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">How it works</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5" style={{ lineHeight: '1.1' }}>
             Three steps. Under 10 minutes.<br className="hidden sm:block" />
             <span className="text-muted">Zero setup required.</span>
           </h2>
@@ -426,7 +426,7 @@ export default function HowItWorks() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-bold text-text/[0.05] mb-4 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-semibold text-text/[0.05] mb-4 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -434,7 +434,7 @@ export default function HowItWorks() {
                   >
                     {step.number}
                   </motion.span>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4 tracking-tight">
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4">
                     {step.title}
                   </h3>
                   <p className="text-muted text-lg leading-relaxed max-w-md">
@@ -469,7 +469,7 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-3" style={{ lineHeight: '1.15' }}>
             Ready to see what you&apos;re missing?
           </h3>
           <p className="text-white/70 text-sm sm:text-base mb-8 max-w-md mx-auto">

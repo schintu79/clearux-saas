@@ -355,7 +355,7 @@ function DashboardInner() {
                   latestScore >= 40 ? 'border-amber-500/20 bg-amber-500/5' :
                   'border-red-500/20 bg-red-500/5'
                 }`}>
-                  <span className={`font-heading text-2xl font-bold ${scoreColor(latestScore)}`}>
+                  <span className={`font-heading text-2xl font-semibold ${scoreColor(latestScore)}`}>
                     {latestScore}
                   </span>
                 </div>
@@ -439,7 +439,7 @@ function DashboardInner() {
                 <TrendingUp size={14} className="text-brand" />
                 <p className="text-xs font-semibold text-muted">Average score</p>
               </div>
-              <p className={`font-heading text-3xl font-bold ${avgScore ? scoreColor(avgScore) : 'text-text'}`}>
+              <p className={`font-heading text-3xl font-semibold ${avgScore ? scoreColor(avgScore) : 'text-text'}`}>
                 {avgScore ?? '--'}
               </p>
               <p className="text-[11px] text-muted mt-1">across {completedCount} audit{completedCount !== 1 ? 's' : ''}</p>
@@ -449,7 +449,7 @@ function DashboardInner() {
                 <CheckCircle2 size={14} className="text-[#22C55E]" />
                 <p className="text-xs font-semibold text-muted">Completed</p>
               </div>
-              <p className="font-heading text-3xl font-bold text-text">{completedCount}</p>
+              <p className="font-heading text-3xl font-semibold text-text">{completedCount}</p>
               <p className="text-[11px] text-muted mt-1">total audit{completedCount !== 1 ? 's' : ''} run</p>
             </div>
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-4">
@@ -457,7 +457,7 @@ function DashboardInner() {
                 <RefreshCw size={14} className="text-amber-500" />
                 <p className="text-xs font-semibold text-muted">Re-audits</p>
               </div>
-              <p className="font-heading text-3xl font-bold text-text">
+              <p className="font-heading text-3xl font-semibold text-text">
                 {audits.filter(a => a.status === 'completed' && (a as any).is_reaudit).length}
               </p>
               <p className="text-[11px] text-muted mt-1">improvement checks</p>

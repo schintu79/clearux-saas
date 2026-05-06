@@ -954,7 +954,7 @@ function PillarSection({
             </div>
           </div>
           <div className="text-right">
-            <p className={`text-2xl font-bold font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className={`text-2xl font-semibold font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
             <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
@@ -1520,7 +1520,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold font-heading text-text mb-1 truncate">
+          <h1 className="text-2xl font-semibold font-heading text-text mb-1 truncate">
             {formatUrl(audit.product_url)}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
@@ -1778,7 +1778,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                    <h2 className="text-xl font-bold font-heading text-text">{L.overallScore}</h2>
+                    <h2 className="text-xl font-semibold font-heading text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
                       <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
                         {auditSelectedPillars!.length} of 4 pillars

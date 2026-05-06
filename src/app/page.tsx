@@ -109,15 +109,15 @@ export default function Home() {
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
           {/* Two columns of findings, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.40]">
+          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-1.5 opacity-[0.40]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
-                className="flex flex-col gap-3"
+                className="flex flex-col gap-1.5"
                 style={{ animation: 'scroll-up-slow 60s linear infinite' }}
               >
                 {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-3">
+                  <div key={setIdx} className="flex flex-col gap-1.5">
                     {[
                       { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', icon: ShieldAlert },
                       { label: 'AI Discoverability', subtitle: 'Future Readiness', icon: Bot },
@@ -149,11 +149,11 @@ export default function Home() {
             {/* Column 2 — scrolls down */}
             <div className="flex-1 overflow-hidden hidden sm:block">
               <div
-                className="flex flex-col gap-3"
+                className="flex flex-col gap-1.5"
                 style={{ animation: 'scroll-down-slow 50s linear infinite' }}
               >
                 {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-3">
+                  <div key={setIdx} className="flex flex-col gap-1.5">
                     {[
                       { label: 'Cognitive Load Test', subtitle: 'Accessibility', icon: Accessibility },
                       { label: 'Conversion Friction', subtitle: 'Revenue Impact', icon: Target },
@@ -201,7 +201,7 @@ export default function Home() {
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light tracking-tight text-white absolute inset-x-0"
+                className="font-heading text-[2.25rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light text-white absolute inset-x-0"
                 style={{ lineHeight: '1.02' }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -355,11 +355,11 @@ export default function Home() {
               For high-performing digital teams
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+             
             >
               What makes ClearUX{' '}
-              <span className="italic text-white/40">unstoppable.</span>
+              <span className="text-lime-gradient">unstoppable.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
               <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
@@ -427,11 +427,11 @@ export default function Home() {
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
-              className="flex gap-3 w-max"
+              className="flex gap-1.5 w-max"
               style={{ animation: 'scroll-left 40s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-3">
+                <div key={setIdx} className="flex gap-1.5">
                   {[
                     { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', icon: ShieldAlert },
                     { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', icon: Brain },
@@ -463,11 +463,11 @@ export default function Home() {
           {/* Row 2 — scrolls right */}
           <div className="relative">
             <div
-              className="flex gap-3 w-max"
+              className="flex gap-1.5 w-max"
               style={{ animation: 'scroll-right 45s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-3">
+                <div key={setIdx} className="flex gap-1.5">
                   {[
                     { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', icon: Shield },
                     { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', icon: Eye },
@@ -517,10 +517,10 @@ export default function Home() {
               Simple process
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+             
             >
-              How ClearUX <span className="italic text-white/40">works.</span>
+              How ClearUX <span className="text-lime-gradient">works.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
               <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
@@ -579,11 +579,11 @@ export default function Home() {
               What you get
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+             
             >
               A report your team{' '}
-              <span className="italic text-white/40">can act on.</span>
+              <span className="text-lime-gradient">can act on.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
               <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
@@ -667,14 +667,14 @@ export default function Home() {
               Simple pricing
             </p>
             <h2
-              className="font-heading text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-light text-white tracking-tight max-w-4xl mb-6"
-              style={{ lineHeight: '1.05' }}
+              className="font-heading text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-light text-white max-w-4xl mb-6"
+             
             >
               $99 per audit.
             </h2>
             <p
-              className="font-heading text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light italic text-white/40 tracking-tight mb-12"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-lime-gradient mb-12"
+             
             >
               First one free.
             </p>
@@ -735,10 +735,10 @@ export default function Home() {
               FAQ
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl"
+             
             >
-              Frequently asked <span className="italic text-white/40">questions.</span>
+              Frequently asked <span className="text-lime-gradient">questions.</span>
             </h2>
           </ScrollReveal>
 
@@ -787,11 +787,11 @@ export default function Home() {
               Get started
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white tracking-tight max-w-4xl mb-10"
-              style={{ lineHeight: '1.1' }}
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+             
             >
               Ready to see what you&apos;re{' '}
-              <span className="italic text-white/40">missing?</span>
+              <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
               Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.

@@ -56,7 +56,7 @@ export default function BestUxAuditToolsPage() {
       <main id="main-content" className="bg-surface">
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
-          <h1 className="font-heading font-bold text-3xl sm:text-4xl text-text mb-6 tracking-tight">
+          <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-6">
             Best UX Audit Tools in 2026: A Practical Comparison
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">

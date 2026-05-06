@@ -467,7 +467,7 @@ export default function WhyClearUX() {
           transition={{ duration: 0.7 }}
         >
           <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">What others miss</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white mb-5 tracking-tight" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white mb-5" style={{ lineHeight: '1.1' }}>
             Why ClearUX
           </h2>
           <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
@@ -494,7 +494,7 @@ export default function WhyClearUX() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-bold text-white/[0.06] mb-2 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-semibold text-white/[0.06] mb-2 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -502,8 +502,8 @@ export default function WhyClearUX() {
                   >
                     {diff.number}
                   </motion.span>
-                  <p className="font-heading text-sm sm:text-base font-semibold text-white mb-1 tracking-tight">{diff.subtitle}</p>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight">
+                  <p className="font-heading text-sm sm:text-base font-semibold text-white mb-1">{diff.subtitle}</p>
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4">
                     {diff.title}
                   </h3>
                   <p className="text-white/80 text-base leading-relaxed mb-4 max-w-md">
@@ -537,7 +537,7 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-3" style={{ lineHeight: '1.15' }}>
             All four. In every audit. For $99.
           </h3>
           <p className="text-white/60 text-sm sm:text-base mb-8 max-w-md mx-auto">
