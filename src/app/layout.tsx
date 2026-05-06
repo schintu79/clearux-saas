@@ -9,17 +9,15 @@ import ScrollToTop from '@/components/ui/ScrollToTop'
 import CrispChat from '@/components/ui/CrispChat'
 import './globals.css'
 
-const obadiah = localFont({
+const justSans = localFont({
   src: [
-    { path: '../../public/fonts/Obadiah/obadiah-thin-webfont.woff2', weight: '100' },
-    { path: '../../public/fonts/Obadiah/obadiah-extralight-webfont.woff2', weight: '200' },
-    { path: '../../public/fonts/Obadiah/obadiah-light-webfont.woff2', weight: '300' },
-    { path: '../../public/fonts/Obadiah/obadiah-regular-webfont.woff2', weight: '400' },
-    { path: '../../public/fonts/Obadiah/obadiah-medium-webfont.woff2', weight: '500' },
-    { path: '../../public/fonts/Obadiah/obadiah-semibold-webfont.woff2', weight: '600' },
-    { path: '../../public/fonts/Obadiah/obadiah-bold-webfont.woff2', weight: '700' },
-    { path: '../../public/fonts/Obadiah/obadiah-ultrabold-webfont.woff2', weight: '800' },
-    { path: '../../public/fonts/Obadiah/obadiah-heavy-webfont.woff2', weight: '900' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans ExLight.woff2', weight: '200' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans Light.woff2', weight: '300' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans Regular.woff2', weight: '400' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans Medium.woff2', weight: '500' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans SemiBold.woff2', weight: '600' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans Bold.woff2', weight: '700' },
+    { path: '../../public/fonts/JUST Sans/JUST Sans ExBold.woff2', weight: '800' },
   ],
   variable: '--font-heading',
   display: 'swap',
@@ -109,7 +107,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${obadiah.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
