@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
-  Search, BarChart3, FileText, Share2, RefreshCw,
+  Search, FileText, Share2, RefreshCw,
   Sparkles, Target, ScanEye, ShieldAlert,
   Zap, Accessibility, Bot, ChevronDown,
 } from "lucide-react";
@@ -404,65 +404,62 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 4 — HOW IT WORKS
-          3 steps, clean cards on dark
+          Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-[#84CC16] mb-3">Simple process</p>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
-              How ClearUX Works
-            </h2>
-            <p className="text-white/40 text-base md:text-lg max-w-xl mx-auto">
-              Three steps. Under 10 minutes. Zero setup.
+      <section id="how-it-works" className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40 mb-8">
+              Simple process
             </p>
+            <h2
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-[#111114] tracking-tight max-w-3xl mb-10"
+              style={{ lineHeight: '1.1' }}
+            >
+              How ClearUX <span className="italic text-[#111114]/40">works.</span>
+            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+              <p className="text-[#111114]/40 text-base md:text-lg max-w-xl leading-relaxed">
+                Three steps. Under 10 minutes. Zero setup.
+              </p>
+              <Link
+                href="/register"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 flex-shrink-0 whitespace-nowrap"
+              >
+                Start Your Audit Now
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
           </ScrollReveal>
 
-          <StaggerReveal className="grid md:grid-cols-3 gap-6 lg:gap-8" staggerDelay={0.15}>
+          <StaggerReveal className="grid md:grid-cols-3 gap-8 lg:gap-10" staggerDelay={0.12}>
             {[
               {
                 step: '01',
-                icon: Search,
                 title: 'Paste your URL',
                 desc: 'Enter any website. ClearUX crawls every key page automatically — no code, no setup, no browser extension.',
               },
               {
                 step: '02',
-                icon: Brain,
                 title: 'AI runs 64 checkpoints',
                 desc: 'Each page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI readiness, and conversion psychology.',
               },
               {
                 step: '03',
-                icon: BarChart3,
                 title: 'Get your report',
                 desc: 'A ranked list of findings by severity and business impact — with clear, actionable fixes for each one. Export PDF or Word.',
               },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <StaggerItem key={i}>
-                  <div className="glass-card rounded-2xl p-8 h-full relative overflow-hidden hover:bg-white/[0.05] transition-colors">
-                    {/* Watermark step number */}
-                    <span className="absolute -top-3 -right-2 font-heading text-[7rem] font-bold leading-none select-none pointer-events-none text-white/[0.03]">
-                      {item.step}
-                    </span>
-                    <div className="relative">
-                      <div className="flex items-center gap-4 mb-5">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#84CC16]/10">
-                          <Icon size={22} className="text-[#84CC16]" />
-                        </div>
-                        <span className="font-heading text-sm font-bold tracking-wide text-white/30">
-                          Step {item.step}
-                        </span>
-                      </div>
-                      <h3 className="font-heading text-xl font-semibold text-white mb-3">{item.title}</h3>
-                      <p className="text-sm text-white/40 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-              );
-            })}
+            ].map((item, i) => (
+              <StaggerItem key={i}>
+                <div className="border-t border-[#111114]/10 pt-8">
+                  <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/30 mb-5">
+                    Step {item.step}
+                  </p>
+                  <h3 className="font-heading text-xl font-semibold text-[#111114] mb-3">{item.title}</h3>
+                  <p className="text-sm text-[#111114]/40 leading-relaxed">{item.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
           </StaggerReveal>
         </div>
       </section>
