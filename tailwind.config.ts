@@ -43,8 +43,8 @@ const config: Config = {
       fontFamily: {
         body:    ["var(--font-body)", "system-ui", "sans-serif"],
         inter:   ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
-        heading: ["var(--font-heading)", "system-ui", "sans-serif"],
-        manrope: ["var(--font-heading)", "system-ui", "sans-serif"], /* backward compat */
+        heading: ["var(--font-body)", "system-ui", "sans-serif"],
+        manrope: ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
         handwriting: ["var(--font-handwriting)", "cursive"],
       },
     },

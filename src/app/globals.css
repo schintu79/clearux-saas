@@ -428,10 +428,10 @@ body {
 
 /* Heading defaults */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading), system-ui, sans-serif;
+  font-family: var(--font-body), var(--font-heading), system-ui, sans-serif;
   letter-spacing: -0.02em;
   line-height: 1.1;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text);
 }
 

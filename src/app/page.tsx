@@ -435,7 +435,7 @@ export default function Home() {
         </div>
 
         {/* ── Scrolling showcase gallery — minimal finding rows ── */}
-        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative">
+        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-50">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
@@ -660,12 +660,12 @@ export default function Home() {
 
       {/* ── Blob glow wrapper — spans Pricing + FAQ ── */}
       <div className="relative overflow-hidden bg-[#141418]">
-        {/* Gradient blob — centered on pricing, bleeds into FAQ */}
+        {/* Gradient blob — scaled up so the green fills the pricing area */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <img
             src="/gradients/pricing-blob.png"
             alt=""
-            className="absolute top-[30%] left-[55%] -translate-x-1/2 -translate-y-1/4 w-[110%] max-w-[1600px] h-auto opacity-50 mix-blend-screen"
+            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[15%] w-[180%] max-w-[2400px] h-auto opacity-80"
           />
         </div>
 

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { DM_Sans, Caveat } from 'next/font/google'
-import localFont from 'next/font/local'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -15,20 +14,7 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const genova = localFont({
-  src: [
-    { path: '../../public/fonts/Genova-Thin.otf', weight: '100', style: 'normal' },
-    { path: '../../public/fonts/Genova-ThinItalic.otf', weight: '100', style: 'italic' },
-    { path: '../../public/fonts/Genova.otf', weight: '400', style: 'normal' },
-    { path: '../../public/fonts/Genova-Italic.otf', weight: '400', style: 'italic' },
-    { path: '../../public/fonts/Genova-Medium.otf', weight: '500', style: 'normal' },
-    { path: '../../public/fonts/Genova-MediumItalic.otf', weight: '500', style: 'italic' },
-    { path: '../../public/fonts/Genova-Black.otf', weight: '900', style: 'normal' },
-    { path: '../../public/fonts/Genova-BlackItalic.otf', weight: '900', style: 'italic' },
-  ],
-  variable: '--font-heading',
-  display: 'swap',
-})
+/* DM Sans used for both heading and body — single font system */
 
 
 const caveat = Caveat({
@@ -109,7 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${genova.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
