@@ -224,9 +224,8 @@ export function AnimatedCounter({
   className?: string
   duration?: number
 }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-80px' })
-  const nodeRef = useRef<HTMLSpanElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-20px' })
 
   // Use requestAnimationFrame for smooth counting
   const started = useRef(false)
@@ -247,7 +246,7 @@ export function AnimatedCounter({
   }, [isInView, end, duration])
 
   return (
-    <motion.span
+    <motion.div
       ref={ref}
       className={className}
       initial={{ opacity: 0, scale: 0.8 }}
@@ -255,7 +254,7 @@ export function AnimatedCounter({
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       {prefix}{displayCount}{suffix}
-    </motion.span>
+    </motion.div>
   )
 }
 

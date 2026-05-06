@@ -332,14 +332,12 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
               >
-                <div className="block">
-                  <AnimatedCounter
-                    end={stat.end}
-                    suffix={stat.suffix}
-                    className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient leading-none"
-                    duration={2}
-                  />
-                </div>
+                <AnimatedCounter
+                  end={stat.end}
+                  suffix={stat.suffix}
+                  className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient leading-none"
+                  duration={2}
+                />
                 <p className="text-sm font-semibold text-white/70 mt-3">{stat.label}</p>
                 <p className="text-xs text-white/40 mt-1">{stat.desc}</p>
               </motion.div>
