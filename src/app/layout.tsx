@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { DM_Sans, Caveat, Syne } from 'next/font/google'
+import { DM_Sans, Caveat } from 'next/font/google'
+import localFont from 'next/font/local'
 import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -14,10 +15,11 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const syne = Syne({
-  subsets: ['latin'],
+const glyke = localFont({
+  src: '../../public/fonts/CCSGlykeRegular.woff',
   variable: '--font-heading',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: '400',
+  display: 'swap',
 })
 
 
@@ -99,7 +101,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${syne.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${dmSans.variable} ${glyke.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
     >
       <head>
         <script
