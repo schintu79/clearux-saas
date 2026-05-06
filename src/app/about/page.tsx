@@ -10,12 +10,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-[#111114]">
       <Navbar />
-      <main id="main-content" className="min-h-[70vh] bg-[#111114]">
-        <AboutContent />
-      </main>
+      <AboutContent />
       <Footer />
-    </>
+    </div>
   )
 }

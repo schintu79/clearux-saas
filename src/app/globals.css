@@ -462,7 +462,7 @@ article, .prose {
 }
 
 .auth-left {
-  background: #0C0C0F;
+  background: #111114;
   padding: 3rem 3.5rem;
   display: flex;
   flex-direction: column;
@@ -471,30 +471,9 @@ article, .prose {
   overflow: hidden;
 }
 
-.auth-left::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-.auth-glow {
-  position: absolute;
-  top: -120px;
-  left: -60px;
-  width: 520px;
-  height: 520px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(132,204,22,.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-
 .auth-right {
   position: relative;
-  background: #18181C;
+  background: #111114;
   display: flex;
   align-items: center;
   justify-content: center;

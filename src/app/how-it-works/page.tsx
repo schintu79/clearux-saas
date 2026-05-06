@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import AboutContent from './HowItWorksContent'
+import HowItWorksContent from './HowItWorksContent'
 
 export const metadata: Metadata = {
   title: 'How ClearUX Works — Human-Centered AI Audit Platform',
@@ -10,13 +10,10 @@ export const metadata: Metadata = {
 
 export default function HowItWorksPage() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-[#111114]">
       <Navbar />
-      <main id="main-content" className="min-h-[70vh] bg-[#111114]">
-        <AboutContent />
-      </main>
-
+      <HowItWorksContent />
       <Footer />
-    </>
+    </div>
   )
 }

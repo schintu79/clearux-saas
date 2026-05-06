@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════
-   HowItWorksContent — Musicbed-inspired design system
+   Data
    ═══════════════════════════════════════════════════════════════ */
 
 const PILLARS = [
@@ -87,21 +87,35 @@ const STEPS = [
   },
 ]
 
-export default function AboutContent() {
+/* ═══════════════════════════════════════════════════════════════
+   Component
+   ═══════════════════════════════════════════════════════════════ */
+
+export default function HowItWorksContent() {
   return (
-    <>
+    <main id="main-content" className="relative flex-1">
+      {/* ── Single page background ── */}
+      <div className="absolute inset-0" aria-hidden="true">
+        <img
+          src="/gradients/bg-howitworks.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+      </div>
+
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-[#111114] py-24 sm:py-32 overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative z-10 py-28 sm:py-36">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             HOW IT WORKS
           </p>
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6">
+          <h1
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6"
+            style={{ lineHeight: '1.1' }}
+          >
             How ClearUX <span className="text-lime-gradient">works.</span>
           </h1>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
@@ -113,12 +127,15 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           2. THREE-STEP PROCESS
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#141418] py-24 sm:py-32">
+      <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             THE PROCESS
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-16">
+          <h2
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-16"
+            style={{ lineHeight: '1.1' }}
+          >
             Three steps to <span className="text-lime-gradient">clarity.</span>
           </h2>
 
@@ -128,7 +145,7 @@ export default function AboutContent() {
               return (
                 <div
                   key={step.num}
-                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
                   <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.06] leading-none block mb-4">
                     {step.num}
@@ -152,12 +169,15 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. THE FOUR PILLARS
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#111114] py-24 sm:py-32">
+      <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             WHAT WE EVALUATE
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
+          <h2
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
+            style={{ lineHeight: '1.1' }}
+          >
             Four pillars of <span className="text-lime-gradient">modern UX.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
@@ -170,7 +190,7 @@ export default function AboutContent() {
               return (
                 <div
                   key={pillar.title}
-                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <PillarIcon size={20} className="text-[#84CC16]" />
@@ -191,12 +211,15 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           4. BUILT FOR
           ═══════════════════════════════════════════════════════ */}
-      <section className="bg-[#141418] py-24 sm:py-32">
+      <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
             WHO WE SERVE
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
+          <h2
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
+            style={{ lineHeight: '1.1' }}
+          >
             Built for people who <span className="text-lime-gradient">ship.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
@@ -209,7 +232,7 @@ export default function AboutContent() {
               return (
                 <div
                   key={item.title}
-                  className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-8"
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <ItemIcon size={20} className="text-[#84CC16]" />
@@ -230,37 +253,27 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. FINAL CTA
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative bg-[#141418] py-24 sm:py-32 overflow-hidden">
+      <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
-            START YOUR AUDIT TODAY
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
-            Ready to see what you&apos;re <span className="text-lime-gradient">missing?</span>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+            Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-10">
-            64 checkpoints. 16 categories. Results in minutes.
+          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4">
-            <Link
-              href="/register"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-            >
-              Start Free Audit
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <Link
-              href="/contact"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
-            >
-              Contact us
-            </Link>
-          </div>
+          <Link
+            href="/register"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+          >
+            Start Free Audit
+            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </section>
-    </>
+    </main>
   )
 }

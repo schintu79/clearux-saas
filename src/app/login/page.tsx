@@ -260,24 +260,28 @@ export default function LoginPage() {
   return (
     <>
       {/* MOBILE / TABLET: Navbar + full-width form */}
-      <div className="lg:hidden min-h-screen bg-[#111114] flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-          {formContent}
+      <div className="lg:hidden min-h-screen bg-[#111114] flex flex-col relative">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
-        <div className="border-t border-white/[0.06] px-4 py-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
-            <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
-              <ArrowLeft size={12} /> Back to Home
-            </Link>
-            <span className="text-white/15">|</span>
-            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <span className="text-white/15">|</span>
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <span className="text-white/15">|</span>
-            <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
-            <span className="text-white/15">|</span>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+        <div className="relative z-10 flex flex-col flex-1">
+          <Navbar />
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+            {formContent}
+          </div>
+          <div className="border-t border-white/[0.06] px-4 py-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
+              <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
+                <ArrowLeft size={12} /> Back to Home
+              </Link>
+              <span className="text-white/15">|</span>
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <span className="text-white/15">|</span>
+              <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+              <span className="text-white/15">|</span>
+              <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+            </div>
           </div>
         </div>
       </div>
@@ -285,9 +289,12 @@ export default function LoginPage() {
       {/* DESKTOP: classic 2-panel layout */}
       <div className="hidden lg:block">
         <div className="auth-page">
-          {/* Left Panel — Welcome Back */}
-          <div className="auth-left relative z-0">
-            <div className="auth-glow" />
+          {/* Left Panel */}
+          <div className="auth-left">
+            <div className="absolute inset-0" aria-hidden="true">
+              <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+            </div>
 
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
@@ -300,7 +307,7 @@ export default function LoginPage() {
                 <h2 className="text-2xl font-heading font-light text-white mb-2">
                   Welcome back
                 </h2>
-                <p className="text-sm text-white/65 leading-relaxed max-w-[320px]">
+                <p className="text-sm text-white/50 leading-relaxed max-w-[320px]">
                   Pick up where you left off. Your UX insights, tracked fixes, and score trends are ready and waiting.
                 </p>
 
@@ -316,40 +323,30 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-8">
-                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">64</p>
-                  <p className="text-xs text-white/55 uppercase tracking-wide">Checkpoints</p>
-                </div>
-                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">16</p>
-                  <p className="text-xs text-white/55 uppercase tracking-wide">Categories</p>
-                </div>
-                <div className="bg-white/[0.04] rounded-lg px-4 py-3 flex-1 text-center">
-                  <p className="text-lg font-bold text-white">&lt; 10 min</p>
-                  <p className="text-xs text-white/55 uppercase tracking-wide">Per audit</p>
-                </div>
+              {/* Stats in glass cards */}
+              <div className="flex gap-3 mt-8">
+                {[
+                  { num: '64', label: 'Checkpoints' },
+                  { num: '16', label: 'Categories' },
+                  { num: '< 10 min', label: 'Per audit' },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3 flex-1 text-center">
+                    <p className="text-lg font-bold text-white">{stat.num}</p>
+                    <p className="text-xs text-white/45 uppercase tracking-wide">{stat.label}</p>
+                  </div>
+                ))}
               </div>
 
-              {/* Secondary CTA */}
+              {/* Footer links */}
               <div className="mt-8 pt-6 border-t border-white/[0.06]">
-                <p className="text-xs text-white/35 mb-3">Not ready to sign in?</p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link href="/how-it-works" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
-                    How it works <ArrowRight size={14} />
-                  </Link>
+                  <Link href="/how-it-works" className="text-sm font-medium text-white/50 hover:text-white transition-colors">How it works</Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
-                    Pricing <ArrowRight size={14} />
-                  </Link>
+                  <Link href="/pricing" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Pricing</Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/faq" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
-                    FAQ <ArrowRight size={14} />
-                  </Link>
+                  <Link href="/faq" className="text-sm font-medium text-white/50 hover:text-white transition-colors">FAQ</Link>
                   <span className="text-white/15">|</span>
-                  <Link href="/contact" className="flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors">
-                    Contact <ArrowRight size={14} />
-                  </Link>
+                  <Link href="/contact" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Contact</Link>
                 </div>
               </div>
             </div>
