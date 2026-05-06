@@ -99,24 +99,27 @@ export default function PricingContent() {
       {/* ── Hero card: Single Audit ── */}
       <section className="py-24 sm:py-32 bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-8 sm:p-10">
-            <div className="grid sm:grid-cols-2 gap-8 items-center">
+          <div className="rounded-xl border border-[#84CC16]/20 bg-white/[0.03] p-8 sm:p-10 relative overflow-hidden">
+            {/* Subtle lime glow */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-[#84CC16]/[0.04] blur-3xl pointer-events-none" />
+            <div className="relative z-10 grid sm:grid-cols-2 gap-8 items-center">
               {/* Left: Price */}
               <div>
                 <h2 className="font-heading text-2xl font-light text-white mb-1">Single Audit</h2>
                 <p className="font-body text-white/50 text-sm mb-6">For founders and teams who need a one-time baseline</p>
 
                 <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-white/50 text-lg">$</span>
-                  <span className="font-heading text-6xl sm:text-7xl font-light text-white">99</span>
+                  <span className="text-lime-gradient text-lg font-medium">$</span>
+                  <span className="font-heading text-6xl sm:text-7xl font-medium text-lime-gradient">99</span>
                 </div>
                 <p className="font-body text-white/50 text-sm mb-8">One-time payment per audit</p>
 
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-lime-gradient text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
                 >
                   Buy 1 audit
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <p className="font-body text-xs text-white/50 mt-3">No account needed to preview</p>
               </div>
@@ -133,7 +136,7 @@ export default function PricingContent() {
                   'Results in under 10 minutes',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-[#84CC16] flex-shrink-0 mt-0.5" />
                     <span className="font-body text-sm text-white">{item}</span>
                   </div>
                 ))}
@@ -147,7 +150,7 @@ export default function PricingContent() {
       <section className="bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex items-center gap-4">
           <div className="flex-1 h-px bg-white/[0.06]" />
-          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 text-center">Need more audits? Save with packs</span>
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/50 text-center">Need more audits? Save with packs</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
       </section>
@@ -163,39 +166,45 @@ export default function PricingContent() {
             ].map((pack) => (
               <div
                 key={pack.name}
-                className={`rounded-xl border bg-white/[0.03] p-7 transition-all duration-300 ${
+                className={`rounded-xl border bg-white/[0.03] p-7 transition-all duration-300 relative overflow-hidden ${
                   pack.popular
                     ? 'border-white/[0.15]'
                     : 'border-white/[0.06] hover:border-white/[0.1]'
                 }`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-heading text-lg font-light text-white">{pack.name}</h3>
-                  {pack.popular ? (
-                    <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">Most Popular</span>
-                  ) : (
-                    <span className="font-body text-xs text-white/40">
-                      {pack.per}/audit
-                    </span>
-                  )}
+                {pack.popular && (
+                  <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-[#84CC16]/[0.03] blur-2xl pointer-events-none" />
+                )}
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-heading text-lg font-light text-white">{pack.name}</h3>
+                    {pack.popular ? (
+                      <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#84CC16]/70">Most Popular</span>
+                    ) : (
+                      <span className="font-body text-xs text-white/40">
+                        {pack.per}/audit
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-0.5">
+                    <span className="text-lime-gradient text-sm font-medium">$</span>
+                    <span className="font-heading text-4xl font-medium text-lime-gradient">{pack.price.toLocaleString()}</span>
+                  </div>
+                  <p className="font-body text-white/50 text-sm mb-1">
+                    {pack.per} per audit <span className="text-white/30">/</span> {pack.credits} audits
+                  </p>
+                  <p className="font-body text-xs text-[#84CC16]/60 font-semibold mb-5">Save {pack.save}%</p>
+
+                  <p className="font-body text-xs text-white/50 mb-5">{pack.desc}</p>
+
+                  <Link
+                    href="/register"
+                    className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap w-full sm:w-auto min-h-[48px]"
+                  >
+                    {pack.cta}
+                  </Link>
                 </div>
-
-                <div className="flex items-baseline gap-1 mb-0.5">
-                  <span className="text-white/50 text-sm">$</span>
-                  <span className="font-heading text-4xl font-light text-white">{pack.price.toLocaleString()}</span>
-                </div>
-                <p className="font-body text-white/50 text-sm mb-5">
-                  {pack.per} per audit <span className="text-white/30">/</span> {pack.credits} audits
-                </p>
-
-                <p className="font-body text-xs text-white/50 mb-5">{pack.desc}</p>
-
-                <Link
-                  href="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap w-full sm:w-auto"
-                >
-                  {pack.cta}
-                </Link>
               </div>
             ))}
           </div>
@@ -252,13 +261,13 @@ export default function PricingContent() {
                 <tbody>
                   <tr className="bg-white/[0.02] border-b border-white/[0.04]">
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Free Audit</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$0</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-medium text-lime-gradient text-lg font-heading">$0</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Free (1 audit)</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">First-time users evaluating the platform</td>
                   </tr>
                   <tr className="bg-white/[0.03] border-b border-white/[0.04]">
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Single Audit</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$99</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-medium text-lime-gradient text-lg font-heading">$99</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">$99.00</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">One-off baseline or pre-launch check</td>
                   </tr>
@@ -266,31 +275,31 @@ export default function PricingContent() {
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">
                       <span className="flex items-center gap-3">
                         Growth
-                        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">Popular</span>
+                        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#84CC16]/70">Popular</span>
                       </span>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$399</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-medium text-lime-gradient text-lg font-heading">$399</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$79.80</span>
-                      <span className="ml-2 text-[11px] font-semibold text-white/40">save 19%</span>
+                      <span className="ml-2 text-[11px] font-semibold text-[#84CC16]/60">save 19%</span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Quarterly audits per release cycle</td>
                   </tr>
                   <tr className="bg-white/[0.03] border-b border-white/[0.04]">
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Agency</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$999</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-medium text-lime-gradient text-lg font-heading">$999</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$66.60</span>
-                      <span className="ml-2 text-[11px] font-semibold text-white/40">save 33%</span>
+                      <span className="ml-2 text-[11px] font-semibold text-[#84CC16]/60">save 33%</span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Multiple client sites + white-label</td>
                   </tr>
                   <tr className="bg-white/[0.02]">
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white font-body">Scale</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-semibold text-white text-lg font-body">$2,499</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-5 font-medium text-lime-gradient text-lg font-heading">$2,499</td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 font-body">
                       <span className="text-white font-medium">$49.98</span>
-                      <span className="ml-2 text-[11px] font-semibold text-white/40">save 50%</span>
+                      <span className="ml-2 text-[11px] font-semibold text-[#84CC16]/60">save 50%</span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-5 text-white/50 font-body">Continuous auditing across teams</td>
                   </tr>
