@@ -659,55 +659,56 @@ export default function Home() {
           SECTION 6 — PRICING
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
-        {/* Background image — same as hero */}
+        {/* Background image */}
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10">
               Simple pricing
             </p>
-            <h2
-              className="font-heading text-[2.5rem] sm:text-[3.25rem] md:text-[4rem] lg:text-[5rem] font-light text-white max-w-4xl mb-6"
-             
-            >
-              $99 per audit.
-            </h2>
-            <p
-              className="font-heading text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-lime-gradient mb-12"
-             
-            >
+
+            {/* Price hero — $99 in bold lime gradient */}
+            <div className="mb-6">
+              <h2 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05' }}>
+                <span className="text-lime-gradient font-bold text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
+                <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-white/60 ml-3 sm:ml-5">per audit</span>
+              </h2>
+            </div>
+
+            <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-12">
               First one free.
             </p>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed">
-                No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
-              </p>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-shrink-0">
-                <Link
-                  href="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] w-full sm:w-auto"
-                >
-                  Start Free Audit
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px] w-full sm:w-auto"
-                >
-                  View All Plans
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
+
+            <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+              No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <Link
+                href="/register"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+              >
+                Start Free Audit
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              >
+                View All Plans
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </div>
           </ScrollReveal>
 
-          {/* Feature list — horizontal strip */}
+          {/* Feature list — glass card strip */}
           <ScrollReveal>
-            <div className="border-t border-white/[0.08] pt-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
                 {[
                   'All 16 categories, all 4 pillars',
                   'PDF & Word reports included',
