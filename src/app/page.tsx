@@ -8,7 +8,7 @@ import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
   Search, BarChart3, FileText, Share2, RefreshCw,
   Sparkles, Target, ScanEye, ShieldAlert,
-  Zap, Accessibility, Bot,
+  Zap, Accessibility, Bot, ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -36,10 +36,10 @@ const HERO_HEADLINES = [
 
 /* ── Selling points below search bar ────────────────────── */
 const HERO_SELLING_POINTS = [
-  { icon: ShieldAlert, label: 'Dark patterns' },
-  { icon: Accessibility, label: 'Accessibility' },
-  { icon: Bot, label: 'AI readiness' },
-  { icon: Target, label: 'Conversion' },
+  { icon: ShieldAlert, label: 'Dark Pattern', highlight: 'Detection' },
+  { icon: Accessibility, label: 'Cognitive', highlight: 'Accessibility' },
+  { icon: Bot, label: 'AI Agent', highlight: 'Readiness' },
+  { icon: Target, label: 'Conversion', highlight: 'Psychology' },
 ];
 
 /* ── Typewriter placeholders ─────────────────────────────── */
@@ -78,7 +78,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setHeadlineIdx((prev) => (prev + 1) % HERO_HEADLINES.length);
-    }, 4000);
+    }, 7000);
     return () => clearInterval(interval);
   }, []);
 
@@ -100,25 +100,25 @@ export default function Home() {
           SECTION 1 — HERO
           Kaleidoscope aurora, rotating headlines, selling icons
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+      <section className="relative overflow-hidden min-h-[100vh] flex flex-col items-center justify-center">
         <AuroraBackground variant="hero" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-16">
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-8">
           <div className="text-center">
-            {/* Rotating headline */}
-            <div className="h-[5.5rem] sm:h-[7rem] md:h-[8.5rem] lg:h-[10rem] relative mb-6 overflow-hidden">
+            {/* Rotating headline — wider, slower */}
+            <div className="h-[6rem] sm:h-[7.5rem] md:h-[9rem] lg:h-[11rem] relative mb-6 overflow-hidden">
               <AnimatePresence mode="wait">
                 <motion.h1
                   key={headlineIdx}
-                  className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-bold tracking-tight text-white absolute inset-x-0"
+                  className="font-heading text-[2.5rem] sm:text-5xl md:text-6xl lg:text-[5rem] font-bold tracking-tight text-white absolute inset-x-0"
                   style={{ lineHeight: '1.08' }}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -40 }}
-                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  exit={{ opacity: 0, y: -50 }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
                 >
                   {HERO_HEADLINES[headlineIdx].main}<br />
-                  <span className="italic font-normal text-white/60">{HERO_HEADLINES[headlineIdx].accent}</span>
+                  <span className="text-[#84CC16]">{HERO_HEADLINES[headlineIdx].accent}</span>
                 </motion.h1>
               </AnimatePresence>
             </div>
@@ -136,12 +136,12 @@ export default function Home() {
             {/* Search bar */}
             <motion.form
               onSubmit={handleHeroSubmit}
-              className="max-w-xl mx-auto mb-6"
+              className="max-w-xl mx-auto mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
             >
-              <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-white/[0.15] focus-within:bg-white/[0.06] transition-all">
+              <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-[#84CC16]/30 focus-within:bg-white/[0.06] transition-all">
                 <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
                 <input
@@ -157,7 +157,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
+                  className="group flex items-center gap-2 px-6 py-3 bg-[#84CC16] text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-[#95d825] flex-shrink-0"
                 >
                   {user ? 'Get My Audit' : 'Start Free Audit'}
                   <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -165,9 +165,9 @@ export default function Home() {
               </div>
             </motion.form>
 
-            {/* Selling point icons */}
+            {/* Selling point icons — stronger with lime highlights */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-16"
+              className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.5 }}
@@ -175,33 +175,64 @@ export default function Home() {
               {HERO_SELLING_POINTS.map((sp, i) => {
                 const Icon = sp.icon;
                 return (
-                  <div key={i} className="flex items-center gap-2">
-                    <Icon size={16} className="text-[#84CC16]" />
-                    <span className="text-sm text-white/50">{sp.label}</span>
+                  <div key={i} className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#84CC16]/10 flex items-center justify-center">
+                      <Icon size={16} className="text-[#84CC16]" />
+                    </div>
+                    <span className="text-sm text-white/60">{sp.label} <span className="font-semibold text-[#84CC16]">{sp.highlight}</span></span>
                   </div>
                 );
               })}
             </motion.div>
-          </div>
 
-          {/* Product mockup */}
+            <motion.p
+              className="text-sm text-white/25 mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              First audit free. No credit card required.
+            </motion.p>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.button
+          onClick={() => document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' })}
+          className="relative z-10 mb-8 flex flex-col items-center gap-2 text-white/30 hover:text-[#84CC16]/60 transition-colors"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          aria-label="Scroll to see more"
+        >
+          <span className="text-xs tracking-widest uppercase">Scroll</span>
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <HeroReportMockup />
+            <ChevronDown size={20} />
           </motion.div>
+        </motion.button>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 1B — PRODUCT SHOWCASE (moved from hero)
+          ═══════════════════════════════════════════════════════ */}
+      <section id="showcase" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <ScrollReveal>
+            <HeroReportMockup />
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 2 — TRUST STATS + AUDIENCE
-          Animated numbers + who it's for
+          Lime background, prominent, confident
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative border-t border-white/[0.06] py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 mb-16">
+      <section className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden" style={{ background: '#84CC16' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 mb-14">
             {[
               { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
@@ -219,31 +250,33 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-heading text-4xl sm:text-5xl font-bold text-white"
+                  className="font-heading text-5xl sm:text-6xl font-bold text-[#111114]"
                   duration={1.5}
                 />
-                <p className="text-sm font-semibold text-white/70 mt-2">{stat.label}</p>
-                <p className="text-xs text-white/30 mt-0.5">{stat.desc}</p>
+                <p className="text-sm font-bold text-[#111114] mt-2">{stat.label}</p>
+                <p className="text-xs text-[#111114]/50 mt-0.5">{stat.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          <p className="text-center text-xs font-semibold tracking-widest uppercase text-white/25 mb-6">
-            Built for teams who care about user experience
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {['Product Managers', 'Design Teams', 'Agencies', 'Startups', 'Enterprise'].map((label, i) => (
-              <motion.span
-                key={i}
-                className="text-sm font-medium text-white/25 tracking-wide"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                {label}
-              </motion.span>
-            ))}
+          <div className="text-center">
+            <p className="text-xs font-bold tracking-widest uppercase text-[#111114]/40 mb-5">
+              Built for teams who care about user experience
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+              {['Product Managers', 'Design Teams', 'Agencies', 'Startups', 'Enterprise'].map((label, i) => (
+                <motion.span
+                  key={i}
+                  className="text-sm font-semibold text-[#111114]/60 tracking-wide"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  {label}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -356,7 +389,7 @@ export default function Home() {
           <ScrollReveal delay={0.3} className="text-center mt-12">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 bg-white text-[#111114] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-white/90"
+              className="group inline-flex items-center gap-2.5 bg-[#84CC16] text-[#111114] font-semibold text-[15px] px-7 py-3.5 rounded-xl transition-all hover:bg-[#95d825]"
             >
               Try It Out
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -548,7 +581,7 @@ export default function Home() {
                       'Credits never expire',
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-2.5">
-                        <CheckCircle className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                        <CheckCircle className="w-4 h-4 text-[#84CC16] flex-shrink-0" />
                         <span className="text-sm text-white/70">{item}</span>
                       </div>
                     ))}
@@ -556,7 +589,7 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row items-start gap-3">
                     <Link
                       href="/register"
-                      className="inline-flex items-center gap-2 bg-white text-[#111114] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:bg-white/90 transition-opacity"
+                      className="inline-flex items-center gap-2 bg-[#84CC16] text-[#111114] font-semibold text-[15px] rounded-xl px-6 py-3 min-h-[48px] hover:bg-[#95d825] transition-all"
                     >
                       Start Free Audit
                       <ArrowRight size={16} />
@@ -577,9 +610,9 @@ export default function Home() {
                       <span className="font-heading text-8xl font-bold text-white tracking-tight">99</span>
                     </div>
                     <p className="text-white/30 text-sm">per audit, one-time</p>
-                    <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/15">
-                      <CheckCircle size={13} className="text-indigo-400" />
-                      <span className="text-xs font-semibold text-indigo-300">First audit free</span>
+                    <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#84CC16]/10 border border-[#84CC16]/15">
+                      <CheckCircle size={13} className="text-[#84CC16]" />
+                      <span className="text-xs font-semibold text-[#84CC16]">First audit free</span>
                     </div>
                   </div>
                 </div>
@@ -638,14 +671,14 @@ export default function Home() {
         <ScrollReveal className="relative z-10 max-w-3xl mx-auto text-center">
           <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight" style={{ lineHeight: '1.1' }}>
             Ready to see what<br className="hidden sm:block" />
-            you&apos;re missing?
+            you&apos;re <span className="text-[#84CC16]">missing</span>?
           </h2>
           <p className="text-white/40 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
             Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
           </p>
 
           <form onSubmit={handleHeroSubmit} className="max-w-lg mx-auto mb-6">
-            <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-white/[0.15] transition-all">
+            <div className="relative flex items-center bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1.5 focus-within:border-[#84CC16]/30 transition-all">
               <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
               <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
               <input
@@ -661,7 +694,7 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-white/90 flex-shrink-0"
+                className="group flex items-center gap-2 px-6 py-3 bg-[#84CC16] text-[#111114] rounded-xl font-semibold text-[15px] transition-all hover:bg-[#95d825] flex-shrink-0"
               >
                 {user ? 'Get My Audit' : 'Start Free Audit'}
                 <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

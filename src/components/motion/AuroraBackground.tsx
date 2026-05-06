@@ -18,41 +18,41 @@ export default function AuroraBackground({ variant = 'section', className = '' }
       <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
         {/* Foundation — purple orb, top-left */}
         <div
-          className="absolute -top-[15%] left-[5%] w-[55%] h-[65%] rounded-full opacity-[0.45]"
+          className="absolute -top-[15%] left-[5%] w-[55%] h-[65%] rounded-full opacity-[0.65]"
           style={{
             background: 'radial-gradient(circle at center, #6B5B95 0%, transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'aurora-drift-1 20s ease-in-out infinite',
+            filter: 'blur(45px)',
+            animation: 'aurora-drift-1 12s ease-in-out infinite',
           }}
         />
 
         {/* Human Experience — pink orb, top-right */}
         <div
-          className="absolute -top-[5%] right-[0%] w-[50%] h-[60%] rounded-full opacity-[0.4]"
+          className="absolute -top-[5%] right-[0%] w-[50%] h-[60%] rounded-full opacity-[0.6]"
           style={{
             background: 'radial-gradient(circle at center, #EC4899 0%, transparent 70%)',
-            filter: 'blur(50px)',
-            animation: 'aurora-drift-2 25s ease-in-out infinite',
+            filter: 'blur(40px)',
+            animation: 'aurora-drift-2 15s ease-in-out infinite',
           }}
         />
 
         {/* Inclusive Design — amber orb, bottom-center */}
         <div
-          className="absolute top-[35%] left-[20%] w-[50%] h-[60%] rounded-full opacity-[0.4]"
+          className="absolute top-[35%] left-[20%] w-[50%] h-[60%] rounded-full opacity-[0.7]"
           style={{
             background: 'radial-gradient(circle at center, #F59E0B 0%, transparent 70%)',
-            filter: 'blur(70px)',
-            animation: 'aurora-drift-3 18s ease-in-out infinite',
+            filter: 'blur(50px)',
+            animation: 'aurora-drift-3 10s ease-in-out infinite',
           }}
         />
 
         {/* Future Readiness — green orb, bottom-right */}
         <div
-          className="absolute top-[30%] right-[5%] w-[45%] h-[55%] rounded-full opacity-[0.45]"
+          className="absolute top-[30%] right-[5%] w-[45%] h-[55%] rounded-full opacity-[0.65]"
           style={{
             background: 'radial-gradient(circle at center, #22C55E 0%, transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'aurora-drift-1 22s ease-in-out infinite reverse',
+            filter: 'blur(45px)',
+            animation: 'aurora-drift-1 13s ease-in-out infinite reverse',
           }}
         />
 
@@ -61,21 +61,32 @@ export default function AuroraBackground({ variant = 'section', className = '' }
           className="absolute inset-0"
           style={{
             backgroundImage: `
-              linear-gradient(to right, rgba(255,255,255,0.03) 0.5px, transparent 0.5px),
-              linear-gradient(to bottom, rgba(255,255,255,0.03) 0.5px, transparent 0.5px)
+              linear-gradient(to right, rgba(255,255,255,0.05) 0.5px, transparent 0.5px),
+              linear-gradient(to bottom, rgba(255,255,255,0.05) 0.5px, transparent 0.5px)
             `,
             backgroundSize: '64px 64px',
-            animation: 'grid-drift 20s linear infinite',
-            maskImage: 'radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%)',
+            animation: 'grid-drift 12s linear infinite',
+            maskImage: 'radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 80%)',
           }}
         />
+
+        {/* Horizontal sweep line — scanner effect */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute top-0 left-0 w-[15%] h-full"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(132,204,22,0.04), transparent)',
+              animation: 'sweep-x 8s ease-in-out infinite',
+            }}
+          />
+        </div>
 
         {/* Radial vignette — fades edges to #111114 */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse 70% 60% at 50% 45%, transparent 0%, #111114 100%)',
+            background: 'radial-gradient(ellipse 75% 65% at 50% 45%, transparent 0%, #111114 100%)',
           }}
         />
       </div>
