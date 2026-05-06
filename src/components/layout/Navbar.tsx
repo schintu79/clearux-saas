@@ -12,7 +12,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
     : email ? email[0].toUpperCase() : '?';
 
   return (
-    <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-medium select-none">
+    <div className="w-7 h-7 rounded-full bg-lime-gradient text-[#111114] flex items-center justify-center text-xs font-medium select-none">
       {initials}
     </div>
   );

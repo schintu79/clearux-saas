@@ -288,7 +288,7 @@ export default function Home() {
         {/* Scroll indicator — "Discover ClearUX" */}
         <div className="relative z-10 flex-1" />
         <motion.div
-          className="relative z-10 flex justify-center pb-10"
+          className="relative z-10 flex justify-center pb-20 sm:pb-24"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}

@@ -232,7 +232,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
           <div className="space-y-2.5">
             {[
               { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: '#22C55E', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-              { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: '#6366F1', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+              { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: '#84CC16', bg: 'bg-lime-50 dark:bg-lime-900/20' },
               { icon: Target, label: 'Focus on pillars', desc: 'Target specific areas to improve', color: 'var(--brand)', bg: 'bg-off dark:bg-white/[0.04]' },
             ].map((m, i) => {
               const Icon = m.icon
