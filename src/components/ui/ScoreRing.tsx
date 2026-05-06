@@ -70,7 +70,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
       {/* Score text in center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="font-body font-bold text-center"
+          className="font-body font-medium text-center"
           style={{
             fontSize: `${size * 0.3}px`,
             color: getColor(animatedScore),

@@ -202,7 +202,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="font-heading font-semibold text-xl text-text truncate">{domain}</h1>
+                <h1 className="font-heading font-medium text-xl text-text truncate">{domain}</h1>
                 <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${statusMeta.color}`}>
                   {statusMeta.label}
                 </span>
@@ -245,7 +245,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                     <span className="text-xs text-muted">({userProfile.email})</span>
                   )}
                   {userProfile.plan && (
-                    <span className="ml-auto text-[10px] font-semibold uppercase text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{userProfile.plan}</span>
+                    <span className="ml-auto text-[10px] font-medium uppercase text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{userProfile.plan}</span>
                   )}
                 </div>
               )}
@@ -254,7 +254,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
             {/* Score + severity summary */}
             {audit.status === 'completed' && report && (
               <div className="flex-shrink-0 text-right hidden sm:block">
-                <p className={`text-4xl font-semibold font-heading ${scoreColor(overall)}`}>{overall}</p>
+                <p className={`text-4xl font-medium font-heading ${scoreColor(overall)}`}>{overall}</p>
                 <p className="text-xs text-muted">{scoreLabel(overall)}</p>
                 <p className="text-xs text-muted mt-1">{report.total_issues} issues</p>
               </div>
@@ -265,12 +265,12 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {audit.status === 'completed' && (
             <div className="flex flex-wrap gap-1.5 mt-4 pt-4 border-t border-border/15 dark:border-white/[0.04]">
               {severityCounts.critical > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />{severityCounts.critical} critical
                 </span>
               )}
               {severityCounts.high > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />{severityCounts.high} high
                 </span>
               )}
@@ -310,7 +310,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {/* Executive Summary */}
           {report.executive_summary && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 sm:p-6">
-              <h2 className="font-heading font-semibold text-lg text-text mb-3">Executive Summary</h2>
+              <h2 className="font-heading font-medium text-lg text-text mb-3">Executive Summary</h2>
               <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                 {report.executive_summary}
               </div>
@@ -324,12 +324,12 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
                   <Zap size={14} className="text-white" />
                 </div>
-                <p className="text-sm font-bold text-text">Top Priority Recommendations</p>
+                <p className="text-sm font-medium text-text">Top Priority Recommendations</p>
               </div>
               <div className="space-y-4">
                 {topRecs.slice(0, 3).map((rec, i) => (
                   <div key={i} className="flex gap-3 items-start">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#111] mt-0.5 bg-brand">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface dark:text-[#111] mt-0.5 bg-brand">
                       {i + 1}
                     </span>
                     <p className="text-sm text-text leading-relaxed">{rec}</p>
@@ -361,7 +361,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                         <PillarIcon size={18} className="text-white" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-bold text-text">{pillar.name}</p>
+                        <p className="text-sm font-medium text-text">{pillar.name}</p>
                         <p className="text-xs text-muted">
                           {pillar.isAudited
                             ? `${pillar.cats.length} categories`
@@ -371,7 +371,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className={`text-2xl font-semibold font-heading ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
+                        <p className={`text-2xl font-medium font-heading ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
                           {pillar.isAudited ? pillar.avg : '--'}
                         </p>
                         {pillar.isAudited && <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>}
@@ -387,7 +387,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                         <div key={j}>
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <span className="text-sm font-medium text-text truncate flex-1">{cat.name}</span>
-                            <span className={`text-sm font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+                            <span className={`text-sm font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
                           </div>
                           <div className="w-full h-1.5 rounded-full bg-border/15 dark:bg-white/[0.06] overflow-hidden mb-1">
                             <div className={`h-full rounded-full ${scoreBgClass(cat.score)}`} style={{ width: `${cat.score}%` }} />
@@ -408,7 +408,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {findings.length > 0 && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
               <div className="px-5 py-4 border-b border-border/15 dark:border-white/[0.04]">
-                <h2 className="font-heading font-semibold text-lg text-text">All Findings ({findings.length})</h2>
+                <h2 className="font-heading font-medium text-lg text-text">All Findings ({findings.length})</h2>
               </div>
               <div className="divide-y divide-border/10 dark:divide-white/[0.03]">
                 {findings.map(f => {
@@ -422,7 +422,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                       >
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${sev.dot}`} />
                         <span className="text-sm text-text flex-1 truncate">{f.title}</span>
-                        <span className={`text-[10px] font-semibold uppercase flex-shrink-0 ${sev.text}`}>{sev.label}</span>
+                        <span className={`text-[10px] font-medium uppercase flex-shrink-0 ${sev.text}`}>{sev.label}</span>
                         {f.dismissed && (
                           <span className="text-[10px] text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">Dismissed</span>
                         )}
@@ -430,7 +430,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                           <span className="text-[10px] text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded capitalize">{f.status.replace(/_/g, ' ')}</span>
                         )}
                         {f.verification_status && (
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                             f.verification_status === 'likely_fixed' ? 'bg-[#22C55E]/10 text-[#22C55E]'
                             : f.verification_status === 'poorly_fixed' ? 'bg-amber-500/10 text-amber-500'
                             : 'bg-red-500/10 text-red-500'
@@ -445,13 +445,13 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                           <p className="text-sm text-muted leading-relaxed">{f.description}</p>
                           {f.evidence && (
                             <div className="p-3 rounded-lg bg-off/50 dark:bg-white/[0.03]">
-                              <p className="text-[10px] font-semibold text-muted uppercase mb-1">Evidence</p>
+                              <p className="text-[10px] font-medium text-muted uppercase mb-1">Evidence</p>
                               <p className="text-xs text-text leading-relaxed">{f.evidence}</p>
                             </div>
                           )}
                           {f.recommendation && (
                             <div className="p-3 rounded-lg bg-brand/5 dark:bg-brand/[0.04]">
-                              <p className="text-[10px] font-semibold text-brand uppercase mb-1">Recommendation</p>
+                              <p className="text-[10px] font-medium text-brand uppercase mb-1">Recommendation</p>
                               <p className="text-xs text-text leading-relaxed">{f.recommendation}</p>
                             </div>
                           )}

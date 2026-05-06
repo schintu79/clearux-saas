@@ -30,13 +30,13 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
             Transparent Pricing
           </p>
 
           <div className="mb-6">
             <h1 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05', marginBottom: 0 }}>
-              <span className="text-lime-gradient font-bold text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
+              <span className="text-lime-gradient font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
               <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-white/60 ml-3 sm:ml-5">per audit</span>
             </h1>
           </div>
@@ -53,14 +53,14 @@ export default function PricingContent() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-lime-gradient text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-lime-gradient text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
             >
               Start Free Audit
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <a
               href="#packs"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-medium tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
             >
               View Packs
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -77,7 +77,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Every audit includes
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-14" style={{ lineHeight: '1.1' }}>
@@ -97,7 +97,7 @@ export default function PricingContent() {
 
           {/* Value anchor */}
           <p className="text-sm text-white/40 mt-6">
-            At $99 per audit, that&apos;s <span className="font-semibold text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
+            At $99 per audit, that&apos;s <span className="font-medium text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
           </p>
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function PricingContent() {
       <section id="packs" className="relative py-24 sm:py-32 overflow-hidden scroll-mt-8">
         <div className="absolute inset-0 bg-[#111114]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Need more audits?
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
@@ -135,7 +135,7 @@ export default function PricingContent() {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-heading text-xl font-light text-white" style={{ marginBottom: 0 }}>{pack.name}</h3>
                     {pack.popular && (
-                      <span className="text-[10px] font-bold tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#84CC16]/10 text-[#84CC16] border border-[#84CC16]/20">
+                      <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#84CC16]/10 text-[#84CC16] border border-[#84CC16]/20">
                         Most Popular
                       </span>
                     )}
@@ -144,18 +144,18 @@ export default function PricingContent() {
                   {/* Price */}
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-lime-gradient text-lg font-medium">$</span>
-                    <span className="font-heading text-5xl sm:text-6xl font-bold text-lime-gradient">{pack.price.toLocaleString()}</span>
+                    <span className="font-heading text-5xl sm:text-6xl font-medium text-lime-gradient">{pack.price.toLocaleString()}</span>
                   </div>
                   <p className="text-white/50 text-sm mb-1">
                     {pack.per} per audit <span className="text-white/20">|</span> {pack.credits} audits
                   </p>
-                  <p className="text-sm text-[#84CC16] font-semibold mb-6">Save {pack.save}%</p>
+                  <p className="text-sm text-[#84CC16] font-medium mb-6">Save {pack.save}%</p>
 
                   <p className="text-sm text-white/40 mb-8 leading-relaxed">{pack.desc}</p>
 
                   <Link
                     href="/register"
-                    className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-sm font-semibold tracking-wide uppercase transition-all whitespace-nowrap w-full min-h-[48px] ${
+                    className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-sm font-medium tracking-wide uppercase transition-all whitespace-nowrap w-full min-h-[48px] ${
                       pack.popular
                         ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
                         : 'bg-white text-[#111114] hover:bg-white/90'
@@ -179,7 +179,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-4">At a glance</p>
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">At a glance</p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-14" style={{ lineHeight: '1.1' }}>
             Compare plans
           </h2>
@@ -189,10 +189,10 @@ export default function PricingContent() {
               <table className="w-full text-sm border-collapse min-w-[540px]">
                 <thead>
                   <tr className="bg-white/[0.04]">
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Plan</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Price</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Per Audit</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-semibold text-white/40 uppercase tracking-[0.2em]">Best For</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/40 uppercase tracking-[0.2em]">Plan</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/40 uppercase tracking-[0.2em]">Price</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/40 uppercase tracking-[0.2em]">Per Audit</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/40 uppercase tracking-[0.2em]">Best For</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -204,19 +204,19 @@ export default function PricingContent() {
                     { plan: 'Scale', price: '$2,499', per: '$49.98', best: 'Continuous auditing across teams', badge: null, save: '50%' },
                   ].map((row, i) => (
                     <tr key={i} className={`border-t border-white/[0.06] ${i % 2 === 0 ? 'bg-white/[0.02]' : 'bg-white/[0.04]'}`}>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-semibold text-white">
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-white">
                         <span className="flex items-center gap-3">
                           {row.plan}
                           {row.badge && (
-                            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#84CC16]/80">{row.badge}</span>
+                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#84CC16]/80">{row.badge}</span>
                           )}
                         </span>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-heading font-bold text-lime-gradient text-lg">{row.price}</td>
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-heading font-medium text-lime-gradient text-lg">{row.price}</td>
                       <td className="px-4 sm:px-6 py-4 sm:py-5">
                         <span className="text-white font-medium">{row.per}</span>
                         {row.save && (
-                          <span className="ml-2 text-[11px] font-semibold text-[#84CC16]">save {row.save}</span>
+                          <span className="ml-2 text-[11px] font-medium text-[#84CC16]">save {row.save}</span>
                         )}
                       </td>
                       <td className="px-4 sm:px-6 py-4 sm:py-5 text-white/50">{row.best}</td>
@@ -263,7 +263,7 @@ export default function PricingContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

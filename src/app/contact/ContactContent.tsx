@@ -55,7 +55,7 @@ export default function ContactContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
             GET IN TOUCH
           </p>
 
@@ -79,7 +79,7 @@ export default function ContactContent() {
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-5">
                     <CheckCircle size={28} className="text-[#84CC16]" />
                   </div>
-                  <p className="font-heading font-semibold text-lg text-white mb-1">Message sent!</p>
+                  <p className="font-heading font-medium text-lg text-white mb-1">Message sent!</p>
                   <p className="font-body text-sm text-white/50">
                     Thanks for reaching out. We&rsquo;ll reply within 24 hours.
                   </p>
@@ -143,7 +143,7 @@ export default function ContactContent() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] disabled:opacity-60"
+                      className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] disabled:opacity-60"
                     >
                       {loading ? (
                         <>
@@ -171,7 +171,7 @@ export default function ContactContent() {
                 <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
                   <Mail size={18} className="text-[#84CC16]" />
                 </div>
-                <p className="text-sm font-semibold font-body text-white mb-1">Email us</p>
+                <p className="text-sm font-medium font-body text-white mb-1">Email us</p>
                 <a
                   href="mailto:support@clearux.ai"
                   className="text-sm font-body text-white/50 hover:text-white/70 transition-colors"
@@ -184,7 +184,7 @@ export default function ContactContent() {
                 <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
                   <MessageSquare size={18} className="text-[#84CC16]" />
                 </div>
-                <p className="text-sm font-semibold font-body text-white mb-1">Response time</p>
+                <p className="text-sm font-medium font-body text-white mb-1">Response time</p>
                 <p className="text-sm font-body text-white/50">Usually within 24 hours</p>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function ContactContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

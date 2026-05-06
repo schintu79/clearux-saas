@@ -89,7 +89,7 @@ export default function AdminAuditsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading font-semibold text-2xl text-text">Audits</h1>
+        <h1 className="font-heading font-medium text-2xl text-text">Audits</h1>
         <p className="text-sm text-muted mt-1">{total} total audits</p>
       </div>
 
@@ -131,13 +131,13 @@ export default function AdminAuditsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">URL</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">User</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Score</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Pages</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Created</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Link</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">URL</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">User</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Score</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Pages</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Created</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -174,7 +174,7 @@ export default function AdminAuditsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[13px] font-bold tabular-nums ${scoreColor(score)}`}>
+                        <span className={`text-[13px] font-medium tabular-nums ${scoreColor(score)}`}>
                           {score !== null ? `${score}/100` : '—'}
                         </span>
                       </td>

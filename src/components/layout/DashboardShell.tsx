@@ -88,7 +88,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="h-14 px-5 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-heading text-2xl font-extrabold tracking-[0.6px] text-text">clearux.ai</span>
+            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-text">clearux.ai</span>
           </Link>
         </div>
 
@@ -97,7 +97,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-semibold text-surface dark:text-[#111111] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-medium text-surface dark:text-[#111111] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
           >
             <PlusCircle size={14} strokeWidth={2.5} />
             New Audit
@@ -131,7 +131,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     </span>
                     <span>{item.label}</span>
                     {(item as any).badge && (
-                      <span className="ml-auto text-[9px] font-bold text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[9px] font-medium text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
                         {unreadNotifications}
                       </span>
                     )}
@@ -152,9 +152,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Coins size={13} className="text-[#22C55E]" />
-                  <span className="text-[11px] font-semibold text-text">Credits</span>
+                  <span className="text-[11px] font-medium text-text">Credits</span>
                 </div>
-                <span className="text-base font-bold text-[#22C55E] tabular-nums">{credits}</span>
+                <span className="text-base font-medium text-[#22C55E] tabular-nums">{credits}</span>
               </div>
               <p className="text-[10px] text-muted mb-2.5 leading-snug">
                 {credits === 0
@@ -163,7 +163,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               </p>
               <Link
                 href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-semibold text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
+                className="block text-center text-[11px] font-medium text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
               >
                 {credits === 0 ? 'Buy Credits' : 'Buy More'}
               </Link>
@@ -180,7 +180,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#111111] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface dark:text-[#111111] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading text-2xl font-extrabold tracking-[0.6px] text-text">
+          <span className="ml-3 font-heading text-2xl font-medium tracking-[0.6px] text-text">
             clearux.ai
           </span>
         </div>

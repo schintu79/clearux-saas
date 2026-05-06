@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><span className="font-heading text-2xl font-extrabold tracking-[0.6px] text-white">clearux.ai</span></div>
+            <div className="mb-3"><span className="font-heading text-2xl font-medium tracking-[0.6px] text-white">clearux.ai</span></div>
             <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
               Professional UX audits powered by AI. 64 checkpoints, 16 categories, results in minutes.
             </p>
@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
           {/* Link columns */}
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div>
-              <h4 className="font-body font-semibold text-xs uppercase tracking-wider text-white/35 mb-4">Product</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/35 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'How It Works', href: '/how-it-works' },
@@ -60,7 +60,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-body font-semibold text-xs uppercase tracking-wider text-white/35 mb-4">Company</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/35 mb-4">Company</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'About Us', href: '/about' },
@@ -78,7 +78,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-body font-semibold text-xs uppercase tracking-wider text-white/35 mb-4">Legal</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/35 mb-4">Legal</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'Privacy Policy', href: '/privacy' },

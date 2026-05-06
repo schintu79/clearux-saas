@@ -132,7 +132,7 @@ export default function AdminNotificationsPage() {
     <div className="max-w-3xl mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-semibold text-text">Notifications</h1>
+          <h1 className="text-lg font-medium text-text">Notifications</h1>
           <p className="text-xs text-muted mt-0.5">Send notifications to all users</p>
         </div>
         <button
@@ -147,11 +147,11 @@ export default function AdminNotificationsPage() {
       {/* Create Form */}
       {showForm && (
         <div className="mb-6 rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-5">
-          <h2 className="text-sm font-bold text-text mb-4">Create Notification</h2>
+          <h2 className="text-sm font-medium text-text mb-4">Create Notification</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-text mb-1.5">Title</label>
+              <label className="block text-xs font-medium text-text mb-1.5">Title</label>
               <input
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
@@ -161,7 +161,7 @@ export default function AdminNotificationsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text mb-1.5">Message</label>
+              <label className="block text-xs font-medium text-text mb-1.5">Message</label>
               <textarea
                 value={form.message}
                 onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
@@ -173,7 +173,7 @@ export default function AdminNotificationsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-text mb-1.5">Icon Type</label>
+                <label className="block text-xs font-medium text-text mb-1.5">Icon Type</label>
                 <select
                   value={form.icon}
                   onChange={(e) => setForm(f => ({ ...f, icon: e.target.value }))}
@@ -183,7 +183,7 @@ export default function AdminNotificationsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-text mb-1.5">Color</label>
+                <label className="block text-xs font-medium text-text mb-1.5">Color</label>
                 <div className="flex gap-2">
                   {COLOR_OPTIONS.map(c => (
                     <button
@@ -205,18 +205,18 @@ export default function AdminNotificationsPage() {
                 className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
               />
               <div>
-                <span className="text-xs font-semibold text-text">Show in Dashboard Overview</span>
+                <span className="text-xs font-medium text-text">Show in Dashboard Overview</span>
                 <p className="text-[10px] text-muted">Pins this notification to the main overview tab. Only 1 at a time.</p>
               </div>
             </label>
 
             {/* Preview */}
             <div>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-wide mb-2">Preview</p>
+              <p className="text-[10px] font-medium text-muted uppercase tracking-wide mb-2">Preview</p>
               <div className={`p-3.5 rounded-xl border flex items-start gap-3 ${colorMap[form.color] || colorMap.blue}`}>
                 {(() => { const IconComp = getNotificationIcon(form.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${iconColorMap[form.color] || iconColorMap.blue}`} />; })()}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-text">{form.title || 'Notification title'}</p>
+                  <p className="text-xs font-medium text-text">{form.title || 'Notification title'}</p>
                   <p className="text-[11px] text-muted mt-0.5">{form.message || 'Notification message...'}</p>
                 </div>
               </div>
@@ -226,7 +226,7 @@ export default function AdminNotificationsPage() {
               <button
                 onClick={handleCreate}
                 disabled={sending || !form.title.trim() || !form.message.trim()}
-                className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-semibold px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
               >
                 <Send size={13} />
                 {sending ? 'Sending...' : 'Send to all users'}
@@ -250,7 +250,7 @@ export default function AdminNotificationsPage() {
       ) : notifications.length === 0 ? (
         <div className="text-center py-12">
           <Bell size={24} className="text-muted mx-auto mb-3" />
-          <p className="text-sm font-semibold text-text">No notifications yet</p>
+          <p className="text-sm font-medium text-text">No notifications yet</p>
           <p className="text-xs text-muted mt-1">Create your first notification above.</p>
         </div>
       ) : (
@@ -261,12 +261,12 @@ export default function AdminNotificationsPage() {
                 {(() => { const IconComp = getNotificationIcon(n.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${n.is_active ? iconColorMap[n.color] || iconColorMap.blue : 'text-muted'}`} />; })()}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-bold text-text">{n.title}</p>
+                    <p className="text-xs font-medium text-text">{n.title}</p>
                     {n.show_in_overview && (
-                      <span className="text-[9px] font-bold text-brand bg-brand/10 dark:bg-brand/15 px-1.5 py-0.5 rounded">PINNED</span>
+                      <span className="text-[9px] font-medium text-brand bg-brand/10 dark:bg-brand/15 px-1.5 py-0.5 rounded">PINNED</span>
                     )}
                     {!n.is_active && (
-                      <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">INACTIVE</span>
+                      <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">INACTIVE</span>
                     )}
                   </div>
                   <p className="text-[11px] text-muted">{n.message}</p>

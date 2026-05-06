@@ -374,7 +374,7 @@ function CheckpointHealth({ categoryScores, findings }: {
       <div className="px-5 py-3.5 border-b border-border/15 dark:border-white/[0.03]">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-brand" />
-          <h3 className="text-xs font-bold text-text">64-Checkpoint Health</h3>
+          <h3 className="text-xs font-medium text-text">64-Checkpoint Health</h3>
           <span className="text-[10px] text-muted ml-auto">
             {findings.filter(f => !f.dismissed).length} issues across {categoryScores.length} categories
           </span>
@@ -394,11 +394,11 @@ function CheckpointHealth({ categoryScores, findings }: {
                 onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
                 className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-brand/5 dark:hover:bg-brand/[0.04] transition-colors text-left"
               >
-                <span className={`text-[11px] font-semibold w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
+                <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
                 <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[9px] font-semibold text-[#22C55E] dark:text-emerald-400">{passCount} pass</span>}
-                  {failCount > 0 && <span className="text-[9px] font-semibold text-red-500">{failCount} fail</span>}
+                  {passCount > 0 && <span className="text-[9px] font-medium text-[#22C55E] dark:text-emerald-400">{passCount} pass</span>}
+                  {failCount > 0 && <span className="text-[9px] font-medium text-red-500">{failCount} fail</span>}
                 </div>
                 <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -422,7 +422,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                             <p className="text-[10px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
                           )}
                         </div>
-                        <span className={`text-[9px] font-semibold flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-[#22C55E] dark:text-emerald-500'}`}>
+                        <span className={`text-[9px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-[#22C55E] dark:text-emerald-500'}`}>
                           {hasFinding ? 'Fail' : 'Pass'}
                         </span>
                       </div>
@@ -498,11 +498,11 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
           <TrendingUp size={14} className="text-brand" />
         </div>
         <div className="flex-1 text-left">
-          <span className="text-sm font-semibold text-text">Score Over Time</span>
+          <span className="text-sm font-medium text-text">Score Over Time</span>
           <span className="text-[10px] text-muted ml-2">{trend.length} audits · {domain}</span>
         </div>
         {improvement !== 0 && (
-          <span className={`text-xs font-bold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+          <span className={`text-xs font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
@@ -563,11 +563,11 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
                   {showLabel && (
                     <g style={{ pointerEvents: 'none' }}>
                       <rect x={p.x - 13} y={p.y - 20} width="26" height="14" rx="4" fill="#6366F1" />
-                      <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+                      <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
                     </g>
                   )}
                   {isCurrent && !isHovered && (
-                    <text x={p.x} y={p.y + 12} textAnchor="middle" fontSize="7" fontWeight="600" fill="#6366F1" fontFamily="var(--font-inter)">now</text>
+                    <text x={p.x} y={p.y + 12} textAnchor="middle" fontSize="7" fontWeight="500" fill="#6366F1" fontFamily="var(--font-inter)">now</text>
                   )}
                 </g>
               );
@@ -676,17 +676,17 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
         <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${sev.text}`}>
+            <span className={`text-[11px] font-medium uppercase tracking-wider ${sev.text}`}>
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-[#22C55E]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-[#22C55E]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Eye size={10} />
                 Likely Fixed
               </span>
             )}
             {(finding as any).verification_status === 'poorly_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <AlertTriangle size={10} />
                 Poorly Fixed
               </span>
@@ -711,7 +711,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               </a>
             )}
           </div>
-          <h4 className="font-semibold text-text text-sm leading-snug">{finding.title}</h4>
+          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
         </div>
         <ChevronDown
           size={16}
@@ -732,7 +732,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
             <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
               <Eye size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-bold text-text mb-0.5">AI Verification</p>
+                <p className="text-[11px] font-medium text-text mb-0.5">AI Verification</p>
                 <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">
                   {(finding as any).verification_note}
                 </p>
@@ -748,7 +748,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
             <div className="flex items-start gap-2.5 p-3 bg-red-50/60 dark:bg-red-950/20 rounded-lg border border-red-200/40 dark:border-red-800/20">
               <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-bold text-text mb-0.5">Regression Detected</p>
+                <p className="text-[11px] font-medium text-text mb-0.5">Regression Detected</p>
                 <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed">
                   {(finding as any).verification_note}
                 </p>
@@ -765,7 +765,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               <div className="flex gap-2.5">
                 <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillarColor}`} />
                 <div>
-                  <p className="text-[11px] font-bold text-text mb-1">Recommendation</p>
+                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
                   <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
                 </div>
               </div>
@@ -777,7 +777,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
             <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
               <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-bold text-text mb-0.5">Expected Impact</p>
+                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
                 <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">{finding.estimated_impact}</p>
               </div>
             </div>
@@ -788,7 +788,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
             <div className="rounded-lg overflow-hidden border border-border/30 dark:border-white/[0.04]">
               <div className="px-3 py-2 bg-surface-alt/60 dark:bg-white/[0.03] border-b border-border/20 dark:border-white/[0.04] flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
-                <span className="text-[11px] font-semibold text-text">Visual Evidence</span>
+                <span className="text-[11px] font-medium text-text">Visual Evidence</span>
                 {finding.page_url && (
                   <span className="text-[10px] text-muted ml-auto font-mono truncate max-w-[200px]">
                     {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
@@ -808,7 +808,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
           {/* Status toggle + Dismiss */}
           <div className="mt-1 p-3 rounded-lg bg-surface-alt/60 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-bold text-text uppercase tracking-wide">Status</span>
+              <span className="text-[11px] font-medium text-text uppercase tracking-wide">Status</span>
               <div className="flex flex-wrap gap-1.5">
                 {FINDING_STATUSES.map((s) => {
                   const active = status === s.key;
@@ -817,7 +817,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                       key={s.key}
                       onClick={() => handleStatusChange(s.key)}
                       disabled={statusUpdating}
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-all ${
                         active ? `${s.bg} ${s.color} ring-1 ring-current/20 shadow-sm` : 'text-muted hover:bg-off dark:hover:bg-white/[0.04]'
                       } disabled:opacity-50`}
                     >
@@ -830,7 +830,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               <div className="ml-auto">
                 <button
                   onClick={() => setShowDismissForm(!showDismissForm)}
-                  className="text-[11px] font-semibold text-muted hover:text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                  className="text-[11px] font-medium text-muted hover:text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                 >
                   Dismiss
                 </button>
@@ -841,7 +841,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
           {/* Dismiss form */}
           {showDismissForm && (
             <div className="mt-2 p-3 rounded-lg bg-red-50/50 dark:bg-red-900/10 border border-red-200/30 dark:border-red-800/20">
-              <p className="text-[11px] font-semibold text-text mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
+              <p className="text-[11px] font-medium text-text mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
               <textarea
                 value={dismissReason}
                 onChange={(e) => setDismissReason(e.target.value)}
@@ -853,13 +853,13 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                 <button
                   onClick={handleDismiss}
                   disabled={statusUpdating || !dismissReason.trim()}
-                  className="text-[11px] font-semibold text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+                  className="text-[11px] font-medium text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
                 >
                   Dismiss and skip on re-audit
                 </button>
                 <button
                   onClick={() => setShowDismissForm(false)}
-                  className="text-[11px] font-semibold text-muted px-3 py-1.5 rounded-lg hover:bg-off transition-colors"
+                  className="text-[11px] font-medium text-muted px-3 py-1.5 rounded-lg hover:bg-off transition-colors"
                 >
                   Cancel
                 </button>
@@ -949,12 +949,12 @@ function PillarSection({
               {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'text-white' })}
             </div>
             <div>
-              <h2 className="font-heading font-semibold text-lg text-text">{pillar.name}</h2>
+              <h2 className="font-heading font-medium text-lg text-text">{pillar.name}</h2>
               <p className="text-xs text-muted">{pillarCats.length} {L.categoriesEvaluated}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className={`text-2xl font-semibold font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className={`text-2xl font-medium font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
             <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
@@ -970,8 +970,8 @@ function PillarSection({
                   <div className={`w-6 h-6 rounded-md ${pillar.iconBg} flex items-center justify-center flex-shrink-0`}>
                     <Icon size={12} className={pillar.iconColor} />
                   </div>
-                  <p className="text-xs font-semibold text-text truncate flex-1">{cat.name}</p>
-                  <span className={`text-xs font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>
+                  <p className="text-xs font-medium text-text truncate flex-1">{cat.name}</p>
+                  <span className={`text-xs font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
                     {cat.score}
                   </span>
                 </div>
@@ -1004,7 +1004,7 @@ function PillarSection({
         return (
           <div key={catName} className="mb-4">
             <div className="flex items-center gap-2 mb-2 px-1">
-              <span className={`text-xs font-semibold ${pillar.iconColor}`}>{catName}</span>
+              <span className={`text-xs font-medium ${pillar.iconColor}`}>{catName}</span>
               <span className="text-[11px] text-muted">
                 {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
               </span>
@@ -1474,13 +1474,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="border-b border-border/30 dark:border-white/[0.06] bg-card/95 backdrop-blur-md shadow-sm">
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white ${
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium text-white ${
                   calculatedOverallScore >= 70 ? 'bg-[#22C55E]' : calculatedOverallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
                 }`}>
                   {calculatedOverallScore}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text truncate">{formatUrl(audit.product_url)}</p>
+                  <p className="text-sm font-medium text-text truncate">{formatUrl(audit.product_url)}</p>
                   <p className="text-[11px] text-muted">{getScoreLabel(calculatedOverallScore, auditLang)}</p>
                 </div>
               </div>
@@ -1495,7 +1495,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div key={pillar.name} className={`flex items-center gap-1 ${!wasAudited ? 'opacity-30' : ''}`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${pillar.badgeBg}`} />
                       {wasAudited ? (
-                        <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                        <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
                       ) : (
                         <span className="text-xs text-muted">--</span>
                       )}
@@ -1520,13 +1520,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold font-heading text-text mb-1 truncate">
+          <h1 className="text-2xl font-medium font-heading text-text mb-1 truncate">
             {formatUrl(audit.product_url)}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
             {(audit as any).depth_mode === 'deep' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand dark:text-brand bg-brand/10 dark:bg-brand/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand dark:text-brand bg-brand/10 dark:bg-brand/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Search size={10} />
                 Deep Mode
               </span>
@@ -1619,7 +1619,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex items-center gap-3">
             <Loader2 size={20} className="text-brand animate-spin" />
             <div>
-              <p className="font-semibold text-text">Confirming your payment...</p>
+              <p className="font-medium text-text">Confirming your payment...</p>
               <p className="text-sm text-muted">This only takes a moment.</p>
             </div>
           </div>
@@ -1635,13 +1635,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <Clock size={20} className="text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="font-semibold text-text">Payment required</p>
+                <p className="font-medium text-text">Payment required</p>
                 <p className="text-sm text-muted">Complete payment to start the audit.</p>
               </div>
             </div>
             <button
               onClick={handlePayNow}
-              className="inline-flex items-center gap-2 text-sm font-semibold bg-brand text-surface dark:text-[#111111] px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-brand text-surface dark:text-[#111111] px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
             >
               Pay Now
             </button>
@@ -1655,7 +1655,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex items-center gap-3 mb-5">
             <StatusIcon size={20} className="text-brand" />
             <div>
-              <p className="font-semibold text-text">{meta.label}</p>
+              <p className="font-medium text-text">{meta.label}</p>
               <p className="text-sm text-muted">{meta.description}</p>
             </div>
             <Loader2 size={16} className="text-brand animate-spin ml-auto" />
@@ -1697,7 +1697,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-brand text-surface dark:text-[#111111] px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-brand text-surface dark:text-[#111111] px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
               >
                 {restarting ? (
                   <><Loader2 size={13} className="animate-spin" /> Restarting...</>
@@ -1716,14 +1716,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-red-900 dark:text-red-200">Audit failed</p>
+              <p className="font-medium text-red-900 dark:text-red-200">Audit failed</p>
               <p className="text-sm text-red-700 dark:text-red-400 mt-1">
                 {audit.crawl_error || 'Something went wrong during processing.'}
               </p>
               <div className="mt-3 p-3 rounded-lg bg-[#22C55E]/8 border border-emerald-200 dark:border-emerald-800/30">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
                     No credits were used for this audit
                   </p>
                 </div>
@@ -1735,7 +1735,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleRestart}
                   disabled={restarting}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold bg-brand text-surface dark:text-[#111111] px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium bg-brand text-surface dark:text-[#111111] px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
                 >
                   {restarting ? (
                     <><Loader2 size={14} className="animate-spin" /> Restarting...</>
@@ -1778,13 +1778,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                    <h2 className="text-xl font-semibold font-heading text-text">{L.overallScore}</h2>
+                    <h2 className="text-xl font-medium font-heading text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
-                      <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
                         {auditSelectedPillars!.length} of 4 pillars
                       </span>
                     )}
-                    <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
+                    <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
                       (calculatedOverallScore) >= 70
                         ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
                         : (calculatedOverallScore) >= 40
@@ -1808,7 +1808,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
                           <span className="text-xs text-muted">{pillar.name}</span>
                           {wasAudited ? (
-                            <span className={`text-xs font-bold ${scoreColor(avg)}`}>{avg}</span>
+                            <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
                           ) : (
                             <span className="text-xs text-muted">--</span>
                           )}
@@ -1819,28 +1819,28 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {/* Action buttons — all in one row, same style */}
                   <div className="flex flex-wrap gap-2 mt-4">
-                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
                       <Download size={12} /> PDF
                     </a>
-                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
                       <Download size={12} /> Word
                     </a>
                     <Link
                       href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
                       <RefreshCw size={12} /> Re-audit
                     </Link>
                     <Link
                       href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
                       <Search size={12} /> Dig Deeper
                     </Link>
                     <button
                       onClick={handleShare}
                       disabled={shareLoading}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-semibold px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
                     >
                       {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
                     </button>
@@ -1852,18 +1852,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Issue summary strip */}
               {report.total_issues > 0 && (
                 <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
-                  <span className="text-sm font-semibold text-text">
+                  <span className="text-sm font-medium text-text">
                     {report.total_issues} {L.issuesFound}
                   </span>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     {severityCounts.critical > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         {severityCounts.critical} {L.severityCritical.toLowerCase()}
                       </span>
                     )}
                     {severityCounts.high > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                         {severityCounts.high} {L.severityHigh.toLowerCase()}
                       </span>
@@ -1887,7 +1887,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
             <RefreshCw size={15} className="text-brand flex-shrink-0" />
             <p className="text-xs text-text/60 dark:text-text/50">
-              <span className="font-semibold text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+              <span className="font-medium text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
 
@@ -1914,7 +1914,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={clsx(
-                  'flex-1 text-sm font-semibold py-2.5 rounded-lg transition-all',
+                  'flex-1 text-sm font-medium py-2.5 rounded-lg transition-all',
                   activeTab === tab
                     ? 'bg-card text-text shadow-sm'
                     : 'text-muted hover:text-text',
@@ -2006,12 +2006,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
                       <Zap size={14} className="text-surface dark:text-[#111111]" />
                     </div>
-                    <p className="text-sm font-bold text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
+                    <p className="text-sm font-medium text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
                   </div>
                   <div className="space-y-3">
                     {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
                       <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold bg-brand text-surface dark:text-[#111111] mt-0.5">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-brand text-surface dark:text-[#111111] mt-0.5">
                           {i + 1}
                         </span>
                         <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
@@ -2024,7 +2024,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Executive Summary */}
               {report.executive_summary && (
                 <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-heading font-semibold text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
+                  <h2 className="font-heading font-medium text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
@@ -2058,7 +2058,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-off/40 dark:bg-white/[0.02] border border-border/15 dark:border-white/[0.03]">
                 <p className="text-[11px] text-muted/70 leading-relaxed">
-                  <span className="font-semibold text-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content. It covers 64 checkpoints across 16 categories but cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
+                  <span className="font-medium text-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content. It covers 64 checkpoints across 16 categories but cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
                 </p>
               </div>
 
@@ -2101,7 +2101,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {findings.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 size={32} className="text-[#22C55E] dark:text-emerald-500 mx-auto mb-3" />
-                  <p className="text-text font-semibold">{L.noIssuesFound}</p>
+                  <p className="text-text font-medium">{L.noIssuesFound}</p>
                   <p className="text-sm text-muted mt-1">{L.noIssuesDescription}</p>
                 </div>
               ) : (
@@ -2113,7 +2113,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div key={severity} className="mb-4">
                       <div className="flex items-center gap-2 mb-2 px-1">
                         <span className={`w-2.5 h-2.5 rounded-full ${config.dot}`} />
-                        <span className={`text-sm font-bold ${config.text}`}>
+                        <span className={`text-sm font-medium ${config.text}`}>
                           {config.label}
                         </span>
                         <span className="text-xs text-muted">
@@ -2174,7 +2174,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 href={`/api/reports/${auditId}/pdf`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <Download size={14} /> PDF Report
               </a>
@@ -2182,26 +2182,26 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 href={`/api/reports/${auditId}/docx`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <Download size={14} /> Word Report
               </a>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <RefreshCw size={14} /> Re-audit
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <Search size={14} /> Dig Deeper
               </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-semibold px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
               >
                 {shareCopied ? <><Check size={14} className="text-emerald-500" /> Copied</> : <><Share2 size={14} /> Share</>}
               </button>

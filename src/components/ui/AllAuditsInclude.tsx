@@ -31,7 +31,7 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
                 <ItemIcon size={compact ? 14 : 18} className="text-[#84CC16]" />
               </div>
               <div>
-                <p className={`font-semibold text-white ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1.5'}`}>{item.title}</p>
+                <p className={`font-medium text-white ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1.5'}`}>{item.title}</p>
                 <p className={`text-white/40 leading-relaxed ${compact ? 'text-[11px]' : 'text-xs'}`}>{item.desc}</p>
               </div>
             </div>

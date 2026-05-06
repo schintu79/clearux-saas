@@ -150,7 +150,7 @@ function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
         className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-heading font-semibold text-white text-[15px] leading-snug">{q}</span>
+        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-snug">{q}</span>
         <ChevronDown
           size={16}
           className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -228,7 +228,7 @@ export default function FaqContent() {
         {/* ── HERO ── */}
         <section className="relative z-10 py-28 sm:py-36 lg:py-44">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
               SUPPORT CENTRE
             </p>
 
@@ -277,7 +277,7 @@ export default function FaqContent() {
                 <button
                   key={tab}
                   onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
-                  className={`text-xs font-semibold px-4 py-2 rounded-lg transition-all ${
+                  className={`text-xs font-medium px-4 py-2 rounded-lg transition-all ${
                     activeTab === tab
                       ? 'text-white bg-white/[0.08]'
                       : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
@@ -316,10 +316,10 @@ export default function FaqContent() {
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
                   <div className="flex items-center gap-3 mb-5">
-                    <h2 className="font-heading font-semibold text-xl sm:text-2xl text-white">
+                    <h2 className="font-heading font-medium text-xl sm:text-2xl text-white">
                       {section.title}
                     </h2>
-                    <span className="font-body text-[11px] font-semibold text-white/30">
+                    <span className="font-body text-[11px] font-medium text-white/30">
                       {section.items.length}
                     </span>
                     <div className="flex-1 h-px bg-white/[0.06]" />
@@ -365,7 +365,7 @@ export default function FaqContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

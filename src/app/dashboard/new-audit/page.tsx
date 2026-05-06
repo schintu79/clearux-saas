@@ -110,7 +110,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-semibold text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -242,7 +242,7 @@ const NewAuditInner: React.FC = () => {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Sparkles size={28} className="text-brand" />
         </div>
-        <h1 className="text-3xl font-semibold font-heading text-text mb-2">
+        <h1 className="text-3xl font-medium font-heading text-text mb-2">
           New Audit
         </h1>
         <p className="text-muted">
@@ -252,7 +252,7 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── URL Input ──────────────────────────────────────── */}
       <div className="mb-6">
-        <label htmlFor="audit-url" className="block text-sm font-semibold text-text mb-2">
+        <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
           <Globe size={14} className="inline mr-1.5 -mt-0.5" />
           Website URL
         </label>
@@ -296,7 +296,7 @@ const NewAuditInner: React.FC = () => {
 
       {/* ── Report Language ───────────────────────────────── */}
       <div className="mb-6">
-        <label htmlFor="audit-language" className="block text-sm font-semibold text-text mb-2">
+        <label htmlFor="audit-language" className="block text-sm font-medium text-text mb-2">
           <Languages size={14} className="inline mr-1.5 -mt-0.5" />
           Report Language
         </label>
@@ -338,9 +338,9 @@ const NewAuditInner: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Zap size={15} className="text-brand" />
-              <span className="text-sm font-bold text-text">Audit Scope</span>
+              <span className="text-sm font-medium text-text">Audit Scope</span>
               {!showPillarPicker && (
-                <span className="text-[10px] font-semibold text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
                   {isAllPillars ? 'All 4 pillars' : `${selectedPillars.length} pillar${selectedPillars.length !== 1 ? 's' : ''}`}
                 </span>
               )}
@@ -370,7 +370,7 @@ const NewAuditInner: React.FC = () => {
                   {isAllPillars && <Check size={12} className="text-white" />}
                 </div>
                 <div className="text-left flex-1">
-                  <p className="text-sm font-semibold text-text">Complete audit</p>
+                  <p className="text-sm font-medium text-text">Complete audit</p>
                   <p className="text-[11px] text-muted">All 4 pillars, 16 categories, 64 checkpoints</p>
                 </div>
               </button>
@@ -405,7 +405,7 @@ const NewAuditInner: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <PIcon size={13} style={{ color: p.color }} />
-                          <span className="text-xs font-bold text-text">{p.name}</span>
+                          <span className="text-xs font-medium text-text">{p.name}</span>
                         </div>
                         <p className="text-[10px] text-muted leading-snug">{p.desc}</p>
                       </div>
@@ -433,8 +433,8 @@ const NewAuditInner: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               <Building2 size={15} className="text-brand" />
-              <span className="text-sm font-bold text-text">White-Label Branding</span>
-              <span className="text-[10px] font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="text-sm font-medium text-text">White-Label Branding</span>
+              <span className="text-[10px] font-medium text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 {packageTier}
               </span>
               {!whiteLabelOpen && (companyName.trim() || logoPreview) && (
@@ -456,7 +456,7 @@ const NewAuditInner: React.FC = () => {
 
               {/* Company name */}
               <div className="mb-4">
-                <label htmlFor="wl-company" className="block text-xs font-semibold text-text mb-1.5">
+                <label htmlFor="wl-company" className="block text-xs font-medium text-text mb-1.5">
                   Company Name
                 </label>
                 <input
@@ -471,7 +471,7 @@ const NewAuditInner: React.FC = () => {
 
               {/* Logo upload */}
               <div>
-                <label className="block text-xs font-semibold text-text mb-1.5">
+                <label className="block text-xs font-medium text-text mb-1.5">
                   Company Logo
                 </label>
                 {logoPreview ? (
@@ -537,7 +537,7 @@ const NewAuditInner: React.FC = () => {
               <Sparkles size={18} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-text">
+              <p className="text-sm font-medium text-text">
                 Your first audit is free
               </p>
               <p className="text-xs text-muted">
@@ -556,14 +556,14 @@ const NewAuditInner: React.FC = () => {
               <Coins size={18} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-text">
+              <p className="text-sm font-medium text-text">
                 {credits} credit{credits !== 1 ? 's' : ''} available
               </p>
               <p className="text-xs text-muted">
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-bold text-[#22C55E]">{credits}</span>
+            <span className="text-2xl font-medium text-[#22C55E]">{credits}</span>
           </div>
         </div>
       )}
@@ -572,12 +572,12 @@ const NewAuditInner: React.FC = () => {
         <div className="mb-6 p-4 rounded-xl bg-off border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-text">No credits remaining</p>
+              <p className="text-sm font-medium text-text">No credits remaining</p>
               <p className="text-xs text-muted">This audit costs $99 or buy a credit pack to save.</p>
             </div>
             <Link
               href="/dashboard/buy-credits"
-              className="text-xs font-semibold text-text hover:underline transition-colors whitespace-nowrap ml-3"
+              className="text-xs font-medium text-text hover:underline transition-colors whitespace-nowrap ml-3"
             >
               Buy Credits &rarr;
             </Link>
@@ -596,7 +596,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-semibold text-[15px] py-3 px-6 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2.5 bg-brand text-surface dark:text-[#111111] font-heading font-medium text-[15px] py-3 px-6 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>

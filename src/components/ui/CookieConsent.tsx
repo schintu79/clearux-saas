@@ -61,14 +61,14 @@ export default function CookieConsent() {
             <button
               onClick={handleReject}
               aria-label="Reject all cookies"
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
             >
               Reject all
             </button>
             <button
               onClick={handleAccept}
               aria-label="Accept all cookies"
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
             >
               Accept all
             </button>

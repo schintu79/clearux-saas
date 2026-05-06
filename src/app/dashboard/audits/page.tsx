@@ -90,7 +90,7 @@ function AuditSiteGroup({ domain, audits }: {
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Globe size={12} className="text-muted flex-shrink-0" />
                 <p className="font-medium text-sm text-text truncate">{domain}</p>
-                {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+                {lang && <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
                 <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </div>
               <div className="flex items-center gap-2 text-[10px] text-muted">
@@ -104,7 +104,7 @@ function AuditSiteGroup({ domain, audits }: {
             </div>
             {latestScore != null ? (
               <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(latestScore)}`}>
-                <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
               </div>
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
@@ -128,10 +128,10 @@ function AuditSiteGroup({ domain, audits }: {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Globe size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{domain}</p>
-              <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
                 {audits.length} audits
               </span>
-              {lang && <span className="text-[9px] font-bold text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+              {lang && <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
             </div>
             <div className="flex items-center gap-2 text-[10px] text-muted">
               <span>Latest: {formatDate(latest.created_at)}</span>
@@ -140,7 +140,7 @@ function AuditSiteGroup({ domain, audits }: {
               {improvement !== 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={`font-semibold ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                  <span className={`font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 </>
@@ -150,7 +150,7 @@ function AuditSiteGroup({ domain, audits }: {
           <div className="flex items-center gap-2 flex-shrink-0">
             {latestScore != null && (
               <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
-                <span className={`font-semibold text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
               </div>
             )}
             {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
@@ -232,10 +232,10 @@ export default function AuditsPage() {
     <div className="max-w-2xl mx-auto py-2">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-heading text-lg font-semibold text-text">All Audits</h1>
+          <h1 className="font-heading text-lg font-medium text-text">All Audits</h1>
           <p className="text-muted text-xs mt-0.5">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-semibold px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -250,9 +250,9 @@ export default function AuditsPage() {
       {!loading && audits.length === 0 && (
         <div className="text-center py-12">
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
-          <h2 className="font-semibold text-sm text-text mb-1">No audits yet</h2>
+          <h2 className="font-medium text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-semibold px-4 py-2 rounded-xl transition-all hover:brightness-110">
+          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110">
             <Sparkles size={13} /> Start Audit
           </Link>
         </div>

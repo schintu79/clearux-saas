@@ -97,12 +97,12 @@ export default function AdminManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading font-semibold text-2xl text-text">Admin Management</h1>
+          <h1 className="font-heading font-medium text-2xl text-text">Admin Management</h1>
           <p className="text-sm text-muted mt-1">Manage who has admin access to the platform</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-brand text-surface dark:text-[#111111] rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-brand text-surface dark:text-[#111111] rounded-lg transition-all hover:brightness-110"
         >
           <UserPlus size={15} />
           Add Admin
@@ -115,10 +115,10 @@ export default function AdminManagementPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Admin</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Role</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Member Since</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Admin</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Member Since</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -140,7 +140,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-surface dark:text-[#111111] bg-brand flex-shrink-0"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-medium text-surface dark:text-[#111111] bg-brand flex-shrink-0"
                         >
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
@@ -151,7 +151,7 @@ export default function AdminManagementPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium uppercase px-2.5 py-1 rounded-full ${
                         admin.role === 'super_admin'
                           ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
                           : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
@@ -186,7 +186,7 @@ export default function AdminManagementPage() {
             <ShieldCheck size={18} className="text-[#6366F1]" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-text mb-1">Role Permissions</h3>
+            <h3 className="text-sm font-medium text-text mb-1">Role Permissions</h3>
             <div className="text-[13px] text-text/65 space-y-1">
               <p><span className="font-medium text-amber-500">Admin</span> — Can view all users, audits, and manage credits. Cannot promote or demote other admins.</p>
               <p><span className="font-medium text-[#EF4444]">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
@@ -200,7 +200,7 @@ export default function AdminManagementPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-heading font-semibold text-lg text-text">Add Admin</h3>
+              <h3 className="font-heading font-medium text-lg text-text">Add Admin</h3>
               <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
                 <X size={18} className="text-muted" />
               </button>
@@ -245,7 +245,7 @@ export default function AdminManagementPage() {
               <button
                 onClick={handleAddAdmin}
                 disabled={submitting || !addEmail.trim()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold bg-brand text-surface dark:text-[#111111] transition-all disabled:opacity-40 hover:brightness-110"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-brand text-surface dark:text-[#111111] transition-all disabled:opacity-40 hover:brightness-110"
               >
                 {submitting ? 'Adding...' : 'Add Admin'}
               </button>

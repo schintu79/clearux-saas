@@ -23,18 +23,18 @@ function emailLayout(content: string, preheader?: string): string {
     .outer { width: 100%; background: #f4f4f5; padding: 40px 16px; }
     .container { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .header { background: #111111; padding: 32px 32px 28px; text-align: center; }
-    .header h1 { margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 500; color: #ffffff; letter-spacing: -0.3px; }
     .header .logo { margin-bottom: 16px; }
     .body { padding: 32px; }
     .body p { margin: 0 0 16px; font-size: 15px; line-height: 1.65; color: #3f3f46; }
-    .body h2 { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: #111111; }
-    .btn { display: inline-block; background: #10B981; color: #ffffff !important; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 12px; text-decoration: none; margin: 8px 0 16px; }
+    .body h2 { margin: 0 0 12px; font-size: 17px; font-weight: 500; color: #111111; }
+    .btn { display: inline-block; background: #10B981; color: #ffffff !important; font-size: 15px; font-weight: 500; padding: 14px 28px; border-radius: 12px; text-decoration: none; margin: 8px 0 16px; }
     .info-box { background: #f9fafb; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px; margin: 20px 0; }
     .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
     .info-row:last-child { border-bottom: none; }
     .info-label { color: #71717a; }
-    .info-value { font-weight: 600; color: #111111; }
-    .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { font-weight: 500; color: #111111; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
     .pill-green { background: rgba(34,197,94,0.1); color: #16a34a; }
     .pill-lime { background: rgba(16,185,129,0.15); color: #065f46; }
     .divider { height: 1px; background: #e4e4e7; margin: 24px 0; }

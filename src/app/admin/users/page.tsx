@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading font-semibold text-2xl text-text">Users</h1>
+        <h1 className="font-heading font-medium text-2xl text-text">Users</h1>
         <p className="text-sm text-muted mt-1">{total} total users</p>
       </div>
 
@@ -132,13 +132,13 @@ export default function AdminUsersPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">User</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Credits</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Audits</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Tier</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Role</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Joined</th>
-                <th className="px-4 py-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">User</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Credits</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Audits</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Tier</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Joined</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -162,7 +162,7 @@ export default function AdminUsersPage() {
                       <p className="text-[11px] text-muted truncate max-w-[200px]">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[13px] font-bold text-[#22C55E] tabular-nums">{u.credits}</span>
+                      <span className="text-[13px] font-medium text-[#22C55E] tabular-nums">{u.credits}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-[13px] text-text tabular-nums">{u.audit_count}</span>
@@ -174,7 +174,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {u.role !== 'user' && (
-                        <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${roleColors[u.role] || ''}`}>
+                        <span className={`inline-block text-[10px] font-medium uppercase px-2 py-0.5 rounded-full ${roleColors[u.role] || ''}`}>
                           {u.role === 'super_admin' ? 'Super Admin' : 'Admin'}
                         </span>
                       )}
@@ -236,7 +236,7 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setCreditModal(null)}>
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-heading font-semibold text-lg text-text">
+              <h3 className="font-heading font-medium text-lg text-text">
                 {creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
               </h3>
               <button onClick={() => setCreditModal(null)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
               {creditModal.type === 'add' ? 'Adding credits to' : 'Removing credits from'}{' '}
               <span className="font-medium text-text">{creditModal.user.full_name || creditModal.user.email}</span>
               <br />
-              <span className="text-[12px]">Current balance: <span className="font-bold text-[#22C55E]">{creditModal.user.credits}</span></span>
+              <span className="text-[12px]">Current balance: <span className="font-medium text-[#22C55E]">{creditModal.user.credits}</span></span>
             </p>
 
             <div className="space-y-3">
@@ -286,7 +286,7 @@ export default function AdminUsersPage() {
               <button
                 onClick={handleCreditSubmit}
                 disabled={submitting || !creditModal.amount || parseInt(creditModal.amount) <= 0}
-                className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-40 ${
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-40 ${
                   creditModal.type === 'add'
                     ? 'bg-[#22C55E] hover:bg-[#246B43]'
                     : 'bg-[#EF4444] hover:bg-[#A93226]'

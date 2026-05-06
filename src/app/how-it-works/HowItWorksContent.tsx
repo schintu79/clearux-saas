@@ -109,7 +109,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-28 sm:py-36">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             HOW IT WORKS
           </p>
           <h1
@@ -129,7 +129,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             THE PROCESS
           </p>
           <h2
@@ -153,7 +153,7 @@ export default function HowItWorksContent() {
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-5">
                     <StepIcon size={20} className="text-[#84CC16]" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {step.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -171,7 +171,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             WHAT WE EVALUATE
           </p>
           <h2
@@ -195,7 +195,7 @@ export default function HowItWorksContent() {
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <PillarIcon size={20} className="text-[#84CC16]" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {pillar.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -213,7 +213,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             WHO WE SERVE
           </p>
           <h2
@@ -237,7 +237,7 @@ export default function HowItWorksContent() {
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-semibold text-white mb-3">
+                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {item.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
@@ -267,7 +267,7 @@ export default function HowItWorksContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

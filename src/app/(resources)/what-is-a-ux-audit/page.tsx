@@ -56,7 +56,7 @@ export default function WhatIsAUxAuditPage() {
       <main id="main-content" className="bg-surface">
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
-          <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-6">
+          <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
             What Is a UX Audit? A Complete Guide to the Process
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
@@ -71,7 +71,7 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Section: Definition ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               UX Audit Definition
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -93,7 +93,7 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Section: Why ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               Why Your Product Needs a UX Audit
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -125,7 +125,7 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Section: What Gets Evaluated ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               What a UX Audit Evaluates
             </h2>
             <p className="text-text/80 leading-relaxed mb-6">
@@ -136,7 +136,7 @@ export default function WhatIsAUxAuditPage() {
 
             <div className="space-y-6">
               <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-lg text-text mb-2">
+                <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Accessibility
                 </h3>
                 <p className="text-text/80 leading-relaxed">
@@ -148,7 +148,7 @@ export default function WhatIsAUxAuditPage() {
                 </p>
               </div>
               <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-lg text-text mb-2">
+                <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Usability
                 </h3>
                 <p className="text-text/80 leading-relaxed">
@@ -159,7 +159,7 @@ export default function WhatIsAUxAuditPage() {
                 </p>
               </div>
               <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-lg text-text mb-2">
+                <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Conversion & Engagement
                 </h3>
                 <p className="text-text/80 leading-relaxed">
@@ -171,7 +171,7 @@ export default function WhatIsAUxAuditPage() {
                 </p>
               </div>
               <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-lg text-text mb-2">
+                <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Ethical Design
                 </h3>
                 <p className="text-text/80 leading-relaxed">
@@ -188,14 +188,14 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Section: The Process ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               The Typical UX Audit Process
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
               A traditional UX audit follows a predictable workflow. A
               consultant or internal team defines the scope, reviews the product
               against a{' '}
-              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX audit checklist
               </Link>
               , documents findings, scores each area, and delivers a report with
@@ -212,7 +212,7 @@ export default function WhatIsAUxAuditPage() {
             </p>
             <p className="text-text/80 leading-relaxed">
               That&apos;s why more teams are turning to{' '}
-              <Link href="/best-ux-audit-tools" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/best-ux-audit-tools" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX audit tools
               </Link>{' '}
               that can automate large parts of the process while maintaining
@@ -222,7 +222,7 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Section: ClearUX ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               How ClearUX Automates the UX Audit Process
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -237,7 +237,7 @@ export default function WhatIsAUxAuditPage() {
               sprint, compare scores over time, and share interactive reports
               with stakeholders — no more 80-page PDFs that nobody reads.
               Because the entire{' '}
-              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 checklist
               </Link>{' '}
               is built in, nothing gets missed.
@@ -253,7 +253,7 @@ export default function WhatIsAUxAuditPage() {
             className="mt-16 text-center p-8 rounded-2xl"
             style={{ background: 'var(--gradient-brand-subtle)' }}
           >
-            <h2 className="font-heading font-semibold text-2xl text-text mb-3">
+            <h2 className="font-heading font-medium text-2xl text-text mb-3">
               Ready to audit your product?
             </h2>
             <p className="text-muted mb-6">
@@ -262,7 +262,7 @@ export default function WhatIsAUxAuditPage() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-[#111] font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 bg-brand text-[#111] font-medium px-6 py-3 rounded-xl hover:brightness-110 transition-all"
             >
               <Sparkles size={16} /> Get your free audit
             </Link>
@@ -270,14 +270,14 @@ export default function WhatIsAUxAuditPage() {
 
           {/* ── Related ── */}
           <nav className="mt-12 pt-8 border-t border-border">
-            <p className="text-sm text-muted mb-3 font-semibold uppercase tracking-wider">
+            <p className="text-sm text-muted mb-3 font-medium uppercase tracking-wider">
               Related resources
             </p>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/ux-audit-checklist"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   UX Audit Checklist <ArrowRight size={14} />
                 </Link>
@@ -285,7 +285,7 @@ export default function WhatIsAUxAuditPage() {
               <li>
                 <Link
                   href="/best-ux-audit-tools"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   Best UX Audit Tools <ArrowRight size={14} />
                 </Link>

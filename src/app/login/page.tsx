@@ -250,7 +250,7 @@ export default function LoginPage() {
 
       <div className="mt-6 text-center text-sm text-white/50">
         Don&apos;t have an account?{' '}
-        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-semibold text-white hover:underline transition-colors">
+        <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-medium text-white hover:underline transition-colors">
           Sign up
         </Link>
       </div>
@@ -299,7 +299,7 @@ export default function LoginPage() {
             <div className="relative z-10 flex flex-col h-full">
               <div className="mb-10">
                 <Link href="/" className="inline-block">
-                  <span className="font-heading text-3xl font-extrabold tracking-[0.6px] text-white">clearux.ai</span>
+                  <span className="font-heading text-3xl font-medium tracking-[0.6px] text-white">clearux.ai</span>
                 </Link>
               </div>
 
@@ -331,7 +331,7 @@ export default function LoginPage() {
                   { num: '< 10 min', label: 'Per audit' },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3 flex-1 text-center">
-                    <p className="text-lg font-bold text-white">{stat.num}</p>
+                    <p className="text-lg font-medium text-white">{stat.num}</p>
                     <p className="text-xs text-white/45 uppercase tracking-wide">{stat.label}</p>
                   </div>
                 ))}

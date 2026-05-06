@@ -56,7 +56,7 @@ export function HeroReportMockup() {
         {/* Findings content */}
         <div className="p-5 sm:p-8">
           <motion.p
-            className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-4"
+            className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-4"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.5, duration: 0.4 }}
@@ -73,7 +73,7 @@ export function HeroReportMockup() {
                 animate={isInView ? { opacity: f.opacity, x: 0 } : {}}
                 transition={{ delay: 0.7 + i * 0.15, duration: 0.4 }}
               >
-                <span className={`${f.color} text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded flex-shrink-0`}>
+                <span className={`${f.color} text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded flex-shrink-0`}>
                   {f.severity}
                 </span>
                 <span className="text-sm sm:text-base text-white/70 flex-1 truncate">{f.label}</span>
@@ -118,12 +118,12 @@ export function ReportShowcase() {
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-sm font-semibold text-white">Category Breakdown</p>
+            <p className="text-sm font-medium text-white">Category Breakdown</p>
             <p className="text-xs text-white/30">16 categories across 4 pillars</p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <TrendingUp size={12} className="text-emerald-400" />
-            <span className="text-[11px] font-bold text-emerald-400">6 categories improved</span>
+            <span className="text-[11px] font-medium text-emerald-400">6 categories improved</span>
           </div>
         </div>
 
@@ -150,7 +150,7 @@ export function ReportShowcase() {
                     transition={{ duration: 0.8, delay: 0.5 + i * 0.08, ease: 'easeOut' }}
                   />
                 </div>
-                <span className="text-sm font-bold text-white w-8 text-right">{cat.score}</span>
+                <span className="text-sm font-medium text-white w-8 text-right">{cat.score}</span>
               </motion.div>
             )
           })}
@@ -164,9 +164,9 @@ export function ReportShowcase() {
           transition={{ delay: 1.2, duration: 0.5 }}
         >
           <div className="flex items-start gap-3">
-            <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
+            <span className="bg-red-500 text-white text-[9px] font-medium px-2 py-1 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white mb-1">Confirmshaming in cancel flow</p>
+              <p className="text-sm font-medium text-white mb-1">Confirmshaming in cancel flow</p>
               <p className="text-xs text-white/50 leading-relaxed mb-3">
                 Guilt-based language in opt-out label manipulates user decision. The cancel button reads &quot;No, I don&apos;t want to save money&quot; — a recognised dark pattern.
               </p>

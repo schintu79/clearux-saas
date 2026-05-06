@@ -36,12 +36,12 @@ function DarkPatternVisual({ inView }: { inView: boolean }) {
           <div className="w-10 h-10 rounded-xl bg-[#111]/5 flex items-center justify-center">
             <Scale size={20} className="text-[#111]" />
           </div>
-          <p className="text-sm font-semibold text-[#111]">Dark Pattern Scanner</p>
+          <p className="text-sm font-medium text-[#111]">Dark Pattern Scanner</p>
         </div>
 
         {/* Mock cancel flow */}
         <div className="rounded-xl border border-[#111]/10 p-5 mb-4 bg-[#FAFAFA]">
-          <p className="text-sm font-semibold text-[#111] mb-1.5">Cancel subscription?</p>
+          <p className="text-sm font-medium text-[#111] mb-1.5">Cancel subscription?</p>
           <p className="text-[11px] text-[#111]/50 mb-4 leading-relaxed">Are you sure you want to leave? You&apos;ll lose access to all features.</p>
 
           {/* The dark pattern buttons */}
@@ -52,7 +52,7 @@ function DarkPatternVisual({ inView }: { inView: boolean }) {
               transition={{ duration: 0.4 }}
               style={{ borderRadius: 8 }}
             >
-              <div className="w-full py-2.5 px-4 rounded-lg bg-[#111] text-white text-xs font-semibold text-center">
+              <div className="w-full py-2.5 px-4 rounded-lg bg-[#111] text-white text-xs font-medium text-center">
                 Keep my subscription
               </div>
             </motion.div>
@@ -87,9 +87,9 @@ function DarkPatternVisual({ inView }: { inView: boolean }) {
           transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div className="flex items-start gap-2">
-            <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
+            <span className="bg-red-500 text-white text-[9px] font-medium px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">CRITICAL</span>
             <div>
-              <p className="text-[11px] font-semibold text-[#111] leading-snug">Confirmshaming detected</p>
+              <p className="text-[11px] font-medium text-[#111] leading-snug">Confirmshaming detected</p>
               <p className="text-[10px] text-[#111]/50 mt-0.5">Guilt-based language in opt-out label manipulates user decision</p>
             </div>
           </div>
@@ -139,7 +139,7 @@ function CognitiveVisual({ inView }: { inView: boolean }) {
             <Brain size={20} className="text-[#111]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#111]">Cognitive Analysis</p>
+            <p className="text-sm font-medium text-[#111]">Cognitive Analysis</p>
             <p className="text-xs text-[#111]/40">ADHD, Dyslexia, Autism spectrum</p>
           </div>
         </div>
@@ -158,10 +158,10 @@ function CognitiveVisual({ inView }: { inView: boolean }) {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-medium text-[#111]">{m.label}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-[#111]">{animatedValue}</span>
+                    <span className="text-[11px] font-medium text-[#111]">{animatedValue}</span>
                     {progress >= 80 && (
                       <motion.span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${statusColor(m.status)}`}
+                        className={`text-[9px] font-medium px-1.5 py-0.5 rounded border ${statusColor(m.status)}`}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -234,7 +234,7 @@ function AIReadinessVisual({ inView }: { inView: boolean }) {
             <Zap size={20} className="text-[#111]" />
           </motion.div>
           <div>
-            <p className="text-sm font-semibold text-[#111]">AI Agent Readiness</p>
+            <p className="text-sm font-medium text-[#111]">AI Agent Readiness</p>
             <p className="text-xs text-[#111]/40">How ChatGPT, Perplexity & agents see you</p>
           </div>
         </div>
@@ -245,7 +245,7 @@ function AIReadinessVisual({ inView }: { inView: boolean }) {
             <div className="w-5 h-5 rounded-full bg-[#111] flex items-center justify-center">
               <Sparkles size={10} className="text-[#34D399]" />
             </div>
-            <span className="text-[10px] font-semibold text-[#111]/60">AI Agent parsing acme.com...</span>
+            <span className="text-[10px] font-medium text-[#111]/60">AI Agent parsing acme.com...</span>
           </div>
 
           {/* Structured data checks */}
@@ -289,9 +289,9 @@ function AIReadinessVisual({ inView }: { inView: boolean }) {
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-start gap-2">
-            <span className="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
+            <span className="bg-orange-500 text-white text-[9px] font-medium px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
             <div>
-              <p className="text-[11px] font-semibold text-[#111] leading-snug">AI agents can&apos;t extract pricing</p>
+              <p className="text-[11px] font-medium text-[#111] leading-snug">AI agents can&apos;t extract pricing</p>
               <p className="text-[10px] text-[#111]/50 mt-0.5">Missing structured data means you&apos;re invisible to AI recommendations</p>
             </div>
           </div>
@@ -332,7 +332,7 @@ function ConversionVisual({ inView }: { inView: boolean }) {
             <BarChart3 size={20} className="text-[#111]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#111]">Conversion Psychology</p>
+            <p className="text-sm font-medium text-[#111]">Conversion Psychology</p>
             <p className="text-xs text-[#111]/40">Where users drop off & why</p>
           </div>
         </div>
@@ -351,7 +351,7 @@ function ConversionVisual({ inView }: { inView: boolean }) {
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-[#111]/60">{stage.label}</span>
-                  <span className="text-[10px] font-bold text-[#111]">{stage.pct}%</span>
+                  <span className="text-[10px] font-medium text-[#111]">{stage.pct}%</span>
                 </div>
                 <div className="h-6 rounded-md bg-[#111]/[0.04] overflow-hidden relative">
                   <motion.div
@@ -368,7 +368,7 @@ function ConversionVisual({ inView }: { inView: boolean }) {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.2 + i * 0.1, type: 'spring', stiffness: 300 }}
                     >
-                      <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${
+                      <span className={`text-[8px] font-medium px-1 py-0.5 rounded ${
                         i === 1 ? 'bg-orange-100 text-orange-600' :
                         i === 2 ? 'bg-red-100 text-red-600' :
                         'bg-red-100 text-red-600'
@@ -391,9 +391,9 @@ function ConversionVisual({ inView }: { inView: boolean }) {
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-start gap-2">
-            <span className="bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
+            <span className="bg-amber-500 text-white text-[9px] font-medium px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">HIGH</span>
             <div>
-              <p className="text-[11px] font-semibold text-[#111] leading-snug">CTA below the fold on mobile</p>
+              <p className="text-[11px] font-medium text-[#111] leading-snug">CTA below the fold on mobile</p>
               <p className="text-[10px] text-[#111]/50 mt-0.5">38% of users never see the primary action. Move CTA above 600px viewport line.</p>
             </div>
           </div>
@@ -466,8 +466,8 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-white/60">What others miss</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-white mb-5" style={{ lineHeight: '1.1' }}>
+          <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-white/60">What others miss</p>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-medium text-white mb-5" style={{ lineHeight: '1.1' }}>
             Why ClearUX
           </h2>
           <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
@@ -494,7 +494,7 @@ export default function WhyClearUX() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-semibold text-white/[0.06] mb-2 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-medium text-white/[0.06] mb-2 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -502,8 +502,8 @@ export default function WhyClearUX() {
                   >
                     {diff.number}
                   </motion.span>
-                  <p className="font-heading text-sm sm:text-base font-semibold text-white mb-1">{diff.subtitle}</p>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-4">
+                  <p className="font-heading text-sm sm:text-base font-medium text-white mb-1">{diff.subtitle}</p>
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-4">
                     {diff.title}
                   </h3>
                   <p className="text-white/80 text-base leading-relaxed mb-4 max-w-md">
@@ -537,7 +537,7 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-3" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3" style={{ lineHeight: '1.15' }}>
             All four. In every audit. For $99.
           </h3>
           <p className="text-white/60 text-sm sm:text-base mb-8 max-w-md mx-auto">
@@ -545,7 +545,7 @@ export default function WhyClearUX() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-medium px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Start free audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />

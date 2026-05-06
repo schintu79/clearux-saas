@@ -106,9 +106,9 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
-            <span className="font-heading text-2xl font-extrabold tracking-[0.6px] text-text">clearux.ai</span>
+            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-text">clearux.ai</span>
           </Link>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
+          <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
           </span>
         </div>
@@ -163,7 +163,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-bold text-surface dark:text-[#111111] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface dark:text-[#111111] flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -205,10 +205,10 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading text-2xl font-extrabold tracking-[0.6px] text-text">
+          <span className="ml-3 font-heading text-2xl font-medium tracking-[0.6px] text-text">
             clearux.ai
           </span>
-          <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
+          <span className="ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
           </span>
         </div>

@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
     <>
     <a
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-[#111114] focus:shadow-lg focus:text-sm focus:font-semibold"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white focus:text-[#111114] focus:shadow-lg focus:text-sm focus:font-medium"
     >
       Skip to main content
     </a>
@@ -76,7 +76,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-2xl font-extrabold tracking-[0.6px] text-white">clearux.ai</span>
+            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-white">clearux.ai</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] transition-colors"
                 >
                   <Coins size={13} className="text-white/50" />
-                  <span className="text-xs font-bold text-white/70">{credits}</span>
+                  <span className="text-xs font-medium text-white/70">{credits}</span>
                 </Link>
               )}
 
@@ -162,7 +162,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm font-semibold text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-7 py-[1.2rem] min-h-[48px] tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-sm font-medium text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-7 py-[1.2rem] min-h-[48px] tracking-wide uppercase transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Start Free Audit
                   <ArrowUpRight size={14} />
@@ -222,7 +222,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-semibold text-[#111114] bg-lime-gradient rounded-full px-7 py-[1.2rem] text-center min-h-[48px] tracking-wide uppercase flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-[#111114] bg-lime-gradient rounded-full px-7 py-[1.2rem] text-center min-h-[48px] tracking-wide uppercase flex items-center justify-center mt-1">
                       Start Free Audit
                     </Link>
                   </>

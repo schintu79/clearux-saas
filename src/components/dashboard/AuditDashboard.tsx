@@ -48,7 +48,7 @@ export function ScoreOverTimeChart({ trend }: {
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+      <h3 className="text-sm font-medium text-text mb-3">Score Over Time</h3>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
         {/* Grid */}
         {gridScores.map((s, i) => {
@@ -99,7 +99,7 @@ export function ScoreOverTimeChart({ trend }: {
               {showLabel && (
                 <g style={{ pointerEvents: 'none' }}>
                   <rect x={p.x - 14} y={p.y - 20} width="28" height="15" rx="4" fill="#6366F1" />
-                  <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
+                  <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">{p.score}</text>
                 </g>
               )}
             </g>
@@ -146,9 +146,9 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
         >
           <div className="flex items-center gap-2 mb-2">
             <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
-            <span className={`text-xs font-semibold ${card.color}`}>{card.label}</span>
+            <span className={`text-xs font-medium ${card.color}`}>{card.label}</span>
           </div>
-          <p className={`text-2xl font-semibold font-heading ${card.color}`}>{card.count}</p>
+          <p className={`text-2xl font-medium font-heading ${card.color}`}>{card.count}</p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-[11px] text-muted">{card.description}</p>
             {card.key !== 'passed' && card.count > 0 && (
@@ -178,12 +178,12 @@ export function TopIssuesPanel({ findings, auditId }: {
   if (sorted.length === 0) {
     return (
       <div className="flex-1 min-w-0 h-full flex flex-col">
-        <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
+        <h3 className="text-sm font-medium text-text mb-3">Top Issues</h3>
         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
           <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-3">
             <CheckCircle2 size={22} className="text-[#22C55E]" />
           </div>
-          <p className="text-base font-semibold text-text mb-1">No issues found</p>
+          <p className="text-base font-medium text-text mb-1">No issues found</p>
           <p className="text-sm text-muted">Great job! Your site passed all checks.</p>
         </div>
       </div>
@@ -206,7 +206,7 @@ export function TopIssuesPanel({ findings, auditId }: {
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-semibold text-text mb-3">Top Issues</h3>
+      <h3 className="text-sm font-medium text-text mb-3">Top Issues</h3>
       <div className="space-y-0 divide-y divide-border/20 dark:divide-white/[0.04]">
         {sorted.map((f) => {
           const badgeColor = sevBadgeColors[f.severity] || sevBadgeColors.medium;
@@ -220,7 +220,7 @@ export function TopIssuesPanel({ findings, auditId }: {
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
               <span className="text-xs font-medium text-text flex-1 min-w-0 truncate group-hover:text-brand transition-colors">{f.title}</span>
-              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wide ${badgeColor}`}>
+              <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 uppercase tracking-wide ${badgeColor}`}>
                 {sevLabel}
               </span>
               <ChevronRight size={12} className="text-muted/40 group-hover:text-brand flex-shrink-0 transition-colors" />
@@ -272,7 +272,7 @@ export function HeuristicRadarChart({ pillarScores }: {
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-semibold text-text mb-3">Heuristic Breakdown</h3>
+      <h3 className="text-sm font-medium text-text mb-3">Heuristic Breakdown</h3>
       <svg viewBox="0 0 640 390" className="w-full h-auto mx-auto" style={{ maxWidth: 540 }}>
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
@@ -331,7 +331,7 @@ export function HeuristicRadarChart({ pillarScores }: {
                       width={tooltipW} height="28"
                       rx="7" fill="#1e1e2e" opacity="0.94"
                     />
-                    <text x={p.x} y={p.y - 19} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="white" fontFamily="var(--font-inter)">
+                    <text x={p.x} y={p.y - 19} textAnchor="middle" fontSize="11.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">
                       {tooltipText}
                     </text>
                   </g>
@@ -348,10 +348,10 @@ export function HeuristicRadarChart({ pillarScores }: {
           const color = PILLAR_COLORS[i] || '#6366F1';
           return (
             <g key={i}>
-              <text x={lp.x} y={isTop ? lp.y - 3 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="13.5" fontWeight="600" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
+              <text x={lp.x} y={isTop ? lp.y - 3 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="13.5" fontWeight="500" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
                 {lp.name}
               </text>
-              <text x={lp.x} y={isTop ? lp.y + 13 : lp.y + 16} textAnchor={anchor} dominantBaseline="middle" fontSize="15" fontWeight="700" fill={color} fontFamily="var(--font-inter)">
+              <text x={lp.x} y={isTop ? lp.y + 13 : lp.y + 16} textAnchor={anchor} dominantBaseline="middle" fontSize="15" fontWeight="500" fill={color} fontFamily="var(--font-inter)">
                 {lp.score}
               </text>
             </g>
@@ -389,8 +389,8 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
     const best = Math.max(...allScores);
     const worst = Math.min(...allScores);
     if (allScores.length < 2 || best === worst) return 'text-muted';
-    if (score === best) return 'text-[#22C55E] font-bold';
-    if (score === worst) return 'text-[#EF4444] font-semibold';
+    if (score === best) return 'text-[#22C55E] font-medium';
+    if (score === worst) return 'text-[#EF4444] font-medium';
     return 'text-amber-600 dark:text-amber-400 font-medium';
   };
 
@@ -418,7 +418,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
         <button
           onClick={handleSubmit}
           disabled={manualInputs.every(d => !d.trim())}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-brand px-5 py-2.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-40 shadow-sm"
+          className="inline-flex items-center gap-2 text-sm font-medium text-white bg-brand px-5 py-2.5 rounded-xl hover:brightness-110 transition-all disabled:opacity-40 shadow-sm"
         >
           <BarChart3 size={14} />
           Run Benchmark
@@ -441,13 +441,13 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
         <div className="px-5 pt-5 pb-2 flex items-center gap-2">
           <BarChart3 size={14} className="text-brand" />
-          <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
+          <h3 className="text-sm font-medium text-text">Benchmarks</h3>
         </div>
 
         {detecting ? (
           <div className="flex flex-col items-center justify-center text-center px-6 py-10">
             <Loader2 size={28} className="text-brand animate-spin mb-3" />
-            <p className="text-sm font-semibold text-text mb-1">Analysing competitors...</p>
+            <p className="text-sm font-medium text-text mb-1">Analysing competitors...</p>
             <p className="text-xs text-muted animate-pulse max-w-xs">
               Fetching real HTML from each site and scoring their UX across all pillars. This takes 15–30 seconds.
             </p>
@@ -458,7 +458,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
             <div className="w-12 h-12 rounded-2xl bg-brand/8 dark:bg-brand/10 flex items-center justify-center mb-4">
               <BarChart3 size={22} className="text-brand" />
             </div>
-            <p className="text-base font-semibold text-text mb-1">Benchmark against competitors</p>
+            <p className="text-base font-medium text-text mb-1">Benchmark against competitors</p>
             <p className="text-sm text-muted max-w-sm mb-5">
               Add up to 3 competitor domains. We analyse their real website and score their UX across all pillars.
             </p>
@@ -481,7 +481,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
     <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
-        <h3 className="text-sm font-semibold text-text">Benchmarks</h3>
+        <h3 className="text-sm font-medium text-text">Benchmarks</h3>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-[10px] text-muted">vs. {maxCompetitors.length} competitor{maxCompetitors.length !== 1 ? 's' : ''}</span>
           {onBenchmark && (
@@ -491,7 +491,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
                 setEditing(true);
               }}
               disabled={detecting}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-brand bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={12} className={detecting ? 'animate-spin' : ''} />
               Replace competitors
@@ -504,10 +504,10 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
         <table className="w-full text-xs">
           <thead>
             <tr className="border-y border-border/20 dark:border-white/[0.04]">
-              <th className="text-left font-semibold text-muted py-2 px-5 w-[140px]">Category</th>
-              <th className="text-center font-semibold text-brand py-2 px-3">You</th>
+              <th className="text-left font-medium text-muted py-2 px-5 w-[140px]">Category</th>
+              <th className="text-center font-medium text-brand py-2 px-3">You</th>
               {maxCompetitors.map((c, i) => (
-                <th key={i} className="text-center font-semibold text-muted py-2 px-3 truncate max-w-[100px]">
+                <th key={i} className="text-center font-medium text-muted py-2 px-3 truncate max-w-[100px]">
                   {c.domain}
                 </th>
               ))}
@@ -523,7 +523,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
               const allScores = [row.yourScore, ...compScores.filter((s): s is number => s != null)];
 
               return (
-                <tr key={row.label} className={`hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors ${isOverall ? 'font-semibold' : ''}`}>
+                <tr key={row.label} className={`hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors ${isOverall ? 'font-medium' : ''}`}>
                   <td className="py-2.5 px-5 text-text">{row.label}</td>
                   <td className={`py-2.5 px-3 text-center ${scoreColor(row.yourScore, allScores)}`}>
                     {row.yourScore}
@@ -581,11 +581,11 @@ export function AuditDashboardOverview({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {/* UX Score Card */}
         <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-text mb-4">UX Score</h3>
+          <h3 className="text-sm font-medium text-text mb-4">UX Score</h3>
           <div className="flex flex-col items-center">
             <ScoreRing score={overallScore} size={130} strokeWidth={8} />
             <p className="text-xs text-muted mt-2">/100</p>
-            <span className={`text-sm font-semibold mt-1 px-3 py-0.5 rounded-full ${
+            <span className={`text-sm font-medium mt-1 px-3 py-0.5 rounded-full ${
               overallScore >= 70
                 ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
                 : overallScore >= 40
@@ -603,13 +603,13 @@ export function AuditDashboardOverview({
             <ScoreOverTimeChart trend={scoreTrend} />
           ) : (
             <div className="h-full flex flex-col">
-              <h3 className="text-sm font-semibold text-text mb-3">Score Over Time</h3>
+              <h3 className="text-sm font-medium text-text mb-3">Score Over Time</h3>
               <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
                 <TrendingUp size={28} className="text-muted/30 mb-2" />
                 <p className="text-xs text-muted">Re-audit to track your score over time</p>
                 <Link
                   href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-                  className="text-xs font-semibold text-brand hover:text-brand/80 transition-colors mt-2"
+                  className="text-xs font-medium text-brand hover:text-brand/80 transition-colors mt-2"
                 >
                   Re-audit (1 credit) →
                 </Link>

@@ -71,12 +71,12 @@ function TrackerVisual({ inView }: { inView: boolean }) {
               <ListChecks size={20} className="text-text" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-text">acme.com</p>
+              <p className="text-sm font-medium text-text">acme.com</p>
               <p className="text-xs text-muted">Resolution tracker</p>
             </div>
           </div>
           <motion.span
-            className="font-heading text-3xl font-semibold text-emerald-500"
+            className="font-heading text-3xl font-medium text-emerald-500"
             key={pct}
             initial={{ opacity: 0.5 }}
             animate={{ opacity: 1 }}
@@ -109,12 +109,12 @@ function TrackerVisual({ inView }: { inView: boolean }) {
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
               >
-                <span className={`${sevColor[f.severity]} text-white text-[9px] font-bold px-2 py-1 rounded flex-shrink-0 w-[56px] text-center`}>
+                <span className={`${sevColor[f.severity]} text-white text-[9px] font-medium px-2 py-1 rounded flex-shrink-0 w-[56px] text-center`}>
                   {f.severity.toUpperCase()}
                 </span>
                 <span className="text-sm text-text flex-1 truncate">{f.label}</span>
                 <motion.span
-                  className={`text-[10px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${config.bg} ${config.text}`}
+                  className={`text-[10px] font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${config.bg} ${config.text}`}
                   key={currentStatus}
                   initial={isTransitioning ? { scale: 0.8, opacity: 0 } : false}
                   animate={{ scale: 1, opacity: 1 }}
@@ -163,12 +163,12 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
               <TrendingUp size={20} className="text-text" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-text">Score Trend</p>
+              <p className="text-sm font-medium text-text">Score Trend</p>
               <p className="text-xs text-muted">Across re-audits</p>
             </div>
           </div>
           <motion.span
-            className="text-sm font-bold text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full"
+            className="text-sm font-medium text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full"
             initial={{ opacity: 0 }}
             animate={activeAudit >= 2 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -186,7 +186,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
               return (
                 <div key={i} className="flex-1 text-center">
                   <motion.span
-                    className="text-base font-heading font-semibold text-text"
+                    className="text-base font-heading font-medium text-text"
                     initial={{ opacity: 0 }}
                     animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.3, duration: 0.3 }}
@@ -219,7 +219,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
           <div className="flex gap-4 mt-2">
             {audits.map((a, i) => (
               <div key={i} className="flex-1 text-center">
-                <p className="text-xs font-semibold text-text">{a.date}</p>
+                <p className="text-xs font-medium text-text">{a.date}</p>
                 <p className="text-[10px] text-muted">{a.label}</p>
               </div>
             ))}
@@ -228,7 +228,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
 
         {/* Re-audit modes — Dig Deeper */}
         <div className="pt-5 border-t border-border/30 dark:border-white/[0.06]">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Choose how to dig deeper</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted mb-4">Choose how to dig deeper</p>
           <div className="space-y-2.5">
             {[
               { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: '#22C55E', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
@@ -248,7 +248,7 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
                     <Icon size={16} style={{ color: m.color }} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text leading-tight">{m.label}</p>
+                    <p className="text-sm font-medium text-text leading-tight">{m.label}</p>
                     <p className="text-xs text-muted leading-snug mt-0.5">{m.desc}</p>
                   </div>
                 </motion.div>
@@ -287,7 +287,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
               <Share2 size={20} className="text-text" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-text">Share Report</p>
+              <p className="text-sm font-medium text-text">Share Report</p>
               <p className="text-xs text-muted">One link, no account needed</p>
             </div>
           </div>
@@ -300,7 +300,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
           animate={step >= 1 ? { opacity: 1 } : {}}
           transition={{ duration: 0.4 }}
         >
-          <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-2">Shareable link</p>
+          <p className="text-[10px] text-muted uppercase tracking-wider font-medium mb-2">Shareable link</p>
           <div className="flex items-center gap-2">
             <div className="flex-1 px-3 py-2 rounded-lg bg-surface border border-border/30 dark:border-white/[0.06]">
               <motion.span
@@ -312,7 +312,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
               </motion.span>
             </div>
             <motion.div
-              className="px-4 py-2 rounded-lg bg-text text-surface dark:text-[#111] text-xs font-semibold flex-shrink-0"
+              className="px-4 py-2 rounded-lg bg-text text-surface dark:text-[#111] text-xs font-medium flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -328,11 +328,11 @@ function ShareVisual({ inView }: { inView: boolean }) {
           animate={step >= 2 ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-3">Stakeholder view</p>
+          <p className="text-[10px] text-muted uppercase tracking-wider font-medium mb-3">Stakeholder view</p>
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-text">acme.com</span>
+            <span className="text-sm font-medium text-text">acme.com</span>
             <motion.span
-              className="font-heading text-3xl font-semibold text-text"
+              className="font-heading text-3xl font-medium text-text"
               initial={{ opacity: 0 }}
               animate={step >= 2 ? { opacity: 1 } : {}}
               transition={{ duration: 0.4, delay: 0.2 }}
@@ -364,7 +364,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
                     transition={{ duration: 0.6, delay: 0.4 + i * 0.08 }}
                   />
                 </div>
-                <span className="text-xs font-bold text-text w-6 text-right">{p.value}</span>
+                <span className="text-xs font-medium text-text w-6 text-right">{p.value}</span>
               </motion.div>
             ))}
           </div>
@@ -392,7 +392,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
                 transition={{ delay: i * 0.1, duration: 0.3 }}
               >
                 <Icon size={14} className="text-muted" />
-                <span className="text-xs font-semibold text-text">{opt.label}</span>
+                <span className="text-xs font-medium text-text">{opt.label}</span>
               </motion.div>
             )
           })}
@@ -462,8 +462,8 @@ export default function BeyondTheReport() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">Beyond the report</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5" style={{ lineHeight: '1.1' }}>
+          <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-text">Beyond the report</p>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-medium text-text mb-5" style={{ lineHeight: '1.1' }}>
             Find it. Fix it. Prove it.
           </h2>
           <p className="text-muted text-base md:text-lg leading-relaxed max-w-xl mx-auto">
@@ -490,7 +490,7 @@ export default function BeyondTheReport() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-semibold text-text/[0.05] mb-3 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-medium text-text/[0.05] mb-3 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -498,7 +498,7 @@ export default function BeyondTheReport() {
                   >
                     {feat.number}
                   </motion.span>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4">
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-text mb-4">
                     {feat.title}
                   </h3>
                   <p className="text-muted text-lg leading-relaxed max-w-md">

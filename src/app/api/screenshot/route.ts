@@ -169,7 +169,7 @@ async function captureScreenshot(
                 background: #DC2626;
                 color: white;
                 font-size: 11px;
-                font-weight: 700;
+                font-weight: 500;
                 font-family: system-ui, -apple-system, sans-serif;
                 padding: 3px 10px;
                 border-radius: 4px;

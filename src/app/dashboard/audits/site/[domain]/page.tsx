@@ -236,7 +236,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Globe size={18} className="text-muted flex-shrink-0" />
-            <h1 className="text-xl font-semibold font-heading text-text truncate">{domain}</h1>
+            <h1 className="text-xl font-medium font-heading text-text truncate">{domain}</h1>
             <a
               href={productUrl || `https://${domain}`}
               target="_blank"
@@ -248,7 +248,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}
-            {latestScore > 0 && <> · Latest score: <span className={`font-semibold ${scoreColor(latestScore)}`}>{latestScore}/100</span></>}
+            {latestScore > 0 && <> · Latest score: <span className={`font-medium ${scoreColor(latestScore)}`}>{latestScore}/100</span></>}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -311,12 +311,12 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
       )}
 
       {/* ── Audit History ────────────────────────────────────── */}
-      <h2 className="text-sm font-semibold text-text mb-3">Audit History</h2>
+      <h2 className="text-sm font-medium text-text mb-3">Audit History</h2>
 
       {audits.length === 0 ? (
         <div className="text-center py-12">
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
-          <h2 className="font-semibold text-sm text-text mb-1">No audits for {domain}</h2>
+          <h2 className="font-medium text-sm text-text mb-1">No audits for {domain}</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start an audit to analyze this site.</p>
           <Link
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
@@ -343,14 +343,14 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                       <span className="text-border">·</span>
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
-                      <span className="text-[10px] font-bold text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                      <span className="text-[10px] font-medium text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
                       {(audit as any).depth_mode === 'deep' && (
-                        <span className="text-[9px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
+                        <span className="text-[9px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
                       )}
                       {done && report?.overall_score != null && (
                         <>
                           <span className="text-border">·</span>
-                          <span className={`font-bold ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span>
+                          <span className={`font-medium ${scoreColor(report.overall_score)}`}>{report.overall_score} pts</span>
                         </>
                       )}
                     </div>

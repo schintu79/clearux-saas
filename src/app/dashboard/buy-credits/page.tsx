@@ -67,7 +67,7 @@ export default function BuyCreditsPage() {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Coins size={28} className="text-[#22C55E]" />
         </div>
-        <h1 className="text-3xl font-semibold font-heading text-text mb-2">
+        <h1 className="text-3xl font-medium font-heading text-text mb-2">
           Buy Audit Credits
         </h1>
         <p className="text-muted max-w-md mx-auto">
@@ -76,7 +76,7 @@ export default function BuyCreditsPage() {
         {credits !== null && (
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/20">
             <Coins size={14} className="text-[#22C55E]" />
-            <span className="text-sm font-semibold text-text">
+            <span className="text-sm font-medium text-text">
               Current balance: <span className="text-[#22C55E]">{credits} credit{credits !== 1 ? 's' : ''}</span>
             </span>
           </div>
@@ -95,27 +95,27 @@ export default function BuyCreditsPage() {
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-brand text-surface dark:text-[#111111] text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-2.5 right-4 bg-brand text-surface dark:text-[#111111] text-[10px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
                 Customers Favourite
               </span>
             )}
 
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-heading font-semibold text-lg text-text">
+                <h3 className="font-heading font-medium text-lg text-text">
                   {pack.credits} Credit{pack.credits !== 1 ? 's' : ''}
                 </h3>
                 <p className="text-xs text-muted">{pack.per} per audit</p>
               </div>
               {pack.save && (
-                <span className="inline-flex items-center bg-[#22C55E] text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center bg-[#22C55E] text-white text-xs font-medium px-2.5 py-1 rounded-full">
                   Save {pack.save}
                 </span>
               )}
             </div>
 
             <div className="mb-4">
-              <span className="font-heading text-3xl font-semibold text-text">${pack.price.toLocaleString()}</span>
+              <span className="font-heading text-3xl font-medium text-text">${pack.price.toLocaleString()}</span>
             </div>
 
             <div className="space-y-1.5 mb-5">
@@ -135,7 +135,7 @@ export default function BuyCreditsPage() {
             <button
               onClick={() => handlePurchase(pack.id)}
               disabled={purchasing !== null}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
                 pack.popular
                   ? 'bg-brand text-surface dark:text-[#111111] hover:brightness-110 shadow-sm'
                   : 'bg-off border border-border text-text hover:bg-border/50'

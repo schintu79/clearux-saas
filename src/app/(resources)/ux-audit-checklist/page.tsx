@@ -169,12 +169,12 @@ export default function UxAuditChecklistPage() {
       <main id="main-content" className="bg-surface">
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
-          <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-6">
+          <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
             The Complete UX Audit Checklist: 16 Categories, 4 Pillars
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
             Running a{' '}
-            <Link href="/what-is-a-ux-audit" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+            <Link href="/what-is-a-ux-audit" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
               UX audit
             </Link>{' '}
             without a checklist is like performing a code review without
@@ -187,7 +187,7 @@ export default function UxAuditChecklistPage() {
 
           {/* ── How to use ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               How to Use This Website Audit Checklist
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -209,7 +209,7 @@ export default function UxAuditChecklistPage() {
           {/* ── Pillars ── */}
           {pillars.map((pillar) => (
             <section key={pillar.title} className="mb-14">
-              <h2 className="font-heading font-semibold text-2xl text-text mb-3">
+              <h2 className="font-heading font-medium text-2xl text-text mb-3">
                 {pillar.title}
               </h2>
               <p className="text-text/80 leading-relaxed mb-6">
@@ -221,7 +221,7 @@ export default function UxAuditChecklistPage() {
                     key={cat.name}
                     className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none"
                   >
-                    <h3 className="font-heading font-semibold text-lg text-text mb-2 flex items-start gap-2">
+                    <h3 className="font-heading font-medium text-lg text-text mb-2 flex items-start gap-2">
                       <CheckCircle size={18} className="text-brand mt-1 shrink-0" />
                       {cat.name}
                     </h3>
@@ -236,7 +236,7 @@ export default function UxAuditChecklistPage() {
 
           {/* ── Beyond the Checklist ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               Beyond the Checklist: Continuous Auditing
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -253,7 +253,7 @@ export default function UxAuditChecklistPage() {
               accountable. Explore how ClearUX compares to other{' '}
               <Link
                 href="/best-ux-audit-tools"
-                className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
               >
                 UX audit tools
               </Link>{' '}
@@ -266,7 +266,7 @@ export default function UxAuditChecklistPage() {
             className="mt-16 text-center p-8 rounded-2xl"
             style={{ background: 'var(--gradient-brand-subtle)' }}
           >
-            <h2 className="font-heading font-semibold text-2xl text-text mb-3">
+            <h2 className="font-heading font-medium text-2xl text-text mb-3">
               Automate this entire checklist
             </h2>
             <p className="text-muted mb-6">
@@ -275,7 +275,7 @@ export default function UxAuditChecklistPage() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-[#111] font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 bg-brand text-[#111] font-medium px-6 py-3 rounded-xl hover:brightness-110 transition-all"
             >
               <Sparkles size={16} /> Get your free audit
             </Link>
@@ -283,14 +283,14 @@ export default function UxAuditChecklistPage() {
 
           {/* ── Related ── */}
           <nav className="mt-12 pt-8 border-t border-border">
-            <p className="text-sm text-muted mb-3 font-semibold uppercase tracking-wider">
+            <p className="text-sm text-muted mb-3 font-medium uppercase tracking-wider">
               Related resources
             </p>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/what-is-a-ux-audit"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   What Is a UX Audit? <ArrowRight size={14} />
                 </Link>
@@ -298,7 +298,7 @@ export default function UxAuditChecklistPage() {
               <li>
                 <Link
                   href="/best-ux-audit-tools"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   Best UX Audit Tools <ArrowRight size={14} />
                 </Link>

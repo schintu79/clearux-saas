@@ -55,7 +55,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
               <ScanLine size={20} className="text-[#34D399]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">Site Crawl</p>
+              <p className="text-sm font-medium text-white">Site Crawl</p>
               <p className="text-xs text-white/40">Discovering pages</p>
             </div>
           </div>
@@ -63,7 +63,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-xs font-bold text-[#34D399] bg-[#10B981]/10 px-3 py-1.5 rounded-full"
+              className="text-xs font-medium text-[#34D399] bg-[#10B981]/10 px-3 py-1.5 rounded-full"
             >
               {pages.length} pages found
             </motion.span>
@@ -81,7 +81,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
             <span className="text-sm text-white/60 font-mono">acme.com</span>
           </div>
           <motion.div
-            className="px-5 py-3 rounded-xl bg-[#10B981] text-[#111] text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+            className="px-5 py-3 rounded-xl bg-[#10B981] text-[#111] text-sm font-medium flex items-center gap-2 flex-shrink-0"
             animate={step >= 1 ? { scale: [1, 1.04, 1] } : {}}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
@@ -166,11 +166,11 @@ function ScanningGrid({ inView }: { inView: boolean }) {
               <Brain size={20} className="text-[#34D399]" />
             </motion.div>
             <div>
-              <p className="text-sm font-semibold text-white">Analysing acme.com</p>
+              <p className="text-sm font-medium text-white">Analysing acme.com</p>
               <p className="text-xs text-white/40">64 checkpoints across 4 pillars</p>
             </div>
           </div>
-          <span className="text-[#34D399] font-heading text-3xl font-semibold">{progress}%</span>
+          <span className="text-[#34D399] font-heading text-3xl font-medium">{progress}%</span>
         </div>
 
         {/* Progress bar */}
@@ -256,7 +256,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
               <BarChart3 size={20} className="text-[#34D399]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">Audit Complete</p>
+              <p className="text-sm font-medium text-white">Audit Complete</p>
               <p className="text-xs text-white/40">acme.com</p>
             </div>
           </div>
@@ -277,7 +277,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-semibold text-white">
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-medium text-white">
               {score}
             </span>
           </motion.div>
@@ -299,7 +299,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs text-white/50">{p.label}</span>
-                <span className="text-xs font-bold text-white">{p.value}</span>
+                <span className="text-xs font-medium text-white">{p.value}</span>
               </div>
               <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <motion.div
@@ -315,7 +315,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
 
         {/* Top findings */}
         <div className="space-y-2.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/30 mb-3">Top findings</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">Top findings</p>
           {findings.map((f, i) => (
             <motion.div
               key={i}
@@ -324,7 +324,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
               transition={{ delay: 1.4 + i * 0.15, duration: 0.4 }}
               className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]"
             >
-              <span className={`${f.color} text-white text-[10px] font-bold px-2 py-1 rounded mt-0.5 flex-shrink-0`}>
+              <span className={`${f.color} text-white text-[10px] font-medium px-2 py-1 rounded mt-0.5 flex-shrink-0`}>
                 {f.severity}
               </span>
               <div>
@@ -400,8 +400,8 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[13px] font-semibold tracking-widest uppercase mb-4 text-text">How it works</p>
-          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-semibold text-text mb-5" style={{ lineHeight: '1.1' }}>
+          <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-text">How it works</p>
+          <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-medium text-text mb-5" style={{ lineHeight: '1.1' }}>
             Three steps. Under 10 minutes.<br className="hidden sm:block" />
             <span className="text-muted">Zero setup required.</span>
           </h2>
@@ -426,7 +426,7 @@ export default function HowItWorks() {
                   transition={{ duration: 0.7 }}
                 >
                   <motion.span
-                    className="font-heading text-7xl sm:text-8xl font-semibold text-text/[0.05] mb-4 leading-none"
+                    className="font-heading text-7xl sm:text-8xl font-medium text-text/[0.05] mb-4 leading-none"
                     initial={{ opacity: 0, scale: 0.5 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
@@ -434,7 +434,7 @@ export default function HowItWorks() {
                   >
                     {step.number}
                   </motion.span>
-                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-text mb-4">
+                  <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-text mb-4">
                     {step.title}
                   </h3>
                   <p className="text-muted text-lg leading-relaxed max-w-md">
@@ -469,7 +469,7 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-3" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3" style={{ lineHeight: '1.15' }}>
             Ready to see what you&apos;re missing?
           </h3>
           <p className="text-white/70 text-sm sm:text-base mb-8 max-w-md mx-auto">
@@ -477,7 +477,7 @@ export default function HowItWorks() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-bold px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+            className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-medium px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
             Start Free Audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />

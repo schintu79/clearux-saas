@@ -69,12 +69,12 @@ export async function GET() {
               justifyContent: 'center',
               color: 'white',
               fontSize: '24px',
-              fontWeight: 700,
+              fontWeight: 500,
             }}
           >
             C
           </div>
-          <span style={{ fontSize: '36px', fontWeight: 700, color: 'white' }}>
+          <span style={{ fontSize: '36px', fontWeight: 500, color: 'white' }}>
             Clear<span style={{ color: '#8B5CF6' }}>UX</span>
           </span>
         </div>
@@ -83,7 +83,7 @@ export async function GET() {
         <div
           style={{
             fontSize: '52px',
-            fontWeight: 800,
+            fontWeight: 500,
             color: 'white',
             textAlign: 'center',
             lineHeight: 1.15,
@@ -132,7 +132,7 @@ export async function GET() {
               <span
                 style={{
                   fontSize: '36px',
-                  fontWeight: 800,
+                  fontWeight: 500,
                   background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
                   backgroundClip: 'text',
                   color: 'transparent',

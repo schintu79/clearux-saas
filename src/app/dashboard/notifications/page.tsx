@@ -69,7 +69,7 @@ export default function NotificationsPage() {
     <div className="max-w-2xl mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-heading text-lg font-semibold text-text">Notifications</h1>
+          <h1 className="font-heading text-lg font-medium text-text">Notifications</h1>
           <p className="text-muted text-xs mt-0.5">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
           </p>
@@ -81,7 +81,7 @@ export default function NotificationsPage() {
           <div className="w-12 h-12 rounded-full bg-off dark:bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
             <Bell size={20} className="text-muted" />
           </div>
-          <p className="text-sm font-semibold text-text mb-1">No notifications yet</p>
+          <p className="text-sm font-medium text-text mb-1">No notifications yet</p>
           <p className="text-xs text-muted max-w-xs mx-auto">
             We will notify you about product updates and important announcements.
           </p>
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
                   <Icon size={16} className={`flex-shrink-0 mt-0.5 ${iconColorMap[n.color] || iconColorMap.blue}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-text">{n.title}</p>
+                      <p className="text-xs font-medium text-text">{n.title}</p>
                       {!n.is_read && (
                         <span className="w-2 h-2 rounded-full bg-brand flex-shrink-0" />
                       )}

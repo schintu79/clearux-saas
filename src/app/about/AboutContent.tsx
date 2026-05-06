@@ -33,7 +33,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             About ClearUX
           </p>
 
@@ -53,7 +53,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             The origin story
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-14">
@@ -95,7 +95,7 @@ export default function AboutContent() {
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
                     <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
-                  <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
+                  <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
               )
@@ -109,7 +109,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             The founder
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-12">
@@ -127,7 +127,7 @@ export default function AboutContent() {
               />
 
               <div className="flex-1">
-                <h3 className="font-heading font-semibold text-xl text-white mb-1">Stefano Schintu</h3>
+                <h3 className="font-heading font-medium text-xl text-white mb-1">Stefano Schintu</h3>
                 <p className="font-body text-white/50 text-sm mb-4">Founder &amp; Product Lead</p>
 
                 <div className="space-y-4 font-body text-white/50 text-[15px] leading-relaxed">
@@ -146,7 +146,7 @@ export default function AboutContent() {
                   href="https://www.linkedin.com/in/stefanoschintu"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-white hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-2 mt-6 text-sm font-medium text-white hover:opacity-70 transition-opacity"
                 >
                   <ExternalLink size={14} />
                   Connect on LinkedIn
@@ -162,7 +162,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
             Our commitment
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
@@ -199,7 +199,7 @@ export default function AboutContent() {
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
                     <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
-                  <h3 className="font-heading font-semibold text-lg text-white mb-3">{item.title}</h3>
+                  <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
               )
@@ -225,7 +225,7 @@ export default function AboutContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

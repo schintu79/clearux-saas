@@ -430,7 +430,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), var(--font-body), system-ui, sans-serif;
   line-height: 0.8em;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -537,7 +537,7 @@ article, .prose {
   border: none;
   border-radius: 12px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s ease;

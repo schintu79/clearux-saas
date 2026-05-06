@@ -91,6 +91,11 @@ export default function Home() {
 
   return (
     <div className="bg-[#111114] text-white min-h-screen">
+      {/* Single page background */}
+      <div className="fixed inset-0" aria-hidden="true">
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+      </div>
       <HomeJsonLd />
       <Navbar />
       <main id="main-content">
@@ -99,12 +104,7 @@ export default function Home() {
           SECTION 1 — HERO (Musicbed-inspired)
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
-        </div>
-
+      <section className="relative z-10 min-h-screen flex flex-col overflow-hidden">
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden hidden sm:block" aria-hidden="true">
           {/* Two columns of findings, scrolling vertically in opposite directions */}
@@ -135,7 +135,7 @@ export default function Home() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                            <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
                           </div>
                         </div>
                       );
@@ -171,7 +171,7 @@ export default function Home() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                            <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
                           </div>
                         </div>
                       );
@@ -188,7 +188,7 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-24 sm:pt-44 sm:pb-28">
           {/* Top label */}
           <motion.p
-            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
+            className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -209,7 +209,7 @@ export default function Home() {
                 transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 {HERO_HEADLINES[headlineIdx].main}<br />
-                <span className="font-semibold text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
+                <span className="font-medium text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
               </motion.h1>
             </AnimatePresence>
           </div>
@@ -251,7 +251,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 <span className="sm:hidden">Start</span>
                 <span className="hidden sm:inline">Start Free Audit</span>
@@ -270,7 +270,7 @@ export default function Home() {
             {HERO_KSPS.map((ksp, i) => (
               <div key={i} className="flex items-center gap-3 sm:gap-4">
                 {i > 0 && <span className="text-[#84CC16]/30">·</span>}
-                <span className="text-[13px] font-semibold text-lime-gradient tracking-wide">{ksp.text}</span>
+                <span className="text-[13px] font-medium text-lime-gradient tracking-wide">{ksp.text}</span>
               </div>
             ))}
           </motion.div>
@@ -291,7 +291,7 @@ export default function Home() {
             }}
             className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
           >
-            <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-semibold">Discover ClearUX</span>
+            <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-medium">Discover ClearUX</span>
             <div className="w-10 h-10 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
               <ChevronDown size={18} className="text-[#84CC16] group-hover:text-[#BEF264] transition-colors" />
             </div>
@@ -304,10 +304,10 @@ export default function Home() {
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section id="trust-stats" className="relative py-24 sm:py-32 bg-[#0C0C0F]">
+      <section id="trust-stats" className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-14">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">
               ClearUX in numbers
             </p>
           </ScrollReveal>
@@ -333,7 +333,7 @@ export default function Home() {
                   className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient leading-none"
                   duration={2}
                 />
-                <p className="text-sm font-semibold text-white/70 mt-3">{stat.label}</p>
+                <p className="text-sm font-medium text-white/70 mt-3">{stat.label}</p>
                 <p className="text-xs text-white/40 mt-1">{stat.desc}</p>
               </motion.div>
             ))}
@@ -345,11 +345,11 @@ export default function Home() {
           SECTION 3 — CORE FEATURES
           Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#141418]">
+      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
               For high-performing digital teams
             </p>
             <h2
@@ -365,7 +365,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -410,7 +410,7 @@ export default function Home() {
                       <div className="w-9 h-9 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
                         <Icon size={18} className="text-[#84CC16]" strokeWidth={2} />
                       </div>
-                      <h3 className="font-heading text-[15px] font-semibold text-white">{item.title}</h3>
+                      <h3 className="font-heading text-[15px] font-medium text-white">{item.title}</h3>
                     </div>
                     <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
                   </div>
@@ -448,7 +448,7 @@ export default function Home() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                          <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -484,7 +484,7 @@ export default function Home() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-bold text-white/40 leading-tight">{card.label}</p>
+                          <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -495,8 +495,8 @@ export default function Home() {
           </div>
 
           {/* Gradient fade on left and right edges — seamless */}
-          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, #141418 0%, #141418 20%, transparent 100%)' }} />
-          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, #141418 0%, #141418 20%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
         </div>
       </section>
 
@@ -504,14 +504,10 @@ export default function Home() {
           SECTION 4 — HOW IT WORKS
           Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative py-24 sm:py-32 overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section id="how-it-works" className="relative z-10 py-24 sm:py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
               Simple process
             </p>
             <h2
@@ -526,7 +522,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -557,7 +553,7 @@ export default function Home() {
                   <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-white/[0.06] leading-none block mb-4">
                     {item.step}
                   </span>
-                  <h3 className="font-heading text-xl font-semibold text-white mb-3">{item.title}</h3>
+                  <h3 className="font-heading text-xl font-medium text-white mb-3">{item.title}</h3>
                   <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
@@ -569,11 +565,11 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden bg-[#0C0C0F]">
+      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
               What you get
             </p>
             <h2
@@ -638,8 +634,8 @@ export default function Home() {
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/25 mb-3 block">{card.label}</span>
-                  <h3 className="font-heading text-base font-semibold text-white mb-3 leading-tight">{card.title}</h3>
+                  <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/25 mb-3 block">{card.label}</span>
+                  <h3 className="font-heading text-base font-medium text-white mb-3 leading-tight">{card.title}</h3>
                   <p className="text-sm text-white/40 leading-relaxed">{card.desc}</p>
                 </div>
               );
@@ -648,33 +644,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Background wrapper — Pricing only ── */}
-      <div className="relative overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-
       {/* ═══════════════════════════════════════════════════════
           SECTION 6 — PRICING
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-10">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
               Simple pricing
             </p>
 
             {/* Price hero — $99 in bold lime gradient */}
             <div className="mb-6">
               <h2 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05' }}>
-                <span className="text-lime-gradient font-bold text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
+                <span className="text-lime-gradient font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
                 <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-white/60 ml-3 sm:ml-5">per audit</span>
               </h2>
             </div>
@@ -690,14 +673,14 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <Link
                 href="/register"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
                 href="/pricing"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-sm font-medium tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
               >
                 View All Plans
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -726,16 +709,14 @@ export default function Home() {
         </div>
       </section>
 
-      </div>{/* ── End Pricing wrapper ── */}
-
       {/* ═══════════════════════════════════════════════════════
           SECTION 7 — FAQ
           Dark bg (#111114), left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative py-24 sm:py-32 bg-[#111114]">
+      <section id="faq" className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
               FAQ
             </p>
             <h2
@@ -751,7 +732,7 @@ export default function Home() {
               <StaggerItem key={idx}>
                 <details className="group">
                   <summary className="flex items-center justify-between py-6 cursor-pointer">
-                    <h3 className="font-heading text-[15px] sm:text-base font-semibold text-white pr-8">{item.q}</h3>
+                    <h3 className="font-heading text-[15px] sm:text-base font-medium text-white pr-8">{item.q}</h3>
                     <ChevronDown size={16} className="text-white/40 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="pb-6">
@@ -765,7 +746,7 @@ export default function Home() {
           <ScrollReveal delay={0.3} className="mt-10 max-w-3xl">
             <Link
               href="/faq"
-              className="group inline-flex items-center gap-2.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
+              className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/40 hover:text-white transition-colors"
             >
               Read all FAQ
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -778,16 +759,11 @@ export default function Home() {
           SECTION 8 — FINAL CTA
           Dark bg with aurora + background visual cards, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-
+      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
         {/* Content — left-aligned, above the background */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
               Get started
             </p>
             <h2
@@ -820,7 +796,7 @@ export default function Home() {
                 </div>
                 <button
                   type="submit"
-                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />

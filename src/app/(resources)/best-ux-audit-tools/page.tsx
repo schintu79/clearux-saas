@@ -56,7 +56,7 @@ export default function BestUxAuditToolsPage() {
       <main id="main-content" className="bg-surface">
         <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
           {/* ── H1 ── */}
-          <h1 className="font-heading font-semibold text-3xl sm:text-4xl text-text mb-6">
+          <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-6">
             Best UX Audit Tools in 2026: A Practical Comparison
           </h1>
           <p className="text-lg text-muted mb-12 leading-relaxed">
@@ -71,17 +71,17 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── Approach 1: Manual ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               Approach 1: Manual UX Consultancies
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
               The traditional approach to{' '}
-              <Link href="/what-is-a-ux-audit" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/what-is-a-ux-audit" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 UX auditing
               </Link>{' '}
               involves hiring a consultancy or freelance UX researcher to
               review your product against a{' '}
-              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 checklist
               </Link>{' '}
               of heuristics and best practices. The consultant typically
@@ -91,7 +91,7 @@ export default function BestUxAuditToolsPage() {
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   Strengths
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -110,7 +110,7 @@ export default function BestUxAuditToolsPage() {
                 </ul>
               </div>
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   Limitations
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -140,7 +140,7 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── Approach 2: Accessibility-only ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               Approach 2: Accessibility-Only Scanners
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -151,7 +151,7 @@ export default function BestUxAuditToolsPage() {
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   Strengths
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -170,7 +170,7 @@ export default function BestUxAuditToolsPage() {
                 </ul>
               </div>
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   Limitations
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -193,7 +193,7 @@ export default function BestUxAuditToolsPage() {
               Accessibility scanners are essential — every team should run
               Lighthouse and axe as part of their development workflow. But
               they cover only one of the{' '}
-              <Link href="/ux-audit-checklist" className="text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
+              <Link href="/ux-audit-checklist" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">
                 four pillars of a complete UX audit
               </Link>
               . Treating them as a full audit solution leaves usability
@@ -204,7 +204,7 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── Approach 3: Comprehensive ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               Approach 3: Comprehensive UX Audit Platforms
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -225,7 +225,7 @@ export default function BestUxAuditToolsPage() {
 
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   What ClearUX covers
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -248,7 +248,7 @@ export default function BestUxAuditToolsPage() {
                 </ul>
               </div>
               <div className="p-5 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
-                <h3 className="font-heading font-semibold text-base text-text mb-2">
+                <h3 className="font-heading font-medium text-base text-text mb-2">
                   Honest limitations
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
@@ -277,17 +277,17 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── Comparison table ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               UX Audit Tool Comparison at a Glance
             </h2>
             <div className="overflow-x-auto rounded-2xl border border-border/20 dark:border-white/[0.05] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
               <table className="w-full text-sm text-left">
                 <thead className="bg-off">
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-text">Criteria</th>
-                    <th className="px-4 py-3 font-semibold text-text">Manual Consultancy</th>
-                    <th className="px-4 py-3 font-semibold text-text">Accessibility Scanner</th>
-                    <th className="px-4 py-3 font-semibold text-text">ClearUX</th>
+                    <th className="px-4 py-3 font-medium text-text">Criteria</th>
+                    <th className="px-4 py-3 font-medium text-text">Manual Consultancy</th>
+                    <th className="px-4 py-3 font-medium text-text">Accessibility Scanner</th>
+                    <th className="px-4 py-3 font-medium text-text">ClearUX</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
@@ -314,7 +314,7 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── How to choose ── */}
           <section className="mb-12">
-            <h2 className="font-heading font-semibold text-2xl text-text mb-4">
+            <h2 className="font-heading font-medium text-2xl text-text mb-4">
               How to Choose the Right UX Audit Tool
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
@@ -348,7 +348,7 @@ export default function BestUxAuditToolsPage() {
             className="mt-16 text-center p-8 rounded-2xl"
             style={{ background: 'var(--gradient-brand-subtle)' }}
           >
-            <h2 className="font-heading font-semibold text-2xl text-text mb-3">
+            <h2 className="font-heading font-medium text-2xl text-text mb-3">
               See the difference for yourself
             </h2>
             <p className="text-muted mb-6">
@@ -357,7 +357,7 @@ export default function BestUxAuditToolsPage() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 bg-brand text-[#111] font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 bg-brand text-[#111] font-medium px-6 py-3 rounded-xl hover:brightness-110 transition-all"
             >
               <Sparkles size={16} /> Get your free audit
             </Link>
@@ -365,14 +365,14 @@ export default function BestUxAuditToolsPage() {
 
           {/* ── Related ── */}
           <nav className="mt-12 pt-8 border-t border-border">
-            <p className="text-sm text-muted mb-3 font-semibold uppercase tracking-wider">
+            <p className="text-sm text-muted mb-3 font-medium uppercase tracking-wider">
               Related resources
             </p>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/what-is-a-ux-audit"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   What Is a UX Audit? <ArrowRight size={14} />
                 </Link>
@@ -380,7 +380,7 @@ export default function BestUxAuditToolsPage() {
               <li>
                 <Link
                   href="/ux-audit-checklist"
-                  className="inline-flex items-center gap-1 text-text font-semibold underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1 text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
                 >
                   UX Audit Checklist <ArrowRight size={14} />
                 </Link>
