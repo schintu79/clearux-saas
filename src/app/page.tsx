@@ -14,7 +14,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
-import { HeroReportMockup, ReportShowcase } from '@/components/motion/ProductMockup';
+import { ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 import AuroraBackground from '@/components/motion/AuroraBackground';
 
@@ -100,7 +100,7 @@ export default function Home() {
           SECTION 1 — HERO (Musicbed-inspired)
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden">
+      <section className="relative">
         <AuroraBackground variant="hero" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-32 sm:pt-40 pb-16 sm:pb-20">
@@ -114,16 +114,16 @@ export default function Home() {
             AI-Powered UX Audit
           </motion.p>
 
-          {/* Rotating headline — left-aligned, light weight, very large */}
-          <div className="h-[7rem] sm:h-[10rem] md:h-[13rem] lg:h-[16rem] relative mb-8 overflow-hidden">
+          {/* Rotating headline — left-aligned, light weight, Musicbed-sized */}
+          <div className="h-[5rem] sm:h-[6.5rem] md:h-[8rem] lg:h-[10rem] relative mb-8">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[3rem] sm:text-[4.5rem] md:text-[6rem] lg:text-[7.5rem] font-light tracking-tight text-white absolute inset-x-0"
-                style={{ lineHeight: '1.05' }}
-                initial={{ opacity: 0, y: 60 }}
+                className="font-heading text-[2.5rem] sm:text-[3.5rem] md:text-[4.5rem] lg:text-[5.5rem] font-light tracking-tight text-white absolute inset-x-0"
+                style={{ lineHeight: '1.08' }}
+                initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -60 }}
+                exit={{ opacity: 0, y: -50 }}
                 transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 {HERO_HEADLINES[headlineIdx].main}<br />
@@ -132,7 +132,7 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
-          {/* Description + CTA row — Musicbed style: text left, button right */}
+          {/* Description + CTA row */}
           <motion.div
             className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-12"
             initial={{ opacity: 0, y: 30 }}
@@ -155,17 +155,49 @@ export default function Home() {
               </span>
             </div>
           </motion.div>
+
+          {/* URL input field */}
+          <motion.form
+            onSubmit={handleHeroSubmit}
+            className="max-w-2xl mb-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+          >
+            <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all">
+              <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
+              <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
+              <input
+                id="hero-url-input"
+                type="text"
+                name="url"
+                autoComplete="url"
+                value={heroUrl}
+                onChange={(e) => setHeroUrl(e.target.value)}
+                placeholder={placeholder}
+                aria-label="Website URL to audit"
+                className="flex-1 bg-transparent text-white text-base px-3 py-3 placeholder:text-white/20 focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+              >
+                {user ? 'Audit Now' : 'Audit Now'}
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </motion.form>
         </div>
 
         {/* Divider line */}
         <div className="relative z-10 border-t border-white/[0.06]" />
 
-        {/* Selling points row — horizontal strip like Musicbed's logo bar */}
+        {/* Selling points row — horizontal strip */}
         <motion.div
           className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7 }}
         >
           <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
             {HERO_SELLING_POINTS.map((sp, i) => {
@@ -179,56 +211,41 @@ export default function Home() {
             })}
           </div>
         </motion.div>
+      </section>
 
-        {/* Divider line */}
-        <div className="relative z-10 border-t border-white/[0.06]" />
-
-        {/* Demo visual — large, edge-to-edge like Musicbed's image block */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-12 sm:py-16">
-          <motion.div
-            className="relative overflow-hidden rounded-2xl"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <HeroReportMockup />
-
-            {/* Overlay stats — bottom-right, like Musicbed */}
-            <div className="mt-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-              <div>
-                <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-2" style={{ lineHeight: '1.15' }}>
-                  Find what&apos;s costing you<br />
-                  <span className="font-semibold text-lime-gradient">users and revenue.</span>
-                </h2>
-                <p className="text-sm text-white/30 max-w-md leading-relaxed mt-3">
-                  From dark patterns eroding trust to inaccessible interfaces excluding real users — ClearUX finds the issues your team can act on. Prioritised by impact, trackable as you fix them.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-8 flex-shrink-0">
-                <div>
-                  <AnimatedCounter end={64} suffix="+" className="font-heading text-3xl sm:text-4xl font-semibold text-white" duration={1.5} />
-                  <p className="text-xs text-white/30 mt-1">UX checkpoints</p>
-                </div>
-                <div>
-                  <AnimatedCounter end={16} suffix="" className="font-heading text-3xl sm:text-4xl font-semibold text-white" duration={1.5} />
-                  <p className="text-xs text-white/30 mt-1">audit categories</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Link
-                    href="/how-it-works"
-                    className="inline-flex items-center justify-center px-5 py-2.5 border border-white/30 text-white text-xs font-semibold tracking-wide uppercase hover:bg-white hover:text-[#111114] transition-all"
-                  >
-                    See How It Works
-                  </Link>
-                  <span className="text-[11px] text-white/25 max-w-[120px] leading-snug hidden sm:block">
-                    Start with a free audit to see the full report.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 2 — TRUST STATS
+          Visual break with subtle background
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-20 sm:py-28 px-6 sm:px-10 lg:px-16 overflow-hidden" style={{ background: 'rgba(132,204,22,0.04)' }}>
+        <div className="absolute inset-0 border-t border-b border-[#84CC16]/10 pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
+            {[
+              { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
+              { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
+              { end: 4, suffix: '', label: 'UX pillars', desc: 'for complete coverage' },
+              { end: 40, suffix: '+', label: 'Pages analysed', desc: 'per audit on avg.' },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+              >
+                <AnimatedCounter
+                  end={stat.end}
+                  suffix={stat.suffix}
+                  className="font-heading text-5xl sm:text-6xl lg:text-7xl font-light text-white"
+                  duration={2}
+                />
+                <p className="text-sm font-semibold text-white/60 mt-3">{stat.label}</p>
+                <p className="text-xs text-white/25 mt-1">{stat.desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -240,7 +257,7 @@ export default function Home() {
         <AuroraBackground variant="section" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-3">Core features</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#84CC16] mb-3">Core features</p>
             <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-white tracking-tight mb-4" style={{ lineHeight: '1.1' }}>
               What makes ClearUX <span className="italic font-normal text-white/50">unstoppable</span>
             </h2>
@@ -356,7 +373,7 @@ export default function Home() {
       <section id="how-it-works" className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase text-indigo-400 mb-3">Simple process</p>
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#84CC16] mb-3">Simple process</p>
             <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
               How ClearUX Works
             </h2>
@@ -396,8 +413,8 @@ export default function Home() {
                     </span>
                     <div className="relative">
                       <div className="flex items-center gap-4 mb-5">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-500/10">
-                          <Icon size={22} className="text-indigo-400" />
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#84CC16]/10">
+                          <Icon size={22} className="text-[#84CC16]" />
                         </div>
                         <span className="font-heading text-sm font-bold tracking-wide text-white/30">
                           Step {item.step}
@@ -422,7 +439,7 @@ export default function Home() {
         <AuroraBackground variant="subtle" />
         <div className="relative z-10 max-w-5xl mx-auto">
           <ScrollReveal className="text-center mb-16">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-4 text-indigo-400">What you get</p>
+            <p className="text-xs font-semibold tracking-widest uppercase mb-4 text-[#84CC16]">What you get</p>
             <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
               A report your team can act on
             </h2>
@@ -444,8 +461,8 @@ export default function Home() {
               return (
                 <StaggerItem key={i}>
                   <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-500/10 mb-4">
-                      <Icon size={18} className="text-indigo-400" />
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#84CC16]/10 mb-4">
+                      <Icon size={18} className="text-[#84CC16]" />
                     </div>
                     <h3 className="text-sm font-semibold text-white mb-1.5">{item.title}</h3>
                     <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
