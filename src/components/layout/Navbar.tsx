@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
       Skip to main content
     </a>
     <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#111114]/80 backdrop-blur-xl border-b border-white/[0.06]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">

@@ -206,9 +206,15 @@ export default function Home() {
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 px-6 sm:px-10 lg:px-16 bg-white">
-        <div className="relative max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
+      <section className="relative py-24 sm:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <ScrollReveal className="mb-14">
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40">
+              ClearUX in numbers
+            </p>
+          </ScrollReveal>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-0">
             {[
               { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
@@ -217,7 +223,7 @@ export default function Home() {
             ].map((stat, i) => (
               <motion.div
                 key={i}
-                className="text-left"
+                className={`text-left ${i > 0 ? 'lg:border-l lg:border-[#111114]/10 lg:pl-10' : ''}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
