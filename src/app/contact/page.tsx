@@ -125,7 +125,7 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap disabled:opacity-60"
+                      className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap disabled:opacity-60"
                     >
                       {loading ? (
                         <>
@@ -187,7 +187,7 @@ export default function ContactPage() {
             </p>
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
             >
               Start Free Audit
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

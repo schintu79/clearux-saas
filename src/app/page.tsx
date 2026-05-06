@@ -105,9 +105,10 @@ export default function Home() {
         <AuroraBackground variant="hero" />
 
         {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center" aria-hidden="true">
+          <div className="relative w-full max-w-7xl px-6 sm:px-10 lg:px-16 h-full">
           {/* Two columns of cards, scrolling vertically in opposite directions */}
-          <div className="absolute top-0 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-full flex gap-3 opacity-[0.07]">
+          <div className="absolute top-0 right-0 w-[50%] lg:w-[45%] h-full flex gap-3 opacity-[0.07]">
             {/* Column 1 — scrolls up */}
             <div className="flex-1 overflow-hidden">
               <div
@@ -176,6 +177,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Gradient overlay — fades cards from left, Musicbed album art style */}
           <div
@@ -205,7 +207,7 @@ export default function Home() {
           </motion.p>
 
           {/* Rotating headline — left-aligned, light weight */}
-          <div className="h-[4.5rem] sm:h-[5.5rem] md:h-[7rem] lg:h-[8.5rem] relative mb-14 sm:mb-20">
+          <div className="h-[9rem] sm:h-[11rem] md:h-[14rem] lg:h-[17rem] relative mb-10 sm:mb-14">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
@@ -241,7 +243,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all">
+            <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-full p-1.5 focus-within:border-white/[0.2] transition-all">
               <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
               <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
               <input
@@ -257,7 +259,7 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+                className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -265,33 +267,14 @@ export default function Home() {
             </div>
             <p className="text-[11px] text-white/20 mt-3 tracking-wide">No credit card required</p>
           </motion.form>
-        </div>
 
-        {/* Scroll indicator */}
-        <div className="relative z-10 flex-1" />
-        <motion.div
-          className="relative z-10 flex justify-center pb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-        >
-          <div className="flex flex-col items-center gap-2 animate-bounce-slow">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-white/25">Scroll</span>
-            <ChevronDown size={16} className="text-white/25" />
-          </div>
-        </motion.div>
-
-        {/* Divider line */}
-        <div className="relative z-10 border-t border-white/[0.06]" />
-
-        {/* Selling points row — horizontal strip */}
-        <motion.div
-          className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
+          {/* Selling points — inline below input */}
+          <motion.div
+            className="flex flex-wrap items-center gap-x-8 gap-y-3 mt-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
             {HERO_SELLING_POINTS.map((sp, i) => {
               const Icon = sp.icon;
               return (
@@ -301,15 +284,39 @@ export default function Home() {
                 </div>
               );
             })}
-          </div>
+          </motion.div>
+        </div>
+
+        {/* Scroll indicator — "Discover ClearUX" */}
+        <div className="relative z-10 flex-1" />
+        <motion.div
+          className="relative z-10 flex justify-center pb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('trust-stats');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="group flex flex-col items-center gap-3 animate-bounce-slow cursor-pointer"
+          >
+            <span className="text-xs tracking-[0.2em] uppercase text-white/50 group-hover:text-white/80 transition-colors font-medium">Discover ClearUX</span>
+            <div className="w-10 h-10 rounded-full border border-white/20 group-hover:border-white/50 flex items-center justify-center transition-all group-hover:bg-white/[0.05]">
+              <ChevronDown size={18} className="text-white/50 group-hover:text-white/80 transition-colors" />
+            </div>
+          </button>
         </motion.div>
+
       </section>
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 bg-white">
+      <section id="trust-stats" className="relative py-24 sm:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-14">
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111114]/40">
@@ -370,7 +377,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -539,7 +546,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 flex-shrink-0 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-[#111114] text-white text-sm font-semibold tracking-wide uppercase transition-all hover:bg-[#111114]/90 flex-shrink-0 whitespace-nowrap"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -686,14 +693,14 @@ export default function Home() {
               <div className="flex items-center gap-4 flex-shrink-0">
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
                 >
                   View All Plans
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -884,7 +891,7 @@ export default function Home() {
             </p>
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
-              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-none p-1.5 focus-within:border-white/[0.2] transition-all backdrop-blur-sm">
+              <div className="relative flex items-center bg-white/[0.03] border border-white/[0.08] rounded-full p-1.5 focus-within:border-white/[0.2] transition-all backdrop-blur-sm">
                 <Search size={18} className="ml-4 text-white/25 flex-shrink-0" />
                 <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
                 <input
@@ -900,7 +907,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="group flex items-center gap-2 px-6 py-3 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
+                  className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 flex-shrink-0"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />

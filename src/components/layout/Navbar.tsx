@@ -156,13 +156,13 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-[15px] font-medium text-white/50 hover:text-white rounded-lg px-3 py-1.5 transition-colors"
+                  className="text-[15px] font-medium text-white/50 hover:text-white rounded-full px-3 py-1.5 transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="text-[15px] font-semibold text-[#111114] bg-white hover:bg-white/90 rounded-xl px-5 py-2.5 min-h-[44px] transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
+                  className="text-[15px] font-semibold text-[#111114] bg-white hover:bg-white/90 rounded-full px-5 py-2.5 min-h-[44px] transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
                   Start Free Audit
                   <ArrowUpRight size={14} />
@@ -222,7 +222,7 @@ const Navbar: React.FC = () => {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-3 min-h-[44px] flex items-center">
                       Login
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-[#111114] bg-white rounded-xl px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">
+                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-[15px] font-semibold text-[#111114] bg-white rounded-full px-6 py-3 text-center min-h-[48px] flex items-center justify-center mt-1">
                       Start Free Audit
                     </Link>
                   </>

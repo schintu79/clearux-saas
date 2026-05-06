@@ -215,14 +215,14 @@ export default function AboutContent() {
           <div className="flex flex-col sm:flex-row items-start gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
             >
               Start Free Audit
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/how-it-works"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
             >
               See how it works
             </Link>

@@ -33,7 +33,7 @@ export default function PricingContent() {
               </div>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
               >
                 Start Free Audit
                 <ArrowRight size={16} />
@@ -111,7 +111,7 @@ export default function PricingContent() {
 
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
                 >
                   Buy 1 audit
                 </Link>
@@ -189,7 +189,7 @@ export default function PricingContent() {
 
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full border border-white/20 text-white text-sm font-semibold tracking-wide uppercase transition-all hover:border-white/40 whitespace-nowrap"
                 >
                   {pack.cta}
                 </Link>
@@ -314,7 +314,7 @@ export default function PricingContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
+            className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-[#111114] text-sm font-semibold tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap"
           >
             Start Free Audit
             <ArrowRight size={16} />
