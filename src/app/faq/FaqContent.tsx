@@ -103,7 +103,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I get a refund?',
-        a: 'If you\'re unsatisfied with an audit, contact support@clearux.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.',
+        a: 'If you\'re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.',
       },
       {
         q: 'Can I buy more credits later?',
@@ -124,7 +124,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What if the audit flags something incorrectly?',
-        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, email support@clearux.ai and we\'ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
+        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, use our contact form or email support@clearux.ai and we\'ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
       },
       {
         q: 'Can I share the report with clients or my team?',

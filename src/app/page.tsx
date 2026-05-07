@@ -29,8 +29,8 @@ const TOP_FAQS = [
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
-  { main: 'Find the UX Issues', accent: 'Costing You Conversions' },
-  { main: 'See What Your Users', accent: "Won't Tell You" },
+  { main: 'Find and Fix', accent: 'Design Problems' },
+  { main: 'Automated UX Audit.', accent: '10 Minutes.' },
   { main: '64 Checkpoints.', accent: 'Zero Guesswork.' },
 ];
 
@@ -222,7 +222,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            We analyse websites across 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness. Fully automated and delivered in minutes.
+            Analyse your website for usability issues, accessibility problems, and design flaws — without hiring an expensive consultant. 64 checkpoints, fully automated, delivered in minutes.
           </motion.p>
 
           {/* URL input field */}

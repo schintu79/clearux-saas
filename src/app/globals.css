@@ -422,7 +422,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
   font-size: 16px;
-  line-height: 1.65;
+  line-height: 1.7;
   letter-spacing: -0.011em;
 }
 
@@ -443,12 +443,12 @@ h3, h4, h5 {
 }
 
 p, li, td, th, label, span, a {
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
-/* Readable line lengths */
+/* Readable line lengths — 65ch ≈ 650px at 16px, within 50–75 char range */
 article, .prose {
-  max-width: 72ch;
+  max-width: 65ch;
 }
 
 /* ══════════════════════════════════════════════════════════════

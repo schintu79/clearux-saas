@@ -74,7 +74,9 @@ export default function PrivacyPage() {
               <div className="space-y-2 ml-1">
                 <p><span className="font-medium text-text">Access and update</span> your data anytime from your dashboard settings.</p>
                 <p><span className="font-medium text-text">Export</span> your audit reports as PDF or Word documents.</p>
-                <p><span className="font-medium text-text">Delete your account</span> and all associated data by emailing{' '}
+                <p><span className="font-medium text-text">Delete your account</span> and all associated data via our{' '}
+                  <a href="/contact" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">contact form</a>{' '}
+                  or by emailing{' '}
                   <a href="mailto:support@clearux.ai" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>.
                   We process deletion requests within 30 days.
                 </p>
@@ -99,7 +101,9 @@ export default function PrivacyPage() {
             <section>
               <h2 className="font-heading font-medium text-xl text-text mb-3">Questions?</h2>
               <p>
-                Email us at{' '}
+                Use our{' '}
+                <a href="/contact" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">contact form</a>{' '}
+                or email us at{' '}
                 <a href="mailto:support@clearux.ai" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>.
                 We reply to every message.
               </p>

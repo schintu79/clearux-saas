@@ -100,7 +100,9 @@ export default function CookiesPage() {
             <section>
               <h2 className="font-heading font-medium text-xl text-text mb-3">Questions?</h2>
               <p>
-                Email us at{' '}
+                Use our{' '}
+                <a href="/contact" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">contact form</a>{' '}
+                or email us at{' '}
                 <a href="mailto:support@clearux.ai" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>.
               </p>
             </section>
