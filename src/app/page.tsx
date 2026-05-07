@@ -105,87 +105,13 @@ export default function Home() {
           Left-aligned, clean, minimal, dark mode
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 min-h-screen flex flex-col overflow-hidden">
-        {/* Background visual cards — slowly scrolling on the right, Musicbed-style */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden sm:block" aria-hidden="true">
-          {/* Two columns of findings, scrolling vertically in opposite directions */}
-          <div className="absolute top-1/2 -translate-y-1/2 right-[2%] lg:right-[5%] w-[45%] lg:w-[40%] h-[80%] flex gap-1.5 opacity-[0.40]">
-            {/* Column 1 — scrolls up */}
-            <div className="flex-1 overflow-hidden">
-              <div
-                className="flex flex-col gap-1.5"
-                style={{ animation: 'scroll-up-slow 60s linear infinite' }}
-              >
-                {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-1.5">
-                    {[
-                      { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX', icon: ShieldAlert },
-                      { label: 'AI Discoverability', subtitle: 'Future Readiness', icon: Bot },
-                      { label: 'Trust Signal Audit', subtitle: 'Foundation', icon: Shield },
-                      { label: 'Reading Complexity', subtitle: 'Cognitive', icon: Brain },
-                    ].map((card, j) => {
-                      const CardIcon = card.icon;
-                      return (
-                        <div
-                          key={j}
-                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
-                            <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2 — scrolls down */}
-            <div className="flex-1 overflow-hidden hidden sm:block">
-              <div
-                className="flex flex-col gap-1.5"
-                style={{ animation: 'scroll-down-slow 50s linear infinite' }}
-              >
-                {[...Array(2)].map((_, setIdx) => (
-                  <div key={setIdx} className="flex flex-col gap-1.5">
-                    {[
-                      { label: 'Cognitive Load Test', subtitle: 'Accessibility', icon: Accessibility },
-                      { label: 'Conversion Friction', subtitle: 'Revenue Impact', icon: Target },
-                      { label: 'WCAG Compliance', subtitle: 'Inclusive Design', icon: Eye },
-                      { label: 'Structured Data', subtitle: 'AI Readiness', icon: ScanEye },
-                    ].map((card, j) => {
-                      const CardIcon = card.icon;
-                      return (
-                        <div
-                          key={j}
-                          className="relative w-full rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                          style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
-                            <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                            <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
+        {/* Subtle background glow for centered hero */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#84CC16]/[0.03] blur-[120px]" />
         </div>
 
-        {/* Hero content — vertically centered on all screens */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-24 sm:pt-44 sm:pb-28">
+        {/* Hero content — centered on all screens */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-24 sm:pt-44 sm:pb-28">
           {/* Top label */}
           <motion.p
             className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
@@ -196,7 +122,7 @@ export default function Home() {
             AI-Powered UX Audit
           </motion.p>
 
-          {/* Rotating headline — left-aligned, light weight */}
+          {/* Rotating headline — centered, light weight */}
           <div className="relative mb-5 sm:mb-10">
             <AnimatePresence mode="wait">
               <motion.h1
@@ -228,12 +154,12 @@ export default function Home() {
           {/* URL input field */}
           <motion.form
             onSubmit={handleHeroSubmit}
-            className="max-w-2xl mb-0"
+            className="max-w-2xl w-full mb-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center justify-center gap-3 sm:gap-4">
               <div className="relative flex items-center flex-1 sm:flex-initial sm:w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
                 <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
                 <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
@@ -262,7 +188,7 @@ export default function Home() {
 
           {/* KSPs — minimal proof points */}
           <motion.div
-            className="flex items-center gap-3 sm:gap-4 mt-5"
+            className="flex items-center justify-center gap-3 sm:gap-4 mt-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
