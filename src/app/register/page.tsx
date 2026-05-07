@@ -193,7 +193,7 @@ export default function RegisterPage() {
       {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-white/[0.08]" />
-        <span className="text-xs text-white/40">or sign up with email</span>
+        <span className="text-xs text-white/60">or sign up with email</span>
         <div className="flex-1 h-px bg-white/[0.08]" />
       </div>
 
@@ -360,7 +360,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-[11px] text-white/35 leading-relaxed">
+      <p className="mt-5 text-center text-[11px] text-white/60 leading-relaxed">
         Your audit results are private and encrypted. We never share your data.
       </p>
 
@@ -409,7 +409,7 @@ export default function RegisterPage() {
               <h1 className="font-heading text-[2rem] font-light text-white mb-2" style={{ lineHeight: '1.1' }}>
                 {pendingUrl ? 'Your free audit is one step away.' : 'Start auditing in minutes.'}
               </h1>
-              <p className="text-sm text-white/40 leading-relaxed">
+              <p className="text-sm text-white/60 leading-relaxed">
                 No credit card required. 64 checkpoints across 16 categories.
               </p>
             </div>
@@ -444,7 +444,7 @@ export default function RegisterPage() {
                     <>Start auditing in <span className="text-lime-gradient">minutes.</span></>
                   )}
                 </h2>
-                <p className="text-sm text-white/40 leading-relaxed max-w-[300px]">
+                <p className="text-sm text-white/60 leading-relaxed max-w-[300px]">
                   No credit card required. 64 checkpoints across 16 categories.
                 </p>
 
@@ -463,7 +463,7 @@ export default function RegisterPage() {
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3.5 flex-1 text-center">
                     <p className="text-lg font-medium text-white">{stat.num}</p>
-                    <p className="text-[10px] text-white/35 uppercase tracking-wider mt-0.5">{stat.label}</p>
+                    <p className="text-[10px] text-white/60 uppercase tracking-wider mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>

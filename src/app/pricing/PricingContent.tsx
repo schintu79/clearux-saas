@@ -45,7 +45,7 @@ export default function PricingContent() {
             First one free.
           </p>
 
-          <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+          <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit runs the full 64-checkpoint
             analysis across all 16 categories and 4 pillars. Credits never expire.
           </p>
@@ -96,7 +96,7 @@ export default function PricingContent() {
           </div>
 
           {/* Value anchor */}
-          <p className="text-sm text-white/40 mt-6">
+          <p className="text-sm text-white/60 mt-6">
             At $99 per audit, that&apos;s <span className="font-medium text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
           </p>
         </div>
@@ -112,7 +112,7 @@ export default function PricingContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
             Save up to <span className="text-lime-gradient">50%</span> with packs
           </h2>
-          <p className="text-white/45 text-base max-w-xl mb-14 leading-relaxed">
+          <p className="text-white/65 text-base max-w-xl mb-14 leading-relaxed">
             Same 64-checkpoint audit. Packs simply lower the per-audit cost. No features are locked behind tiers.
           </p>
 
@@ -146,12 +146,12 @@ export default function PricingContent() {
                     <span className="text-lime-gradient text-lg font-medium">$</span>
                     <span className="font-heading text-5xl sm:text-6xl font-medium text-lime-gradient">{pack.price.toLocaleString()}</span>
                   </div>
-                  <p className="text-white/50 text-sm mb-1">
+                  <p className="text-white/65 text-sm mb-1">
                     {pack.per} per audit <span className="text-white/20">|</span> {pack.credits} audits
                   </p>
                   <p className="text-sm text-[#84CC16] font-medium mb-6">Save {pack.save}%</p>
 
-                  <p className="text-sm text-white/40 mb-8 leading-relaxed">{pack.desc}</p>
+                  <p className="text-sm text-white/60 mb-8 leading-relaxed">{pack.desc}</p>
 
                   <Link
                     href="/register"
@@ -219,7 +219,7 @@ export default function PricingContent() {
                           <span className="ml-2 text-[11px] font-medium text-[#84CC16]">save {row.save}</span>
                         )}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 text-white/50">{row.best}</td>
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 text-white/65">{row.best}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -240,7 +240,7 @@ export default function PricingContent() {
               <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-3">
                 30-day money-back guarantee
               </h2>
-              <p className="text-sm sm:text-base text-white/50 leading-relaxed max-w-lg">
+              <p className="text-sm sm:text-base text-white/65 leading-relaxed max-w-lg">
                 Not satisfied with your audit? We will refund your credits within 30 days, no questions asked. We stand behind the quality of every report.
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function PricingContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link

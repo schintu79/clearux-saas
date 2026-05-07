@@ -142,7 +142,7 @@ export default function Home() {
 
           {/* Description */}
           <motion.p
-            className="text-white/35 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
+            className="text-white/60 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
             style={{ lineHeight: '1.7' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,7 +286,7 @@ export default function Home() {
               <span className="text-lime-gradient">unstoppable.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
                 Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
               </p>
               <Link
@@ -338,7 +338,7 @@ export default function Home() {
                       </div>
                       <h3 className="font-heading text-[15px] font-medium text-white">{item.title}</h3>
                     </div>
-                    <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
+                    <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -443,7 +443,7 @@ export default function Home() {
               How ClearUX <span className="text-lime-gradient">works.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
                 No signup walls, no setup, no waiting. Paste a URL, let the AI do the heavy lifting, and get a prioritised report your team can act on immediately.
               </p>
               <Link
@@ -480,7 +480,7 @@ export default function Home() {
                     {item.step}
                   </span>
                   <h3 className="font-heading text-xl font-medium text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -506,7 +506,7 @@ export default function Home() {
               <span className="text-lime-gradient">can act on.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
-              <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed">
+              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
                 Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
               </p>
               {/* Scroll arrows */}
@@ -562,7 +562,7 @@ export default function Home() {
                   </div>
                   <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/25 mb-3 block">{card.label}</span>
                   <h3 className="font-heading text-base font-medium text-white mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-sm text-white/40 leading-relaxed">{card.desc}</p>
+                  <p className="text-sm text-white/60 leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
@@ -592,7 +592,7 @@ export default function Home() {
               First one free.
             </p>
 
-            <p className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
               No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
             </p>
 
@@ -662,7 +662,7 @@ export default function Home() {
                     <ChevronDown size={16} className="text-white/40 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="pb-6">
-                    <p className="text-sm text-white/40 leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-white/60 leading-relaxed">{item.a}</p>
                   </div>
                 </details>
               </StaggerItem>
@@ -699,7 +699,7 @@ export default function Home() {
               Ready to see what you&apos;re{' '}
               <span className="text-lime-gradient">missing?</span>
             </h2>
-            <p className="text-white/35 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
               Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
             </p>
 
@@ -728,7 +728,7 @@ export default function Home() {
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
-              <p className="text-xs text-white/35 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
+              <p className="text-xs text-white/60 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
             </form>
           </ScrollReveal>
         </div>

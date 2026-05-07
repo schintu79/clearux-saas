@@ -42,7 +42,7 @@ export default function AboutContent() {
             <span className="text-lime-gradient">unbiased</span> review.
           </h1>
 
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
             ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets.
           </p>
         </div>
@@ -96,7 +96,7 @@ export default function AboutContent() {
                     <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
-                  <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
+                  <p className="font-body text-white/65 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
               )
             })}
@@ -130,7 +130,7 @@ export default function AboutContent() {
                 <h3 className="font-heading font-medium text-xl text-white mb-1">Stefano Schintu</h3>
                 <p className="font-body text-white/50 text-sm mb-4">Founder &amp; Product Lead</p>
 
-                <div className="space-y-4 font-body text-white/50 text-[15px] leading-relaxed">
+                <div className="space-y-4 font-body text-white/65 text-[15px] leading-relaxed">
                   <p>
                     20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, unicorn companies, and enterprise teams across the world — exposed to cultural and market differences, from early-stage MVPs to products serving millions.
                   </p>
@@ -168,7 +168,7 @@ export default function AboutContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
             Clear, simple, and reliable
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-14">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-14">
             We hold ourselves to the same standard we measure others by.
           </p>
 
@@ -200,7 +200,7 @@ export default function AboutContent() {
                     <ItemIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
-                  <p className="font-body text-white/50 text-[14px] leading-relaxed">{item.desc}</p>
+                  <p className="font-body text-white/65 text-[14px] leading-relaxed">{item.desc}</p>
                 </div>
               )
             })}
@@ -220,7 +220,7 @@ export default function AboutContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link

@@ -85,7 +85,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-[15px] font-medium text-white/50 hover:text-white transition-colors"
+                className="text-[15px] font-medium text-white/65 hover:text-white transition-colors"
               >
                 {link.label}
               </Link>
@@ -156,7 +156,7 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-[15px] font-medium text-white/50 hover:text-white rounded-full px-3 py-1.5 transition-colors"
+                  className="text-[15px] font-medium text-white/65 hover:text-white rounded-full px-3 py-1.5 transition-colors"
                 >
                   Login
                 </Link>

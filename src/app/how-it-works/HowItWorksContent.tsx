@@ -118,7 +118,7 @@ export default function HowItWorksContent() {
           >
             How ClearUX <span className="text-lime-gradient">works.</span>
           </h1>
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
             A human-centered AI audit that evaluates your product the way a senior UX researcher would — with empathy, evidence, and actionable clarity.
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function HowItWorksContent() {
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {step.title}
                   </h3>
-                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                  <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">
                     {step.desc}
                   </p>
                 </div>
@@ -180,7 +180,7 @@ export default function HowItWorksContent() {
           >
             Four pillars of <span className="text-lime-gradient">modern UX.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-16">
             64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
           </p>
 
@@ -198,7 +198,7 @@ export default function HowItWorksContent() {
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {pillar.title}
                   </h3>
-                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                  <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">
                     {pillar.desc}
                   </p>
                 </div>
@@ -222,7 +222,7 @@ export default function HowItWorksContent() {
           >
             Built for people who <span className="text-lime-gradient">ship.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-xl mb-16">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-16">
             Not another enterprise tool. Built for teams that move fast.
           </p>
 
@@ -240,7 +240,7 @@ export default function HowItWorksContent() {
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {item.title}
                   </h3>
-                  <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed">
+                  <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
@@ -262,7 +262,7 @@ export default function HowItWorksContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link

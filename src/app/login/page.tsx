@@ -165,7 +165,7 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-px bg-white/[0.08]" />
-        <span className="text-xs text-white/40">or sign in with email</span>
+        <span className="text-xs text-white/60">or sign in with email</span>
         <div className="flex-1 h-px bg-white/[0.08]" />
       </div>
 
@@ -260,7 +260,7 @@ export default function LoginPage() {
               <h1 className="font-heading text-[2rem] font-light text-white mb-2" style={{ lineHeight: '1.1' }}>
                 Welcome back.
               </h1>
-              <p className="text-sm text-white/40 leading-relaxed">
+              <p className="text-sm text-white/60 leading-relaxed">
                 Access your dashboard, track fixes, and run new audits.
               </p>
             </div>
@@ -291,7 +291,7 @@ export default function LoginPage() {
                 <h2 className="font-heading text-[2.5rem] xl:text-[3rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
                   Welcome <span className="text-lime-gradient">back.</span>
                 </h2>
-                <p className="text-sm text-white/40 leading-relaxed max-w-[300px]">
+                <p className="text-sm text-white/60 leading-relaxed max-w-[300px]">
                   Access your dashboard, track fixes, and run new audits.
                 </p>
               </div>
@@ -304,7 +304,7 @@ export default function LoginPage() {
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3.5 flex-1 text-center">
                     <p className="text-lg font-medium text-white">{stat.num}</p>
-                    <p className="text-[10px] text-white/35 uppercase tracking-wider mt-0.5">{stat.label}</p>
+                    <p className="text-[10px] text-white/60 uppercase tracking-wider mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>

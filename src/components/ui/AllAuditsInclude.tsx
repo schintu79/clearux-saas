@@ -32,7 +32,7 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
               </div>
               <div>
                 <p className={`font-medium text-white ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1.5'}`}>{item.title}</p>
-                <p className={`text-white/40 leading-relaxed ${compact ? 'text-[11px]' : 'text-xs'}`}>{item.desc}</p>
+                <p className={`text-white/60 leading-relaxed ${compact ? 'text-[11px]' : 'text-xs'}`}>{item.desc}</p>
               </div>
             </div>
           )

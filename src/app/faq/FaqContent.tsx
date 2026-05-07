@@ -159,7 +159,7 @@ function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
       {isOpen && (
         <div className="px-5 pb-5 pt-0">
           <div className="border-t border-white/[0.04] pt-4">
-            <p className="font-body text-sm text-white/50 leading-[1.8]">{a}</p>
+            <p className="font-body text-sm text-white/65 leading-[1.8]">{a}</p>
           </div>
         </div>
       )}
@@ -236,7 +236,7 @@ export default function FaqContent() {
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 
-            <p className="font-body text-sm sm:text-base text-white/50 leading-relaxed max-w-lg mb-10">
+            <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-lg mb-10">
               Everything you need to know about ClearUX audits, pricing, and reports.
             </p>
 
@@ -360,7 +360,7 @@ export default function FaqContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link

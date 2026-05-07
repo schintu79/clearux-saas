@@ -66,7 +66,7 @@ export default function ContactContent() {
             Contact <span className="text-lime-gradient">us.</span>
           </h1>
 
-          <p className="text-white/45 text-base md:text-lg max-w-xl leading-relaxed mt-6 mb-14">
+          <p className="text-white/65 text-base md:text-lg max-w-xl leading-relaxed mt-6 mb-14">
             Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
           </p>
 
@@ -80,7 +80,7 @@ export default function ContactContent() {
                     <CheckCircle size={28} className="text-[#84CC16]" />
                   </div>
                   <p className="font-heading font-medium text-lg text-white mb-1">Message sent!</p>
-                  <p className="font-body text-sm text-white/50">
+                  <p className="font-body text-sm text-white/65">
                     Thanks for reaching out. We&rsquo;ll reply within 24 hours.
                   </p>
                 </div>
@@ -174,7 +174,7 @@ export default function ContactContent() {
                 <p className="text-sm font-medium font-body text-white mb-1">Email us</p>
                 <a
                   href="mailto:support@clearux.ai"
-                  className="text-sm font-body text-white/50 hover:text-white/70 transition-colors"
+                  className="text-sm font-body text-white/65 hover:text-white/70 transition-colors"
                 >
                   support@clearux.ai
                 </a>
@@ -185,7 +185,7 @@ export default function ContactContent() {
                   <MessageSquare size={18} className="text-[#84CC16]" />
                 </div>
                 <p className="text-sm font-medium font-body text-white mb-1">Response time</p>
-                <p className="text-sm font-body text-white/50">Usually within 24 hours</p>
+                <p className="text-sm font-body text-white/65">Usually within 24 hours</p>
               </div>
             </div>
 
@@ -211,7 +211,7 @@ export default function ContactContent() {
           >
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/45 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link
