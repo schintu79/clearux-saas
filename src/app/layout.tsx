@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import { DM_Sans, Caveat } from 'next/font/google'
-import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
@@ -95,19 +94,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Read the theme cookie server-side so we can apply the correct
-  // class on the very first render — no flash of wrong theme.
-  const cookieStore = await cookies()
-  const themeCookie = cookieStore.get('clearux-theme')?.value as 'light' | 'dark' | undefined
-  const initialTheme = themeCookie === 'light' ? 'light' : 'dark'
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Always dark mode — no theme toggle on the public site.
+  const initialTheme = 'dark' as const
 
   return (
     <html
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${initialTheme === 'dark' ? 'dark' : ''}`}
+      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} dark`}
     >
       <head>
         <script
