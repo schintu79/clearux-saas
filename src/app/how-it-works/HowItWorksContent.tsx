@@ -109,11 +109,11 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-28 sm:py-36">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             HOW IT WORKS
           </p>
           <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3"
             style={{ lineHeight: '1.1' }}
           >
             How ClearUX <span className="text-lime-gradient">works.</span>
@@ -129,11 +129,11 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             THE PROCESS
           </p>
           <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-16"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10"
             style={{ lineHeight: '1.1' }}
           >
             Three steps to <span className="text-lime-gradient">clarity.</span>
@@ -171,7 +171,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             WHAT WE EVALUATE
           </p>
           <h2
@@ -180,7 +180,7 @@ export default function HowItWorksContent() {
           >
             Four pillars of <span className="text-lime-gradient">modern UX.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-16">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
             64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
           </p>
 
@@ -213,7 +213,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             WHO WE SERVE
           </p>
           <h2
@@ -222,7 +222,7 @@ export default function HowItWorksContent() {
           >
             Built for people who <span className="text-lime-gradient">ship.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-16">
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
             Not another enterprise tool. Built for teams that move fast.
           </p>
 

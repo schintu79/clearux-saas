@@ -275,11 +275,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               For high-performing digital teams
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
              
             >
               What makes ClearUX{' '}
@@ -433,12 +433,12 @@ export default function Home() {
       <section id="how-it-works" className="relative z-10 py-24 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               Simple process
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
-             
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
+
             >
               How ClearUX <span className="text-lime-gradient">works.</span>
             </h2>
@@ -495,11 +495,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               What you get
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-6"
              
             >
               A report your team{' '}
@@ -576,7 +576,7 @@ export default function Home() {
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               Simple pricing
             </p>
 
@@ -588,7 +588,7 @@ export default function Home() {
               </h2>
             </div>
 
-            <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-12">
+            <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-6">
               First one free.
             </p>
 
@@ -642,7 +642,7 @@ export default function Home() {
       <section id="faq" className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               FAQ
             </p>
             <h2
@@ -689,11 +689,11 @@ export default function Home() {
         {/* Content — left-aligned, above the background */}
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-8">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               Get started
             </p>
             <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-10"
+              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
              
             >
               Ready to see what you&apos;re{' '}

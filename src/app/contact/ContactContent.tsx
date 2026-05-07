@@ -55,7 +55,7 @@ export default function ContactContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             GET IN TOUCH
           </p>
 
@@ -66,7 +66,7 @@ export default function ContactContent() {
             Contact <span className="text-lime-gradient">us.</span>
           </h1>
 
-          <p className="text-white/65 text-base md:text-lg max-w-xl leading-relaxed mt-6 mb-14">
+          <p className="text-white/65 text-base md:text-lg max-w-xl leading-relaxed mt-3 mb-14">
             Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
           </p>
 

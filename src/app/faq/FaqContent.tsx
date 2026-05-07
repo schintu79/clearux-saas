@@ -228,11 +228,11 @@ export default function FaqContent() {
         {/* ── HERO ── */}
         <section className="relative z-10 py-28 sm:py-36 lg:py-44">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               SUPPORT CENTRE
             </p>
 
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 

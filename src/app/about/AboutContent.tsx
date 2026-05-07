@@ -33,11 +33,11 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             About ClearUX
           </p>
 
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-6">
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-3">
             Every product deserves an independent,{' '}
             <span className="text-lime-gradient">unbiased</span> review.
           </h1>
@@ -53,10 +53,10 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             The origin story
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-14">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
             Why ClearUX exists
           </h2>
 
@@ -109,10 +109,10 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             The founder
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-12">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
             Built by someone who lived the problem
           </h2>
 
@@ -162,7 +162,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Our commitment
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">

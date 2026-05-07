@@ -30,7 +30,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-10">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Transparent Pricing
           </p>
 
@@ -41,7 +41,7 @@ export default function PricingContent() {
             </h1>
           </div>
 
-          <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-12">
+          <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-6">
             First one free.
           </p>
 
@@ -80,7 +80,7 @@ export default function PricingContent() {
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Every audit includes
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-14" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-10" style={{ lineHeight: '1.1' }}>
             64 checkpoints. <span className="text-lime-gradient">Zero compromises.</span>
           </h2>
 
@@ -109,7 +109,7 @@ export default function PricingContent() {
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Need more audits?
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-6" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
             Save up to <span className="text-lime-gradient">50%</span> with packs
           </h2>
           <p className="text-white/65 text-base max-w-xl mb-14 leading-relaxed">
@@ -180,7 +180,7 @@ export default function PricingContent() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">At a glance</p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-14" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-10" style={{ lineHeight: '1.1' }}>
             Compare plans
           </h2>
 
