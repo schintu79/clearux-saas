@@ -102,9 +102,11 @@ const Logo: React.FC<LogoProps> = ({
   const wordmarkColor =
     variant === 'light'
       ? '#FFFFFF'
-      : variant === 'lime'
-        ? `url(#${gradientId}-text)`
-        : 'currentColor';
+      : variant === 'dark'
+        ? '#111111'
+        : variant === 'lime'
+          ? `url(#${gradientId}-text)`
+          : 'currentColor';
 
   if (!showWordmark) {
     return <Iconmark size={height} className={className} gradient={iconGradient} />;

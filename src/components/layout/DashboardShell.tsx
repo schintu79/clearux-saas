@@ -86,9 +86,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         )}
       >
         {/* Logo */}
-        <div className="h-14 px-5 flex items-center border-b border-border">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Logo height={22} variant="dark" iconGradient />
+        <div className="px-5 py-4 flex items-center border-b border-border">
+          <Link href="/dashboard" className="flex items-center">
+            <Logo height={100} variant="dark" iconGradient />
           </Link>
         </div>
 
@@ -97,7 +97,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-medium text-surface dark:text-[#111111] bg-brand rounded-lg transition-all hover:bg-brand-hover hover:shadow-sm active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 w-full px-3 py-2.5 text-[13px] font-medium text-[#111111] rounded-lg transition-all hover:shadow-sm active:scale-[0.98]"
+            style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
           >
             <PlusCircle size={14} strokeWidth={2.5} />
             New Audit
@@ -119,7 +120,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     className={clsx(
                       'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-surface text-text font-medium'
+                        ? 'bg-[#84CC16]/10 text-text font-medium'
                         : 'text-muted hover:text-text hover:bg-surface/60'
                     )}
                   >
@@ -223,7 +224,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden h-14 bg-card border-b border-border flex items-center px-4">
+        <div className="md:hidden h-16 bg-card border-b border-border flex items-center px-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-1.5 rounded-lg hover:bg-surface transition-colors"
@@ -235,7 +236,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={22} variant="dark" iconGradient />
+            <Logo height={100} variant="dark" iconGradient />
           </span>
         </div>
 
