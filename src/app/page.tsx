@@ -127,7 +127,7 @@ export default function Home() {
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[2.75rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light text-white"
+                className="font-heading text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-light text-white"
                 style={{ lineHeight: '1.05' }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}

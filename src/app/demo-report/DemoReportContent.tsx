@@ -538,7 +538,7 @@ export default function DemoReportContent() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto pt-28 sm:pt-36 pb-16 px-4 sm:px-6">
+      <div className="relative z-10 max-w-4xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
         {/* ── Sample report banner ── */}
         <div className="flex items-center gap-3 mb-6">
           <span className="px-3 py-1 rounded-full bg-[#84CC16]/10 text-[#84CC16] text-xs font-medium">
@@ -556,7 +556,7 @@ export default function DemoReportContent() {
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
-            <h1 className="text-2xl font-medium font-heading text-white mb-1 truncate">
+            <h1 className="text-xl sm:text-2xl font-medium font-heading text-white mb-1 truncate">
               {DEMO_SITE}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
@@ -613,20 +613,20 @@ export default function DemoReportContent() {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-xs font-medium px-3 py-2 rounded-lg cursor-default">
+                <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 mt-4">
+                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Download size={12} /> PDF
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-xs font-medium px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Download size={12} /> Word
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-xs font-medium px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <RefreshCw size={12} /> Re-audit
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-xs font-medium px-3 py-2 rounded-lg cursor-default">
-                    <Search size={12} /> Dig Deeper
+                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                    <Search size={12} /> Deeper
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-xs font-medium px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Share2 size={12} /> Share
                   </span>
                 </div>
@@ -668,19 +668,6 @@ export default function DemoReportContent() {
           <p className="text-xs text-white/50">
             <span className="font-medium text-white/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
           </p>
-        </div>
-
-        {/* ── Screenshot placeholder ── */}
-        <div className="mb-6 rounded-xl overflow-hidden border border-white/[0.06]">
-          <div className="h-48 bg-gradient-to-br from-white/[0.03] to-white/[0.01] flex items-center justify-center">
-            <div className="text-center">
-              <Globe size={32} className="text-white/20 mx-auto mb-2" />
-              <p className="text-xs text-white/30">Homepage screenshot captured during audit</p>
-            </div>
-          </div>
-          <div className="px-4 py-2 bg-white/[0.02] border-t border-white/[0.03]">
-            <p className="text-xs text-white/30">Homepage captured</p>
-          </div>
         </div>
 
         {/* ── Tab Navigation ── */}
@@ -834,28 +821,32 @@ export default function DemoReportContent() {
           </div>
         )}
 
-        {/* ════════════════════════════════════════════════
-            FINAL CTA
-            ════════════════════════════════════════════════ */}
-        <section className="mt-16 mb-8">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-10 sm:p-14 text-center">
-            <TrendingUp size={32} className="text-[#84CC16] mx-auto mb-4" />
-            <h2 className="font-heading text-2xl sm:text-3xl font-light text-white mb-3">
-              Ready to audit <span className="text-lime-gradient">your site?</span>
-            </h2>
-            <p className="text-base text-white/50 leading-relaxed max-w-lg mx-auto mb-8">
-              Get the same depth of analysis for your own website. Your first audit is free — no credit card required.
-            </p>
-            <Link
-              href="/register"
-              className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 min-h-[52px]"
-            >
-              Start Free Audit
-              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
-        </section>
       </div>
+
+      {/* ════════════════════════════════════════════════
+          FINAL CTA — full-width, matches other pages
+          ════════════════════════════════════════════════ */}
+      <section className="relative py-28 sm:py-36 overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+            Start your audit <span className="text-lime-gradient">today</span>
+          </h2>
+          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+          </p>
+          <Link
+            href="/register"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+          >
+            Start Free Audit
+            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        </div>
+      </section>
     </main>
   )
 }

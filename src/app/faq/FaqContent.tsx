@@ -150,7 +150,7 @@ function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
         className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-snug">{q}</span>
+        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-relaxed">{q}</span>
         <ChevronDown
           size={16}
           className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
