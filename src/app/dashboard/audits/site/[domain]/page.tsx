@@ -234,9 +234,9 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
       {/* Domain header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Globe size={18} className="text-muted flex-shrink-0" />
-            <h1 className="text-xl font-medium font-heading text-text truncate">{domain}</h1>
+          <div className="flex items-center gap-3 mb-1.5">
+            <Globe size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-heading text-text truncate">{domain}</h1>
             <a
               href={productUrl || `https://${domain}`}
               target="_blank"

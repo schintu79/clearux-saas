@@ -179,14 +179,10 @@ export default function RegisterPage() {
               className="font-heading text-[2rem] sm:text-[2.75rem] font-light text-white mb-3"
               style={{ lineHeight: '1.1' }}
             >
-              {pendingUrl ? (
-                <>Your free audit <span className="text-lime-gradient">awaits.</span></>
-              ) : (
-                <>Start auditing in <span className="text-lime-gradient">minutes.</span></>
-              )}
+              Start your audit <span className="text-lime-gradient">now.</span>
             </h1>
             <p className="text-base text-white/60 leading-relaxed">
-              No credit card required. 64 checkpoints across 16 categories.
+              64 checkpoints across 16 categories. Your first audit is free.
             </p>
           </div>
 
@@ -323,6 +319,8 @@ export default function RegisterPage() {
                 {errors.password && <p className="text-xs text-red-400 mt-2">{errors.password}</p>}
               </div>
 
+              {/* Show confirm password only after all password checks pass */}
+              {passwordChecks.every(c => c.met) && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">Confirm Password</label>
                 <div className="relative">
@@ -366,6 +364,7 @@ export default function RegisterPage() {
                 )}
                 {errors.confirmPassword && <p className="text-xs text-red-400 mt-2">{errors.confirmPassword}</p>}
               </div>
+              )}
 
               {/* Marketing consent */}
               <div className="flex items-start gap-3 pt-2">
@@ -423,14 +422,14 @@ export default function RegisterPage() {
           <div className="mt-6">
             <button
               onClick={() => setFaqOpen(prev => !prev)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-white/40 hover:text-white/70 transition-colors py-2"
+              className="w-full flex items-center justify-center gap-1.5 text-sm text-white/60 hover:text-white/80 transition-colors py-2 font-medium"
             >
               What happens after I sign up?
               <ChevronDown size={14} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
             </button>
             {faqOpen && (
-              <div className="mt-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-                <p className="text-sm text-white/50 leading-relaxed">
+              <div className="mt-2 p-5 rounded-2xl bg-white/[0.05] border border-white/[0.10]">
+                <p className="text-sm text-white/60 leading-relaxed">
                   You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 64 UX checkpoints in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
                 </p>
               </div>
@@ -442,7 +441,7 @@ export default function RegisterPage() {
             Already have an account?{' '}
             <Link
               href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'}
-              className="font-medium text-white hover:underline transition-colors"
+              className="font-medium text-lime-gradient hover:underline transition-colors"
             >
               Sign in
             </Link>

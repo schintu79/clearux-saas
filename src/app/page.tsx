@@ -296,7 +296,7 @@ export default function Home() {
             {[
               { end: 64, suffix: '', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in 4 audit pillars' },
-              { end: 10, suffix: ' min', label: 'To full report', desc: 'paste URL, get results' },
+              { end: 10, suffix: ' min', suffixClassName: 'text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] lg:text-[3rem] font-light', label: 'To full report', desc: 'paste URL, get results' },
               { end: 99, suffix: '%', label: 'Cost savings', desc: 'vs. traditional audits' },
             ].map((stat, i) => (
               <motion.div
@@ -310,6 +310,7 @@ export default function Home() {
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
+                  suffixClassName={'suffixClassName' in stat ? (stat as { suffixClassName: string }).suffixClassName : ''}
                   className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient leading-none"
                   duration={2}
                 />
@@ -401,15 +402,15 @@ export default function Home() {
         </div>
 
         {/* ── Scrolling showcase gallery — minimal finding rows ── */}
-        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-70" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
+        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative opacity-90 -mx-6 sm:-mx-10 lg:-mx-16" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
-              className="flex gap-1.5 w-max"
+              className="flex gap-2.5 w-max"
               style={{ animation: 'scroll-left 40s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-1.5">
+                <div key={setIdx} className="flex gap-2.5">
                   {[
                     { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', icon: ShieldAlert },
                     { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', icon: Brain },
@@ -420,15 +421,15 @@ export default function Home() {
                     return (
                       <div
                         key={j}
-                        className="relative w-[240px] sm:w-[280px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                       >
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
-                          <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
+                          <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/25 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-white/50 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -441,11 +442,11 @@ export default function Home() {
           {/* Row 2 — scrolls right */}
           <div className="relative">
             <div
-              className="flex gap-1.5 w-max"
+              className="flex gap-2.5 w-max"
               style={{ animation: 'scroll-right 45s linear infinite' }}
             >
               {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-1.5">
+                <div key={setIdx} className="flex gap-2.5">
                   {[
                     { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', icon: Shield },
                     { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', icon: Eye },
@@ -456,15 +457,15 @@ export default function Home() {
                     return (
                       <div
                         key={j}
-                        className="relative w-[220px] sm:w-[260px] rounded-xl overflow-hidden flex-shrink-0 px-5 py-5 flex items-start gap-4"
-                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                        className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4"
+                        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                       >
-                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.04]">
-                          <CardIcon size={17} className="text-white/30" strokeWidth={1.5} />
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
+                          <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/15 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[13px] font-medium text-white/40 leading-tight">{card.label}</p>
+                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/25 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-white/50 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -560,9 +561,18 @@ export default function Home() {
               <span className="text-lime-gradient">can act on.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
-              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
-                Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
-              </p>
+              <div className="max-w-2xl">
+                <p className="text-white/60 text-base md:text-lg leading-relaxed mb-4">
+                  Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
+                </p>
+                <Link
+                  href="/demo-report"
+                  className="group inline-flex items-center gap-2 text-sm font-medium text-lime-gradient hover:opacity-80 transition-opacity"
+                >
+                  See a sample report
+                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
               {/* Scroll arrows */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 <button

@@ -282,7 +282,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{' '}
             <Link
               href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'}
-              className="font-medium text-white hover:underline transition-colors"
+              className="font-medium text-lime-gradient hover:underline transition-colors"
             >
               Sign up
             </Link>

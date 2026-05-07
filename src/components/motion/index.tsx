@@ -216,12 +216,14 @@ export function AnimatedCounter({
   suffix = '',
   prefix = '',
   className = '',
+  suffixClassName = '',
   duration = 1.5,
 }: {
   end: number
   suffix?: string
   prefix?: string
   className?: string
+  suffixClassName?: string
   duration?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -253,7 +255,7 @@ export function AnimatedCounter({
       animate={isInView ? { opacity: 1, scale: 1 } : {}}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {prefix}{displayCount}{suffix}
+      {prefix}{displayCount}{suffixClassName ? <span className={suffixClassName}>{suffix}</span> : suffix}
     </motion.div>
   )
 }

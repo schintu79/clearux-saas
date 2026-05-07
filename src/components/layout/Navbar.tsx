@@ -3,9 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight, Sun, Moon } from 'lucide-react';
+import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/ui/Logo';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
@@ -23,7 +22,6 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
 const Navbar: React.FC = () => {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
@@ -79,7 +77,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center" aria-label="ClearUX home">
-            <Logo height={110} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={110} variant="light" iconGradient />
           </Link>
 
           {/* Desktop Navigation */}
@@ -97,15 +95,6 @@ const Navbar: React.FC = () => {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
             {isLoggedIn ? (
               <>
               {credits !== null && (
@@ -185,14 +174,6 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-1">
-            {/* Mobile theme toggle */}
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
