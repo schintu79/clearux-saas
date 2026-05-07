@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown, ArrowRight } from 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
+import Navbar from '@/components/layout/Navbar'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -152,7 +153,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--surface)] relative overflow-hidden px-5 py-12">
+    <div className="min-h-screen flex flex-col bg-[var(--surface)] relative overflow-hidden">
+      <Navbar />
+
       {/* Background gradient — visible in dark mode */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="dark-only absolute inset-0">
@@ -165,16 +168,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-[420px]">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-[var(--text)]">
-              clearux<span className="text-[var(--accent)]">.</span>ai
-            </span>
-          </Link>
-        </div>
-
+      <div className="relative z-10 w-full max-w-[420px] mx-auto flex-1 flex flex-col items-center justify-center px-5 py-12">
         {/* Heading */}
         <div className="text-center mb-6">
           <h1 className="font-heading text-[1.75rem] sm:text-[2rem] font-light text-[var(--text)] mb-2" style={{ lineHeight: '1.15' }}>
