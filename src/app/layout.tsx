@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | ClearUX',
-    default:  'ClearUX — Find the UX issues costing you conversions. In minutes.',
+    default:  'ClearUX: AI UX Audits in Minutes',
   },
   description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
   keywords: [
@@ -62,13 +62,13 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'ClearUX',
-    title: 'ClearUX — Find the UX issues costing you conversions. In minutes.',
+    title: 'ClearUX: AI UX Audits in Minutes — 64 Checkpoints, $99',
     description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — Find the UX issues costing you conversions. In minutes.' }],
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — AI-powered UX audits in minutes' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearUX — Find the UX issues costing you conversions. In minutes.',
+    title: 'ClearUX: AI UX Audits in Minutes — 64 Checkpoints, $99',
     description: 'Get a consultant-grade UX audit for $99. 64 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
     images: ['/api/og'],
   },

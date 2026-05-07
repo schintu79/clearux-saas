@@ -8,7 +8,7 @@ import {
   ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
   Search, FileText, Share2, RefreshCw, BarChart3, ListChecks,
   Sparkles, Target, ScanEye, ShieldAlert,
-  Accessibility, Bot, ChevronDown,
+  Accessibility, Bot, ChevronDown, ShieldCheck,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -20,24 +20,24 @@ import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/com
 
 /* ── FAQ data ─────────────────────────────────────────────── */
 const TOP_FAQS = [
-  { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across 16 categories, and generates a full professional report.' },
-  { q: 'What does the audit cover?', a: 'We evaluate 16 categories across 4 pillars: Foundation, Human Experience, Inclusive Design, and Future Readiness. Every audit includes accessibility, ethical UX, AI readiness, conversion analysis, and more.' },
-  { q: 'Is ClearUX 100% accurate?', a: 'No automated tool is perfect, and we believe honesty about this builds trust. Our AI catches what other tools miss, but we recommend human review for critical accessibility findings. You can dismiss any finding with a reason, and the AI learns from your feedback on re-audits.' },
-  { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations.' },
-  { q: 'Can I re-audit the same site to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they only verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues beyond the baseline, hit "Dig Deeper" for a full Deep mode analysis.' },
+  { q: 'How accurate is ClearUX?', a: 'Our AI is trained on thousands of professional UX audits and delivers high-precision findings on critical issues like mobile responsiveness, accessibility failures, and conversion blockers. Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today.' },
+  { q: 'How long does it take to get my report?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions. No waiting, no scheduling calls, no follow-up emails.' },
+  { q: 'How actionable are the recommendations?', a: 'Every finding comes with a specific fix, not vague advice. Most teams implement the top 3-5 critical fixes in their first sprint and see measurable improvement within 2-4 weeks. You can track progress directly in your dashboard — mark findings as fixed, in progress, or dismissed.' },
+  { q: 'How does this compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for $99. It\'s ideal for quick baseline assessments, pre-launch checks, and ongoing monitoring. For deep qualitative research like user interviews, pair ClearUX findings with a specialist.' },
+  { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues, hit "Dig Deeper" for a full analysis.' },
 ];
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
-  { main: 'Find and Fix', accent: 'Design Problems' },
-  { main: 'Automated UX Audit.', accent: '10 Minutes.' },
+  { main: 'Stop Losing Users to', accent: 'Hidden UX Flaws.' },
+  { main: 'The $10k Audit.', accent: '$99. 10 Minutes.' },
   { main: '64 Checkpoints.', accent: 'Zero Guesswork.' },
 ];
 
 /* ── Hero KSPs — outcome-focused, not feature-focused ──── */
 const HERO_KSPS = [
-  { text: '64 checkpoints' },
-  { text: 'Under 10 min' },
+  { text: 'First audit free' },
+  { text: 'Results in minutes' },
   { text: 'No credit card' },
 ];
 
@@ -98,7 +98,7 @@ export default function Home() {
       </div>
       <HomeJsonLd />
       <Navbar />
-      <main id="main-content">
+      <main id="main-content" role="main" aria-label="ClearUX homepage">
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 1 — HERO (Musicbed-inspired)
@@ -148,7 +148,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            Analyse your website for usability issues, accessibility problems, and design flaws — without hiring an expensive consultant. 64 checkpoints, fully automated, delivered in minutes.
+            Your visitors are bouncing and you don't know why. Get a consultant-grade UX audit — 64 checkpoints across accessibility, conversions, dark patterns, and AI readiness — in minutes, not weeks.
           </motion.p>
 
           {/* URL input field */}
@@ -200,6 +200,36 @@ export default function Home() {
               </div>
             ))}
           </motion.div>
+
+          {/* Trust badges — cohesive visual group */}
+          <motion.div
+            className="flex items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            {[
+              { icon: Shield, label: 'SSL Encrypted' },
+              { icon: ShieldCheck, label: 'GDPR Compliant' },
+              { icon: CheckCircle, label: 'Stripe Payments' },
+            ].map((badge, i) => {
+              const BadgeIcon = badge.icon;
+              return (
+                <div key={i} className="flex items-center gap-1.5">
+                  <BadgeIcon size={13} className="text-white/30" strokeWidth={1.5} />
+                  <span className="text-[11px] text-white/30 font-medium tracking-wide">{badge.label}</span>
+                </div>
+              );
+            })}
+          </motion.div>
+          <motion.p
+            className="text-[11px] text-white/25 mt-2 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            Your data is never stored or shared beyond generating your report.
+          </motion.p>
         </div>
 
         {/* Scroll indicator — "Discover ClearUX" — always at bottom */}
@@ -218,7 +248,7 @@ export default function Home() {
             className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
           >
             <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-medium">Discover ClearUX</span>
-            <div className="w-10 h-10 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
+            <div className="w-11 h-11 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
               <ChevronDown size={18} className="text-[#84CC16] group-hover:text-[#BEF264] transition-colors" />
             </div>
           </button>
@@ -233,17 +263,17 @@ export default function Home() {
       <section id="trust-stats" className="relative z-10 py-24 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-14">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">
+            <h2 className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">
               ClearUX in numbers
-            </p>
+            </h2>
           </ScrollReveal>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 sm:gap-y-12 gap-x-8 sm:gap-x-0">
             {[
-              { end: 64, suffix: '+', label: 'UX checkpoints', desc: 'across every audit' },
-              { end: 16, suffix: '', label: 'Categories', desc: 'in the framework' },
-              { end: 4, suffix: '', label: 'UX pillars', desc: 'for complete coverage' },
-              { end: 40, suffix: '+', label: 'Pages analysed', desc: 'per audit on avg.' },
+              { end: 64, suffix: '', label: 'UX checkpoints', desc: 'across every audit' },
+              { end: 16, suffix: '', label: 'Categories', desc: 'in 4 audit pillars' },
+              { end: 10, suffix: ' min', label: 'Average delivery', desc: 'from URL to report' },
+              { end: 99, suffix: '%', label: 'Cost savings', desc: 'vs. traditional audits' },
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -306,26 +336,31 @@ export default function Home() {
                 icon: ShieldAlert,
                 title: 'Dark Pattern Detection',
                 desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that erode trust.',
+                narrative: 'Dark patterns trick users into actions they did not intend — unwanted subscriptions, hidden fees, or guilt-driven opt-ins. ClearUX scans every page for 12 recognised dark pattern categories so product teams, compliance officers, and founders can ship ethical interfaces that build long-term customer loyalty instead of short-term conversions.',
               },
               {
                 icon: Brain,
                 title: 'Cognitive Accessibility',
                 desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load and sensory overload.',
+                narrative: 'One in five people has a cognitive difference such as ADHD, dyslexia, or autism. ClearUX measures reading level, information density, animation intensity, and navigation complexity to ensure your site is usable by the widest possible audience — helping accessibility leads, designers, and product managers meet WCAG cognitive guidelines before they become legal requirements.',
               },
               {
                 icon: Sparkles,
                 title: 'AI Agent Readiness',
                 desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs interact with your site.',
+                narrative: 'AI assistants like ChatGPT, Perplexity, and Siri increasingly recommend products and complete tasks on behalf of users. ClearUX tests whether your structured data, semantic HTML, and content clarity allow AI agents to accurately describe your offering and navigate your flows — giving CTOs and growth teams a head start on the next channel of organic discovery.',
               },
               {
                 icon: Target,
                 title: 'Conversion Psychology',
                 desc: 'CTA placement, friction points, trust signal positioning, and decision psychology. Every finding ties back to revenue impact.',
+                narrative: 'Every extra click, unclear label, or misplaced trust badge costs you conversions. ClearUX evaluates call-to-action visibility, form friction, social proof placement, and pricing page clarity using evidence-based conversion principles — giving marketers, growth leads, and e-commerce managers a prioritised list of changes ranked by estimated revenue impact.',
               },
               {
                 icon: Eye,
                 title: 'Visual & UX Audit',
                 desc: 'Colour contrast, typography hierarchy, layout consistency, and responsive design — the foundation every site needs right.',
+                narrative: 'Visual inconsistencies signal unprofessionalism and erode trust within seconds. ClearUX checks colour contrast ratios, font hierarchy, spacing rhythm, responsive breakpoints, and mobile touch-target sizing across every page — providing designers and front-end developers with pixel-level findings they can fix in a single sprint.',
               },
             ].map((item, i) => {
               const Icon = item.icon;
@@ -339,6 +374,7 @@ export default function Home() {
                       <h3 className="font-heading text-[15px] font-medium text-white">{item.title}</h3>
                     </div>
                     <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                    <p className="text-sm text-white/40 leading-relaxed mt-3">{item.narrative}</p>
                   </div>
                 </StaggerItem>
               );
@@ -347,7 +383,7 @@ export default function Home() {
         </div>
 
         {/* ── Scrolling showcase gallery — minimal finding rows ── */}
-        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-50">
+        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-50" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
@@ -518,7 +554,7 @@ export default function Home() {
                     const el = document.getElementById('feature-cards-scroll');
                     if (el) el.scrollBy({ left: -400, behavior: 'smooth' });
                   }}
-                  className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
+                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
                 >
                   <ArrowRight size={16} className="text-white/40 rotate-180" />
                 </button>
@@ -529,7 +565,7 @@ export default function Home() {
                     const el = document.getElementById('feature-cards-scroll');
                     if (el) el.scrollBy({ left: 400, behavior: 'smooth' });
                   }}
-                  className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
+                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
                 >
                   <ArrowRight size={16} className="text-white/40" />
                 </button>

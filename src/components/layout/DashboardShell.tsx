@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
@@ -27,6 +28,7 @@ interface DashboardShellProps {
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
@@ -88,7 +90,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="px-5 py-4 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center">
-            <Logo height={100} variant="dark" iconGradient />
+            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </Link>
         </div>
 
@@ -236,7 +238,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={100} variant="dark" iconGradient />
+            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </span>
         </div>
 

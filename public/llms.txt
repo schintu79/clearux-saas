@@ -28,10 +28,9 @@ ClearUX crawls a website and uses AI to evaluate its user experience across 64 c
 
 - First audit: Free
 - Single audit: $99
-- Starter pack (3 audits): $249
-- Growth pack (10 audits): $790
-- Agency pack (30 audits): $1,990
-- Scale pack (100 audits): $4,990
+- Growth pack (5 audits): $399
+- Agency pack (15 audits): $999
+- Scale pack (50 audits): $2,499
 
 ## Who it is for
 

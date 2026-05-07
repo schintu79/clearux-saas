@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FaqContent from './FaqContent';
+import { FaqJsonLd } from '@/components/seo/JsonLd';
 
 export const metadata: Metadata = {
   title: 'FAQ — ClearUX',
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function FaqPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#111114]">
+      <FaqJsonLd />
       <Navbar />
       <FaqContent />
       <Footer />

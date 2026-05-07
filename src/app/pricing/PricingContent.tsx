@@ -99,6 +99,20 @@ export default function PricingContent() {
           <p className="text-sm text-white/60 mt-6">
             At $99 per audit, that&apos;s <span className="font-medium text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
           </p>
+
+          {/* Delivery & fulfillment clarity */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { title: 'Delivered in minutes', desc: 'Report arrives via email and your dashboard within 10 minutes of purchase. Download as PDF or Word.' },
+              { title: 'Credits never expire', desc: 'Use credits whenever you\'re ready. Share across your team. Re-audit the same site as often as you like.' },
+              { title: 'Satisfaction guaranteed', desc: 'Not happy? Contact support@clearux.ai and we\'ll resolve it or provide a credit for a new audit.' },
+            ].map((item, i) => (
+              <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                <p className="text-sm font-medium text-white mb-1.5">{item.title}</p>
+                <p className="text-xs text-white/50 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

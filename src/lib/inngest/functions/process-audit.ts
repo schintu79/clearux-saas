@@ -360,15 +360,18 @@ RULES FOR RE-AUDIT:
       }
 
       // Determine effective depth mode:
-      // - 'deep' explicitly requested → always deep (find new issues)
-      // - 'baseline' explicitly requested → baseline (only verify previous findings)
-      // - 'standard' → always deep (fresh AI analysis with context from previous audit)
-      // NOTE: Previously 'standard' + previous audit defaulted to 'baseline' which
-      // copied old findings instead of running fresh analysis. This caused stale results
-      // when users re-audited a site they had updated. Now 'standard' always runs fresh
-      // AI analysis but still uses previous findings as context for consistency.
+      // - 'deep' explicitly requested → always deep (fresh AI analysis, find new issues)
+      // - 'baseline' explicitly requested → baseline (deterministic, copy previous findings)
+      // - 'standard' (default re-audit) → baseline if previous audit exists (score stability),
+      //   otherwise deep (first audit always needs full AI analysis)
+      // This ensures re-audits produce consistent scores unless the user explicitly
+      // requests a deep analysis via "Dig Deeper". Score swings of -30+ points on
+      // unchanged sites were caused by always running non-deterministic AI analysis.
       let effectiveDepthMode: 'deep' | 'baseline' = 'deep'
       if (auditDetails.depthMode === 'baseline') {
+        effectiveDepthMode = 'baseline'
+      } else if (auditDetails.depthMode === 'standard' && previousRawFindings.length > 0) {
+        // Standard re-audit with previous findings → use baseline for score stability
         effectiveDepthMode = 'baseline'
       }
 

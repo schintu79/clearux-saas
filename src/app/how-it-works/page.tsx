@@ -4,7 +4,7 @@ import Footer from '@/components/layout/Footer'
 import HowItWorksContent from './HowItWorksContent'
 
 export const metadata: Metadata = {
-  title: 'How ClearUX Works — Human-Centered AI Audit Platform',
+  title: 'How It Works',
   description: 'Three steps to a comprehensive UX audit. Paste your URL, AI runs 64 checkpoints across four pillars, and get ranked findings with actionable fixes.',
 }
 

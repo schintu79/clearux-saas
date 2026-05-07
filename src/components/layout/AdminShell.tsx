@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
@@ -27,6 +28,7 @@ interface AdminShellProps {
 const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme } = useTheme();
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
@@ -106,7 +108,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="px-5 py-4 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center">
-            <Logo height={100} variant="dark" iconGradient />
+            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </Link>
           <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
@@ -206,7 +208,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={100} variant="dark" iconGradient />
+            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </span>
           <span className="ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
