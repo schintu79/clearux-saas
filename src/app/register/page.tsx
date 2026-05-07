@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown, ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -29,6 +29,18 @@ function getPasswordChecks(pw: string) {
 }
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
+  )
+}
+
+function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pendingUrl = searchParams.get('url')
