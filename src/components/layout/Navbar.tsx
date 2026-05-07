@@ -3,8 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight } from 'lucide-react';
+import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   const initials = name
@@ -21,6 +22,7 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
 const Navbar: React.FC = () => {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
@@ -71,12 +73,12 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-[#111114]/95 backdrop-blur-xl border-b border-white/[0.06]">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 nav-bg backdrop-blur-xl border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-white">clearux.ai</span>
+            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-[var(--text)]">clearux<span className="text-[var(--accent)]">.</span>ai</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -85,7 +87,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-[15px] font-medium text-white/65 hover:text-white transition-colors"
+                className="text-[15px] font-medium text-[var(--muted)] hover:text-[var(--text)] transition-colors"
               >
                 {link.label}
               </Link>
@@ -94,15 +96,24 @@ const Navbar: React.FC = () => {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
             {isLoggedIn ? (
               <>
               {credits !== null && (
                 <Link
                   href="/dashboard/buy-credits"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.10] transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--card)] border border-[var(--border)] hover:bg-[var(--card-hover)] transition-colors"
                 >
-                  <Coins size={13} className="text-white/50" />
-                  <span className="text-xs font-medium text-white/70">{credits}</span>
+                  <Coins size={13} className="text-[var(--muted)]" />
+                  <span className="text-xs font-medium text-[var(--text)]">{credits}</span>
                 </Link>
               )}
 
@@ -111,39 +122,39 @@ const Navbar: React.FC = () => {
                   onClick={() => setMenuOpen(!menuOpen)}
                   aria-expanded={menuOpen}
                   aria-haspopup="true"
-                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
+                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-[var(--card-hover)] transition-colors"
                 >
                   <UserAvatar name={profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name} email={user?.email} />
-                  <span className="text-sm text-white/70 font-medium max-w-[120px] truncate">
+                  <span className="text-sm text-[var(--text)] font-medium max-w-[120px] truncate">
                     {(profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name)?.split(' ')[0] || user?.email?.split('@')[0]}
                   </span>
                 </button>
 
                 {menuOpen && (
-                  <div role="menu" className="absolute right-0 mt-2 w-48 bg-[#18181C] border border-white/[0.08] rounded-xl shadow-xl shadow-black/20 py-1.5 z-50">
+                  <div role="menu" className="absolute right-0 mt-2 w-48 bg-[var(--surface-alt)] border border-[var(--border)] rounded-xl shadow-xl shadow-black/10 py-1.5 z-50">
                     <Link
                       href="/dashboard"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/[0.04] transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
                     >
-                      <LayoutDashboard size={15} className="text-white/30" />
+                      <LayoutDashboard size={15} className="text-[var(--muted)]" />
                       Dashboard
                     </Link>
                     <Link
                       href="/dashboard/settings"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/[0.04] transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
                     >
-                      <Settings size={15} className="text-white/30" />
+                      <Settings size={15} className="text-[var(--muted)]" />
                       Settings
                     </Link>
-                    <div className="border-t border-white/[0.06] my-1" />
+                    <div className="border-t border-[var(--border)] my-1" />
                     <button
                       onClick={handleSignOut}
                       role="menuitem"
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-white/[0.04] transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-[var(--card-hover)] transition-colors"
                     >
                       <LogOut size={15} />
                       Sign out
@@ -156,7 +167,7 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   href="/login"
-                  className="text-[15px] font-medium text-white/65 hover:text-white rounded-full px-3 py-1.5 transition-colors"
+                  className="text-[15px] font-medium text-[var(--muted)] hover:text-[var(--text)] rounded-full px-3 py-1.5 transition-colors"
                 >
                   Login
                 </Link>
@@ -172,20 +183,28 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1">
+            {/* Mobile theme toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--card-hover)] transition-colors"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isOpen}
-              className="relative w-[44px] h-[44px] rounded-lg hover:bg-white/[0.04] transition-colors flex items-center justify-center"
+              className="relative w-[44px] h-[44px] rounded-lg hover:bg-[var(--card-hover)] transition-colors flex items-center justify-center"
             >
               <div className="w-5 h-3.5 flex flex-col justify-between">
                 <span
-                  className="block h-[2px] w-full bg-white rounded-full transition-all duration-300 origin-center"
+                  className="block h-[2px] w-full bg-[var(--text)] rounded-full transition-all duration-300 origin-center"
                   style={isOpen ? { transform: 'translateY(5px) rotate(45deg)' } : {}}
                 />
                 <span
-                  className="block h-[2px] w-full bg-white rounded-full transition-all duration-300 origin-center"
+                  className="block h-[2px] w-full bg-[var(--text)] rounded-full transition-all duration-300 origin-center"
                   style={isOpen ? { transform: 'translateY(-5px) rotate(-45deg)' } : {}}
                 />
               </div>
@@ -195,22 +214,22 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden pb-4 border-t border-white/[0.06]">
+          <div className="md:hidden pb-4 border-t border-[var(--border)]">
             <div className="flex flex-col gap-1 pt-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center"
+                  className="text-[17px] text-[var(--muted)] hover:text-[var(--text)] transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-1 pt-3 border-t border-white/[0.06] mt-2">
+              <div className="flex flex-col gap-1 pt-3 border-t border-[var(--border)] mt-2">
                 {isLoggedIn ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-white px-3 py-[1.2rem] min-h-[44px] flex items-center">
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-[var(--text)] px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Dashboard
                     </Link>
                     <button onClick={handleSignOut} className="text-sm text-red-400 px-3 py-[1.2rem] min-h-[44px] text-left">
@@ -219,7 +238,7 @@ const Navbar: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-white/40 hover:text-white transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center">
+                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-[var(--muted)] hover:text-[var(--text)] transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Login
                     </Link>
                     <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-[#111114] bg-lime-gradient rounded-full px-7 py-[1.2rem] text-center min-h-[48px] flex items-center justify-center mt-1">

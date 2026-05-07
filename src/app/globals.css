@@ -118,6 +118,14 @@
   --sidebar-text:#F0F0F5;
 }
 
+/* ── Dark-only utility — hides children in light mode ──────── */
+.dark-only { display: none; }
+.dark .dark-only { display: block; }
+
+/* ── Navbar background — semi-transparent surface ──────────── */
+.nav-bg { background: rgba(255,255,255,0.95); }
+.dark .nav-bg { background: rgba(17,17,20,0.95); }
+
 /* ══════════════════════════════════════════════════════════════
    AURORA BACKGROUNDS — Flowing blue/purple gradient blobs
    ══════════════════════════════════════════════════════════════ */
