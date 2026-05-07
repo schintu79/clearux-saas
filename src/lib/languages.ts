@@ -140,6 +140,129 @@ export function getCategoryNames(code: string): string[] {
   return CATEGORY_NAMES[code] || CATEGORY_NAMES['en']
 }
 
+/**
+ * Build a baseline (re-audit) executive summary in the correct language.
+ * This is used in deterministic baseline mode where no AI is called.
+ */
+export function getBaselineSummary(
+  code: string,
+  url: string,
+  currentCount: number,
+  overallScore: number,
+  prevOverallScore: number,
+  fixedCount: number,
+  dismissedCount: number,
+  nothingChanged: boolean,
+): string {
+  if (code === 'en' || !BASELINE_TEMPLATES[code]) {
+    // English fallback
+    if (nothingChanged) {
+      return `This re-audit of ${url} shows no changes since the previous audit. All ${currentCount} previously identified findings remain open. The overall score remains at ${overallScore}/100. To improve your score, address the open findings — starting with critical and high-severity issues — and run another re-audit to track your progress.`
+    }
+    const parts: string[] = []
+    parts.push(`This re-audit of ${url} shows progress since the previous audit.`)
+    if (fixedCount > 0) parts.push(`${fixedCount} issue${fixedCount > 1 ? 's have' : ' has'} been resolved.`)
+    if (dismissedCount > 0) parts.push(`${dismissedCount} finding${dismissedCount > 1 ? 's were' : ' was'} dismissed.`)
+    parts.push(`${currentCount} finding${currentCount !== 1 ? 's' : ''} remain open.`)
+    if (overallScore > prevOverallScore) {
+      parts.push(`The overall score improved from ${prevOverallScore} to ${overallScore}/100.`)
+    } else {
+      parts.push(`The overall score is ${overallScore}/100.`)
+    }
+    parts.push(`Continue addressing the remaining findings to further improve your score.`)
+    return parts.join(' ')
+  }
+
+  const t = BASELINE_TEMPLATES[code]
+  if (nothingChanged) {
+    return t.noChanges(url, currentCount, overallScore)
+  }
+  return t.withChanges(url, currentCount, overallScore, prevOverallScore, fixedCount, dismissedCount)
+}
+
+interface BaselineTemplate {
+  noChanges: (url: string, count: number, score: number) => string
+  withChanges: (url: string, count: number, score: number, prevScore: number, fixed: number, dismissed: number) => string
+}
+
+const BASELINE_TEMPLATES: Record<string, BaselineTemplate> = {
+  es: {
+    noChanges: (url, count, score) =>
+      `Esta re-auditoría de ${url} no muestra cambios desde la auditoría anterior. Los ${count} hallazgos identificados previamente siguen abiertos. La puntuación general se mantiene en ${score}/100. Para mejorar su puntuación, aborde los hallazgos abiertos — comenzando por los problemas críticos y de alta gravedad — y ejecute otra re-auditoría para seguir su progreso.`,
+    withChanges: (url, count, score, prevScore, fixed, dismissed) => {
+      const parts: string[] = []
+      parts.push(`Esta re-auditoría de ${url} muestra progreso desde la auditoría anterior.`)
+      if (fixed > 0) parts.push(`${fixed} problema${fixed > 1 ? 's han' : ' ha'} sido resuelto${fixed > 1 ? 's' : ''}.`)
+      if (dismissed > 0) parts.push(`${dismissed} hallazgo${dismissed > 1 ? 's fueron' : ' fue'} descartado${dismissed > 1 ? 's' : ''}.`)
+      parts.push(`${count} hallazgo${count !== 1 ? 's permanecen' : ' permanece'} abierto${count !== 1 ? 's' : ''}.`)
+      if (score > prevScore) parts.push(`La puntuación general mejoró de ${prevScore} a ${score}/100.`)
+      else parts.push(`La puntuación general es ${score}/100.`)
+      parts.push(`Continúe abordando los hallazgos restantes para mejorar su puntuación.`)
+      return parts.join(' ')
+    },
+  },
+  fr: {
+    noChanges: (url, count, score) =>
+      `Ce ré-audit de ${url} ne montre aucun changement depuis l'audit précédent. Les ${count} constats identifiés précédemment restent ouverts. Le score global reste à ${score}/100. Pour améliorer votre score, traitez les constats ouverts — en commençant par les problèmes critiques et de haute gravité — et lancez un autre ré-audit pour suivre vos progrès.`,
+    withChanges: (url, count, score, prevScore, fixed, dismissed) => {
+      const parts: string[] = []
+      parts.push(`Ce ré-audit de ${url} montre des progrès depuis l'audit précédent.`)
+      if (fixed > 0) parts.push(`${fixed} problème${fixed > 1 ? 's ont' : ' a'} été résolu${fixed > 1 ? 's' : ''}.`)
+      if (dismissed > 0) parts.push(`${dismissed} constat${dismissed > 1 ? 's ont' : ' a'} été écarté${dismissed > 1 ? 's' : ''}.`)
+      parts.push(`${count} constat${count !== 1 ? 's restent' : ' reste'} ouvert${count !== 1 ? 's' : ''}.`)
+      if (score > prevScore) parts.push(`Le score global s'est amélioré de ${prevScore} à ${score}/100.`)
+      else parts.push(`Le score global est de ${score}/100.`)
+      parts.push(`Continuez à traiter les constats restants pour améliorer votre score.`)
+      return parts.join(' ')
+    },
+  },
+  de: {
+    noChanges: (url, count, score) =>
+      `Dieses Re-Audit von ${url} zeigt keine Änderungen seit dem vorherigen Audit. Alle ${count} zuvor identifizierten Befunde sind weiterhin offen. Die Gesamtpunktzahl bleibt bei ${score}/100. Um Ihre Punktzahl zu verbessern, beheben Sie die offenen Befunde — beginnend mit kritischen und hochgradigen Problemen — und führen Sie ein weiteres Re-Audit durch, um Ihren Fortschritt zu verfolgen.`,
+    withChanges: (url, count, score, prevScore, fixed, dismissed) => {
+      const parts: string[] = []
+      parts.push(`Dieses Re-Audit von ${url} zeigt Fortschritte seit dem vorherigen Audit.`)
+      if (fixed > 0) parts.push(`${fixed} Problem${fixed > 1 ? 'e wurden' : ' wurde'} behoben.`)
+      if (dismissed > 0) parts.push(`${dismissed} Befund${dismissed > 1 ? 'e wurden' : ' wurde'} verworfen.`)
+      parts.push(`${count} Befund${count !== 1 ? 'e bleiben' : ' bleibt'} offen.`)
+      if (score > prevScore) parts.push(`Die Gesamtpunktzahl hat sich von ${prevScore} auf ${score}/100 verbessert.`)
+      else parts.push(`Die Gesamtpunktzahl beträgt ${score}/100.`)
+      parts.push(`Beheben Sie weiterhin die verbleibenden Befunde, um Ihre Punktzahl zu verbessern.`)
+      return parts.join(' ')
+    },
+  },
+  it: {
+    noChanges: (url, count, score) =>
+      `Questo re-audit di ${url} non mostra cambiamenti rispetto all'audit precedente. Tutti i ${count} risultati identificati in precedenza rimangono aperti. Il punteggio complessivo resta a ${score}/100. Per migliorare il punteggio, affrontare i risultati aperti — iniziando dai problemi critici e ad alta gravità — ed eseguire un altro re-audit per monitorare i progressi.`,
+    withChanges: (url, count, score, prevScore, fixed, dismissed) => {
+      const parts: string[] = []
+      parts.push(`Questo re-audit di ${url} mostra progressi rispetto all'audit precedente.`)
+      if (fixed > 0) parts.push(`${fixed} problema${fixed > 1 ? ' sono stati risolti' : ' è stato risolto'}.`)
+      if (dismissed > 0) parts.push(`${dismissed} risultat${dismissed > 1 ? 'i sono stati' : 'o è stato'} scartato${dismissed > 1 ? 'i' : ''}.`)
+      parts.push(`${count} risultat${count !== 1 ? 'i rimangono' : 'o rimane'} apert${count !== 1 ? 'i' : 'o'}.`)
+      if (score > prevScore) parts.push(`Il punteggio complessivo è migliorato da ${prevScore} a ${score}/100.`)
+      else parts.push(`Il punteggio complessivo è ${score}/100.`)
+      parts.push(`Continuare ad affrontare i risultati rimanenti per migliorare il punteggio.`)
+      return parts.join(' ')
+    },
+  },
+  pt: {
+    noChanges: (url, count, score) =>
+      `Esta re-auditoria de ${url} não mostra alterações desde a auditoria anterior. Todas as ${count} descobertas identificadas anteriormente permanecem abertas. A pontuação geral permanece em ${score}/100. Para melhorar sua pontuação, resolva as descobertas abertas — começando pelos problemas críticos e de alta gravidade — e execute outra re-auditoria para acompanhar seu progresso.`,
+    withChanges: (url, count, score, prevScore, fixed, dismissed) => {
+      const parts: string[] = []
+      parts.push(`Esta re-auditoria de ${url} mostra progresso desde a auditoria anterior.`)
+      if (fixed > 0) parts.push(`${fixed} problema${fixed > 1 ? 's foram' : ' foi'} resolvido${fixed > 1 ? 's' : ''}.`)
+      if (dismissed > 0) parts.push(`${dismissed} descoberta${dismissed > 1 ? 's foram' : ' foi'} descartada${dismissed > 1 ? 's' : ''}.`)
+      parts.push(`${count} descoberta${count !== 1 ? 's permanecem' : ' permanece'} aberta${count !== 1 ? 's' : ''}.`)
+      if (score > prevScore) parts.push(`A pontuação geral melhorou de ${prevScore} para ${score}/100.`)
+      else parts.push(`A pontuação geral é ${score}/100.`)
+      parts.push(`Continue resolvendo as descobertas restantes para melhorar sua pontuação.`)
+      return parts.join(' ')
+    },
+  },
+}
+
 /** Get locale string for date formatting */
 export function getLocale(code: string): string {
   const localeMap: Record<string, string> = {

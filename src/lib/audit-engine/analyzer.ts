@@ -5,7 +5,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { Audit, FindingSeverity, AuditFinding } from '@/types/database'
-import { getLanguagePromptInstruction, getLanguageLabel, getCategoryNames } from '@/lib/languages'
+import { getLanguagePromptInstruction, getLanguageLabel, getCategoryNames, getBaselineSummary } from '@/lib/languages'
 
 let _anthropic: Anthropic | null = null
 function getAnthropicClient(): Anthropic {
@@ -276,6 +276,16 @@ export async function analyzeCategory(
 
   const languageInstruction = getLanguagePromptInstruction(language)
 
+  // Translate the category name for the prompt (keep English internally for lookup)
+  const englishCategoryNames = getCategoryNames('en')
+  const translatedCategoryNames = getCategoryNames(language)
+  const categoryIndex = englishCategoryNames.findIndex(
+    (n) => n.toLowerCase() === category.toLowerCase()
+  )
+  const displayCategoryName = categoryIndex >= 0 && translatedCategoryNames[categoryIndex]
+    ? translatedCategoryNames[categoryIndex]
+    : category
+
   // Extract available page URLs from the aggregated content for the prompt
   const availableUrls = pageContent
     .split('\n')
@@ -287,7 +297,7 @@ export async function analyzeCategory(
 
   const prompt = `You are a senior UX strategist at a world-class design consultancy (think IDEO, Pentagram, or Nielsen Norman Group). You are conducting a deep, human-centered UX audit for a paying client. This is NOT a basic checklist scan — it is the kind of audit that agencies charge $5,000–$15,000 for.
 ${languageInstruction}
-CATEGORY: ${category}
+CATEGORY: ${displayCategoryName}
 ${focusBlock}${pageUrlIndex}
 EVALUATION CRITERIA:
 ${itemsToCheck}
@@ -418,6 +428,7 @@ However, you MUST respect these rules:
 2. NEVER re-report a previously [FIXED] or [SKIP] finding under a different title. If an issue was dismissed or fixed, it's done.
 3. Do NOT find issues for the sake of finding issues. Every new finding must be genuinely impactful — the kind of thing a $200/hour consultant would flag. If there are no new real issues to find, return fewer findings. Quality over quantity.
 4. New findings should explore DEEPER layers of analysis — things the first audit couldn't cover, subtle interaction patterns, advanced accessibility edge cases, nuanced content strategy gaps. Not surface-level issues that should have been caught the first time.` : ''}
+${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: Every single field in the JSON response (title, description, recommendation, estimatedImpact) MUST be written in ${getLanguageLabel(language)}. The JSON keys stay in English, but ALL values must be in ${getLanguageLabel(language)}. Do NOT write any finding text in English.\n` : ''}
 Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
   try {
@@ -574,27 +585,17 @@ export async function generateReport(
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
       : prev.previousOverallScore
 
-    // Build executive summary — deterministic, no AI
-    let executiveSummary: string
-    if (nothingChanged) {
-      executiveSummary = `This re-audit of ${auditData.product_url} shows no changes since the previous audit. ` +
-        `All ${currentCount} previously identified findings remain open. ` +
-        `The overall score remains at ${overallScore}/100. ` +
-        `To improve your score, address the open findings — starting with critical and high-severity issues — and run another re-audit to track your progress.`
-    } else {
-      const parts: string[] = []
-      parts.push(`This re-audit of ${auditData.product_url} shows progress since the previous audit.`)
-      if (fixedCount > 0) parts.push(`${fixedCount} issue${fixedCount > 1 ? 's have' : ' has'} been resolved.`)
-      if (dismissedCount > 0) parts.push(`${dismissedCount} finding${dismissedCount > 1 ? 's were' : ' was'} dismissed.`)
-      parts.push(`${currentCount} finding${currentCount !== 1 ? 's' : ''} remain open.`)
-      if (overallScore > prev.previousOverallScore) {
-        parts.push(`The overall score improved from ${prev.previousOverallScore} to ${overallScore}/100.`)
-      } else {
-        parts.push(`The overall score is ${overallScore}/100.`)
-      }
-      parts.push(`Continue addressing the remaining findings to further improve your score.`)
-      executiveSummary = parts.join(' ')
-    }
+    // Build executive summary — deterministic, no AI, language-aware
+    const executiveSummary = getBaselineSummary(
+      language,
+      auditData.product_url,
+      currentCount,
+      overallScore,
+      prev.previousOverallScore,
+      fixedCount,
+      dismissedCount,
+      nothingChanged,
+    )
 
     // Carry forward previous top recommendations (filtered to only still-open ones)
     const prevTopRecs = prev.previousReportJson?.topRecommendations || []
@@ -604,8 +605,8 @@ export async function generateReport(
 
     return {
       executiveSummary,
-      keyRecommendation: topRecs[0] || 'Continue addressing open findings to improve your score.',
-      topRecommendations: topRecs.length > 0 ? topRecs : ['Continue addressing open findings to improve your score.'],
+      keyRecommendation: topRecs[0] || getDefaultRecommendation(language),
+      topRecommendations: topRecs.length > 0 ? topRecs : [getDefaultRecommendation(language)],
       overallScore,
       uxScore: pillarAvg(0, 4),
       conversionScore: pillarAvg(4, 8),
@@ -734,7 +735,8 @@ Return ONLY valid JSON:
   "categoryScores": [
 ${categoryExamples}
   ]
-}`
+}
+${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topRecommendations, and all category summary fields MUST be written entirely in ${getLanguageLabel(language)}. The JSON keys and category names stay as provided above, but all descriptive text must be in ${getLanguageLabel(language)}.\n` : ''}`
 
   try {
     const anthropic = getAnthropicClient()
@@ -850,6 +852,18 @@ ${categoryExamples}
   }
 }
 
+function getDefaultRecommendation(language: string): string {
+  const recs: Record<string, string> = {
+    en: 'Continue addressing open findings to improve your score.',
+    es: 'Continúe abordando los hallazgos abiertos para mejorar su puntuación.',
+    fr: 'Continuez à traiter les constats ouverts pour améliorer votre score.',
+    de: 'Beheben Sie weiterhin die offenen Befunde, um Ihre Punktzahl zu verbessern.',
+    it: 'Continuare ad affrontare i risultati aperti per migliorare il punteggio.',
+    pt: 'Continue resolvendo as descobertas abertas para melhorar sua pontuação.',
+  }
+  return recs[language] || recs.en
+}
+
 function clampScore(v: number | undefined): number {
   if (v == null || isNaN(v)) return 70 // Default to 70 (decent) not 50 — absence of findings is positive
   return Math.min(100, Math.max(0, Math.round(v)))
@@ -935,8 +949,8 @@ function calculateScoresFromFindings(findings: AuditFinding[], language: string 
 
   return {
     executiveSummary: summary,
-    keyRecommendation: topRecs[0] || 'Review the detailed findings and prioritise by severity.',
-    topRecommendations: topRecs.length > 0 ? topRecs : ['Review the detailed findings and prioritise by severity.'],
+    keyRecommendation: topRecs[0] || getDefaultRecommendation(language),
+    topRecommendations: topRecs.length > 0 ? topRecs : [getDefaultRecommendation(language)],
     overallScore: overall,
     uxScore: pillarAvg(0, 4),
     conversionScore: pillarAvg(4, 8),
