@@ -596,7 +596,7 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full sm:max-w-md sm:mx-auto flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
+        className="w-full flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
         style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
       >
         {loading ? (
