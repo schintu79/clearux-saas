@@ -1,38 +1,153 @@
-import Image from 'next/image';
+import React from 'react';
+
+/**
+ * ClearUX inline SVG iconmark (the abstract eye/crown shape).
+ * Supports: currentColor fill, or lime gradient fill.
+ */
+const iconmarkPaths = (
+  <>
+    <path d="M67.89,295.45v-63.04c.31-1.68,5.44-4.2,7.08-5.23l1.38.9-.79,136.24c-.8.12-6.53-3.85-7.62-4.66s-6.84-5.42-7.24-5.98c-.56-.79-.59-2.23-.79-3.2v-53.5s1-1.45,1-1.45l6.99-.08Z" />
+    <path d="M155.82,295.45h7.99v-62.73c2.48.4,7.71,4.62,8.03,7.04l-.61,113.68c-4.23,3.05-8.67,7.83-13.24,10.28-.75.4-1.17.83-2.17.6v-68.88Z" />
+    <path d="M43.91,295.45l.03-34.1,6.74-12.65,1.88,1.03-.05,92.45c-1.07.17-1.35.04-2.13-.63-.91-.79-4.26-6.93-5.06-8.47-4.11-7.89-7.62-18.09-8.73-26.93-.15-1.16-.76-9.23-.6-9.69.64-1.91,6.17-.68,7.92-1.01Z" />
+    <path d="M83.88,321.59c.79-2.74,2.1.24,2.44.6,4.13,4.36,8.56,7.21,13.54,10.47v40.9c-5.35-.69-11.42-2.39-15.99-5.23v-46.74Z" />
+    <path d="M147.83,320.67v47.66c-4.59,3.13-10.53,4.56-15.99,5.23v-40.9c2.64-2.16,5.89-3.47,8.56-5.59,2.51-2,4.45-5.34,7.43-6.41Z" />
+    <path d="M187.18,262.86l1.9.36,5.33,16.7c3.34,18.4.62,37.66-8.35,54.07-.51.93-5.41,9.45-6.25,8.81l-.58-46.35c.55-1.93,5.82-.51,7.55-1.09l.92-.92-.53-31.58Z" />
+    <path d="M123.84,334.81v39.67l-.92.92h-14.14l-.92-.92v-38.74c0-1.79,5.72-.29,7.04-.28,3.15.02,5.87-.52,8.95-.64Z" />
+    <path d="M139.83,219.81l7.99,2.46v48.58c-3.39-1.16-4.65-5.32-7.99-7.07v-43.97Z" />
+    <polygon points="91.87 262.55 91.87 220.12 98.95 217.37 99.86 218.27 99.86 258.86 93.12 263.21 91.87 262.55" />
+    <path d="M115.85,216.12h7.99v39.67c0,1.33-7.18.49-7.99-.61v-39.05Z" />
+  </>
+);
+
+/* Wordmark paths from the full clearux logo SVG */
+const wordmarkPaths = (
+  <>
+    <path d="M288.54,319.91c7.33,0,13.8-3.88,19.41-11.21l12.79,9.77c-7.33,11.36-18.54,18.69-32.2,18.69-22.86,0-40.68-18.4-40.68-41.11s17.83-41.4,40.4-41.4c12.94,0,24.15,6.76,31.48,17.4l-12.94,9.63c-5.89-6.76-12.08-10.06-18.55-10.06-12.94,0-23.29,11.5-23.29,24.44s10.78,23.86,23.58,23.86Z" />
+    <path d="M332.24,334.17v-107.82h16.96v107.82h-16.96Z" />
+    <path d="M439.63,296.05v5.75h-58.22c2.16,11.79,11.36,18.4,21.56,18.4,9.63,0,15.67-2.44,20.41-8.19l13.51,10.35c-5.32,7.76-20.13,14.95-33.93,14.95-26.16,0-38.96-21.85-38.96-41.11s14.95-41.55,38.96-41.4c24.58.14,36.66,24.15,36.66,41.26ZM381.69,286.7h40.25c-1.73-8.34-10.21-15.38-19.26-15.38-10.35,0-18.4,6.9-20.99,15.38Z" />
+    <path d="M516.25,335.15l-.86-9.78c-5.32,7.19-14.81,11.79-24.44,11.79-22.71,0-40.68-17.4-40.68-41.26s17.97-41.26,40.68-41.26c9.92,0,19.12,4.89,24.44,11.93l.72-9.78h16.24v78.35h-16.1ZM491.52,270.31c-13.95,0-24.44,11.64-24.44,25.59s10.49,25.3,24.44,25.3,24.15-11.36,24.15-25.3-10.93-25.59-24.15-25.59Z" />
+    <path d="M567.43,256.8l.72,8.19c5.61-5.75,14.09-10.35,25.73-10.35v18.54c-14.81,0-22.57,8.19-25.16,15.38v46.58h-17.4v-78.35h16.1Z" />
+    <path d="M661.73,335.15l-.72-9.92c-5.03,5.46-13.37,12.08-23.72,12.08-14.95,0-31.77-4.89-31.77-37.38v-43.13h17.25v38.1c0,14.52,2.73,25.01,15.96,25.01,11.21,0,18.69-7.91,21.71-13.66v-49.45h17.25v78.35h-15.96Z" />
+    <path d="M733.61,293.75l28.75,41.55h-20.84l-17.83-26.74-17.68,26.74h-20.7l28.61-41.55-25.02-36.95h20.56l14.23,22.28,14.81-22.28h20.41l-25.3,36.95Z" />
+  </>
+);
+
+interface IconmarkProps {
+  size?: number;
+  className?: string;
+  gradient?: boolean;
+}
+
+/**
+ * Standalone iconmark — the abstract ClearUX eye shape.
+ * Set `gradient` to apply the lime gradient fill.
+ */
+export const Iconmark: React.FC<IconmarkProps> = ({
+  size = 24,
+  className = '',
+  gradient = false,
+}) => {
+  const gradientId = `clearux-icon-grad-${Math.random().toString(36).slice(2, 8)}`;
+  return (
+    <svg
+      viewBox="30 210 170 170"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden="true"
+      fill={gradient ? `url(#${gradientId})` : 'currentColor'}
+    >
+      {gradient && (
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#84CC16" />
+            <stop offset="50%" stopColor="#BEF264" />
+            <stop offset="100%" stopColor="#84CC16" />
+          </linearGradient>
+        </defs>
+      )}
+      {iconmarkPaths}
+    </svg>
+  );
+};
 
 interface LogoProps {
   className?: string;
   height?: number;
-  variant?: 'dark' | 'light' | 'lime' | 'lime-cta';
+  variant?: 'dark' | 'light' | 'lime';
+  iconGradient?: boolean;
+  showWordmark?: boolean;
 }
 
 /**
- * ClearUX SVG logo. Uses CSS filter to switch between dark/light/lime variants.
- * - dark: black logo (default, for light backgrounds)
- * - light: white logo (for dark backgrounds like footer, hero)
- * - lime: lime/green logo (for dark backgrounds like footer)
- * - lime-cta: dark logo (for lime backgrounds like final CTA)
+ * Full ClearUX logo — iconmark + wordmark.
+ *
+ * Variants control the wordmark color:
+ * - `dark`: dark text (for light backgrounds)
+ * - `light`: white text (for dark backgrounds)
+ * - `lime`: lime gradient wordmark
+ *
+ * `iconGradient` fills the iconmark with the lime gradient (default: true).
+ * `showWordmark` controls whether the text is shown (default: true).
  */
-const Logo: React.FC<LogoProps> = ({ className = '', height = 22, variant = 'dark' }) => {
-  const filterStyle =
-    variant === 'light'
-      ? { filter: 'brightness(0) invert(1)' }
-      : variant === 'lime'
-        ? { filter: 'brightness(0) invert(1) sepia(1) saturate(50) hue-rotate(30deg) brightness(1.5)' }
-        : variant === 'lime-cta'
-          ? { filter: 'brightness(0)' }
-          : {};
+const Logo: React.FC<LogoProps> = ({
+  className = '',
+  height = 24,
+  variant = 'dark',
+  iconGradient = true,
+  showWordmark = true,
+}) => {
+  const gradientId = `clearux-logo-grad-${Math.random().toString(36).slice(2, 8)}`;
 
+  const wordmarkColor =
+    variant === 'light'
+      ? '#FFFFFF'
+      : variant === 'lime'
+        ? `url(#${gradientId}-text)`
+        : 'currentColor';
+
+  if (!showWordmark) {
+    return <Iconmark size={height} className={className} gradient={iconGradient} />;
+  }
+
+  // Full logo: iconmark on the left, wordmark on the right
+  // Original SVG viewBox is 792x612. We keep that ratio.
   return (
-    <Image
-      src="/logo.svg"
-      alt="ClearUX"
-      width={Math.round(height * (792 / 210))}
+    <svg
+      viewBox="0 0 792 612"
       height={height}
       className={className}
-      style={filterStyle}
-      priority
-    />
+      style={{ width: 'auto' }}
+      aria-label="ClearUX"
+      role="img"
+    >
+      <defs>
+        {iconGradient && (
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#84CC16" />
+            <stop offset="50%" stopColor="#BEF264" />
+            <stop offset="100%" stopColor="#84CC16" />
+          </linearGradient>
+        )}
+        {variant === 'lime' && (
+          <linearGradient id={`${gradientId}-text`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#84CC16" />
+            <stop offset="50%" stopColor="#BEF264" />
+            <stop offset="100%" stopColor="#84CC16" />
+          </linearGradient>
+        )}
+      </defs>
+
+      {/* Iconmark */}
+      <g fill={iconGradient ? `url(#${gradientId})` : wordmarkColor}>
+        {iconmarkPaths}
+      </g>
+
+      {/* Wordmark */}
+      <g fill={wordmarkColor}>
+        {wordmarkPaths}
+      </g>
+    </svg>
   );
 };
 

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import Logo from '@/components/ui/Logo';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   const initials = name
@@ -75,10 +76,10 @@ const Navbar: React.FC = () => {
     </a>
     <nav aria-label="Main navigation" className="sticky top-0 z-50 nav-bg backdrop-blur-xl border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-1" aria-label="ClearUX home">
-            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-[var(--text)]">clearux<span className="text-[var(--accent)]">.</span>ai</span>
+          <Link href="/" className="flex-shrink-0 flex items-center" aria-label="ClearUX home">
+            <Logo height={110} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </Link>
 
           {/* Desktop Navigation */}

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
-
+import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface AdminShellProps {
@@ -106,7 +106,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center gap-2">
-            <span className="font-heading text-2xl font-medium tracking-[0.6px] text-text">clearux.ai</span>
+            <Logo height={22} variant="dark" iconGradient />
           </Link>
           <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
@@ -205,8 +205,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-heading text-2xl font-medium tracking-[0.6px] text-text">
-            clearux.ai
+          <span className="ml-3">
+            <Logo height={22} variant="dark" iconGradient />
           </span>
           <span className="ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
