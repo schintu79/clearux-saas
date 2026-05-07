@@ -535,8 +535,8 @@ article, .prose {
   background: var(--brand);
   color: var(--surface);
   border: none;
-  border-radius: 12px;
-  font-size: 0.9375rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;

@@ -225,7 +225,7 @@ export default function AboutContent() {
           </p>
           <Link
             href="/register"
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-sm font-medium tracking-wide uppercase transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
             Start Free Audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />

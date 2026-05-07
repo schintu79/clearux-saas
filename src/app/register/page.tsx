@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
@@ -154,36 +154,27 @@ export default function RegisterPage() {
 
   const formContent = (
     <div className="w-full max-w-[380px]">
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-light text-white mb-1.5">
-          Create your account
-        </h1>
-        <p className="text-sm text-white/50 leading-relaxed">
-          Run your first UX audit in under 10 minutes. No credit card required.
-        </p>
-      </div>
-
       {error && (
-        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-4">
+        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-5">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-4">
+        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-5">
           <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{success}</span>
         </div>
       )}
 
       {/* Social sign-up */}
-      <div className="space-y-3 mb-6">
+      <div className="mb-6">
         <button
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-lg border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05] transition-colors text-[15px] font-medium text-white disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-sm font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -201,9 +192,9 @@ export default function RegisterPage() {
 
       {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-white/50 font-medium">or sign up with email</span>
-        <div className="flex-1 h-px bg-border" />
+        <div className="flex-1 h-px bg-white/[0.08]" />
+        <span className="text-xs text-white/40">or sign up with email</span>
+        <div className="flex-1 h-px bg-white/[0.08]" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4" aria-label="Create account form">
@@ -351,7 +342,7 @@ export default function RegisterPage() {
           </button>
           <label
             onClick={() => setMarketingEmails(prev => !prev)}
-            className="text-xs text-white/50 leading-relaxed cursor-pointer select-none"
+            className="text-xs text-white/40 leading-relaxed cursor-pointer select-none"
           >
             Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
           </label>
@@ -369,7 +360,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-[11px] text-white/40 leading-relaxed">
+      <p className="mt-5 text-center text-[11px] text-white/35 leading-relaxed">
         Your audit results are private and encrypted. We never share your data.
       </p>
 
@@ -377,21 +368,21 @@ export default function RegisterPage() {
       <div className="mt-4">
         <button
           onClick={() => setFaqOpen(prev => !prev)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors py-1.5"
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors py-1.5"
         >
           What happens after I sign up?
           <ChevronDown size={12} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
         </button>
         {faqOpen && (
           <div className="mt-2 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-            <p className="text-xs text-white/50 leading-relaxed">
+            <p className="text-xs text-white/40 leading-relaxed">
               You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 64 UX checkpoints in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
             </p>
           </div>
         )}
       </div>
 
-      <div className="mt-4 text-center text-sm text-white/50">
+      <div className="mt-4 text-center text-sm text-white/40">
         Already have an account?{' '}
         <Link href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'} className="font-medium hover:underline transition-colors text-white">
           Sign in
@@ -410,21 +401,19 @@ export default function RegisterPage() {
         </div>
         <div className="relative z-10 flex flex-col flex-1">
           <Navbar />
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-            {formContent}
-          </div>
-          <div className="border-t border-white/[0.06] px-4 py-4">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
-              <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
-                <ArrowLeft size={12} /> Back to Home
-              </Link>
-              <span className="text-white/15">|</span>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <span className="text-white/15">|</span>
-              <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
-              <span className="text-white/15">|</span>
-              <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
+            <div className="w-full max-w-[380px] mb-8">
+              <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+                Create account
+              </p>
+              <h1 className="font-heading text-[2rem] font-light text-white mb-2" style={{ lineHeight: '1.1' }}>
+                {pendingUrl ? 'Your free audit is one step away.' : 'Start auditing in minutes.'}
+              </h1>
+              <p className="text-sm text-white/40 leading-relaxed">
+                No credit card required. 64 checkpoints across 16 categories.
+              </p>
             </div>
+            {formContent}
           </div>
         </div>
       </div>
@@ -445,16 +434,23 @@ export default function RegisterPage() {
               </Link>
 
               <div>
-                <h2 className="font-heading text-[2rem] sm:text-[2.5rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
-                  {pendingUrl ? 'Your free audit is one step away.' : 'Start auditing in minutes.'}
+                <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+                  Create account
+                </p>
+                <h2 className="font-heading text-[2.5rem] xl:text-[3rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
+                  {pendingUrl ? (
+                    <>Your free audit is <span className="text-lime-gradient">one step away.</span></>
+                  ) : (
+                    <>Start auditing in <span className="text-lime-gradient">minutes.</span></>
+                  )}
                 </h2>
-                <p className="text-sm text-white/40 leading-relaxed max-w-[280px]">
+                <p className="text-sm text-white/40 leading-relaxed max-w-[300px]">
                   No credit card required. 64 checkpoints across 16 categories.
                 </p>
 
                 {pendingUrl && (
                   <div className="mt-4 rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-2.5">
-                    <p className="text-[11px] text-white/40 font-medium truncate">Auditing: {pendingUrl}</p>
+                    <p className="text-[11px] text-white/35 font-medium truncate">Auditing: {pendingUrl}</p>
                   </div>
                 )}
               </div>
@@ -465,9 +461,9 @@ export default function RegisterPage() {
                   { num: '16', label: 'Categories' },
                   { num: '< 10 min', label: 'Per audit' },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3 flex-1 text-center">
+                  <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3.5 flex-1 text-center">
                     <p className="text-lg font-medium text-white">{stat.num}</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">{stat.label}</p>
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>

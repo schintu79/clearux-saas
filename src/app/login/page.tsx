@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
 import Navbar from '@/components/layout/Navbar'
@@ -126,36 +126,27 @@ export default function LoginPage() {
 
   const formContent = (
     <div className="w-full max-w-[380px]">
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-light text-white mb-1.5">
-          Welcome back
-        </h1>
-        <p className="text-sm text-white/50">
-          Sign in to access your dashboard, track fixes, and run new audits.
-        </p>
-      </div>
-
       {error && (
-        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-4">
+        <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-5">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-4">
+        <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-5">
           <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <span>{success}</span>
         </div>
       )}
 
       {/* Social sign-in */}
-      <div className="space-y-3 mb-6">
+      <div className="mb-6">
         <button
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-lg border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05] transition-colors text-[15px] font-medium text-white disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-sm font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
@@ -173,9 +164,9 @@ export default function LoginPage() {
 
       {/* Divider */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-white/50 font-medium">or sign in with email</span>
-        <div className="flex-1 h-px bg-border" />
+        <div className="flex-1 h-px bg-white/[0.08]" />
+        <span className="text-xs text-white/40">or sign in with email</span>
+        <div className="flex-1 h-px bg-white/[0.08]" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" aria-label="Sign in form">
@@ -225,7 +216,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-right">
-          <Link href="/forgot-password" className="btn-ghost text-xs">
+          <Link href="/forgot-password" className="text-xs text-white/40 hover:text-white transition-colors">
             Forgot password?
           </Link>
         </div>
@@ -242,7 +233,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-white/50">
+      <div className="mt-6 text-center text-sm text-white/40">
         Don&apos;t have an account?{' '}
         <Link href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'} className="font-medium text-white hover:underline transition-colors">
           Sign up
@@ -253,7 +244,7 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* MOBILE / TABLET: Navbar + full-width form */}
+      {/* MOBILE / TABLET */}
       <div className="lg:hidden min-h-screen bg-[#111114] flex flex-col relative">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
@@ -261,26 +252,24 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 flex flex-col flex-1">
           <Navbar />
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-            {formContent}
-          </div>
-          <div className="border-t border-white/[0.06] px-4 py-4">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-white/50">
-              <Link href="/" className="hover:text-white transition-colors font-medium flex items-center gap-1">
-                <ArrowLeft size={12} /> Back to Home
-              </Link>
-              <span className="text-white/15">|</span>
-              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <span className="text-white/15">|</span>
-              <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
-              <span className="text-white/15">|</span>
-              <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
+            <div className="w-full max-w-[380px] mb-8">
+              <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+                Sign in
+              </p>
+              <h1 className="font-heading text-[2rem] font-light text-white mb-2" style={{ lineHeight: '1.1' }}>
+                Welcome back.
+              </h1>
+              <p className="text-sm text-white/40 leading-relaxed">
+                Access your dashboard, track fixes, and run new audits.
+              </p>
             </div>
+            {formContent}
           </div>
         </div>
       </div>
 
-      {/* DESKTOP: classic 2-panel layout */}
+      {/* DESKTOP: 2-panel layout */}
       <div className="hidden lg:block">
         <div className="auth-page">
           {/* Left Panel */}
@@ -296,11 +285,14 @@ export default function LoginPage() {
               </Link>
 
               <div>
-                <h2 className="font-heading text-[2rem] sm:text-[2.5rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
-                  Welcome back.
+                <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6">
+                  Sign in
+                </p>
+                <h2 className="font-heading text-[2.5rem] xl:text-[3rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
+                  Welcome <span className="text-lime-gradient">back.</span>
                 </h2>
-                <p className="text-sm text-white/40 leading-relaxed max-w-[280px]">
-                  Your audits, tracked fixes, and score trends are ready.
+                <p className="text-sm text-white/40 leading-relaxed max-w-[300px]">
+                  Access your dashboard, track fixes, and run new audits.
                 </p>
               </div>
 
@@ -310,9 +302,9 @@ export default function LoginPage() {
                   { num: '16', label: 'Categories' },
                   { num: '< 10 min', label: 'Per audit' },
                 ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3 flex-1 text-center">
+                  <div key={stat.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-4 py-3.5 flex-1 text-center">
                     <p className="text-lg font-medium text-white">{stat.num}</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">{stat.label}</p>
+                    <p className="text-[10px] text-white/35 uppercase tracking-wider mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>
