@@ -1,7 +1,7 @@
 // ============================================================
 // ClearUX API — POST /api/free-audit
 // Creates a free preview audit (no auth required).
-// Rate-limited and URL-cached to prevent abuse.
+// Rate-limited. Only caches in-flight audits (not completed ones).
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -18,14 +18,14 @@ export const dynamic = 'force-dynamic'
  *   {
  *     url: string      (required) — the URL to audit (https:// prepended if missing)
  *     email?: string   (optional) — email for rate limiting and follow-up
- *     force?: boolean  (optional) — skip 24h cache and run a fresh audit
+ *     force?: boolean  (optional) — skip in-flight dedup and always create a new audit
  *   }
  *
  * Response:
  *   {
  *     success: true,
  *     audit_id: string,
- *     cached: boolean  (true if returned existing audit from last 24h)
+ *     cached: boolean  (true if returned an in-flight audit instead of creating new)
  *   }
  */
 export async function POST(request: NextRequest) {
@@ -64,35 +64,38 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceSupabase()
 
     // ────────────────────────────────────────────────────────────
-    // Check for cached audit (URL + 24h) — skip if force=true
+    // Check for in-flight audit (same URL, still processing)
+    // Only cache if an audit is actively running to prevent duplicates.
+    // Completed audits are never cached — always run fresh.
     // ────────────────────────────────────────────────────────────
     if (!force) {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
 
-      const { data: existingAudits, error: fetchError } = await supabase
+      const { data: inFlightAudits, error: fetchError } = await supabase
         .from('audits')
         .select('id, status, created_at')
         .eq('product_url', validatedUrl)
         .eq('is_free_preview', true)
-        .gte('created_at', oneDayAgo)
+        .gte('created_at', tenMinutesAgo)
+        .in('status', ['payment_received', 'crawling', 'analysing', 'generating_report'])
         .order('created_at', { ascending: false })
         .limit(1)
 
       if (fetchError) {
-        console.error('Error checking for cached audit:', fetchError)
+        console.error('Error checking for in-flight audit:', fetchError)
         return NextResponse.json(
           { error: 'Failed to check for existing audits' },
           { status: 500 },
         )
       }
 
-      // If cached audit exists and is already processed or being processed, return it
-      if (existingAudits && existingAudits.length > 0) {
-        const cached = existingAudits[0]
+      // Only return cached result if an audit is currently in progress
+      if (inFlightAudits && inFlightAudits.length > 0) {
+        const inFlight = inFlightAudits[0]
         return NextResponse.json(
           {
             success: true,
-            audit_id: cached.id,
+            audit_id: inFlight.id,
             cached: true,
           },
           { status: 200 },

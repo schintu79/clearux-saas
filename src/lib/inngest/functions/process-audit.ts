@@ -361,11 +361,14 @@ RULES FOR RE-AUDIT:
 
       // Determine effective depth mode:
       // - 'deep' explicitly requested → always deep (find new issues)
-      // - 'standard' + has previous audit → baseline (only verify previous findings)
-      // - 'standard' + no previous audit → deep (first audit, must find issues)
-      const hasPreviousFindings = userContext.includes('PREVIOUS FINDINGS')
+      // - 'baseline' explicitly requested → baseline (only verify previous findings)
+      // - 'standard' → always deep (fresh AI analysis with context from previous audit)
+      // NOTE: Previously 'standard' + previous audit defaulted to 'baseline' which
+      // copied old findings instead of running fresh analysis. This caused stale results
+      // when users re-audited a site they had updated. Now 'standard' always runs fresh
+      // AI analysis but still uses previous findings as context for consistency.
       let effectiveDepthMode: 'deep' | 'baseline' = 'deep'
-      if (auditDetails.depthMode === 'standard' && hasPreviousFindings) {
+      if (auditDetails.depthMode === 'baseline') {
         effectiveDepthMode = 'baseline'
       }
 
