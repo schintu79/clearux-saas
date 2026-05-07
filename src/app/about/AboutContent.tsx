@@ -31,7 +31,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32">
+      <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             About ClearUX
@@ -51,7 +51,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           2. WHY WE EXIST — Origin story
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32">
+      <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             The origin story
@@ -107,7 +107,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           3. FOUNDER
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32">
+      <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             The founder
@@ -160,7 +160,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           4. OUR VALUES — Simple, clear, reliable
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32">
+      <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             Our commitment

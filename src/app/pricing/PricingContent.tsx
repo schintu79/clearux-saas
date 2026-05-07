@@ -70,7 +70,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── WHAT'S INCLUDED — glass strip ── */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
+      <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
@@ -117,7 +117,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── CREDIT PACKS ── */}
-      <section id="packs" className="relative py-24 sm:py-32 overflow-hidden scroll-mt-8">
+      <section id="packs" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
         <div className="absolute inset-0 bg-[#111114]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
@@ -186,7 +186,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── COMPARE TABLE ── */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
+      <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
@@ -244,7 +244,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── GUARANTEE ── */}
-      <section className="py-24 sm:py-32 bg-[#111114]">
+      <section className="py-14 sm:py-32 bg-[#111114]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">

@@ -212,36 +212,37 @@ export default function Home() {
 
           {/* KSPs — minimal proof points */}
           <motion.div
-            className="flex items-center justify-center gap-3 sm:gap-4 mt-5"
+            className="flex items-center justify-center gap-2 sm:gap-4 mt-5 flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
             {HERO_KSPS.map((ksp, i) => (
-              <div key={i} className="flex items-center gap-3 sm:gap-4">
-                {i > 0 && <span className="text-[#84CC16]/30">·</span>}
-                <span className="text-[13px] font-medium text-lime-gradient tracking-wide">{ksp.text}</span>
+              <div key={i} className="flex items-center gap-2 sm:gap-4">
+                {i > 0 && <span className="text-[#84CC16]/30 hidden sm:inline">·</span>}
+                <span className="text-[12px] sm:text-[13px] font-medium text-lime-gradient tracking-wide whitespace-nowrap">{ksp.text}</span>
               </div>
             ))}
           </motion.div>
 
           {/* Trust badges — cohesive visual group */}
           <motion.div
-            className="flex items-center justify-center gap-4 sm:gap-6 mt-8 sm:mt-10"
+            className="flex items-center justify-center gap-3 sm:gap-6 mt-6 sm:mt-10 flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
           >
             {[
-              { icon: Shield, label: 'SSL Encrypted' },
-              { icon: ShieldCheck, label: 'GDPR Compliant' },
-              { icon: CheckCircle, label: 'Stripe Payments' },
+              { icon: Shield, label: 'SSL' },
+              { icon: ShieldCheck, label: 'GDPR' },
+              { icon: CheckCircle, label: 'Stripe' },
             ].map((badge, i) => {
               const BadgeIcon = badge.icon;
               return (
                 <div key={i} className="flex items-center gap-1.5">
                   <BadgeIcon size={13} className="text-white/30" strokeWidth={1.5} />
-                  <span className="text-[11px] text-white/30 font-medium tracking-wide">{badge.label}</span>
+                  <span className="text-[11px] text-white/30 font-medium tracking-wide sm:hidden">{badge.label}</span>
+                  <span className="text-[11px] text-white/30 font-medium tracking-wide hidden sm:inline">{badge.label === 'SSL' ? 'SSL Encrypted' : badge.label === 'GDPR' ? 'GDPR Compliant' : 'Stripe Payments'}</span>
                 </div>
               );
             })}
@@ -284,7 +285,7 @@ export default function Home() {
           SECTION 2 — TRUST STATS
           Pure white background, charcoal text, left-aligned
           ═══════════════════════════════════════════════════════ */}
-      <section id="trust-stats" className="relative z-10 py-24 sm:py-32">
+      <section id="trust-stats" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-14">
             <h2 className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">
@@ -326,7 +327,7 @@ export default function Home() {
           SECTION 3 — CORE FEATURES
           Musicbed-style editorial grid with scrolling showcase
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
+      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
@@ -485,7 +486,7 @@ export default function Home() {
           SECTION 4 — HOW IT WORKS
           Pure white, charcoal text, left-aligned Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative z-10 py-24 sm:py-32 overflow-hidden">
+      <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
@@ -546,7 +547,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — WHAT YOU GET
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
+      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
@@ -567,10 +568,10 @@ export default function Home() {
                 </p>
                 <Link
                   href="/demo-report"
-                  className="group inline-flex items-center gap-2 text-sm font-medium text-lime-gradient hover:opacity-80 transition-opacity"
+                  className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-[#84CC16]/30 bg-[#84CC16]/[0.06] hover:bg-[#84CC16]/[0.12] text-sm font-medium text-lime-gradient transition-all"
                 >
                   See a sample report
-                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
               {/* Scroll arrows */}
@@ -703,7 +704,7 @@ export default function Home() {
           SECTION 7 — FAQ
           Dark bg (#111114), left-aligned, clean Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative z-10 py-24 sm:py-32">
+      <section id="faq" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
@@ -749,7 +750,7 @@ export default function Home() {
           SECTION 8 — FINAL CTA
           Dark bg with aurora + background visual cards, Musicbed style
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-24 sm:py-32 overflow-hidden">
+      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         {/* Content — left-aligned, above the background */}
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
