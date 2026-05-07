@@ -177,7 +177,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 <span className="sm:hidden">Start</span>
                 <span className="hidden sm:inline">Start Free Audit</span>
@@ -291,7 +291,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -448,7 +448,7 @@ export default function Home() {
               </p>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
               >
                 Start Your Audit Now
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -599,7 +599,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <Link
                 href="/register"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
               >
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -722,7 +722,7 @@ export default function Home() {
                 </div>
                 <button
                   type="submit"
-                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-xl bg-white text-[#111114] text-sm font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
                 >
                   Start Free Audit
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />

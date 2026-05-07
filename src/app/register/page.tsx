@@ -174,7 +174,7 @@ export default function RegisterPage() {
           type="button"
           onClick={() => handleOAuth('google')}
           disabled={!!oauthLoading || loading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-sm font-medium text-white disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 min-h-[48px] rounded-full border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-base font-medium text-white disabled:opacity-50"
         >
           {oauthLoading === 'google' ? (
             <span className="spinner" />
