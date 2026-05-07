@@ -606,7 +606,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/pricing"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-xl border border-white/20 text-white text-sm font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
               >
                 View All Plans
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />

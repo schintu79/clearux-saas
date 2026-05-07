@@ -104,7 +104,7 @@ export default function ContactContent() {
                         autoComplete="name"
                         aria-required="true"
                         required
-                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full"
+                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="Your name"
                       />
                     </div>
@@ -120,7 +120,7 @@ export default function ContactContent() {
                         autoComplete="email"
                         aria-required="true"
                         required
-                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full"
+                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="you@example.com"
                       />
                     </div>
@@ -135,7 +135,7 @@ export default function ContactContent() {
                         rows={5}
                         aria-required="true"
                         required
-                        className="rounded-lg bg-white/[0.03] border border-white/[0.06] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-4 py-3 text-sm font-body w-full resize-y"
+                        className="rounded-2xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
                         placeholder="How can we help?"
                       />
                     </div>

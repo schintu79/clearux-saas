@@ -249,7 +249,7 @@ export default function FaqContent() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-lg border border-white/[0.1] bg-white/[0.05] text-white text-sm font-body placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.06] text-white text-base font-body placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
                 />
                 {searchQuery && (
                   <button

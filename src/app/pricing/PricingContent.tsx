@@ -60,7 +60,7 @@ export default function PricingContent() {
             </Link>
             <a
               href="#packs"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-xl border border-white/20 text-white text-sm font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
             >
               View Packs
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -155,7 +155,7 @@ export default function PricingContent() {
 
                   <Link
                     href="/register"
-                    className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-xl text-sm font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
+                    className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
                       pack.popular
                         ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
                         : 'bg-white text-[#111114] hover:bg-white/90'

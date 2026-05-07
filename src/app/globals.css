@@ -494,13 +494,24 @@ article, .prose {
   padding: 0.75rem 1rem;
   min-height: 48px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 9999px;
   font-size: 1rem;
   color: var(--text);
   background: var(--input-bg);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
+}
+
+/* Dark-page inputs — visible bg on dark backgrounds */
+.dark .input {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+  color: #F0F0F5;
+}
+
+.dark .input::placeholder {
+  color: rgba(255,255,255,0.30);
 }
 
 .input:focus {
@@ -560,6 +571,16 @@ article, .prose {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Ensure btn-primary is visible on dark pages */
+.dark .btn-primary {
+  background: #FFFFFF;
+  color: #111114;
+}
+
+.dark .btn-primary:hover:not(:disabled) {
+  background: #E5E5E5;
 }
 
 .btn-ghost {
