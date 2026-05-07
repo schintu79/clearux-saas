@@ -138,6 +138,30 @@ export default function Home() {
                 <span className="font-medium text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
               </motion.h1>
             </AnimatePresence>
+
+            {/* Slider progress indicators */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              {HERO_HEADLINES.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setHeadlineIdx(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className="relative h-[3px] rounded-full overflow-hidden cursor-pointer"
+                  style={{ width: i === headlineIdx ? 32 : 16, background: 'rgba(255,255,255,0.12)', transition: 'width 0.3s ease' }}
+                >
+                  {i === headlineIdx && (
+                    <motion.div
+                      className="absolute inset-y-0 left-0 rounded-full bg-[#84CC16]"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 7, ease: 'linear' }}
+                      key={`progress-${headlineIdx}`}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Description */}
@@ -272,7 +296,7 @@ export default function Home() {
             {[
               { end: 64, suffix: '', label: 'UX checkpoints', desc: 'across every audit' },
               { end: 16, suffix: '', label: 'Categories', desc: 'in 4 audit pillars' },
-              { end: 10, suffix: ' min', label: 'Average delivery', desc: 'from URL to report' },
+              { end: 10, suffix: ' min', label: 'To full report', desc: 'paste URL, get results' },
               { end: 99, suffix: '%', label: 'Cost savings', desc: 'vs. traditional audits' },
             ].map((stat, i) => (
               <motion.div
@@ -335,32 +359,27 @@ export default function Home() {
               {
                 icon: ShieldAlert,
                 title: 'Dark Pattern Detection',
-                desc: 'Confirmshaming, forced continuity, trick questions, hidden costs — we detect manipulative UX patterns that erode trust.',
-                narrative: 'Dark patterns trick users into actions they did not intend — unwanted subscriptions, hidden fees, or guilt-driven opt-ins. ClearUX scans every page for 12 recognised dark pattern categories so product teams, compliance officers, and founders can ship ethical interfaces that build long-term customer loyalty instead of short-term conversions.',
+                desc: 'Detects confirmshaming, hidden costs, trick questions, and forced continuity across every page.',
               },
               {
                 icon: Brain,
                 title: 'Cognitive Accessibility',
-                desc: 'How your site performs for users with ADHD, dyslexia, and autism spectrum — testing cognitive load and sensory overload.',
-                narrative: 'One in five people has a cognitive difference such as ADHD, dyslexia, or autism. ClearUX measures reading level, information density, animation intensity, and navigation complexity to ensure your site is usable by the widest possible audience — helping accessibility leads, designers, and product managers meet WCAG cognitive guidelines before they become legal requirements.',
+                desc: 'Tests cognitive load, sensory overload, and navigation clarity for users with ADHD, dyslexia, and more.',
               },
               {
                 icon: Sparkles,
                 title: 'AI Agent Readiness',
-                desc: 'Can ChatGPT describe your product? Can an AI agent navigate your checkout? We test how LLMs interact with your site.',
-                narrative: 'AI assistants like ChatGPT, Perplexity, and Siri increasingly recommend products and complete tasks on behalf of users. ClearUX tests whether your structured data, semantic HTML, and content clarity allow AI agents to accurately describe your offering and navigate your flows — giving CTOs and growth teams a head start on the next channel of organic discovery.',
+                desc: 'Checks if LLMs and AI assistants can accurately describe your product and navigate your flows.',
               },
               {
                 icon: Target,
                 title: 'Conversion Psychology',
-                desc: 'CTA placement, friction points, trust signal positioning, and decision psychology. Every finding ties back to revenue impact.',
-                narrative: 'Every extra click, unclear label, or misplaced trust badge costs you conversions. ClearUX evaluates call-to-action visibility, form friction, social proof placement, and pricing page clarity using evidence-based conversion principles — giving marketers, growth leads, and e-commerce managers a prioritised list of changes ranked by estimated revenue impact.',
+                desc: 'Evaluates CTAs, friction points, trust signals, and pricing clarity — tied to revenue impact.',
               },
               {
                 icon: Eye,
                 title: 'Visual & UX Audit',
-                desc: 'Colour contrast, typography hierarchy, layout consistency, and responsive design — the foundation every site needs right.',
-                narrative: 'Visual inconsistencies signal unprofessionalism and erode trust within seconds. ClearUX checks colour contrast ratios, font hierarchy, spacing rhythm, responsive breakpoints, and mobile touch-target sizing across every page — providing designers and front-end developers with pixel-level findings they can fix in a single sprint.',
+                desc: 'Checks contrast, typography, spacing, responsive breakpoints, and mobile touch targets.',
               },
             ].map((item, i) => {
               const Icon = item.icon;
@@ -371,10 +390,9 @@ export default function Home() {
                       <div className="w-9 h-9 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
                         <Icon size={18} className="text-[#84CC16]" strokeWidth={2} />
                       </div>
-                      <h3 className="font-heading text-[15px] font-medium text-white">{item.title}</h3>
+                      <h3 className="font-heading text-lg font-medium text-white">{item.title}</h3>
                     </div>
                     <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
-                    <p className="text-sm text-white/40 leading-relaxed mt-3">{item.narrative}</p>
                   </div>
                 </StaggerItem>
               );
@@ -383,7 +401,7 @@ export default function Home() {
         </div>
 
         {/* ── Scrolling showcase gallery — minimal finding rows ── */}
-        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-50" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
+        <div className="mt-16 sm:mt-24 space-y-3 overflow-hidden relative opacity-70" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
           {/* Row 1 — scrolls left */}
           <div className="relative">
             <div
@@ -512,7 +530,7 @@ export default function Home() {
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-white/[0.06] pt-8">
-                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-white/[0.06] leading-none block mb-4">
+                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-white/[0.10] leading-none block mb-4">
                     {item.step}
                   </span>
                   <h3 className="font-heading text-xl font-medium text-white mb-3">{item.title}</h3>

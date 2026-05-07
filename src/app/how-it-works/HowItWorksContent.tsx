@@ -118,8 +118,8 @@ export default function HowItWorksContent() {
           >
             How ClearUX <span className="text-lime-gradient">works.</span>
           </h1>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
-            A human-centered AI audit that evaluates your product the way a senior UX researcher would — with empathy, evidence, and actionable clarity.
+          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-2xl">
+            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering accessibility, dark patterns, conversion psychology, and AI readiness. You get a prioritised report with evidence-based findings, severity rankings, and specific fixes. No consultants, no weeks of waiting. Paste a URL, get a professional audit your team can act on in their next sprint.
           </p>
         </div>
       </section>
@@ -147,7 +147,7 @@ export default function HowItWorksContent() {
                   key={step.num}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
-                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.06] leading-none block mb-4">
+                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.10] leading-none block mb-4">
                     {step.num}
                   </span>
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-5">
@@ -220,10 +220,10 @@ export default function HowItWorksContent() {
             className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
             style={{ lineHeight: '1.1' }}
           >
-            Built for people who <span className="text-lime-gradient">ship.</span>
+            Built for teams who <span className="text-lime-gradient">care.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
-            Not another enterprise tool. Built for teams that move fast.
+            For teams that put the user first — and need the data to prove it.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
