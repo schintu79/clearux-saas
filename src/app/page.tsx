@@ -25,9 +25,9 @@ const TOP_FAQS = [
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
-  { main: 'Full clarity,', accent: 'at your fingertips.' },
+  { main: 'AI UX audits.', accent: '$99. 10 minutes.' },
   { main: 'UX audits are broken.', accent: 'We fixed them.' },
-  { main: 'The $10k audit.', accent: '$99. 10 minutes.' },
+  { main: 'The $10k audit.', accent: 'First one free.' },
 ];
 
 /* ── 6 Audit Modules ─────────────────────────────────────── */

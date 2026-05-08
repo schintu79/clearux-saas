@@ -46,8 +46,8 @@ export default function PricingContent() {
           </p>
 
           <p className="text-white/65 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
-            No subscription. No feature gates. Every audit runs the full 64-checkpoint
-            analysis across six modules and 24 categories. Credits never expire.
+            No subscription. No feature gates. Every audit — including your free first one — runs the
+            full 96-checkpoint analysis across six modules and 24 categories. Credits never expire.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
@@ -127,7 +127,7 @@ export default function PricingContent() {
             Save up to <span className="text-lime-gradient">50%</span> with packs
           </h2>
           <p className="text-white/65 text-base max-w-xl mb-14 leading-relaxed">
-            Same 64-checkpoint audit. Packs simply lower the per-audit cost. No features are locked behind tiers.
+            Same 96-checkpoint audit. Packs simply lower the per-audit cost. No features are locked behind tiers.
           </p>
 
           <div className="grid sm:grid-cols-3 gap-5">

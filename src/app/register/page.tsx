@@ -191,10 +191,10 @@ function RegisterContent() {
               className="font-heading text-[2rem] sm:text-[2.75rem] font-light text-white mb-3"
               style={{ lineHeight: '1.1' }}
             >
-              Start your audit <span className="text-lime-gradient">now.</span>
+              Get your free <span className="text-lime-gradient">UX audit.</span>
             </h1>
-            <p className="text-base text-white/60 leading-relaxed">
-              96 checkpoints across 24 categories. Your first audit is free.
+            <p className="text-base text-white/60 leading-relaxed max-w-md mx-auto">
+              96 checkpoints across 6 modules. No credit card required. No subscription. Your first audit is completely free.
             </p>
           </div>
 
@@ -442,7 +442,7 @@ function RegisterContent() {
             {faqOpen && (
               <div className="mt-2 p-5 rounded-2xl bg-white/[0.05] border border-white/[0.10]">
                 <p className="text-sm text-white/60 leading-relaxed">
-                  You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 64 UX checkpoints in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
+                  You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 96 checkpoints in 6 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
                 </p>
               </div>
             )}

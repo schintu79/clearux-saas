@@ -3,7 +3,7 @@
 import { CheckCircle, Globe2, Clock, Zap } from 'lucide-react'
 
 const ITEMS = [
-  { Icon: CheckCircle, title: 'Full 64-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
+  { Icon: CheckCircle, title: 'Full 96-checkpoint analysis', desc: 'Every category, every checkpoint. No feature tiers or locked sections.' },
   { Icon: Globe2, title: 'Available in 6 languages', desc: 'English, Spanish, French, German, Italian, and Portuguese.' },
   { Icon: Clock, title: 'Credits never expire', desc: 'Buy once, use whenever you need. No monthly fees, no pressure.' },
   { Icon: Zap, title: 'Instant delivery', desc: 'Reports within minutes. PDF, Word, and interactive dashboard included.' },

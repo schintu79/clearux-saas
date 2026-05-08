@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Global focus-visible ring ────────────────────────────── */
+/* Ensures keyboard navigation is always visible (WCAG 2.4.7) */
+*:focus-visible {
+  outline: 2px solid var(--accent, #84CC16);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Suppress inner outline on elements that already have ring styles */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent, #84CC16);
+}
+
 /* ══════════════════════════════════════════════════════════════
    ClearUX — Dual-mode design system
    Light palette (:root) for dashboard/admin

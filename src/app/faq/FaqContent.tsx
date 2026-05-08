@@ -20,7 +20,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What types of audits do you offer?',
-        a: 'Three types: Website audits (paste a URL and we crawl your site), Brand Identity audits (upload your brand guidelines, logo, and materials for analysis), and Design audits (coming soon — review designs before production). Every audit type uses the same 6-module, 64-checkpoint framework.',
+        a: 'Three types: Website audits (paste a URL and we crawl your site), Brand Identity audits (upload your brand guidelines, logo, and materials for analysis), and Design audits (coming soon — review designs before production). Every audit type uses the same 6-module, 96-checkpoint framework.',
       },
       {
         q: 'Can I audit any website?',

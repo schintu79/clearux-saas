@@ -166,7 +166,7 @@ function LoginContent() {
               Welcome <span className="text-lime-gradient">back.</span>
             </h1>
             <p className="text-base text-white/60 leading-relaxed">
-              Sign in to access your dashboard and audits.
+              Sign in to access your audits, reports, and brand identities.
             </p>
           </div>
 
@@ -289,8 +289,12 @@ function LoginContent() {
             </form>
           </div>
 
+          <p className="mt-6 text-center text-xs text-white/30 leading-relaxed">
+            Your audit results are private and encrypted. We never share your data.
+          </p>
+
           {/* Sign up link */}
-          <p className="mt-8 text-center text-sm text-white/40">
+          <p className="mt-4 text-center text-sm text-white/40">
             Don&apos;t have an account?{' '}
             <Link
               href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'}
