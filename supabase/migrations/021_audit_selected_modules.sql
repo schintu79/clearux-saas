@@ -11,12 +11,12 @@ ALTER TABLE audits
 -- Mapping: 0=foundation, 1=human_experience, 2=inclusive_design, 3=future_readiness
 UPDATE audits
 SET selected_modules = ARRAY(
-  SELECT CASE idx
+  SELECT CASE (elem::int)
     WHEN 0 THEN 'foundation'
     WHEN 1 THEN 'human_experience'
     WHEN 2 THEN 'inclusive_design'
     WHEN 3 THEN 'future_readiness'
   END
-  FROM unnest(selected_pillars) AS idx
+  FROM jsonb_array_elements(selected_pillars) AS elem
 )
 WHERE selected_pillars IS NOT NULL AND selected_modules IS NULL;
