@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -36,6 +36,7 @@ const NewAuditInner: React.FC = () => {
 
   // Module selection (slug-based)
   const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
+  const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
   // White-label is now managed at profile level via /dashboard/white-label
@@ -148,23 +149,38 @@ const NewAuditInner: React.FC = () => {
       // White-label branding is now managed at profile level (/dashboard/white-label)
       // and resolved at report-generation time from the white_label_settings table.
 
-      const { data: audit, error: auditError } = await supabase
+      // Try with selected_modules; fallback without it if column doesn't exist yet
+      const insertPayload: Record<string, any> = {
+        user_id: user.id,
+        status: hasCredits ? 'payment_received' : 'pending_payment',
+        product_url: productUrl,
+        product_type: 'auto_detect',
+        ux_concern: 'General UX audit',
+        notes: null,
+        plan: 'full_audit',
+        language: language,
+        depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
+        selected_modules: selectedModules,
+        ...(selectedBrandId ? { brand_identity_id: selectedBrandId } : {}),
+      };
+
+      let { data: audit, error: auditError } = await supabase
         .from('audits')
-        .insert({
-          user_id: user.id,
-          status: hasCredits ? ('payment_received' as const) : ('pending_payment' as const),
-          product_url: productUrl,
-          product_type: 'auto_detect',
-          ux_concern: 'General UX audit',
-          notes: null,
-          plan: 'full_audit',
-          language: language,
-          depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
-          selected_modules: selectedModules,
-          ...(selectedBrandId ? { brand_identity_id: selectedBrandId } : {}),
-        })
+        .insert(insertPayload)
         .select('id')
         .single();
+
+      // Fallback: if selected_modules column doesn't exist, retry without it
+      if (auditError?.message?.includes('selected_modules')) {
+        delete insertPayload.selected_modules;
+        const retry = await supabase
+          .from('audits')
+          .insert(insertPayload)
+          .select('id')
+          .single();
+        audit = retry.data;
+        auditError = retry.error;
+      }
 
       if (auditError) {
         console.error('Audit insert error:', JSON.stringify(auditError));
@@ -310,83 +326,92 @@ const NewAuditInner: React.FC = () => {
 
       {/* -- Audit Scope (Module Selection) -- */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
+        <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
           <Zap size={15} className="text-brand" />
-          <span className="text-sm font-medium text-text">Audit Scope</span>
-        </div>
+          Audit Scope
+        </label>
 
-        {/* Complete Audit toggle */}
-        <button
-          type="button"
-          onClick={toggleCompleteAudit}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 mb-3 transition-all ${
-            isCompleteAudit
-              ? 'border-[#22C55E]/50 bg-[#22C55E]/5 dark:bg-[#22C55E]/10'
-              : 'border-border/60 dark:border-white/[0.08] hover:border-border'
-          }`}
-        >
-          <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-            isCompleteAudit ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
-          }`}>
-            {isCompleteAudit && <Check size={12} className="text-white" />}
-          </div>
-          <div className="text-left flex-1">
-            <p className="text-sm font-medium text-text">Complete Audit</p>
-            <p className="text-[11px] text-muted">All core modules — full coverage across every checkpoint</p>
-          </div>
-        </button>
+        {/* Scope dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setScopeOpen(!scopeOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand"
+          >
+            <span>
+              {isCompleteAudit
+                ? 'Complete Audit — all core modules'
+                : `Custom — ${selectedModules.length} module${selectedModules.length !== 1 ? 's' : ''} selected`}
+            </span>
+            <ChevronDown size={14} className={`text-muted transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-        {/* Individual module toggles */}
-        <div className="space-y-1.5">
-          {AUDIT_MODULES.map((mod) => {
-            const selected = selectedModules.includes(mod.slug);
-            const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
-            const disabled = brandRequired;
-
-            return (
+          {scopeOpen && (
+            <div className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+              {/* Complete Audit option */}
               <button
-                key={mod.slug}
                 type="button"
-                disabled={disabled}
-                onClick={() => {
-                  if (disabled) return;
-                  toggleModule(mod.slug);
-                }}
-                className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border transition-all text-left ${
-                  disabled
-                    ? 'border-border/30 dark:border-white/[0.04] opacity-40 cursor-not-allowed'
-                    : selected
-                    ? 'border-[#22C55E]/40 dark:border-[#22C55E]/30 bg-[#22C55E]/5 dark:bg-[#22C55E]/[0.06]'
-                    : 'border-border/40 dark:border-white/[0.06] hover:border-border'
-                }`}
+                onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border/50"
               >
-                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                  disabled
-                    ? 'bg-off dark:bg-white/5 border-2 border-border/50'
-                    : selected
-                    ? 'bg-[#22C55E]'
-                    : 'bg-white dark:bg-white/10 border-2 border-border'
+                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isCompleteAudit ? 'bg-[#22C55E]' : 'border-2 border-border'
                 }`}>
-                  {selected && !disabled && <Check size={12} className="text-white" />}
+                  {isCompleteAudit && <Check size={10} className="text-white" />}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-medium text-text">{mod.name}</span>
-                    {mod.requiresBrandIdentity && (
-                      <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded-full">
-                        Requires brand
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted leading-snug">{mod.description}</p>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-text">Complete Audit</p>
+                  <p className="text-[10px] text-muted">All core modules — full coverage</p>
                 </div>
               </button>
-            );
-          })}
+
+              {/* Individual modules */}
+              {AUDIT_MODULES.map((mod) => {
+                const selected = selectedModules.includes(mod.slug);
+                const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
+                const disabled = brandRequired;
+
+                return (
+                  <button
+                    key={mod.slug}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => { if (!disabled) toggleModule(mod.slug); }}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                      selected && !disabled ? 'bg-[#22C55E]' : 'border-2 border-border'
+                    }`}>
+                      {selected && !disabled && <Check size={10} className="text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-text">{mod.name}</span>
+                      {mod.requiresBrandIdentity && (
+                        <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
+                          Requires brand
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* Close */}
+              <div className="px-4 py-2 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setScopeOpen(false)}
+                  className="text-xs font-medium text-brand hover:underline"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {selectedModules.length === 0 && (
-          <p className="text-red-500 dark:text-red-400 text-xs mt-2">Select at least one module to audit.</p>
+          <p className="text-red-500 text-xs mt-2">Select at least one module to audit.</p>
         )}
       </div>
 

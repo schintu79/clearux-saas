@@ -96,7 +96,7 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#84CC16]/[0.03] blur-[120px]" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-24 sm:pt-44 sm:pb-28">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-16 min-h-[calc(100svh-64px)]">
           {/* Top label */}
           <motion.p
             className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
@@ -157,7 +157,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            UX audits should be fast, rigorous, and repeatable. We replaced gut feel with evidence — 64 checkpoints, 6 modules, clarity in what to fix, why, and what it&apos;s worth.
+            We audit what no one else is checking — for humans and AI agents alike. 64 checkpoints, 6 modules, for a fraction of the price.
           </motion.p>
 
           {/* CTA buttons */}
