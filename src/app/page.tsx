@@ -100,26 +100,19 @@ function RotatingNumber({ values, interval = 3000 }: { values: string[]; interva
     return () => clearInterval(timer);
   }, [values, interval]);
 
-  // Find the widest value to reserve space
-  const widest = values.reduce((a, b) => (a.length >= b.length ? a : b), '');
-
   return (
-    <span className="inline-block relative">
-      {/* Invisible spacer to hold width/height */}
-      <span className="invisible">{widest}</span>
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={idx}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4 }}
-          className="absolute inset-0"
-        >
-          {values[idx]}
-        </motion.span>
-      </AnimatePresence>
-    </span>
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={idx}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4 }}
+        className="text-lime-gradient"
+      >
+        {values[idx]}
+      </motion.span>
+    </AnimatePresence>
   );
 }
 
@@ -324,11 +317,11 @@ export default function Home() {
                 { values: ['<10'], label: 'Minutes', desc: 'to full report' },
               ].map((stat, i) => (
                 <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
-                  <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-lime-gradient leading-none mb-2">
+                  <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light leading-none mb-2">
                     {stat.values.length > 1 ? (
                       <RotatingNumber values={stat.values} interval={3000} />
                     ) : (
-                      stat.values[0]
+                      <span className="text-lime-gradient">{stat.values[0]}</span>
                     )}
                   </p>
                   <p className="text-base font-medium text-white/70">{stat.label}</p>
