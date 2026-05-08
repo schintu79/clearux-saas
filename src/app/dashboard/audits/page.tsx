@@ -13,7 +13,7 @@ import {
   FileSearch,
   ExternalLink,
   ChevronRight,
-  Palette,
+  Fingerprint,
   PenTool,
   Lock,
 } from 'lucide-react';
@@ -39,10 +39,10 @@ const statusMeta: Record<string, { label: string; color: string; icon: React.Ele
   failed:            { label: 'Failed',            color: 'failed',    icon: AlertTriangle },
 };
 
-const TABS: { key: AuditType; label: string; icon: React.ElementType; disabled?: boolean }[] = [
-  { key: 'website',        label: 'Website',        icon: Globe },
-  { key: 'brand_identity', label: 'Brand Identity', icon: Palette },
-  { key: 'design',         label: 'Design',         icon: PenTool, disabled: true },
+const TABS: { key: AuditType; label: string; description: string; icon: React.ElementType; disabled?: boolean }[] = [
+  { key: 'website',        label: 'Website',        description: 'Full UX audit of your live site',         icon: Globe },
+  { key: 'brand_identity', label: 'Brand Identity', description: 'Analyze uploaded brand materials',        icon: Fingerprint },
+  { key: 'design',         label: 'Design',         description: 'Review design files and prototypes',      icon: PenTool, disabled: true },
 ];
 
 function formatDate(d: string) {
@@ -186,7 +186,7 @@ function BrandAuditCard({ audit }: { audit: AuditWithReport }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <Palette size={12} className="text-muted flex-shrink-0" />
+              <Fingerprint size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{brandName}</p>
               {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
             </div>
@@ -357,8 +357,8 @@ function AuditsPageInner() {
         </Link>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-5 p-1 bg-off/60 dark:bg-white/[0.03] rounded-xl border border-border/30 dark:border-white/[0.04]">
+      {/* Audit Type Selector */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.key === activeTab;
@@ -368,24 +368,38 @@ function AuditsPageInner() {
               key={tab.key}
               disabled={tab.disabled}
               onClick={() => !tab.disabled && setActiveTab(tab.key)}
-              className={`
-                flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg transition-all
-                ${tab.disabled
-                  ? 'text-muted/40 cursor-not-allowed'
-                  : isActive
-                    ? 'bg-card text-text shadow-sm border border-border/40 dark:border-white/[0.06]'
-                    : 'text-muted hover:text-text hover:bg-card/50'
-                }
-              `}
+              className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all text-center ${
+                isActive
+                  ? 'border-brand bg-brand/5 dark:bg-brand/[0.03]'
+                  : tab.disabled
+                    ? 'border-border/50 opacity-50 cursor-not-allowed'
+                    : 'border-border hover:border-brand/40 cursor-pointer'
+              }`}
             >
-              {tab.disabled ? <Lock size={11} /> : <Icon size={12} />}
-              <span className="hidden sm:inline">{tab.label}</span>
-              {!tab.disabled && count > 0 && (
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isActive ? 'bg-brand/10 text-brand' : 'bg-off text-muted'}`}>
-                  {count}
+              <div className={`transition-colors ${isActive ? 'text-brand' : 'text-muted'}`}>
+                {tab.disabled ? <Lock size={22} /> : <Icon size={22} />}
+              </div>
+              <div>
+                <div className="flex items-center justify-center gap-1.5">
+                  <p className={`text-sm font-medium ${isActive ? 'text-text' : 'text-muted'}`}>
+                    {tab.label}
+                  </p>
+                  {!tab.disabled && count > 0 && (
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isActive ? 'bg-brand/10 text-brand' : 'bg-off text-muted'}`}>
+                      {count}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted leading-tight mt-0.5">
+                  {tab.description}
+                </p>
+              </div>
+              {tab.disabled && (
+                <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] text-muted bg-off px-1.5 py-0.5 rounded-full">
+                  <Lock size={8} />
+                  Soon
                 </span>
               )}
-              {tab.disabled && <span className="text-[10px]">Soon</span>}
             </button>
           );
         })}
