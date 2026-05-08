@@ -28,6 +28,9 @@ import {
   BarChart3,
   Type,
   Layers,
+  Lightbulb,
+  TrendingUp,
+  X,
 } from 'lucide-react';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Card from '@/components/ui/Card';
@@ -97,11 +100,11 @@ function scoreBarColor(s: number) {
   return 'bg-[#EF4444]';
 }
 
-const SEVERITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  critical: { label: 'Critical', color: 'text-red-700 dark:text-red-300', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800' },
-  high:     { label: 'High',     color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800' },
-  medium:   { label: 'Medium',   color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800' },
-  low:      { label: 'Low',      color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
+const SEVERITY_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string; border: string; impactBg: string }> = {
+  critical: { label: 'Critical', dot: 'bg-red-500',    text: 'text-red-600 dark:text-red-400',       bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-red-50 dark:bg-red-950/20' },
+  high:     { label: 'High',     dot: 'bg-orange-500', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-orange-50 dark:bg-orange-950/20' },
+  medium:   { label: 'Medium',   dot: 'bg-yellow-500', text: 'text-yellow-600 dark:text-yellow-500', bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-yellow-50 dark:bg-yellow-950/20' },
+  low:      { label: 'Low',      dot: 'bg-blue-500',   text: 'text-blue-600 dark:text-blue-400',     bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-blue-50 dark:bg-blue-950/20' },
 };
 
 const statusMeta: Record<string, { label: string; description: string; icon: React.ElementType }> = {
@@ -115,56 +118,174 @@ const statusMeta: Record<string, { label: string; description: string; icon: Rea
 };
 
 /* ── Finding Card ────────────────────────────────────────── */
+// Matches the FindingCard structure from the website audit page for visual consistency.
 
-function BrandFindingCard({ finding }: { finding: AuditFinding }) {
-  const [expanded, setExpanded] = useState(false);
+function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: AuditFinding; categoryColor?: string; onScoreUpdate?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState(finding.status || 'open');
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [dismissed, setDismissed] = useState(finding.dismissed || false);
+  const [showDismissForm, setShowDismissForm] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
   const sev = SEVERITY_CONFIG[finding.severity] || SEVERITY_CONFIG.medium;
-  const sourceFile = finding.page_url; // page_url is reused for source file in brand audits
+  const sourceFile = finding.page_url; // page_url reused for source file in brand audits
+  const pillarColor = categoryColor || 'text-brand';
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusUpdating(true);
+    const previousStatus = status;
+    try {
+      const res = await fetch(`/api/findings/${finding.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setStatus(newStatus as any);
+        const involvesFixed = newStatus === 'fixed' || previousStatus === 'fixed';
+        if (involvesFixed && onScoreUpdate) onScoreUpdate();
+      }
+    } catch (err) {
+      console.error('Status update error:', err);
+    }
+    setStatusUpdating(false);
+  };
+
+  const handleDismiss = async () => {
+    if (!dismissReason.trim()) return;
+    setStatusUpdating(true);
+    try {
+      const res = await fetch(`/api/findings/${finding.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dismiss: true, dismissal_reason: dismissReason }),
+      });
+      if (res.ok) {
+        setDismissed(true);
+        setShowDismissForm(false);
+        if (onScoreUpdate) onScoreUpdate();
+      }
+    } catch {}
+    setStatusUpdating(false);
+  };
+
+  if (dismissed) {
+    return (
+      <div className="rounded-xl border border-border/20 dark:border-white/[0.04] bg-off/30 dark:bg-white/[0.02] p-3 opacity-60">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
+          <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
+          <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
+        </div>
+        {finding.dismissal_reason && (
+          <p className="text-[11px] text-muted mt-1 ml-4">{finding.dismissal_reason}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className={clsx(
-      'rounded-xl border overflow-hidden transition-colors',
-      'border-border/40 dark:border-white/[0.06] bg-card',
-    )}>
+    <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
+      {/* Header — always visible */}
       <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full text-left px-4 py-3 flex items-start gap-3"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        aria-expanded={open}
       >
-        <div className={clsx('mt-0.5 w-2 h-2 rounded-full flex-shrink-0', scoreBarColor(
-          finding.severity === 'critical' ? 15 : finding.severity === 'high' ? 35 : finding.severity === 'medium' ? 55 : 75
-        ))} />
+        <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className={clsx('text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded border', sev.color, sev.bg, sev.border)}>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className={`text-[11px] font-medium uppercase tracking-wider ${sev.text}`}>
               {sev.label}
             </span>
             {sourceFile && (
-              <span className="text-[10px] text-muted truncate max-w-[200px]">{sourceFile}</span>
+              <span className="text-[11px] text-muted truncate max-w-[200px]">{sourceFile}</span>
             )}
           </div>
-          <p className="text-sm font-medium text-text">{finding.title}</p>
+          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
         </div>
-        <ChevronDown size={14} className={clsx('text-muted flex-shrink-0 mt-1 transition-transform', expanded && 'rotate-180')} />
+        <ChevronDown
+          size={16}
+          className={clsx('text-muted flex-shrink-0 mt-1 transition-transform duration-200', open && 'rotate-180')}
+        />
       </button>
-      {expanded && (
-        <div className="px-4 pb-4 pt-0 border-t border-border/30 dark:border-white/[0.04]">
-          <div className="mt-3 space-y-3">
-            {finding.description && (
-              <div>
-                <p className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Issue</p>
-                <p className="text-sm text-text/80 leading-relaxed">{finding.description}</p>
+
+      {/* Expanded detail */}
+      {open && (
+        <div className="px-4 pb-4 pt-0 border-t border-border/20 dark:border-white/[0.04] mx-4 space-y-3">
+          {/* Description */}
+          <p className="text-muted text-sm leading-relaxed pt-3">{finding.description}</p>
+
+          {/* Recommendation */}
+          {finding.recommendation && (
+            <div className="p-3 bg-surface-alt/60 dark:bg-white/[0.03] rounded-lg border border-border/30 dark:border-white/[0.04]">
+              <div className="flex gap-2.5">
+                <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillarColor}`} />
+                <div>
+                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
+                  <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
+                </div>
               </div>
-            )}
-            {finding.recommendation && (
+            </div>
+          )}
+
+          {/* Expected Impact */}
+          {finding.estimated_impact && (
+            <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
+              <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Recommendation</p>
-                <p className="text-sm text-text/80 leading-relaxed">{finding.recommendation}</p>
+                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">{finding.estimated_impact}</p>
               </div>
-            )}
-            {finding.estimated_impact && (
-              <div>
-                <p className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Estimated Impact</p>
-                <p className="text-sm text-text/80 leading-relaxed">{finding.estimated_impact}</p>
+            </div>
+          )}
+
+          {/* Status + Dismiss controls */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border/20 dark:border-white/[0.04] mt-3">
+            <span className="text-[11px] text-muted mr-1">Status:</span>
+            {['open', 'in_progress', 'fixed'].map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                disabled={statusUpdating}
+                className={clsx(
+                  'text-[11px] font-medium px-2 py-1 rounded-md transition-colors capitalize',
+                  status === s
+                    ? s === 'fixed'
+                      ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/20'
+                      : s === 'in_progress'
+                        ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                        : 'bg-off dark:bg-white/[0.06] text-text border border-border/40 dark:border-white/[0.08]'
+                    : 'text-muted hover:bg-off dark:hover:bg-white/[0.04]',
+                )}
+              >
+                {s === 'in_progress' ? 'In Progress' : s === 'fixed' ? 'Fixed' : 'Open'}
+              </button>
+            ))}
+            <div className="flex-1" />
+            {!showDismissForm ? (
+              <button
+                onClick={() => setShowDismissForm(true)}
+                className="text-[11px] text-muted hover:text-red-500 transition-colors"
+              >
+                Dismiss
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={dismissReason}
+                  onChange={(e) => setDismissReason(e.target.value)}
+                  placeholder="Reason..."
+                  className="text-[11px] px-2 py-1 rounded-md border border-border/40 dark:border-white/[0.08] bg-off dark:bg-white/[0.03] text-text w-40"
+                  onKeyDown={(e) => e.key === 'Enter' && handleDismiss()}
+                />
+                <button onClick={handleDismiss} disabled={!dismissReason.trim() || statusUpdating} className="text-[11px] font-medium text-red-500 hover:text-red-600 disabled:opacity-40">
+                  Confirm
+                </button>
+                <button onClick={() => setShowDismissForm(false)} className="text-muted hover:text-text">
+                  <X size={12} />
+                </button>
               </div>
             )}
           </div>
@@ -181,11 +302,13 @@ function CategorySection({
   findings,
   expanded,
   onToggle,
+  onScoreUpdate,
 }: {
   category: BrandCategoryScore;
   findings: AuditFinding[];
   expanded: boolean;
   onToggle: () => void;
+  onScoreUpdate?: () => void;
 }) {
   const config = getCategoryConfig(category.slug);
   const Icon = config.icon;
@@ -242,7 +365,7 @@ function CategorySection({
           {findings.length > 0 && (
             <div className="px-4 pb-4 space-y-2">
               {findings.map((f) => (
-                <BrandFindingCard key={f.id} finding={f} />
+                <BrandFindingCard key={f.id} finding={f} categoryColor={`text-[${config.color}]`} onScoreUpdate={onScoreUpdate} />
               ))}
             </div>
           )}
@@ -772,7 +895,7 @@ export default function BrandAuditDetail({
                     : 'text-muted hover:text-text hover:bg-card/50',
                 )}
               >
-                {tab === 'overview' ? 'Category Breakdown' : `All Findings (${findings.length})`}
+                {tab === 'overview' ? 'Overview' : `Findings (${findings.length})`}
               </button>
             ))}
           </div>
@@ -816,6 +939,7 @@ export default function BrandAuditDetail({
                   findings={findingsByCategory[cat.slug] || []}
                   expanded={expandedCategories.has(cat.slug)}
                   onToggle={() => toggleCategory(cat.slug)}
+                  onScoreUpdate={() => fetchAuditDetail(true)}
                 />
               ))}
             </div>
@@ -834,7 +958,7 @@ export default function BrandAuditDetail({
                 </Card>
               )}
               {findings.map((f) => (
-                <BrandFindingCard key={f.id} finding={f} />
+                <BrandFindingCard key={f.id} finding={f} onScoreUpdate={() => fetchAuditDetail(true)} />
               ))}
             </div>
           )}

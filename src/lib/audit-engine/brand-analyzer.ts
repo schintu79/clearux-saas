@@ -56,6 +56,50 @@ export interface BrandReportData {
   lowCount: number
 }
 
+// ── Post-processing filter ─────────────────────────────────────
+// Mirrors the isSpeculativeFinding() filter in analyzer.ts.
+// Strips findings that contain speculative language the prompt didn't catch.
+
+function isSpeculativeBrandFinding(f: BrandFinding): boolean {
+  const text = `${f.title} ${f.description}`.toLowerCase()
+
+  const speculativePatterns = [
+    'not verified',
+    'could not verify',
+    'could not confirm',
+    'unable to verify',
+    'unable to confirm',
+    'not tested',
+    'could not be tested',
+    'cannot be confirmed',
+    'unclear whether',
+    'unclear if',
+    'it is unclear',
+    'may not have',
+    'may not be',
+    'may lack',
+    'might not',
+    'might lack',
+    'potentially missing',
+    'potentially lacks',
+    'possible lack of',
+    'appears to be missing',
+    'appears to lack',
+    'without further testing',
+    'would need to be tested',
+    'requires manual testing',
+    'requires further investigation',
+    'cannot determine from',
+    'not possible to assess',
+  ]
+
+  for (const pattern of speculativePatterns) {
+    if (text.includes(pattern)) return true
+  }
+
+  return false
+}
+
 // ── Analysis ───────────────────────────────────────────────────
 
 /** Build a context string from all extracted file contents */
@@ -135,7 +179,38 @@ Respond with ONLY valid JSON (no markdown fences):
 - medium: Noticeable issue that affects professional perception
 - low: Minor polish item or best-practice suggestion
 
-Find 2-6 findings per category. Be specific — reference actual content from the files. Don't invent issues that aren't evidenced in the materials.${languageInstruction}`
+## MANDATORY EVIDENCE RULE — ZERO SPECULATION POLICY
+Every finding MUST cite specific, concrete evidence you directly observed in the provided brand materials. This means:
+- You MUST quote the exact text, color value, font name, or visual element you observed that proves the issue exists.
+- "Not verified", "could not confirm", "potentially", "may have", "appears to lack" = AUTOMATIC REJECTION. If you cannot verify it from the materials, DO NOT include it.
+- "Could not determine the brand colors" or "typography not specified" are NOT findings — they are admissions you have no evidence. Never include them.
+- If the brand materials don't address a topic (e.g., no logo guidelines provided), that's a LEGITIMATE finding — but frame it as "Brand materials do not include X" with evidence of its absence, not as speculation.
+- If you cannot point to a specific quoted excerpt, color, font, or visual element that proves the issue, the finding does not exist.
+
+## SUBJECTIVE OPINION FILTER
+Design preferences are NOT brand failures. Do not flag:
+- "The color palette could be more [vibrant/modern/sophisticated]" — aesthetic preferences without evidence of inconsistency or audience mismatch
+- "The tone could be [warmer/more professional/friendlier]" when the tone is internally consistent
+- "Layout could benefit from more [whitespace/visual interest/structure]" without evidence of confusion or readability problems
+- Generic best-practice suggestions that don't address a specific problem in THESE materials
+A finding must describe a SPECIFIC inconsistency, gap, or error — something that creates confusion, damages credibility, or misaligns with the brand's stated goals. "I would do it differently" is not a finding.
+
+## NO DUPLICATE FINDINGS
+Each finding must address a DISTINCT issue:
+- The same inconsistency across multiple files = ONE finding (list all affected files)
+- The same type of error (e.g., typos) across pages = ONE finding with examples
+- Before adding a finding, ask: "Is this the same root issue as another finding?" If yes, merge them.
+
+## FINAL SELF-CHECK
+Before returning your findings, review each one against these gates:
+1. Does this finding quote specific evidence from the provided materials? If no → DELETE.
+2. Is this a real inconsistency, error, or gap — or just my design preference? If preference → DELETE.
+3. Could a client verify this claim by looking at their own materials? If no → DELETE.
+4. Is this essentially the same issue as another finding? If yes → MERGE.
+5. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
+
+## QUANTITY GUIDELINES
+Find 2-5 findings per category. Fewer, better findings beat many shallow ones. It's OK to report only 1-2 findings if the materials are genuinely strong in this category. NEVER pad with speculative or opinion-based findings.${languageInstruction}`
 
   try {
     const response = await client.messages.create({
@@ -155,14 +230,17 @@ Find 2-6 findings per category. Be specific — reference actual content from th
       name: category.name,
       score: Math.max(0, Math.min(100, Math.round(parsed.score ?? 50))),
       summary: parsed.summary || 'Analysis completed.',
-      findings: (parsed.findings || []).map((f: any) => ({
-        severity: (['critical', 'high', 'medium', 'low'].includes(f.severity) ? f.severity : 'medium') as FindingSeverity,
-        title: f.title || 'Untitled finding',
-        description: f.description || '',
-        recommendation: f.recommendation || '',
-        estimatedImpact: f.estimatedImpact || null,
-        sourceFile: f.sourceFile || null,
-      })),
+      findings: (parsed.findings || [])
+        .map((f: any) => ({
+          severity: (['critical', 'high', 'medium', 'low'].includes(f.severity) ? f.severity : 'medium') as FindingSeverity,
+          title: f.title || 'Untitled finding',
+          description: f.description || '',
+          recommendation: f.recommendation || '',
+          estimatedImpact: f.estimatedImpact || null,
+          sourceFile: f.sourceFile || null,
+        }))
+        .filter((f: BrandFinding) => f.title && f.description && f.recommendation)
+        .filter((f: BrandFinding) => !isSpeculativeBrandFinding(f)),
     }
   } catch (err) {
     console.error(`Brand analysis failed for category "${category.name}":`, err)
