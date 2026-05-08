@@ -348,7 +348,7 @@ const STEPS = [
   },
   {
     number: '02',
-    title: 'AI runs 64 checkpoints',
+    title: 'Our AI runs 64 checkpoints',
     description: 'Each page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI readiness, and conversion psychology.',
   },
   {

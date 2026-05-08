@@ -60,7 +60,7 @@ const STEPS = [
   },
   {
     num: '02',
-    title: 'AI runs 64 checkpoints',
+    title: 'Our AI runs 64 checkpoints',
     desc: 'Each page is analysed across six modules and 16 categories. Every score is evidence-based — no subjective hand-waving.',
     icon: Globe2,
   },

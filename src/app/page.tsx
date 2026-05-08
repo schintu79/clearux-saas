@@ -503,7 +503,7 @@ export default function Home() {
               },
               {
                 step: '02',
-                title: 'AI runs 64 checkpoints',
+                title: 'Our AI runs 64 checkpoints',
                 desc: 'Every page evaluated across 6 modules: foundation, experience, inclusivity, future readiness, brand consistency, and SEO structure. Scored by severity and business impact.',
               },
               {

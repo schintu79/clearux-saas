@@ -6,7 +6,7 @@ import Link from 'next/link';
 const FEATURES = [
   'All 6 modules, 16 categories',
   'PDF & Word reports included',
-  'AI-powered severity scoring',
+  'ClearUX AI severity scoring',
   'Issue screenshots with highlights',
   'Track fixes and re-audit anytime',
   'Credits never expire',
