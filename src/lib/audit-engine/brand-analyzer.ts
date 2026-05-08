@@ -91,10 +91,29 @@ function isSpeculativeBrandFinding(f: BrandFinding): boolean {
     'requires further investigation',
     'cannot determine from',
     'not possible to assess',
+    // Patterns for "can't see it from provided content" admissions
+    'provided content does not',
+    'provided content doesn\'t',
+    'not included in the provided',
+    'not visible in the provided',
+    'not visible in provided',
+    'cannot be completed without',
+    'cannot be verified without',
+    'not available in the provided',
+    'not shown in the provided',
+    'without interactive testing',
+    'without live testing',
+    'without visual evidence',
+    'unverified',
+    'this finding is conditional',
   ]
 
   for (const pattern of speculativePatterns) {
-    if (text.includes(pattern)) return true
+    if (pattern.includes('.*')) {
+      if (new RegExp(pattern).test(text)) return true
+    } else {
+      if (text.includes(pattern)) return true
+    }
   }
 
   return false

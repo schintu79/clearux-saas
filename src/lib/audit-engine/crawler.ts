@@ -753,9 +753,26 @@ export async function crawlPages(
 
       const allDiscovered = [...allDiscoveredMap.values()]
 
+      // Filter out infrastructure/non-content URLs before queuing
+      const EXCLUDED_PATH_PREFIXES = [
+        '/cdn-cgi/',          // Cloudflare email protection, challenges, etc.
+        '/_next/',            // Next.js internal assets
+        '/api/',              // API endpoints (not user-facing pages)
+        '/wp-admin/',         // WordPress admin
+        '/wp-json/',          // WordPress REST API
+        '/wp-includes/',      // WordPress internals
+        '/feed',              // RSS feeds
+        '/xmlrpc.php',        // WordPress XML-RPC
+      ]
+
+      function isExcludedPath(url: URL): boolean {
+        const path = url.pathname.toLowerCase()
+        return EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))
+      }
+
       // Level 1: pages to crawl from all sources
       const level1ToVisit = allDiscovered
-        .filter((link) => link.hostname === baseHostname && !visited.has(link.toString()))
+        .filter((link) => link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link))
         .slice(0, Math.min(40, maxPages - 1))
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
@@ -804,7 +821,7 @@ export async function crawlPages(
           }
 
           for (const link of l2Links) {
-            if (link.hostname === baseHostname && !visited.has(link.toString())) {
+            if (link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link)) {
               level2Candidates.push(link)
               visited.add(link.toString())
             }

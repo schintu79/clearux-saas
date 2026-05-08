@@ -375,6 +375,31 @@ function isSpeculativeFinding(f: AnalysisFinding): boolean {
     'requires further investigation',
     'cannot determine from',
     'not possible to assess',
+    // New patterns: "can't see it from crawled content" admissions
+    'provided content does not',
+    'provided content doesn\'t',
+    'not included in the provided',
+    'not visible in the provided',
+    'not visible in provided',
+    'not included in provided',
+    'cannot be completed without',
+    'cannot be verified without',
+    'not available in the provided',
+    'not shown in the provided',
+    'not mentioned in the provided',
+    'full.*cannot be completed',
+    'full.*audit cannot',
+    'without interactive testing',
+    'without live testing',
+    'without visual evidence',
+    'without css',
+    'no css.*information',
+    'cannot.*from text content',
+    'cannot.*from crawled',
+    'unverified',
+    'conditional.*if applicable',
+    'if applicable.*not applicable',
+    'this finding is conditional',
   ]
 
   for (const pattern of speculativePatterns) {
@@ -403,6 +428,92 @@ function isSpeculativeFinding(f: AnalysisFinding): boolean {
   }
 
   return false
+}
+
+/**
+ * Programmatic deduplication — removes findings that are near-duplicates of each other.
+ * Uses title similarity and description overlap to detect the same issue reported multiple times.
+ */
+function deduplicateFindings(findings: AnalysisFinding[]): AnalysisFinding[] {
+  if (findings.length <= 1) return findings
+
+  // Normalize text for comparison
+  function normalize(s: string): string {
+    return s.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  // Extract key "topic" words — nouns and adjectives that define the finding
+  function topicWords(s: string): Set<string> {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+      'should', 'may', 'might', 'shall', 'can', 'need', 'must', 'to', 'of',
+      'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through',
+      'during', 'before', 'after', 'above', 'below', 'between', 'and', 'but',
+      'or', 'not', 'no', 'nor', 'so', 'yet', 'both', 'either', 'neither',
+      'each', 'every', 'all', 'any', 'few', 'more', 'most', 'other', 'some',
+      'such', 'than', 'too', 'very', 'just', 'because', 'if', 'when', 'while',
+      'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their',
+      'what', 'which', 'who', 'whom', 'how', 'where', 'why', 'there', 'here',
+      'page', 'pages', 'site', 'website', 'users', 'user', 'content', 'data',
+    ])
+    const words = normalize(s).split(' ')
+    return new Set(words.filter((w) => w.length > 2 && !stopWords.has(w)))
+  }
+
+  // Jaccard similarity between two sets
+  function similarity(a: Set<string>, b: Set<string>): number {
+    let intersectionSize = 0
+    a.forEach((x) => { if (b.has(x)) intersectionSize++ })
+    const unionSize = a.size + b.size - intersectionSize
+    return unionSize > 0 ? intersectionSize / unionSize : 0
+  }
+
+  const kept: AnalysisFinding[] = []
+  const keptTopics: Set<string>[] = []
+
+  // Sort by severity (critical first) so we keep the highest-severity version
+  const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  const sorted = [...findings].sort(
+    (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
+  )
+
+  for (const finding of sorted) {
+    const titleTopics = topicWords(finding.title)
+    const descTopics = topicWords(finding.description.substring(0, 300))
+    const allTopics = new Set<string>()
+    titleTopics.forEach((w) => allTopics.add(w))
+    descTopics.forEach((w) => allTopics.add(w))
+
+    let isDuplicate = false
+    for (const existing of keptTopics) {
+      const sim = similarity(allTopics, existing)
+      if (sim > 0.45) {
+        isDuplicate = true
+        break
+      }
+      // Also check title-only similarity (catches renamed duplicates)
+      const titleSim = similarity(titleTopics, existing)
+      if (titleSim > 0.55) {
+        isDuplicate = true
+        break
+      }
+    }
+
+    if (!isDuplicate) {
+      kept.push(finding)
+      keptTopics.push(allTopics)
+    }
+  }
+
+  if (kept.length < findings.length) {
+    console.log(`[dedup] Removed ${findings.length - kept.length} duplicate findings (${findings.length} → ${kept.length})`)
+  }
+
+  return kept
 }
 
 /**
@@ -503,6 +614,17 @@ Every finding MUST cite specific, concrete evidence you directly observed in the
 - Before flagging "missing X" (e.g., missing labels, missing alt text, missing ARIA), you MUST search the provided content for X. If you find <label htmlFor="...">, for="...", aria-label, aria-labelledby, or equivalent — the element IS labeled. Do not flag it.
 - If you cannot point to a specific quoted excerpt or HTML pattern that proves the issue, the finding does not exist. Period.
 
+CRITICAL — YOU ARE ANALYZING TEXT CONTENT, NOT RAW HTML/CSS:
+The content provided is extracted text, NOT raw HTML source code. This means:
+- You CANNOT see CSS styles, classes, media queries, focus states, animations, or visual styling. NEVER flag issues about CSS you haven't seen (focus indicators, line-height, font-size, touch target sizes, color contrast, responsive breakpoints).
+- You CANNOT see HTML attributes like lang, aria-*, role, autocomplete, htmlFor, type, etc. NEVER flag "missing" HTML attributes — you simply don't have that data.
+- You CANNOT see structured data (JSON-LD, microdata, Schema.org). NEVER flag "missing structured data" — it may exist in the <head> which was stripped during text extraction.
+- You CANNOT see meta tags, OG tags, Twitter cards, canonical URLs. NEVER flag missing meta tags unless you can see ALL the <head> content (you can't).
+- You CANNOT verify JavaScript behavior (form validation, error messages, loading states, success states, interactive components). NEVER flag "form lacks error feedback" or "no success state after submission" — you can't see client-side behavior.
+- You CANNOT test mobile responsiveness, keyboard navigation, screen reader behavior, or touch interactions. NEVER flag these as issues.
+- "The provided content does not show X" is NOT evidence that X is missing. It means you can't see it. THESE ARE DIFFERENT THINGS. Never conflate them.
+If an issue depends on seeing CSS, HTML attributes, JavaScript behavior, or visual rendering that you cannot access from text content — DO NOT INCLUDE IT.
+
 THIRD-PARTY & INFRASTRUCTURE EXCLUSION:
 Never flag issues caused by services the site owner does not control:
 - CDN behaviors (Cloudflare email obfuscation, Cloudflare challenge pages, Cloudflare-injected scripts, edge caching headers)
@@ -538,8 +660,14 @@ DO NOT flag these common false positives:
 - Content that EXISTS on another page of the same site (e.g., "no team credentials" when there's an About page, "no pricing" when there's a Pricing page) — CHECK THE SITE MAP
 - Suggesting content that already exists elsewhere on the site should be "added to the homepage" — that's a layout preference, not a UX issue
 - Generic recommendations like "add social proof" when testimonials exist on the site
-- Privacy policy "tone" or legal page writing style — these serve legal purposes, not UX purposes
+- Privacy policy "tone" or legal page writing style — these serve legal purposes, not UX purposes. A friendly privacy policy intro is a GOOD thing, not a finding.
 - Identical or near-identical issues on login vs register pages — these are ONE finding, not two
+- "Missing structured data" when you cannot see the HTML <head> — JSON-LD is invisible in text extractions
+- "Missing focus indicators" or "missing focus states" — you cannot see CSS from text content
+- "Missing form validation" or "missing error messages" — you cannot see JavaScript behavior from text
+- "Missing responsive design" or "touch target too small" — you cannot verify this from text
+- "Missing lang attribute" — you cannot see HTML attributes from text content
+- "Missing meta tags" or "missing OG tags" — you cannot see <head> content from text extraction
 
 DO flag these high-value findings:
 - Real friction points in the user journey that lose conversions
@@ -585,14 +713,20 @@ Return a JSON array. Each issue:
   "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain."
 }
 
-CRITICAL — NO DUPLICATE FINDINGS:
-Each finding must be UNIQUE. Do NOT report an issue if it is essentially the same problem you would flag in another category. For example:
-- "Login page lacks brand identity" and "Register page lacks brand identity" are the SAME finding — report it ONCE covering both pages.
+CRITICAL — NO DUPLICATE FINDINGS (STRICTLY ENFORCED):
+Each finding must be UNIQUE. Do NOT report an issue if it is essentially the same problem phrased differently. This is the #1 quality issue in audits — duplicates destroy client trust.
+SPECIFIC RULES:
+- "Login page lacks X" and "Register page lacks X" are the SAME finding — report it ONCE covering both pages.
 - "FAQ lacks visual hierarchy" should be one finding, not repeated for each sub-aspect.
 - If a problem spans multiple pages, combine it into ONE finding and list all affected pages.
-- Issues caused by the same root cause are ONE finding: e.g., if Cloudflare email protection affects 5 pages, that is ONE infrastructure issue (and should be excluded per the third-party rule anyway).
+- Issues caused by the same root cause are ONE finding.
 - "Form lacks X" on login + register + contact = ONE finding about forms, not three.
-Before adding a finding, ask yourself: "Could this be merged with another finding about the same underlying issue?" If yes, merge them.
+- An issue about "headline/H1 messaging" is ONE finding — not three separate findings about "headline clarity", "value proposition", and "non-technical audience messaging" if they all refer to the same headline.
+- "Free offer is ambiguous" and "free offer creates false urgency" are the SAME finding.
+- "Consent checkbox framing" and "consent checkbox opt-out language" are the SAME finding.
+- "Contact form lacks success state", "contact form lacks confirmation", and "contact form feedback" are the SAME finding.
+- "Missing structured data" should be ONE finding that covers all missing schemas (Organization, FAQ, Product, Breadcrumb) — not separate findings for each schema type.
+Before adding a finding, ask yourself: "Is this the same underlying problem as something I already listed, just from a different angle?" If yes, DO NOT add it.
 
 FINAL SELF-CHECK — Before returning your findings, review each one against these gates:
 1. Does this finding quote specific evidence from the provided content? If no → DELETE.
@@ -602,12 +736,13 @@ FINAL SELF-CHECK — Before returning your findings, review each one against the
 5. Is this essentially the same issue as another finding? If yes → MERGE.
 6. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
 
-QUANTITY GUIDELINES:
-- Include 2-5 UNIQUE findings per category. Fewer, better findings beat many shallow ones.
-- It's OK to report only 1-2 findings if the site genuinely excels in this category.
+QUANTITY GUIDELINES (HARD LIMITS):
+- Include 1-3 UNIQUE findings per category. MAXIMUM 3. NEVER more than 3.
+- It's OK to report only 1 finding or even 0 findings if the site excels in this category.
 - Every finding must be genuinely worth the client's attention and effort to fix.
-- If you can't find real issues, report fewer findings rather than inventing problems.
+- If you can't find real issues, return an EMPTY array []. This is far better than inventing problems.
 - NEVER repeat the same finding with slight rewording. Each finding must address a DISTINCT issue.
+- A 25-page site with strong design should produce 15-25 total findings across all categories, not 50+.
 
 ${pageContent.includes('PREVIOUS FINDINGS') ? `RE-AUDIT CONSISTENCY:
 A PREVIOUS AUDIT BASELINE is provided above. You MUST be consistent:
@@ -742,7 +877,8 @@ export async function runFullAnalysis(
     }
   }
 
-  return allFindings
+  // Post-processing: remove cross-category duplicates that the per-category prompts missed
+  return deduplicateFindings(allFindings)
 }
 
 /**
