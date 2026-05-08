@@ -66,6 +66,10 @@ const C = {
   pillarInclusiveBg: 'FFFBEB',
   pillarFuture: '10B981',
   pillarFutureBg: 'ECFDF5',
+  pillarSeo: '3B82F6',
+  pillarSeoBg: 'EFF6FF',
+  pillarBrand: 'F97316',
+  pillarBrandBg: 'FFF7ED',
   // Recommendation / Impact
   recBg: 'F5F3FF',
   impactBg: 'ECFDF5',
@@ -116,6 +120,8 @@ const PILLAR_STYLES = [
   { start: 4, end: 8, color: C.pillarHuman, bg: C.pillarHumanBg },
   { start: 8, end: 12, color: C.pillarInclusive, bg: C.pillarInclusiveBg },
   { start: 12, end: 16, color: C.pillarFuture, bg: C.pillarFutureBg },
+  { start: 16, end: 20, color: C.pillarSeo, bg: C.pillarSeoBg },
+  { start: 20, end: 24, color: C.pillarBrand, bg: C.pillarBrandBg },
 ]
 
 function buildPillars(lang: string) {
@@ -244,7 +250,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
         }
         // Distribute unmatched by sort_order
         if (!matched) {
-          const catIdx = Math.min(Math.floor(finding.sort_order / Math.max(1, f.length / 16)), 15)
+          const catIdx = Math.min(Math.floor(finding.sort_order / Math.max(1, f.length / 24)), 23)
           const pillar = PILLARS.find(p => catIdx >= p.start && catIdx < p.end) || PILLARS[0]
           const cats = catScores.slice(pillar.start, Math.min(pillar.end, catScores.length))
           if (cats.length > 0) {
@@ -411,7 +417,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     const pillarSummaryCells = pillarScores.map(p => new TableCell({
       borders: noBorders,
-      width: { size: Math.floor(CONTENT_W / 4), type: WidthType.DXA },
+      width: { size: Math.floor(CONTENT_W / pillarScores.length), type: WidthType.DXA },
       margins: { top: 80, bottom: 80, left: 60, right: 60 },
       children: [
         new Paragraph({
@@ -428,7 +434,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     children.push(new Table({
       width: { size: CONTENT_W, type: WidthType.DXA },
-      columnWidths: pillarScores.map(() => Math.floor(CONTENT_W / 4)),
+      columnWidths: pillarScores.map(() => Math.floor(CONTENT_W / pillarScores.length)),
       rows: [new TableRow({ children: pillarSummaryCells })],
     }))
 

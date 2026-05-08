@@ -83,7 +83,7 @@ export default function AboutContent() {
               {
                 icon: Sparkles,
                 title: 'What we built instead',
-                desc: 'Not a checklist tool. A structured audit framework — six modules, 64 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes, at a fraction of the cost.',
+                desc: 'Not a checklist tool. A structured audit framework — six modules, 96 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes, at a fraction of the cost.',
               },
             ].map((item) => {
               const ItemIcon = item.icon

@@ -60,8 +60,8 @@ const STEPS = [
   },
   {
     num: '02',
-    title: 'We run 64 checkpoints',
-    desc: 'Every input analysed across six modules and 16 categories. Every score is evidence-based — no subjective hand-waving.',
+    title: 'We run 96 checkpoints',
+    desc: 'Every input analysed across six modules and 24 categories. Every score is evidence-based — no subjective hand-waving.',
     icon: Globe2,
   },
   {
@@ -105,7 +105,7 @@ export default function HowItWorksContent() {
             <span className="text-lime-gradient">360° clarity.</span>
           </h1>
           <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-2xl">
-            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. Audit your website, your brand identity materials, or your design files. Prioritised findings with evidence, severity rankings, and specific fixes. No consultants. No weeks of waiting.
+            ClearUX runs a structured AI audit across 96 checkpoints in 24 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. Audit your website, your brand identity materials, or your design files. Prioritised findings with evidence, severity rankings, and specific fixes. No consultants. No weeks of waiting.
           </p>
         </div>
       </section>
@@ -167,7 +167,7 @@ export default function HowItWorksContent() {
             Six modules. <span className="text-lime-gradient">Complete coverage.</span>
           </h2>
           <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-xl mb-10">
-            64 checkpoints across six modules that go beyond traditional audits — evaluating the dimensions most tools still ignore.
+            96 checkpoints across six modules that go beyond traditional audits — evaluating the dimensions most tools still ignore.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
