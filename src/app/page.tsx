@@ -359,15 +359,15 @@ export default function Home() {
 
           <StaggerReveal className="grid sm:grid-cols-3 gap-6" staggerDelay={0.08}>
             {[
-              { label: 'Traditional agencies', stat: '$10-50k', desc: '2-6 weeks delivery. Budget reserved for enterprise.' },
-              { label: 'In-house teams', stat: 'Senior hire', desc: 'Most teams lack the specialised UX research expertise.' },
+              { label: 'Traditional agencies', stat: '$10-50k', desc: '2-6 weeks delivery, $10-50k budgets. Reserved for enterprise teams with deep pockets.' },
+              { label: 'In-house teams', stat: 'Senior hire', desc: 'Most teams lack specialised UX research expertise. The ones who have it are too busy to audit.' },
               { label: 'Free tools', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks dark patterns, AI readiness, or conversion psychology.' },
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-white/[0.06] pt-8">
                   <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-white/50 mb-3">{item.label}</p>
                   <p className="font-heading text-2xl sm:text-3xl font-medium text-lime-gradient mb-2">{item.stat}</p>
-                  <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
+                  <p className="text-base text-white/70 leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
             ))}
