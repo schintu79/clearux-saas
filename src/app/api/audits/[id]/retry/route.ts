@@ -89,14 +89,19 @@ export async function POST(
       metadata: {},
     } as any)
 
-    // Re-trigger processing via Inngest (dispatch by audit type)
+    // Trigger audit processing — direct execution with Inngest as backup
     const ar = audit as any
     const auditType = ar.audit_type || (ar.brand_identity_id && !ar.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    await inngest.send({
-      name: eventName,
-      data: { auditId },
-    })
+    console.log(`[retry] Starting ${auditType} audit ${auditId}`)
+    if (auditType === 'website') {
+      const { processAudit } = await import('@/lib/audit-engine')
+      processAudit(auditId).catch((err) => console.error(`[retry] processAudit failed:`, err))
+    } else if (auditType === 'brand_identity') {
+      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+      processBrandAudit(auditId).catch((err) => console.error(`[retry] processBrandAudit failed:`, err))
+    }
+    inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
     return NextResponse.json({
       status: 'payment_received',
