@@ -2082,7 +2082,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Module Sections with scores and findings */}
               {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar, pillarIdx) => {
-                // Skip modules that have no category scores (e.g. old audits with only 16 categories)
+                // Skip modules that have no category scores (e.g. old audits with only 24 categories)
                 const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
                 const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
                 if (!hasCats && !hasFindings) return null;

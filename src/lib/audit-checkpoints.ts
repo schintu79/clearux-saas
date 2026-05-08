@@ -1,6 +1,6 @@
 // ============================================================
 // ClearUX — Audit Checkpoint Labels (client-safe)
-// Short labels for the 64 checkpoints, grouped by category.
+// Short labels for the 96 checkpoints, grouped by category.
 // Used in the audit detail page to show pass/fail checklist.
 // ============================================================
 
