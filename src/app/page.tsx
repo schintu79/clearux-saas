@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, CheckCircle, Shield, Search,
+  ArrowRight, CheckCircle, Shield,
   FileText, Share2, RefreshCw, BarChart3, ListChecks,
-  Sparkles, ChevronDown, ShieldCheck, Layers, Users,
-  Accessibility, Rocket, Eye, Globe2, Fingerprint, Code2,
+  Sparkles, ChevronDown, ShieldCheck, Layers, Users, Accessibility,
+  Rocket, Eye, Globe2, Fingerprint, Code2,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
-import { useAuth } from '@/context/AuthContext';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 
 /* ── FAQ data ─────────────────────────────────────────────── */
@@ -31,28 +29,6 @@ const HERO_HEADLINES = [
   { main: 'The $10k audit.', accent: '$99. 10 minutes.' },
   { main: '64 checkpoints.', accent: '6 modules. Zero guesswork.' },
 ];
-
-/* ── Typewriter placeholders ─────────────────────────────── */
-const PLACEHOLDER_URLS = [
-  'yourwebsite.com',
-  'acme.com/pricing',
-  'shopify.com/checkout',
-  'notion.so/product',
-  'linear.app/features',
-];
-
-function useTypewriterPlaceholder() {
-  const [placeholder, setPlaceholder] = useState(PLACEHOLDER_URLS[0]);
-  useEffect(() => {
-    let idx = 0;
-    const interval = setInterval(() => {
-      idx = (idx + 1) % PLACEHOLDER_URLS.length;
-      setPlaceholder(PLACEHOLDER_URLS[idx]);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-  return placeholder;
-}
 
 /* ── 6 Audit Modules ─────────────────────────────────────── */
 const MODULES = [
@@ -92,10 +68,6 @@ const MODULES = [
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
 export default function Home() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [heroUrl, setHeroUrl] = useState('');
-  const placeholder = useTypewriterPlaceholder();
   const [headlineIdx, setHeadlineIdx] = useState(0);
 
   useEffect(() => {
@@ -104,14 +76,6 @@ export default function Home() {
     }, 7000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleHeroSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = heroUrl.trim();
-    if (!trimmed) return;
-    const encoded = encodeURIComponent(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
-    router.push(user ? `/dashboard/new-audit?url=${encoded}` : `/register?url=${encoded}`);
-  };
 
   return (
     <div className="bg-[#111114] text-white min-h-screen">
@@ -196,40 +160,28 @@ export default function Home() {
             Agencies charge $10-50k and take weeks. In-house teams lack the expertise. ClearUX runs 64 checkpoints across 6 modules and delivers an expert-grade report in minutes.
           </motion.p>
 
-          {/* URL input */}
-          <motion.form
-            onSubmit={handleHeroSubmit}
-            className="max-w-2xl w-full mb-0"
+          {/* CTA buttons */}
+          <motion.div
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <div className="flex items-center justify-center gap-3 sm:gap-4">
-              <div className="relative flex items-center flex-1 sm:flex-initial sm:w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all">
-                <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
-                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
-                <input
-                  id="hero-url-input"
-                  type="text"
-                  name="url"
-                  autoComplete="url"
-                  value={heroUrl}
-                  onChange={(e) => setHeroUrl(e.target.value)}
-                  placeholder={placeholder}
-                  aria-label="Website URL to audit"
-                  className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.1rem] sm:py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
-                />
-              </div>
-              <button
-                type="submit"
-                className="group flex items-center justify-center gap-2 px-5 sm:px-7 py-[1.1rem] sm:py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-              >
-                <span className="sm:hidden">Start</span>
-                <span className="hidden sm:inline">Start Free Audit</span>
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          </motion.form>
+            <Link
+              href="/register"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+            >
+              Start Free Audit
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link
+              href="/how-it-works"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+            >
+              How It Works
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </motion.div>
 
           {/* KSPs */}
           <motion.div
@@ -448,34 +400,46 @@ export default function Home() {
           <StaggerReveal className="grid sm:grid-cols-2 gap-6" staggerDelay={0.08}>
             {[
               {
+                icon: Globe2,
                 title: 'AI discoverability',
                 desc: 'We\'re the only platform auditing how LLMs read and surface your product. Structured data, semantic markup, machine-readable content — the new SEO.',
                 label: 'No other tool checks this',
               },
               {
+                icon: Eye,
                 title: 'Dark pattern detection',
                 desc: 'Confirmshaming, hidden costs, trick questions, forced continuity. We flag manipulative design that erodes trust and conversion.',
                 label: 'Beyond accessibility scanners',
               },
               {
+                icon: Fingerprint,
                 title: 'Brand consistency',
                 desc: 'Upload your brand guidelines and we audit your site against them — voice, visual identity, tone. Not just colours and fonts, but whether your site sounds like you.',
                 label: 'New module',
               },
               {
+                icon: RefreshCw,
                 title: 'Continuous, not annual',
                 desc: 'Re-audit after every sprint. Track fixes, prove improvement, catch regressions. UX quality as a continuous metric, not a one-off project.',
                 label: 'Built for modern teams',
               },
-            ].map((item, i) => (
-              <StaggerItem key={i}>
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-7">
-                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#84CC16]/60 mb-4">{item.label}</p>
-                  <h3 className="font-heading text-lg font-medium text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
+            ].map((item, i) => {
+              const CardIcon = item.icon;
+              return (
+                <StaggerItem key={i}>
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="w-11 h-11 rounded-xl bg-[#84CC16]/10 flex items-center justify-center">
+                        <CardIcon size={20} className="text-[#84CC16]" />
+                      </div>
+                      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#84CC16]/60">{item.label}</p>
+                    </div>
+                    <h3 className="font-heading text-lg font-medium text-white mb-3">{item.title}</h3>
+                    <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                  </div>
+                </StaggerItem>
+              );
+            })}
           </StaggerReveal>
         </div>
       </section>
@@ -732,33 +696,23 @@ export default function Home() {
               Your first audit is free. 64 checkpoints, 6 modules, full report in minutes.
             </p>
 
-            <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <div className="relative flex items-center w-full sm:max-w-[400px] bg-white/[0.06] rounded-full ring-1 ring-inset ring-white/[0.15] focus-within:ring-white/[0.25] transition-all backdrop-blur-sm">
-                  <Search size={16} className="ml-4 text-white/40 flex-shrink-0" />
-                  <label htmlFor="cta-url-input" className="sr-only">Website URL to audit</label>
-                  <input
-                    id="cta-url-input"
-                    type="text"
-                    name="url"
-                    autoComplete="url"
-                    value={heroUrl}
-                    onChange={(e) => setHeroUrl(e.target.value)}
-                    placeholder="yourwebsite.com"
-                    aria-label="Website URL to audit"
-                    className="flex-1 bg-transparent text-white text-[15px] pl-2 pr-4 py-[1.2rem] placeholder:text-white/35 focus:outline-none min-w-0"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="group flex items-center justify-center gap-2 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-                >
-                  Start Free Audit
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-              <p className="text-xs text-white/60 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
-            </form>
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+              <Link
+                href="/register"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+              >
+                Start Free Audit
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
+                href="/how-it-works"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              >
+                How It Works
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+            <p className="text-xs text-white/60 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
           </ScrollReveal>
         </div>
       </section>
