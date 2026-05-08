@@ -106,7 +106,7 @@ export async function GET() {
             marginBottom: '40px',
           }}
         >
-          64 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact.
+          96 checkpoints across accessibility, ethics, AI readiness, and conversion — prioritised by business impact.
         </div>
 
         {/* Stats row */}

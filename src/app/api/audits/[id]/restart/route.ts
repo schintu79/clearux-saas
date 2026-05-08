@@ -76,10 +76,21 @@ export async function POST(
     // Fire off processing via Inngest (dispatch by audit type)
     const auditType = (a as any).audit_type || ((a as any).brand_identity_id && !(a as any).product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    await inngest.send({
-      name: eventName,
-      data: { auditId },
-    })
+    try {
+      await inngest.send({
+        name: eventName,
+        data: { auditId },
+      })
+    } catch (inngestErr) {
+      console.error(`[restart] Inngest send failed, using fallback:`, inngestErr)
+      if (auditType === 'website') {
+        const { processAudit } = await import('@/lib/audit-engine')
+        processAudit(auditId).catch((err) => console.error(`[restart] Fallback failed:`, err))
+      } else if (auditType === 'brand_identity') {
+        const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+        processBrandAudit(auditId).catch((err) => console.error(`[restart] Fallback failed:`, err))
+      }
+    }
 
     return NextResponse.json({ ok: true, message: 'Audit restarted' })
   } catch (err) {

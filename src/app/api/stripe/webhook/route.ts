@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
         // @ts-ignore Supabase type inference issue with generics
         const { data: audit } = await supabase
           .from('audits')
-          .select('product_url')
+          .select('product_url, audit_type, brand_identity_id')
           // @ts-ignore Supabase type inference issue with generics
           .eq('id', auditId)
           .single()
@@ -243,6 +243,11 @@ export async function POST(request: NextRequest) {
             const { processAudit } = await import('@/lib/audit-engine')
             processAudit(auditId).catch((err) => {
               console.error(`[webhook] Fallback processAudit failed:`, err)
+            })
+          } else if (auditType === 'brand_identity') {
+            const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+            processBrandAudit(auditId).catch((err) => {
+              console.error(`[webhook] Fallback processBrandAudit failed:`, err)
             })
           }
         }

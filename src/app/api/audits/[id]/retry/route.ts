@@ -93,10 +93,21 @@ export async function POST(
     const ar = audit as any
     const auditType = ar.audit_type || (ar.brand_identity_id && !ar.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    await inngest.send({
-      name: eventName,
-      data: { auditId },
-    })
+    try {
+      await inngest.send({
+        name: eventName,
+        data: { auditId },
+      })
+    } catch (inngestErr) {
+      console.error(`[retry] Inngest send failed, using fallback:`, inngestErr)
+      if (auditType === 'website') {
+        const { processAudit } = await import('@/lib/audit-engine')
+        processAudit(auditId).catch((err) => console.error(`[retry] Fallback failed:`, err))
+      } else if (auditType === 'brand_identity') {
+        const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+        processBrandAudit(auditId).catch((err) => console.error(`[retry] Fallback failed:`, err))
+      }
+    }
 
     return NextResponse.json({
       status: 'payment_received',
