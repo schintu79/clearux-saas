@@ -42,14 +42,10 @@ export function ThemeProvider({
     }
   }, [])
 
-  // Sync <html> class + cookie whenever theme changes
+  // Persist preference to cookie — but NEVER touch <html> classList.
+  // The public site is always dark (hardcoded in layout.tsx).
+  // The dashboard scopes its own theme via DashboardShell.
   useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
     setThemeCookie(theme)
   }, [theme])
 

@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, CheckCircle, Zap, Languages, Building2, Upload, X, ChevronDown, Scale, Heart, Accessibility, Brain, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
+import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 
 const AUDIT_FEATURES = [
@@ -15,13 +16,6 @@ const AUDIT_FEATURES = [
   'AI discoverability check',
   'PDF + DOCX professional reports',
   'Prioritised findings & recommendations',
-];
-
-const PILLARS = [
-  { idx: 0, name: 'Foundation', desc: 'Visual design, messaging, navigation, content', Icon: Scale, color: '#6366F1', bg: 'bg-[#6366F1]/10' },
-  { idx: 1, name: 'Human Experience', desc: 'Conversion, trust, ethics, psychology', Icon: Heart, color: '#EC4899', bg: 'bg-pink-500/10' },
-  { idx: 2, name: 'Inclusive Design', desc: 'Accessibility, cognitive, wellbeing, mobile', Icon: Accessibility, color: '#F59E0B', bg: 'bg-amber-500/10' },
-  { idx: 3, name: 'Future Readiness', desc: 'Performance, AI, agents, global', Icon: Brain, color: '#10B981', bg: 'bg-[#10B981]/10' },
 ];
 
 const NewAuditInner: React.FC = () => {
@@ -40,21 +34,16 @@ const NewAuditInner: React.FC = () => {
   const [packageTier, setPackageTier] = useState<string>('starter');
   const [firstAuditFree, setFirstAuditFree] = useState(false);
 
-  // Pillar selection (only for re-audits by paying users)
-  const [selectedPillars, setSelectedPillars] = useState<number[]>([0, 1, 2, 3]); // all selected by default
-  const [showPillarPicker, setShowPillarPicker] = useState(false);
-  const [hasPriorAudit, setHasPriorAudit] = useState(false);
-  const isAllPillars = selectedPillars.length === 4;
+  // Module selection (slug-based)
+  const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
+  const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
-  // White-label fields (Agency/Scale only)
-  const [whiteLabelOpen, setWhiteLabelOpen] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoUploading, setLogoUploading] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
+  // White-label is now managed at profile level via /dashboard/white-label
+  const isWhiteLabelEligible = packageTier === 'growth' || packageTier === 'agency' || packageTier === 'scale';
 
-  const isWhiteLabelEligible = packageTier === 'agency' || packageTier === 'scale';
+  // Brand identity selection
+  const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string }[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string>('');
 
   useEffect(() => {
     if (!userLoading && user && urlInputRef.current) {
@@ -62,30 +51,7 @@ const NewAuditInner: React.FC = () => {
     }
   }, [userLoading, user]);
 
-  // Check if this URL already has a completed audit (enables pillar picker for re-audits)
-  useEffect(() => {
-    if (!user || !url.trim()) { setHasPriorAudit(false); return; }
-    const checkPrior = async () => {
-      try {
-        const supabase = createBrowserSupabase();
-        const productUrl = url.startsWith('http') ? url : `https://${url}`;
-        let hostname = '';
-        try { hostname = new URL(productUrl).hostname.replace(/^www\./, ''); } catch { return; }
-        const { data } = await supabase
-          .from('audits')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('status', 'completed')
-          .ilike('product_url', `%${hostname}%`)
-          .limit(1);
-        setHasPriorAudit(!!(data && data.length > 0));
-      } catch { setHasPriorAudit(false); }
-    };
-    const timeout = setTimeout(checkPrior, 500); // debounce
-    return () => clearTimeout(timeout);
-  }, [user, url]);
-
-  // Fetch credits + package tier
+  // Fetch credits + package tier + brand identities
   useEffect(() => {
     if (!user) return;
     fetch('/api/credits')
@@ -96,7 +62,19 @@ const NewAuditInner: React.FC = () => {
         if (d.first_audit_free) setFirstAuditFree(true);
       })
       .catch(() => setCredits(0));
+
+    fetch('/api/brand-identities')
+      .then((r) => r.json())
+      .then((d) => setBrandIdentities((d.identities || []).map((bi: any) => ({ id: bi.id, name: bi.name }))))
+      .catch(() => {});
   }, [user]);
+
+  // When brand identity is deselected, remove brand_consistency from selection
+  useEffect(() => {
+    if (!selectedBrandId && selectedModules.includes('brand_consistency')) {
+      setSelectedModules((prev) => prev.filter((s) => s !== 'brand_consistency'));
+    }
+  }, [selectedBrandId]);
 
   if (userLoading) {
     return (
@@ -134,10 +112,29 @@ const NewAuditInner: React.FC = () => {
     }
   };
 
+  const toggleModule = (slug: string) => {
+    setSelectedModules((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const toggleCompleteAudit = () => {
+    if (isCompleteAudit) {
+      setSelectedModules([]);
+    } else {
+      // Select all "complete" modules, plus keep brand_consistency if brand is selected
+      const next = [...COMPLETE_AUDIT_SLUGS];
+      if (selectedBrandId && !next.includes('brand_consistency')) {
+        next.push('brand_consistency');
+      }
+      setSelectedModules(next);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateUrl(url)) return;
-    if (hasPriorAudit && selectedPillars.length === 0) {
-      setGeneralError('Select at least one pillar to audit.');
+    if (selectedModules.length === 0) {
+      setGeneralError('Select at least one module to audit.');
       return;
     }
 
@@ -148,23 +145,8 @@ const NewAuditInner: React.FC = () => {
       const supabase = createBrowserSupabase();
       const productUrl = url.startsWith('http') ? url : `https://${url}`;
 
-      // Upload white-label logo if provided
-      let whitelabelLogoUrl: string | null = null;
-      if (isWhiteLabelEligible && logoFile) {
-        setLogoUploading(true);
-        const ext = logoFile.name.split('.').pop() || 'png';
-        const filePath = `${user.id}/${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from('white-label-logos')
-          .upload(filePath, logoFile, { cacheControl: '31536000', upsert: false });
-        setLogoUploading(false);
-        if (uploadErr) {
-          console.error('Logo upload error:', uploadErr);
-          throw new Error('Failed to upload logo. Please try again.');
-        }
-        const { data: urlData } = supabase.storage.from('white-label-logos').getPublicUrl(filePath);
-        whitelabelLogoUrl = urlData.publicUrl;
-      }
+      // White-label branding is now managed at profile level (/dashboard/white-label)
+      // and resolved at report-generation time from the white_label_settings table.
 
       const { data: audit, error: auditError } = await supabase
         .from('audits')
@@ -178,9 +160,8 @@ const NewAuditInner: React.FC = () => {
           plan: 'full_audit',
           language: language,
           depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
-          ...(hasPriorAudit && !isAllPillars && selectedPillars.length > 0 ? { selected_pillars: selectedPillars } : {}),
-          ...(isWhiteLabelEligible && companyName.trim() ? { white_label_company_name: companyName.trim() } : {}),
-          ...(isWhiteLabelEligible && whitelabelLogoUrl ? { white_label_logo_url: whitelabelLogoUrl } : {}),
+          selected_modules: selectedModules,
+          ...(selectedBrandId ? { brand_identity_id: selectedBrandId } : {}),
         })
         .select('id')
         .single();
@@ -250,7 +231,7 @@ const NewAuditInner: React.FC = () => {
         </p>
       </div>
 
-      {/* ── URL Input ──────────────────────────────────────── */}
+      {/* -- URL Input -- */}
       <div className="mb-6">
         <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
           <Globe size={14} className="inline mr-1.5 -mt-0.5" />
@@ -294,7 +275,7 @@ const NewAuditInner: React.FC = () => {
         )}
       </div>
 
-      {/* ── Report Language ───────────────────────────────── */}
+      {/* -- Report Language -- */}
       <div className="mb-6">
         <label htmlFor="audit-language" className="block text-sm font-medium text-text mb-2">
           <Languages size={14} className="inline mr-1.5 -mt-0.5" />
@@ -327,209 +308,133 @@ const NewAuditInner: React.FC = () => {
         )}
       </div>
 
-      {/* ── Pillar Selection (re-audit only, paying users) ─────── */}
-      {hasPriorAudit && !firstAuditFree && (
-        <div className="mb-6 rounded-xl border-2 border-border/60 dark:border-white/[0.08] bg-card overflow-hidden">
-          {/* Toggle header */}
-          <button
-            type="button"
-            onClick={() => setShowPillarPicker(!showPillarPicker)}
-            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Zap size={15} className="text-brand" />
-              <span className="text-sm font-medium text-text">Audit Scope</span>
-              {!showPillarPicker && (
-                <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                  {isAllPillars ? 'All 4 pillars' : `${selectedPillars.length} pillar${selectedPillars.length !== 1 ? 's' : ''}`}
-                </span>
-              )}
-            </div>
-            <ChevronDown size={14} className={`text-muted transition-transform duration-200 ${showPillarPicker ? 'rotate-180' : ''}`} />
-          </button>
+      {/* -- Audit Scope (Module Selection) -- */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap size={15} className="text-brand" />
+          <span className="text-sm font-medium text-text">Audit Scope</span>
+        </div>
 
-          {showPillarPicker && (
-            <div className="px-5 pb-5 border-t border-border/40 dark:border-white/[0.04]">
-              <p className="text-xs text-muted mt-3 mb-4">
-                Focus your re-audit on specific pillars, or run all four for a complete analysis.
-              </p>
+        {/* Complete Audit toggle */}
+        <button
+          type="button"
+          onClick={toggleCompleteAudit}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 mb-3 transition-all ${
+            isCompleteAudit
+              ? 'border-[#22C55E]/50 bg-[#22C55E]/5 dark:bg-[#22C55E]/10'
+              : 'border-border/60 dark:border-white/[0.08] hover:border-border'
+          }`}
+        >
+          <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+            isCompleteAudit ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
+          }`}>
+            {isCompleteAudit && <Check size={12} className="text-white" />}
+          </div>
+          <div className="text-left flex-1">
+            <p className="text-sm font-medium text-text">Complete Audit</p>
+            <p className="text-[11px] text-muted">All core modules — full coverage across every checkpoint</p>
+          </div>
+        </button>
 
-              {/* Select All toggle */}
+        {/* Individual module toggles */}
+        <div className="space-y-1.5">
+          {AUDIT_MODULES.map((mod) => {
+            const selected = selectedModules.includes(mod.slug);
+            const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
+            const disabled = brandRequired;
+
+            return (
               <button
+                key={mod.slug}
                 type="button"
-                onClick={() => setSelectedPillars(isAllPillars ? [] : [0, 1, 2, 3])}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 mb-3 transition-all ${
-                  isAllPillars
-                    ? 'border-[#22C55E]/50 bg-[#22C55E]/5 dark:bg-[#22C55E]/10'
-                    : 'border-border/60 dark:border-white/[0.08] hover:border-border'
+                disabled={disabled}
+                onClick={() => {
+                  if (disabled) return;
+                  toggleModule(mod.slug);
+                }}
+                className={`w-full flex items-start gap-3 px-4 py-3 rounded-lg border transition-all text-left ${
+                  disabled
+                    ? 'border-border/30 dark:border-white/[0.04] opacity-40 cursor-not-allowed'
+                    : selected
+                    ? 'border-[#22C55E]/40 dark:border-[#22C55E]/30 bg-[#22C55E]/5 dark:bg-[#22C55E]/[0.06]'
+                    : 'border-border/40 dark:border-white/[0.06] hover:border-border'
                 }`}
               >
-                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                  isAllPillars ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
+                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                  disabled
+                    ? 'bg-off dark:bg-white/5 border-2 border-border/50'
+                    : selected
+                    ? 'bg-[#22C55E]'
+                    : 'bg-white dark:bg-white/10 border-2 border-border'
                 }`}>
-                  {isAllPillars && <Check size={12} className="text-white" />}
+                  {selected && !disabled && <Check size={12} className="text-white" />}
                 </div>
-                <div className="text-left flex-1">
-                  <p className="text-sm font-medium text-text">Complete audit</p>
-                  <p className="text-[11px] text-muted">All 4 pillars, 16 categories, 64 checkpoints</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-medium text-text">{mod.name}</span>
+                    {mod.requiresBrandIdentity && (
+                      <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded-full">
+                        Requires brand
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted leading-snug">{mod.description}</p>
                 </div>
               </button>
-
-              {/* Individual pillar toggles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {PILLARS.map((p) => {
-                  const selected = selectedPillars.includes(p.idx);
-                  const PIcon = p.Icon;
-                  return (
-                    <button
-                      key={p.idx}
-                      type="button"
-                      onClick={() => {
-                        setSelectedPillars(prev =>
-                          selected
-                            ? prev.filter(i => i !== p.idx)
-                            : [...prev, p.idx].sort()
-                        );
-                      }}
-                      className={`flex items-start gap-3 px-3.5 py-3 rounded-lg border-2 transition-all text-left ${
-                        selected
-                          ? 'border-[#22C55E]/40 dark:border-[#22C55E]/30 bg-[#22C55E]/5 dark:bg-[#22C55E]/[0.06]'
-                          : 'border-border/40 dark:border-white/[0.06] hover:border-border opacity-60'
-                      }`}
-                    >
-                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                        selected ? 'bg-[#22C55E]' : 'bg-white dark:bg-white/10 border-2 border-border'
-                      }`}>
-                        {selected && <Check size={12} className="text-white" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <PIcon size={13} style={{ color: p.color }} />
-                          <span className="text-xs font-medium text-text">{p.name}</span>
-                        </div>
-                        <p className="text-[10px] text-muted leading-snug">{p.desc}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selectedPillars.length === 0 && (
-                <p className="text-red-500 dark:text-red-400 text-xs mt-2">Select at least one pillar to audit.</p>
-              )}
-            </div>
-          )}
+            );
+          })}
         </div>
-      )}
 
-      {/* ── White-label branding (Agency/Scale only) — collapsible ── */}
-      {isWhiteLabelEligible && (
-        <div className="mb-6 rounded-xl border-2 border-dashed border-brand/20 dark:border-brand/10 bg-brand/5 dark:bg-brand/[0.03] overflow-hidden">
-          {/* Toggle header */}
-          <button
-            type="button"
-            onClick={() => setWhiteLabelOpen(!whiteLabelOpen)}
-            className="w-full flex items-center justify-between gap-2 px-5 py-4 hover:bg-brand/5 dark:hover:bg-brand/5 transition-colors"
+        {selectedModules.length === 0 && (
+          <p className="text-red-500 dark:text-red-400 text-xs mt-2">Select at least one module to audit.</p>
+        )}
+      </div>
+
+      {/* -- Brand Identity selector -- */}
+      {brandIdentities.length > 0 && (
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+            <Fingerprint size={15} className="text-brand" />
+            Brand Identity
+            <span className="text-xs font-normal text-muted">(optional)</span>
+          </label>
+          <select
+            value={selectedBrandId}
+            onChange={(e) => setSelectedBrandId(e.target.value)}
+            className="w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] appearance-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
           >
-            <div className="flex items-center gap-2">
-              <Building2 size={15} className="text-brand" />
-              <span className="text-sm font-medium text-text">White-Label Branding</span>
-              <span className="text-[10px] font-medium text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                {packageTier}
-              </span>
-              {!whiteLabelOpen && (companyName.trim() || logoPreview) && (
-                <span className="text-[10px] text-[#22C55E] font-medium">Configured</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 text-muted">
-              {!whiteLabelOpen && <span className="text-xs">Optional</span>}
-              <ChevronDown size={14} className={`transition-transform duration-200 ${whiteLabelOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {/* Collapsible content */}
-          {whiteLabelOpen && (
-            <div className="px-5 pb-5 border-t border-brand/10 dark:border-brand/10">
-              <p className="text-xs text-muted mt-3 mb-4">
-                Replace ClearUX branding with your own in the PDF &amp; Word reports.
-              </p>
-
-              {/* Company name */}
-              <div className="mb-4">
-                <label htmlFor="wl-company" className="block text-xs font-medium text-text mb-1.5">
-                  Company Name
-                </label>
-                <input
-                  id="wl-company"
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your Company Name (optional)"
-                  className="w-full px-4 py-2.5 border border-border rounded-lg font-body text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 focus:border-brand"
-                />
-              </div>
-
-              {/* Logo upload */}
-              <div>
-                <label className="block text-xs font-medium text-text mb-1.5">
-                  Company Logo
-                </label>
-                {logoPreview ? (
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
-                    <img
-                      src={logoPreview}
-                      alt="Logo preview"
-                      className="h-10 w-auto max-w-[120px] object-contain rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-text font-medium truncate">{logoFile?.name}</p>
-                      <p className="text-[10px] text-muted">{logoFile ? `${(logoFile.size / 1024).toFixed(1)} KB` : ''}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setLogoFile(null); setLogoPreview(null); }}
-                      className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-colors"
-                      aria-label="Remove logo"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted hover:text-text hover:border-brand hover:bg-brand/5 dark:hover:bg-brand/5 transition-all"
-                  >
-                    <Upload size={14} />
-                    Upload logo (PNG, JPG, SVG — optional)
-                  </button>
-                )}
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/svg+xml"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                      setGeneralError('Logo must be under 2 MB');
-                      return;
-                    }
-                    setLogoFile(file);
-                    setLogoPreview(URL.createObjectURL(file));
-                  }}
-                />
-              </div>
-            </div>
-          )}
+            <option value="">No brand identity</option>
+            {brandIdentities.map((bi) => (
+              <option key={bi.id} value={bi.id}>{bi.name}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted mt-1.5">
+            Select a brand to check website consistency against your brand guidelines.{' '}
+            <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
+              Manage brands
+            </Link>
+          </p>
         </div>
       )}
 
-      {/* ── What's included ────────────────────────────────── */}
+      {/* -- White-label info (managed at profile level) -- */}
+      {isWhiteLabelEligible && (
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl border border-brand/15 bg-brand/5 dark:bg-brand/[0.03]">
+          <Building2 size={15} className="text-brand flex-shrink-0" />
+          <p className="text-xs text-muted flex-1">
+            White-label branding is applied automatically from your{' '}
+            <Link href="/dashboard/white-label" className="text-brand hover:underline font-medium">
+              White Label settings
+            </Link>.
+          </p>
+        </div>
+      )}
+
+      {/* -- What's included -- */}
       <AllAuditsInclude compact className="mb-6" />
 
-      {/* ── Free first audit banner ──────────────────────── */}
+      {/* -- Free first audit banner -- */}
       {firstAuditFree && (
         <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
@@ -548,7 +453,7 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* ── Credits banner ────────────────────────────────── */}
+      {/* -- Credits banner -- */}
       {!firstAuditFree && credits !== null && hasCredits && (
         <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
@@ -585,14 +490,14 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* ── Error ──────────────────────────────────────────── */}
+      {/* -- Error -- */}
       {generalError && (
         <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-red-700 dark:text-red-300 text-sm">{generalError}</p>
         </div>
       )}
 
-      {/* ── CTA ────────────────────────────────────────────── */}
+      {/* -- CTA -- */}
       <button
         onClick={handleSubmit}
         disabled={loading}

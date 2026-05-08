@@ -90,7 +90,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
   if (!authorized) return null;
 
   return (
-    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
+    <div className={`flex h-screen bg-surface ${theme === 'light' ? 'theme-light' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"

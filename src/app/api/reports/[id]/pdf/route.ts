@@ -110,8 +110,19 @@ export async function GET(
     const f = (findingsRes.data || []) as any[]
     const pages = (pagesRes.data || []) as any[]
 
-    const wlCompany: string | null = a.white_label_company_name || null
-    const wlLogoUrl: string | null = a.white_label_logo_url || null
+    // Profile-level white label settings (preferred), fallback to per-audit fields
+    const { data: wlSettings } = await db
+      .from('white_label_settings')
+      .select('*')
+      .eq('user_id', a.user_id)
+      .eq('is_active', true)
+      .single()
+
+    const wlCompany: string | null = (wlSettings as any)?.company_name || a.white_label_company_name || null
+    const wlLogoUrl: string | null = (wlSettings as any)?.logo_url || a.white_label_logo_url || null
+    const wlBrandColor: string | null = (wlSettings as any)?.brand_color || null
+    const wlContactEmail: string | null = (wlSettings as any)?.contact_email || null
+    const wlFooterText: string | null = (wlSettings as any)?.footer_text || null
     const isWhiteLabel = !!(wlCompany || wlLogoUrl)
 
     const lang = a.language || 'en'
@@ -538,7 +549,7 @@ export async function GET(
       doc.moveTo(leftM, 748).lineTo(leftM + contentW, 748)
         .strokeColor(C.borderLight).lineWidth(0.5).stroke()
       doc.fontSize(7).font('Helvetica').fillColor(C.textTert)
-      doc.text(L.confidential, leftM, 752, { width: contentW / 2, lineBreak: false })
+      doc.text(wlFooterText || L.confidential, leftM, 752, { width: contentW / 2, lineBreak: false })
       doc.text(`Page ${i + 1}`, leftM + contentW / 2, 752, { width: contentW / 2, align: 'right', lineBreak: false })
 
       // Header (skip cover page)

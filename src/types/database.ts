@@ -87,6 +87,10 @@ export interface Audit {
   depth_mode:         AuditDepthMode
   // Pillar selection: null = all pillars (full audit), array of indices = partial audit
   selected_pillars:   number[] | null
+  // Brand identity for brand consistency auditing
+  brand_identity_id:  string | null
+  // Module selection (slug-based): null = complete audit
+  selected_modules:   string[] | null
 }
 
 export interface ScheduledAudit {
@@ -235,6 +239,38 @@ export interface AuditLog {
   created_at: string
 }
 
+export interface WhiteLabelSettings {
+  id:            string
+  user_id:       string
+  company_name:  string | null
+  logo_url:      string | null
+  brand_color:   string | null
+  contact_email: string | null
+  footer_text:   string | null
+  is_active:     boolean
+  created_at:    string
+  updated_at:    string
+}
+
+export interface BrandIdentity {
+  id:          string
+  user_id:     string
+  name:        string
+  description: string | null
+  created_at:  string
+  updated_at:  string
+}
+
+export interface BrandIdentityFile {
+  id:                string
+  brand_identity_id: string
+  file_name:         string
+  file_url:          string
+  file_type:         string | null
+  file_size_bytes:   number | null
+  created_at:        string
+}
+
 // ── VIEW TYPES ───────────────────────────────────────────────
 
 export interface AuditOverview {
@@ -321,6 +357,21 @@ export interface Database {
         Row: AuditLog
         Insert: Partial<AuditLog> & Pick<AuditLog, 'audit_id' | 'event' | 'status'>
         Update: Partial<AuditLog>
+      }
+      white_label_settings: {
+        Row: WhiteLabelSettings
+        Insert: Partial<WhiteLabelSettings> & Pick<WhiteLabelSettings, 'user_id'>
+        Update: Partial<WhiteLabelSettings>
+      }
+      brand_identities: {
+        Row: BrandIdentity
+        Insert: Partial<BrandIdentity> & Pick<BrandIdentity, 'user_id' | 'name'>
+        Update: Partial<BrandIdentity>
+      }
+      brand_identity_files: {
+        Row: BrandIdentityFile
+        Insert: Partial<BrandIdentityFile> & Pick<BrandIdentityFile, 'brand_identity_id' | 'file_name' | 'file_url'>
+        Update: Partial<BrandIdentityFile>
       }
     }
     Views: {

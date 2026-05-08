@@ -184,9 +184,19 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     const f = (findingsRes.data || []) as any[]
     const pages = (pagesRes.data || []) as any[]
 
-    // White-label branding
-    const wlCompany: string | null = a.white_label_company_name || null
-    const wlLogoUrl: string | null = a.white_label_logo_url || null
+    // Profile-level white label settings (preferred), fallback to per-audit fields
+    const { data: wlSettings } = await db
+      .from('white_label_settings')
+      .select('*')
+      .eq('user_id', a.user_id)
+      .eq('is_active', true)
+      .single()
+
+    const wlCompany: string | null = (wlSettings as any)?.company_name || a.white_label_company_name || null
+    const wlLogoUrl: string | null = (wlSettings as any)?.logo_url || a.white_label_logo_url || null
+    const wlBrandColor: string | null = (wlSettings as any)?.brand_color || null
+    const wlContactEmail: string | null = (wlSettings as any)?.contact_email || null
+    const wlFooterText: string | null = (wlSettings as any)?.footer_text || null
     const isWhiteLabel = !!(wlCompany || wlLogoUrl)
 
     const lang = a.language || 'en'
@@ -848,7 +858,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
             children: [new Paragraph({
               border: { top: { style: BorderStyle.SINGLE, size: 1, color: C.borderLight, space: 4 } },
               children: [
-                new TextRun({ text: L.confidential, font: 'Arial', size: 14, color: C.textTert }),
+                new TextRun({ text: wlFooterText || L.confidential, font: 'Arial', size: 14, color: C.textTert }),
                 new TextRun({ text: '        Page ', font: 'Arial', size: 14, color: C.textTert }),
                 new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 14, color: C.textTert }),
               ],

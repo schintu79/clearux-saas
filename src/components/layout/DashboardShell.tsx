@@ -15,6 +15,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Bell,
+  Paintbrush,
+  Fingerprint,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -50,6 +52,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
     { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
+    { label: 'White Label', href: '/dashboard/white-label', icon: Paintbrush },
+    { label: 'Brand Identity', href: '/dashboard/brand-identity', icon: Fingerprint },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
@@ -71,7 +75,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
+    <div className={clsx('flex h-screen bg-surface', theme === 'light' && 'theme-light')} style={{ fontFamily: 'var(--font-body)' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
