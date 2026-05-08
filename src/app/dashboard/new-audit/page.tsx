@@ -107,9 +107,11 @@ const NewAuditInner: React.FC = () => {
       .catch(() => {});
   }, [user]);
 
-  // When brand identity is deselected, remove brand_consistency from selection
+  // Auto-add brand_consistency when a brand is selected; remove when deselected
   useEffect(() => {
-    if (!selectedBrandId && selectedModules.includes('brand_consistency')) {
+    if (selectedBrandId && !selectedModules.includes('brand_consistency')) {
+      setSelectedModules((prev) => [...prev, 'brand_consistency']);
+    } else if (!selectedBrandId && selectedModules.includes('brand_consistency')) {
       setSelectedModules((prev) => prev.filter((s) => s !== 'brand_consistency'));
     }
   }, [selectedBrandId]);

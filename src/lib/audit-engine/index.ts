@@ -176,8 +176,13 @@ async function _processAuditInner(auditId: string): Promise<void> {
           )
 
           const textParts = extracted
-            .filter(e => e.textContent && e.textContent.length > 0)
-            .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+            .filter(e => (e.textContent && e.textContent.length > 0) || (e.visualDescription && e.visualDescription.length > 0))
+            .map(e => {
+              const parts: string[] = [`[Brand file: ${e.fileName}]`]
+              if (e.textContent) parts.push(e.textContent)
+              if (e.visualDescription) parts.push(`[Visual description]\n${e.visualDescription}`)
+              return parts.join('\n')
+            })
 
           if (textParts.length > 0) {
             const brandContext = textParts.join('\n\n---\n\n')
