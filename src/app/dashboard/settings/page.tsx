@@ -118,7 +118,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
           Sign In
         </a>
       </div>
@@ -286,7 +286,7 @@ const SettingsPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <SettingsIcon size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text">Settings</h1>
+          <h1 className="text-2xl font-medium font-heading text-text leading-none">Settings</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">Manage your account and preferences</p>
       </div>

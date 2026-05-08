@@ -312,7 +312,7 @@ function ShareVisual({ inView }: { inView: boolean }) {
               </motion.span>
             </div>
             <motion.div
-              className="px-4 py-2 rounded-lg bg-text text-surface dark:text-[#111] text-xs font-medium flex-shrink-0"
+              className="px-4 py-2 rounded-lg bg-text text-surface text-xs font-medium flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

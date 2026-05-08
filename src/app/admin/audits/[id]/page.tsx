@@ -329,7 +329,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
               <div className="space-y-4">
                 {topRecs.slice(0, 3).map((rec, i) => (
                   <div key={i} className="flex gap-3 items-start">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface dark:text-[#111] mt-0.5 bg-brand">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface mt-0.5 bg-brand">
                       {i + 1}
                     </span>
                     <p className="text-sm text-text leading-relaxed">{rec}</p>

@@ -1641,7 +1641,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
             <button
               onClick={handlePayNow}
-              className="inline-flex items-center gap-2 text-sm font-medium bg-brand text-surface dark:text-[#111111] px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-brand text-surface px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
             >
               Pay Now
             </button>
@@ -1697,7 +1697,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="inline-flex items-center gap-1.5 text-xs font-medium bg-brand text-surface dark:text-[#111111] px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-brand text-surface px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
               >
                 {restarting ? (
                   <><Loader2 size={13} className="animate-spin" /> Restarting...</>
@@ -1735,7 +1735,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleRestart}
                   disabled={restarting}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium bg-brand text-surface dark:text-[#111111] px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium bg-brand text-surface px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
                 >
                   {restarting ? (
                     <><Loader2 size={14} className="animate-spin" /> Restarting...</>
@@ -2004,14 +2004,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <div className="mb-6 p-5 rounded-xl border border-brand/20 dark:border-brand/10 bg-brand/5 dark:bg-brand/[0.06]">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
-                      <Zap size={14} className="text-surface dark:text-[#111111]" />
+                      <Zap size={14} className="text-surface" />
                     </div>
                     <p className="text-sm font-medium text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
                   </div>
                   <div className="space-y-3">
                     {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
                       <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-brand text-surface dark:text-[#111111] mt-0.5">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-brand text-surface mt-0.5">
                           {i + 1}
                         </span>
                         <p className="text-sm text-text/80 leading-relaxed">{rec}</p>

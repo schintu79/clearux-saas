@@ -95,7 +95,7 @@ export default function BuyCreditsPage() {
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-brand text-surface dark:text-[#111111] text-[10px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-2.5 right-4 bg-brand text-surface text-[10px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
                 Customers Favourite
               </span>
             )}
@@ -137,7 +137,7 @@ export default function BuyCreditsPage() {
               disabled={purchasing !== null}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
                 pack.popular
-                  ? 'bg-brand text-surface dark:text-[#111111] hover:brightness-110 shadow-sm'
+                  ? 'bg-brand text-surface hover:brightness-110 shadow-sm'
                   : 'bg-off border border-border text-text hover:bg-border/50'
               }`}
             >

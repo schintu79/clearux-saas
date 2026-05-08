@@ -88,7 +88,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
           Sign In
         </a>
       </div>

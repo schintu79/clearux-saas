@@ -187,7 +187,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface dark:text-[#111111] flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">

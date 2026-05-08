@@ -79,7 +79,7 @@ function OnboardingBanner() {
           { step: '3', title: 'Get your report', desc: 'PDF, Word, and dashboard', icon: FileSearch },
         ].map((s) => (
           <div key={s.step} className="flex items-start gap-3 p-3 rounded-lg bg-card/80 dark:bg-white/[0.04] border border-border/20 dark:border-white/[0.04]">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface dark:text-[#111111] bg-brand">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface bg-brand">
               {s.step}
             </span>
             <div>
@@ -250,7 +250,7 @@ function DashboardInner() {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <LayoutDashboard size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text">Hey {name}</h1>
+          <h1 className="text-2xl font-medium font-heading text-text leading-none">Hey {name}</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">
           {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}

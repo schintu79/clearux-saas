@@ -185,17 +185,18 @@ export default function Home() {
 
           {/* KSP */}
           <motion.p
-            className="text-[13px] sm:text-[15px] font-medium text-lime-gradient tracking-wide mt-5 text-center"
+            className="text-[13px] sm:text-[15px] font-medium text-lime-gradient tracking-wide mt-10 sm:mt-12 text-center leading-relaxed max-w-xs sm:max-w-none mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            Your first audit is free — results in minutes, no credit card needed.
+            Your first audit is free —<br />
+            results in minutes, no credit card needed.
           </motion.p>
 
           {/* Trust badges */}
           <motion.div
-            className="flex items-center justify-center gap-3 sm:gap-6 mt-6 sm:mt-10 flex-wrap"
+            className="flex items-center justify-center gap-3 sm:gap-6 mt-3 flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}

@@ -62,6 +62,21 @@ export async function POST(
     const storagePath = `${user.id}/${brandIdentityId}/${Date.now()}-${file.name}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
+    // Ensure bucket exists (auto-create if missing)
+    const { data: buckets } = await db.storage.listBuckets()
+    const bucketExists = buckets?.some((b: any) => b.name === 'brand-assets')
+    if (!bucketExists) {
+      const { error: createErr } = await db.storage.createBucket('brand-assets', {
+        public: true,
+        fileSizeLimit: MAX_FILE_SIZE,
+        allowedMimeTypes: ALLOWED_TYPES,
+      })
+      if (createErr) {
+        console.error('Bucket creation error:', createErr)
+        return NextResponse.json({ error: 'Storage not configured — please contact support' }, { status: 500 })
+      }
+    }
+
     const { error: uploadErr } = await db.storage
       .from('brand-assets')
       .upload(storagePath, buffer, {
@@ -72,7 +87,7 @@ export async function POST(
 
     if (uploadErr) {
       console.error('Storage upload error:', uploadErr)
-      return NextResponse.json({ error: 'Failed to upload file to storage' }, { status: 500 })
+      return NextResponse.json({ error: `Upload failed: ${uploadErr.message}` }, { status: 500 })
     }
 
     const { data: urlData } = db.storage

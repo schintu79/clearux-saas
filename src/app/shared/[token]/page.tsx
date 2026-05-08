@@ -103,7 +103,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <Lock size={40} className="text-muted mx-auto mb-4" />
             <h1 className="font-heading font-medium text-2xl text-text mb-2">Link unavailable</h1>
             <p className="text-muted text-sm mb-6">{error || 'This shared audit link is invalid or has been revoked.'}</p>
-            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+            <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
               Go to ClearUX
             </Link>
           </div>
@@ -226,7 +226,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                   <div className="space-y-4">
                     {topRecs.slice(0, 3).map((rec, i) => (
                       <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface dark:text-[#111] mt-0.5 bg-brand">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium text-surface mt-0.5 bg-brand">
                           {i + 1}
                         </span>
                         <p className="text-sm text-text leading-relaxed">{rec}</p>
@@ -292,7 +292,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               <div className="text-center mt-10 mb-6 px-4">
                 <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
                 <p className="text-muted text-xs mb-5">64 checkpoints. 16 categories. Results in minutes. First audit free.</p>
-                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5">
+                <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5">
                   <Sparkles size={16} />
                   Get Your Free Audit
                 </Link>

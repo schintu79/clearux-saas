@@ -137,7 +137,7 @@ export default function AdminNotificationsPage() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
         >
           <Plus size={14} />
           New Notification
@@ -226,7 +226,7 @@ export default function AdminNotificationsPage() {
               <button
                 onClick={handleCreate}
                 disabled={sending || !form.title.trim() || !form.message.trim()}
-                className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
               >
                 <Send size={13} />
                 {sending ? 'Sending...' : 'Send to all users'}

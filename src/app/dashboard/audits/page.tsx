@@ -234,11 +234,11 @@ export default function AuditsPage() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <FileSearch size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text">All Audits</h1>
+            <h1 className="text-2xl font-medium font-heading text-text leading-none">All Audits</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -255,7 +255,7 @@ export default function AuditsPage() {
           <FileSearch size={24} className="text-muted mx-auto mb-3" />
           <h2 className="font-medium text-sm text-text mb-1">No audits yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110">
+          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110">
             <Sparkles size={13} /> Start Audit
           </Link>
         </div>

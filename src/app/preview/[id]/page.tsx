@@ -436,7 +436,7 @@ export default function PreviewPage() {
               <div className="mt-6 space-y-3">
                 <Link
                   href={`/register?redirect=/dashboard/audits/${auditId}&claim=${auditId}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-body text-sm font-medium bg-brand text-surface dark:text-[#111111] transition-all hover:shadow-lg active:scale-95"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-body text-sm font-medium bg-brand text-surface transition-all hover:shadow-lg active:scale-95"
                 >
                   Unlock Full Audit — $99
                   <ArrowRight className="h-4 w-4" />
@@ -510,7 +510,7 @@ export default function PreviewPage() {
             </p>
             <Link
               href={`/register?redirect=/dashboard/audits/${auditId}&claim=${auditId}`}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg px-6 py-3 font-body text-sm font-medium bg-brand text-surface dark:text-[#111111] transition-all hover:shadow-lg active:scale-95"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg px-6 py-3 font-body text-sm font-medium bg-brand text-surface transition-all hover:shadow-lg active:scale-95"
             >
               Get Full Audit
               <ArrowRight className="h-4 w-4" />

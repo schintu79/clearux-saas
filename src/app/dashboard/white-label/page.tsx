@@ -204,7 +204,7 @@ const WhiteLabelPage: React.FC = () => {
         <p className="text-muted mb-4">Please sign in to access white-label settings</p>
         <a
           href="/login"
-          className="inline-flex items-center gap-2 bg-brand text-surface dark:text-[#111111] font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110"
+          className="inline-flex items-center gap-2 bg-brand text-surface font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110"
         >
           Sign In
         </a>
@@ -227,7 +227,7 @@ const WhiteLabelPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <Paintbrush size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text">White Label</h1>
+          <h1 className="text-2xl font-medium font-heading text-text leading-none">White Label</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">
           Customize reports with your own branding. Settings apply to all future audits.

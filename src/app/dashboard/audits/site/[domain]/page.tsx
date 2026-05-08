@@ -264,7 +264,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           )}
           <Link
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`}
-            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <RefreshCw size={13} />
             Re-audit
@@ -320,7 +320,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Start an audit to analyze this site.</p>
           <Link
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
-            className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Sparkles size={13} /> Start Audit
           </Link>
