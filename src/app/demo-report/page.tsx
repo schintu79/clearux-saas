@@ -5,7 +5,7 @@ import DemoReportContent from './DemoReportContent'
 
 export const metadata: Metadata = {
   title: 'Sample Audit Report — ClearUX',
-  description: 'See what a ClearUX audit report looks like. Visual demo of findings, scores, and recommendations across 96 checkpoints.',
+  description: 'See what a ClearUX audit report looks like. Visual demo of findings, scores, and recommendations across 64 checkpoints.',
 }
 
 export default function DemoReportPage() {

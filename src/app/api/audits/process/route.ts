@@ -51,19 +51,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Trigger audit processing — direct execution with Inngest as backup
+    // Trigger processing via Inngest (background job)
+    // Dispatch to the correct function based on audit type
+    // Smart inference: check audit_type first, then fall back to brand_identity_id + product_url
     const a = audit as any
     const auditType = a.audit_type || (a.brand_identity_id && !a.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    console.log(`[process] Starting ${auditType} audit ${audit_id}`)
-    if (auditType === 'website') {
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(audit_id).catch((err) => console.error(`[process] processAudit failed:`, err))
-    } else if (auditType === 'brand_identity') {
-      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-      processBrandAudit(audit_id).catch((err) => console.error(`[process] processBrandAudit failed:`, err))
-    }
-    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch(() => {})
+
+    await inngest.send({
+      name: eventName,
+      data: { auditId: audit_id },
+    })
 
     return NextResponse.json(
       { message: 'Audit processing started', audit_id },

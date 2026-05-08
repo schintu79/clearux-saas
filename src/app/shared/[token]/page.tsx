@@ -291,7 +291,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               {/* ── CTA ──────────────────────────────────── */}
               <div className="text-center mt-10 mb-6 px-4">
                 <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
-                <p className="text-muted text-xs mb-5">96 checkpoints. 24 categories. Results in minutes. First audit free.</p>
+                <p className="text-muted text-xs mb-5">64 checkpoints. 16 categories. Results in minutes. First audit free.</p>
                 <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5">
                   <Sparkles size={16} />
                   Get Your Free Audit

@@ -9,7 +9,7 @@ const BASE_URL = 'https://clearux.com'
 export const metadata: Metadata = {
   title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | ClearUX',
   description:
-    'A comprehensive UX audit checklist organized by 6 modules and 24 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let ClearUX automate it.',
+    'A comprehensive UX audit checklist organized by 4 pillars and 16 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let ClearUX automate it.',
   keywords: [
     'ux audit checklist',
     'ux audit template',
@@ -179,7 +179,7 @@ export default function UxAuditChecklistPage() {
             </Link>{' '}
             without a checklist is like performing a code review without
             linting rules — you will catch some issues, but you will miss far
-            more. This UX audit checklist covers the 24 categories that
+            more. This UX audit checklist covers the 16 categories that
             ClearUX evaluates, organized into four pillars: Accessibility,
             Usability, Conversion, and Ethical Design. Use it as a template
             for manual reviews, or let ClearUX automate the entire process.
@@ -270,7 +270,7 @@ export default function UxAuditChecklistPage() {
               Automate this entire checklist
             </h2>
             <p className="text-muted mb-6">
-              ClearUX evaluates all 24 categories automatically and delivers
+              ClearUX evaluates all 16 categories automatically and delivers
               a scored, shareable report in minutes.
             </p>
             <Link

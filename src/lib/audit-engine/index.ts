@@ -4,11 +4,11 @@
 
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from './crawler'
-import { runFullAnalysis, generateReport } from './analyzer'
+import { analyzeCategory, runFullAnalysis, generateReport } from './analyzer'
 import { generatePdfReport } from './pdf'
 import { sendAuditComplete } from './email'
 import { captureAuditScreenshots } from './screenshots'
-import type { AuditFinding } from '@/types/database'
+import type { AuditFinding, ChecklistCategory, ChecklistItem } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
 
@@ -154,38 +154,119 @@ async function _processAuditInner(auditId: string): Promise<void> {
       })
       .join('\n---\n')
 
-    // Always use built-in 24-category analysis (6 pillars × 4 categories)
-    // DB checklist_categories are deprecated — they only had 16 categories
+    // Try DB checklist first, fall back to built-in categories
     let allFindings: AuditFinding[] = []
     let sortOrder = 0
 
-    console.log('[audit-engine] Running built-in 24-category analysis')
-    const findings = await runFullAnalysis(pageContent, audit as any, userFocus, language)
+    const { data: dbCategories } = await db
+      .from('checklist_categories')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
 
-    for (const finding of findings) {
-      const { data: inserted } = await db
-        .from('audit_findings')
-        .insert({
-          audit_id: auditId,
-          checklist_item_id: null,
-          severity: finding.severity,
-          title: finding.title,
-          description: finding.description,
-          evidence: null,
-          page_url: finding.pageUrl || crawledPages[0]?.url || null,
-          recommendation: finding.recommendation,
-          estimated_impact: finding.estimatedImpact || null,
-          target_element: finding.targetElement || null,
-          screenshot_url: null,
-          sort_order: sortOrder++,
-        } as any)
-        .select()
-        .single()
+    if (dbCategories && dbCategories.length > 0) {
+      // Use DB-seeded categories — process in parallel batches of 3
+      const CONCURRENCY = 3
 
-      if (inserted) allFindings.push(inserted as any)
+      // Pre-fetch all checklist items
+      const categoriesWithItems = await Promise.all(
+        dbCategories.map(async (category: any) => {
+          const { data: items } = await db
+            .from('checklist_items')
+            .select('*')
+            .eq('category_id', category.id)
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true })
+          return { category, items: items || [] }
+        }),
+      )
+
+      const validCategories = categoriesWithItems.filter((c) => c.items.length > 0)
+
+      for (let i = 0; i < validCategories.length; i += CONCURRENCY) {
+        const batch = validCategories.slice(i, i + CONCURRENCY)
+
+        const batchResults = await Promise.all(
+          batch.map(({ category, items }) =>
+            analyzeCategory(
+              pageContent,
+              (category as any).name,
+              items.map((item: any) => ({
+                title: item.title,
+                description: item.description,
+                whatToCheck: item.what_to_check,
+              })),
+              userFocus,
+              language,
+            ).then((findings) => ({ category, findings })),
+          ),
+        )
+
+        for (const { category, findings } of batchResults) {
+          for (const finding of findings) {
+            const { data: inserted } = await db
+              .from('audit_findings')
+              .insert({
+                audit_id: auditId,
+                checklist_item_id: null,
+                severity: finding.severity,
+                title: finding.title,
+                description: finding.description,
+                evidence: null,
+                page_url: finding.pageUrl || crawledPages[0]?.url || null,
+                recommendation: finding.recommendation,
+                estimated_impact: finding.estimatedImpact || null,
+                target_element: finding.targetElement || null,
+                screenshot_url: null,
+                sort_order: sortOrder++,
+              } as any)
+              .select()
+              .single()
+
+            if (inserted) allFindings.push(inserted as any)
+          }
+
+          await log(db, auditId, 'category_analysed', 'success', `Analyzed: ${(category as any).name}`, {
+            findings_count: findings.length,
+          })
+        }
+
+        // Brief pause between batches
+        if (i + CONCURRENCY < validCategories.length) {
+          await new Promise((r) => setTimeout(r, 500))
+        }
+      }
+    } else {
+      // No DB categories — use built-in 19-category analysis
+      console.log('[audit-engine] No DB categories found, using built-in analysis')
+
+      const findings = await runFullAnalysis(pageContent, audit as any, userFocus, language)
+
+      for (const finding of findings) {
+        const { data: inserted } = await db
+          .from('audit_findings')
+          .insert({
+            audit_id: auditId,
+            checklist_item_id: null,
+            severity: finding.severity,
+            title: finding.title,
+            description: finding.description,
+            evidence: null,
+            page_url: finding.pageUrl || crawledPages[0]?.url || null,
+            recommendation: finding.recommendation,
+            estimated_impact: finding.estimatedImpact || null,
+            target_element: finding.targetElement || null,
+            screenshot_url: null,
+            sort_order: sortOrder++,
+          } as any)
+          .select()
+          .single()
+
+        if (inserted) allFindings.push(inserted as any)
+      }
+
+      await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
     }
-
-    await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
 
     // 4. CAPTURE SCREENSHOTS — pages + highlighted findings (non-fatal)
     try {

@@ -221,7 +221,7 @@ export default function Home() {
               360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
             </p>
             <p className="text-base sm:text-lg font-bold text-lime-gradient">
-              10 free credits to test.
+              First audit free.
             </p>
           </motion.div>
 
@@ -250,7 +250,7 @@ export default function Home() {
 
           {/* Trust badges */}
           <motion.div
-            className="flex items-center justify-center gap-3 sm:gap-6 mt-3 flex-wrap"
+            className="flex items-center justify-center gap-3 sm:gap-6 mt-5 flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}

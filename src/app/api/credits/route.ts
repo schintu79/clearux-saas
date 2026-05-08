@@ -147,21 +147,24 @@ export async function POST(request: NextRequest) {
     const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
-    // Trigger audit processing — direct execution with Inngest as backup
-    console.log(`[credits] Starting ${auditType} audit ${audit_id}`)
-    if (auditType === 'website') {
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(audit_id).catch((err) => {
-        console.error(`[credits] processAudit failed for ${audit_id}:`, err)
+    // Trigger audit processing via Inngest (background job)
+    try {
+      console.log(`[credits] Sending Inngest event "${eventName}" for audit ${audit_id}`)
+      const sendResult = await inngest.send({
+        name: eventName,
+        data: { auditId: audit_id },
       })
-    } else if (auditType === 'brand_identity') {
-      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-      processBrandAudit(audit_id).catch((err) => {
-        console.error(`[credits] processBrandAudit failed for ${audit_id}:`, err)
-      })
+      console.log(`[credits] Inngest event sent successfully:`, JSON.stringify(sendResult))
+    } catch (inngestErr) {
+      console.error(`[credits] Inngest send FAILED for audit ${audit_id}:`, inngestErr)
+      // Fallback: process directly if Inngest fails (website audits only)
+      if (auditType === 'website') {
+        const { processAudit } = await import('@/lib/audit-engine')
+        processAudit(audit_id).catch((err) => {
+          console.error(`[credits] Fallback processAudit failed for ${audit_id}:`, err)
+        })
+      }
     }
-    // Also try Inngest if configured (non-blocking)
-    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch(() => {})
 
     return NextResponse.json({
       success: true,
