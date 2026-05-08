@@ -43,9 +43,11 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    if ((audit as any).status !== 'failed') {
+    const retriableStatuses = ['failed', 'crawling', 'analysing', 'generating_report']
+    const auditStatus = (audit as any).status as string
+    if (!retriableStatuses.includes(auditStatus)) {
       return NextResponse.json(
-        { error: 'Only failed audits can be retried' },
+        { error: 'Only failed or stuck audits can be retried' },
         { status: 400 },
       )
     }
@@ -75,10 +77,11 @@ export async function POST(
       } as any)
       .eq('id', auditId)
 
-    // Clean up old findings and report so they get regenerated
+    // Clean up old findings, report, and snapshots so they get regenerated
     await db.from('audit_findings').delete().eq('audit_id', auditId)
     await db.from('reports').delete().eq('audit_id', auditId)
     await db.from('audit_pages').delete().eq('audit_id', auditId)
+    await db.from('brand_audit_file_snapshots').delete().eq('audit_id', auditId)
 
     // Log retry
     await db.from('audit_logs').insert({

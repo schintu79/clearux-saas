@@ -91,9 +91,26 @@ async function refundCredit(auditId: string) {
   }
 }
 
+/* ── Timeout helper ── */
+
+const BRAND_AUDIT_TIMEOUT_MS = 8 * 60 * 1000 // 8 minutes max
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Brand audit timed out after ${ms / 1000}s (${label})`)), ms),
+    ),
+  ])
+}
+
 /* ── Main processor ── */
 
 export async function processBrandAudit(auditId: string): Promise<void> {
+  return withTimeout(_processBrandAuditInner(auditId), BRAND_AUDIT_TIMEOUT_MS, 'processBrandAudit')
+}
+
+async function _processBrandAuditInner(auditId: string): Promise<void> {
   const db = getDb()
 
   try {
@@ -175,7 +192,6 @@ export async function processBrandAudit(auditId: string): Promise<void> {
         file_url: f.file_url,
         file_type: f.file_type,
       })),
-      5,
     )
 
     const successCount = extractedFiles.filter((r) => !r.error).length

@@ -238,19 +238,23 @@ function AuditsPageInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Tab state from URL param
+  // Tab state — use local state for instant switching, sync URL for deep-linking
   const tabParam = searchParams.get('type') as AuditType | null;
-  const activeTab: AuditType = TABS.some(t => t.key === tabParam && !t.disabled) ? tabParam! : 'website';
+  const initialTab: AuditType = TABS.some(t => t.key === tabParam && !t.disabled) ? tabParam! : 'website';
+  const [activeTab, setActiveTabState] = useState<AuditType>(initialTab);
 
-  const setActiveTab = (tab: AuditType) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const setActiveTab = useCallback((tab: AuditType) => {
+    setActiveTabState(tab);
+    // Sync URL (non-blocking — visual switch is already done via state)
+    const params = new URLSearchParams(window.location.search);
     if (tab === 'website') {
       params.delete('type');
     } else {
       params.set('type', tab);
     }
-    router.replace(`/dashboard/audits${params.toString() ? `?${params.toString()}` : ''}`);
-  };
+    const qs = params.toString();
+    window.history.replaceState(null, '', `/dashboard/audits${qs ? `?${qs}` : ''}`);
+  }, []);
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {

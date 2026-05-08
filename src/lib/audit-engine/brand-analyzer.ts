@@ -176,20 +176,25 @@ Find 2-6 findings per category. Be specific — reference actual content from th
   }
 }
 
-/** Analyze all brand audit categories in parallel */
+/** Analyze all brand audit categories in batches */
 export async function analyzeAllBrandCategories(
   extractedFiles: ExtractedContent[],
   brandName: string,
   language: string = 'en',
-  batchSize: number = 9,
+  batchSize: number = 5,
 ): Promise<BrandCategoryResult[]> {
   const brandContext = buildBrandContext(extractedFiles)
+  const results: BrandCategoryResult[] = []
   const categories = [...BRAND_AUDIT_CATEGORIES]
 
-  // Run all categories in parallel for maximum speed
-  const results = await Promise.all(
-    categories.map((cat) => analyzeBrandCategory(cat, brandContext, brandName, language)),
-  )
+  // Process in batches of 5 (2 rounds for 9 categories — fast but avoids rate limits)
+  for (let i = 0; i < categories.length; i += batchSize) {
+    const batch = categories.slice(i, i + batchSize)
+    const batchResults = await Promise.all(
+      batch.map((cat) => analyzeBrandCategory(cat, brandContext, brandName, language)),
+    )
+    results.push(...batchResults)
+  }
 
   // Sort by category sort order
   results.sort((a, b) => {

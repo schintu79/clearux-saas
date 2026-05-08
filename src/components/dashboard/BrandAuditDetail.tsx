@@ -531,6 +531,12 @@ export default function BrandAuditDetail({
   const isCompleted = audit.status === 'completed';
   const isFailed = audit.status === 'failed';
   const isInProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
+  // Show retry if stuck for more than 5 minutes in a processing state
+  const stuckMinutes = isInProgress && audit.updated_at
+    ? (Date.now() - new Date(audit.updated_at).getTime()) / 60_000
+    : 0;
+  const isStuck = isInProgress && stuckMinutes > 5;
+  const canRetry = isFailed || isStuck;
   const meta = statusMeta[audit.status] || statusMeta.pending_payment;
   const StatusIcon = meta.icon;
   const overallScore = audit.report?.overall_score ?? null;
@@ -597,14 +603,14 @@ export default function BrandAuditDetail({
                   <span className="ml-auto text-[11px] text-muted">1 credit</span>
                 </Link>
               )}
-              {isFailed && (
+              {canRetry && (
                 <button
                   onClick={() => { handleRetry(); setMenuOpen(false); }}
                   disabled={retrying}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50"
                 >
                   <Zap size={13} className="text-muted" />
-                  Retry audit
+                  {isStuck ? 'Restart stuck audit' : 'Retry audit'}
                 </button>
               )}
               <button
@@ -664,17 +670,21 @@ export default function BrandAuditDetail({
         </Card>
       )}
 
-      {/* ── Failed ───────────────────────────────────────── */}
-      {isFailed && (
+      {/* ── Failed or Stuck ───────────────────────────────── */}
+      {canRetry && (
         <Card className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                <AlertTriangle size={20} className="text-red-500" />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isFailed ? 'bg-red-50 dark:bg-red-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20'}`}>
+                <AlertTriangle size={20} className={isFailed ? 'text-red-500' : 'text-yellow-500'} />
               </div>
               <div>
-                <p className="font-medium text-text">Audit failed</p>
-                <p className="text-sm text-muted">{(audit as any).crawl_error || 'An error occurred during processing.'}</p>
+                <p className="font-medium text-text">{isFailed ? 'Audit failed' : 'Audit appears stuck'}</p>
+                <p className="text-sm text-muted">
+                  {isFailed
+                    ? ((audit as any).crawl_error || 'An error occurred during processing.')
+                    : `Processing hasn't progressed in ${Math.round(stuckMinutes)} minutes. You can restart it.`}
+                </p>
               </div>
             </div>
             <button
@@ -683,7 +693,7 @@ export default function BrandAuditDetail({
               className="inline-flex items-center gap-2 text-sm font-medium bg-brand text-surface px-4 py-2 rounded-lg hover:brightness-110 disabled:opacity-50"
             >
               {retrying ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-              Retry
+              {isStuck ? 'Restart' : 'Retry'}
             </button>
           </div>
         </Card>
