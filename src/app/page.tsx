@@ -100,8 +100,13 @@ function RotatingNumber({ values, interval = 3000 }: { values: string[]; interva
     return () => clearInterval(timer);
   }, [values, interval]);
 
+  // Find the widest value to reserve space
+  const widest = values.reduce((a, b) => (a.length >= b.length ? a : b), '');
+
   return (
     <span className="inline-block relative">
+      {/* Invisible spacer to hold width/height */}
+      <span className="invisible">{widest}</span>
       <AnimatePresence mode="wait">
         <motion.span
           key={idx}
@@ -109,7 +114,7 @@ function RotatingNumber({ values, interval = 3000 }: { values: string[]; interva
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4 }}
-          className="inline-block"
+          className="absolute inset-0"
         >
           {values[idx]}
         </motion.span>
@@ -571,8 +576,8 @@ export default function Home() {
             ].map((item, i) => {
               const StepIcon = item.icon;
               return (
-                <StaggerItem key={i}>
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8">
+                <StaggerItem key={i} className="flex">
+                  <div className="flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 flex-1">
                     <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.10] leading-none block mb-4">
                       {item.step}
                     </span>
@@ -580,7 +585,7 @@ export default function Home() {
                       <StepIcon size={20} className="text-[#84CC16]" />
                     </div>
                     <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">{item.title}</h3>
-                    <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">{item.desc}</p>
+                    <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed flex-1">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
