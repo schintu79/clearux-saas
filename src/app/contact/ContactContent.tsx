@@ -66,7 +66,7 @@ export default function ContactContent() {
             Contact <span className="text-lime-gradient">us.</span>
           </h1>
 
-          <p className="text-white/65 text-base md:text-lg max-w-xl leading-relaxed mt-3 mb-14">
+          <p className="text-white/65 text-base sm:text-lg max-w-xl leading-relaxed mt-3 mb-14">
             Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
           </p>
 
@@ -211,7 +211,7 @@ export default function ContactContent() {
           >
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
           </p>
           <Link

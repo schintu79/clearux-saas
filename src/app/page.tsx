@@ -7,7 +7,7 @@ import {
   ArrowRight, CheckCircle, Shield,
   FileText, Share2, RefreshCw, BarChart3, ListChecks,
   Sparkles, ChevronDown, ShieldCheck, Layers, Users, Accessibility,
-  Rocket, Eye, Globe2, Fingerprint, Code2,
+  Rocket, Eye, Globe2, Fingerprint, Code2, Search,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -63,6 +63,60 @@ const MODULES = [
     desc: 'Whether your product is findable, legible, and ranked the way it deserves — heading hierarchy, meta tags, structured data, and crawlability.',
   },
 ];
+
+/* ── FAQ accordion item (matches FAQ page design) ─────────── */
+function HomeFaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
+        aria-expanded={open}
+      >
+        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-relaxed">{q}</span>
+        <ChevronDown
+          size={16}
+          className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <div className="px-5 pb-5 pt-0">
+          <div className="border-t border-white/[0.04] pt-4">
+            <p className="font-body text-sm text-white/65 leading-[1.8]">{a}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Rotating number counter ─────────────────────────────── */
+function RotatingNumber({ values, interval = 3000 }: { values: string[]; interval?: number }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (values.length <= 1) return;
+    const timer = setInterval(() => setIdx(p => (p + 1) % values.length), interval);
+    return () => clearInterval(timer);
+  }, [values, interval]);
+
+  return (
+    <span className="inline-block relative">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={idx}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="inline-block"
+        >
+          {values[idx]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
@@ -149,10 +203,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Description — the problem, one line */}
+          {/* Description */}
           <motion.p
-            className="text-white/70 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
-            style={{ lineHeight: '1.7' }}
+            className="text-white/70 text-base sm:text-lg max-w-xl mb-8 sm:mb-16 leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
@@ -218,9 +271,9 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator — 50px below trust badges, positioned at bottom */}
         <motion.div
-          className="relative z-10 flex justify-center pb-6 sm:pb-24 flex-shrink-0"
+          className="relative z-10 flex justify-center mt-[50px] pb-6 sm:pb-10 flex-shrink-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.8 }}
@@ -228,7 +281,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => {
-              const el = document.getElementById('the-problem');
+              const el = document.getElementById('trust-numbers');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
             className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
@@ -242,7 +295,48 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — THE PROBLEM
+          SECTION 2 — TWO AUDIENCES (trust numbers + rotating counters)
+          ═══════════════════════════════════════════════════════ */}
+      <section id="trust-numbers" className="relative z-10 py-14 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <ScrollReveal>
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+              Why now
+            </p>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              Two audiences. <span className="text-lime-gradient">One interface.</span>
+            </h2>
+            <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed mb-16 sm:mb-20">
+              Your product now serves humans and language models. The teams that audit fast and audit often will own the next decade. Clarity. Rigor. Speed. ClearUX makes it continuous, not annual.
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal>
+            <div className="grid sm:grid-cols-3 gap-6">
+              {[
+                { values: ['64+', '80+', '100+'], label: 'Checkpoints', desc: 'and growing' },
+                { values: ['6'], label: 'Modules', desc: 'complete coverage' },
+                { values: ['<10'], label: 'Minutes', desc: 'to full report' },
+              ].map((stat, i) => (
+                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
+                  <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-lime-gradient leading-none mb-2">
+                    {stat.values.length > 1 ? (
+                      <RotatingNumber values={stat.values} interval={3000} />
+                    ) : (
+                      stat.values[0]
+                    )}
+                  </p>
+                  <p className="text-base font-medium text-white/70">{stat.label}</p>
+                  <p className="text-sm text-white/55">{stat.desc}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 3 — THE PROBLEM
           ═══════════════════════════════════════════════════════ */}
       <section id="the-problem" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -253,7 +347,7 @@ export default function Home() {
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               UX audits are <span className="text-lime-gradient">broken.</span>
             </h2>
-            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed">
               Agencies cost $10-50k and take weeks. In-house audits need senior expertise most teams don't have. So products ship with issues that quietly kill conversion and retention.
             </p>
           </ScrollReveal>
@@ -277,7 +371,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — WHAT WE AUDIT (6 modules)
+          SECTION 4 — WHAT WE AUDIT (6 modules)
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -288,7 +382,7 @@ export default function Home() {
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               6 modules. 64 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
             </h2>
-            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed">
               We audit feeling, not function alone. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO — prioritised with concrete fixes.
             </p>
           </ScrollReveal>
@@ -377,7 +471,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 4 — WHY CLEARUX (what others miss)
+          SECTION 5 — WHY CLEARUX (what others miss)
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -388,7 +482,7 @@ export default function Home() {
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               What others <span className="text-lime-gradient">miss.</span>
             </h2>
-            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed">
               Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. ClearUX gives product teams shipping fast 360° clarity on every layer of user experience. We identify every issue, ranked and explained. You decide what to fix.
             </p>
           </ScrollReveal>
@@ -441,7 +535,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 5 — HOW IT WORKS
+          SECTION 6 — HOW IT WORKS (matching How It Works page process section)
           ═══════════════════════════════════════════════════════ */}
       <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -454,40 +548,49 @@ export default function Home() {
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal className="grid md:grid-cols-3 gap-8 lg:gap-10" staggerDelay={0.12}>
+          <StaggerReveal className="grid md:grid-cols-3 gap-6" staggerDelay={0.12}>
             {[
               {
                 step: '01',
                 title: 'Choose your audit',
                 desc: 'Paste a website URL, upload your brand identity files, or submit a design. ClearUX handles all three — no code, no setup.',
+                icon: Search,
               },
               {
                 step: '02',
                 title: 'We run 64 checkpoints',
                 desc: 'Every input evaluated across 6 modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Scored by severity and business impact.',
+                icon: Globe2,
               },
               {
                 step: '03',
                 title: 'You decide what to fix',
                 desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link, track progress from your dashboard. We identify. You decide.',
+                icon: FileText,
               },
-            ].map((item, i) => (
-              <StaggerItem key={i}>
-                <div className="border-t border-white/[0.06] pt-8">
-                  <span className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light text-white/[0.10] leading-none block mb-4">
-                    {item.step}
-                  </span>
-                  <h3 className="font-heading text-xl font-medium text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-white/70 leading-relaxed">{item.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
+            ].map((item, i) => {
+              const StepIcon = item.icon;
+              return (
+                <StaggerItem key={i}>
+                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8">
+                    <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.10] leading-none block mb-4">
+                      {item.step}
+                    </span>
+                    <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-5">
+                      <StepIcon size={20} className="text-[#84CC16]" />
+                    </div>
+                    <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">{item.title}</h3>
+                    <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">{item.desc}</p>
+                  </div>
+                </StaggerItem>
+              );
+            })}
           </StaggerReveal>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — WHAT YOU GET
+          SECTION 7 — WHAT YOU GET
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -501,7 +604,7 @@ export default function Home() {
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
               <div className="max-w-2xl">
-                <p className="text-white/70 text-base md:text-lg leading-relaxed mb-4">
+                <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
                   Every finding ranked by severity and business impact, with specific fixes your team can ship in their next sprint.
                 </p>
                 <Link
@@ -549,41 +652,6 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 7 — WHY NOW
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal>
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
-              Why now
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
-              Two audiences. <span className="text-lime-gradient">One interface.</span>
-            </h2>
-            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
-              Your product now serves humans and language models. The teams that audit fast and audit often will own the next decade. Clarity. Rigor. Speed. ClearUX makes it continuous, not annual.
-            </p>
-          </ScrollReveal>
-
-          <ScrollReveal>
-            <div className="grid sm:grid-cols-3 gap-6">
-              {[
-                { num: '64', label: 'Checkpoints', desc: 'per audit' },
-                { num: '6', label: 'Modules', desc: 'complete coverage' },
-                { num: '<10', label: 'Minutes', desc: 'to full report' },
-              ].map((stat, i) => (
-                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
-                  <p className="font-heading text-[4rem] sm:text-[5rem] font-light text-lime-gradient leading-none mb-2">{stat.num}</p>
-                  <p className="text-sm font-medium text-white/70">{stat.label}</p>
-                  <p className="text-xs text-white/55">{stat.desc}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
           SECTION 8 — PRICING
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
@@ -601,7 +669,7 @@ export default function Home() {
             <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-6">
               First one free.
             </p>
-            <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/65 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
               No subscription. No feature gates. Every audit gets all 6 modules, 64 checkpoints, and full reports. Credits never expire.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
@@ -637,7 +705,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 9 — FAQ
+          SECTION 9 — FAQ (matching FAQ page card design)
           ═══════════════════════════════════════════════════════ */}
       <section id="faq" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -650,24 +718,19 @@ export default function Home() {
             </h2>
           </ScrollReveal>
 
-          <StaggerReveal className="max-w-3xl divide-y divide-white/[0.06]" staggerDelay={0.06}>
+          <StaggerReveal className="max-w-3xl space-y-3" staggerDelay={0.06}>
             {TOP_FAQS.map((item, idx) => (
               <StaggerItem key={idx}>
-                <details className="group">
-                  <summary className="flex items-center justify-between py-6 cursor-pointer">
-                    <h3 className="font-heading text-[15px] sm:text-base font-medium text-white pr-8">{item.q}</h3>
-                    <ChevronDown size={16} className="text-white/40 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
-                  </summary>
-                  <div className="pb-6">
-                    <p className="text-sm text-white/70 leading-relaxed">{item.a}</p>
-                  </div>
-                </details>
+                <HomeFaqItem q={item.q} a={item.a} />
               </StaggerItem>
             ))}
           </StaggerReveal>
 
-          <ScrollReveal delay={0.3} className="mt-10 max-w-3xl">
-            <Link href="/faq" className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/40 hover:text-white transition-colors">
+          <ScrollReveal delay={0.3} className="mt-8 max-w-3xl">
+            <Link
+              href="/faq"
+              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-white/20 hover:border-white/40 text-sm font-medium text-white transition-all"
+            >
               Read all FAQ
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -688,7 +751,7 @@ export default function Home() {
               Ready to see what you&apos;re{' '}
               <span className="text-lime-gradient">missing?</span>
             </h2>
-            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
               Your first audit is free. 64 checkpoints, 6 modules, full report in minutes. Senior UX rigor, at startup pace.
             </p>
 

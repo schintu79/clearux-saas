@@ -104,7 +104,7 @@ export default function HowItWorksContent() {
             Audit your product. Get{' '}
             <span className="text-lime-gradient">360° clarity.</span>
           </h1>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-2xl">
+          <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-2xl">
             ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. Audit your website, your brand identity materials, or your design files. Prioritised findings with evidence, severity rankings, and specific fixes. No consultants. No weeks of waiting.
           </p>
         </div>
@@ -166,7 +166,7 @@ export default function HowItWorksContent() {
           >
             Six modules. <span className="text-lime-gradient">Complete coverage.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
+          <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-xl mb-10">
             64 checkpoints across six modules that go beyond traditional audits — evaluating the dimensions most tools still ignore.
           </p>
 

@@ -42,7 +42,7 @@ export default function AboutContent() {
             <span className="text-lime-gradient">at your fingertips.</span>
           </h1>
 
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
+          <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-xl">
             ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. Every digital product, fully auditable — no hidden issues, ever.
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function AboutContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
             Clarity. Rigour. <span className="text-lime-gradient">Speed.</span>
           </h2>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-14">
+          <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-xl mb-14">
             We hold ourselves to the same standard we measure others by.
           </p>
 

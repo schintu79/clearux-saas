@@ -240,7 +240,7 @@ export default function FaqContent() {
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 
-            <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-lg mb-10">
+            <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-lg mb-10">
               Everything you need to know about ClearUX audits, pricing, and reports.
             </p>
 

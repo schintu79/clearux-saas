@@ -45,7 +45,7 @@ export default function PricingContent() {
             First one free.
           </p>
 
-          <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+          <p className="text-white/65 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit runs the full 64-checkpoint
             analysis across six modules and 16 categories. Credits never expire.
           </p>
@@ -272,7 +272,7 @@ export default function PricingContent() {
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-white/65 text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link
