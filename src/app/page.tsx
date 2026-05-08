@@ -99,7 +99,7 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-16 min-h-[calc(100svh-64px)]">
           {/* Top label */}
           <motion.p
-            className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-6 sm:mb-10"
+            className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-6 sm:mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -151,7 +151,7 @@ export default function Home() {
 
           {/* Description — the problem, one line */}
           <motion.p
-            className="text-white/60 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
+            className="text-white/70 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
             style={{ lineHeight: '1.7' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -209,9 +209,9 @@ export default function Home() {
               const BadgeIcon = badge.icon;
               return (
                 <div key={i} className="flex items-center gap-1.5">
-                  <BadgeIcon size={13} className="text-white/30" strokeWidth={1.5} />
-                  <span className="text-[11px] text-white/30 font-medium tracking-wide sm:hidden">{badge.label}</span>
-                  <span className="text-[11px] text-white/30 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
+                  <BadgeIcon size={13} className="text-white/45" strokeWidth={1.5} />
+                  <span className="text-[11px] text-white/50 font-medium tracking-wide sm:hidden">{badge.label}</span>
+                  <span className="text-[11px] text-white/50 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
                 </div>
               );
             })}
@@ -247,13 +247,13 @@ export default function Home() {
       <section id="the-problem" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               The problem
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               UX audits are <span className="text-lime-gradient">broken.</span>
             </h2>
-            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
               Agencies cost $10-50k and take weeks. In-house audits need senior expertise most teams don't have. So products ship with issues that quietly kill conversion and retention.
             </p>
           </ScrollReveal>
@@ -266,7 +266,7 @@ export default function Home() {
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-white/[0.06] pt-8">
-                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-3">{item.label}</p>
+                  <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-white/50 mb-3">{item.label}</p>
                   <p className="font-heading text-2xl sm:text-3xl font-medium text-lime-gradient mb-2">{item.stat}</p>
                   <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
                 </div>
@@ -282,13 +282,13 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               What we audit
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               6 modules. 64 checkpoints. <span className="text-lime-gradient">Every audit.</span>
             </h2>
-            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
               Usability, accessibility, conversion friction, AI discoverability, brand consistency, and SEO structure — prioritised with concrete fixes.
             </p>
           </ScrollReveal>
@@ -305,7 +305,7 @@ export default function Home() {
                       </div>
                       <h3 className="font-heading text-lg font-medium text-white">{mod.title}</h3>
                     </div>
-                    <p className="text-sm text-white/60 leading-relaxed">{mod.desc}</p>
+                    <p className="text-sm text-white/70 leading-relaxed">{mod.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -332,8 +332,8 @@ export default function Home() {
                           <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/25 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-white/50 leading-tight">{card.label}</p>
+                          <p className="text-[11px] tracking-[0.12em] uppercase text-white/45 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-white/60 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -360,8 +360,8 @@ export default function Home() {
                           <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] tracking-[0.12em] uppercase text-white/25 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-white/50 leading-tight">{card.label}</p>
+                          <p className="text-[11px] tracking-[0.12em] uppercase text-white/45 mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-white/60 leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -382,13 +382,13 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               Why ClearUX
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               What others <span className="text-lime-gradient">miss.</span>
             </h2>
-            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
               Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. None of them audit your interface against best practices at speed. We do.
             </p>
           </ScrollReveal>
@@ -431,7 +431,7 @@ export default function Home() {
                       <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#84CC16]/60">{item.label}</p>
                     </div>
                     <h3 className="font-heading text-lg font-medium text-white mb-3">{item.title}</h3>
-                    <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                    <p className="text-sm text-white/70 leading-relaxed">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -446,7 +446,7 @@ export default function Home() {
       <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               How it works
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
@@ -478,7 +478,7 @@ export default function Home() {
                     {item.step}
                   </span>
                   <h3 className="font-heading text-xl font-medium text-white mb-3">{item.title}</h3>
-                  <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-white/70 leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -492,7 +492,7 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               What you get
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-6">
@@ -501,7 +501,7 @@ export default function Home() {
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
               <div className="max-w-2xl">
-                <p className="text-white/60 text-base md:text-lg leading-relaxed mb-4">
+                <p className="text-white/70 text-base md:text-lg leading-relaxed mb-4">
                   Every finding ranked by severity and business impact, with specific fixes your team can ship in their next sprint.
                 </p>
                 <Link
@@ -538,9 +538,9 @@ export default function Home() {
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/25 mb-3 block">{card.label}</span>
+                  <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-white/45 mb-3 block">{card.label}</span>
                   <h3 className="font-heading text-base font-medium text-white mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-sm text-white/60 leading-relaxed">{card.desc}</p>
+                  <p className="text-sm text-white/70 leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
@@ -554,13 +554,13 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal>
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               Why now
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               Two audiences. <span className="text-lime-gradient">One interface.</span>
             </h2>
-            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
               Your interface now serves humans and language models. The teams that audit fast and audit often will own the next decade. ClearUX makes it continuous, not annual.
             </p>
           </ScrollReveal>
@@ -575,7 +575,7 @@ export default function Home() {
                 <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
                   <p className="font-heading text-[4rem] sm:text-[5rem] font-light text-lime-gradient leading-none mb-2">{stat.num}</p>
                   <p className="text-sm font-medium text-white/70">{stat.label}</p>
-                  <p className="text-xs text-white/40">{stat.desc}</p>
+                  <p className="text-xs text-white/55">{stat.desc}</p>
                 </div>
               ))}
             </div>
@@ -589,7 +589,7 @@ export default function Home() {
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               Pricing
             </p>
             <div className="mb-6">
@@ -627,7 +627,7 @@ export default function Home() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-[#84CC16] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/60 font-medium">{item}</span>
+                    <span className="text-sm text-white/70 font-medium">{item}</span>
                   </div>
                 ))}
               </div>
@@ -642,7 +642,7 @@ export default function Home() {
       <section id="faq" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               FAQ
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl">
@@ -659,7 +659,7 @@ export default function Home() {
                     <ChevronDown size={16} className="text-white/40 flex-shrink-0 transform group-open:rotate-180 transition-transform" />
                   </summary>
                   <div className="pb-6">
-                    <p className="text-sm text-white/60 leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-white/70 leading-relaxed">{item.a}</p>
                   </div>
                 </details>
               </StaggerItem>
@@ -681,14 +681,14 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               Get started
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               Ready to see what you&apos;re{' '}
               <span className="text-lime-gradient">missing?</span>
             </h2>
-            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+            <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
               Your first audit is free. 64 checkpoints, 6 modules, full report in minutes.
             </p>
 

@@ -322,7 +322,7 @@ const BrandIdentityDetailPage: React.FC = () => {
             <p className="text-sm text-muted">
               {uploading ? 'Uploading...' : 'Drop files here or click to browse'}
             </p>
-            <p className="text-[10px] text-muted/70">
+            <p className="text-[11px] text-muted/70">
               PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10MB each
             </p>
           </div>
@@ -352,7 +352,7 @@ const BrandIdentityDetailPage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-text truncate">{f.file_name}</p>
-                    <div className="flex items-center gap-2 text-[10px] text-muted">
+                    <div className="flex items-center gap-2 text-[11px] text-muted">
                       <span>{getFileTypeLabel(f.file_name)}</span>
                       {f.file_size_bytes && (
                         <>

@@ -375,7 +375,7 @@ function CheckpointHealth({ categoryScores, findings }: {
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-brand" />
           <h3 className="text-xs font-medium text-text">64-Checkpoint Health</h3>
-          <span className="text-[10px] text-muted ml-auto">
+          <span className="text-[11px] text-muted ml-auto">
             {findings.filter(f => !f.dismissed).length} issues across {categoryScores.length} categories
           </span>
         </div>
@@ -397,8 +397,8 @@ function CheckpointHealth({ categoryScores, findings }: {
                 <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
                 <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[9px] font-medium text-[#22C55E] dark:text-emerald-400">{passCount} pass</span>}
-                  {failCount > 0 && <span className="text-[9px] font-medium text-red-500">{failCount} fail</span>}
+                  {passCount > 0 && <span className="text-[11px] font-medium text-[#22C55E] dark:text-emerald-400">{passCount} pass</span>}
+                  {failCount > 0 && <span className="text-[11px] font-medium text-red-500">{failCount} fail</span>}
                 </div>
                 <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -419,10 +419,10 @@ function CheckpointHealth({ categoryScores, findings }: {
                             {checkpoint}
                           </p>
                           {finding && (
-                            <p className="text-[10px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
+                            <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
                           )}
                         </div>
-                        <span className={`text-[9px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-[#22C55E] dark:text-emerald-500'}`}>
+                        <span className={`text-[11px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-[#22C55E] dark:text-emerald-500'}`}>
                           {hasFinding ? 'Fail' : 'Pass'}
                         </span>
                       </div>
@@ -499,7 +499,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
         </div>
         <div className="flex-1 text-left">
           <span className="text-sm font-medium text-text">Score Over Time</span>
-          <span className="text-[10px] text-muted ml-2">{trend.length} audits · {domain}</span>
+          <span className="text-[11px] text-muted ml-2">{trend.length} audits · {domain}</span>
         </div>
         {improvement !== 0 && (
           <span className={`text-xs font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
@@ -656,7 +656,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
           <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
-          <span className="text-[10px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
+          <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
         </div>
         {finding.dismissal_reason && (
           <p className="text-[11px] text-muted mt-1 ml-4">{finding.dismissal_reason}</p>
@@ -680,13 +680,13 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-[#22C55E]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-[#22C55E]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Eye size={10} />
                 Likely Fixed
               </span>
             )}
             {(finding as any).verification_status === 'poorly_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <AlertTriangle size={10} />
                 Poorly Fixed
               </span>
@@ -736,7 +736,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                 <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">
                   {(finding as any).verification_note}
                 </p>
-                <p className="text-[10px] text-muted mt-1">
+                <p className="text-[11px] text-muted mt-1">
                   Mark this finding as &quot;Fixed&quot; to confirm and update your score.
                 </p>
               </div>
@@ -752,7 +752,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                 <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed">
                   {(finding as any).verification_note}
                 </p>
-                <p className="text-[10px] text-muted mt-1">
+                <p className="text-[11px] text-muted mt-1">
                   The attempted fix introduced new issues. Review and address the regression to improve your score.
                 </p>
               </div>
@@ -790,7 +790,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                 <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
                 <span className="text-[11px] font-medium text-text">Visual Evidence</span>
                 {finding.page_url && (
-                  <span className="text-[10px] text-muted ml-auto font-mono truncate max-w-[200px]">
+                  <span className="text-[11px] text-muted ml-auto font-mono truncate max-w-[200px]">
                     {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
                   </span>
                 )}
@@ -1526,7 +1526,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
             {(audit as any).depth_mode === 'deep' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-brand dark:text-brand bg-brand/10 dark:bg-brand/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand dark:text-brand bg-brand/10 dark:bg-brand/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Search size={10} />
                 Deep Mode
               </span>
@@ -1580,7 +1580,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <RefreshCw size={13} className="text-muted" />
                 Re-audit this site
-                <span className="ml-auto text-[10px] text-muted">1 credit</span>
+                <span className="ml-auto text-[11px] text-muted">1 credit</span>
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
@@ -1589,7 +1589,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <Search size={13} className="text-muted" />
                 Dig Deeper (find new issues)
-                <span className="ml-auto text-[10px] text-muted">1 credit</span>
+                <span className="ml-auto text-[11px] text-muted">1 credit</span>
               </Link>
               <button
                 onClick={() => { handleRestart(); setMenuOpen(false); }}
@@ -1780,7 +1780,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
                     <h2 className="text-xl font-medium font-heading text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
-                      <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
                         {auditSelectedPillars!.length} of 4 modules
                       </span>
                     )}

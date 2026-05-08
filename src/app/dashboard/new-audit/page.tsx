@@ -347,7 +347,7 @@ const NewAuditInner: React.FC = () => {
           </button>
 
           {scopeOpen && (
-            <div className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+            <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
               {/* Complete Audit option */}
               <button
                 type="button"
@@ -361,7 +361,7 @@ const NewAuditInner: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-medium text-text">Complete Audit</p>
-                  <p className="text-[10px] text-muted">All core modules — full coverage</p>
+                  <p className="text-[11px] text-muted">All core modules — full coverage</p>
                 </div>
               </button>
 
@@ -387,7 +387,7 @@ const NewAuditInner: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <span className="text-sm text-text">{mod.name}</span>
                       {mod.requiresBrandIdentity && (
-                        <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
+                        <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
                           Requires brand
                         </span>
                       )}

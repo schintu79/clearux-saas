@@ -94,7 +94,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-36">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             HOW IT WORKS
           </p>
           <h1
@@ -115,7 +115,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             THE PROCESS
           </p>
           <h2
@@ -157,7 +157,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             WHAT WE EVALUATE
           </p>
           <h2

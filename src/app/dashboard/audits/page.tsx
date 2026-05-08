@@ -90,16 +90,16 @@ function AuditSiteGroup({ domain, audits }: {
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Globe size={12} className="text-muted flex-shrink-0" />
                 <p className="font-medium text-sm text-text truncate">{domain}</p>
-                {lang && <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+                {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
                 <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-muted">
+              <div className="flex items-center gap-2 text-[11px] text-muted">
                 <span>{formatDate(latest.created_at)}</span>
                 <span className="text-border">·</span>
                 <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
               </div>
               {latestDone && latest.report?.executive_summary && (
-                <p className="text-muted text-[10px] mt-1 line-clamp-1">{latest.report.executive_summary}</p>
+                <p className="text-muted text-[11px] mt-1 line-clamp-1">{latest.report.executive_summary}</p>
               )}
             </div>
             {latestScore != null ? (
@@ -128,12 +128,12 @@ function AuditSiteGroup({ domain, audits }: {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Globe size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{domain}</p>
-              <span className="text-[10px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
                 {audits.length} audits
               </span>
-              {lang && <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+              {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-muted">
+            <div className="flex items-center gap-2 text-[11px] text-muted">
               <span>Latest: {formatDate(latest.created_at)}</span>
               <span className="text-border">·</span>
               <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
@@ -234,7 +234,7 @@ export default function AuditsPage() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <FileSearch size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text leading-none">All Audits</h1>
+            <h1 className="text-2xl font-medium font-heading text-text">All Audits</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>

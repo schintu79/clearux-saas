@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
             <div className="mb-3"><Logo height={110} variant="light" iconGradient /></div>
-            <p className="font-body text-sm text-white/55 leading-relaxed mb-5">
+            <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
               The audit layer for the AI era. 64 checkpoints, 6 modules, expert-grade results in minutes.
             </p>
 
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
           {/* Link columns */}
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/60 mb-4">Product</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'How It Works', href: '/how-it-works' },
@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
                   { label: 'FAQ', href: '/faq' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/55 hover:text-white transition-colors">
+                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -61,7 +61,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/60 mb-4">Company</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Company</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'About Us', href: '/about' },
@@ -70,7 +70,7 @@ const Footer: React.FC = () => {
                   { label: 'Dashboard', href: '/dashboard' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/55 hover:text-white transition-colors">
+                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
@@ -79,7 +79,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/60 mb-4">Legal</h4>
+              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Legal</h4>
               <ul className="space-y-2.5">
                 {[
                   { label: 'Privacy Policy', href: '/privacy' },
@@ -87,13 +87,13 @@ const Footer: React.FC = () => {
                   { label: 'Cookie Policy', href: '/cookies' },
                 ].map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/55 hover:text-white transition-colors">
+                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
                       {link.label}
                     </Link>
                   </li>
                 ))}
                 <li>
-                  <a href="mailto:support@clearux.ai" className="font-body text-sm text-white/55 hover:text-white transition-colors">
+                  <a href="mailto:support@clearux.ai" className="font-body text-sm text-white/70 hover:text-white transition-colors">
                     support@clearux.ai
                   </a>
                 </li>
@@ -104,10 +104,10 @@ const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-body text-xs text-white/65">
+          <p className="font-body text-xs text-white/70">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-white/60">
+          <div className="flex items-center gap-4 text-xs text-white/70">
             <span className="flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               SSL Encrypted

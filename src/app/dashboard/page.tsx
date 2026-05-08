@@ -250,7 +250,7 @@ function DashboardInner() {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <LayoutDashboard size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text leading-none">Hey {name}</h1>
+          <h1 className="text-2xl font-medium font-heading text-text">Hey {name}</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">
           {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}
@@ -401,7 +401,7 @@ function DashboardInner() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-muted mt-0.5">
                         <span>{formatDate(audit.created_at)}</span>
                         <span className="text-border">·</span>
                         <span className="flex items-center gap-0.5 text-brand font-medium">
@@ -421,7 +421,7 @@ function DashboardInner() {
                   <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
-                    <p className="text-[10px] text-muted mt-0.5">{formatDate(audit.created_at)} · Credit refunded</p>
+                    <p className="text-[11px] text-muted mt-0.5">{formatDate(audit.created_at)} · Credit refunded</p>
                   </div>
                   <ChevronRight size={14} className="text-muted flex-shrink-0" />
                 </div>
@@ -477,12 +477,12 @@ function DashboardInner() {
                   const score = a.report?.overall_score ?? 0;
                   return (
                     <div key={a.id} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] font-medium text-text">{score}</span>
+                      <span className="text-[11px] font-medium text-text">{score}</span>
                       <div
                         className={`w-full rounded-t-md ${score >= 70 ? 'bg-[#22C55E]' : score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
                         style={{ height: `${Math.max(score * 0.5, 4)}px` }}
                       />
-                      <span className="text-[9px] text-muted truncate w-full text-center">{formatDate(a.created_at)}</span>
+                      <span className="text-[11px] text-muted truncate w-full text-center">{formatDate(a.created_at)}</span>
                     </div>
                   );
                 })}

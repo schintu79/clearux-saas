@@ -71,7 +71,7 @@ export default function NotificationsPage() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Bell size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text leading-none">Notifications</h1>
+            <h1 className="text-2xl font-medium font-heading text-text">Notifications</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
@@ -110,7 +110,7 @@ export default function NotificationsPage() {
                       )}
                     </div>
                     <p className="text-[11px] text-muted mt-0.5 leading-relaxed">{n.message}</p>
-                    <p className="text-[10px] text-muted/50 mt-1.5">
+                    <p className="text-[11px] text-muted mt-1.5">
                       {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>

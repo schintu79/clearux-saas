@@ -228,7 +228,7 @@ export default function FaqContent() {
         {/* ── HERO ── */}
         <section className="relative z-10 py-28 sm:py-36 lg:py-44">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
               SUPPORT CENTRE
             </p>
 

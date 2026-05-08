@@ -55,7 +55,7 @@ export default function ContactContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             GET IN TOUCH
           </p>
 

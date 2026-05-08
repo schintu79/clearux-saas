@@ -155,7 +155,7 @@ const BrandIdentityPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Fingerprint size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text leading-none">Brand Identity</h1>
+            <h1 className="text-2xl font-medium font-heading text-text">Brand Identity</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             Manage brand identities to audit websites against your brand guidelines.
@@ -240,7 +240,7 @@ const BrandIdentityPage: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h3 className="text-[15px] font-medium text-text truncate">{bi.name}</h3>
-                    <span className="text-[10px] text-muted bg-off px-2 py-0.5 rounded-full flex-shrink-0">
+                    <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full flex-shrink-0">
                       {bi.brand_identity_files.length} file{bi.brand_identity_files.length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -252,14 +252,14 @@ const BrandIdentityPage: React.FC = () => {
                       {bi.brand_identity_files.slice(0, 4).map((f) => (
                         <span
                           key={f.id}
-                          className="inline-flex items-center gap-1 text-[10px] text-muted bg-off px-2 py-0.5 rounded-md"
+                          className="inline-flex items-center gap-1 text-[11px] text-muted bg-off px-2 py-0.5 rounded-md"
                         >
                           <FileText size={10} />
                           {f.file_name.length > 20 ? f.file_name.slice(0, 18) + '...' : f.file_name}
                         </span>
                       ))}
                       {bi.brand_identity_files.length > 4 && (
-                        <span className="text-[10px] text-muted">
+                        <span className="text-[11px] text-muted">
                           +{bi.brand_identity_files.length - 4} more
                         </span>
                       )}
@@ -333,7 +333,7 @@ const BrandIdentityPage: React.FC = () => {
                 <h3 className="text-sm font-medium text-text">{item.title}</h3>
               </div>
               <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-              <p className="text-[10px] text-muted/70">Formats: {item.formats}</p>
+              <p className="text-[11px] text-muted/70">Formats: {item.formats}</p>
             </div>
           ))}
         </div>

@@ -30,7 +30,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             Transparent Pricing
           </p>
 
@@ -77,7 +77,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             Every audit includes
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-10" style={{ lineHeight: '1.1' }}>
@@ -96,7 +96,7 @@ export default function PricingContent() {
           </div>
 
           {/* Value anchor */}
-          <p className="text-sm text-white/60 mt-6">
+          <p className="text-sm text-white/70 mt-6">
             At $99 per audit, that&apos;s <span className="font-medium text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
           </p>
 
@@ -120,7 +120,7 @@ export default function PricingContent() {
       <section id="packs" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
         <div className="absolute inset-0 bg-[#111114]" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             Need more audits?
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
@@ -165,7 +165,7 @@ export default function PricingContent() {
                   </p>
                   <p className="text-sm text-[#84CC16] font-medium mb-6">Save {pack.save}%</p>
 
-                  <p className="text-sm text-white/60 mb-8 leading-relaxed">{pack.desc}</p>
+                  <p className="text-sm text-white/70 mb-8 leading-relaxed">{pack.desc}</p>
 
                   <Link
                     href="/register"
@@ -193,7 +193,7 @@ export default function PricingContent() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">At a glance</p>
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">At a glance</p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-10" style={{ lineHeight: '1.1' }}>
             Compare plans
           </h2>

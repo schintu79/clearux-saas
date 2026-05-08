@@ -95,7 +95,7 @@ export default function BuyCreditsPage() {
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-brand text-surface text-[10px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
+              <span className="absolute -top-2.5 right-4 bg-brand text-surface text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
                 Customers Favourite
               </span>
             )}

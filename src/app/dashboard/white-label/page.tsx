@@ -227,7 +227,7 @@ const WhiteLabelPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <Paintbrush size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text leading-none">White Label</h1>
+          <h1 className="text-2xl font-medium font-heading text-text">White Label</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">
           Customize reports with your own branding. Settings apply to all future audits.
@@ -442,7 +442,7 @@ const WhiteLabelPage: React.FC = () => {
                 disabled={!canEdit}
                 className="sr-only peer"
               />
-              <div className="w-9 h-5 bg-off rounded-full peer peer-checked:bg-brand transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
+              <div className="w-9 h-5 bg-border rounded-full peer peer-checked:bg-brand transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
 

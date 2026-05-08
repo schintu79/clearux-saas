@@ -78,7 +78,7 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
           transition={{ duration: 0.4 }}
         >
           <div className="flex-1 px-4 py-3 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center">
-            <span className="text-sm text-white/60 font-mono">acme.com</span>
+            <span className="text-sm text-white/70 font-mono">acme.com</span>
           </div>
           <motion.div
             className="px-5 py-3 rounded-xl bg-[#10B981] text-[#111] text-sm font-medium flex items-center gap-2 flex-shrink-0"

@@ -466,7 +466,7 @@ export default function WhyClearUX() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-white/60">What others miss</p>
+          <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-white/70">What others miss</p>
           <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-medium text-white mb-5" style={{ lineHeight: '1.1' }}>
             Why ClearUX
           </h2>
@@ -540,7 +540,7 @@ export default function WhyClearUX() {
           <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3" style={{ lineHeight: '1.15' }}>
             All four. In every audit. For $99.
           </h3>
-          <p className="text-white/60 text-sm sm:text-base mb-8 max-w-md mx-auto">
+          <p className="text-white/70 text-sm sm:text-base mb-8 max-w-md mx-auto">
             No credit card required for your first audit.
           </p>
           <Link

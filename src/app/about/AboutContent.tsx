@@ -33,7 +33,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             About ClearUX
           </p>
 
@@ -53,7 +53,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             The origin story
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
@@ -109,7 +109,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             The founder
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
@@ -162,7 +162,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             Our commitment
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">

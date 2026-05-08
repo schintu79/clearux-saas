@@ -343,9 +343,9 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
                       <span className="text-border">·</span>
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
-                      <span className="text-[10px] font-medium text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                      <span className="text-[11px] font-medium text-text/50 bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
                       {(audit as any).depth_mode === 'deep' && (
-                        <span className="text-[9px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
+                        <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
                       )}
                       {done && report?.overall_score != null && (
                         <>

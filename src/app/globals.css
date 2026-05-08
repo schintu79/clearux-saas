@@ -485,7 +485,6 @@ body {
 /* Heading defaults */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), var(--font-body), system-ui, sans-serif;
-  line-height: 0.8em;
   font-weight: 500;
   color: var(--text);
 }

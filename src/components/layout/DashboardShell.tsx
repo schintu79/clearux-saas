@@ -138,12 +138,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     </span>
                     <span>{item.label}</span>
                     {(item as any).badge && (
-                      <span className="ml-auto text-[9px] font-medium text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[11px] font-medium text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
                         {unreadNotifications}
                       </span>
                     )}
                     {active && !(item as any).badge && (
-                      <ChevronRight size={12} className="ml-auto text-muted/50" />
+                      <ChevronRight size={12} className="ml-auto text-muted" />
                     )}
                   </Link>
                 </li>
@@ -163,7 +163,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 </div>
                 <span className="text-base font-medium text-[#22C55E] tabular-nums">{credits}</span>
               </div>
-              <p className="text-[10px] text-muted mb-2.5 leading-snug">
+              <p className="text-[11px] text-muted mb-2.5 leading-snug">
                 {credits === 0
                   ? 'No credits remaining'
                   : `${credits} audit${credits !== 1 ? 's' : ''} remaining`}
@@ -187,7 +187,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
           {!loading && user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface flex-shrink-0">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[11px] font-medium text-surface flex-shrink-0">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -198,7 +198,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 )}
                 <p className={clsx(
                   'truncate leading-tight',
-                  displayName ? 'text-[10px] text-muted' : 'text-[12px] font-medium text-text'
+                  displayName ? 'text-[11px] text-muted' : 'text-[12px] font-medium text-text'
                 )}>
                   {user.email}
                 </p>
