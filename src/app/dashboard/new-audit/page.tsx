@@ -554,10 +554,10 @@ const NewAuditInner: React.FC = () => {
                 </select>
 
                 {selectedBrand && selectedBrand.fileCount === 0 && (
-                  <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-start gap-2">
-                    <AlertCircle size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="mt-3 p-3 rounded-lg bg-[#FFFBEB] border border-[#FDE68A] flex items-start gap-2">
+                    <AlertCircle size={14} className="text-[#D97706] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <p className="text-xs text-[#92400E]">
                         This brand has no files uploaded.{' '}
                         <Link
                           href={`/dashboard/brand-identity/${selectedBrandId}`}
@@ -572,10 +572,10 @@ const NewAuditInner: React.FC = () => {
                 )}
 
                 {selectedBrand && selectedBrand.fileCount > 0 && (
-                  <div className="mt-3 p-3 rounded-lg bg-brand/5 dark:bg-brand/[0.03] border border-brand/15 flex items-start gap-2">
-                    <FileText size={14} className="text-brand flex-shrink-0 mt-0.5" />
+                  <div className="mt-3 p-3 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] flex items-start gap-2">
+                    <FileText size={14} className="text-[#16A34A] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted">
+                      <p className="text-xs text-[#374151]">
                         {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
                         The AI will evaluate visual consistency, tone of voice, professionalism, value proposition, structure, competitive positioning, and wording quality.
                       </p>

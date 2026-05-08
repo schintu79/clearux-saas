@@ -12,6 +12,8 @@ import {
   Check,
   AlertCircle,
   File,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
@@ -73,6 +75,8 @@ const BrandIdentityDetailPage: React.FC = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -117,7 +121,7 @@ const BrandIdentityDetailPage: React.FC = () => {
       });
       if (!res.ok) throw new Error();
       setHasChanges(false);
-      setSuccessMsg('Saved');
+      setSuccessMsg('Changes saved');
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch {
       setErrorMsg('Failed to save changes');
@@ -131,11 +135,23 @@ const BrandIdentityDetailPage: React.FC = () => {
     if (fileArray.length === 0) return;
 
     setUploading(true);
+    setUploadSuccess(false);
     setErrorMsg(null);
 
-    for (const file of fileArray) {
+    let uploadedCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      setUploadProgress(
+        fileArray.length === 1
+          ? `Uploading ${file.name}...`
+          : `Uploading ${i + 1} of ${fileArray.length}...`
+      );
+
       if (file.size > MAX_FILE_SIZE) {
         setErrorMsg(`${file.name} exceeds 10MB limit`);
+        failedCount++;
         continue;
       }
 
@@ -152,15 +168,24 @@ const BrandIdentityDetailPage: React.FC = () => {
           const data = await res.json();
           throw new Error(data.error || 'Upload failed');
         }
+        uploadedCount++;
       } catch (err) {
         console.error('File upload error:', err);
+        failedCount++;
         setErrorMsg(`Failed to upload ${file.name}`);
       }
     }
 
     setUploading(false);
+    setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     await loadIdentity();
+
+    // Show success feedback
+    if (uploadedCount > 0 && failedCount === 0) {
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 3000);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,7 +218,7 @@ const BrandIdentityDetailPage: React.FC = () => {
   };
 
   const inputClass =
-    'w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder';
+    'w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(17,17,17,.06)] bg-input-bg text-text placeholder:text-placeholder';
 
   if (userLoading || dataLoading) {
     return (
@@ -215,6 +240,8 @@ const BrandIdentityDetailPage: React.FC = () => {
     );
   }
 
+  const fileCount = identity.brand_identity_files.length;
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Back button */}
@@ -228,8 +255,8 @@ const BrandIdentityDetailPage: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
-          <Fingerprint size={20} className="text-brand" />
+        <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] flex items-center justify-center">
+          <Fingerprint size={20} className="text-[#111]" />
         </div>
         <div>
           <h1 className="text-xl font-medium font-heading text-text">{identity.name}</h1>
@@ -241,22 +268,22 @@ const BrandIdentityDetailPage: React.FC = () => {
 
       {/* Messages */}
       {successMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg p-3">
-          <Check size={14} className="text-[#22C55E] flex-shrink-0" />
-          <p className="text-[#22C55E] text-sm">{successMsg}</p>
+        <div className="mb-4 flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-3">
+          <Check size={14} className="text-[#16A34A] flex-shrink-0" />
+          <p className="text-[#15803D] text-sm font-medium">{successMsg}</p>
         </div>
       )}
       {errorMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-          <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
+        <div className="mb-4 flex items-center gap-2 bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-3">
+          <AlertCircle size={14} className="text-[#DC2626] flex-shrink-0" />
+          <p className="text-[#991B1B] text-sm">{errorMsg}</p>
         </div>
       )}
 
-      {/* Edit form */}
-      <Card className="mb-6">
-        <form onSubmit={handleSave} className="space-y-4">
-          <h2 className="text-base font-medium text-text">Details</h2>
+      {/* Single unified card */}
+      <Card>
+        <form onSubmit={handleSave} className="space-y-5">
+          {/* Details section */}
           <div>
             <label htmlFor="bi-name" className="block text-sm font-medium text-text mb-1.5">
               Brand Name
@@ -282,99 +309,135 @@ const BrandIdentityDetailPage: React.FC = () => {
               className={`${inputClass} resize-none`}
             />
           </div>
-          <Button
-            variant="primary"
-            size="md"
-            type="submit"
-            loading={saving}
-            disabled={saving || !hasChanges || !name.trim()}
-          >
-            Save Changes
-          </Button>
-        </form>
-      </Card>
 
-      {/* Files section */}
-      <Card>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-medium text-text">Brand Files</h2>
-            <span className="text-xs text-muted">
-              {identity.brand_identity_files.length} file{identity.brand_identity_files.length !== 1 ? 's' : ''}
-            </span>
-          </div>
+          {/* Divider */}
+          <div className="border-t border-border" />
 
-          {/* Drop zone */}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`
-              flex flex-col items-center justify-center gap-2 px-6 py-8 rounded-xl border-2 border-dashed cursor-pointer transition-all
-              ${dragOver
-                ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                : 'border-border hover:border-brand/40 hover:bg-surface/50'
-              }
-            `}
-          >
-            <Upload size={20} className={dragOver ? 'text-brand' : 'text-muted'} />
-            <p className="text-sm text-muted">
-              {uploading ? 'Uploading...' : 'Drop files here or click to browse'}
-            </p>
-            <p className="text-[11px] text-muted/70">
-              PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10MB each
-            </p>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          {/* Files section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-text">Brand Files</label>
+              <span className="text-xs text-muted">
+                {fileCount} file{fileCount !== 1 ? 's' : ''}
+              </span>
+            </div>
 
-          {/* File list */}
-          {identity.brand_identity_files.length > 0 && (
-            <div className="space-y-2">
-              {identity.brand_identity_files.map((f) => (
-                <div
-                  key={f.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border bg-off/50 group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
-                    {f.file_type && ['png', 'jpg', 'jpeg', 'svg', 'webp'].includes(f.file_type) ? (
-                      <File size={14} className="text-brand" />
-                    ) : (
-                      <FileText size={14} className="text-brand" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text truncate">{f.file_name}</p>
-                    <div className="flex items-center gap-2 text-[11px] text-muted">
-                      <span>{getFileTypeLabel(f.file_name)}</span>
-                      {f.file_size_bytes && (
-                        <>
-                          <span className="text-border">|</span>
-                          <span>{formatBytes(f.file_size_bytes)}</span>
-                        </>
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              className={`
+                relative flex flex-col items-center justify-center gap-2 px-6 py-8 rounded-xl border-2 border-dashed transition-all
+                ${uploading
+                  ? 'border-[#111]/20 bg-[#F9FAFB] cursor-wait'
+                  : dragOver
+                    ? 'border-[#111] bg-[#F9FAFB] cursor-pointer'
+                    : uploadSuccess
+                      ? 'border-[#16A34A]/40 bg-[#F0FDF4] cursor-pointer'
+                      : 'border-border hover:border-[#111]/30 hover:bg-[#F9FAFB] cursor-pointer'
+                }
+              `}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 size={20} className="text-[#111] animate-spin" />
+                  <p className="text-sm font-medium text-text">{uploadProgress}</p>
+                  <p className="text-[11px] text-muted">Please wait while files are being saved</p>
+                </>
+              ) : uploadSuccess ? (
+                <>
+                  <CheckCircle2 size={20} className="text-[#16A34A]" />
+                  <p className="text-sm font-medium text-[#16A34A]">Files uploaded successfully</p>
+                  <p className="text-[11px] text-muted">Drop more files or click to browse</p>
+                </>
+              ) : (
+                <>
+                  <Upload size={20} className={dragOver ? 'text-[#111]' : 'text-muted'} />
+                  <p className="text-sm text-muted">Drop files here or click to browse</p>
+                  <p className="text-[11px] text-muted/60">
+                    PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10MB each
+                  </p>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {/* File list */}
+            {fileCount > 0 && (
+              <div className="mt-3 space-y-2">
+                {identity.brand_identity_files.map((f) => (
+                  <div
+                    key={f.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border group transition-all ${
+                      deletingFileId === f.id ? 'opacity-50' : 'bg-[#F9FAFB]'
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+                      {f.file_type && ['png', 'jpg', 'jpeg', 'svg', 'webp'].includes(f.file_type) ? (
+                        <File size={14} className="text-[#111]" />
+                      ) : (
+                        <FileText size={14} className="text-[#111]" />
                       )}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-text truncate">{f.file_name}</p>
+                      <div className="flex items-center gap-2 text-[11px] text-muted">
+                        <span>{getFileTypeLabel(f.file_name)}</span>
+                        {f.file_size_bytes && (
+                          <>
+                            <span className="text-border">|</span>
+                            <span>{formatBytes(f.file_size_bytes)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); handleDeleteFile(f.id); }}
+                      disabled={deletingFileId === f.id}
+                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#FEF2F2] text-muted hover:text-[#DC2626] transition-all disabled:opacity-50"
+                      title="Remove file"
+                      type="button"
+                    >
+                      {deletingFileId === f.id ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={13} />
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteFile(f.id)}
-                    disabled={deletingFileId === f.id}
-                    className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-all disabled:opacity-50"
-                    title="Remove file"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* Save button */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="primary"
+              size="md"
+              type="submit"
+              loading={saving}
+              disabled={saving || !hasChanges || !name.trim()}
+            >
+              Save Changes
+            </Button>
+            {hasChanges && (
+              <span className="text-xs text-muted">Unsaved changes</span>
+            )}
+          </div>
+        </form>
       </Card>
     </div>
   );
