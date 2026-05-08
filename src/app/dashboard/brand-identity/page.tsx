@@ -157,7 +157,7 @@ const BrandIdentityPage: React.FC = () => {
             <Fingerprint size={22} className="text-brand" />
             <h1 className="text-2xl font-medium font-heading text-text">Brand Identity</h1>
           </div>
-          <p className="text-muted text-sm mt-1">
+          <p className="text-muted text-sm mt-1 pl-[34px]">
             Manage brand identities to audit websites against your brand guidelines.
           </p>
         </div>

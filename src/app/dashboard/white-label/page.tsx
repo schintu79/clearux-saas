@@ -229,7 +229,7 @@ const WhiteLabelPage: React.FC = () => {
           <Paintbrush size={22} className="text-brand" />
           <h1 className="text-2xl font-medium font-heading text-text">White Label</h1>
         </div>
-        <p className="text-muted text-sm mt-1">
+        <p className="text-muted text-sm mt-1 pl-[34px]">
           Customize reports with your own branding. Settings apply to all future audits.
         </p>
       </div>

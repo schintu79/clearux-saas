@@ -42,11 +42,18 @@ export function ThemeProvider({
     }
   }, [])
 
-  // Persist preference to cookie — but NEVER touch <html> classList.
-  // The public site is always dark (hardcoded in layout.tsx).
-  // The dashboard scopes its own theme via DashboardShell.
+  // Persist preference and sync <html> dark class for Tailwind dark: utilities.
+  // The public site defaults to dark (initialTheme='dark' in layout.tsx).
+  // The dashboard toggles via DashboardShell's theme-light CSS-variable class
+  // AND via the Tailwind dark class toggled here.
   useEffect(() => {
     setThemeCookie(theme)
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
   }, [theme])
 
   const setTheme = useCallback((t: Theme) => setThemeState(t), [])

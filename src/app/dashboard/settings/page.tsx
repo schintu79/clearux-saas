@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, User, Building2, CreditCard } from 'lucide-react';
+import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
@@ -284,8 +284,11 @@ const SettingsPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-medium font-heading text-text">Settings</h1>
-        <p className="text-muted text-sm mt-1">Manage your account and preferences</p>
+        <div className="flex items-center gap-3 mb-1">
+          <SettingsIcon size={22} className="text-brand" />
+          <h1 className="text-2xl font-medium font-heading text-text">Settings</h1>
+        </div>
+        <p className="text-muted text-sm mt-1 pl-[34px]">Manage your account and preferences</p>
       </div>
 
       {/* Tabs */}

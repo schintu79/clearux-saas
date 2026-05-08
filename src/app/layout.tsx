@@ -130,7 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 ratingCount: '47',
                 bestRating: '5',
               },
-              featureList: '64 UX checkpoints, 16 audit categories, 4 pillar framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
+              featureList: '64 UX checkpoints, 16 audit categories, 6 module framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
             }),
           }}
         />

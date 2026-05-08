@@ -51,9 +51,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
-    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
-    { label: 'White Label', href: '/dashboard/white-label', icon: Paintbrush },
     { label: 'Brand Identity', href: '/dashboard/brand-identity', icon: Fingerprint },
+    { label: 'White Label', href: '/dashboard/white-label', icon: Paintbrush },
+    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
+  LayoutDashboard,
   Sparkles,
   ArrowRight,
   Globe,
@@ -247,8 +248,11 @@ function DashboardInner() {
     <div className="max-w-4xl mx-auto py-2">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="font-heading text-lg font-medium text-text">Hey {name}</h1>
-        <p className="text-muted text-xs mt-0.5">
+        <div className="flex items-center gap-3 mb-1">
+          <LayoutDashboard size={22} className="text-brand" />
+          <h1 className="text-2xl font-medium font-heading text-text">Hey {name}</h1>
+        </div>
+        <p className="text-muted text-sm mt-1 pl-[34px]">
           {isNewUser ? 'Run your first UX audit' : 'Your audit overview'}
         </p>
       </div>

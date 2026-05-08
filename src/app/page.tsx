@@ -183,20 +183,15 @@ export default function Home() {
             </Link>
           </motion.div>
 
-          {/* KSPs */}
-          <motion.div
-            className="flex items-center justify-center gap-2 sm:gap-4 mt-5 flex-wrap"
+          {/* KSP */}
+          <motion.p
+            className="text-[13px] sm:text-[15px] font-medium text-lime-gradient tracking-wide mt-5 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            {['First audit free', 'Results in minutes', 'No credit card'].map((ksp, i) => (
-              <div key={i} className="flex items-center gap-2 sm:gap-4">
-                {i > 0 && <span className="text-[#84CC16]/30 hidden sm:inline">&middot;</span>}
-                <span className="text-[12px] sm:text-[13px] font-medium text-lime-gradient tracking-wide whitespace-nowrap">{ksp}</span>
-              </div>
-            ))}
-          </motion.div>
+            Your first audit is free — results in minutes, no credit card needed.
+          </motion.p>
 
           {/* Trust badges */}
           <motion.div

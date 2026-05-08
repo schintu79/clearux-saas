@@ -14,7 +14,6 @@ import {
   File,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
@@ -134,8 +133,6 @@ const BrandIdentityDetailPage: React.FC = () => {
     setUploading(true);
     setErrorMsg(null);
 
-    const supabase = createBrowserSupabase();
-
     for (const file of fileArray) {
       if (file.size > MAX_FILE_SIZE) {
         setErrorMsg(`${file.name} exceeds 10MB limit`);
@@ -143,30 +140,18 @@ const BrandIdentityDetailPage: React.FC = () => {
       }
 
       try {
-        const ext = file.name.split('.').pop() || 'bin';
-        const storagePath = `${user!.id}/${id}/${Date.now()}-${file.name}`;
+        const formData = new FormData();
+        formData.append('file', file);
 
-        const { error: uploadErr } = await supabase.storage
-          .from('brand-assets')
-          .upload(storagePath, file, { cacheControl: '31536000', upsert: false });
-
-        if (uploadErr) throw uploadErr;
-
-        const { data: urlData } = supabase.storage
-          .from('brand-assets')
-          .getPublicUrl(storagePath);
-
-        // Register file in DB
-        await fetch(`/api/brand-identities/${id}/files`, {
+        const res = await fetch(`/api/brand-identities/${id}/upload`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            file_name: file.name,
-            file_url: urlData.publicUrl,
-            file_type: ext,
-            file_size_bytes: file.size,
-          }),
+          body: formData,
         });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Upload failed');
+        }
       } catch (err) {
         console.error('File upload error:', err);
         setErrorMsg(`Failed to upload ${file.name}`);

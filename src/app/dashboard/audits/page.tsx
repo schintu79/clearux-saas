@@ -232,8 +232,11 @@ export default function AuditsPage() {
     <div className="max-w-2xl mx-auto py-2">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-heading text-lg font-medium text-text">All Audits</h1>
-          <p className="text-muted text-xs mt-0.5">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
+          <div className="flex items-center gap-3 mb-1">
+            <FileSearch size={22} className="text-brand" />
+            <h1 className="text-2xl font-medium font-heading text-text">All Audits</h1>
+          </div>
+          <p className="text-muted text-sm mt-1 pl-[34px]">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
         </div>
         <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface dark:text-[#111111] text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
           <Sparkles size={13} />
