@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
         // @ts-ignore Supabase type inference issue with generics
         const { data: audit } = await supabase
           .from('audits')
-          .select('product_url')
+          .select('product_url, audit_type, brand_identity_id')
           // @ts-ignore Supabase type inference issue with generics
           .eq('id', auditId)
           .single()
