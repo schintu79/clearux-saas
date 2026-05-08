@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Globe,
   Sparkles,
@@ -12,16 +13,20 @@ import {
   FileSearch,
   ExternalLink,
   ChevronRight,
+  Palette,
+  PenTool,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Badge from '@/components/ui/Badge';
-import type { Audit, Report } from '@/types/database';
+import type { Audit, AuditType, Report } from '@/types/database';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
 interface AuditWithReport extends Audit {
   report: Report | null;
+  brandName?: string | null;
 }
 
 const statusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -33,6 +38,12 @@ const statusMeta: Record<string, { label: string; color: string; icon: React.Ele
   completed:         { label: 'Completed',         color: 'completed', icon: CheckCircle2 },
   failed:            { label: 'Failed',            color: 'failed',    icon: AlertTriangle },
 };
+
+const TABS: { key: AuditType; label: string; icon: React.ElementType; disabled?: boolean }[] = [
+  { key: 'website',        label: 'Website',        icon: Globe },
+  { key: 'brand_identity', label: 'Brand Identity', icon: Palette },
+  { key: 'design',         label: 'Design',         icon: PenTool, disabled: true },
+];
 
 function formatDate(d: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(d));
@@ -59,9 +70,9 @@ function scoreBg(s: number) {
   return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
 }
 
-/* ── Site Group ───────────────────────────────────────────── */
+/* ── Website Audit Card (grouped by domain) ─────────────── */
 
-function AuditSiteGroup({ domain, audits }: {
+function WebsiteAuditGroup({ domain, audits }: {
   domain: string;
   audits: AuditWithReport[];
 }) {
@@ -72,7 +83,6 @@ function AuditSiteGroup({ domain, audits }: {
   const latestDone = latest.status === 'completed';
   const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
 
-  // Score trend
   const scores = audits
     .filter(a => a.status === 'completed' && a.report?.overall_score != null)
     .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
@@ -80,7 +90,6 @@ function AuditSiteGroup({ domain, audits }: {
   const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
   const lang = langCode((latest as any).language);
 
-  // Single audit — entire card is clickable, goes directly to audit detail
   if (!hasMultiple) {
     return (
       <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
@@ -116,7 +125,6 @@ function AuditSiteGroup({ domain, audits }: {
     );
   }
 
-  // Multiple audits — navigate to dedicated domain page
   return (
     <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
       <Link
@@ -162,13 +170,72 @@ function AuditSiteGroup({ domain, audits }: {
   );
 }
 
+/* ── Brand Identity Audit Card ──────────────────────────── */
+
+function BrandAuditCard({ audit }: { audit: AuditWithReport }) {
+  const meta = statusMeta[audit.status] || statusMeta.pending_payment;
+  const StatusIcon = meta.icon;
+  const done = audit.status === 'completed';
+  const score = done ? (audit.report?.overall_score ?? null) : null;
+  const lang = langCode((audit as any).language);
+  const brandName = audit.brandName || 'Unnamed brand';
+
+  return (
+    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+      <Link href={`/dashboard/audits/${audit.id}`} className="block px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Palette size={12} className="text-muted flex-shrink-0" />
+              <p className="font-medium text-sm text-text truncate">{brandName}</p>
+              {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-muted">
+              <span>{formatDate(audit.created_at)}</span>
+              <span className="text-border">·</span>
+              <span className="flex items-center gap-0.5"><StatusIcon size={10} />{meta.label}</span>
+            </div>
+            {done && audit.report?.executive_summary && (
+              <p className="text-muted text-[11px] mt-1 line-clamp-1">{audit.report.executive_summary}</p>
+            )}
+          </div>
+          {score != null ? (
+            <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(score)}`}>
+              <span className={`font-medium text-sm leading-none ${scoreColor(score)}`}>{score}</span>
+            </div>
+          ) : (
+            <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
+          )}
+          <ChevronRight size={14} className="text-muted flex-shrink-0" />
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 /* ── Main Component ───────────────────────────────────────── */
 
 export default function AuditsPage() {
   const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Tab state from URL param
+  const tabParam = searchParams.get('type') as AuditType | null;
+  const activeTab: AuditType = TABS.some(t => t.key === tabParam && !t.disabled) ? tabParam! : 'website';
+
+  const setActiveTab = (tab: AuditType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'website') {
+      params.delete('type');
+    } else {
+      params.set('type', tab);
+    }
+    router.replace(`/dashboard/audits${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {
@@ -188,7 +255,19 @@ export default function AuditsPage() {
         if (!repErr && reports) reportsMap = Object.fromEntries(reports.map((r: any) => [r.audit_id, r]));
       }
 
-      setAudits((rows || []).map((a: any) => ({ ...a, report: reportsMap[a.id] || null })));
+      // Fetch brand names for brand identity audits
+      const brandIds = [...new Set((rows || []).filter((a: any) => a.brand_identity_id).map((a: any) => a.brand_identity_id as string))];
+      let brandMap: Record<string, string> = {};
+      if (brandIds.length > 0) {
+        const { data: brands } = await supabase.from('brand_identities').select('id, name').in('id', brandIds);
+        if (brands) brandMap = Object.fromEntries(brands.map((b: any) => [b.id, b.name]));
+      }
+
+      setAudits((rows || []).map((a: any) => ({
+        ...a,
+        report: reportsMap[a.id] || null,
+        brandName: a.brand_identity_id ? (brandMap[a.brand_identity_id] || null) : null,
+      })));
     } catch (err: any) {
       console.error('[Audits] fetch error:', err);
       setError(err?.message || 'Failed to load audits');
@@ -211,6 +290,34 @@ export default function AuditsPage() {
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 
+  // Filter audits by active tab
+  const filteredAudits = useMemo(() => {
+    return audits.filter(a => (a.audit_type || 'website') === activeTab);
+  }, [audits, activeTab]);
+
+  // Count per tab
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of TABS) counts[t.key] = 0;
+    for (const a of audits) {
+      const type = a.audit_type || 'website';
+      if (counts[type] !== undefined) counts[type]++;
+    }
+    return counts;
+  }, [audits]);
+
+  // Website: group by domain
+  const websiteGrouped = useMemo(() => {
+    if (activeTab !== 'website') return {};
+    const grouped: Record<string, AuditWithReport[]> = {};
+    for (const audit of filteredAudits) {
+      const domain = formatUrl(audit.product_url || '');
+      if (!grouped[domain]) grouped[domain] = [];
+      grouped[domain].push(audit);
+    }
+    return grouped;
+  }, [filteredAudits, activeTab]);
+
   if (authLoading || (loading && user)) {
     return (
       <div className="max-w-2xl mx-auto py-6 space-y-3">
@@ -220,28 +327,60 @@ export default function AuditsPage() {
     );
   }
 
-  // Group by domain
-  const grouped: Record<string, AuditWithReport[]> = {};
-  for (const audit of audits) {
-    const domain = formatUrl(audit.product_url);
-    if (!grouped[domain]) grouped[domain] = [];
-    grouped[domain].push(audit);
-  }
+  const TabIcon = TABS.find(t => t.key === activeTab)?.icon || FileSearch;
+  const tabLabel = TABS.find(t => t.key === activeTab)?.label || 'Audits';
 
   return (
     <div className="max-w-2xl mx-auto py-2">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <FileSearch size={22} className="text-brand" />
             <h1 className="text-2xl font-medium font-heading text-text">All Audits</h1>
           </div>
-          <p className="text-muted text-sm mt-1 pl-[34px]">{audits.length} audit{audits.length !== 1 ? 's' : ''} across {Object.keys(grouped).length} site{Object.keys(grouped).length !== 1 ? 's' : ''}</p>
+          <p className="text-muted text-sm mt-1 pl-[34px]">
+            {audits.length} audit{audits.length !== 1 ? 's' : ''} total
+          </p>
         </div>
         <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
           <Sparkles size={13} />
           New Audit
         </Link>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-5 p-1 bg-off/60 dark:bg-white/[0.03] rounded-xl border border-border/30 dark:border-white/[0.04]">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = tab.key === activeTab;
+          const count = tabCounts[tab.key] || 0;
+          return (
+            <button
+              key={tab.key}
+              disabled={tab.disabled}
+              onClick={() => !tab.disabled && setActiveTab(tab.key)}
+              className={`
+                flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg transition-all
+                ${tab.disabled
+                  ? 'text-muted/40 cursor-not-allowed'
+                  : isActive
+                    ? 'bg-card text-text shadow-sm border border-border/40 dark:border-white/[0.06]'
+                    : 'text-muted hover:text-text hover:bg-card/50'
+                }
+              `}
+            >
+              {tab.disabled ? <Lock size={11} /> : <Icon size={12} />}
+              <span className="hidden sm:inline">{tab.label}</span>
+              {!tab.disabled && count > 0 && (
+                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isActive ? 'bg-brand/10 text-brand' : 'bg-off text-muted'}`}>
+                  {count}
+                </span>
+              )}
+              {tab.disabled && <span className="text-[10px]">Soon</span>}
+            </button>
+          );
+        })}
       </div>
 
       {error && (
@@ -250,21 +389,39 @@ export default function AuditsPage() {
         </div>
       )}
 
-      {!loading && audits.length === 0 && (
+      {/* Empty state */}
+      {!loading && filteredAudits.length === 0 && (
         <div className="text-center py-12">
-          <FileSearch size={24} className="text-muted mx-auto mb-3" />
-          <h2 className="font-medium text-sm text-text mb-1">No audits yet</h2>
-          <p className="text-muted text-xs mb-4 max-w-xs mx-auto">Create your first audit to see how your website scores.</p>
-          <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110">
-            <Sparkles size={13} /> Start Audit
+          <TabIcon size={24} className="text-muted mx-auto mb-3" />
+          <h2 className="font-medium text-sm text-text mb-1">No {tabLabel.toLowerCase()} audits yet</h2>
+          <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
+            {activeTab === 'website'
+              ? 'Create your first audit to see how your website scores.'
+              : 'Run a brand identity audit to evaluate your brand materials.'}
+          </p>
+          <Link
+            href={activeTab === 'brand_identity' ? '/dashboard/new-audit?type=brand_identity' : '/dashboard/new-audit'}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110"
+          >
+            <Sparkles size={13} /> Start {tabLabel} Audit
           </Link>
         </div>
       )}
 
-      {audits.length > 0 && (
+      {/* Website audit list — grouped by domain */}
+      {activeTab === 'website' && filteredAudits.length > 0 && (
         <div className="flex flex-col" style={{ gap: '12px' }}>
-          {Object.keys(grouped).map((domain) => (
-            <AuditSiteGroup key={domain} domain={domain} audits={grouped[domain]} />
+          {Object.keys(websiteGrouped).map((domain) => (
+            <WebsiteAuditGroup key={domain} domain={domain} audits={websiteGrouped[domain]} />
+          ))}
+        </div>
+      )}
+
+      {/* Brand identity audit list — flat list */}
+      {activeTab === 'brand_identity' && filteredAudits.length > 0 && (
+        <div className="flex flex-col" style={{ gap: '12px' }}>
+          {filteredAudits.map((audit) => (
+            <BrandAuditCard key={audit.id} audit={audit} />
           ))}
         </div>
       )}

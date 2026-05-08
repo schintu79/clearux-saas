@@ -465,7 +465,7 @@ const WhiteLabelPage: React.FC = () => {
       {canEdit && (form.company_name || logoUrl || logoPreview) && (
         <Card className="mt-6">
           <h3 className="text-sm font-medium text-text mb-3">Report Preview</h3>
-          <div className="rounded-lg border border-border bg-white p-6 space-y-3">
+          <div className="rounded-lg border border-border bg-surface p-6 space-y-3">
             <div className="flex items-center gap-3">
               {(logoPreview || logoUrl) && (
                 <img
@@ -483,8 +483,8 @@ const WhiteLabelPage: React.FC = () => {
                 </span>
               )}
             </div>
-            <div className="h-px bg-gray-200" />
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="h-px bg-border" />
+            <div className="flex justify-between text-xs text-muted">
               <span>{form.footer_text || 'Custom footer text appears here'}</span>
               <span>{form.contact_email || 'contact@email.com'}</span>
             </div>

@@ -59,6 +59,7 @@ import type {
 } from '@/types/database';
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
+import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import clsx from 'clsx';
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -173,7 +174,7 @@ function buildSeverityConfig(L: UILabels) {
     critical: {
       badge: 'danger' as const,
       label: L.severityCritical,
-      bg: 'bg-white dark:bg-card',
+      bg: 'bg-card',
       border: 'border-border/40 dark:border-white/[0.06]',
       dot: 'bg-red-500',
       text: 'text-red-600 dark:text-red-400',
@@ -182,7 +183,7 @@ function buildSeverityConfig(L: UILabels) {
     high: {
       badge: 'failed' as const,
       label: L.severityHigh,
-      bg: 'bg-white dark:bg-card',
+      bg: 'bg-card',
       border: 'border-border/40 dark:border-white/[0.06]',
       dot: 'bg-orange-500',
       text: 'text-orange-600 dark:text-orange-400',
@@ -191,7 +192,7 @@ function buildSeverityConfig(L: UILabels) {
     medium: {
       badge: 'pending' as const,
       label: L.severityMedium,
-      bg: 'bg-white dark:bg-card',
+      bg: 'bg-card',
       border: 'border-border/40 dark:border-white/[0.06]',
       dot: 'bg-yellow-500',
       text: 'text-yellow-600 dark:text-yellow-500',
@@ -200,7 +201,7 @@ function buildSeverityConfig(L: UILabels) {
     low: {
       badge: 'active' as const,
       label: L.severityLow,
-      bg: 'bg-white dark:bg-card',
+      bg: 'bg-card',
       border: 'border-border/40 dark:border-white/[0.06]',
       dot: 'bg-blue-500',
       text: 'text-blue-600 dark:text-blue-400',
@@ -654,7 +655,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
     return (
       <div className="rounded-xl border border-border/20 dark:border-white/[0.04] bg-off/30 dark:bg-white/[0.02] p-3 opacity-60">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
           <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
           <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
         </div>
@@ -799,7 +800,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               <img
                 src={finding.screenshot_url}
                 alt={`Screenshot showing: ${finding.title}`}
-                className="w-full max-h-80 object-contain bg-white dark:bg-gray-900"
+                className="w-full max-h-80 object-contain bg-off dark:bg-off"
                 loading="lazy"
               />
             </div>
@@ -878,7 +879,7 @@ function ExpandableSummary({ text }: { text: string }) {
   return (
     <p
       onClick={() => setExpanded(!expanded)}
-      className={`text-xs leading-relaxed cursor-pointer text-text/65 hover:text-text/85 transition-colors ${expanded ? '' : 'line-clamp-2'}`}
+      className={`text-xs leading-relaxed cursor-pointer text-muted hover:text-text transition-colors ${expanded ? '' : 'line-clamp-2'}`}
       title={expanded ? 'Click to collapse' : 'Click to read more'}
     >
       {text}
@@ -1403,6 +1404,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     );
   }
 
+  /* ── Brand identity audit → dedicated component ───────── */
+  if (audit.audit_type === 'brand_identity' && user) {
+    return <BrandAuditDetail auditId={auditId} user={{ id: user.id }} />;
+  }
+
   /* ── Derived state ─────────────────────────────────────── */
   const report = audit.report as Report | null;
   const auditLang = (audit as any).language || 'en';
@@ -1480,7 +1486,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {calculatedOverallScore}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text truncate">{formatUrl(audit.product_url)}</p>
+                  <p className="text-sm font-medium text-text truncate">{formatUrl(audit.product_url || '')}</p>
                   <p className="text-[11px] text-muted">{getScoreLabel(calculatedOverallScore, auditLang)}</p>
                 </div>
               </div>
@@ -1510,18 +1516,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
       {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
       <Link
-        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url))}` : '/dashboard/audits'}
+        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/audits'}
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url)} Audits` : 'Back to Audits'}
+        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Audits'}
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <h1 className="text-2xl font-medium font-heading text-text mb-1 truncate">
-            {formatUrl(audit.product_url)}
+            {formatUrl(audit.product_url || '')}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
@@ -1532,7 +1538,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </span>
             )}
             <a
-              href={audit.product_url}
+              href={audit.product_url || ''}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors"
@@ -1574,7 +1580,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </>
               )}
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                 onClick={() => setMenuOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
               >
@@ -1583,7 +1589,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <span className="ml-auto text-[11px] text-muted">1 credit</span>
               </Link>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 onClick={() => setMenuOpen(false)}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
               >
@@ -1826,13 +1832,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       <Download size={12} /> Word
                     </a>
                     <Link
-                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                       className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
                       <RefreshCw size={12} /> Re-audit
                     </Link>
                     <Link
-                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                       className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
                     >
                       <Search size={12} /> Dig Deeper
@@ -1881,13 +1887,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
-          <ScoreOverTime productUrl={audit.product_url} currentAuditId={auditId} />
+          <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} />
 
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
             <RefreshCw size={15} className="text-brand flex-shrink-0" />
-            <p className="text-xs text-text/60 dark:text-text/50">
-              <span className="font-medium text-text/80 dark:text-text/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+            <p className="text-xs text-muted">
+              <span className="font-medium text-text">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
 
@@ -1935,7 +1941,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <>
                   {/* "Nothing changed" alert */}
                   {rawJson.verificationSummary.nothingChanged && (
-                    <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-border/40 dark:border-white/[0.06] flex items-start gap-3">
+                    <div className="mb-4 p-4 rounded-xl bg-off dark:bg-white/[0.03] border border-border/40 dark:border-white/[0.06] flex items-start gap-3">
                       <Info size={16} className="text-muted flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text mb-0.5">No changes detected</p>
@@ -2014,7 +2020,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-brand text-surface mt-0.5">
                           {i + 1}
                         </span>
-                        <p className="text-sm text-text/80 leading-relaxed">{rec}</p>
+                        <p className="text-sm text-text leading-relaxed">{rec}</p>
                       </div>
                     ))}
                   </div>
@@ -2032,7 +2038,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {/* Research note */}
                   <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
                     <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-text/50 dark:text-text/45 leading-relaxed">
+                    <p className="text-xs text-muted leading-relaxed">
                       {L.qualitativeNote}
                     </p>
                   </div>
@@ -2187,13 +2193,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <Download size={14} /> Word Report
               </a>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}`}
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                 className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <RefreshCw size={14} /> Re-audit
               </Link>
               <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url)}&depth=deep`}
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
               >
                 <Search size={14} /> Dig Deeper

@@ -226,20 +226,24 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Trigger audit processing via Inngest (background job)
+        // Trigger audit processing via Inngest (dispatch by audit type)
+        const auditType = (audit as any)?.audit_type || 'website'
+        const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
         try {
-          console.log(`[webhook] Sending Inngest event for audit ${auditId}`)
+          console.log(`[webhook] Sending Inngest event "${eventName}" for audit ${auditId}`)
           const sendResult = await inngest.send({
-            name: 'audit/process',
+            name: eventName,
             data: { auditId },
           })
           console.log(`[webhook] Inngest event sent:`, JSON.stringify(sendResult))
         } catch (inngestErr) {
           console.error(`[webhook] Inngest send FAILED for audit ${auditId}:`, inngestErr)
-          const { processAudit } = await import('@/lib/audit-engine')
-          processAudit(auditId).catch((err) => {
-            console.error(`[webhook] Fallback processAudit failed:`, err)
-          })
+          if (auditType === 'website') {
+            const { processAudit } = await import('@/lib/audit-engine')
+            processAudit(auditId).catch((err) => {
+              console.error(`[webhook] Fallback processAudit failed:`, err)
+            })
+          }
         }
 
         console.log(`Payment processed for audit ${auditId}`)

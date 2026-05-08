@@ -26,6 +26,8 @@ export type FindingSeverity =
 
 export type AuditDepthMode = 'standard' | 'deep'
 
+export type AuditType = 'website' | 'brand_identity' | 'design'
+
 // ── TABLE TYPES ──────────────────────────────────────────────
 
 export interface Profile {
@@ -60,8 +62,9 @@ export interface Audit {
   id:                string
   user_id:           string
   status:            AuditStatus
-  product_url:       string
+  product_url:       string | null
   product_type:      string
+  audit_type:        AuditType
   target_user:       string | null
   ux_concern:        string
   notes:             string | null
@@ -268,7 +271,18 @@ export interface BrandIdentityFile {
   file_url:          string
   file_type:         string | null
   file_size_bytes:   number | null
+  version:           number
+  replaces_file_id:  string | null
   created_at:        string
+}
+
+export interface BrandAuditFileSnapshot {
+  id:            string
+  audit_id:      string
+  brand_file_id: string
+  file_name:     string
+  file_url:      string
+  created_at:    string
 }
 
 // ── VIEW TYPES ───────────────────────────────────────────────
@@ -277,8 +291,9 @@ export interface AuditOverview {
   id:               string
   user_id:          string
   status:           AuditStatus
-  product_url:      string
+  product_url:      string | null
   product_type:     string
+  audit_type:       AuditType
   created_at:       string
   delivery_deadline: string | null
   completed_at:     string | null
@@ -320,7 +335,7 @@ export interface Database {
       }
       audits: {
         Row: Audit
-        Insert: Partial<Audit> & Pick<Audit, 'user_id' | 'product_url'>
+        Insert: Partial<Audit> & Pick<Audit, 'user_id'>
         Update: Partial<Audit>
       }
       payments: {
@@ -372,6 +387,11 @@ export interface Database {
         Row: BrandIdentityFile
         Insert: Partial<BrandIdentityFile> & Pick<BrandIdentityFile, 'brand_identity_id' | 'file_name' | 'file_url'>
         Update: Partial<BrandIdentityFile>
+      }
+      brand_audit_file_snapshots: {
+        Row: BrandAuditFileSnapshot
+        Insert: Partial<BrandAuditFileSnapshot> & Pick<BrandAuditFileSnapshot, 'audit_id' | 'brand_file_id' | 'file_name' | 'file_url'>
+        Update: Partial<BrandAuditFileSnapshot>
       }
     }
     Views: {

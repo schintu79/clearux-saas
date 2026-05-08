@@ -3,19 +3,37 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
 
-const AUDIT_FEATURES = [
-  '64-point deep analysis',
-  '16 UX categories audited',
-  'AI discoverability check',
-  'PDF + DOCX professional reports',
-  'Prioritised findings & recommendations',
+type AuditType = 'website' | 'brand_identity' | 'design';
+
+const AUDIT_TYPE_CONFIG: { type: AuditType; label: string; description: string; icon: React.ReactNode; available: boolean }[] = [
+  {
+    type: 'website',
+    label: 'Website',
+    description: 'Full UX audit of your live site',
+    icon: <Globe size={22} />,
+    available: true,
+  },
+  {
+    type: 'brand_identity',
+    label: 'Brand Identity',
+    description: 'Analyze uploaded brand materials',
+    icon: <Fingerprint size={22} />,
+    available: true,
+  },
+  {
+    type: 'design',
+    label: 'Design',
+    description: 'Review designs before production',
+    icon: <Palette size={22} />,
+    available: false, // Coming soon
+  },
 ];
 
 const NewAuditInner: React.FC = () => {
@@ -24,8 +42,13 @@ const NewAuditInner: React.FC = () => {
   const { user, loading: userLoading } = useAuth();
   const urlInputRef = useRef<HTMLInputElement>(null);
 
+  // Audit type
+  const typeParam = searchParams.get('type') as AuditType | null;
+  const [auditType, setAuditType] = useState<AuditType>(typeParam === 'brand_identity' ? 'brand_identity' : 'website');
+
+  // Website audit state
   const [url, setUrl] = useState(searchParams.get('url') || '');
-  const depthParam = searchParams.get('depth'); // 'deep' for Dig Deeper, null for standard
+  const depthParam = searchParams.get('depth');
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [urlError, setUrlError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,25 +57,24 @@ const NewAuditInner: React.FC = () => {
   const [packageTier, setPackageTier] = useState<string>('starter');
   const [firstAuditFree, setFirstAuditFree] = useState(false);
 
-  // Module selection (slug-based)
+  // Module selection (slug-based) — website audits only
   const [selectedModules, setSelectedModules] = useState<string[]>([...COMPLETE_AUDIT_SLUGS]);
   const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
-  // White-label is now managed at profile level via /dashboard/white-label
   const isWhiteLabelEligible = packageTier === 'growth' || packageTier === 'agency' || packageTier === 'scale';
 
-  // Brand identity selection
-  const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string }[]>([]);
-  const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  // Brand identity selection (shared between website + brand identity audit)
+  const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string; fileCount: number }[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string>(searchParams.get('brand') || '');
 
   useEffect(() => {
-    if (!userLoading && user && urlInputRef.current) {
+    if (!userLoading && user && urlInputRef.current && auditType === 'website') {
       urlInputRef.current.focus();
     }
-  }, [userLoading, user]);
+  }, [userLoading, user, auditType]);
 
-  // Fetch credits + package tier + brand identities
+  // Fetch credits + brand identities
   useEffect(() => {
     if (!user) return;
     fetch('/api/credits')
@@ -66,7 +88,14 @@ const NewAuditInner: React.FC = () => {
 
     fetch('/api/brand-identities')
       .then((r) => r.json())
-      .then((d) => setBrandIdentities((d.identities || []).map((bi: any) => ({ id: bi.id, name: bi.name }))))
+      .then((d) => {
+        const identities = (d.identities || []).map((bi: any) => ({
+          id: bi.id,
+          name: bi.name,
+          fileCount: bi.files?.length ?? 0,
+        }));
+        setBrandIdentities(identities);
+      })
       .catch(() => {});
   }, [user]);
 
@@ -123,7 +152,6 @@ const NewAuditInner: React.FC = () => {
     if (isCompleteAudit) {
       setSelectedModules([]);
     } else {
-      // Select all "complete" modules, plus keep brand_consistency if brand is selected
       const next = [...COMPLETE_AUDIT_SLUGS];
       if (selectedBrandId && !next.includes('brand_consistency')) {
         next.push('brand_consistency');
@@ -132,11 +160,25 @@ const NewAuditInner: React.FC = () => {
     }
   };
 
+  const selectedBrand = brandIdentities.find((bi) => bi.id === selectedBrandId);
+
   const handleSubmit = async () => {
-    if (!validateUrl(url)) return;
-    if (selectedModules.length === 0) {
-      setGeneralError('Select at least one module to audit.');
-      return;
+    // Validation per audit type
+    if (auditType === 'website') {
+      if (!validateUrl(url)) return;
+      if (selectedModules.length === 0) {
+        setGeneralError('Select at least one module to audit.');
+        return;
+      }
+    } else if (auditType === 'brand_identity') {
+      if (!selectedBrandId) {
+        setGeneralError('Select a brand identity to audit.');
+        return;
+      }
+      if (selectedBrand && selectedBrand.fileCount === 0) {
+        setGeneralError('This brand identity has no files uploaded. Upload at least one file before running an audit.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -144,25 +186,28 @@ const NewAuditInner: React.FC = () => {
 
     try {
       const supabase = createBrowserSupabase();
-      const productUrl = url.startsWith('http') ? url : `https://${url}`;
 
-      // White-label branding is now managed at profile level (/dashboard/white-label)
-      // and resolved at report-generation time from the white_label_settings table.
-
-      // Try with selected_modules; fallback without it if column doesn't exist yet
       const insertPayload: Record<string, any> = {
         user_id: user.id,
         status: hasCredits ? 'payment_received' : 'pending_payment',
-        product_url: productUrl,
         product_type: 'auto_detect',
-        ux_concern: 'General UX audit',
+        ux_concern: auditType === 'brand_identity' ? 'Brand identity audit' : 'General UX audit',
         notes: null,
         plan: 'full_audit',
         language: language,
-        depth_mode: depthParam === 'deep' ? 'deep' : 'standard',
-        selected_modules: selectedModules,
-        ...(selectedBrandId ? { brand_identity_id: selectedBrandId } : {}),
+        audit_type: auditType,
       };
+
+      if (auditType === 'website') {
+        const productUrl = url.startsWith('http') ? url : `https://${url}`;
+        insertPayload.product_url = productUrl;
+        insertPayload.depth_mode = depthParam === 'deep' ? 'deep' : 'standard';
+        insertPayload.selected_modules = selectedModules;
+        if (selectedBrandId) insertPayload.brand_identity_id = selectedBrandId;
+      } else if (auditType === 'brand_identity') {
+        insertPayload.brand_identity_id = selectedBrandId;
+        insertPayload.depth_mode = 'deep'; // Brand audits always run full analysis
+      }
 
       let { data: audit, error: auditError } = await supabase
         .from('audits')
@@ -170,9 +215,10 @@ const NewAuditInner: React.FC = () => {
         .select('id')
         .single();
 
-      // Fallback: if selected_modules column doesn't exist, retry without it
-      if (auditError?.message?.includes('selected_modules')) {
+      // Fallback: if new columns don't exist yet, retry without them
+      if (auditError?.message?.includes('selected_modules') || auditError?.message?.includes('audit_type')) {
         delete insertPayload.selected_modules;
+        delete insertPayload.audit_type;
         const retry = await supabase
           .from('audits')
           .insert(insertPayload)
@@ -188,7 +234,7 @@ const NewAuditInner: React.FC = () => {
       }
       if (!audit) throw new Error('Failed to create audit');
 
-      // If user has credits or first audit is free, use it
+      // Use credits
       if (hasCredits) {
         const creditRes = await fetch('/api/credits', {
           method: 'POST',
@@ -243,55 +289,316 @@ const NewAuditInner: React.FC = () => {
           New Audit
         </h1>
         <p className="text-muted">
-          Paste your URL and our AI does a deep analysis across all 64 checkpoints.
+          {auditType === 'brand_identity'
+            ? 'Upload your brand materials and get AI-powered analysis of consistency, messaging, and quality.'
+            : 'Paste your URL and our AI does a deep analysis across all 64 checkpoints.'}
         </p>
       </div>
 
-      {/* -- URL Input -- */}
-      <div className="mb-6">
-        <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
-          <Globe size={14} className="inline mr-1.5 -mt-0.5" />
-          Website URL
-        </label>
-        <div className="relative">
-          <input
-            ref={urlInputRef}
-            id="audit-url"
-            type="url"
-            name="url"
-            autoComplete="url"
-            aria-required="true"
-            aria-describedby={urlError ? 'url-error' : undefined}
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              if (urlError) validateUrl(e.target.value);
-            }}
-            onBlur={() => url && validateUrl(url)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
-            }}
-            placeholder="example.com"
-            className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-body bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
-              urlError
-                ? 'border-red-400 dark:border-red-500 focus:border-red-500'
-                : 'border-border focus:border-brand'
-            }`}
-          />
-          {url && !urlError && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                <span className="text-white text-xs">&#10003;</span>
-              </div>
-            </div>
-          )}
+      {/* ── Audit Type Selector ── */}
+      <div className="mb-8">
+        <div className="grid grid-cols-3 gap-3">
+          {AUDIT_TYPE_CONFIG.map((config) => {
+            const isSelected = auditType === config.type;
+            const isDisabled = !config.available;
+
+            return (
+              <button
+                key={config.type}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => {
+                  if (!isDisabled) {
+                    setAuditType(config.type);
+                    setGeneralError('');
+                  }
+                }}
+                className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all text-center ${
+                  isSelected
+                    ? 'border-brand bg-brand/5 dark:bg-brand/[0.03]'
+                    : isDisabled
+                    ? 'border-border/50 opacity-50 cursor-not-allowed'
+                    : 'border-border hover:border-brand/40 cursor-pointer'
+                }`}
+              >
+                <div className={`transition-colors ${isSelected ? 'text-brand' : 'text-muted'}`}>
+                  {config.icon}
+                </div>
+                <div>
+                  <p className={`text-sm font-medium ${isSelected ? 'text-text' : 'text-muted'}`}>
+                    {config.label}
+                  </p>
+                  <p className="text-[11px] text-muted leading-tight mt-0.5">
+                    {config.description}
+                  </p>
+                </div>
+                {isDisabled && (
+                  <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] text-muted bg-off px-1.5 py-0.5 rounded-full">
+                    <Lock size={8} />
+                    Soon
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        {urlError && (
-          <p id="url-error" className="text-red-500 dark:text-red-400 text-sm mt-2" role="alert">{urlError}</p>
-        )}
       </div>
 
-      {/* -- Report Language -- */}
+      {/* ══════════════════════════════════════════════════════════
+          WEBSITE AUDIT FIELDS
+          ══════════════════════════════════════════════════════════ */}
+      {auditType === 'website' && (
+        <>
+          {/* URL Input */}
+          <div className="mb-6">
+            <label htmlFor="audit-url" className="block text-sm font-medium text-text mb-2">
+              <Globe size={14} className="inline mr-1.5 -mt-0.5" />
+              Website URL
+            </label>
+            <div className="relative">
+              <input
+                ref={urlInputRef}
+                id="audit-url"
+                type="url"
+                name="url"
+                autoComplete="url"
+                aria-required="true"
+                aria-describedby={urlError ? 'url-error' : undefined}
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  if (urlError) validateUrl(e.target.value);
+                }}
+                onBlur={() => url && validateUrl(url)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+                }}
+                placeholder="example.com"
+                className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-body bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
+                  urlError
+                    ? 'border-red-400 dark:border-red-500 focus:border-red-500'
+                    : 'border-border focus:border-brand'
+                }`}
+              />
+              {url && !urlError && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <span className="text-white text-xs">&#10003;</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            {urlError && (
+              <p id="url-error" className="text-red-500 dark:text-red-400 text-sm mt-2" role="alert">{urlError}</p>
+            )}
+          </div>
+
+          {/* Audit Scope (Module Selection) */}
+          <div className="mb-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+              <Zap size={15} className="text-brand" />
+              Audit Scope
+            </label>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setScopeOpen(!scopeOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand"
+              >
+                <span>
+                  {isCompleteAudit
+                    ? 'Complete Audit — all core modules'
+                    : `Custom — ${selectedModules.length} module${selectedModules.length !== 1 ? 's' : ''} selected`}
+                </span>
+                <ChevronDown size={14} className={`text-muted transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {scopeOpen && (
+                <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border/50"
+                  >
+                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isCompleteAudit ? 'bg-[#22C55E]' : 'border-2 border-border'
+                    }`}>
+                      {isCompleteAudit && <Check size={10} className="text-white" />}
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-text">Complete Audit</p>
+                      <p className="text-[11px] text-muted">All core modules — full coverage</p>
+                    </div>
+                  </button>
+
+                  {AUDIT_MODULES.map((mod) => {
+                    const selected = selectedModules.includes(mod.slug);
+                    const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
+                    const disabled = brandRequired;
+
+                    return (
+                      <button
+                        key={mod.slug}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => { if (!disabled) toggleModule(mod.slug); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                          selected && !disabled ? 'bg-[#22C55E]' : 'border-2 border-border'
+                        }`}>
+                          {selected && !disabled && <Check size={10} className="text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-text">{mod.name}</span>
+                          {mod.requiresBrandIdentity && (
+                            <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
+                              Requires brand
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  <div className="px-4 py-2 border-t border-border/50">
+                    <button
+                      type="button"
+                      onClick={() => setScopeOpen(false)}
+                      className="text-xs font-medium text-brand hover:underline"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {selectedModules.length === 0 && (
+              <p className="text-red-500 text-xs mt-2">Select at least one module to audit.</p>
+            )}
+          </div>
+
+          {/* Brand Identity selector (optional for website audits) */}
+          {brandIdentities.length > 0 && (
+            <div className="mb-6">
+              <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+                <Fingerprint size={15} className="text-brand" />
+                Brand Identity
+                <span className="text-xs font-normal text-muted">(optional)</span>
+              </label>
+              <select
+                value={selectedBrandId}
+                onChange={(e) => setSelectedBrandId(e.target.value)}
+                className="w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              >
+                <option value="">No brand identity</option>
+                {brandIdentities.map((bi) => (
+                  <option key={bi.id} value={bi.id}>{bi.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted mt-1.5">
+                Select a brand to check website consistency against your brand guidelines.{' '}
+                <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
+                  Manage brands
+                </Link>
+              </p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          BRAND IDENTITY AUDIT FIELDS
+          ══════════════════════════════════════════════════════════ */}
+      {auditType === 'brand_identity' && (
+        <>
+          {/* Brand Identity selector (required) */}
+          <div className="mb-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+              <Fingerprint size={15} className="text-brand" />
+              Brand Identity
+            </label>
+
+            {brandIdentities.length === 0 ? (
+              <div className="p-6 rounded-xl border-2 border-dashed border-border text-center">
+                <Fingerprint size={32} className="text-muted mx-auto mb-3" />
+                <p className="text-sm font-medium text-text mb-1">No brand identities yet</p>
+                <p className="text-xs text-muted mb-4">
+                  Create a brand identity and upload your materials first.
+                </p>
+                <Link
+                  href="/dashboard/brand-identity"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
+                >
+                  Create Brand Identity
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={selectedBrandId}
+                  onChange={(e) => setSelectedBrandId(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                >
+                  <option value="">Select a brand identity...</option>
+                  {brandIdentities.map((bi) => (
+                    <option key={bi.id} value={bi.id}>
+                      {bi.name} ({bi.fileCount} file{bi.fileCount !== 1 ? 's' : ''})
+                    </option>
+                  ))}
+                </select>
+
+                {selectedBrand && selectedBrand.fileCount === 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 flex items-start gap-2">
+                    <AlertCircle size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        This brand has no files uploaded.{' '}
+                        <Link
+                          href={`/dashboard/brand-identity/${selectedBrandId}`}
+                          className="font-medium underline"
+                        >
+                          Upload files
+                        </Link>{' '}
+                        before running an audit.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedBrand && selectedBrand.fileCount > 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-brand/5 dark:bg-brand/[0.03] border border-brand/15 flex items-start gap-2">
+                    <FileText size={14} className="text-brand flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted">
+                        {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
+                        The AI will evaluate visual consistency, tone of voice, professionalism, value proposition, structure, competitive positioning, and wording quality.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted mt-2">
+                  <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
+                    Manage brands
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          SHARED FIELDS (both audit types)
+          ══════════════════════════════════════════════════════════ */}
+
+      {/* Report Language */}
       <div className="mb-6">
         <label htmlFor="audit-language" className="block text-sm font-medium text-text mb-2">
           <Languages size={14} className="inline mr-1.5 -mt-0.5" />
@@ -324,126 +631,7 @@ const NewAuditInner: React.FC = () => {
         )}
       </div>
 
-      {/* -- Audit Scope (Module Selection) -- */}
-      <div className="mb-6">
-        <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-          <Zap size={15} className="text-brand" />
-          Audit Scope
-        </label>
-
-        {/* Scope dropdown */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setScopeOpen(!scopeOpen)}
-            className="w-full flex items-center justify-between px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand"
-          >
-            <span>
-              {isCompleteAudit
-                ? 'Complete Audit — all core modules'
-                : `Custom — ${selectedModules.length} module${selectedModules.length !== 1 ? 's' : ''} selected`}
-            </span>
-            <ChevronDown size={14} className={`text-muted transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {scopeOpen && (
-            <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
-              {/* Complete Audit option */}
-              <button
-                type="button"
-                onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border/50"
-              >
-                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                  isCompleteAudit ? 'bg-[#22C55E]' : 'border-2 border-border'
-                }`}>
-                  {isCompleteAudit && <Check size={10} className="text-white" />}
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-text">Complete Audit</p>
-                  <p className="text-[11px] text-muted">All core modules — full coverage</p>
-                </div>
-              </button>
-
-              {/* Individual modules */}
-              {AUDIT_MODULES.map((mod) => {
-                const selected = selectedModules.includes(mod.slug);
-                const brandRequired = mod.requiresBrandIdentity && !selectedBrandId;
-                const disabled = brandRequired;
-
-                return (
-                  <button
-                    key={mod.slug}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => { if (!disabled) toggleModule(mod.slug); }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-                  >
-                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                      selected && !disabled ? 'bg-[#22C55E]' : 'border-2 border-border'
-                    }`}>
-                      {selected && !disabled && <Check size={10} className="text-white" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-text">{mod.name}</span>
-                      {mod.requiresBrandIdentity && (
-                        <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded-full ml-2">
-                          Requires brand
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-
-              {/* Close */}
-              <div className="px-4 py-2 border-t border-border/50">
-                <button
-                  type="button"
-                  onClick={() => setScopeOpen(false)}
-                  className="text-xs font-medium text-brand hover:underline"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {selectedModules.length === 0 && (
-          <p className="text-red-500 text-xs mt-2">Select at least one module to audit.</p>
-        )}
-      </div>
-
-      {/* -- Brand Identity selector -- */}
-      {brandIdentities.length > 0 && (
-        <div className="mb-6">
-          <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-            <Fingerprint size={15} className="text-brand" />
-            Brand Identity
-            <span className="text-xs font-normal text-muted">(optional)</span>
-          </label>
-          <select
-            value={selectedBrandId}
-            onChange={(e) => setSelectedBrandId(e.target.value)}
-            className="w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] appearance-none"
-            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-          >
-            <option value="">No brand identity</option>
-            {brandIdentities.map((bi) => (
-              <option key={bi.id} value={bi.id}>{bi.name}</option>
-            ))}
-          </select>
-          <p className="text-xs text-muted mt-1.5">
-            Select a brand to check website consistency against your brand guidelines.{' '}
-            <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
-              Manage brands
-            </Link>
-          </p>
-        </div>
-      )}
-
-      {/* -- White-label info (managed at profile level) -- */}
+      {/* White-label info */}
       {isWhiteLabelEligible && (
         <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl border border-brand/15 bg-brand/5 dark:bg-brand/[0.03]">
           <Building2 size={15} className="text-brand flex-shrink-0" />
@@ -456,10 +644,10 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* -- What's included -- */}
-      <AllAuditsInclude compact className="mb-6" />
+      {/* What's included — website audits only */}
+      {auditType === 'website' && <AllAuditsInclude compact className="mb-6" />}
 
-      {/* -- Free first audit banner -- */}
+      {/* Free first audit banner */}
       {firstAuditFree && (
         <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
@@ -471,14 +659,14 @@ const NewAuditInner: React.FC = () => {
                 Your first audit is free
               </p>
               <p className="text-xs text-muted">
-                No credit card needed. No credits deducted. Just paste your URL and go.
+                No credit card needed. No credits deducted.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* -- Credits banner -- */}
+      {/* Credits banner */}
       {!firstAuditFree && credits !== null && hasCredits && (
         <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
           <div className="flex items-center gap-3">
@@ -515,17 +703,17 @@ const NewAuditInner: React.FC = () => {
         </div>
       )}
 
-      {/* -- Error -- */}
+      {/* Error */}
       {generalError && (
         <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-red-700 dark:text-red-300 text-sm">{generalError}</p>
         </div>
       )}
 
-      {/* -- CTA -- */}
+      {/* CTA */}
       <button
         onClick={handleSubmit}
-        disabled={loading}
+        disabled={loading || (auditType === 'brand_identity' && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0))}
         className="w-full flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
         style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
       >
@@ -544,12 +732,12 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : hasCredits ? (
           <>
-            Use 1 Credit — Start Audit
+            Use 1 Credit — Start {auditType === 'brand_identity' ? 'Brand' : ''} Audit
             <ArrowRight size={20} />
           </>
         ) : (
           <>
-            Start Audit — $99
+            Start {auditType === 'brand_identity' ? 'Brand ' : ''}Audit — $99
             <ArrowRight size={20} />
           </>
         )}

@@ -297,7 +297,7 @@ function DashboardInner() {
               setPinnedNotification(null);
               window.dispatchEvent(new Event('focus'));
             }}
-            className="p-1 rounded-md text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/[0.05] transition-colors flex-shrink-0"
+            className="p-1 rounded-md text-muted hover:text-text hover:bg-off dark:hover:bg-white/[0.05] transition-colors flex-shrink-0"
             aria-label="Dismiss"
           >
             <X size={12} />
@@ -364,7 +364,7 @@ function DashboardInner() {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text truncate">{formatUrl(latestCompleted.product_url)}</p>
+                  <p className="text-sm font-medium text-text truncate">{formatUrl(latestCompleted.product_url || '')}</p>
                   <p className="text-xs text-muted mt-0.5">{formatDate(latestCompleted.created_at)} · {latestScore >= 70 ? 'Good' : latestScore >= 40 ? 'Needs work' : 'Poor'}</p>
                   {latestCompleted.report.key_recommendation && (
                     <p className="text-xs text-muted mt-1.5 leading-relaxed line-clamp-2">
@@ -400,7 +400,7 @@ function DashboardInner() {
                       <Loader2 size={14} className="text-brand animate-spin" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
+                      <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url || '')}</p>
                       <div className="flex items-center gap-2 text-[11px] text-muted mt-0.5">
                         <span>{formatDate(audit.created_at)}</span>
                         <span className="text-border">·</span>
@@ -420,7 +420,7 @@ function DashboardInner() {
                 <div className="bg-card border border-red-200/40 dark:border-red-800/20 rounded-xl px-4 py-3.5 hover:border-red-400/30 transition-colors flex items-center gap-3">
                   <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url)}</p>
+                    <p className="font-medium text-sm text-text truncate">{formatUrl(audit.product_url || '')}</p>
                     <p className="text-[11px] text-muted mt-0.5">{formatDate(audit.created_at)} · Credit refunded</p>
                   </div>
                   <ChevronRight size={14} className="text-muted flex-shrink-0" />

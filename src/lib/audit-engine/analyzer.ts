@@ -588,7 +588,7 @@ export async function generateReport(
     // Build executive summary — deterministic, no AI, language-aware
     const executiveSummary = getBaselineSummary(
       language,
-      auditData.product_url,
+      auditData.product_url || '',
       currentCount,
       overallScore,
       prev.previousOverallScore,

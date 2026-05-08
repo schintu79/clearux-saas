@@ -136,21 +136,32 @@ export async function POST(request: NextRequest) {
         : { credits_before: balance + 1, credits_after: balance },
     } as any)
 
+    // Determine audit type for correct Inngest dispatch
+    const { data: auditRecord } = await db
+      .from('audits')
+      .select('audit_type')
+      .eq('id', audit_id)
+      .single()
+    const auditType = (auditRecord as any)?.audit_type || 'website'
+    const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
+
     // Trigger audit processing via Inngest (background job)
     try {
-      console.log(`[credits] Sending Inngest event for audit ${audit_id}`)
+      console.log(`[credits] Sending Inngest event "${eventName}" for audit ${audit_id}`)
       const sendResult = await inngest.send({
-        name: 'audit/process',
+        name: eventName,
         data: { auditId: audit_id },
       })
       console.log(`[credits] Inngest event sent successfully:`, JSON.stringify(sendResult))
     } catch (inngestErr) {
       console.error(`[credits] Inngest send FAILED for audit ${audit_id}:`, inngestErr)
-      // Fallback: process directly if Inngest fails
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(audit_id).catch((err) => {
-        console.error(`[credits] Fallback processAudit failed for ${audit_id}:`, err)
-      })
+      // Fallback: process directly if Inngest fails (website audits only)
+      if (auditType === 'website') {
+        const { processAudit } = await import('@/lib/audit-engine')
+        processAudit(audit_id).catch((err) => {
+          console.error(`[credits] Fallback processAudit failed for ${audit_id}:`, err)
+        })
+      }
     }
 
     return NextResponse.json({

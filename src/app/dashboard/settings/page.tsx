@@ -517,7 +517,7 @@ const SettingsPage: React.FC = () => {
                   value={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md border border-red-300 dark:border-red-700 bg-white dark:bg-red-900/30 text-text placeholder:text-red-300 dark:placeholder:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md border border-red-300 dark:border-red-700 bg-card dark:bg-red-900/30 text-text placeholder:text-red-300 dark:placeholder:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
 
