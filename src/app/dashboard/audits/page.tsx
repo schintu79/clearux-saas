@@ -290,9 +290,17 @@ function AuditsPageInner() {
     return () => clearInterval(iv);
   }, [audits, user, fetchAudits]);
 
+  // Infer effective audit type — handles older audits without audit_type column
+  const getAuditType = (a: Audit): AuditType => {
+    if (a.audit_type) return a.audit_type;
+    // Fallback: if it has a brand_identity_id but no product_url, it's a brand audit
+    if (a.brand_identity_id && !a.product_url) return 'brand_identity';
+    return 'website';
+  };
+
   // Filter audits by active tab
   const filteredAudits = useMemo(() => {
-    return audits.filter(a => (a.audit_type || 'website') === activeTab);
+    return audits.filter(a => getAuditType(a) === activeTab);
   }, [audits, activeTab]);
 
   // Count per tab
@@ -300,7 +308,7 @@ function AuditsPageInner() {
     const counts: Record<string, number> = {};
     for (const t of TABS) counts[t.key] = 0;
     for (const a of audits) {
-      const type = a.audit_type || 'website';
+      const type = getAuditType(a);
       if (counts[type] !== undefined) counts[type]++;
     }
     return counts;
