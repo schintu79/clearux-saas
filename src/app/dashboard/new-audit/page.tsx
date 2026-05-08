@@ -665,80 +665,187 @@ const NewAuditInner: React.FC = () => {
           ══════════════════════════════════════════════════════════ */}
       {auditType === 'brand_identity' && (
         <>
-          {/* Brand Identity selector (required) */}
           <div className="mb-6">
             <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
               <Fingerprint size={15} className="text-brand" />
               Brand Identity
             </label>
 
-            {brandIdentities.length === 0 ? (
-              <div className="p-6 rounded-xl border-2 border-dashed border-border text-center">
-                <Fingerprint size={32} className="text-muted mx-auto mb-3" />
-                <p className="text-sm font-medium text-text mb-1">No brand identities yet</p>
-                <p className="text-xs text-muted mb-4">
-                  Create a brand identity and upload your materials first.
-                </p>
-                <Link
-                  href="/dashboard/brand-identity"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
-                >
-                  Create Brand Identity
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            ) : (
+            {/* Toggle: existing vs new */}
+            {!showNewBrand ? (
               <>
-                <select
-                  value={selectedBrandId}
-                  onChange={(e) => setSelectedBrandId(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                {/* Existing brand selector */}
+                {brandIdentities.length > 0 && (
+                  <>
+                    <select
+                      value={selectedBrandId}
+                      onChange={(e) => setSelectedBrandId(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
+                      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                    >
+                      <option value="">Select a brand identity...</option>
+                      {brandIdentities.map((bi) => (
+                        <option key={bi.id} value={bi.id}>
+                          {bi.name} ({bi.fileCount} file{bi.fileCount !== 1 ? 's' : ''})
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedBrand && selectedBrand.fileCount === 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-[#FFFBEB] dark:bg-[#78350F]/20 border border-[#FDE68A] dark:border-[#92400E]/40 flex items-start gap-2">
+                        <AlertCircle size={14} className="text-[#D97706] flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#92400E] dark:text-[#FDE68A]">
+                          This brand has no files uploaded.{' '}
+                          <Link href={`/dashboard/brand-identity/${selectedBrandId}`} className="font-medium underline">
+                            Upload files
+                          </Link>{' '}
+                          before running an audit.
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedBrand && selectedBrand.fileCount > 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-[#F0FDF4] dark:bg-[#166534]/20 border border-[#BBF7D0] dark:border-[#166534]/40 flex items-start gap-2">
+                        <FileText size={14} className="text-[#16A34A] flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#374151] dark:text-[#BBF7D0]">
+                          {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
+                          The AI will evaluate visual consistency, tone of voice, professionalism, and wording quality.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Create new brand button */}
+                <button
+                  type="button"
+                  onClick={() => { setShowNewBrand(true); setSelectedBrandId(''); }}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-brand/40 text-sm font-medium text-muted hover:text-text transition-all ${brandIdentities.length > 0 ? 'mt-3' : ''}`}
                 >
-                  <option value="">Select a brand identity...</option>
-                  {brandIdentities.map((bi) => (
-                    <option key={bi.id} value={bi.id}>
-                      {bi.name} ({bi.fileCount} file{bi.fileCount !== 1 ? 's' : ''})
-                    </option>
-                  ))}
-                </select>
+                  <Plus size={16} />
+                  Create New Brand Identity
+                </button>
 
-                {selectedBrand && selectedBrand.fileCount === 0 && (
-                  <div className="mt-3 p-3 rounded-lg bg-[#FFFBEB] border border-[#FDE68A] flex items-start gap-2">
-                    <AlertCircle size={14} className="text-[#D97706] flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-[#92400E]">
-                        This brand has no files uploaded.{' '}
-                        <Link
-                          href={`/dashboard/brand-identity/${selectedBrandId}`}
-                          className="font-medium underline"
-                        >
-                          Upload files
-                        </Link>{' '}
-                        before running an audit.
-                      </p>
-                    </div>
-                  </div>
+                {brandIdentities.length > 0 && (
+                  <p className="text-xs text-muted mt-2">
+                    <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
+                      Manage brands
+                    </Link>
+                  </p>
                 )}
-
-                {selectedBrand && selectedBrand.fileCount > 0 && (
-                  <div className="mt-3 p-3 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] flex items-start gap-2">
-                    <FileText size={14} className="text-[#16A34A] flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-[#374151]">
-                        {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
-                        The AI will evaluate visual consistency, tone of voice, professionalism, value proposition, structure, competitive positioning, and wording quality.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-xs text-muted mt-2">
-                  <Link href="/dashboard/brand-identity" className="text-brand hover:underline">
-                    Manage brands
-                  </Link>
-                </p>
               </>
+            ) : (
+              /* ── Inline new brand creation ── */
+              <div className="rounded-xl border-2 border-brand/30 bg-brand/[0.02] dark:bg-brand/[0.03] p-4 space-y-4">
+                {/* Brand name */}
+                <div>
+                  <label htmlFor="new-brand-name" className="block text-xs font-medium text-text mb-1.5">
+                    Brand Name
+                  </label>
+                  <input
+                    id="new-brand-name"
+                    type="text"
+                    value={newBrandName}
+                    onChange={(e) => setNewBrandName(e.target.value)}
+                    placeholder="e.g. My Company"
+                    className="w-full px-3 py-2.5 border-2 border-border rounded-lg font-body text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:border-brand"
+                  />
+                </div>
+
+                {/* File upload area */}
+                <div>
+                  <label className="block text-xs font-medium text-text mb-1.5">
+                    Brand Files
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.svg,.webp"
+                    className="hidden"
+                    onChange={(e) => handleAddFiles(e.target.files)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleAddFiles(e.dataTransfer.files); }}
+                    className="w-full flex flex-col items-center gap-2 px-4 py-5 rounded-lg border-2 border-dashed border-border hover:border-brand/40 bg-off/50 transition-all cursor-pointer"
+                  >
+                    <Upload size={20} className="text-muted" />
+                    <span className="text-xs text-muted">
+                      Click to upload or drag files here
+                    </span>
+                    <span className="text-[10px] text-muted/60">
+                      PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10 MB each
+                    </span>
+                  </button>
+                </div>
+
+                {/* File list */}
+                {newBrandFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {newBrandFiles.map((f, i) => (
+                      <div key={`${f.name}-${i}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border/50">
+                        <FileText size={14} className="text-muted flex-shrink-0" />
+                        <span className="text-xs text-text flex-1 truncate">{f.name}</span>
+                        <span className="text-[10px] text-muted flex-shrink-0">
+                          {f.size < 1024 * 1024
+                            ? `${Math.round(f.size / 1024)} KB`
+                            : `${(f.size / (1024 * 1024)).toFixed(1)} MB`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(i)}
+                          className="text-muted hover:text-red-500 transition-colors flex-shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-muted">
+                      {newBrandFiles.length} file{newBrandFiles.length !== 1 ? 's' : ''} ready to upload
+                    </p>
+                  </div>
+                )}
+
+                {/* Upload error */}
+                {brandUploadError && (
+                  <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                    <p className="text-red-600 dark:text-red-400 text-xs">{brandUploadError}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewBrand(false);
+                      setNewBrandName('');
+                      setNewBrandFiles([]);
+                      setBrandUploadError('');
+                    }}
+                    className="text-xs font-medium text-muted hover:text-text transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  {brandIdentities.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewBrand(false);
+                        setNewBrandName('');
+                        setNewBrandFiles([]);
+                        setBrandUploadError('');
+                      }}
+                      className="text-xs font-medium text-brand hover:underline"
+                    >
+                      Use existing brand instead
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </>
@@ -863,17 +970,17 @@ const NewAuditInner: React.FC = () => {
       {/* CTA */}
       <button
         onClick={handleSubmit}
-        disabled={loading || (auditType === 'brand_identity' && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0))}
+        disabled={loading || brandUploading || (auditType === 'brand_identity' && !showNewBrand && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0)) || (auditType === 'brand_identity' && showNewBrand && (newBrandFiles.length === 0 || !newBrandName.trim()))}
         className="w-full flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
         style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
       >
-        {loading ? (
+        {loading || brandUploading ? (
           <>
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            {hasCredits ? 'Starting audit...' : 'Creating checkout...'}
+            {brandUploading ? 'Uploading brand files...' : hasCredits ? 'Starting audit...' : 'Creating checkout...'}
           </>
         ) : firstAuditFree ? (
           <>
