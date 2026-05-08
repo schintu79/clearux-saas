@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -68,6 +68,14 @@ const NewAuditInner: React.FC = () => {
   const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string; fileCount: number }[]>([]);
   const [selectedBrandId, setSelectedBrandId] = useState<string>(searchParams.get('brand') || '');
 
+  // Inline brand creation + file upload
+  const [showNewBrand, setShowNewBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [newBrandFiles, setNewBrandFiles] = useState<File[]>([]);
+  const [brandUploading, setBrandUploading] = useState(false);
+  const [brandUploadError, setBrandUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!userLoading && user && urlInputRef.current && auditType === 'website') {
       urlInputRef.current.focus();
@@ -92,7 +100,7 @@ const NewAuditInner: React.FC = () => {
         const identities = (d.identities || []).map((bi: any) => ({
           id: bi.id,
           name: bi.name,
-          fileCount: bi.files?.length ?? 0,
+          fileCount: bi.brand_identity_files?.length ?? 0,
         }));
         setBrandIdentities(identities);
       })
@@ -162,6 +170,89 @@ const NewAuditInner: React.FC = () => {
 
   const selectedBrand = brandIdentities.find((bi) => bi.id === selectedBrandId);
 
+  const handleAddFiles = (files: FileList | null) => {
+    if (!files) return;
+    const allowed = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024;
+    const valid: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (!allowed.includes(f.type)) {
+        setBrandUploadError(`${f.name}: unsupported file type`);
+        return;
+      }
+      if (f.size > maxSize) {
+        setBrandUploadError(`${f.name}: exceeds 10 MB limit`);
+        return;
+      }
+      valid.push(f);
+    }
+    setBrandUploadError('');
+    setNewBrandFiles((prev) => [...prev, ...valid]);
+  };
+
+  const removeFile = (idx: number) => {
+    setNewBrandFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const createBrandAndUpload = async (): Promise<string | null> => {
+    if (!newBrandName.trim()) {
+      setBrandUploadError('Enter a name for the brand identity.');
+      return null;
+    }
+    if (newBrandFiles.length === 0) {
+      setBrandUploadError('Upload at least one file.');
+      return null;
+    }
+
+    setBrandUploading(true);
+    setBrandUploadError('');
+
+    try {
+      // 1. Create brand identity
+      const createRes = await fetch('/api/brand-identities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newBrandName.trim() }),
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok) throw new Error(createData.error || 'Failed to create brand identity');
+
+      const brandId = createData.identity.id;
+
+      // 2. Upload each file
+      for (const file of newBrandFiles) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const uploadRes = await fetch(`/api/brand-identities/${brandId}/upload`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          throw new Error(uploadData.error || `Failed to upload ${file.name}`);
+        }
+      }
+
+      // 3. Update local state
+      setBrandIdentities((prev) => [
+        { id: brandId, name: newBrandName.trim(), fileCount: newBrandFiles.length },
+        ...prev,
+      ]);
+      setSelectedBrandId(brandId);
+      setShowNewBrand(false);
+      setNewBrandName('');
+      setNewBrandFiles([]);
+
+      return brandId;
+    } catch (err) {
+      setBrandUploadError(err instanceof Error ? err.message : 'Upload failed');
+      return null;
+    } finally {
+      setBrandUploading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     // Validation per audit type
     if (auditType === 'website') {
@@ -171,8 +262,61 @@ const NewAuditInner: React.FC = () => {
         return;
       }
     } else if (auditType === 'brand_identity') {
+      // If user is creating a new brand inline, do that first
+      if (showNewBrand) {
+        const newId = await createBrandAndUpload();
+        if (!newId) return; // error was set inside createBrandAndUpload
+        // Update selectedBrandId for the rest of the flow
+        setSelectedBrandId(newId);
+        // Use newId directly since state update is async
+        setLoading(true);
+        setGeneralError('');
+        try {
+          const supabase = createBrowserSupabase();
+          const insertPayload: Record<string, any> = {
+            user_id: user.id,
+            status: hasCredits ? 'payment_received' : 'pending_payment',
+            product_type: 'auto_detect',
+            ux_concern: 'Brand identity audit',
+            notes: null,
+            plan: 'full_audit',
+            language: language,
+            audit_type: 'brand_identity',
+            brand_identity_id: newId,
+            depth_mode: 'deep',
+          };
+          let { data: audit, error: auditError } = await supabase
+            .from('audits').insert(insertPayload).select('id').single();
+          if (auditError?.message?.includes('selected_modules') ||
+              auditError?.message?.includes('audit_type') ||
+              auditError?.message?.includes('brand_identity_id')) {
+            delete insertPayload.selected_modules;
+            delete insertPayload.audit_type;
+            delete insertPayload.brand_identity_id;
+            const retry = await supabase.from('audits').insert(insertPayload).select('id').single();
+            audit = retry.data; auditError = retry.error;
+          }
+          if (auditError) throw new Error(auditError.message || 'Failed to create audit');
+          if (!audit) throw new Error('Failed to create audit');
+          if (hasCredits) {
+            const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
+            if (!creditRes.ok) throw new Error('Failed to apply credit');
+            router.push(`/dashboard/audits/${audit.id}?payment=success`);
+            return;
+          }
+          const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
+          const checkoutData = await checkoutRes.json();
+          if (!checkoutRes.ok || !checkoutData.url) throw new Error(checkoutData.error || 'Failed to create checkout');
+          window.location.href = checkoutData.url;
+          return;
+        } catch (err) {
+          setGeneralError(err instanceof Error ? err.message : 'Something went wrong.');
+          setLoading(false);
+          return;
+        }
+      }
       if (!selectedBrandId) {
-        setGeneralError('Select a brand identity to audit.');
+        setGeneralError('Select a brand identity or create a new one.');
         return;
       }
       if (selectedBrand && selectedBrand.fileCount === 0) {

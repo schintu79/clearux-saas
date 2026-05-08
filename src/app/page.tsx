@@ -261,37 +261,37 @@ export default function Home() {
             ].map((badge, i) => {
               const BadgeIcon = badge.icon;
               return (
-                <div key={i} className="flex items-center gap-1.5">
-                  <BadgeIcon size={13} className="text-white/45" strokeWidth={1.5} />
-                  <span className="text-[11px] text-white/50 font-medium tracking-wide sm:hidden">{badge.label}</span>
-                  <span className="text-[11px] text-white/50 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
+                <div key={i} className="flex items-center gap-2">
+                  <BadgeIcon size={16} className="text-white/45" strokeWidth={1.5} />
+                  <span className="text-[13px] text-white/50 font-medium tracking-wide sm:hidden">{badge.label}</span>
+                  <span className="text-[13px] text-white/50 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
                 </div>
               );
             })}
           </motion.div>
-        </div>
 
-        {/* Scroll indicator — 50px below trust badges, positioned at bottom */}
-        <motion.div
-          className="relative z-10 flex justify-center mt-[50px] pb-6 sm:pb-10 flex-shrink-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              const el = document.getElementById('trust-numbers');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
+          {/* Scroll indicator — 50px below trust badges */}
+          <motion.div
+            className="flex justify-center mt-[50px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.8 }}
           >
-            <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-medium">Discover ClearUX</span>
-            <div className="w-11 h-11 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
-              <ChevronDown size={18} className="text-[#84CC16] group-hover:text-[#BEF264] transition-colors" />
-            </div>
-          </button>
-        </motion.div>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('trust-numbers');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
+            >
+              <span className="text-xs tracking-[0.2em] uppercase text-lime-gradient font-medium">Discover ClearUX</span>
+              <div className="w-11 h-11 rounded-full border border-[#84CC16]/40 group-hover:border-[#84CC16]/70 flex items-center justify-center transition-all group-hover:bg-[#84CC16]/[0.05]">
+                <ChevronDown size={18} className="text-[#84CC16] group-hover:text-[#BEF264] transition-colors" />
+              </div>
+            </button>
+          </motion.div>
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
