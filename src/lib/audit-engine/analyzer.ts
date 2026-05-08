@@ -560,8 +560,9 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 
 /**
  * Run full analysis across UX categories in parallel batches.
- * This is used when the checklist_categories table is empty (not seeded).
  * Processes categories one at a time to avoid rate limits.
+ * Skips Brand Consistency (20-23) unless brand identity files are attached.
+ * Respects selected_modules if provided.
  */
 export async function runFullAnalysis(
   pageContent: string,
@@ -572,10 +573,43 @@ export async function runFullAnalysis(
 ): Promise<AnalysisFinding[]> {
   const allFindings: AnalysisFinding[] = []
 
+  // Module slug → category index ranges
+  const MODULE_RANGES: Record<string, [number, number]> = {
+    foundation: [0, 4],
+    human_experience: [4, 8],
+    inclusive_design: [8, 12],
+    future_readiness: [12, 16],
+    seo_structure: [16, 20],
+    brand_consistency: [20, 24],
+  }
+
+  // Determine which categories to analyze
+  const selectedModules: string[] | null = (audit as any).selected_modules ?? null
+  const hasBrandIdentity = !!(audit as any).brand_identity_id
+
+  function shouldAnalyze(categoryIndex: number): boolean {
+    // Brand Consistency (20-23) requires brand identity files
+    if (categoryIndex >= 20 && categoryIndex < 24 && !hasBrandIdentity) return false
+
+    // If selected_modules specified, only analyze those modules
+    if (selectedModules && selectedModules.length > 0) {
+      for (const mod of selectedModules) {
+        const range = MODULE_RANGES[mod]
+        if (range && categoryIndex >= range[0] && categoryIndex < range[1]) return true
+      }
+      return false
+    }
+
+    return true
+  }
+
   // Process categories ONE AT A TIME to avoid rate limits and memory issues
-  for (let i = 0; i < UX_CATEGORIES.length; i++) {
-    const category = UX_CATEGORIES[i]
-    console.log(`[runFullAnalysis] Category ${i + 1}/${UX_CATEGORIES.length}: ${category.name}`)
+  const categoriesToAnalyze = UX_CATEGORIES.filter((_, i) => shouldAnalyze(i))
+  console.log(`[runFullAnalysis] Analyzing ${categoriesToAnalyze.length}/${UX_CATEGORIES.length} categories`)
+
+  for (let ci = 0; ci < categoriesToAnalyze.length; ci++) {
+    const category = categoriesToAnalyze[ci]
+    console.log(`[runFullAnalysis] Category ${ci + 1}/${categoriesToAnalyze.length}: ${category.name}`)
 
     const findings = await analyzeCategory(
       pageContent,
@@ -593,7 +627,7 @@ export async function runFullAnalysis(
     allFindings.push(...findings)
 
     // Brief pause between categories to avoid rate limits
-    if (i < UX_CATEGORIES.length - 1) {
+    if (ci < categoriesToAnalyze.length - 1) {
       await new Promise((r) => setTimeout(r, 500))
     }
   }
@@ -723,7 +757,28 @@ export async function generateReport(
     : ''
 
   const reportLanguageInstruction = getLanguagePromptInstruction(language)
-  const translatedNames = getCategoryNames(language)
+  const allTranslatedNames = getCategoryNames(language)
+
+  // Only ask the AI to score categories that were actually analyzed
+  // Brand Consistency (20-23) is excluded when no brand identity is attached
+  const hasBrandIdentity = !!(auditData as any).brand_identity_id
+  const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
+  const MODULE_RANGES: Record<string, [number, number]> = {
+    foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
+    future_readiness: [12, 16], seo_structure: [16, 20], brand_consistency: [20, 24],
+  }
+  function wasAnalyzed(idx: number): boolean {
+    if (idx >= 20 && idx < 24 && !hasBrandIdentity) return false
+    if (selectedModules && selectedModules.length > 0) {
+      for (const mod of selectedModules) {
+        const r = MODULE_RANGES[mod]
+        if (r && idx >= r[0] && idx < r[1]) return true
+      }
+      return false
+    }
+    return true
+  }
+  const translatedNames = allTranslatedNames.filter((_, i) => wasAnalyzed(i))
 
   const categoryList = translatedNames.map((name, i) => `${i + 1}. ${name}`).join('\n')
   const summaryExamples = [
@@ -894,20 +949,51 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
         ? [report.keyRecommendation]
         : []
 
-    // Parse category scores
-    const categoryScores = Array.isArray(report.categoryScores)
+    // Parse category scores from AI and map back to global 24-category positions
+    // The AI only scored the categories we asked about (which may be < 24)
+    // We need to rebuild the full array with correct global positions
+    const aiCategoryScores = Array.isArray(report.categoryScores)
       ? report.categoryScores.map((c: any) => ({
           name: c.name || 'Unknown',
           score: clampScore(c.score),
           summary: c.summary || '',
         }))
-      : getDefaultCategoryScores()
+      : []
+
+    // Map AI scores back to the full category array by matching names
+    const allCategoryNames = getCategoryNames(language)
+    const categoryScores: CategoryScore[] = []
+    for (let gi = 0; gi < allCategoryNames.length; gi++) {
+      if (!wasAnalyzed(gi)) continue // skip unanalyzed categories
+      const globalName = allCategoryNames[gi]
+      // Find the matching AI score by name (fuzzy match by position if names differ)
+      const aiIdx = categoryScores.length // position in the analyzed subset
+      const matched = aiCategoryScores.find((c: any) =>
+        c.name.toLowerCase() === globalName.toLowerCase()
+      ) || aiCategoryScores[aiIdx] // fallback to positional match
+      categoryScores.push({
+        name: globalName,
+        score: matched ? clampScore(matched.score) : 70,
+        summary: matched?.summary || '',
+      })
+    }
+
+    // If AI returned nothing useful, use defaults for analyzed categories
+    if (categoryScores.length === 0) {
+      for (let gi = 0; gi < allCategoryNames.length; gi++) {
+        if (wasAnalyzed(gi)) categoryScores.push({ name: allCategoryNames[gi], score: 70, summary: '' })
+      }
+    }
 
     // CALCULATE scores from category data — don't trust AI's arbitrary top-level numbers
     // Modules: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11),
     //          Future Readiness (12-15), SEO Structure (16-19), Brand Consistency (20-23)
+    // Pillar averages use the categoryScores which only contain analyzed categories
     const pillarAvg = (start: number, end: number) => {
-      const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+      const cats = categoryScores.filter((c) => {
+        const idx = allCategoryNames.indexOf(c.name)
+        return idx >= start && idx < end
+      })
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
 
@@ -917,7 +1003,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     const calculatedFuture = pillarAvg(12, 16)      // Future Readiness
     // SEO (16-19) and Brand (20-23) feed into overall but don't have dedicated legacy score columns
 
-    // Overall = average of ALL category scores (not just pillar averages)
+    // Overall = average of ALL analyzed category scores
     const allScores = categoryScores.map(c => c.score)
     const calculatedOverall = allScores.length > 0
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)

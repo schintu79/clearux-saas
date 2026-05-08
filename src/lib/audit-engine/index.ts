@@ -269,7 +269,10 @@ async function _processAuditInner(auditId: string): Promise<void> {
         mobile_score: reportData.mobileScore,
         ai_discoverability_score: reportData.aiDiscoverabilityScore,
         content_score: reportData.contentScore,
-        raw_json: reportData,
+        raw_json: {
+          ...reportData,
+          selectedModules: (audit as any).selected_modules ?? null,
+        },
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
       } as any)

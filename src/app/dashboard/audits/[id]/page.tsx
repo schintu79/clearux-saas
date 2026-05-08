@@ -912,7 +912,7 @@ function ExpandableSummary({ text }: { text: string }) {
 }
 
 /* ── Pillar Section ───────────────────────────────────────── */
-const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain];
+const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
 
 function PillarSection({
   pillar,
@@ -1461,9 +1461,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency'];
   // Total possible modules: 6 (or 5 if brand_consistency not applicable)
   const totalModuleCount = PILLAR_STYLE.length; // 6
+  // Count pillars that actually have category score data
+  const pillarsWithData = PILLAR_STYLE.filter(p =>
+    categoryScores.some((_, idx) => idx >= p.range[0] && idx < p.range[1])
+  ).length;
   const activeModuleCount = auditSelectedModules
-    ? auditSelectedModules.length
-    : (auditSelectedPillars ? auditSelectedPillars.length : totalModuleCount);
+    ? Math.min(auditSelectedModules.length, pillarsWithData)
+    : (auditSelectedPillars ? Math.min(auditSelectedPillars.length, pillarsWithData) : pillarsWithData);
   const isPartialAudit = activeModuleCount < totalModuleCount;
 
   // ALWAYS calculate overall score from category data (don't trust stored value)
@@ -1531,7 +1535,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   const avg = pillarCats.length > 0
                     ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                     : 0;
-                  const wasAudited = !isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true));
+                  const hasData = pillarCats.length > 0;
+                  const wasAudited = hasData && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true)));
                   return (
                     <div key={pillar.name} className={`flex items-center gap-1 ${!wasAudited ? 'opacity-30' : ''}`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${pillar.badgeBg}`} />
@@ -1843,7 +1848,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       const avg = pillarCats.length > 0
                         ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                         : 0;
-                      const wasAudited = !isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true));
+                      const hasData = pillarCats.length > 0;
+                      const wasAudited = hasData && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true)));
                       return (
                         <div key={pillar.name} className={`flex items-center gap-1.5 ${!wasAudited ? 'opacity-30' : ''}`}>
                           <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
