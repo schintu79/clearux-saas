@@ -255,8 +255,8 @@ const BrandIdentityDetailPage: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] flex items-center justify-center">
-          <Fingerprint size={20} className="text-[#111]" />
+        <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center">
+          <Fingerprint size={20} className="text-brand" />
         </div>
         <div>
           <h1 className="text-xl font-medium font-heading text-text">{identity.name}</h1>
@@ -268,15 +268,15 @@ const BrandIdentityDetailPage: React.FC = () => {
 
       {/* Messages */}
       {successMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-3">
-          <Check size={14} className="text-[#16A34A] flex-shrink-0" />
-          <p className="text-[#15803D] text-sm font-medium">{successMsg}</p>
+        <div className="mb-4 flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+          <Check size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+          <p className="text-green-700 dark:text-green-300 text-sm font-medium">{successMsg}</p>
         </div>
       )}
       {errorMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-3">
-          <AlertCircle size={14} className="text-[#DC2626] flex-shrink-0" />
-          <p className="text-[#991B1B] text-sm">{errorMsg}</p>
+        <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
         </div>
       )}
 
@@ -331,30 +331,30 @@ const BrandIdentityDetailPage: React.FC = () => {
               className={`
                 relative flex flex-col items-center justify-center gap-2 px-6 py-8 rounded-xl border-2 border-dashed transition-all
                 ${uploading
-                  ? 'border-[#111]/20 bg-[#F9FAFB] cursor-wait'
+                  ? 'border-border bg-off cursor-wait'
                   : dragOver
-                    ? 'border-[#111] bg-[#F9FAFB] cursor-pointer'
+                    ? 'border-brand bg-brand/5 cursor-pointer'
                     : uploadSuccess
-                      ? 'border-[#16A34A]/40 bg-[#F0FDF4] cursor-pointer'
-                      : 'border-border hover:border-[#111]/30 hover:bg-[#F9FAFB] cursor-pointer'
+                      ? 'border-green-400/40 dark:border-green-600/40 bg-green-50 dark:bg-green-900/20 cursor-pointer'
+                      : 'border-border hover:border-brand/30 hover:bg-surface cursor-pointer'
                 }
               `}
             >
               {uploading ? (
                 <>
-                  <Loader2 size={20} className="text-[#111] animate-spin" />
+                  <Loader2 size={20} className="text-brand animate-spin" />
                   <p className="text-sm font-medium text-text">{uploadProgress}</p>
                   <p className="text-[11px] text-muted">Please wait while files are being saved</p>
                 </>
               ) : uploadSuccess ? (
                 <>
-                  <CheckCircle2 size={20} className="text-[#16A34A]" />
-                  <p className="text-sm font-medium text-[#16A34A]">Files uploaded successfully</p>
+                  <CheckCircle2 size={20} className="text-green-600 dark:text-green-400" />
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Files uploaded successfully</p>
                   <p className="text-[11px] text-muted">Drop more files or click to browse</p>
                 </>
               ) : (
                 <>
-                  <Upload size={20} className={dragOver ? 'text-[#111]' : 'text-muted'} />
+                  <Upload size={20} className={dragOver ? 'text-brand' : 'text-muted'} />
                   <p className="text-sm text-muted">Drop files here or click to browse</p>
                   <p className="text-[11px] text-muted/60">
                     PDF, DOCX, TXT, PNG, JPG, SVG, WebP — max 10MB each
@@ -378,14 +378,14 @@ const BrandIdentityDetailPage: React.FC = () => {
                   <div
                     key={f.id}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border group transition-all ${
-                      deletingFileId === f.id ? 'opacity-50' : 'bg-[#F9FAFB]'
+                      deletingFileId === f.id ? 'opacity-50' : 'bg-surface'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-off flex items-center justify-center flex-shrink-0">
                       {f.file_type && ['png', 'jpg', 'jpeg', 'svg', 'webp'].includes(f.file_type) ? (
-                        <File size={14} className="text-[#111]" />
+                        <File size={14} className="text-muted" />
                       ) : (
-                        <FileText size={14} className="text-[#111]" />
+                        <FileText size={14} className="text-muted" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -403,7 +403,7 @@ const BrandIdentityDetailPage: React.FC = () => {
                     <button
                       onClick={(e) => { e.preventDefault(); handleDeleteFile(f.id); }}
                       disabled={deletingFileId === f.id}
-                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#FEF2F2] text-muted hover:text-[#DC2626] transition-all disabled:opacity-50"
+                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-all disabled:opacity-50"
                       title="Remove file"
                       type="button"
                     >
