@@ -226,31 +226,24 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Trigger audit processing via Inngest (dispatch by audit type)
+        // Trigger audit processing — direct execution with Inngest as backup
         const aw = audit as any
         const auditType = aw?.audit_type || (aw?.brand_identity_id && !aw?.product_url ? 'brand_identity' : 'website')
         const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-        try {
-          console.log(`[webhook] Sending Inngest event "${eventName}" for audit ${auditId}`)
-          const sendResult = await inngest.send({
-            name: eventName,
-            data: { auditId },
+        console.log(`[webhook] Starting ${auditType} audit ${auditId}`)
+        if (auditType === 'website') {
+          const { processAudit } = await import('@/lib/audit-engine')
+          processAudit(auditId).catch((err) => {
+            console.error(`[webhook] processAudit failed:`, err)
           })
-          console.log(`[webhook] Inngest event sent:`, JSON.stringify(sendResult))
-        } catch (inngestErr) {
-          console.error(`[webhook] Inngest send FAILED for audit ${auditId}:`, inngestErr)
-          if (auditType === 'website') {
-            const { processAudit } = await import('@/lib/audit-engine')
-            processAudit(auditId).catch((err) => {
-              console.error(`[webhook] Fallback processAudit failed:`, err)
-            })
-          } else if (auditType === 'brand_identity') {
-            const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-            processBrandAudit(auditId).catch((err) => {
-              console.error(`[webhook] Fallback processBrandAudit failed:`, err)
-            })
-          }
+        } else if (auditType === 'brand_identity') {
+          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+          processBrandAudit(auditId).catch((err) => {
+            console.error(`[webhook] processBrandAudit failed:`, err)
+          })
         }
+        // Also try Inngest if configured (non-blocking)
+        inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
         console.log(`Payment processed for audit ${auditId}`)
         return NextResponse.json({ received: true }, { status: 200 })

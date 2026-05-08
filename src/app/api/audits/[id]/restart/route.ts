@@ -73,24 +73,18 @@ export async function POST(
       metadata: {},
     } as any)
 
-    // Fire off processing via Inngest (dispatch by audit type)
+    // Trigger audit processing — direct execution with Inngest as backup
     const auditType = (a as any).audit_type || ((a as any).brand_identity_id && !(a as any).product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    try {
-      await inngest.send({
-        name: eventName,
-        data: { auditId },
-      })
-    } catch (inngestErr) {
-      console.error(`[restart] Inngest send failed, using fallback:`, inngestErr)
-      if (auditType === 'website') {
-        const { processAudit } = await import('@/lib/audit-engine')
-        processAudit(auditId).catch((err) => console.error(`[restart] Fallback failed:`, err))
-      } else if (auditType === 'brand_identity') {
-        const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-        processBrandAudit(auditId).catch((err) => console.error(`[restart] Fallback failed:`, err))
-      }
+    console.log(`[restart] Starting ${auditType} audit ${auditId}`)
+    if (auditType === 'website') {
+      const { processAudit } = await import('@/lib/audit-engine')
+      processAudit(auditId).catch((err) => console.error(`[restart] processAudit failed:`, err))
+    } else if (auditType === 'brand_identity') {
+      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+      processBrandAudit(auditId).catch((err) => console.error(`[restart] processBrandAudit failed:`, err))
     }
+    inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
     return NextResponse.json({ ok: true, message: 'Audit restarted' })
   } catch (err) {
