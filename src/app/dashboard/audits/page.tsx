@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -215,7 +215,7 @@ function BrandAuditCard({ audit }: { audit: AuditWithReport }) {
 
 /* ── Main Component ───────────────────────────────────────── */
 
-export default function AuditsPage() {
+function AuditsPageInner() {
   const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -426,5 +426,20 @@ export default function AuditsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AuditsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-2xl mx-auto py-6 space-y-3">
+          <div className="h-5 w-32 bg-off rounded animate-pulse" />
+          {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-off rounded-lg animate-pulse" />)}
+        </div>
+      }
+    >
+      <AuditsPageInner />
+    </Suspense>
   );
 }
