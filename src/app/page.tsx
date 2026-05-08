@@ -157,7 +157,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            Agencies charge $10-50k and take weeks. In-house teams lack the expertise. ClearUX runs 64 checkpoints across 6 modules and delivers an expert-grade report in minutes.
+            UX audits should be fast, rigorous, and repeatable. We replaced gut feel with evidence — 64 checkpoints, 6 modules, clarity in what to fix, why, and what it&apos;s worth.
           </motion.p>
 
           {/* CTA buttons */}
