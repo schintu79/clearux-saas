@@ -71,7 +71,7 @@ export default function BuyCreditsPage() {
           Buy Audit Credits
         </h1>
         <p className="text-muted max-w-md mx-auto">
-          Every credit = one full deep audit across all 96 checkpoints. Buy more, save more.
+          Every credit = one full deep audit across all 64 checkpoints. Buy more, save more.
         </p>
         {credits !== null && (
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/20">
@@ -121,7 +121,7 @@ export default function BuyCreditsPage() {
             <div className="space-y-1.5 mb-5">
               {[
                 `${pack.credits} full deep audit${pack.credits !== 1 ? 's' : ''}`,
-                '96 checkpoints per audit',
+                '64 checkpoints per audit',
                 'PDF + DOCX reports',
                 'Credits never expire',
               ].map((f, i) => (

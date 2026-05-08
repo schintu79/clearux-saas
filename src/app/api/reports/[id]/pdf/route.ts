@@ -45,10 +45,6 @@ const C = {
   pillarInclusiveBg: '#FFFBEB',
   pillarFuture: '#10B981',
   pillarFutureBg: '#ECFDF5',
-  pillarSeo: '#3B82F6',
-  pillarSeoBg: '#EFF6FF',
-  pillarBrand: '#F97316',
-  pillarBrandBg: '#FFF7ED',
   // Boxes
   impactBg: '#ECFDF5',
   impactText: '#047857',
@@ -59,8 +55,6 @@ const PILLAR_STYLES = [
   { start: 4, end: 8, color: C.pillarHuman, bg: C.pillarHumanBg },
   { start: 8, end: 12, color: C.pillarInclusive, bg: C.pillarInclusiveBg },
   { start: 12, end: 16, color: C.pillarFuture, bg: C.pillarFutureBg },
-  { start: 16, end: 20, color: C.pillarSeo, bg: C.pillarSeoBg },
-  { start: 20, end: 24, color: C.pillarBrand, bg: C.pillarBrandBg },
 ]
 
 function scoreColor(s: number): string {
@@ -173,7 +167,7 @@ export async function GET(
         if (matched) break
       }
       if (!matched) {
-        const catIdx = Math.min(Math.floor(finding.sort_order / Math.max(1, f.length / 24)), 23)
+        const catIdx = Math.min(Math.floor(finding.sort_order / Math.max(1, f.length / 16)), 15)
         const pillar = PILLARS.find(p => catIdx >= p.start && catIdx < p.end) || PILLARS[0]
         const cats = catScores.slice(pillar.start, Math.min(pillar.end, catScores.length))
         if (cats.length > 0) {
@@ -284,7 +278,7 @@ export async function GET(
 
     // Pillar scores row (DOCX: score size 36 = 18pt, name size 16 = 8pt)
     doc.moveDown(2)
-    const colW = contentW / pillarScores.length
+    const colW = contentW / 4
     const pillarY = doc.y
     for (let i = 0; i < pillarScores.length; i++) {
       const p = pillarScores[i]

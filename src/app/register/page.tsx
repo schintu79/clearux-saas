@@ -194,7 +194,7 @@ function RegisterContent() {
               Start your audit <span className="text-lime-gradient">now.</span>
             </h1>
             <p className="text-base text-white/60 leading-relaxed">
-              96 checkpoints across 24 categories. Your first audit is free.
+              64 checkpoints across 16 categories. Your first audit is free.
             </p>
           </div>
 

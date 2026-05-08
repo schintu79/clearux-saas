@@ -375,7 +375,7 @@ function DemoCheckpointHealth() {
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-[#84CC16]" />
           <h3 className="text-xs font-medium text-white">64-Checkpoint Health</h3>
-          <span className="text-[10px] text-white/40 ml-auto">7 issues across 24 categories</span>
+          <span className="text-[10px] text-white/40 ml-auto">7 issues across 16 categories</span>
         </div>
       </div>
       <div className="divide-y divide-white/[0.03]">

@@ -216,7 +216,7 @@ export default function BestUxAuditToolsPage() {
               scanners miss.
             </p>
             <p className="text-text/80 leading-relaxed mb-4">
-              ClearUX falls into this category. It evaluates 24 categories
+              ClearUX falls into this category. It evaluates 16 categories
               across all four pillars, produces scored reports with specific
               recommendations, and lets teams track improvements over time.
               The audit takes minutes instead of weeks and costs a fraction of
@@ -231,11 +231,11 @@ export default function BestUxAuditToolsPage() {
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
-                    All 6 modules: accessibility, usability, conversion, ethical design
+                    All 4 pillars: accessibility, usability, conversion, ethical design
                   </li>
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
-                    24 categories with individual scores and issue-level detail
+                    16 categories with individual scores and issue-level detail
                   </li>
                   <li className="flex gap-2">
                     <Target size={14} className="text-brand mt-1 shrink-0" />
@@ -292,7 +292,7 @@ export default function BestUxAuditToolsPage() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {[
-                    ['Scope', '6 modules (subjective)', 'Accessibility only', '6 modules (24 categories)'],
+                    ['Scope', '4 pillars (subjective)', 'Accessibility only', '4 pillars (16 categories)'],
                     ['Turnaround', '2-6 weeks', 'Seconds', 'Minutes'],
                     ['Cost per audit', '$5,000-$30,000+', 'Free / low', 'From $0 (free tier)'],
                     ['Consistency', 'Varies by consultant', 'High (rule-based)', 'High (AI + rules)'],

@@ -211,14 +211,19 @@ export default function Home() {
           </div>
 
           {/* Description */}
-          <motion.p
-            className="text-white/70 text-base sm:text-lg max-w-xl mb-8 sm:mb-16 leading-relaxed"
+          <motion.div
+            className="max-w-xl mb-8 sm:mb-16"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
-          </motion.p>
+            <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
+              360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
+            </p>
+            <p className="text-base sm:text-lg font-bold text-lime-gradient">
+              10 free credits to test.
+            </p>
+          </motion.div>
 
           {/* CTA buttons */}
           <motion.div
@@ -242,17 +247,6 @@ export default function Home() {
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </motion.div>
-
-          {/* KSP */}
-          <motion.p
-            className="text-[13px] sm:text-[15px] font-medium text-lime-gradient tracking-wide mt-10 sm:mt-12 text-center leading-relaxed max-w-xs sm:max-w-none mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            Your first audit is free —<br />
-            results in minutes, no credit card needed.
-          </motion.p>
 
           {/* Trust badges */}
           <motion.div
