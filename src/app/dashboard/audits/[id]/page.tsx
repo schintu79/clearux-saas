@@ -1597,7 +1597,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <MoreVertical size={16} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-border/40 dark:border-white/[0.08] bg-card shadow-xl shadow-black/10 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 top-10 z-[100] w-52 rounded-xl border border-border/40 dark:border-white/[0.08] bg-white dark:bg-[#1E1E24] shadow-xl shadow-black/20 dark:shadow-black/50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
               {isCompleted && (
                 <>
                   <button

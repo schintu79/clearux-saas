@@ -565,7 +565,7 @@ const NewAuditInner: React.FC = () => {
               </button>
 
               {scopeOpen && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                <div className="absolute z-[100] left-0 right-0 mt-1 bg-white dark:bg-[#1E1E24] border border-border rounded-xl shadow-xl dark:shadow-black/50 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
