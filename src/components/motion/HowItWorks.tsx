@@ -167,7 +167,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
             </motion.div>
             <div>
               <p className="text-sm font-medium text-white">Analysing acme.com</p>
-              <p className="text-xs text-white/40">64 checkpoints across 4 pillars</p>
+              <p className="text-xs text-white/40">64 checkpoints across 6 modules</p>
             </div>
           </div>
           <span className="text-[#34D399] font-heading text-3xl font-medium">{progress}%</span>

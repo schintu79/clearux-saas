@@ -4,7 +4,7 @@ import { CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 const FEATURES = [
-  'All 16 categories, all 4 pillars',
+  'All 6 modules, 16 categories',
   'PDF & Word reports included',
   'AI-powered severity scoring',
   'Issue screenshots with highlights',
@@ -47,7 +47,7 @@ export default function PricingContent() {
 
           <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit runs the full 64-checkpoint
-            analysis across all 16 categories and 4 pillars. Credits never expire.
+            analysis across six modules and 16 categories. Credits never expire.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">

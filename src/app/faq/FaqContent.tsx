@@ -12,11 +12,11 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How long does an audit take?',
-        a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across 16 categories, and generates a full professional report.',
+        a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across six modules, and generates a full professional report.',
       },
       {
         q: 'What does the audit cover?',
-        a: 'We evaluate 16 categories across 4 pillars: Foundation (Visual Design, Value Proposition, Navigation, Content Quality), Human Experience (CTAs & Conversion, Trust & Credibility, Ethical UX, Emotional Design), Inclusive Design (Accessibility, Cognitive Accessibility, Digital Wellbeing, Mobile Experience), and Future Readiness (Performance & Technical Health, AI Discoverability, AI Agent Readiness, Cultural Sensitivity).',
+        a: 'We evaluate 16 categories across six modules: Foundation (visual design, value proposition, navigation, content quality), Human Experience (CTAs, trust signals, ethical UX, emotional design), Inclusive Design (accessibility, cognitive load, digital wellbeing, mobile experience), Future Readiness (performance, AI discoverability, AI agent readiness, cultural sensitivity), Brand Consistency (voice, visual identity, tone alignment), and SEO Structure (technical SEO, meta tags, heading hierarchy, structured data).',
       },
       {
         q: 'Can I audit any website?',
@@ -28,7 +28,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How does ClearUX compare to hiring a UX consultant?',
-        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
+        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 64 checkpoints across six modules in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
       },
       {
         q: 'Can I track which findings have been fixed?',
@@ -49,11 +49,11 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How does the AI analysis work?',
-        a: 'Our engine crawls your site (5–25 pages depending on plan), then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each finding includes severity scoring, evidence, and a specific recommendation.',
+        a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 64 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.',
       },
       {
         q: 'What format is the report?',
-        a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, pillar score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.',
+        a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.',
       },
       {
         q: 'What should I know before running an audit?',
@@ -65,7 +65,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What is the free preview audit?',
-        a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, pillar scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.',
+        a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.',
       },
     ],
   },
@@ -86,7 +86,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Does ClearUX replace a human UX auditor?',
-        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across 16 categories in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
+        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across six modules in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
       },
     ],
   },
@@ -95,7 +95,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How do credits work?',
-        a: 'One credit = one full audit. Credits never expire. Every audit includes all 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
+        a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
       },
       {
         q: 'Is my data secure?',
@@ -128,7 +128,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Can I share the report with clients or my team?',
-        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, pillar breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
+        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, module breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
       },
       {
         q: 'How does ClearUX handle false positives?',

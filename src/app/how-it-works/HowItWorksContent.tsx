@@ -3,16 +3,14 @@
 import Link from 'next/link'
 import {
   ArrowRight,
-  BrainCircuit,
+  Layers,
+  Users,
   Accessibility,
-  ShieldCheck,
-  HeartHandshake,
-  BarChart3,
   Rocket,
-  Tag,
-  Target,
-  Globe2,
+  Fingerprint,
+  Code2,
   Search,
+  Globe2,
   FileText,
 } from 'lucide-react'
 
@@ -20,49 +18,36 @@ import {
    Data
    ═══════════════════════════════════════════════════════════════ */
 
-const PILLARS = [
+const MODULES = [
   {
-    icon: ShieldCheck,
-    title: 'Ethical UX',
-    desc: 'Detects dark patterns, manipulative flows, confirmshaming, fake urgency, and guilt-driven copy. Ensures your product makes users feel safe, respected, and in control.',
+    icon: Layers,
+    title: 'Foundation',
+    desc: 'Visual design, value proposition, navigation, and content quality. The structural basics that determine whether users stay or leave.',
+  },
+  {
+    icon: Users,
+    title: 'Human Experience',
+    desc: 'CTAs, trust signals, ethical UX, and emotional design. How your product makes people feel — not just what it lets them do.',
   },
   {
     icon: Accessibility,
-    title: 'Cognitive Accessibility',
-    desc: 'Evaluates cognitive load, sensory overwhelm, predictable navigation, and clear information hierarchy for users with ADHD, dyslexia, autism spectrum, and more.',
-  },
-  {
-    icon: BrainCircuit,
-    title: 'AI Readiness',
-    desc: 'Assesses whether your product is discoverable, navigable, and interpretable by LLMs and AI agents — structured data, semantic markup, and machine-readable content.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Conversion Psychology',
-    desc: 'Analyzes tone, microcopy, error messaging, delight moments, and persuasion patterns. The emotional experience users remember long after they close the tab.',
-  },
-]
-
-const AUDIENCES = [
-  {
-    icon: BarChart3,
-    title: 'Product Managers',
-    desc: 'Justify UX investment with data. Track findings from open to fixed, share results with stakeholders, and re-audit to show measurable improvement.',
+    title: 'Inclusive Design',
+    desc: 'Accessibility, cognitive load, digital wellbeing, and mobile experience. Interfaces that work for everyone, including users in stressed or impaired states.',
   },
   {
     icon: Rocket,
-    title: 'Founders & Startups',
-    desc: 'Get consultant-grade audits at a fraction of the cost, in minutes instead of weeks. No six-figure budget required.',
+    title: 'Future Readiness',
+    desc: 'Performance, AI discoverability, AI agent readiness, and cultural sensitivity. Built for the next wave of how products are found and used.',
   },
   {
-    icon: Tag,
-    title: 'Agencies',
-    desc: 'White-label reports for clients, shareable result links for stakeholders, and re-audit tracking to prove the value of your work over time.',
+    icon: Fingerprint,
+    title: 'Brand Consistency',
+    desc: 'Voice, visual identity, and tone alignment across every page. Upload your brand guidelines and the audit checks your product against them.',
   },
   {
-    icon: Target,
-    title: 'UX Designers',
-    desc: 'An objective second opinion before launch. Comprehensive, evidence-based review across 16 categories that catches what fresh eyes would.',
+    icon: Code2,
+    title: 'SEO Structure',
+    desc: 'Technical SEO, meta tags, heading hierarchy, and structured data. The foundation search engines and AI models need to understand your product.',
   },
 ]
 
@@ -70,13 +55,13 @@ const STEPS = [
   {
     num: '01',
     title: 'Paste your URL',
-    desc: 'Enter your site URL and ClearUX automatically crawls every key page — homepage, pricing, sign-up, checkout, and more.',
+    desc: 'Enter your site URL. ClearUX automatically crawls every key page — homepage, pricing, sign-up, checkout, and more.',
     icon: Search,
   },
   {
     num: '02',
     title: 'AI runs 64 checkpoints',
-    desc: 'Each page is analyzed across four UX pillars and 16 categories. No subjective hand-waving — every score is evidence-based.',
+    desc: 'Each page is analysed across six modules and 16 categories. Every score is evidence-based — no subjective hand-waving.',
     icon: Globe2,
   },
   {
@@ -107,7 +92,7 @@ export default function HowItWorksContent() {
       {/* ═══════════════════════════════════════════════════════
           1. HERO
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-28 sm:py-36">
+      <section className="relative z-10 py-14 sm:py-36">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
             HOW IT WORKS
@@ -116,10 +101,11 @@ export default function HowItWorksContent() {
             className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3"
             style={{ lineHeight: '1.1' }}
           >
-            How ClearUX <span className="text-lime-gradient">works.</span>
+            Paste a URL. Get a{' '}
+            <span className="text-lime-gradient">professional audit.</span>
           </h1>
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-2xl">
-            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering accessibility, dark patterns, conversion psychology, and AI readiness. You get a prioritised report with evidence-based findings, severity rankings, and specific fixes. No consultants, no weeks of waiting. Paste a URL, get a professional audit your team can act on in their next sprint.
+            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. You get a prioritised report with evidence-based findings, severity rankings, and specific fixes. No consultants. No weeks of waiting.
           </p>
         </div>
       </section>
@@ -167,7 +153,7 @@ export default function HowItWorksContent() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          3. THE FOUR PILLARS
+          3. SIX MODULES
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -178,28 +164,28 @@ export default function HowItWorksContent() {
             className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
             style={{ lineHeight: '1.1' }}
           >
-            Four pillars of <span className="text-lime-gradient">modern UX.</span>
+            Six modules. <span className="text-lime-gradient">Complete coverage.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
-            64 checkpoints across four pillars that go beyond traditional audits — evaluating the dimensions most tools still ignore.
+            64 checkpoints across six modules that go beyond traditional audits — evaluating the dimensions most tools still ignore.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {PILLARS.map((pillar) => {
-              const PillarIcon = pillar.icon
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {MODULES.map((mod) => {
+              const ModIcon = mod.icon
               return (
                 <div
-                  key={pillar.title}
+                  key={mod.title}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
                   <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
-                    <PillarIcon size={20} className="text-[#84CC16]" />
+                    <ModIcon size={20} className="text-[#84CC16]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
-                    {pillar.title}
+                    {mod.title}
                   </h3>
                   <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">
-                    {pillar.desc}
+                    {mod.desc}
                   </p>
                 </div>
               )
@@ -209,49 +195,7 @@ export default function HowItWorksContent() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          4. BUILT FOR
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
-            WHO WE SERVE
-          </p>
-          <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
-            style={{ lineHeight: '1.1' }}
-          >
-            Built for teams who <span className="text-lime-gradient">care.</span>
-          </h2>
-          <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-10">
-            For teams that put the user first — and need the data to prove it.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {AUDIENCES.map((item) => {
-              const ItemIcon = item.icon
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
-                    <ItemIcon size={20} className="text-[#84CC16]" />
-                  </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          5. FINAL CTA
+          4. FINAL CTA
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">

@@ -5,40 +5,31 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, CheckCircle, Eye, Shield, Heart, Brain,
-  Search, FileText, Share2, RefreshCw, BarChart3, ListChecks,
-  Sparkles, Target, ScanEye, ShieldAlert,
-  Accessibility, Bot, ChevronDown, ShieldCheck,
+  ArrowRight, CheckCircle, Shield, Search,
+  FileText, Share2, RefreshCw, BarChart3, ListChecks,
+  Sparkles, ChevronDown, ShieldCheck, Layers, Users,
+  Accessibility, Rocket, Eye, Globe2, Fingerprint, Code2,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { useAuth } from '@/context/AuthContext';
-// ProductMockup components available if needed
-// import { ReportShowcase } from '@/components/motion/ProductMockup';
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
 
 /* ── FAQ data ─────────────────────────────────────────────── */
 const TOP_FAQS = [
-  { q: 'How accurate is ClearUX?', a: 'Our AI is trained on thousands of professional UX audits and delivers high-precision findings on critical issues like mobile responsiveness, accessibility failures, and conversion blockers. Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today.' },
-  { q: 'How long does it take to get my report?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions. No waiting, no scheduling calls, no follow-up emails.' },
-  { q: 'How actionable are the recommendations?', a: 'Every finding comes with a specific fix, not vague advice. Most teams implement the top 3-5 critical fixes in their first sprint and see measurable improvement within 2-4 weeks. You can track progress directly in your dashboard — mark findings as fixed, in progress, or dismissed.' },
-  { q: 'How does this compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 64 checkpoints across 16 categories in minutes for $99. It\'s ideal for quick baseline assessments, pre-launch checks, and ongoing monitoring. For deep qualitative research like user interviews, pair ClearUX findings with a specialist.' },
-  { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits run in Baseline mode by default — they verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. When you\'re ready to discover new issues, hit "Dig Deeper" for a full analysis.' },
+  { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
+  { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
+  { q: 'What does the audit cover?', a: 'Six modules: Foundation (visual design, messaging, navigation), Human Experience (conversion, trust, ethical patterns), Inclusive Design (accessibility, cognitive load, mobile), Future Readiness (performance, AI discoverability, internationalisation), Brand Consistency (voice and visual identity alignment), and SEO Structure (heading hierarchy, meta tags, structured data).' },
+  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 64 checkpoints across 6 modules in minutes for $99. For deep qualitative research, pair ClearUX findings with a specialist.' },
+  { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
 ];
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
-  { main: 'Stop Losing Users to', accent: 'Hidden UX Flaws.' },
-  { main: 'The $10k Audit.', accent: '$99. 10 Minutes.' },
-  { main: '64 Checkpoints.', accent: 'Zero Guesswork.' },
-];
-
-/* ── Hero KSPs — outcome-focused, not feature-focused ──── */
-const HERO_KSPS = [
-  { text: 'First audit free' },
-  { text: 'Results in minutes' },
-  { text: 'No credit card' },
+  { main: 'UX audits are broken.', accent: 'We fixed them.' },
+  { main: 'The $10k audit.', accent: '$99. 10 minutes.' },
+  { main: '64 checkpoints.', accent: '6 modules. Zero guesswork.' },
 ];
 
 /* ── Typewriter placeholders ─────────────────────────────── */
@@ -63,9 +54,42 @@ function useTypewriterPlaceholder() {
   return placeholder;
 }
 
+/* ── 6 Audit Modules ─────────────────────────────────────── */
+const MODULES = [
+  {
+    icon: Layers,
+    title: 'Foundation',
+    desc: 'Visual design, messaging clarity, navigation structure, and content quality.',
+  },
+  {
+    icon: Users,
+    title: 'Human Experience',
+    desc: 'Conversion flow, trust signals, ethical patterns, and behavioural psychology.',
+  },
+  {
+    icon: Accessibility,
+    title: 'Inclusive Design',
+    desc: 'Accessibility compliance, cognitive load, digital wellbeing, and mobile experience.',
+  },
+  {
+    icon: Rocket,
+    title: 'Future Readiness',
+    desc: 'Performance, AI discoverability, agent readiness, and internationalisation.',
+  },
+  {
+    icon: Fingerprint,
+    title: 'Brand Consistency',
+    desc: 'Alignment with your brand voice, visual identity, and guidelines.',
+  },
+  {
+    icon: Code2,
+    title: 'SEO Structure',
+    desc: 'Heading hierarchy, meta tags, structured data, canonical URLs, and crawlability.',
+  },
+];
+
 /* ═══════════════════════════════════════════════════════════════
-   MAIN PAGE — Dark atmospheric, DeepSeek V3 inspired
-   Deep navy bg, vibrant gradient blobs, glass-morphism cards
+   MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
 export default function Home() {
   const router = useRouter();
@@ -101,16 +125,13 @@ export default function Home() {
       <main id="main-content" role="main" aria-label="ClearUX homepage">
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO (Musicbed-inspired)
-          Left-aligned, clean, minimal, dark mode
+          SECTION 1 — HERO
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 min-h-screen flex flex-col overflow-hidden">
-        {/* Subtle background glow for centered hero */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#84CC16]/[0.03] blur-[120px]" />
         </div>
 
-        {/* Hero content — centered on all screens */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-24 sm:pt-44 sm:pb-28">
           {/* Top label */}
           <motion.p
@@ -119,10 +140,10 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            AI-Powered UX Audit
+            The audit layer for the AI era
           </motion.p>
 
-          {/* Rotating headline — centered, light weight */}
+          {/* Rotating headline */}
           <div className="relative mb-5 sm:mb-10">
             <AnimatePresence mode="wait">
               <motion.h1
@@ -139,7 +160,7 @@ export default function Home() {
               </motion.h1>
             </AnimatePresence>
 
-            {/* Slider progress indicators */}
+            {/* Slider progress */}
             <div className="flex items-center justify-center gap-2 mt-6">
               {HERO_HEADLINES.map((_, i) => (
                 <button
@@ -164,7 +185,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description — the problem, one line */}
           <motion.p
             className="text-white/60 text-base sm:text-lg max-w-xl mb-8 sm:mb-16"
             style={{ lineHeight: '1.7' }}
@@ -172,10 +193,10 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            Your visitors are bouncing and you don't know why. Get a consultant-grade UX audit — 64 checkpoints across accessibility, conversions, dark patterns, and AI readiness — in minutes, not weeks.
+            Agencies charge $10-50k and take weeks. In-house teams lack the expertise. ClearUX runs 64 checkpoints across 6 modules and delivers an expert-grade report in minutes.
           </motion.p>
 
-          {/* URL input field */}
+          {/* URL input */}
           <motion.form
             onSubmit={handleHeroSubmit}
             className="max-w-2xl w-full mb-0"
@@ -210,22 +231,22 @@ export default function Home() {
             </div>
           </motion.form>
 
-          {/* KSPs — minimal proof points */}
+          {/* KSPs */}
           <motion.div
             className="flex items-center justify-center gap-2 sm:gap-4 mt-5 flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            {HERO_KSPS.map((ksp, i) => (
+            {['First audit free', 'Results in minutes', 'No credit card'].map((ksp, i) => (
               <div key={i} className="flex items-center gap-2 sm:gap-4">
-                {i > 0 && <span className="text-[#84CC16]/30 hidden sm:inline">·</span>}
-                <span className="text-[12px] sm:text-[13px] font-medium text-lime-gradient tracking-wide whitespace-nowrap">{ksp.text}</span>
+                {i > 0 && <span className="text-[#84CC16]/30 hidden sm:inline">&middot;</span>}
+                <span className="text-[12px] sm:text-[13px] font-medium text-lime-gradient tracking-wide whitespace-nowrap">{ksp}</span>
               </div>
             ))}
           </motion.div>
 
-          {/* Trust badges — cohesive visual group */}
+          {/* Trust badges */}
           <motion.div
             className="flex items-center justify-center gap-3 sm:gap-6 mt-6 sm:mt-10 flex-wrap"
             initial={{ opacity: 0 }}
@@ -233,31 +254,23 @@ export default function Home() {
             transition={{ delay: 0.9 }}
           >
             {[
-              { icon: Shield, label: 'SSL' },
-              { icon: ShieldCheck, label: 'GDPR' },
-              { icon: CheckCircle, label: 'Stripe' },
+              { icon: Shield, label: 'SSL', full: 'SSL Encrypted' },
+              { icon: ShieldCheck, label: 'GDPR', full: 'GDPR Compliant' },
+              { icon: CheckCircle, label: 'Stripe', full: 'Stripe Payments' },
             ].map((badge, i) => {
               const BadgeIcon = badge.icon;
               return (
                 <div key={i} className="flex items-center gap-1.5">
                   <BadgeIcon size={13} className="text-white/30" strokeWidth={1.5} />
                   <span className="text-[11px] text-white/30 font-medium tracking-wide sm:hidden">{badge.label}</span>
-                  <span className="text-[11px] text-white/30 font-medium tracking-wide hidden sm:inline">{badge.label === 'SSL' ? 'SSL Encrypted' : badge.label === 'GDPR' ? 'GDPR Compliant' : 'Stripe Payments'}</span>
+                  <span className="text-[11px] text-white/30 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
                 </div>
               );
             })}
           </motion.div>
-          <motion.p
-            className="text-[11px] text-white/25 mt-2 text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
-            Your data is never stored or shared beyond generating your report.
-          </motion.p>
         </div>
 
-        {/* Scroll indicator — "Discover ClearUX" — always at bottom */}
+        {/* Scroll indicator */}
         <motion.div
           className="relative z-10 flex justify-center pb-6 sm:pb-24 flex-shrink-0"
           initial={{ opacity: 0 }}
@@ -267,7 +280,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => {
-              const el = document.getElementById('trust-stats');
+              const el = document.getElementById('the-problem');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
             className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
@@ -278,113 +291,63 @@ export default function Home() {
             </div>
           </button>
         </motion.div>
-
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — TRUST STATS
-          Pure white background, charcoal text, left-aligned
+          SECTION 2 — THE PROBLEM
           ═══════════════════════════════════════════════════════ */}
-      <section id="trust-stats" className="relative z-10 py-14 sm:py-32">
+      <section id="the-problem" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-14">
-            <h2 className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">
-              ClearUX in numbers
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+              The problem
+            </p>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              UX audits are <span className="text-lime-gradient">broken.</span>
             </h2>
+            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+              Agencies cost $10-50k and take weeks. In-house audits need senior expertise most teams don't have. So products ship with issues that quietly kill conversion and retention.
+            </p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 sm:gap-y-12 gap-x-8 sm:gap-x-0">
+          <StaggerReveal className="grid sm:grid-cols-3 gap-6" staggerDelay={0.08}>
             {[
-              { end: 64, suffix: '', label: 'UX checkpoints', desc: 'across every audit' },
-              { end: 16, suffix: '', label: 'Categories', desc: 'in 4 audit pillars' },
-              { end: 10, suffix: ' min', suffixClassName: 'text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] lg:text-[3rem] font-light', label: 'To full report', desc: 'paste URL, get results' },
-              { end: 99, suffix: '%', label: 'Cost savings', desc: 'vs. traditional audits' },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                className={`text-left ${i > 0 ? 'lg:border-l lg:border-white/[0.06] lg:pl-10' : ''}`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
-                <AnimatedCounter
-                  end={stat.end}
-                  suffix={stat.suffix}
-                  suffixClassName={'suffixClassName' in stat ? (stat as { suffixClassName: string }).suffixClassName : ''}
-                  className="font-heading text-[3.5rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] font-light text-lime-gradient leading-none"
-                  duration={2}
-                />
-                <p className="text-sm font-medium text-white/70 mt-3">{stat.label}</p>
-                <p className="text-xs text-white/40 mt-1">{stat.desc}</p>
-              </motion.div>
+              { label: 'Traditional agencies', stat: '$10-50k', desc: '2-6 weeks delivery. Budget reserved for enterprise.' },
+              { label: 'In-house teams', stat: 'Senior hire', desc: 'Most teams lack the specialised UX research expertise.' },
+              { label: 'Free tools', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks dark patterns, AI readiness, or conversion psychology.' },
+            ].map((item, i) => (
+              <StaggerItem key={i}>
+                <div className="border-t border-white/[0.06] pt-8">
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-3">{item.label}</p>
+                  <p className="font-heading text-2xl sm:text-3xl font-medium text-lime-gradient mb-2">{item.stat}</p>
+                  <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — CORE FEATURES
-          Musicbed-style editorial grid with scrolling showcase
+          SECTION 3 — WHAT WE AUDIT (6 modules)
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          {/* Editorial headline — left-aligned, large, Musicbed-style */}
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
-              For high-performing digital teams
+              What we audit
             </p>
-            <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
-             
-            >
-              What makes ClearUX{' '}
-              <span className="text-lime-gradient">unstoppable.</span>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              6 modules. 64 checkpoints. <span className="text-lime-gradient">Every audit.</span>
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
-                Four pillars no other tool covers — each one designed to find the issues that actually cost you users and revenue.
-              </p>
-              <Link
-                href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
-              >
-                Start Your Audit Now
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
+            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+              Usability, accessibility, conversion friction, AI discoverability, brand consistency, and SEO structure — prioritised with concrete fixes.
+            </p>
           </ScrollReveal>
 
-          {/* Feature grid — 3 columns top, 2 bottom, matching Musicbed layout */}
           <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-0" staggerDelay={0.08}>
-            {[
-              {
-                icon: ShieldAlert,
-                title: 'Dark Pattern Detection',
-                desc: 'Detects confirmshaming, hidden costs, trick questions, and forced continuity across every page.',
-              },
-              {
-                icon: Brain,
-                title: 'Cognitive Accessibility',
-                desc: 'Tests cognitive load, sensory overload, and navigation clarity for users with ADHD, dyslexia, and more.',
-              },
-              {
-                icon: Sparkles,
-                title: 'AI Agent Readiness',
-                desc: 'Checks if LLMs and AI assistants can accurately describe your product and navigate your flows.',
-              },
-              {
-                icon: Target,
-                title: 'Conversion Psychology',
-                desc: 'Evaluates CTAs, friction points, trust signals, and pricing clarity — tied to revenue impact.',
-              },
-              {
-                icon: Eye,
-                title: 'Visual & UX Audit',
-                desc: 'Checks contrast, typography, spacing, responsive breakpoints, and mobile touch targets.',
-              },
-            ].map((item, i) => {
-              const Icon = item.icon;
+            {MODULES.map((mod, i) => {
+              const Icon = mod.icon;
               return (
                 <StaggerItem key={i}>
                   <div className="py-8 border-t border-white/[0.06]">
@@ -392,9 +355,9 @@ export default function Home() {
                       <div className="w-9 h-9 rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0">
                         <Icon size={18} className="text-[#84CC16]" strokeWidth={2} />
                       </div>
-                      <h3 className="font-heading text-lg font-medium text-white">{item.title}</h3>
+                      <h3 className="font-heading text-lg font-medium text-white">{mod.title}</h3>
                     </div>
-                    <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                    <p className="text-sm text-white/60 leading-relaxed">{mod.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -402,29 +365,21 @@ export default function Home() {
           </StaggerReveal>
         </div>
 
-        {/* ── Scrolling showcase gallery — minimal finding rows ── */}
-        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative opacity-90 -mx-6 sm:-mx-10 lg:-mx-16" aria-hidden="true" role="presentation" aria-label="Decorative showcase of audit categories">
-          {/* Row 1 — scrolls left */}
+        {/* Scrolling showcase */}
+        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative opacity-90 -mx-6 sm:-mx-10 lg:-mx-16" aria-hidden="true" role="presentation">
           <div className="relative">
-            <div
-              className="flex gap-2.5 w-max"
-              style={{ animation: 'scroll-left 40s linear infinite' }}
-            >
+            <div className="flex gap-2.5 w-max" style={{ animation: 'scroll-left 40s linear infinite' }}>
               {[...Array(2)].map((_, setIdx) => (
                 <div key={setIdx} className="flex gap-2.5">
                   {[
-                    { label: 'Dark Pattern Scanner', subtitle: 'Ethical UX Pillar', icon: ShieldAlert },
-                    { label: 'Cognitive Load Test', subtitle: 'Accessibility Pillar', icon: Brain },
-                    { label: 'AI Discoverability', subtitle: 'Future Readiness Pillar', icon: Bot },
-                    { label: 'Conversion Friction Map', subtitle: 'Revenue Impact Pillar', icon: Target },
+                    { label: 'Dark Pattern Scanner', subtitle: 'Human Experience', icon: ShieldCheck },
+                    { label: 'Cognitive Load Test', subtitle: 'Inclusive Design', icon: Accessibility },
+                    { label: 'AI Discoverability', subtitle: 'Future Readiness', icon: Rocket },
+                    { label: 'Conversion Friction Map', subtitle: 'Human Experience', icon: Users },
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
-                      <div
-                        key={j}
-                        className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4"
-                        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-                      >
+                      <div key={j} className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
                           <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
@@ -440,27 +395,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Row 2 — scrolls right */}
           <div className="relative">
-            <div
-              className="flex gap-2.5 w-max"
-              style={{ animation: 'scroll-right 45s linear infinite' }}
-            >
+            <div className="flex gap-2.5 w-max" style={{ animation: 'scroll-right 45s linear infinite' }}>
               {[...Array(2)].map((_, setIdx) => (
                 <div key={setIdx} className="flex gap-2.5">
                   {[
-                    { label: 'Trust Signal Audit', subtitle: 'Foundation Pillar', icon: Shield },
-                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design Pillar', icon: Eye },
-                    { label: 'Reading Complexity', subtitle: 'Cognitive Accessibility', icon: Accessibility },
-                    { label: 'Structured Data Check', subtitle: 'AI Readiness', icon: ScanEye },
+                    { label: 'Trust Signal Audit', subtitle: 'Foundation', icon: Shield },
+                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design', icon: Eye },
+                    { label: 'Brand Voice Check', subtitle: 'Brand Consistency', icon: Fingerprint },
+                    { label: 'Structured Data', subtitle: 'SEO Structure', icon: Code2 },
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
-                      <div
-                        key={j}
-                        className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4"
-                        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-                      >
+                      <div key={j} className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
                           <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
                         </div>
@@ -476,40 +423,75 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Gradient fade on left and right edges — seamless */}
           <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
           <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 4 — HOW IT WORKS
-          Pure white, charcoal text, left-aligned Musicbed style
+          SECTION 4 — WHY CLEARUX (what others miss)
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative z-10 py-14 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <ScrollReveal className="mb-16 sm:mb-20">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+              Why ClearUX
+            </p>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              What others <span className="text-lime-gradient">miss.</span>
+            </h2>
+            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
+              Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. None of them audit your interface against best practices at speed. We do.
+            </p>
+          </ScrollReveal>
+
+          <StaggerReveal className="grid sm:grid-cols-2 gap-6" staggerDelay={0.08}>
+            {[
+              {
+                title: 'AI discoverability',
+                desc: 'We\'re the only platform auditing how LLMs read and surface your product. Structured data, semantic markup, machine-readable content — the new SEO.',
+                label: 'No other tool checks this',
+              },
+              {
+                title: 'Dark pattern detection',
+                desc: 'Confirmshaming, hidden costs, trick questions, forced continuity. We flag manipulative design that erodes trust and conversion.',
+                label: 'Beyond accessibility scanners',
+              },
+              {
+                title: 'Brand consistency',
+                desc: 'Upload your brand guidelines and we audit your site against them — voice, visual identity, tone. Not just colours and fonts, but whether your site sounds like you.',
+                label: 'New module',
+              },
+              {
+                title: 'Continuous, not annual',
+                desc: 'Re-audit after every sprint. Track fixes, prove improvement, catch regressions. UX quality as a continuous metric, not a one-off project.',
+                label: 'Built for modern teams',
+              },
+            ].map((item, i) => (
+              <StaggerItem key={i}>
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-7">
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#84CC16]/60 mb-4">{item.label}</p>
+                  <h3 className="font-heading text-lg font-medium text-white mb-3">{item.title}</h3>
+                  <p className="text-sm text-white/60 leading-relaxed">{item.desc}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerReveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 5 — HOW IT WORKS
           ═══════════════════════════════════════════════════════ */}
       <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
-              Simple process
+              How it works
             </p>
-            <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
-
-            >
-              How ClearUX <span className="text-lime-gradient">works.</span>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              Paste a URL. Get a <span className="text-lime-gradient">report.</span>
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
-              <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed">
-                No signup walls, no setup, no waiting. Paste a URL, let the AI do the heavy lifting, and get a prioritised report your team can act on immediately.
-              </p>
-              <Link
-                href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 flex-shrink-0 whitespace-nowrap min-h-[48px]"
-              >
-                Start Your Audit Now
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
           </ScrollReveal>
 
           <StaggerReveal className="grid md:grid-cols-3 gap-8 lg:gap-10" staggerDelay={0.12}>
@@ -517,17 +499,17 @@ export default function Home() {
               {
                 step: '01',
                 title: 'Paste your URL',
-                desc: 'Enter any website or specific page. ClearUX automatically crawls your key pages, identifies interactive elements, and maps the user journey — no code snippets, no browser extension, no tag manager required.',
+                desc: 'Enter any website. ClearUX crawls your key pages, maps the user journey, and identifies interactive elements. No code, no setup.',
               },
               {
                 step: '02',
-                title: 'AI analyses 64 checkpoints',
-                desc: 'Every page is evaluated against four UX pillars: ethical design, cognitive accessibility, AI agent readiness, and conversion psychology. The AI scores each category, flags issues by severity, and ties findings to business impact.',
+                title: 'AI runs 64 checkpoints',
+                desc: 'Every page evaluated across 6 modules: foundation, experience, inclusivity, future readiness, brand consistency, and SEO structure. Scored by severity and business impact.',
               },
               {
                 step: '03',
-                title: 'Get your prioritised report',
-                desc: 'A ranked report with critical issues first, clear explanations of what\'s wrong and why it matters, and actionable fixes for each finding. Export as PDF or Word, share with a link, or track fixes from your dashboard.',
+                title: 'Act on your report',
+                desc: 'Critical issues first. Clear fixes for each finding. Export as PDF or Word, share with a link, track progress from your dashboard.',
               },
             ].map((item, i) => (
               <StaggerItem key={i}>
@@ -545,26 +527,22 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 5 — WHAT YOU GET
+          SECTION 6 — WHAT YOU GET
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          {/* Editorial headline */}
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               What you get
             </p>
-            <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-6"
-             
-            >
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-5xl mb-6">
               A report your team{' '}
               <span className="text-lime-gradient">can act on.</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
               <div className="max-w-2xl">
                 <p className="text-white/60 text-base md:text-lg leading-relaxed mb-4">
-                  Every finding ranked by severity and business impact, with clear fixes and category scores your team can act on immediately.
+                  Every finding ranked by severity and business impact, with specific fixes your team can ship in their next sprint.
                 </p>
                 <Link
                   href="/demo-report"
@@ -574,54 +552,29 @@ export default function Home() {
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
-              {/* Scroll arrows */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <button
-                  type="button"
-                  aria-label="Scroll left"
-                  onClick={() => {
-                    const el = document.getElementById('feature-cards-scroll');
-                    if (el) el.scrollBy({ left: -400, behavior: 'smooth' });
-                  }}
-                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
-                >
+                <button type="button" aria-label="Scroll left" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: -400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors">
                   <ArrowRight size={16} className="text-white/40 rotate-180" />
                 </button>
-                <button
-                  type="button"
-                  aria-label="Scroll right"
-                  onClick={() => {
-                    const el = document.getElementById('feature-cards-scroll');
-                    if (el) el.scrollBy({ left: 400, behavior: 'smooth' });
-                  }}
-                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors"
-                >
+                <button type="button" aria-label="Scroll right" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: 400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors">
                   <ArrowRight size={16} className="text-white/40" />
                 </button>
               </div>
             </div>
           </ScrollReveal>
 
-          {/* Scrollable cards row */}
-          <div
-            id="feature-cards-scroll"
-            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+          <div id="feature-cards-scroll" className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {[
               { icon: ListChecks, title: 'Prioritised Findings', label: 'Severity Ranked', desc: 'Critical issues surface first. Ranked by severity and business impact so your team knows exactly where to start.' },
-              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click', desc: 'Professional reports ready for stakeholders. Branded, formatted, and downloadable in seconds.' },
-              { icon: Share2, title: 'Team Sharing', label: 'Shareable', desc: 'One link for your full score, category breakdown, and prioritised recommendations. No account needed to view.' },
+              { icon: FileText, title: 'PDF & Word Export', label: 'One-Click', desc: 'Professional reports ready for stakeholders. White-label available for agencies.' },
+              { icon: Share2, title: 'Team Sharing', label: 'Shareable', desc: 'One link for your full score, breakdown, and recommendations. No account needed to view.' },
               { icon: CheckCircle, title: 'Track Every Fix', label: 'Dashboard', desc: 'Status tracking for every finding — open, in progress, fixed. Real-time progress at a glance.' },
-              { icon: RefreshCw, title: 'Re-Audit', label: 'Baseline', desc: 'Re-audit the same URL to verify fixes or dig deeper. Track your score improvement over time.' },
-              { icon: BarChart3, title: 'Category Scores', label: '16 Categories', desc: 'Each of the 4 pillars and 16 categories scored individually. See exactly where you excel and where to improve.' },
+              { icon: RefreshCw, title: 'Re-Audit', label: 'Continuous', desc: 'Re-audit the same URL to verify fixes or dig deeper. Track your score improvement over time.' },
+              { icon: BarChart3, title: 'Module Scores', label: '6 Modules', desc: 'Each module scored individually. See exactly where you excel and where to improve.' },
             ].map((card, i) => {
               const Icon = card.icon;
               return (
-                <div
-                  key={i}
-                  className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group"
-                >
+                <div key={i} className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group">
                   <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#84CC16]" strokeWidth={1.5} />
                   </div>
@@ -636,55 +589,78 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — PRICING
+          SECTION 7 — WHY NOW
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative z-10 py-14 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <ScrollReveal>
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
+              Why now
+            </p>
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
+              Two audiences. <span className="text-lime-gradient">One interface.</span>
+            </h2>
+            <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
+              Your interface now serves humans and language models. The teams that audit fast and audit often will own the next decade. ClearUX makes it continuous, not annual.
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal>
+            <div className="grid sm:grid-cols-3 gap-6">
+              {[
+                { num: '64', label: 'Checkpoints', desc: 'per audit' },
+                { num: '6', label: 'Modules', desc: 'complete coverage' },
+                { num: '<10', label: 'Minutes', desc: 'to full report' },
+              ].map((stat, i) => (
+                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
+                  <p className="font-heading text-[4rem] sm:text-[5rem] font-light text-lime-gradient leading-none mb-2">{stat.num}</p>
+                  <p className="text-sm font-medium text-white/70">{stat.label}</p>
+                  <p className="text-xs text-white/40">{stat.desc}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 8 — PRICING
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
-              Simple pricing
+              Pricing
             </p>
-
-            {/* Price hero — $99 in bold lime gradient */}
             <div className="mb-6">
               <h2 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05' }}>
                 <span className="text-lime-gradient font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
                 <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-light text-white/60 ml-3 sm:ml-5">per audit</span>
               </h2>
             </div>
-
             <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-light text-lime-gradient mb-6">
               First one free.
             </p>
-
             <p className="text-white/65 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
-              No subscription. No feature gates. Every audit gets the full 64-checkpoint analysis across all 16 categories and 4 pillars. Credits never expire.
+              No subscription. No feature gates. Every audit gets all 6 modules, 64 checkpoints, and full reports. Credits never expire.
             </p>
-
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <Link
-                href="/register"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-              >
+              <Link href="/register" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]">
                 Start Free Audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
-              <Link
-                href="/pricing"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
-              >
+              <Link href="/pricing" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]">
                 View All Plans
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </ScrollReveal>
 
-          {/* Feature list — glass card strip */}
           <ScrollReveal>
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
                 {[
-                  'All 16 categories, all 4 pillars',
+                  'All 6 modules, 64 checkpoints',
                   'PDF & Word reports included',
                   'Track fixes and re-audit anytime',
                   'Credits never expire',
@@ -701,8 +677,7 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 7 — FAQ
-          Dark bg (#111114), left-aligned, clean Musicbed style
+          SECTION 9 — FAQ
           ═══════════════════════════════════════════════════════ */}
       <section id="faq" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -710,10 +685,7 @@ export default function Home() {
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               FAQ
             </p>
-            <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl"
-             
-            >
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl">
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h2>
           </ScrollReveal>
@@ -735,10 +707,7 @@ export default function Home() {
           </StaggerReveal>
 
           <ScrollReveal delay={0.3} className="mt-10 max-w-3xl">
-            <Link
-              href="/faq"
-              className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/40 hover:text-white transition-colors"
-            >
+            <Link href="/faq" className="group inline-flex items-center gap-2.5 text-sm font-medium text-white/40 hover:text-white transition-colors">
               Read all FAQ
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -747,25 +716,20 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 8 — FINAL CTA
-          Dark bg with aurora + background visual cards, Musicbed style
+          SECTION 10 — FINAL CTA
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
-        {/* Content — left-aligned, above the background */}
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
             <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-4">
               Get started
             </p>
-            <h2
-              className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6"
-             
-            >
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
               Ready to see what you&apos;re{' '}
               <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="text-white/60 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
-              Real findings your team can act on — prioritised by impact, trackable as you fix them, re-auditable to prove improvement.
+              Your first audit is free. 64 checkpoints, 6 modules, full report in minutes.
             </p>
 
             <form onSubmit={handleHeroSubmit} className="max-w-2xl mb-0">

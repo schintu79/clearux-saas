@@ -176,7 +176,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                         {isPartialAudit && (
                           <>
                             <span className="text-border">|</span>
-                            <span className="text-[11px] text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{selectedPillars!.length} of 4 pillars</span>
+                            <span className="text-[11px] text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{selectedPillars!.length} of 4 modules</span>
                           </>
                         )}
                       </div>

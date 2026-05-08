@@ -1781,7 +1781,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <h2 className="text-xl font-medium font-heading text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
                       <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                        {auditSelectedPillars!.length} of 4 pillars
+                        {auditSelectedPillars!.length} of 4 modules
                       </span>
                     )}
                     <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${

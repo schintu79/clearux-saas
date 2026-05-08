@@ -38,8 +38,8 @@ export default function AboutContent() {
           </p>
 
           <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-3">
-            Every product deserves an independent,{' '}
-            <span className="text-lime-gradient">unbiased</span> review.
+            The audit layer for the{' '}
+            <span className="text-lime-gradient">AI era.</span>
           </h1>
 
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
@@ -78,12 +78,12 @@ export default function AboutContent() {
               {
                 icon: Shield,
                 title: 'What kept going wrong',
-                desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products that ignore emotional design failing to connect. These cost businesses revenue and cost users their dignity.',
+                desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products invisible to AI models. These cost businesses revenue and cost users their dignity.',
               },
               {
                 icon: Sparkles,
                 title: 'What we built instead',
-                desc: 'Not a checklist tool. A human-centered audit framework — 16 categories, 4 pillars — that examines products the way a skilled UX researcher would: with empathy, evidence, and actionable clarity.',
+                desc: 'Not a checklist tool. A structured audit framework — six modules, 64 checkpoints — that examines products the way a skilled UX researcher would: with evidence, rigour, and actionable clarity.',
               },
             ].map((item) => {
               const ItemIcon = item.icon
@@ -132,10 +132,10 @@ export default function AboutContent() {
 
                 <div className="space-y-4 font-body text-white/65 text-[15px] leading-relaxed">
                   <p>
-                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, unicorn companies, and enterprise teams across the world — exposed to cultural and market differences, from early-stage MVPs to products serving millions.
+                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across the world — from early-stage MVPs to products serving millions.
                   </p>
                   <p>
-                    The frustration was always the same: brilliant teams shipping products without an unbiased, structured UX review — because the only option was a consultant charging five figures and taking six weeks. The teams that needed it most could never afford it.
+                    The frustration was always the same: brilliant teams shipping products without a structured UX review — because the only option was a consultant charging five figures and taking six weeks.
                   </p>
                   <p>
                     ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks, at a fraction of the cost.
@@ -158,7 +158,7 @@ export default function AboutContent() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          4. OUR VALUES — Simple, clear, reliable
+          4. OUR VALUES
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
@@ -166,7 +166,7 @@ export default function AboutContent() {
             Our commitment
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
-            Clear, simple, and reliable
+            Clarity. Rigour. <span className="text-lime-gradient">Speed.</span>
           </h2>
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl mb-14">
             We hold ourselves to the same standard we measure others by.
@@ -182,7 +182,7 @@ export default function AboutContent() {
               {
                 icon: Eye,
                 title: 'Evidence over opinion',
-                desc: 'Scores are backed by 64 measurable checkpoints across 16 categories. No subjective hand-waving. Every finding links to evidence you can verify.',
+                desc: 'Scores are backed by 64 measurable checkpoints across six modules. No subjective hand-waving. Every finding links to evidence you can verify.',
               },
               {
                 icon: Heart,
