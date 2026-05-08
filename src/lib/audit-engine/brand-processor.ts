@@ -175,7 +175,7 @@ export async function processBrandAudit(auditId: string): Promise<void> {
         file_url: f.file_url,
         file_type: f.file_type,
       })),
-      3,
+      5,
     )
 
     const successCount = extractedFiles.filter((r) => !r.error).length
@@ -194,7 +194,6 @@ export async function processBrandAudit(auditId: string): Promise<void> {
       extractedFiles as ExtractedContent[],
       auditDetails.brandName,
       auditDetails.language,
-      3,
     )
 
     const totalFindings = categoryResults.reduce((sum, r) => sum + r.findings.length, 0)
@@ -217,11 +216,12 @@ export async function processBrandAudit(auditId: string): Promise<void> {
       topRecommendations,
     )
 
-    // Store findings
+    // Store findings (batch insert for speed)
+    const findingsToInsert: any[] = []
     let sortOrder = 0
     for (const catResult of reportData.categoryResults) {
       for (const finding of catResult.findings) {
-        await db.from('audit_findings').insert({
+        findingsToInsert.push({
           audit_id: auditId,
           severity: finding.severity,
           title: finding.title,
@@ -231,8 +231,11 @@ export async function processBrandAudit(auditId: string): Promise<void> {
           page_url: finding.sourceFile || null,
           sort_order: sortOrder++,
           status: 'open',
-        } as any)
+        })
       }
+    }
+    if (findingsToInsert.length > 0) {
+      await db.from('audit_findings').insert(findingsToInsert as any)
     }
 
     // Store report

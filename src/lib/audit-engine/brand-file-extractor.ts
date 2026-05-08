@@ -361,7 +361,7 @@ export async function extractBrandFileContent(
 /** Extract content from multiple brand files in parallel (with concurrency limit) */
 export async function extractAllBrandFiles(
   files: Array<{ file_name: string; file_url: string; file_type: string | null }>,
-  concurrency = 3,
+  concurrency = 5,
 ): Promise<ExtractedContent[]> {
   const results: ExtractedContent[] = []
   const queue = [...files]

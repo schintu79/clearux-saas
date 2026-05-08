@@ -29,15 +29,30 @@ interface AuditWithReport extends Audit {
   brandName?: string | null;
 }
 
-const statusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+const websiteStatusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending_payment:   { label: 'Awaiting payment', color: 'pending',   icon: Clock },
-  payment_received:  { label: 'Processing',       color: 'active',    icon: Zap },
+  payment_received:  { label: 'Queued',            color: 'active',    icon: Zap },
   crawling:          { label: 'Crawling...',       color: 'active',    icon: Globe },
   analysing:         { label: 'Analysing...',      color: 'active',    icon: Sparkles },
   generating_report: { label: 'Generating...',     color: 'active',    icon: FileSearch },
   completed:         { label: 'Completed',         color: 'completed', icon: CheckCircle2 },
   failed:            { label: 'Failed',            color: 'failed',    icon: AlertTriangle },
 };
+
+const brandStatusMeta: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  pending_payment:   { label: 'Awaiting payment',   color: 'pending',   icon: Clock },
+  payment_received:  { label: 'Queued',              color: 'active',    icon: Zap },
+  crawling:          { label: 'Extracting...',       color: 'active',    icon: FileSearch },
+  analysing:         { label: 'Analyzing...',        color: 'active',    icon: Sparkles },
+  generating_report: { label: 'Generating report...', color: 'active',  icon: FileSearch },
+  completed:         { label: 'Completed',           color: 'completed', icon: CheckCircle2 },
+  failed:            { label: 'Failed',              color: 'failed',    icon: AlertTriangle },
+};
+
+function getStatusMeta(status: string, auditType?: string) {
+  const meta = auditType === 'brand_identity' ? brandStatusMeta : websiteStatusMeta;
+  return meta[status] || websiteStatusMeta.pending_payment;
+}
 
 const TABS: { key: AuditType; label: string; description: string; icon: React.ElementType; disabled?: boolean }[] = [
   { key: 'website',        label: 'Website',        description: 'Full UX audit of your live site',         icon: Globe },
@@ -78,7 +93,7 @@ function WebsiteAuditGroup({ domain, audits }: {
 }) {
   const hasMultiple = audits.length > 1;
   const latest = audits[0];
-  const latestMeta = statusMeta[latest.status] || statusMeta.pending_payment;
+  const latestMeta = getStatusMeta(latest.status, 'website');
   const LatestIcon = latestMeta.icon;
   const latestDone = latest.status === 'completed';
   const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
@@ -173,7 +188,7 @@ function WebsiteAuditGroup({ domain, audits }: {
 /* ── Brand Identity Audit Card ──────────────────────────── */
 
 function BrandAuditCard({ audit }: { audit: AuditWithReport }) {
-  const meta = statusMeta[audit.status] || statusMeta.pending_payment;
+  const meta = getStatusMeta(audit.status, 'brand_identity');
   const StatusIcon = meta.icon;
   const done = audit.status === 'completed';
   const score = done ? (audit.report?.overall_score ?? null) : null;
