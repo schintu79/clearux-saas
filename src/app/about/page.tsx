@@ -4,8 +4,8 @@ import Footer from '@/components/layout/Footer'
 import AboutContent from './AboutContent'
 
 export const metadata: Metadata = {
-  title: 'About ClearUX — Why We Exist',
-  description: 'ClearUX was born from 20+ years of watching companies ship products that ignored their users. Learn why we exist and who built it.',
+  title: 'About ClearUX — Full Clarity, at Your Fingertips',
+  description: 'ClearUX gives product teams 360° clarity on every layer of user experience. Learn why we exist and who built it.',
 }
 
 export default function AboutPage() {

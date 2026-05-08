@@ -18,16 +18,16 @@ import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/com
 const TOP_FAQS = [
   { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
   { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
-  { q: 'What does the audit cover?', a: 'Six modules: Foundation (visual design, messaging, navigation), Human Experience (conversion, trust, ethical patterns), Inclusive Design (accessibility, cognitive load, mobile), Future Readiness (performance, AI discoverability, internationalisation), Brand Consistency (voice and visual identity alignment), and SEO Structure (heading hierarchy, meta tags, structured data).' },
+  { q: 'What does the audit cover?', a: 'Six modules: Foundation (structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
   { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 64 checkpoints across 6 modules in minutes for $99. For deep qualitative research, pair ClearUX findings with a specialist.' },
   { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
 ];
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
+  { main: 'Full clarity,', accent: 'at your fingertips.' },
   { main: 'UX audits are broken.', accent: 'We fixed them.' },
   { main: 'The $10k audit.', accent: '$99. 10 minutes.' },
-  { main: '64 checkpoints.', accent: '6 modules. Zero guesswork.' },
 ];
 
 /* ── 6 Audit Modules ─────────────────────────────────────── */
@@ -35,32 +35,32 @@ const MODULES = [
   {
     icon: Layers,
     title: 'Foundation',
-    desc: 'Visual design, messaging clarity, navigation structure, and content quality.',
+    desc: 'The structural and technical baseline a great experience is built on — visual design, messaging, navigation, and content quality.',
   },
   {
     icon: Users,
     title: 'Human Experience',
-    desc: 'Conversion flow, trust signals, ethical patterns, and behavioural psychology.',
+    desc: 'How your product feels to use — clarity, flow, cognitive load, wellbeing, and whether your UX respects users in stressed or impaired states.',
   },
   {
     icon: Accessibility,
     title: 'Inclusive Design',
-    desc: 'Accessibility compliance, cognitive load, digital wellbeing, and mobile experience.',
+    desc: 'Accessibility and equity for every user, every ability, every context — from WCAG compliance to cognitive accessibility and mobile experience.',
   },
   {
     icon: Rocket,
     title: 'Future Readiness',
-    desc: 'Performance, AI discoverability, agent readiness, and internationalisation.',
+    desc: 'AI discoverability and how your product holds up as discovery and interaction shift — performance, agent readiness, and internationalisation.',
   },
   {
     icon: Fingerprint,
     title: 'Brand Consistency',
-    desc: 'Alignment with your brand voice, visual identity, and guidelines.',
+    desc: 'Whether what users see matches what your brand promises — voice, visual identity, and tone alignment across every surface.',
   },
   {
     icon: Code2,
     title: 'SEO Structure',
-    desc: 'Heading hierarchy, meta tags, structured data, canonical URLs, and crawlability.',
+    desc: 'Whether your product is findable, legible, and ranked the way it deserves — heading hierarchy, meta tags, structured data, and crawlability.',
   },
 ];
 
@@ -104,7 +104,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            The audit layer for the AI era
+            User experience, fully auditable
           </motion.p>
 
           {/* Rotating headline */}
@@ -157,7 +157,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            We audit what no one else is checking — for humans and AI agents alike. 64 checkpoints, 6 modules, for a fraction of the price.
+            360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
           </motion.p>
 
           {/* CTA buttons */}
@@ -286,10 +286,10 @@ export default function Home() {
               What we audit
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
-              6 modules. 64 checkpoints. <span className="text-lime-gradient">Every audit.</span>
+              6 modules. 64 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
             </h2>
             <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
-              Usability, accessibility, conversion friction, AI discoverability, brand consistency, and SEO structure — prioritised with concrete fixes.
+              We audit feeling, not function alone. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO — prioritised with concrete fixes.
             </p>
           </ScrollReveal>
 
@@ -389,7 +389,7 @@ export default function Home() {
               What others <span className="text-lime-gradient">miss.</span>
             </h2>
             <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed">
-              Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. None of them audit your interface against best practices at speed. We do.
+              Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. ClearUX gives product teams shipping fast 360° clarity on every layer of user experience. We identify every issue, ranked and explained. You decide what to fix.
             </p>
           </ScrollReveal>
 
@@ -450,7 +450,7 @@ export default function Home() {
               How it works
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
-              Paste a URL. Get a <span className="text-lime-gradient">report.</span>
+              Audit your product. Get <span className="text-lime-gradient">clarity.</span>
             </h2>
           </ScrollReveal>
 
@@ -458,18 +458,18 @@ export default function Home() {
             {[
               {
                 step: '01',
-                title: 'Paste your URL',
-                desc: 'Enter any website. ClearUX crawls your key pages, maps the user journey, and identifies interactive elements. No code, no setup.',
+                title: 'Choose your audit',
+                desc: 'Paste a website URL, upload your brand identity files, or submit a design. ClearUX handles all three — no code, no setup.',
               },
               {
                 step: '02',
-                title: 'Our AI runs 64 checkpoints',
-                desc: 'Every page evaluated across 6 modules: foundation, experience, inclusivity, future readiness, brand consistency, and SEO structure. Scored by severity and business impact.',
+                title: 'We run 64 checkpoints',
+                desc: 'Every input evaluated across 6 modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Scored by severity and business impact.',
               },
               {
                 step: '03',
-                title: 'Act on your report',
-                desc: 'Critical issues first. Clear fixes for each finding. Export as PDF or Word, share with a link, track progress from your dashboard.',
+                title: 'You decide what to fix',
+                desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link, track progress from your dashboard. We identify. You decide.',
               },
             ].map((item, i) => (
               <StaggerItem key={i}>
@@ -561,7 +561,7 @@ export default function Home() {
               Two audiences. <span className="text-lime-gradient">One interface.</span>
             </h2>
             <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
-              Your interface now serves humans and language models. The teams that audit fast and audit often will own the next decade. ClearUX makes it continuous, not annual.
+              Your product now serves humans and language models. The teams that audit fast and audit often will own the next decade. Clarity. Rigor. Speed. ClearUX makes it continuous, not annual.
             </p>
           </ScrollReveal>
 
@@ -689,7 +689,7 @@ export default function Home() {
               <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="text-white/70 text-base md:text-lg max-w-2xl leading-relaxed mb-12">
-              Your first audit is free. 64 checkpoints, 6 modules, full report in minutes.
+              Your first audit is free. 64 checkpoints, 6 modules, full report in minutes. Senior UX rigor, at startup pace.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">

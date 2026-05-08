@@ -22,52 +22,52 @@ const MODULES = [
   {
     icon: Layers,
     title: 'Foundation',
-    desc: 'Visual design, value proposition, navigation, and content quality. The structural basics that determine whether users stay or leave.',
+    desc: 'The structural and technical baseline a great experience is built on — visual design, value proposition, navigation, and content quality.',
   },
   {
     icon: Users,
     title: 'Human Experience',
-    desc: 'CTAs, trust signals, ethical UX, and emotional design. How your product makes people feel — not just what it lets them do.',
+    desc: 'How your product feels to use — clarity, flow, cognitive load, and wellbeing. We audit feeling, not function alone, including how flows land for users in stressed or impaired states.',
   },
   {
     icon: Accessibility,
     title: 'Inclusive Design',
-    desc: 'Accessibility, cognitive load, digital wellbeing, and mobile experience. Interfaces that work for everyone, including users in stressed or impaired states.',
+    desc: 'Accessibility and equity for every user, every ability, every context. WCAG compliance, cognitive accessibility, digital wellbeing, and mobile experience.',
   },
   {
     icon: Rocket,
     title: 'Future Readiness',
-    desc: 'Performance, AI discoverability, AI agent readiness, and cultural sensitivity. Built for the next wave of how products are found and used.',
+    desc: 'AI discoverability and how your product holds up as discovery and interaction shift. Performance, agent readiness, and internationalisation.',
   },
   {
     icon: Fingerprint,
     title: 'Brand Consistency',
-    desc: 'Voice, visual identity, and tone alignment across every page. Upload your brand guidelines and the audit checks your product against them.',
+    desc: 'Whether what users see matches what the brand promises — voice, visual identity, and tone alignment across every surface.',
   },
   {
     icon: Code2,
     title: 'SEO Structure',
-    desc: 'Technical SEO, meta tags, heading hierarchy, and structured data. The foundation search engines and AI models need to understand your product.',
+    desc: 'Whether your product is findable, legible, and ranked the way it deserves. Technical SEO, meta tags, heading hierarchy, and structured data.',
   },
 ]
 
 const STEPS = [
   {
     num: '01',
-    title: 'Paste your URL',
-    desc: 'Enter your site URL. ClearUX automatically crawls every key page — homepage, pricing, sign-up, checkout, and more.',
+    title: 'Choose your audit',
+    desc: 'Paste a website URL, upload brand identity files (PDF, DOCX, images), or submit a design. ClearUX handles all three.',
     icon: Search,
   },
   {
     num: '02',
-    title: 'Our AI runs 64 checkpoints',
-    desc: 'Each page is analysed across six modules and 16 categories. Every score is evidence-based — no subjective hand-waving.',
+    title: 'We run 64 checkpoints',
+    desc: 'Every input analysed across six modules and 16 categories. Every score is evidence-based — no subjective hand-waving.',
     icon: Globe2,
   },
   {
     num: '03',
-    title: 'Get your report',
-    desc: 'Ranked findings with severity levels, actionable fixes, and shareable links. Track progress as you resolve each issue.',
+    title: 'You decide what to fix',
+    desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link. We identify. You decide.',
     icon: FileText,
   },
 ]
@@ -101,11 +101,11 @@ export default function HowItWorksContent() {
             className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3"
             style={{ lineHeight: '1.1' }}
           >
-            Paste a URL. Get a{' '}
-            <span className="text-lime-gradient">professional audit.</span>
+            Audit your product. Get{' '}
+            <span className="text-lime-gradient">360° clarity.</span>
           </h1>
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-2xl">
-            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. You get a prioritised report with evidence-based findings, severity rankings, and specific fixes. No consultants. No weeks of waiting.
+            ClearUX runs a structured AI audit across 64 checkpoints in 16 categories — covering usability, accessibility, dark patterns, conversion, and AI discoverability. Audit your website, your brand identity materials, or your design files. Prioritised findings with evidence, severity rankings, and specific fixes. No consultants. No weeks of waiting.
           </p>
         </div>
       </section>
@@ -207,7 +207,7 @@ export default function HowItWorksContent() {
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link
             href="/register"

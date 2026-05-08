@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
           <div className="md:max-w-[260px] flex-shrink-0">
             <div className="mb-3"><Logo height={110} variant="light" iconGradient /></div>
             <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
-              The audit layer for the AI era. 64 checkpoints, 6 modules, expert-grade results in minutes.
+              Full clarity, at your fingertips. 360° UX audits across 6 modules, 64 checkpoints. Senior rigor, in minutes.
             </p>
 
             {/* Social links */}

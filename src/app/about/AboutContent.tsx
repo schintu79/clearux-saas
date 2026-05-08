@@ -38,12 +38,12 @@ export default function AboutContent() {
           </p>
 
           <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-3">
-            The audit layer for the{' '}
-            <span className="text-lime-gradient">AI era.</span>
+            Full clarity,{' '}
+            <span className="text-lime-gradient">at your fingertips.</span>
           </h1>
 
           <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed max-w-xl">
-            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets.
+            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. Every digital product, fully auditable — no hidden issues, ever.
           </p>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function AboutContent() {
               {
                 icon: Sparkles,
                 title: 'What we built instead',
-                desc: 'Not a checklist tool. A structured audit framework — six modules, 64 checkpoints — that examines products the way a skilled UX researcher would: with evidence, rigour, and actionable clarity.',
+                desc: 'Not a checklist tool. A structured audit framework — six modules, 64 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes, at a fraction of the cost.',
               },
             ].map((item) => {
               const ItemIcon = item.icon
@@ -132,7 +132,7 @@ export default function AboutContent() {
 
                 <div className="space-y-4 font-body text-white/65 text-[15px] leading-relaxed">
                   <p>
-                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with startups, agencies, and enterprise teams across the world — from early-stage MVPs to products serving millions.
+                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with founders, product managers, and design leads at SaaS companies and digital product teams — from early-stage MVPs to products serving millions.
                   </p>
                   <p>
                     The frustration was always the same: brilliant teams shipping products without a structured UX review — because the only option was a consultant charging five figures and taking six weeks.
@@ -221,7 +221,7 @@ export default function AboutContent() {
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link
             href="/register"

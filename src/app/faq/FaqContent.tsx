@@ -16,7 +16,11 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What does the audit cover?',
-        a: 'We evaluate 16 categories across six modules: Foundation (visual design, value proposition, navigation, content quality), Human Experience (CTAs, trust signals, ethical UX, emotional design), Inclusive Design (accessibility, cognitive load, digital wellbeing, mobile experience), Future Readiness (performance, AI discoverability, AI agent readiness, cultural sensitivity), Brand Consistency (voice, visual identity, tone alignment), and SEO Structure (technical SEO, meta tags, heading hierarchy, structured data).',
+        a: 'We evaluate 16 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user, every ability, every context), Future Readiness (AI discoverability and how your product holds up as discovery shifts), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (whether your product is findable, legible, and ranked the way it deserves). Available for websites, brand identity materials, and design files.',
+      },
+      {
+        q: 'What types of audits do you offer?',
+        a: 'Three types: Website audits (paste a URL and we crawl your site), Brand Identity audits (upload your brand guidelines, logo, and materials for analysis), and Design audits (coming soon — review designs before production). Every audit type uses the same 6-module, 64-checkpoint framework.',
       },
       {
         q: 'Can I audit any website?',
@@ -361,7 +365,7 @@ export default function FaqContent() {
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link
             href="/register"

@@ -2,7 +2,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
 
 const FAQ_ITEMS = [
   { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across six modules, and generates a full professional report with prioritised recommendations.' },
-  { q: 'What does the audit cover?', a: 'We evaluate 16 categories across six modules: Foundation (visual design, value proposition, navigation, content quality), Human Experience (CTAs, trust signals, ethical UX, emotional design), Inclusive Design (accessibility, cognitive load, digital wellbeing, mobile experience), Future Readiness (performance, AI discoverability, AI agent readiness, cultural sensitivity), Brand Consistency (voice, visual identity, tone alignment), and SEO Structure (technical SEO, meta tags, heading hierarchy, structured data).' },
+  { q: 'What does the audit cover?', a: 'We evaluate 16 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how the product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
   { q: 'How do credits work?', a: 'One credit equals one full audit of any website. Credits never expire. There are no feature tiers or limits — every audit includes all six modules, 64 checkpoints, PDF & Word reports, and prioritised recommendations.' },
   { q: 'What format is the report?', a: 'You get both a professional PDF report and a downloadable Word document. Reports include an overall score, module breakdowns, detailed findings with severity levels, and actionable recommendations for each issue.' },
   { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. Our crawler handles JavaScript-rendered sites, single-page applications, and multi-page websites. We automatically detect your industry, tech stack, and target audience.' },
@@ -44,7 +44,7 @@ export function HomeJsonLd() {
         '@type': 'WebSite',
         name: 'ClearUX',
         url: siteUrl,
-        description: 'The audit layer for the AI era. 64 checkpoints, 6 modules, expert-grade UX reports in minutes.',
+        description: 'Full clarity, at your fingertips. 360° UX audits across 6 modules, 64 checkpoints. Senior UX rigor, in minutes.',
         potentialAction: {
           '@type': 'SearchAction',
           target: `${siteUrl}/dashboard/new-audit?url={search_term_string}`,
@@ -56,7 +56,7 @@ export function HomeJsonLd() {
         name: 'ClearUX',
         url: siteUrl,
         logo: `${siteUrl}/logo.png`,
-        description: 'AI-powered UX audit platform delivering consultant-grade insights in minutes.',
+        description: 'AI-powered UX audit platform that gives product teams 360° clarity on every layer of user experience. Senior UX rigor, in minutes.',
         contactPoint: {
           '@type': 'ContactPoint',
           email: 'support@clearux.ai',
@@ -71,14 +71,15 @@ export function HomeJsonLd() {
         url: siteUrl,
         applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web',
-        description: 'AI-powered UX audit platform that analyses websites across 64 checkpoints in six modules. Expert-grade insights with prioritised, severity-ranked recommendations in minutes.',
+        description: 'AI-powered UX audit platform that gives product teams 360° clarity on every layer of user experience — websites, brand identity, and design. 64 checkpoints across six modules with severity-ranked recommendations.',
         featureList: [
-          'Foundation: Visual Design, Value Proposition, Navigation, Content Quality',
-          'Human Experience: CTAs & Conversion, Trust & Credibility, Ethical UX, Emotional Design',
-          'Inclusive Design: Accessibility, Cognitive Accessibility, Digital Wellbeing, Mobile Experience',
-          'Future Readiness: Performance, AI Discoverability, AI Agent Readiness, Cultural Sensitivity',
-          'Brand Consistency: Voice, Visual Identity, Tone Alignment',
-          'SEO Structure: Technical SEO, Meta Tags, Heading Hierarchy, Structured Data',
+          'Foundation: The structural and technical baseline a great experience is built on',
+          'Human Experience: How the product feels to use — clarity, flow, cognitive load, wellbeing',
+          'Inclusive Design: Accessibility and equity for every user, every ability, every context',
+          'Future Readiness: AI discoverability and how the product holds up as discovery shifts',
+          'Brand Consistency: Whether what users see matches what the brand promises',
+          'SEO Structure: Whether the product is findable, legible, and ranked the way it deserves',
+          'Audit types: Website audits, Brand Identity audits, Design audits',
         ],
         offers: [
           {

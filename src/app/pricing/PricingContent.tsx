@@ -4,7 +4,7 @@ import { CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 const FEATURES = [
-  'All 6 modules, 16 categories',
+  'All 6 modules, 360° coverage',
   'PDF & Word reports included',
   'ClearUX AI severity scoring',
   'Issue screenshots with highlights',
@@ -273,7 +273,7 @@ export default function PricingContent() {
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link
             href="/register"
