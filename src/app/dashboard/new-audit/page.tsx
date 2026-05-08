@@ -216,9 +216,15 @@ const NewAuditInner: React.FC = () => {
         .single();
 
       // Fallback: if new columns don't exist yet, retry without them
-      if (auditError?.message?.includes('selected_modules') || auditError?.message?.includes('audit_type')) {
+      // Note: this strips audit_type + selected_modules + brand_identity_id which
+      // means brand identity audits will NOT work without the DB migration.
+      if (auditError?.message?.includes('selected_modules') ||
+          auditError?.message?.includes('audit_type') ||
+          auditError?.message?.includes('brand_identity_id')) {
+        console.warn('[new-audit] Fallback: retrying without new columns. Brand audits require DB migration.');
         delete insertPayload.selected_modules;
         delete insertPayload.audit_type;
+        delete insertPayload.brand_identity_id;
         const retry = await supabase
           .from('audits')
           .insert(insertPayload)

@@ -82,56 +82,76 @@ export function getReportLabels(code: string): ReportLabels {
 /** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (16 categories, 4 per pillar) */
 const CATEGORY_NAMES: Record<string, string[]> = {
   en: [
-    // Foundation (1-4)
+    // Foundation (0-3)
     'Visual Design & First Impression',
     'Value Proposition & Messaging',
     'Navigation & Information Architecture',
     'Content Quality & Readability',
-    // Human Experience (5-8)
+    // Human Experience (4-7)
     'Calls-to-Action & Conversion Path',
     'Trust, Credibility & Social Proof',
     'Ethical UX & Dark Pattern Detection',
     'Emotional Design & Psychological Safety',
-    // Inclusive Design (9-12)
+    // Inclusive Design (8-11)
     'Accessibility & WCAG Compliance',
     'Cognitive Accessibility & Neurodiversity',
     'Digital Wellbeing & Responsible Design',
     'Mobile Experience & Responsive Design',
-    // Future Readiness (13-16)
+    // Future Readiness (12-15)
     'Performance & Technical Health',
     'AI Discoverability & LLM Readiness',
     'AI Agent Readiness',
     'Cultural Sensitivity & Global Readiness',
+    // SEO Structure & Rules (16-19)
+    'On-Page SEO Fundamentals',
+    'Technical SEO & Crawlability',
+    'Structured Data & Rich Results',
+    'SEO Content & Link Strategy',
+    // Brand Consistency (20-23)
+    'Visual Identity Alignment',
+    'Voice & Tone Alignment',
+    'Messaging & Value Prop Alignment',
+    'Brand Standards Compliance',
   ],
   es: [
     'Diseño Visual y Primera Impresión', 'Propuesta de Valor y Mensajes', 'Navegación y Arquitectura de la Información', 'Calidad del Contenido y Legibilidad',
     'Llamadas a la Acción y Ruta de Conversión', 'Confianza, Credibilidad y Prueba Social', 'UX Ético y Detección de Patrones Oscuros', 'Diseño Emocional y Seguridad Psicológica',
     'Accesibilidad y Cumplimiento WCAG', 'Accesibilidad Cognitiva y Neurodiversidad', 'Bienestar Digital y Diseño Responsable', 'Experiencia Móvil y Diseño Responsivo',
     'Rendimiento y Salud Técnica', 'Descubribilidad por IA y Preparación para LLM', 'Preparación para Agentes de IA', 'Sensibilidad Cultural y Preparación Global',
+    'SEO On-Page Fundamental', 'SEO Técnico y Rastreabilidad', 'Datos Estructurados y Resultados Enriquecidos', 'Contenido SEO y Estrategia de Enlaces',
+    'Alineación de Identidad Visual', 'Alineación de Voz y Tono', 'Alineación de Mensajes y Propuesta de Valor', 'Cumplimiento de Estándares de Marca',
   ],
   fr: [
     'Design Visuel et Première Impression', 'Proposition de Valeur et Messages', 'Navigation et Architecture de l\'Information', 'Qualité du Contenu et Lisibilité',
     'Appels à l\'Action et Parcours de Conversion', 'Confiance, Crédibilité et Preuve Sociale', 'UX Éthique et Détection de Dark Patterns', 'Design Émotionnel et Sécurité Psychologique',
     'Accessibilité et Conformité WCAG', 'Accessibilité Cognitive et Neurodiversité', 'Bien-être Numérique et Design Responsable', 'Expérience Mobile et Design Adaptatif',
     'Performance et Santé Technique', 'Découvrabilité IA et Préparation LLM', 'Préparation aux Agents IA', 'Sensibilité Culturelle et Préparation Mondiale',
+    'SEO On-Page Fondamental', 'SEO Technique et Crawlabilité', 'Données Structurées et Résultats Enrichis', 'Contenu SEO et Stratégie de Liens',
+    'Alignement de l\'Identité Visuelle', 'Alignement de la Voix et du Ton', 'Alignement des Messages et Proposition de Valeur', 'Conformité aux Standards de Marque',
   ],
   de: [
     'Visuelles Design und Erster Eindruck', 'Wertversprechen und Botschaften', 'Navigation und Informationsarchitektur', 'Inhaltsqualität und Lesbarkeit',
     'Handlungsaufforderungen und Konversionspfad', 'Vertrauen, Glaubwürdigkeit und Social Proof', 'Ethisches UX und Dark-Pattern-Erkennung', 'Emotionales Design und Psychologische Sicherheit',
     'Barrierefreiheit und WCAG-Konformität', 'Kognitive Barrierefreiheit und Neurodiversität', 'Digitales Wohlbefinden und Verantwortungsvolles Design', 'Mobile Erfahrung und Responsives Design',
     'Leistung und Technische Gesundheit', 'KI-Auffindbarkeit und LLM-Bereitschaft', 'KI-Agenten-Bereitschaft', 'Kulturelle Sensibilität und Globale Bereitschaft',
+    'On-Page SEO Grundlagen', 'Technisches SEO und Crawlbarkeit', 'Strukturierte Daten und Rich Results', 'SEO-Inhalte und Linkstrategie',
+    'Visuelle Identitätsausrichtung', 'Stimme und Tonausrichtung', 'Nachrichten- und Wertversprechen-Ausrichtung', 'Markenstandard-Konformität',
   ],
   it: [
     'Design Visivo e Prima Impressione', 'Proposta di Valore e Messaggi', 'Navigazione e Architettura dell\'Informazione', 'Qualità dei Contenuti e Leggibilità',
     'Chiamate all\'Azione e Percorso di Conversione', 'Fiducia, Credibilità e Riprova Sociale', 'UX Etico e Rilevamento Dark Pattern', 'Design Emotivo e Sicurezza Psicologica',
     'Accessibilità e Conformità WCAG', 'Accessibilità Cognitiva e Neurodiversità', 'Benessere Digitale e Design Responsabile', 'Esperienza Mobile e Design Responsivo',
     'Prestazioni e Salute Tecnica', 'Scopribilità IA e Preparazione LLM', 'Preparazione per Agenti IA', 'Sensibilità Culturale e Preparazione Globale',
+    'SEO On-Page Fondamentale', 'SEO Tecnico e Scansionabilità', 'Dati Strutturati e Risultati Arricchiti', 'Contenuti SEO e Strategia di Link',
+    'Allineamento dell\'Identità Visiva', 'Allineamento di Voce e Tono', 'Allineamento dei Messaggi e Proposta di Valore', 'Conformità agli Standard del Brand',
   ],
   pt: [
     'Design Visual e Primeira Impressão', 'Proposta de Valor e Mensagens', 'Navegação e Arquitetura da Informação', 'Qualidade do Conteúdo e Legibilidade',
     'Chamadas para Ação e Caminho de Conversão', 'Confiança, Credibilidade e Prova Social', 'UX Ético e Detecção de Dark Patterns', 'Design Emocional e Segurança Psicológica',
     'Acessibilidade e Conformidade WCAG', 'Acessibilidade Cognitiva e Neurodiversidade', 'Bem-estar Digital e Design Responsável', 'Experiência Mobile e Design Responsivo',
     'Desempenho e Saúde Técnica', 'Descobribilidade por IA e Preparação para LLM', 'Preparação para Agentes de IA', 'Sensibilidade Cultural e Preparação Global',
+    'SEO On-Page Fundamental', 'SEO Técnico e Rastreabilidade', 'Dados Estruturados e Resultados Enriquecidos', 'Conteúdo SEO e Estratégia de Links',
+    'Alinhamento da Identidade Visual', 'Alinhamento de Voz e Tom', 'Alinhamento de Mensagens e Proposta de Valor', 'Conformidade com Padrões da Marca',
   ],
 }
 
@@ -281,6 +301,8 @@ export interface UILabels {
   pillarHumanExperience: string
   pillarInclusiveDesign: string
   pillarFutureReadiness: string
+  pillarSeoStructure: string
+  pillarBrandConsistency: string
   // Severity
   severityCritical: string
   severityHigh: string
@@ -341,6 +363,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Human Experience',
     pillarInclusiveDesign: 'Inclusive Design',
     pillarFutureReadiness: 'Future Readiness',
+    pillarSeoStructure: 'SEO Structure & Rules',
+    pillarBrandConsistency: 'Brand Consistency',
     severityCritical: 'Critical',
     severityHigh: 'High',
     severityMedium: 'Medium',
@@ -390,6 +414,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Experiencia Humana',
     pillarInclusiveDesign: 'Diseno Inclusivo',
     pillarFutureReadiness: 'Preparacion para el Futuro',
+    pillarSeoStructure: 'Estructura SEO y Reglas',
+    pillarBrandConsistency: 'Consistencia de Marca',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -439,6 +465,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Experience Humaine',
     pillarInclusiveDesign: 'Design Inclusif',
     pillarFutureReadiness: 'Preparation au Futur',
+    pillarSeoStructure: 'Structure SEO et Regles',
+    pillarBrandConsistency: 'Coherence de Marque',
     severityCritical: 'Critique',
     severityHigh: 'Eleve',
     severityMedium: 'Moyen',
@@ -488,6 +516,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Menschliche Erfahrung',
     pillarInclusiveDesign: 'Inklusives Design',
     pillarFutureReadiness: 'Zukunftsbereitschaft',
+    pillarSeoStructure: 'SEO-Struktur und Regeln',
+    pillarBrandConsistency: 'Markenkonsistenz',
     severityCritical: 'Kritisch',
     severityHigh: 'Hoch',
     severityMedium: 'Mittel',
@@ -537,6 +567,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Esperienza Umana',
     pillarInclusiveDesign: 'Design Inclusivo',
     pillarFutureReadiness: 'Preparazione al Futuro',
+    pillarSeoStructure: 'Struttura SEO e Regole',
+    pillarBrandConsistency: 'Coerenza del Brand',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -586,6 +618,8 @@ const UI_LABELS: Record<string, UILabels> = {
     pillarHumanExperience: 'Experiencia Humana',
     pillarInclusiveDesign: 'Design Inclusivo',
     pillarFutureReadiness: 'Preparacao para o Futuro',
+    pillarSeoStructure: 'Estrutura SEO e Regras',
+    pillarBrandConsistency: 'Consistencia de Marca',
     severityCritical: 'Critico',
     severityHigh: 'Alto',
     severityMedium: 'Medio',
@@ -640,7 +674,7 @@ export function getUILabels(code: string): UILabels {
 /** Translated pillar names as array (order: Foundation, Human, Inclusive, Future) */
 export function getPillarNames(code: string): string[] {
   const L = getUILabels(code)
-  return [L.pillarFoundation, L.pillarHumanExperience, L.pillarInclusiveDesign, L.pillarFutureReadiness]
+  return [L.pillarFoundation, L.pillarHumanExperience, L.pillarInclusiveDesign, L.pillarFutureReadiness, L.pillarSeoStructure || 'SEO Structure & Rules', L.pillarBrandConsistency || 'Brand Consistency']
 }
 
 /** Translated score label */

@@ -18,6 +18,8 @@ import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CA
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
+import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
+import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -130,11 +132,20 @@ export const processAuditFn = inngest.createFunction(
 
       if (error || !audit) throw new Error(`Audit not found: ${error?.message}`)
 
-      // Parse selected_pillars: null = all pillars, array of indices = partial
+      // Parse selected_modules: new slug-based system
+      const rawModules = (audit as any).selected_modules
+      const selectedModules: string[] | null = Array.isArray(rawModules) && rawModules.length > 0
+        ? rawModules.filter((v: any) => typeof v === 'string')
+        : null
+
+      // Backward compat: if no selected_modules, check legacy selected_pillars
       const rawPillars = (audit as any).selected_pillars
       const selectedPillars: number[] | null = Array.isArray(rawPillars) && rawPillars.length > 0
         ? rawPillars.filter((v: any) => typeof v === 'number' && v >= 0 && v <= 3)
         : null
+
+      // Brand identity ID for brand consistency module
+      const brandIdentityId: string | null = (audit as any).brand_identity_id || null
 
       return {
         userEmail: (audit as any).profiles?.email || '',
@@ -143,7 +154,9 @@ export const processAuditFn = inngest.createFunction(
         userFocus: (audit as any).ux_concern as string | null,
         language: ((audit as any).language as string) || 'en',
         depthMode: ((audit as any).depth_mode as string) || 'standard',
-        selectedPillars, // null = all, [0,2] = Foundation + Inclusive Design only
+        selectedModules, // null = complete audit, ['foundation', 'seo_structure'] = partial
+        selectedPillars, // legacy fallback
+        brandIdentityId, // for brand consistency module
       }
     })
 
@@ -534,17 +547,74 @@ RULES FOR RE-AUDIT:
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
       // ════════════════════════════════════════════════════════════
-      // Filter categories based on selected pillars (null = all)
-      // Each pillar = 4 categories: pillar 0 → cats 0-3, pillar 1 → cats 4-7, etc.
-      let categoriesToAnalyze = [...UX_CATEGORY_NAMES]
-      if (auditDetails.selectedPillars) {
-        const selectedIndices = new Set<number>()
-        for (const pillarIdx of auditDetails.selectedPillars) {
-          for (let c = pillarIdx * 4; c < pillarIdx * 4 + 4; c++) {
-            if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
-          }
+      // ── Determine which modules (and thus categories) to analyze ──
+      // Module slug → category index mapping (each module = 4 categories):
+      //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
+      //   future_readiness → 12-15, seo_structure → 16-19, brand_consistency → 20-23
+      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency']
+
+      let activeSlugs: string[]
+      if (auditDetails.selectedModules) {
+        // New system: explicit module slugs from DB
+        activeSlugs = auditDetails.selectedModules
+      } else if (auditDetails.selectedPillars) {
+        // Legacy fallback: convert old pillar indices to module slugs (0-3 only)
+        activeSlugs = auditDetails.selectedPillars
+          .filter((idx: number) => idx >= 0 && idx < 4)
+          .map((idx: number) => MODULE_SLUG_ORDER[idx])
+      } else {
+        // Complete audit: all modules that are includedInComplete
+        activeSlugs = [...COMPLETE_AUDIT_SLUGS]
+      }
+
+      // If brand_consistency is selected but no brand identity was provided, skip it
+      if (activeSlugs.includes('brand_consistency') && !auditDetails.brandIdentityId) {
+        activeSlugs = activeSlugs.filter(s => s !== 'brand_consistency')
+        await auditLog(auditId, 'brand_skipped', 'warning', 'Brand Consistency module skipped — no brand identity selected')
+      }
+
+      // Build the set of category indices to analyze
+      const selectedIndices = new Set<number>()
+      for (const slug of activeSlugs) {
+        const moduleIdx = MODULE_SLUG_ORDER.indexOf(slug)
+        if (moduleIdx === -1) continue
+        for (let c = moduleIdx * 4; c < moduleIdx * 4 + 4; c++) {
+          if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
         }
-        categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
+      }
+
+      let categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
+
+      // ── Fetch brand content if brand_consistency module is active ──
+      let brandContext = ''
+      if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
+        try {
+          const db = getDb()
+          const { data: brandFiles } = await db
+            .from('brand_identity_files')
+            .select('file_name, file_url, file_type')
+            .eq('brand_identity_id', auditDetails.brandIdentityId)
+
+          if (brandFiles && brandFiles.length > 0) {
+            const extracted = await extractAllBrandFiles(
+              brandFiles.map((f: any) => ({
+                file_name: f.file_name as string,
+                file_url: f.file_url as string,
+                file_type: f.file_type as string | null,
+              })),
+            )
+            const textParts = extracted
+              .filter(e => e.textContent && e.textContent.length > 0)
+              .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+            brandContext = textParts.join('\n\n---\n\n')
+            await auditLog(auditId, 'brand_files_extracted', 'success',
+              `Extracted content from ${extracted.length} brand file(s)`)
+          }
+        } catch (err) {
+          console.error('[inngest] Brand file extraction error (non-fatal):', err)
+          await auditLog(auditId, 'brand_extraction_error', 'warning',
+            `Brand file extraction failed: ${err instanceof Error ? err.message : String(err)}`)
+        }
       }
 
       const BATCH_SIZE = 4
@@ -554,6 +624,15 @@ RULES FOR RE-AUDIT:
       }
 
       const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
+      // Brand consistency categories get extra brand context prepended
+      const brandContentWithContext = brandContext
+        ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
+        : contentWithContext
+      // Brand consistency category names (indices 20-23)
+      const brandCategoryNames = new Set(
+        UX_CATEGORY_NAMES.slice(20, 24)
+      )
+
       let totalFindingsCount = 0
 
       for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
@@ -566,16 +645,20 @@ RULES FOR RE-AUDIT:
 
           console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
           const batchResults = await Promise.all(
-            batch.map((categoryName) =>
-              analyzeCategory(
-                contentWithContext,
+            batch.map((categoryName) => {
+              // Use brand-enriched content for brand consistency categories
+              const content = brandCategoryNames.has(categoryName)
+                ? brandContentWithContext
+                : contentWithContext
+              return analyzeCategory(
+                content,
                 categoryName,
                 [],
                 auditDetails.userFocus,
                 auditDetails.language,
                 'deep', // Always 'deep' here — baseline path doesn't call analyzeCategory
               )
-            ),
+            }),
           )
 
           for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
@@ -923,7 +1006,8 @@ RULES FOR RE-AUDIT:
       const reportJsonWithBaseline = {
         ...reportData,
         _baselineCategoryScores: reportData.categoryScores,
-        selectedPillars: auditDetails.selectedPillars, // null = all, array = partial
+        selectedPillars: auditDetails.selectedPillars, // legacy compat
+        selectedModules: auditDetails.selectedModules, // new slug-based system
       }
 
       // Insert report

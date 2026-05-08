@@ -68,12 +68,14 @@ export interface ReportData {
   }>
 }
 
-// ── The 16 UX categories we evaluate ─────────────────────────
-// Grouped into 4 pillars (4 categories each = 25% weight per pillar):
-//   FOUNDATION (1-4): Does the site look right?
-//   HUMAN EXPERIENCE (5-8): Does the site feel right?
-//   INCLUSIVE DESIGN (9-12): Does the site work for everyone?
-//   FUTURE READINESS (13-16): Is the site ready for what's next?
+// ── The UX categories we evaluate ────────────────────────────
+// Grouped into 6 modules (4 categories each):
+//   FOUNDATION (0-3): Does the site look right?
+//   HUMAN EXPERIENCE (4-7): Does the site feel right?
+//   INCLUSIVE DESIGN (8-11): Does the site work for everyone?
+//   FUTURE READINESS (12-15): Is the site ready for what's next?
+//   SEO STRUCTURE & RULES (16-19): Is the site search-engine friendly?
+//   BRAND CONSISTENCY (20-23): Does the site match the brand? (requires brand files)
 export const UX_CATEGORIES = [
   // ═══ PILLAR 1: FOUNDATION ═══════════════════════════════════
   // Core visual design, messaging, navigation, and content quality
@@ -244,6 +246,92 @@ export const UX_CATEGORIES = [
       'INTERNATIONALIZATION: Does the site declare its language (html lang="..."), handle text direction correctly, and format numbers/dates/currency appropriately for its audience? SCORING: A single-market site with correct local formatting = good. Not having RTL on an English-only site = LOW severity at most. Only flag RTL as high if the site explicitly targets global/multilingual audiences.',
       'CULTURAL NEUTRALITY: Are design choices and imagery neutral across major cultures? PRACTICAL: Standard web conventions (blue links, red errors, green success) are universal and should NEVER be flagged. Only flag genuinely problematic imagery, offensive symbols, or stereotypical representations.',
       'LEGAL & PRIVACY: Does the site have appropriate legal infrastructure for its markets? Check for privacy policy, cookie consent (if applicable), and data handling disclosures. A US site with a solid privacy policy = good. A site targeting EU users without GDPR basics = real gap. Evaluate based on actual target market, not theoretical global compliance.',
+    ],
+  },
+
+  // ═══ MODULE 5: SEO STRUCTURE & RULES ═══════════════════════
+  // Technical SEO, meta tags, structured data, crawlability
+  {
+    name: 'On-Page SEO Fundamentals',
+    pillar: 'SEO Structure & Rules',
+    items: [
+      'TITLE TAGS: Does every page have a unique, descriptive title tag between 50-60 characters? The title should include the primary keyword near the beginning and the brand name. Quote the actual title tag for each crawled page and flag issues: too long (truncated in SERPs), too short (wasted opportunity), duplicate across pages, or missing entirely.',
+      'META DESCRIPTIONS: Does every page have a unique meta description between 120-160 characters that summarizes the page content and includes a call-to-action? Quote actual meta descriptions. Flag: missing descriptions, duplicate descriptions across pages, descriptions that don\'t match page content, or descriptions that exceed the character limit.',
+      'HEADING HIERARCHY: Does each page have exactly ONE H1 that clearly describes the page topic? Is the heading structure logical (H1 → H2 → H3) with no skipped levels? Check every crawled page. Flag: missing H1, multiple H1s, skipped heading levels (H1 → H3), headings used for styling rather than structure, or H1 that doesn\'t match the page\'s primary topic.',
+      'URL STRUCTURE: Are URLs clean, descriptive, and human-readable? Check for: unnecessary parameters, session IDs in URLs, non-descriptive slugs (/page1, /post-123), excessive depth (/a/b/c/d/e/page), mixed case URLs, and special characters. Good URLs use hyphens, are lowercase, and describe the content (/pricing, /about, /blog/how-to-audit-ux).',
+    ],
+  },
+  {
+    name: 'Technical SEO & Crawlability',
+    pillar: 'SEO Structure & Rules',
+    items: [
+      'ROBOTS & CRAWL DIRECTIVES: Check robots.txt for proper configuration. Are important pages accessible to crawlers? Are admin/private pages blocked? Look for overly restrictive rules that block CSS/JS (preventing proper rendering), or missing robots.txt entirely. Check for noindex/nofollow meta tags that might accidentally block important pages.',
+      'SITEMAP: Does the site have an XML sitemap (usually at /sitemap.xml)? Is it referenced in robots.txt? Check if the sitemap includes all important pages and excludes non-indexable ones. Flag: missing sitemap, sitemap with errors, sitemap not referenced in robots.txt, or sitemap that includes redirected/404 URLs.',
+      'CANONICAL URLS: Does the site use canonical tags to prevent duplicate content issues? Check for: missing canonical tags on important pages, self-referencing canonicals (good practice), canonical tags pointing to wrong URLs, HTTP vs HTTPS inconsistencies, and www vs non-www inconsistencies. Proper canonicalization prevents search engines from splitting page authority.',
+      'INTERNAL LINKING & CRAWL DEPTH: Can search engines reach all important pages within 3 clicks from the homepage? Check the link structure: are key pages (pricing, features, about, contact) linked from the main navigation? Are there orphan pages with no internal links pointing to them? Is link text descriptive (not "click here")? Flag pages that are deeply buried or poorly interconnected.',
+    ],
+  },
+  {
+    name: 'Structured Data & Rich Results',
+    pillar: 'SEO Structure & Rules',
+    items: [
+      'JSON-LD IMPLEMENTATION: Does the site use JSON-LD structured data? Check for common types: Organization, WebSite, WebPage, BreadcrumbList, FAQPage, Product, SoftwareApplication, LocalBusiness. Each type should have all required properties filled correctly. Flag: missing JSON-LD entirely, invalid JSON-LD syntax, incomplete required fields, or types that don\'t match the page content.',
+      'OPEN GRAPH TAGS: Does every page have proper og:title, og:description, og:image, og:url, and og:type tags? These control how the site appears when shared on social media. Check: missing OG tags, OG image with wrong dimensions (should be 1200x630), og:title different from page title without good reason, and og:url not matching canonical URL.',
+      'TWITTER/X CARDS: Does the site implement Twitter Card meta tags (twitter:card, twitter:title, twitter:description, twitter:image)? While less critical than OG tags, they provide control over Twitter/X appearance. Check for summary_large_image card type for maximum visual impact. Flag only if OG tags are also missing — having OG tags alone is acceptable as Twitter falls back to them.',
+      'SCHEMA BREADCRUMBS & NAVIGATION: Does the site use BreadcrumbList schema for navigation hierarchy? Are breadcrumbs visible on the page AND marked up in structured data? Check that the breadcrumb trail matches the actual page hierarchy. For e-commerce and content-heavy sites, breadcrumbs are particularly important for both users and search engines.',
+    ],
+  },
+  {
+    name: 'SEO Content & Link Strategy',
+    pillar: 'SEO Structure & Rules',
+    items: [
+      'CONTENT OPTIMIZATION: Is the page content optimized for its target keywords without keyword stuffing? Check: does the H1 include the primary topic, are subheadings descriptive and keyword-relevant, is the content comprehensive enough to satisfy search intent, and is there enough text content (thin pages rank poorly)? Flag pages with very little text content or content that doesn\'t match the page\'s apparent purpose.',
+      'IMAGE SEO: Do all meaningful images have descriptive alt text that includes relevant context? Are images using modern formats (WebP/AVIF) with fallbacks? Do images have descriptive filenames (not IMG_001.jpg)? Are images properly sized (not 4000px wide loaded in a 400px container)? Check for lazy loading on below-fold images and eager loading on above-fold images.',
+      'MOBILE SEO: Does the site have a proper viewport meta tag? Is the site mobile-responsive (not a separate m.domain)? Check for mobile-specific SEO issues: text too small to read, touch targets too close together, content wider than screen, and interstitials that block content on mobile. Google uses mobile-first indexing, so mobile experience directly impacts rankings.',
+      'LINK EQUITY DISTRIBUTION: Are the most important pages (homepage, key landing pages, pricing) receiving the most internal links? Check for: excessive links in the footer/header that dilute equity, important pages with very few internal links, broken internal links (404s), and redirect chains. The site\'s most valuable pages should be the most interconnected.',
+    ],
+  },
+
+  // ═══ MODULE 6: BRAND CONSISTENCY ═══════════════════════════
+  // Website alignment with brand identity (requires brand files)
+  {
+    name: 'Visual Identity Alignment',
+    pillar: 'Brand Consistency',
+    items: [
+      'COLOR PALETTE MATCH: Compare the website\'s color usage against the brand guidelines. Are the primary, secondary, and accent colors used correctly and consistently? Check: hero sections, buttons, links, backgrounds, and text colors. Flag any colors used prominently on the website that don\'t appear in the brand palette, or brand colors that are absent from the website.',
+      'TYPOGRAPHY CONSISTENCY: Does the website use the fonts specified in the brand guidelines? Check: heading fonts, body text fonts, font weights, and font sizes. If the brand specifies a particular typeface, is it actually loaded and used on the site? Flag: wrong fonts, missing web font loading, inconsistent font usage across pages, or font sizes that don\'t match brand specifications.',
+      'LOGO USAGE: Is the logo used correctly according to brand guidelines? Check: proper logo version (full color, monochrome, icon-only), minimum clear space around the logo, logo sizing, and placement. Flag: distorted logos, logos on incorrect backgrounds, logos too small/large, or logo placement that violates brand rules.',
+      'IMAGERY & VISUAL STYLE: Does the website\'s visual style (photography, illustrations, icons, graphics) match the brand\'s visual language? Check: image style consistency, icon style matching brand guidelines, use of brand-specific visual elements, and overall aesthetic alignment. Flag: stock photos that clash with brand personality, inconsistent illustration styles, or visual elements that feel off-brand.',
+    ],
+  },
+  {
+    name: 'Voice & Tone Alignment',
+    pillar: 'Brand Consistency',
+    items: [
+      'BRAND VOICE MATCH: Does the website copy reflect the brand\'s defined voice and personality? If the brand is described as "professional yet approachable," does the website copy feel that way? Compare actual website copy against brand voice guidelines. Quote specific examples of copy that aligns well and copy that misaligns with the stated brand voice.',
+      'TONE CONSISTENCY ACROSS PAGES: Is the tone of voice consistent across all pages, or does it shift unexpectedly? The homepage might be energetic while the pricing page is dry and corporate. Check all crawled pages for tonal consistency. Flag jarring shifts in tone that could confuse users about the brand\'s personality.',
+      'AUDIENCE LANGUAGE FIT: Does the website use language appropriate for the brand\'s target audience as defined in the brand materials? If the brand targets enterprise clients but the website uses casual slang, that\'s a mismatch. Compare the website\'s reading level and vocabulary against the audience defined in brand documents.',
+      'BRAND TERMINOLOGY: Does the website consistently use the brand\'s preferred terminology for its products, features, and services? Check: product names, feature names, industry terms, and brand-specific vocabulary. Flag: inconsistent naming (calling the same thing different names on different pages), or using generic terms instead of branded terminology defined in brand materials.',
+    ],
+  },
+  {
+    name: 'Messaging & Value Prop Alignment',
+    pillar: 'Brand Consistency',
+    items: [
+      'CORE MESSAGE ALIGNMENT: Does the website\'s primary messaging (hero headline, tagline, key selling points) align with the brand\'s documented value proposition and positioning? Compare the website\'s stated benefits against the brand\'s defined value proposition. Flag: messaging that contradicts brand positioning, missing key selling points, or value props that don\'t appear anywhere on the site.',
+      'KEY MESSAGES PRESENCE: Are the brand\'s key messages and talking points represented on the website? Check if the most important brand messages (as defined in brand documents) appear prominently on the site. Flag: key messages that are buried or absent, messaging that introduces claims not supported by brand documents, or critical differentiators that are missing from the website.',
+      'COMPETITIVE POSITIONING: Does the website\'s competitive positioning match what\'s defined in the brand materials? If the brand positions itself as premium, does the website communicate premium value? If the brand emphasizes innovation, is that reflected in the site\'s messaging and design? Flag disconnects between stated positioning and how the website actually presents the brand.',
+      'PROMISE CONSISTENCY: Are the promises and claims made on the website consistent with what the brand documents state? Check: pricing claims, feature descriptions, guarantees, and customer promises. Flag: website promises that exceed brand documentation (overpromising), or brand commitments that aren\'t reflected on the website (missed opportunities).',
+    ],
+  },
+  {
+    name: 'Brand Standards Compliance',
+    pillar: 'Brand Consistency',
+    items: [
+      'BRAND GUIDELINE ADHERENCE: Does the website follow the specific rules laid out in the brand guidelines? This includes: spacing rules, grid systems, component styles, and any do\'s and don\'ts specified in brand documents. Flag specific violations of documented brand standards with references to which guideline is being violated.',
+      'CONTENT FORMAT STANDARDS: Does the website follow the brand\'s content formatting standards? Check: date formats, number formatting, capitalization rules (Title Case vs sentence case), abbreviation usage, and any editorial style guide rules. Consistency in these details signals professionalism and brand discipline.',
+      'CROSS-PAGE CONSISTENCY: Is the brand applied consistently across ALL pages of the website, or do some pages feel "off-brand"? Inner pages, blog posts, and utility pages (404, login, terms) often deviate from brand standards. Check every crawled page against brand guidelines. Flag pages that feel like they belong to a different brand.',
+      'BRAND EVOLUTION GAPS: Are there signs that the brand has evolved but the website hasn\'t caught up? Check for: old logos still appearing somewhere, outdated color schemes on legacy pages, messaging that uses old positioning language, or visual elements from a previous brand iteration. These gaps erode brand credibility and confuse users about the current brand identity.',
     ],
   },
 ]
@@ -471,9 +559,9 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
 }
 
 /**
- * Run full analysis across all 19 UX categories in parallel batches.
+ * Run full analysis across UX categories in parallel batches.
  * This is used when the checklist_categories table is empty (not seeded).
- * Runs 3 categories concurrently to balance speed vs rate limits.
+ * Processes categories one at a time to avoid rate limits.
  */
 export async function runFullAnalysis(
   pageContent: string,
@@ -645,7 +733,7 @@ export async function generateReport(
     'Content is scannable with good subheadings. Some paragraphs exceed recommended length.',
   ]
   const categoryExamples = translatedNames.map((name, i) => {
-    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 62, 48, 65, 58, 72, 66, 45]
+    const scores = [75, 68, 72, 65, 80, 74, 60, 70, 55, 62, 48, 65, 58, 72, 66, 45, 70, 63, 77, 52, 74, 67, 71, 59]
     return `    { "name": "${name}", "score": ${scores[i % scores.length]}, "summary": "${summaryExamples[i % summaryExamples.length]}" }`
   }).join(',\n')
 
@@ -673,7 +761,7 @@ For the EXECUTIVE SUMMARY:
 - Start with what the website does, who it serves, and the overall impression it creates
 - Discuss what works well — be genuine about strengths (this builds credibility for the critique)
 - Address the most impactful issues with depth: explain the human impact, not just the technical problem. How does this issue make real users FEEL? What does it cost the business?
-- Cover findings across all 4 audit pillars (Foundation, Human Experience, Inclusive Design, Future Readiness) — show the breadth of the analysis
+- Cover findings across all audit modules analysed (Foundation, Human Experience, Inclusive Design, Future Readiness, plus SEO Structure and Brand Consistency if included) — show the breadth of the analysis
 - End with a clear, prioritized action plan: what to fix first for maximum ROI
 - Write with authority and empathy. This should feel like advice from a trusted consultant, not a scan report
 - Reference specific content from the site — quote actual copy, describe actual design decisions
@@ -701,7 +789,7 @@ For CATEGORY SUMMARIES (REQUIRED — do NOT leave empty):
 - 0-19: Severely broken
 
 For CATEGORY SCORES:
-Provide a score (0-100) and a one-sentence summary for each of these 16 categories.
+Provide a score (0-100) and a one-sentence summary for each of the following ${translatedNames.length} categories.
 IMPORTANT: Use EXACTLY these category names (they are already in the correct language):
 ${categoryList}
 
@@ -816,7 +904,8 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
       : getDefaultCategoryScores()
 
     // CALCULATE scores from category data — don't trust AI's arbitrary top-level numbers
-    // Pillars: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11), Future Readiness (12-15)
+    // Modules: Foundation (0-3), Human Experience (4-7), Inclusive Design (8-11),
+    //          Future Readiness (12-15), SEO Structure (16-19), Brand Consistency (20-23)
     const pillarAvg = (start: number, end: number) => {
       const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
@@ -826,6 +915,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     const calculatedConversion = pillarAvg(4, 8)    // Human Experience
     const calculatedInclusive = pillarAvg(8, 12)    // Inclusive Design
     const calculatedFuture = pillarAvg(12, 16)      // Future Readiness
+    // SEO (16-19) and Brand (20-23) feed into overall but don't have dedicated legacy score columns
 
     // Overall = average of ALL category scores (not just pillar averages)
     const allScores = categoryScores.map(c => c.score)

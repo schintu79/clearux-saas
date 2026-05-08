@@ -82,15 +82,17 @@ function formatUrl(url: string) {
   }
 }
 
-/* ── Pillar configuration ─────────────────────────────────── */
-// Must match the 16 categories in analyzer.ts exactly (4 per pillar)
+/* ── Module configuration ─────────────────────────────────── */
+// Must match the 24 categories in analyzer.ts exactly (4 per module, 6 modules)
 
-/* Category icons in index order (must match the 16 categories in analyzer.ts) */
+/* Category icons in index order (must match the 24 categories in analyzer.ts) */
 const CATEGORY_ICONS: React.ElementType[] = [
   Eye, Target, Map, Type,                          // Foundation (0-3)
   MousePointerClick, Shield, AlertTriangle, Heart,  // Human Experience (4-7)
   Accessibility, Brain, Sparkles, Smartphone,       // Inclusive Design (8-11)
   Gauge, Search, Zap, Globe,                        // Future Readiness (12-15)
+  FileSearch, LinkIcon, Share2, Scale,              // SEO Structure & Rules (16-19)
+  Eye, MessageSquare, Target, CheckCircle2,         // Brand Consistency (20-23)
 ];
 
 /* Pillar visual config — names come from translations at render time */
@@ -138,6 +140,28 @@ const PILLAR_STYLE = [
     badgeBg: 'bg-[#22C55E]',
     scoreBg: 'bg-[#22C55E]',
     range: [12, 16] as [number, number],
+  },
+  {
+    color: 'cyan',
+    gradient: 'from-[#06B6D4] to-[#0E7490]',
+    gradientSubtle: 'from-[#06B6D4]/5 to-[#06B6D4]/10 dark:from-[#06B6D4]/10 dark:to-[#06B6D4]/5',
+    border: 'border-[#06B6D4]/20 dark:border-[#06B6D4]/15',
+    iconBg: 'bg-[#06B6D4]/10',
+    iconColor: 'text-[#06B6D4]',
+    badgeBg: 'bg-[#06B6D4]',
+    scoreBg: 'bg-[#06B6D4]',
+    range: [16, 20] as [number, number],
+  },
+  {
+    color: 'rose',
+    gradient: 'from-[#F43F5E] to-[#BE123C]',
+    gradientSubtle: 'from-[#F43F5E]/5 to-[#F43F5E]/10 dark:from-[#F43F5E]/10 dark:to-[#F43F5E]/5',
+    border: 'border-[#F43F5E]/20 dark:border-[#F43F5E]/15',
+    iconBg: 'bg-[#F43F5E]/10',
+    iconColor: 'text-[#F43F5E]',
+    badgeBg: 'bg-[#F43F5E]',
+    scoreBg: 'bg-[#F43F5E]',
+    range: [20, 24] as [number, number],
   },
 ];
 
@@ -1432,7 +1456,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // Selected pillars from report (null = all 4)
   const auditSelectedPillars: number[] | null = rawJson?.selectedPillars ?? (audit as any)?.selected_pillars ?? null;
-  const isPartialAudit = Array.isArray(auditSelectedPillars) && auditSelectedPillars.length < 4;
+  const auditSelectedModules: string[] | null = rawJson?.selectedModules ?? (audit as any)?.selected_modules ?? null;
+  // Module slug order must match PILLAR_STYLE order
+  const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency'];
+  // Total possible modules: 6 (or 5 if brand_consistency not applicable)
+  const totalModuleCount = PILLAR_STYLE.length; // 6
+  const activeModuleCount = auditSelectedModules
+    ? auditSelectedModules.length
+    : (auditSelectedPillars ? auditSelectedPillars.length : totalModuleCount);
+  const isPartialAudit = activeModuleCount < totalModuleCount;
 
   // ALWAYS calculate overall score from category data (don't trust stored value)
   const calculatedOverallScore = categoryScores.length > 0
@@ -1447,16 +1479,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     low: findings.filter((f) => f.severity === 'low').length,
   };
 
-  // Assign findings to pillars based on sort_order (findings come out in category order from the engine)
+  // Assign findings to modules based on sort_order (findings come out in category order from the engine)
   function assignFindingsToPillars() {
     const perPillar: Record<string, AuditFinding[]> = {};
     for (const p of PILLAR_CONFIG) perPillar[p.name] = [];
 
-    // Simple heuristic: distribute findings based on their sort_order
-    // The engine processes categories 0-18 in order, so sort_order roughly maps to category index
+    // Determine how many categories were actually analyzed
+    // Use selectedModules from raw_json if available, fall back to pillar count
+    const selectedModules: string[] | null = rawJson?.selectedModules ?? null;
+    const totalCategories = selectedModules
+      ? selectedModules.length * 4
+      : (auditSelectedPillars ? auditSelectedPillars.length * 4 : categoryScores.length || 16);
     const totalFindings = findings.length;
-    const totalCategories = 19;
-    const findingsPerCategory = totalFindings / totalCategories;
+    const findingsPerCategory = totalFindings / Math.max(1, totalCategories);
 
     for (const f of findings) {
       const estimatedCatIdx = Math.min(
@@ -1496,7 +1531,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   const avg = pillarCats.length > 0
                     ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                     : 0;
-                  const wasAudited = !isPartialAudit || (auditSelectedPillars?.includes(pIdx) ?? true);
+                  const wasAudited = !isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true));
                   return (
                     <div key={pillar.name} className={`flex items-center gap-1 ${!wasAudited ? 'opacity-30' : ''}`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${pillar.badgeBg}`} />
@@ -1787,7 +1822,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <h2 className="text-xl font-medium font-heading text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
                       <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                        {auditSelectedPillars!.length} of 4 modules
+                        {activeModuleCount} of {totalModuleCount} modules
                       </span>
                     )}
                     <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
@@ -1808,7 +1843,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       const avg = pillarCats.length > 0
                         ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
                         : 0;
-                      const wasAudited = !isPartialAudit || (auditSelectedPillars?.includes(pIdx) ?? true);
+                      const wasAudited = !isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true));
                       return (
                         <div key={pillar.name} className={`flex items-center gap-1.5 ${!wasAudited ? 'opacity-30' : ''}`}>
                           <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
@@ -2045,18 +2080,24 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Pillar Sections with scores and findings */}
-              {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar, pillarIdx) => (
-                <PillarSection
-                  key={pillar.name}
-                  pillar={pillar}
-                  pillarIndex={pillarIdx}
-                  categoryScores={categoryScores}
-                  findings={findingsByPillar[pillar.name] || []}
-                  lang={auditLang}
-                  onScoreUpdate={() => fetchAuditDetail(true)}
-                />
-              ))}
+              {/* Module Sections with scores and findings */}
+              {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar, pillarIdx) => {
+                // Skip modules that have no category scores (e.g. old audits with only 16 categories)
+                const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
+                if (!hasCats && !hasFindings) return null;
+                return (
+                  <PillarSection
+                    key={pillar.name}
+                    pillar={pillar}
+                    pillarIndex={pillarIdx}
+                    categoryScores={categoryScores}
+                    findings={findingsByPillar[pillar.name] || []}
+                    lang={auditLang}
+                    onScoreUpdate={() => fetchAuditDetail(true)}
+                  />
+                );
+              })}
 
               {/* 64-Checkpoint Health — pass/fail breakdown */}
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
@@ -2064,7 +2105,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-off/40 dark:bg-white/[0.02] border border-border/15 dark:border-white/[0.03]">
                 <p className="text-[11px] text-muted/70 leading-relaxed">
-                  <span className="font-medium text-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content. It covers 64 checkpoints across 16 categories but cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
+                  <span className="font-medium text-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
                 </p>
               </div>
 
