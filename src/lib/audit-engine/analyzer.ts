@@ -337,6 +337,75 @@ export const UX_CATEGORIES = [
 ]
 
 /**
+ * Post-processing filter: reject findings that contain speculative language
+ * or reference third-party infrastructure the site owner can't control.
+ * This is a programmatic safety net — the prompt already instructs the AI
+ * not to generate these, but some slip through.
+ */
+function isSpeculativeFinding(f: AnalysisFinding): boolean {
+  const text = `${f.title} ${f.description}`.toLowerCase()
+
+  // Speculative language patterns — findings that admit they can't verify
+  const speculativePatterns = [
+    'not verified',
+    'could not verify',
+    'could not confirm',
+    'unable to verify',
+    'unable to confirm',
+    'not tested',
+    'could not be tested',
+    'cannot be confirmed',
+    'unclear whether',
+    'unclear if',
+    'it is unclear',
+    'may not have',
+    'may not be',
+    'may lack',
+    'might not',
+    'might lack',
+    'potentially missing',
+    'potentially lacks',
+    'possible lack of',
+    'appears to be missing',
+    'appears to lack',
+    'no evidence of.*but',  // "no evidence of X but could be"
+    'without further testing',
+    'would need to be tested',
+    'requires manual testing',
+    'requires further investigation',
+    'cannot determine from',
+    'not possible to assess',
+  ]
+
+  for (const pattern of speculativePatterns) {
+    if (pattern.includes('.*')) {
+      if (new RegExp(pattern).test(text)) return true
+    } else {
+      if (text.includes(pattern)) return true
+    }
+  }
+
+  // Third-party infrastructure — site owner can't fix these
+  const infrastructurePatterns = [
+    'cloudflare',
+    'email obfuscat',
+    'email protect',
+    'cdn-cgi',
+    '/cdn-cgi/',
+    'edge cach',
+    'server header',
+    'x-powered-by',
+    'cf-ray',
+  ]
+
+  for (const pattern of infrastructurePatterns) {
+    if (text.includes(pattern)) return true
+  }
+
+  return false
+}
+
+/**
  * Analyze a single UX category — called once per category
  * @param depthMode 'deep' = find new issues freely (first audit or explicit Dig Deeper)
  *                  'baseline' = ONLY check status of previous findings, no new issues
@@ -426,6 +495,33 @@ Many websites display example/demo content to showcase their product's capabilit
 - Mock-ups, wireframes, or UI previews shown as product demonstrations
 If you find text like "Confirmshaming detected" or "Dark pattern found" inside a demo/example panel on a UX audit tool's own website, that is the tool demonstrating its capabilities — NOT an actual dark pattern on the site. Never flag demo content as real findings.
 
+MANDATORY EVIDENCE RULE — ZERO SPECULATION POLICY:
+Every finding MUST cite specific, concrete evidence you directly observed in the provided content. This means:
+- You MUST quote the exact text, element, attribute, or pattern you observed that proves the issue exists.
+- "Not verified", "could not confirm", "potentially", "may have", "appears to lack" = AUTOMATIC REJECTION. If you cannot verify it from the content, DO NOT include it.
+- "Color contrast not verified" or "accessibility not tested" are NOT findings — they are admissions that you have no evidence. Never include them.
+- Before flagging "missing X" (e.g., missing labels, missing alt text, missing ARIA), you MUST search the provided content for X. If you find <label htmlFor="...">, for="...", aria-label, aria-labelledby, or equivalent — the element IS labeled. Do not flag it.
+- If you cannot point to a specific quoted excerpt or HTML pattern that proves the issue, the finding does not exist. Period.
+
+THIRD-PARTY & INFRASTRUCTURE EXCLUSION:
+Never flag issues caused by services the site owner does not control:
+- CDN behaviors (Cloudflare email obfuscation, Cloudflare challenge pages, Cloudflare-injected scripts, edge caching headers)
+- Hosting platform artifacts (Vercel, Netlify, AWS deployment markers, server headers)
+- Third-party widget behavior (chat widgets, analytics scripts, cookie consent banners from third-party providers)
+- Email protection/obfuscation by security services (e.g., [email protected] links rewritten by Cloudflare)
+- DNS-level redirects, SSL certificate details, CDN-specific response headers
+These are infrastructure decisions, not UX issues. The site owner often cannot change them. NEVER include them.
+
+SUBJECTIVE OPINION FILTER:
+Design preferences are NOT UX failures. Do not flag:
+- "Visual hierarchy could be stronger" without evidence of user confusion or missed content
+- "Color palette feels [adjective]" — subjective color opinions are not findings
+- "Font size could be larger" when the font meets readability standards (≥16px body)
+- "Layout is too [simple/complex/minimal/busy]" without evidence of user impact
+- "Content tone is too [formal/casual/corporate/friendly]" when tone is consistent and appropriate for the audience
+- Aesthetic preferences disguised as UX recommendations (e.g., "hero section would benefit from more visual interest")
+A finding must describe a FUNCTIONAL problem — something that causes users to fail, abandon, misunderstand, or feel unsafe. "I would design it differently" is not a finding.
+
 DO NOT flag these common false positives:
 - Generic "missing meta description" or "missing alt text" unless it's truly egregious
 - Minor HTML structure issues that don't affect the user experience
@@ -442,6 +538,8 @@ DO NOT flag these common false positives:
 - Content that EXISTS on another page of the same site (e.g., "no team credentials" when there's an About page, "no pricing" when there's a Pricing page) — CHECK THE SITE MAP
 - Suggesting content that already exists elsewhere on the site should be "added to the homepage" — that's a layout preference, not a UX issue
 - Generic recommendations like "add social proof" when testimonials exist on the site
+- Privacy policy "tone" or legal page writing style — these serve legal purposes, not UX purposes
+- Identical or near-identical issues on login vs register pages — these are ONE finding, not two
 
 DO flag these high-value findings:
 - Real friction points in the user journey that lose conversions
@@ -456,11 +554,12 @@ DO flag these high-value findings:
 - Performance bottlenecks that directly harm user retention
 
 QUALITY STANDARDS FOR EACH FINDING:
-1. SPECIFIC — Reference actual text, elements, or patterns you observe. Quote the website.
-2. IMPACTFUL — Explain WHY this matters in business terms (lost conversions, user drop-off, trust erosion).
+1. EVIDENCE-BACKED — You MUST quote the specific text, element, or HTML pattern that proves this issue exists. A finding without a direct quote or concrete reference is not a finding. "The hero section..." must include WHAT about the hero section, with quoted text.
+2. IMPACTFUL — Explain WHY this matters in business terms (lost conversions, user drop-off, trust erosion). If you cannot articulate a concrete user impact beyond "best practice says so," reconsider whether this is worth including.
 3. FIXABLE — Give a concrete, implementable recommendation. Not "improve your CTA" but "Change the CTA from 'Submit' to 'Get My Free Report' — action-oriented language increases click-through by 20-30%."
 4. DEEP — Go beyond what a basic tool would catch. Show the insight of a $200/hour consultant.
 5. VERIFIED — Before including ANY finding about "missing" content, confirm it's not on another page. If the site has an About page, don't flag missing team info. If it has a Pricing page, don't flag missing pricing. If it has an FAQ page, don't flag missing FAQ. A senior consultant would check the WHOLE site, not just one page.
+6. NOT SPECULATIVE — If your finding title or description contains words like "not verified," "unclear whether," "may not," "potentially," "could lack," or "appears to be missing" — DELETE IT. Either you have evidence or you don't. There is no middle ground.
 
 CRITICAL — PAGE URL ASSIGNMENT:
 The content above includes MULTIPLE pages, each starting with "URL:". For each finding, you MUST set "pageUrl" to the EXACT page URL (from the list above) where the issue exists.
@@ -491,7 +590,17 @@ Each finding must be UNIQUE. Do NOT report an issue if it is essentially the sam
 - "Login page lacks brand identity" and "Register page lacks brand identity" are the SAME finding — report it ONCE covering both pages.
 - "FAQ lacks visual hierarchy" should be one finding, not repeated for each sub-aspect.
 - If a problem spans multiple pages, combine it into ONE finding and list all affected pages.
+- Issues caused by the same root cause are ONE finding: e.g., if Cloudflare email protection affects 5 pages, that is ONE infrastructure issue (and should be excluded per the third-party rule anyway).
+- "Form lacks X" on login + register + contact = ONE finding about forms, not three.
 Before adding a finding, ask yourself: "Could this be merged with another finding about the same underlying issue?" If yes, merge them.
+
+FINAL SELF-CHECK — Before returning your findings, review each one against these gates:
+1. Does this finding quote specific evidence from the provided content? If no → DELETE.
+2. Is this about something the site owner can actually control? If no → DELETE.
+3. Could I verify this claim is true from the content provided? If no → DELETE.
+4. Is this a real functional problem, or just my design preference? If preference → DELETE.
+5. Is this essentially the same issue as another finding? If yes → MERGE.
+6. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
 
 QUANTITY GUIDELINES:
 - Include 2-5 UNIQUE findings per category. Fewer, better findings beat many shallow ones.
@@ -550,6 +659,7 @@ Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
     const findings: AnalysisFinding[] = JSON.parse(jsonMatch[0])
     return findings
       .filter((f) => f.severity && f.title && f.description && f.recommendation)
+      .filter((f) => !isSpeculativeFinding(f))
       .map((f) => ({ ...f, targetElement: f.targetElement || null, pageUrl: f.pageUrl || null }))
   } catch (err) {
     console.error(`[analyzeCategory] Error for "${category}":`, err instanceof Error ? err.message : err)
