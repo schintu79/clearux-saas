@@ -5,8 +5,14 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
+
+// Keep the serverless function alive while the audit runs in the background.
+// Without this, Vercel kills the container as soon as the response is sent,
+// which terminates the fire-and-forget processAudit / processBrandAudit promise.
+export const maxDuration = 300 // 5 minutes (Vercel Pro max)
 
 /* ── GET — credit balance ───────────────────────────────── */
 export async function GET(request: NextRequest) {
@@ -147,19 +153,23 @@ export async function POST(request: NextRequest) {
     const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
-    // Trigger audit processing — direct execution with Inngest as backup
-    console.log(`[credits] Starting ${auditType} audit ${audit_id}`)
-    if (auditType === 'website') {
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(audit_id).catch((err) => {
-        console.error(`[credits] processAudit failed for ${audit_id}:`, err)
-      })
-    } else if (auditType === 'brand_identity') {
-      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-      processBrandAudit(audit_id).catch((err) => {
-        console.error(`[credits] processBrandAudit failed for ${audit_id}:`, err)
-      })
-    }
+    // Trigger audit processing using next/server `after()` — this keeps the
+    // serverless function alive AFTER the response is sent, so the audit
+    // runs to completion without being killed by Vercel's container recycling.
+    console.log(`[credits] Scheduling ${auditType} audit ${audit_id} via after()`)
+    after(async () => {
+      try {
+        if (auditType === 'website') {
+          const { processAudit } = await import('@/lib/audit-engine')
+          await processAudit(audit_id)
+        } else if (auditType === 'brand_identity') {
+          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+          await processBrandAudit(audit_id)
+        }
+      } catch (err) {
+        console.error(`[credits] ${auditType} audit ${audit_id} failed:`, err)
+      }
+    })
     // Also try Inngest if configured (non-blocking)
     inngest.send({ name: eventName, data: { auditId: audit_id } }).catch(() => {})
 

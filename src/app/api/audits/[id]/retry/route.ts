@@ -5,8 +5,11 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
+
+export const maxDuration = 300
 
 export async function POST(
   request: NextRequest,
@@ -92,18 +95,24 @@ export async function POST(
       metadata: {},
     } as any)
 
-    // Trigger audit processing — direct execution with Inngest as backup
+    // Trigger audit processing via after() — keeps function alive after response
     const ar = audit as any
     const auditType = ar.audit_type || (ar.brand_identity_id && !ar.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    console.log(`[retry] Starting ${auditType} audit ${auditId}`)
-    if (auditType === 'website') {
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(auditId).catch((err) => console.error(`[retry] processAudit failed:`, err))
-    } else if (auditType === 'brand_identity') {
-      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-      processBrandAudit(auditId).catch((err) => console.error(`[retry] processBrandAudit failed:`, err))
-    }
+    console.log(`[retry] Scheduling ${auditType} audit ${auditId} via after()`)
+    after(async () => {
+      try {
+        if (auditType === 'website') {
+          const { processAudit } = await import('@/lib/audit-engine')
+          await processAudit(auditId)
+        } else if (auditType === 'brand_identity') {
+          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
+          await processBrandAudit(auditId)
+        }
+      } catch (err) {
+        console.error(`[retry] ${auditType} audit ${auditId} failed:`, err)
+      }
+    })
     inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
     return NextResponse.json({
