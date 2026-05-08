@@ -75,7 +75,7 @@ function OnboardingBanner() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { step: '1', title: 'Paste your URL', desc: 'Enter any website to audit', icon: Globe },
-          { step: '2', title: 'AI analyses 96 checkpoints', desc: 'Across 24 UX categories', icon: Sparkles },
+          { step: '2', title: 'AI analyses 64 checkpoints', desc: 'Across 16 UX categories', icon: Sparkles },
           { step: '3', title: 'Get your report', desc: 'PDF, Word, and dashboard', icon: FileSearch },
         ].map((s) => (
           <div key={s.step} className="flex items-start gap-3 p-3 rounded-lg bg-card/80 dark:bg-white/[0.04] border border-border/20 dark:border-white/[0.04]">

@@ -79,7 +79,7 @@ export function getReportLabels(code: string): ReportLabels {
   return REPORT_LABELS[code] || REPORT_LABELS['en']
 }
 
-/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (24 categories, 4 per pillar) */
+/** Translated UX category names — order must match UX_CATEGORIES in analyzer.ts (16 categories, 4 per pillar) */
 const CATEGORY_NAMES: Record<string, string[]> = {
   en: [
     // Foundation (0-3)
@@ -384,7 +384,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Complete payment to start the audit.',
     descPaymentConfirmed: 'Payment received. Your audit is being queued.',
     descCrawling: 'Our AI is crawling your website and collecting data...',
-    descAnalysing: 'Running deep analysis across 24 categories...',
+    descAnalysing: 'Running deep analysis across 16 categories...',
     descGeneratingReport: 'Compiling your professional audit report...',
     descCompleted: 'Your audit is ready.',
     descFailed: 'Something went wrong. You can retry the audit.',
@@ -435,7 +435,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Complete el pago para iniciar la auditoria.',
     descPaymentConfirmed: 'Pago recibido. Su auditoria esta en cola.',
     descCrawling: 'Nuestra IA esta rastreando su sitio web y recopilando datos...',
-    descAnalysing: 'Ejecutando analisis profundo en 24 categorias...',
+    descAnalysing: 'Ejecutando analisis profundo en 16 categorias...',
     descGeneratingReport: 'Compilando su informe profesional de auditoria...',
     descCompleted: 'Su auditoria esta lista.',
     descFailed: 'Algo salio mal. Puede reintentar la auditoria.',
@@ -486,7 +486,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Completez le paiement pour demarrer l\'audit.',
     descPaymentConfirmed: 'Paiement recu. Votre audit est en file d\'attente.',
     descCrawling: 'Notre IA explore votre site web et collecte les donnees...',
-    descAnalysing: 'Analyse approfondie sur 24 categories en cours...',
+    descAnalysing: 'Analyse approfondie sur 16 categories en cours...',
     descGeneratingReport: 'Compilation de votre rapport d\'audit professionnel...',
     descCompleted: 'Votre audit est pret.',
     descFailed: 'Une erreur s\'est produite. Vous pouvez relancer l\'audit.',
@@ -588,7 +588,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Completa il pagamento per avviare l\'audit.',
     descPaymentConfirmed: 'Pagamento ricevuto. Il tuo audit e in coda.',
     descCrawling: 'La nostra IA sta scansionando il tuo sito web e raccogliendo dati...',
-    descAnalysing: 'Analisi approfondita su 24 categorie in corso...',
+    descAnalysing: 'Analisi approfondita su 16 categorie in corso...',
     descGeneratingReport: 'Compilazione del tuo report professionale di audit...',
     descCompleted: 'Il tuo audit e pronto.',
     descFailed: 'Qualcosa e andato storto. Puoi riprovare l\'audit.',
@@ -639,7 +639,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Complete o pagamento para iniciar a auditoria.',
     descPaymentConfirmed: 'Pagamento recebido. Sua auditoria esta na fila.',
     descCrawling: 'Nossa IA esta rastreando seu site e coletando dados...',
-    descAnalysing: 'Executando analise profunda em 24 categorias...',
+    descAnalysing: 'Executando analise profunda em 16 categorias...',
     descGeneratingReport: 'Compilando seu relatorio profissional de auditoria...',
     descCompleted: 'Sua auditoria esta pronta.',
     descFailed: 'Algo deu errado. Voce pode tentar novamente.',

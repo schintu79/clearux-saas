@@ -5,7 +5,7 @@ import HowItWorksContent from './HowItWorksContent'
 
 export const metadata: Metadata = {
   title: 'How It Works',
-  description: 'Three steps to 360° clarity. Choose your audit type (website, brand identity, or design), we run 96 checkpoints across six modules, and you decide what to fix.',
+  description: 'Three steps to 360° clarity. Choose your audit type (website, brand identity, or design), we run 64 checkpoints across six modules, and you decide what to fix.',
 }
 
 export default function HowItWorksPage() {

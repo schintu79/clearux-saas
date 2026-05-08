@@ -19,7 +19,7 @@ const TOP_FAQS = [
   { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
   { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
   { q: 'What does the audit cover?', a: 'Six modules: Foundation (structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Available for websites, brand identity materials, and design files.' },
-  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes for $99. For deep qualitative research, pair ClearUX findings with a specialist.' },
+  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 64 checkpoints across 6 modules in minutes for $99. For deep qualitative research, pair ClearUX findings with a specialist.' },
   { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
 ];
 
@@ -211,19 +211,14 @@ export default function Home() {
           </div>
 
           {/* Description */}
-          <motion.div
-            className="max-w-xl mb-8 sm:mb-16"
+          <motion.p
+            className="text-white/70 text-base sm:text-lg max-w-xl mb-8 sm:mb-16 leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
-              360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
-            </p>
-            <p className="text-base sm:text-lg font-bold text-lime-gradient">
-              10 free credits to test.
-            </p>
-          </motion.div>
+            360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
+          </motion.p>
 
           {/* CTA buttons */}
           <motion.div
@@ -247,6 +242,17 @@ export default function Home() {
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </motion.div>
+
+          {/* KSP */}
+          <motion.p
+            className="text-[13px] sm:text-[15px] font-medium text-lime-gradient tracking-wide mt-10 sm:mt-12 text-center leading-relaxed max-w-xs sm:max-w-none mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            Your first audit is free —<br />
+            results in minutes, no credit card needed.
+          </motion.p>
 
           {/* Trust badges */}
           <motion.div
@@ -315,7 +321,7 @@ export default function Home() {
           <ScrollReveal>
             <div className="grid sm:grid-cols-3 gap-6">
               {[
-                { countTo: 96, suffix: '', label: 'Checkpoints', desc: 'across every audit' },
+                { countTo: 64, suffix: '', label: 'Checkpoints', desc: 'across every audit' },
                 { countTo: 6, suffix: '', label: 'Modules', desc: 'complete coverage' },
                 { static: '<10', label: 'Minutes', desc: 'to full report' },
               ].map((stat, i) => (
@@ -381,7 +387,7 @@ export default function Home() {
               What we audit
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-4xl mb-6">
-              6 modules. 96 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
+              6 modules. 64 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
             </h2>
             <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed">
               We audit feeling, not function alone. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO — prioritised with concrete fixes.
@@ -559,7 +565,7 @@ export default function Home() {
               },
               {
                 step: '02',
-                title: 'We run 96 checkpoints',
+                title: 'We run 64 checkpoints',
                 desc: 'Every input evaluated across 6 modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Scored by severity and business impact.',
                 icon: Globe2,
               },
@@ -671,7 +677,7 @@ export default function Home() {
               First one free.
             </p>
             <p className="text-white/65 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
-              No subscription. No feature gates. Every audit gets all 6 modules, 96 checkpoints, and full reports. Credits never expire.
+              No subscription. No feature gates. Every audit gets all 6 modules, 64 checkpoints, and full reports. Credits never expire.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <Link href="/register" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]">
@@ -689,7 +695,7 @@ export default function Home() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
                 {[
-                  'All 6 modules, 96 checkpoints',
+                  'All 6 modules, 64 checkpoints',
                   'PDF & Word reports included',
                   'Track fixes and re-audit anytime',
                   'Credits never expire',
@@ -753,7 +759,7 @@ export default function Home() {
               <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="text-white/70 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
-              Your first audit is free. 96 checkpoints, 6 modules, full report in minutes. Senior UX rigor, at startup pace.
+              Your first audit is free. 64 checkpoints, 6 modules, full report in minutes. Senior UX rigor, at startup pace.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">

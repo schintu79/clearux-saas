@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 
-const RESTARTABLE = ['crawling', 'analysing', 'generating_report', 'payment_received']
+const RESTARTABLE = ['crawling', 'analysing', 'generating_report', 'payment_received', 'failed']
 
 // How long an audit can be in a processing state before we consider it stuck
 const STUCK_AFTER_MS = 3 * 60 * 1000 // 3 minutes
@@ -39,10 +39,10 @@ export async function POST(
       )
     }
 
-    // Check if actually stuck (not just started)
+    // Check if actually stuck (not just started) — skip for failed audits
     const updatedAt = new Date(a.updated_at).getTime()
     const elapsed = Date.now() - updatedAt
-    if (elapsed < STUCK_AFTER_MS) {
+    if (a.status !== 'failed' && elapsed < STUCK_AFTER_MS) {
       const remaining = Math.ceil((STUCK_AFTER_MS - elapsed) / 1000)
       return NextResponse.json(
         { error: `Audit is still processing. Wait ${remaining}s before restarting.` },

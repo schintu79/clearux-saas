@@ -12,11 +12,11 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How long does an audit take?',
-        a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 96 checkpoints across six modules, and generates a full professional report.',
+        a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 64 checkpoints across six modules, and generates a full professional report.',
       },
       {
         q: 'What does the audit cover?',
-        a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user, every ability, every context), Future Readiness (AI discoverability and how your product holds up as discovery shifts), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (whether your product is findable, legible, and ranked the way it deserves). Available for websites, brand identity materials, and design files.',
+        a: 'We evaluate 16 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user, every ability, every context), Future Readiness (AI discoverability and how your product holds up as discovery shifts), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (whether your product is findable, legible, and ranked the way it deserves). Available for websites, brand identity materials, and design files.',
       },
       {
         q: 'What types of audits do you offer?',
@@ -32,7 +32,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How does ClearUX compare to hiring a UX consultant?',
-        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 96 checkpoints across six modules in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
+        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 64 checkpoints across six modules in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
       },
       {
         q: 'Can I track which findings have been fixed?',
@@ -53,7 +53,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How does the AI analysis work?',
-        a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 96 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.',
+        a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 64 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.',
       },
       {
         q: 'What format is the report?',
@@ -78,7 +78,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'What AI powers the audits?',
-        a: 'ClearUX uses Anthropic\'s Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 96 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn\'t just ask the AI generic questions — it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
+        a: 'ClearUX uses Anthropic\'s Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 64 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn\'t just ask the AI generic questions — it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
       },
       {
         q: 'What are the known limitations?',
@@ -90,7 +90,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Does ClearUX replace a human UX auditor?',
-        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 96 checkpoints across six modules in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
+        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 64 checkpoints across six modules in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
       },
     ],
   },
@@ -99,7 +99,7 @@ const FAQ_SECTIONS = [
     items: [
       {
         q: 'How do credits work?',
-        a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
+        a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 64 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
       },
       {
         q: 'Is my data secure?',

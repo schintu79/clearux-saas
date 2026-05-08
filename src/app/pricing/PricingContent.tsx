@@ -47,7 +47,7 @@ export default function PricingContent() {
 
           <p className="text-white/65 text-base sm:text-lg max-w-2xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit runs the full 64-checkpoint
-            analysis across six modules and 24 categories. Credits never expire.
+            analysis across six modules and 16 categories. Credits never expire.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
@@ -81,7 +81,7 @@ export default function PricingContent() {
             Every audit includes
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-light text-white mb-10" style={{ lineHeight: '1.1' }}>
-            96 checkpoints. <span className="text-lime-gradient">Zero compromises.</span>
+            64 checkpoints. <span className="text-lime-gradient">Zero compromises.</span>
           </h2>
 
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8 lg:p-10">

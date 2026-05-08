@@ -441,7 +441,7 @@ const NewAuditInner: React.FC = () => {
         <p className="text-muted">
           {auditType === 'brand_identity'
             ? 'Upload your brand materials and get AI-powered analysis of consistency, messaging, and quality.'
-            : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
+            : 'Paste your URL and our AI does a deep analysis across all 64 checkpoints.'}
         </p>
       </div>
 
