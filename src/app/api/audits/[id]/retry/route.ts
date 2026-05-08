@@ -90,7 +90,8 @@ export async function POST(
     } as any)
 
     // Re-trigger processing via Inngest (dispatch by audit type)
-    const auditType = (audit as any).audit_type || 'website'
+    const ar = audit as any
+    const auditType = ar.audit_type || (ar.brand_identity_id && !ar.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
     await inngest.send({
       name: eventName,

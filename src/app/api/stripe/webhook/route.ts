@@ -227,7 +227,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Trigger audit processing via Inngest (dispatch by audit type)
-        const auditType = (audit as any)?.audit_type || 'website'
+        const aw = audit as any
+        const auditType = aw?.audit_type || (aw?.brand_identity_id && !aw?.product_url ? 'brand_identity' : 'website')
         const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
         try {
           console.log(`[webhook] Sending Inngest event "${eventName}" for audit ${auditId}`)

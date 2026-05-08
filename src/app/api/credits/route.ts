@@ -137,12 +137,14 @@ export async function POST(request: NextRequest) {
     } as any)
 
     // Determine audit type for correct Inngest dispatch
+    // Smart inference: check audit_type first, then fall back to brand_identity_id + product_url
     const { data: auditRecord } = await db
       .from('audits')
-      .select('audit_type')
+      .select('audit_type, brand_identity_id, product_url')
       .eq('id', audit_id)
       .single()
-    const auditType = (auditRecord as any)?.audit_type || 'website'
+    const ar = auditRecord as any
+    const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
     // Trigger audit processing via Inngest (background job)

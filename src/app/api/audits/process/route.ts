@@ -53,7 +53,9 @@ export async function POST(request: NextRequest) {
 
     // Trigger processing via Inngest (background job)
     // Dispatch to the correct function based on audit type
-    const auditType = (audit as any).audit_type || 'website'
+    // Smart inference: check audit_type first, then fall back to brand_identity_id + product_url
+    const a = audit as any
+    const auditType = a.audit_type || (a.brand_identity_id && !a.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
     await inngest.send({
