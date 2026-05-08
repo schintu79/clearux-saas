@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -92,28 +92,37 @@ function HomeFaqItem({ q, a }: { q: string; a: string }) {
 }
 
 /* ── Rotating number counter ─────────────────────────────── */
-function RotatingNumber({ values, interval = 3000 }: { values: string[]; interval?: number }) {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (values.length <= 1) return;
-    const timer = setInterval(() => setIdx(p => (p + 1) % values.length), interval);
-    return () => clearInterval(timer);
-  }, [values, interval]);
+function CountUp({ to, suffix = '', duration = 1.8 }: { to: number; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
 
-  return (
-    <AnimatePresence mode="wait">
-      <motion.span
-        key={idx}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.4 }}
-        className="text-lime-gradient"
-      >
-        {values[idx]}
-      </motion.span>
-    </AnimatePresence>
-  );
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
+      { threshold: 0.3 },
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+    const steps = Math.ceil(duration * 30); // ~30fps
+    const increment = to / steps;
+    let current = 0;
+    let frame = 0;
+    const timer = setInterval(() => {
+      frame++;
+      current = Math.min(Math.round(increment * frame), to);
+      setCount(current);
+      if (frame >= steps) clearInterval(timer);
+    }, duration * 1000 / steps);
+    return () => clearInterval(timer);
+  }, [started, to, duration]);
+
+  return <span ref={ref} className="text-lime-gradient">{count}{suffix}</span>;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -312,16 +321,16 @@ export default function Home() {
           <ScrollReveal>
             <div className="grid sm:grid-cols-3 gap-6">
               {[
-                { values: ['64+', '80+', '100+'], label: 'Checkpoints', desc: 'and growing' },
-                { values: ['6'], label: 'Modules', desc: 'complete coverage' },
-                { values: ['<10'], label: 'Minutes', desc: 'to full report' },
+                { countTo: 64, suffix: '', label: 'Checkpoints', desc: 'across every audit' },
+                { countTo: 6, suffix: '', label: 'Modules', desc: 'complete coverage' },
+                { static: '<10', label: 'Minutes', desc: 'to full report' },
               ].map((stat, i) => (
                 <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
                   <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light leading-none mb-2">
-                    {stat.values.length > 1 ? (
-                      <RotatingNumber values={stat.values} interval={3000} />
+                    {'countTo' in stat ? (
+                      <CountUp to={stat.countTo!} suffix={stat.suffix || ''} />
                     ) : (
-                      <span className="text-lime-gradient">{stat.values[0]}</span>
+                      <span className="text-lime-gradient">{(stat as any).static}</span>
                     )}
                   </p>
                   <p className="text-base font-medium text-white/70">{stat.label}</p>
