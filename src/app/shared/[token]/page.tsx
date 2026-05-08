@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { Eye, Sparkles, Lock, Zap, Scale, Heart, Accessibility, Brain } from 'lucide-react';
+import { Eye, Sparkles, Lock, Zap, Scale, Heart, Accessibility, Brain, Search, Fingerprint } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -34,10 +34,12 @@ const PILLAR_STYLE = [
   { color: 'pink', gradient: 'from-pink-500 to-pink-600', bg: 'bg-pink-500/10', text: 'text-pink-500', badgeBg: 'bg-pink-500', Icon: Heart },
   { color: 'amber', gradient: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10', text: 'text-amber-500', badgeBg: 'bg-amber-500', Icon: Accessibility },
   { color: 'emerald', gradient: 'from-[#22C55E] to-[#246B43]', bg: 'bg-[#22C55E]/10', text: 'text-[#22C55E]', badgeBg: 'bg-[#22C55E]', Icon: Brain },
+  { color: 'cyan', gradient: 'from-[#06B6D4] to-[#0E7490]', bg: 'bg-[#06B6D4]/10', text: 'text-[#06B6D4]', badgeBg: 'bg-[#06B6D4]', Icon: Search },
+  { color: 'rose', gradient: 'from-[#F43F5E] to-[#BE123C]', bg: 'bg-[#F43F5E]/10', text: 'text-[#F43F5E]', badgeBg: 'bg-[#F43F5E]', Icon: Fingerprint },
 ];
 
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
-const PILLAR_RANGES = [[0, 4], [4, 8], [8, 12], [12, 16]];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
+const PILLAR_RANGES = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
 
 export default function SharedAuditPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -117,8 +119,11 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   const rawJson = report?.raw_json as any;
   const categoryScores: Array<{ name: string; score: number; summary: string }> = rawJson?.categoryScores || [];
   const topRecs: string[] = rawJson?.topRecommendations || (rawJson?.keyRecommendation ? [rawJson.keyRecommendation] : []);
+  const selectedModules: string[] | null = rawJson?.selectedModules ?? null;
   const selectedPillars: number[] | null = rawJson?.selectedPillars ?? null;
-  const isPartialAudit = Array.isArray(selectedPillars) && selectedPillars.length < 4;
+  const totalModules = PILLAR_NAMES.length;
+  const activeModuleCount = selectedModules ? selectedModules.length : (selectedPillars ? selectedPillars.length : totalModules);
+  const isPartialAudit = activeModuleCount < totalModules;
 
   const severityCounts = {
     critical: findings.filter(f => f.severity === 'critical').length,
@@ -130,12 +135,13 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   let domain = 'audit';
   try { domain = new URL(audit.product_url).hostname.replace(/^www\./, ''); } catch {}
 
-  // Calculate pillar averages
+  // Calculate pillar averages — filter out pillars with no scored categories
   const pillarData = PILLAR_STYLE.map((style, i) => {
     const cats = categoryScores.slice(PILLAR_RANGES[i][0], PILLAR_RANGES[i][1]);
-    const avg = cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0;
-    return { ...style, name: PILLAR_NAMES[i], avg, cats };
-  });
+    const scoredCats = cats.filter(c => c.score > 0 || c.summary);
+    const avg = scoredCats.length > 0 ? Math.round(scoredCats.reduce((s, c) => s + c.score, 0) / scoredCats.length) : 0;
+    return { ...style, name: PILLAR_NAMES[i], avg, cats: scoredCats, hasCats: scoredCats.length > 0 };
+  }).filter(p => p.hasCats);
 
   return (
     <>
@@ -176,7 +182,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                         {isPartialAudit && (
                           <>
                             <span className="text-border">|</span>
-                            <span className="text-[11px] text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{selectedPillars!.length} of 4 modules</span>
+                            <span className="text-[11px] text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">{activeModuleCount} of {totalModules} modules</span>
                           </>
                         )}
                       </div>
@@ -245,6 +251,8 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                     'Human Experience': 'Ethical UX, dark pattern detection, psychological safety, and cognitive accessibility.',
                     'Inclusive Design': 'WCAG compliance, mobile responsiveness, keyboard navigation, and universal access.',
                     'Future Readiness': 'AI discoverability, agent navigation, cultural sensitivity, and global reach.',
+                    'SEO Structure & Rules': 'Heading hierarchy, meta tags, structured data, canonical URLs, and crawlability.',
+                    'Brand Consistency': 'Visual identity alignment, voice & tone, messaging consistency, and brand standards.',
                   };
                   return (
                     <div key={i} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">

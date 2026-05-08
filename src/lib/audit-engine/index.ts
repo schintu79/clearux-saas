@@ -8,6 +8,7 @@ import { runFullAnalysis, generateReport } from './analyzer'
 import { generatePdfReport } from './pdf'
 import { sendAuditComplete } from './email'
 import { captureAuditScreenshots } from './screenshots'
+import { extractAllBrandFiles } from './brand-file-extractor'
 import type { AuditFinding } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -154,13 +155,51 @@ async function _processAuditInner(auditId: string): Promise<void> {
       })
       .join('\n---\n')
 
+    // Load brand identity files if brand_identity_id is set
+    const brandIdentityId = (audit as any).brand_identity_id as string | null
+    let brandContent = pageContent
+    if (brandIdentityId) {
+      try {
+        const { data: brandFiles } = await db
+          .from('brand_identity_files')
+          .select('file_name, file_url, file_type')
+          .eq('brand_identity_id', brandIdentityId)
+
+        if (brandFiles && brandFiles.length > 0) {
+          console.log(`[audit-engine] Extracting ${brandFiles.length} brand file(s)`)
+          const extracted = await extractAllBrandFiles(
+            brandFiles.map((f: any) => ({
+              file_name: f.file_name as string,
+              file_url: f.file_url as string,
+              file_type: (f.file_type as string | null) ?? null,
+            })),
+          )
+
+          const textParts = extracted
+            .filter(e => e.textContent && e.textContent.length > 0)
+            .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+
+          if (textParts.length > 0) {
+            const brandContext = textParts.join('\n\n---\n\n')
+            brandContent = `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${pageContent}`
+            await log(db, auditId, 'brand_files_extracted', 'success',
+              `Extracted content from ${extracted.length} brand file(s)`)
+          }
+        }
+      } catch (brandErr) {
+        console.error('[audit-engine] Brand file extraction error (non-fatal):', brandErr)
+        await log(db, auditId, 'brand_files_error', 'warning', 'Failed to extract brand files — brand consistency analysis will be limited')
+      }
+    }
+
     // Always use built-in 24-category analysis (6 pillars × 4 categories)
     // DB checklist_categories are deprecated — they only had 16 categories
     let allFindings: AuditFinding[] = []
     let sortOrder = 0
 
     console.log('[audit-engine] Running built-in 24-category analysis')
-    const findings = await runFullAnalysis(pageContent, audit as any, userFocus, language)
+    // Use brand-enriched content for analysis so brand consistency categories get brand context
+    const findings = await runFullAnalysis(brandContent, audit as any, userFocus, language)
 
     for (const finding of findings) {
       const { data: inserted } = await db
