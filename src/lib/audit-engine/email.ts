@@ -137,22 +137,35 @@ export async function sendAuditComplete(
   email: string,
   auditId: string,
   productUrl: string,
+  auditType: 'website' | 'brand_identity' | 'design' = 'website',
 ): Promise<{ success: boolean; error?: string }> {
   const reportUrl = `${APP_URL}/dashboard/audits/${auditId}`
 
-  let domain = productUrl
-  try { domain = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+  const isBrand = auditType === 'brand_identity'
+  const isDesign = auditType === 'design'
+
+  let displayName = productUrl
+  if (!isBrand && !isDesign) {
+    try { displayName = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+  }
+
+  const typeLabel = isBrand ? 'brand identity audit' : isDesign ? 'design audit' : 'UX audit'
+  const typeTitle = isBrand ? 'Brand Identity Audit' : isDesign ? 'Design Audit' : 'UX Audit'
+  const fieldLabel = isBrand ? 'Brand' : isDesign ? 'Design' : 'Website'
+  const reportDescription = isBrand
+    ? 'Your report includes an overall score, category breakdown across 7 brand dimensions, severity-ranked findings, and downloadable PDF/Word exports.'
+    : 'Your report includes an overall score, pillar breakdown, severity-ranked findings, and downloadable PDF/Word exports. You can also share it with your team via a secure read-only link.'
 
   const content = `
-    <h1>Your UX audit is ready</h1>
+    <h1>Your ${typeTitle.toLowerCase()} is ready</h1>
     <!--HEADER-->
-    <p>Great news -- your comprehensive UX audit is complete and ready to review.</p>
+    <p>Great news -- your comprehensive ${typeLabel} is complete and ready to review.</p>
 
     <div class="info-box">
       <table width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
         <tr>
-          <td style="padding:8px 0;color:#71717a">Website</td>
-          <td style="padding:8px 0;text-align:right;font-weight:600;color:#111">${domain}</td>
+          <td style="padding:8px 0;color:#71717a">${fieldLabel}</td>
+          <td style="padding:8px 0;text-align:right;font-weight:600;color:#111">${displayName}</td>
         </tr>
         <tr>
           <td style="padding:8px 0;color:#71717a;border-top:1px solid #f0f0f0">Status</td>
@@ -164,15 +177,15 @@ export async function sendAuditComplete(
     <a href="${reportUrl}" class="btn">View full report</a>
 
     <div class="divider"></div>
-    <p style="font-size:13px;color:#71717a">Your report includes an overall score, pillar breakdown, severity-ranked findings, and downloadable PDF/Word exports. You can also share it with your team via a secure read-only link.</p>
+    <p style="font-size:13px;color:#71717a">${reportDescription}</p>
     <!--FOOTER-->
   `
 
   return send(
     'ClearUX <audits@clearux.ai>',
     email,
-    `Your UX audit for ${domain} is ready`,
-    emailLayout(content, `Your UX audit for ${domain} is complete. View your report now.`),
+    `Your ${typeLabel} for ${displayName} is ready`,
+    emailLayout(content, `Your ${typeLabel} for ${displayName} is complete. View your report now.`),
   )
 }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Search, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, ExternalLink, Globe, Palette, Layers } from 'lucide-react'
 
 interface AdminAudit {
   id: string
@@ -10,6 +10,7 @@ interface AdminAudit {
   status: string
   product_url: string
   product_type: string
+  audit_type: 'website' | 'brand_identity' | 'design' | null
   plan: string | null
   pages_crawled: number
   created_at: string
@@ -163,7 +164,22 @@ export default function AdminAuditsPage() {
                     <tr key={a.id} className="hover:bg-surface-alt/40 transition-colors">
                       <td className="px-4 py-3">
                         <p className="text-[13px] text-text font-medium truncate max-w-[180px]">{hostname}</p>
-                        <p className="text-[11px] text-muted truncate max-w-[180px]">{a.product_type}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {a.audit_type === 'brand_identity' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded-full">
+                              <Palette size={9} /> Brand
+                            </span>
+                          ) : a.audit_type === 'design' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full">
+                              <Layers size={9} /> Design
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                              <Globe size={9} /> Website
+                            </span>
+                          )}
+                          <span className="text-[11px] text-muted truncate max-w-[120px]">{a.product_type}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-[12px] text-text truncate max-w-[150px]">{a.user_display}</p>

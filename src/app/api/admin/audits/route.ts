@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     let query = db
       .from('audits')
       .select(`
-        id, user_id, status, product_url, product_type, plan, pages_crawled,
+        id, user_id, status, product_url, product_type, audit_type, plan, pages_crawled,
         created_at, completed_at,
         reports ( overall_score, total_issues, critical_count )
       `, { count: 'exact' })

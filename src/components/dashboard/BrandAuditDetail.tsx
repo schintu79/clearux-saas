@@ -31,6 +31,10 @@ import {
   Lightbulb,
   TrendingUp,
   X,
+  Download,
+  Search,
+  Check,
+  Copy,
 } from 'lucide-react';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Card from '@/components/ui/Card';
@@ -403,6 +407,7 @@ export default function BrandAuditDetail({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -606,9 +611,12 @@ export default function BrandAuditDetail({
     try {
       const res = await fetch(`/api/audits/${auditId}/share`, { method: 'POST' });
       const data = await res.json();
-      if (data.shareUrl) {
-        setShareUrl(data.shareUrl);
-        navigator.clipboard?.writeText(data.shareUrl);
+      if (data.shareUrl || data.share_url) {
+        const url = data.shareUrl || data.share_url;
+        setShareUrl(url);
+        navigator.clipboard?.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 3000);
       }
     } catch {} finally { setShareLoading(false); }
   };
@@ -825,53 +833,117 @@ export default function BrandAuditDetail({
       {/* ── Completed: Report ────────────────────────────── */}
       {isCompleted && report && (
         <>
-          {/* Score card */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* Overall score */}
-            <Card className="flex flex-col items-center justify-center py-6">
-              <ScoreRing score={overallScore || 0} size={80} />
-              <p className="text-sm font-medium text-text mt-3">Overall Score</p>
-              <p className="text-xs text-muted mt-0.5">{reportJson?.filesAnalyzed || 0} files analyzed</p>
-            </Card>
+          {/* ── Score card (matches website audit layout) ───── */}
+          <Card className="mb-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-1">
+              {/* Score ring */}
+              <div className="flex-shrink-0">
+                <ScoreRing score={overallScore || 0} size={110} />
+              </div>
 
-            {/* Issue counts */}
-            <Card className="py-5 px-5">
-              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Issues Found</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Critical', count: report.critical_count, color: 'bg-red-500' },
-                  { label: 'High', count: report.high_count, color: 'bg-orange-500' },
-                  { label: 'Medium', count: report.medium_count, color: 'bg-yellow-500' },
-                  { label: 'Low', count: report.low_count, color: 'bg-blue-500' },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-2">
-                    <div className={clsx('w-2 h-2 rounded-full', row.color)} />
-                    <span className="text-xs text-muted flex-1">{row.label}</span>
-                    <span className="text-sm font-medium text-text">{row.count}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-2 border-t border-border/30 dark:border-white/[0.04] flex items-center justify-between">
-                <span className="text-xs text-muted">Total</span>
-                <span className="text-sm font-semibold text-text">{report.total_issues}</span>
-              </div>
-            </Card>
+              {/* Score details + actions */}
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap mb-1">
+                  <h2 className="text-xl font-medium text-text">Overall Score</h2>
+                  <span className="text-xs font-medium text-muted bg-off dark:bg-white/[0.04] px-2 py-0.5 rounded-full">
+                    {categoryScores.length} of 7 categories
+                  </span>
+                  <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
+                    (overallScore || 0) >= 70
+                      ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                      : (overallScore || 0) >= 40
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                        : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+                  }`}>
+                    {(overallScore || 0) >= 70 ? 'Good' : (overallScore || 0) >= 40 ? 'Decent' : 'Needs work'}
+                  </span>
+                </div>
 
-            {/* Top recommendations */}
-            <Card className="py-5 px-5">
-              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Top Priorities</p>
-              <div className="space-y-2">
-                {(reportJson?.topRecommendations || []).slice(0, 4).map((rec, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-[10px] font-bold text-brand mt-0.5 flex-shrink-0">{i + 1}</span>
-                    <p className="text-xs text-text/80 leading-relaxed line-clamp-2">{rec}</p>
-                  </div>
-                ))}
-                {(!reportJson?.topRecommendations || reportJson.topRecommendations.length === 0) && (
-                  <p className="text-xs text-muted">No recommendations yet.</p>
-                )}
+                {/* Category mini-scores */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                  {categoryScores.map((cat) => {
+                    const config = getCategoryConfig(cat.slug);
+                    return (
+                      <div key={cat.slug} className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                        <span className="text-xs text-muted">{cat.name}</span>
+                        <span className={clsx('text-xs font-medium', scoreColor(cat.score))}>{cat.score}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                    <Download size={12} /> PDF
+                  </a>
+                  <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
+                    <Download size={12} /> Word
+                  </a>
+                  {audit.brand_identity_id && (
+                    <Link
+                      href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
+                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
+                    >
+                      <RefreshCw size={12} /> Re-audit
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleShare}
+                    disabled={shareLoading}
+                    className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
               </div>
-            </Card>
+            </div>
+
+            {/* Issue summary strip */}
+            {report.total_issues > 0 && (
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
+                <span className="text-sm font-medium text-text">
+                  {report.total_issues} issues found
+                </span>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  {(report.critical_count || 0) > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      {report.critical_count} critical
+                    </span>
+                  )}
+                  {(report.high_count || 0) > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                      {report.high_count} high
+                    </span>
+                  )}
+                  {(report.medium_count || 0) > 0 && (
+                    <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{report.medium_count} medium</span>
+                  )}
+                  {(report.low_count || 0) > 0 && (
+                    <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{report.low_count} low</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Share URL */}
+          {shareUrl && (
+            <p className="text-center text-[11px] text-muted mb-4">
+              Share link: <span className="font-mono text-brand">{shareUrl}</span>
+            </p>
+          )}
+
+          {/* Track progress tip */}
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
+            <RefreshCw size={15} className="text-brand flex-shrink-0" />
+            <p className="text-xs text-muted">
+              <span className="font-medium text-text">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+            </p>
           </div>
 
           {/* Executive summary */}
@@ -963,12 +1035,6 @@ export default function BrandAuditDetail({
             </div>
           )}
 
-          {/* Share URL */}
-          {shareUrl && (
-            <p className="text-center text-[11px] text-muted mt-4">
-              Share link: <span className="font-mono text-brand">{shareUrl}</span>
-            </p>
-          )}
         </>
       )}
     </div>

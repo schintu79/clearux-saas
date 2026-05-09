@@ -350,6 +350,7 @@ export const processBrandAuditFn = inngest.createFunction(
               auditDetails.userEmail,
               auditId,
               auditDetails.brandName, // Use brand name instead of URL
+              'brand_identity',
             )
           } catch (emailErr) {
             console.error('[inngest:brand] Email send error (non-fatal):', emailErr)
