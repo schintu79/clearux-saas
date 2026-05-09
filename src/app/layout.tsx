@@ -112,7 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Prevent flash of wrong theme — runs before React hydrates */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )clearux-theme=(light|dark)/);var t=m?m[1]:window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(e){}})()`,
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )clearux-theme=(light|dark)/);var t=m?m[1]:'dark';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
         <script

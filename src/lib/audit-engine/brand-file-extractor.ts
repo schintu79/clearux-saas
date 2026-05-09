@@ -1,8 +1,9 @@
 // ============================================================
 // ClearUX — Brand File Content Extractor
 // Extracts text + visual descriptions from uploaded brand files.
-// Supports: PDF (via Claude vision), DOCX (xml parsing), TXT,
-// and images (PNG, JPG, SVG, WebP via Claude vision).
+// Supports: PDF (text via pdf-parse + optional vision), DOCX
+// (xml parsing), TXT, and images (PNG, JPG, SVG, WebP via
+// Claude vision).
 // ============================================================
 
 import Anthropic from '@anthropic-ai/sdk'
@@ -12,7 +13,7 @@ function getAnthropicClient(): Anthropic {
   if (!_anthropic) {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set.')
-    _anthropic = new Anthropic({ apiKey, timeout: 60_000 })
+    _anthropic = new Anthropic({ apiKey, timeout: 120_000 })
   }
   return _anthropic
 }
@@ -91,40 +92,52 @@ Be thorough — this description will be used by another AI to evaluate brand co
   return textBlock?.text || '[No description generated]'
 }
 
-/** Use Claude vision to extract text from a PDF page image */
-async function describePdfPage(
-  imageBuffer: Buffer,
-  pageNumber: number,
-  totalPages: number,
+/** Extract raw text from a PDF using pdf-parse (fast, no API call) */
+async function extractPdfText(buffer: Buffer): Promise<{ text: string; pageCount: number }> {
+  const { PDFParse } = await import('pdf-parse')
+  // pdf-parse v5 requires Uint8Array, not Buffer
+  const uint8 = new Uint8Array(buffer)
+  const parser = new PDFParse(uint8)
+  const result = await parser.getText()
+  // Clean null characters from font encoding issues (common in PDF text extraction)
+  const cleanText = (result.text || '').replace(/\x00/g, '')
+  return { text: cleanText, pageCount: result.total || 0 }
+}
+
+/** Use Claude to generate a visual/brand description from PDF text content */
+async function describePdfContent(
+  textContent: string,
   fileName: string,
 ): Promise<string> {
   const client = getAnthropicClient()
-  const base64 = imageBuffer.toString('base64')
+
+  // Send the extracted text to Claude for brand-focused analysis
+  // Much faster than sending the full PDF binary
+  const truncatedText = textContent.slice(0, 30_000)
 
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
+    max_tokens: 4000,
     messages: [
       {
         role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: 'image/png', data: base64 },
-          },
-          {
-            type: 'text',
-            text: `This is page ${pageNumber} of ${totalPages} from the brand document "${fileName}".
+        content: `You are analyzing extracted text from a brand identity document for a brand audit.
 
-Extract and describe:
-1. **All text content** — transcribe every word visible on this page.
-2. **Visual layout** — describe the layout structure (columns, headers, sidebars, etc.).
-3. **Design elements** — colors, fonts, images, logos, icons visible.
-4. **Brand signals** — any brand-related elements (taglines, value props, tone of voice clues).
+Document: "${fileName}"
 
-Be thorough and accurate.`,
-          },
-        ],
+--- EXTRACTED TEXT ---
+${truncatedText}
+--- END ---
+
+Based on this text, provide a structured brand analysis:
+
+1. **Brand elements found**: Logo descriptions, taglines, value propositions, mission/vision statements.
+2. **Visual design references**: Any mentions of colors (with hex values if stated), typography choices, spacing/layout rules, imagery guidelines.
+3. **Tone of voice**: Communication style, language patterns, brand personality traits.
+4. **Brand guidelines**: Any rules, do's/don'ts, usage specifications found.
+5. **Document structure**: How well-organized is this document? What sections does it contain?
+
+Be thorough — this will be used for automated brand consistency analysis.`,
       },
     ],
   })
@@ -222,55 +235,85 @@ async function extractDocx(url: string, fileName: string): Promise<ExtractedCont
   }
 }
 
-/** Extract content from a PDF using Claude's document understanding */
+/** Extract content from a PDF: fast text via pdf-parse, then Claude for brand analysis */
 async function extractPdf(url: string, fileName: string): Promise<ExtractedContent> {
   try {
     const { buffer } = await fetchFile(url)
-    const client = getAnthropicClient()
-    const base64 = buffer.toString('base64')
 
-    // Use Claude's native PDF support via document content block
-    // The 'document' type is supported by the API but not in SDK v0.27 types
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 6000,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'document' as any,
-              source: { type: 'base64', media_type: 'application/pdf', data: base64 },
-            } as any,
-            {
-              type: 'text' as const,
-              text: `You are analyzing this PDF as part of a brand identity audit. Extract and describe:
+    // Step 1: Fast text extraction with pdf-parse (no API call, milliseconds)
+    let textContent = ''
+    let pageCount: number | null = null
+    try {
+      const parsed = await extractPdfText(buffer)
+      textContent = parsed.text.slice(0, 50_000)
+      pageCount = parsed.pageCount
+    } catch (parseErr) {
+      // pdf-parse can fail on heavily visual/scanned PDFs — continue anyway
+      console.warn(`[brand-extractor] pdf-parse failed for ${fileName}:`, (parseErr as Error).message)
+    }
 
-1. **ALL text content** — transcribe everything, preserving section structure.
-2. **Visual design** — describe colors, typography, layout, imagery, logos.
-3. **Brand elements** — taglines, value propositions, tone of voice, brand guidelines.
-4. **Document quality** — formatting consistency, professional polish, any issues.
+    // Step 2: If we got text, send it to Claude for brand-focused analysis
+    // This is much faster than sending the raw PDF binary
+    let visualDescription: string | null = null
+    if (textContent.trim().length > 100) {
+      try {
+        visualDescription = await describePdfContent(textContent, fileName)
+      } catch (descErr) {
+        console.warn(`[brand-extractor] Brand analysis failed for ${fileName}:`, (descErr as Error).message)
+        // Still have text content — proceed without visual description
+      }
+    }
+
+    // Step 3: If pdf-parse got no text (scanned/image-heavy PDF), fall back to
+    // Claude document block for direct PDF reading
+    if (textContent.trim().length < 100) {
+      try {
+        const client = getAnthropicClient()
+        const base64 = buffer.toString('base64')
+        const response = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 6000,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'document' as any,
+                  source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+                } as any,
+                {
+                  type: 'text' as const,
+                  text: `You are analyzing this PDF as part of a brand identity audit. Extract and describe:
+1. ALL text content — transcribe everything, preserving section structure.
+2. Visual design — describe colors, typography, layout, imagery, logos.
+3. Brand elements — taglines, value propositions, tone of voice, brand guidelines.
+4. Document quality — formatting consistency, professional polish, any issues.
 
 Document: ${fileName}
-
 Be thorough — this will be used for automated brand analysis.`,
+                },
+              ],
             },
           ],
-        },
-      ],
-    })
-
-    const textBlock = response.content.find((b) => b.type === 'text')
-    const content = textBlock?.text || ''
+        })
+        const textBlock = response.content.find((b) => b.type === 'text')
+        const content = textBlock?.text || ''
+        textContent = content
+        visualDescription = 'Extracted via Claude document understanding (image-heavy PDF)'
+      } catch (fallbackErr) {
+        console.warn(`[brand-extractor] Claude PDF fallback also failed for ${fileName}:`, (fallbackErr as Error).message)
+        // If both methods failed, return what we have (possibly empty)
+      }
+    }
 
     return {
       fileName,
       fileType: 'pdf',
-      textContent: content,
-      visualDescription: 'Extracted via Claude document understanding',
-      pageCount: null,
+      textContent,
+      visualDescription,
+      pageCount,
       extractionMethod: 'hybrid',
-      error: null,
+      error: textContent.trim().length < 10 ? 'PDF text extraction produced minimal content' : null,
     }
   } catch (err) {
     return {
