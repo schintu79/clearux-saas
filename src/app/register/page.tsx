@@ -169,11 +169,11 @@ function RegisterContent() {
       <Navbar />
 
       {/* Background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
         <img
-          src="/gradients/bg-features.jpg"
+          src="/gradients/bg-hero.jpg"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block"
+          className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
@@ -427,6 +427,10 @@ function RegisterContent() {
 
             <p className="mt-6 text-center text-xs text-muted leading-relaxed">
               Your audit results are private and encrypted. We never share your data.
+              <br />
+              By creating an account you agree to our{' '}
+              <Link href="/terms" className="underline hover:text-text transition-colors">terms</Link>{' '}and{' '}
+              <Link href="/privacy" className="underline hover:text-text transition-colors">privacy policy</Link>.
             </p>
           </div>
 

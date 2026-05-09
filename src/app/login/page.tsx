@@ -141,11 +141,11 @@ function LoginContent() {
       <Navbar />
 
       {/* Background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
         <img
           src="/gradients/bg-hero.jpg"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block"
+          className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>

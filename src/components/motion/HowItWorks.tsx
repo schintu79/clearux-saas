@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
+import SmartCta from '@/components/ui/SmartCta'
 import {
   Search, Brain, BarChart3, CheckCircle,
   ArrowRight, Zap, Shield, Eye, Heart, Accessibility, Globe2,
@@ -475,13 +476,10 @@ export default function HowItWorks() {
           <p className="text-muted text-sm sm:text-base mb-8 max-w-md mx-auto">
             Your first audit is free. Results in under 10 minutes.
           </p>
-          <Link
-            href="/register"
+          <SmartCta
             className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-medium px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
-          >
-            Start free audit
-            <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
+            iconSize={20}
+          />
         </motion.div>
       </section>
     </>

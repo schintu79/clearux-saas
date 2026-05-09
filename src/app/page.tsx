@@ -10,6 +10,7 @@ import {
   Rocket, Eye, Globe2, Fingerprint, Code2, Search,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
+import SmartCta from "@/components/ui/SmartCta";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
@@ -142,7 +143,7 @@ export default function Home() {
     <div className="bg-surface text-text min-h-screen">
       {/* Single page background */}
       <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
       <HomeJsonLd />
@@ -237,13 +238,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
               >
-                <Link
-                  href="/register"
-                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
-                >
-                  Start free audit
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
+                <SmartCta iconSize={15} />
                 <Link
                   href="/how-it-works"
                   className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
@@ -763,10 +758,7 @@ export default function Home() {
               No subscription. No feature gates. Every audit gets all 6 modules, 96 checkpoints, and full reports. Credits never expire.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <Link href="/register" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]">
-                Start free audit
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <SmartCta iconSize={15} />
               <Link href="/pricing" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]">
                 View all plans
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -846,13 +838,7 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-              <Link
-                href="/register"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
-              >
-                Start free audit
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <SmartCta iconSize={15} />
               <Link
                 href="/how-it-works"
                 className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"

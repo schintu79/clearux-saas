@@ -717,7 +717,7 @@ RULES FOR RE-AUDIT:
       const db = getDb()
       const { data: allFindings } = await db
         .from('audit_findings')
-        .select('id, title, severity, page_url, sort_order')
+        .select('id, title, description, severity, page_url, sort_order')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
@@ -725,6 +725,35 @@ RULES FOR RE-AUDIT:
 
       // Severity priority — when merging, keep the higher severity
       const severityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+
+      // Common UX/audit synonym groups — words in same group are treated as identical
+      const SYNONYM_GROUPS: string[][] = [
+        ['unclear', 'ambiguous', 'vague', 'confusing', 'obscure'],
+        ['users', 'audiences', 'visitors', 'people', 'customers'],
+        ['lacks', 'missing', 'absent', 'without', 'none'],
+        ['inconsistent', 'uneven', 'irregular', 'varied', 'mixed'],
+        ['navigation', 'menu', 'navbar', 'links'],
+        ['accessibility', 'a11y', 'accessible', 'wcag'],
+        ['responsive', 'mobile', 'adaptive'],
+        ['performance', 'speed', 'loading', 'slow', 'fast'],
+        ['visual', 'design', 'aesthetic', 'appearance', 'look'],
+        ['hierarchy', 'structure', 'organization', 'layout'],
+        ['feedback', 'response', 'indication', 'notification'],
+        ['contrast', 'readability', 'legibility'],
+        ['value', 'proposition', 'benefit', 'offering'],
+        ['content', 'copy', 'text', 'messaging'],
+        ['error', 'failure', 'issue', 'problem'],
+        ['button', 'action', 'control', 'element'],
+      ]
+
+      // Build synonym lookup: word → canonical form (first word in group)
+      const synonymMap: Record<string, string> = {}
+      for (const group of SYNONYM_GROUPS) {
+        const canonical = group[0]
+        for (const word of group) {
+          synonymMap[word] = canonical
+        }
+      }
 
       // Normalize title for comparison: lowercase, strip punctuation, collapse whitespace
       function normalizeTitle(title: string): string {
@@ -734,17 +763,18 @@ RULES FOR RE-AUDIT:
           .trim()
       }
 
-      // Extract significant words (4+ chars) for fuzzy matching
+      // Extract significant words (4+ chars), replacing synonyms with canonical forms
       function extractWords(text: string): Set<string> {
         return new Set(
           normalizeTitle(text)
             .split(' ')
             .filter(w => w.length >= 4)
+            .map(w => synonymMap[w] || w)
         )
       }
 
-      // Calculate word overlap ratio between two titles
-      function titleSimilarity(a: string, b: string): number {
+      // Calculate word overlap ratio between two texts
+      function textSimilarity(a: string, b: string): number {
         const wordsA = extractWords(a)
         const wordsB = extractWords(b)
         if (wordsA.size === 0 || wordsB.size === 0) return 0
@@ -756,8 +786,24 @@ RULES FOR RE-AUDIT:
         return overlap / Math.min(wordsA.size, wordsB.size)
       }
 
-      // Group duplicates: findings with >= 70% word overlap are considered duplicates
-      const SIMILARITY_THRESHOLD = 0.7
+      // Combined similarity: weighted blend of title + description similarity
+      function combinedSimilarity(findingA: any, findingB: any): number {
+        const titleSim = textSimilarity(findingA.title || '', findingB.title || '')
+        const descSim = textSimilarity(findingA.description || '', findingB.description || '')
+        // Title match is more important (70%), description adds confirmation (30%)
+        return titleSim * 0.7 + descSim * 0.3
+      }
+
+      // Determine if two findings are in the same module (same group of 4 categories)
+      function sameModule(a: any, b: any): boolean {
+        const moduleA = Math.floor((a.sort_order ?? 0) / 4)
+        const moduleB = Math.floor((b.sort_order ?? 0) / 4)
+        return moduleA === moduleB
+      }
+
+      // Group duplicates with adaptive threshold
+      const BASE_THRESHOLD = 0.55    // Lower base threshold to catch synonym-heavy duplicates
+      const SAME_MODULE_THRESHOLD = 0.45 // Even lower for same-module findings (more likely dups)
       const duplicateIds: string[] = []
       const seen = new Set<number>()
 
@@ -767,8 +813,11 @@ RULES FOR RE-AUDIT:
 
         for (let j = i + 1; j < allFindings.length; j++) {
           if (seen.has(j)) continue
-          const sim = titleSimilarity((allFindings[i] as any).title, (allFindings[j] as any).title)
-          if (sim >= SIMILARITY_THRESHOLD) {
+          const fi = allFindings[i] as any
+          const fj = allFindings[j] as any
+          const sim = combinedSimilarity(fi, fj)
+          const threshold = sameModule(fi, fj) ? SAME_MODULE_THRESHOLD : BASE_THRESHOLD
+          if (sim >= threshold) {
             group.push(j)
             seen.add(j)
           }

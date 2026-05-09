@@ -347,6 +347,7 @@ export interface UILabels {
   noIssuesDescription: string
   pagesCrawled: string
   categoriesEvaluated: string
+  notIncludedInAudit: string
   homepageCaptured: string
   qualitativeNote: string
   // Buttons
@@ -402,6 +403,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Your site passed all checks.',
     pagesCrawled: 'page(s) crawled and analysed during this audit',
     categoriesEvaluated: 'categories evaluated',
+    notIncludedInAudit: 'Not included in this audit',
     homepageCaptured: 'Homepage captured during audit',
     qualitativeNote: 'For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
     downloadPdf: 'Download PDF Report',
@@ -453,6 +455,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Su sitio paso todas las verificaciones.',
     pagesCrawled: 'pagina(s) rastreadas y analizadas durante esta auditoria',
     categoriesEvaluated: 'categorias evaluadas',
+    notIncludedInAudit: 'No incluido en esta auditoria',
     homepageCaptured: 'Pagina principal capturada durante la auditoria',
     qualitativeNote: 'Para investigacion cualitativa profunda (entrevistas, pruebas de usabilidad), recomendamos complementar los hallazgos de ClearUX con un especialista.',
     downloadPdf: 'Descargar Informe PDF',
@@ -504,6 +507,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Votre site a passe tous les controles.',
     pagesCrawled: 'page(s) explorees et analysees lors de cet audit',
     categoriesEvaluated: 'categories evaluees',
+    notIncludedInAudit: 'Non inclus dans cet audit',
     homepageCaptured: 'Page d\'accueil capturee lors de l\'audit',
     qualitativeNote: 'Pour une recherche qualitative approfondie (entretiens, tests d\'utilisabilite), nous recommandons de combiner les resultats ClearUX avec un specialiste.',
     downloadPdf: 'Telecharger le Rapport PDF',
@@ -555,6 +559,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Ihre Website hat alle Prufungen bestanden.',
     pagesCrawled: 'Seite(n) wahrend dieses Audits gecrawlt und analysiert',
     categoriesEvaluated: 'Kategorien bewertet',
+    notIncludedInAudit: 'Nicht in diesem Audit enthalten',
     homepageCaptured: 'Startseite wahrend des Audits erfasst',
     qualitativeNote: 'Fur tiefgehende qualitative Forschung (Nutzerinterviews, Usability-Tests) empfehlen wir, ClearUX-Ergebnisse mit einem Spezialisten zu kombinieren.',
     downloadPdf: 'PDF-Bericht herunterladen',
@@ -606,6 +611,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Il tuo sito ha superato tutti i controlli.',
     pagesCrawled: 'pagina/e scansionate e analizzate durante questo audit',
     categoriesEvaluated: 'categorie valutate',
+    notIncludedInAudit: 'Non incluso in questo audit',
     homepageCaptured: 'Homepage catturata durante l\'audit',
     qualitativeNote: 'Per ricerche qualitative approfondite (interviste, test di usabilita), consigliamo di combinare i risultati ClearUX con uno specialista.',
     downloadPdf: 'Scarica Report PDF',
@@ -657,6 +663,7 @@ const UI_LABELS: Record<string, UILabels> = {
     noIssuesDescription: 'Seu site passou em todas as verificacoes.',
     pagesCrawled: 'pagina(s) rastreadas e analisadas durante esta auditoria',
     categoriesEvaluated: 'categorias avaliadas',
+    notIncludedInAudit: 'Nao incluido nesta auditoria',
     homepageCaptured: 'Pagina inicial capturada durante a auditoria',
     qualitativeNote: 'Para pesquisa qualitativa aprofundada (entrevistas, testes de usabilidade), recomendamos combinar os resultados do ClearUX com um especialista.',
     downloadPdf: 'Baixar Relatorio PDF',

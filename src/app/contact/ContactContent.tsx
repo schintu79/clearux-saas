@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { Mail, MessageSquare, Send, CheckCircle, ArrowRight } from 'lucide-react';
+import SmartCta from '@/components/ui/SmartCta';
 
 export default function ContactContent() {
   const [submitted, setSubmitted] = useState(false);
@@ -42,17 +43,14 @@ export default function ContactContent() {
 
   return (
     <main id="main-content" className="flex-1">
+      {/* ── Single page background ── */}
+      <div className="fixed inset-0" aria-hidden="true">
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
+      </div>
 
       {/* ── HERO + FORM ── */}
       <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
-          <img
-            src="/gradients/bg-howitworks.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-        </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
@@ -80,9 +78,21 @@ export default function ContactContent() {
                     <CheckCircle size={28} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <p className="font-heading font-medium text-lg text-text mb-1">Message sent!</p>
-                  <p className="font-body text-sm text-muted">
+                  <p className="font-body text-sm text-muted mb-6">
                     Thanks for reaching out. We&rsquo;ll reply within 24 hours.
                   </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setSubmitted(false)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-sm font-medium text-text hover:bg-card-hover transition-colors"
+                    >
+                      Send another message
+                    </button>
+                    <SmartCta
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#111114] text-sm font-medium hover:opacity-90 transition-all"
+                      iconSize={14}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8 md:p-10">
@@ -195,15 +205,6 @@ export default function ContactContent() {
 
       {/* ── STANDARD FINAL CTA ── */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
-          <img
-            src="/gradients/bg-cta.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-        </div>
-
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2
             className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4"
@@ -214,13 +215,9 @@ export default function ContactContent() {
           <p className="text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
           </p>
-          <Link
-            href="/register"
+          <SmartCta
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          >
-            Start free audit
-            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+          />
         </div>
       </section>
 

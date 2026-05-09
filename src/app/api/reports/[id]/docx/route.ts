@@ -225,6 +225,35 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     const topRecs: string[] = rawJson.topRecommendations || (rawJson.keyRecommendation ? [rawJson.keyRecommendation] : [])
 
     // ── Assign findings to pillars/categories ──────────────
+    // Extended keyword map: category name fragments + domain-specific terms
+    // that commonly appear in findings for each category index (0-23)
+    const CATEGORY_KEYWORDS: Record<number, string[]> = {
+      0: ['visual', 'design', 'first impression', 'hero', 'above the fold', 'layout', 'aesthetic', 'color', 'palette', 'whitespace', 'spacing', 'typography'],
+      1: ['value proposition', 'messaging', 'headline', 'subheadline', 'differentiation', 'clarity', 'benefit', 'audience', 'copy'],
+      2: ['navigation', 'information architecture', 'menu', 'navbar', 'footer', 'breadcrumb', 'sitemap', 'internal link', 'page structure'],
+      3: ['content quality', 'readability', 'scannability', 'writing', 'grammar', 'tone', 'voice', 'paragraph', 'media quality', 'alt text'],
+      4: ['call-to-action', 'cta', 'conversion', 'button', 'sign up', 'free trial', 'conversion path', 'conversion flow'],
+      5: ['trust', 'credibility', 'testimonial', 'social proof', 'security', 'privacy', 'badge', 'certificate', 'review'],
+      6: ['ethical', 'transparent', 'dark pattern', 'cookie', 'consent', 'gdpr', 'manipulat', 'deceptive', 'honest'],
+      7: ['emotional', 'delight', 'micro-interaction', 'animation', 'personality', 'engagement', 'reward', 'feedback'],
+      8: ['accessibility', 'a11y', 'wcag', 'screen reader', 'keyboard', 'aria', 'tab order', 'focus', 'disability'],
+      9: ['inclusive', 'language', 'gender', 'cultural', 'diverse', 'bias', 'representation', 'globali'],
+      10: ['responsive', 'mobile', 'tablet', 'breakpoint', 'viewport', 'touch', 'adaptive', 'device'],
+      11: ['loading', 'performance', 'speed', 'page load', 'core web vital', 'lcp', 'cls', 'fid', 'optimize', 'compress', 'lazy'],
+      12: ['innovation', 'modern', 'trend', 'cutting-edge', 'emerging', 'fresh', 'creative', 'unique'],
+      13: ['scalab', 'growth', 'modular', 'flexible', 'extensible', 'future-proof', 'maintain', 'technical debt'],
+      14: ['onboarding', 'first-time', 'getting started', 'tutorial', 'walkthrough', 'wizard', 'progressive disclosure'],
+      15: ['feedback', 'error', 'validation', 'loading state', 'empty state', 'notification', 'toast', 'progress', 'skeleton'],
+      16: ['seo', 'search engine', 'meta', 'title tag', 'description', 'heading structure', 'h1', 'h2', 'schema', 'structured data', 'canonical'],
+      17: ['local seo', 'schema markup', 'rich snippet', 'open graph', 'social media', 'twitter card', 'og:'],
+      18: ['keyword', 'search intent', 'content gap', 'long-tail', 'topic cluster', 'semantic'],
+      19: ['link', 'backlink', 'internal link', 'anchor text', 'broken link', '404', 'redirect', 'crawl'],
+      20: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline'],
+      21: ['brand experience', 'brand story', 'mission', 'about page', 'company value'],
+      22: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
+      23: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
+    }
+
     function assignFindings() {
       const result: Record<string, Record<string, any[]>> = {}
       for (const p of PILLARS) {
@@ -233,34 +262,52 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
         for (const cat of cats) result[p.name][cat.name] = []
       }
 
+      // Build flat category list for index-based lookup
+      const flatCats: Array<{ pillarName: string; catName: string; catIdx: number }> = []
+      for (const p of PILLARS) {
+        const cats = catScores.slice(p.start, Math.min(p.end, catScores.length))
+        cats.forEach((cat, localIdx) => {
+          flatCats.push({ pillarName: p.name, catName: cat.name, catIdx: p.start + localIdx })
+        })
+      }
+
       for (const finding of f) {
-        let matched = false
-        for (const p of PILLARS) {
-          const cats = catScores.slice(p.start, Math.min(p.end, catScores.length))
-          for (const cat of cats) {
-            const words = cat.name.toLowerCase().split(/[&,\s]+/).filter((w: string) => w.length > 3)
-            const text = `${finding.title} ${finding.description}`.toLowerCase()
-            if (words.some((w: string) => text.includes(w))) {
-              result[p.name][cat.name].push(finding)
-              matched = true
-              break
-            }
+        const text = `${finding.title} ${finding.description}`.toLowerCase()
+        let bestMatch = -1
+        let bestScore = 0
+
+        // Score each category by keyword matches
+        for (const fc of flatCats) {
+          let score = 0
+          // Category name words
+          const nameWords = fc.catName.toLowerCase().split(/[&,\s]+/).filter((w: string) => w.length > 3)
+          for (const w of nameWords) {
+            if (text.includes(w)) score += 2
           }
-          if (matched) break
+          // Extended keywords
+          const keywords = CATEGORY_KEYWORDS[fc.catIdx] || []
+          for (const kw of keywords) {
+            if (text.includes(kw)) score += 1
+          }
+          if (score > bestScore) {
+            bestScore = score
+            bestMatch = flatCats.indexOf(fc)
+          }
         }
-        // Distribute unmatched by sort_order
-        if (!matched) {
-          const catIdx = Math.min(Math.floor(finding.sort_order / Math.max(1, f.length / 24)), 23)
-          const pillar = PILLARS.find(p => catIdx >= p.start && catIdx < p.end) || PILLARS[0]
-          const cats = catScores.slice(pillar.start, Math.min(pillar.end, catScores.length))
-          if (cats.length > 0) {
-            const localIdx = catIdx - pillar.start
-            const cat = cats[Math.min(localIdx, cats.length - 1)]
-            if (result[pillar.name][cat.name]) {
-              result[pillar.name][cat.name].push(finding)
-            } else {
-              result[pillar.name][cats[0].name].push(finding)
-            }
+
+        if (bestMatch >= 0 && bestScore >= 1) {
+          const fc = flatCats[bestMatch]
+          result[fc.pillarName][fc.catName].push(finding)
+        } else {
+          // Fallback: round-robin distribute across categories to avoid clustering
+          // Use sort_order modulo total categories for even distribution
+          const catIdx = Math.min(finding.sort_order % Math.max(1, flatCats.length), flatCats.length - 1)
+          const fc = flatCats[catIdx]
+          if (result[fc.pillarName]?.[fc.catName]) {
+            result[fc.pillarName][fc.catName].push(finding)
+          } else if (flatCats.length > 0) {
+            const fallback = flatCats[0]
+            result[fallback.pillarName][fallback.catName].push(finding)
           }
         }
       }
@@ -415,22 +462,26 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       }
     })
 
-    const pillarSummaryCells = pillarScores.map(p => new TableCell({
-      borders: noBorders,
-      width: { size: Math.floor(CONTENT_W / pillarScores.length), type: WidthType.DXA },
-      margins: { top: 80, bottom: 80, left: 60, right: 60 },
-      children: [
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 40 },
-          children: [new TextRun({ text: `${p.avg}`, font: 'Arial', size: 36, bold: true, color: p.color })],
-        }),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [new TextRun({ text: p.name, font: 'Arial', size: 16, color: C.textSec })],
-        }),
-      ],
-    }))
+    const pillarSummaryCells = pillarScores.map(p => {
+      const pCats = catScores.slice(p.start, Math.min(p.end, catScores.length))
+      const pIncluded = pCats.length > 0
+      return new TableCell({
+        borders: noBorders,
+        width: { size: Math.floor(CONTENT_W / pillarScores.length), type: WidthType.DXA },
+        margins: { top: 80, bottom: 80, left: 60, right: 60 },
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 40 },
+            children: [new TextRun({ text: pIncluded ? `${p.avg}` : '—', font: 'Arial', size: 36, bold: true, color: pIncluded ? p.color : C.textSec })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: p.name, font: 'Arial', size: 16, color: C.textSec })],
+          }),
+        ],
+      })
+    })
 
     children.push(new Table({
       width: { size: CONTENT_W, type: WidthType.DXA },
@@ -548,6 +599,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     // Each pillar as a colored card
     for (const pillar of pillarScores) {
       const cats = catScores.slice(pillar.start, Math.min(pillar.end, catScores.length))
+      const isIncluded = cats.length > 0
 
       // Pillar header bar
       children.push(new Table({
@@ -562,11 +614,14 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
               margins: { top: 140, bottom: 140, left: 200, right: 80 },
               children: [
                 new Paragraph({
-                  children: [new TextRun({ text: pillar.name, font: 'Arial', size: 26, bold: true, color: pillar.color })],
+                  children: [new TextRun({ text: pillar.name, font: 'Arial', size: 26, bold: true, color: isIncluded ? pillar.color : C.textSec })],
                 }),
                 new Paragraph({
                   spacing: { before: 40 },
-                  children: [new TextRun({ text: `${cats.length} ${UI.categoriesEvaluated}`, font: 'Arial', size: 17, color: C.textSec })],
+                  children: [new TextRun({
+                    text: isIncluded ? `${cats.length} ${UI.categoriesEvaluated}` : UI.notIncludedInAudit,
+                    font: 'Arial', size: 17, color: C.textSec, italics: !isIncluded,
+                  })],
                 }),
               ],
             }),
@@ -578,7 +633,10 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
               children: [new Paragraph({
                 alignment: AlignmentType.RIGHT,
                 children: [
-                  new TextRun({ text: `${pillar.avg}`, font: 'Arial', size: 44, bold: true, color: pillar.color }),
+                  new TextRun({
+                    text: isIncluded ? `${pillar.avg}` : '—',
+                    font: 'Arial', size: 44, bold: true, color: isIncluded ? pillar.color : C.textSec,
+                  }),
                 ],
               })],
             }),

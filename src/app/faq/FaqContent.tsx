@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Search, ChevronDown } from 'lucide-react';
+import SmartCta from '@/components/ui/SmartCta';
 
 /* ── FAQ Data ───────────────────────────────────────────────── */
 
@@ -221,13 +222,14 @@ export default function FaqContent() {
 
   return (
     <main id="main-content" className="flex-1">
+      {/* ── Single page background ── */}
+      <div className="fixed inset-0" aria-hidden="true">
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
+      </div>
 
       {/* ── ONE background for the entire page ── */}
       <div className="relative">
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block" />
-          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-        </div>
 
         {/* ── HERO ── */}
         <section className="relative z-10 py-28 sm:py-36 lg:py-44">
@@ -354,12 +356,22 @@ export default function FaqContent() {
         <div className="relative z-10 pb-16" />
       </div>
 
+      {/* ── CROSS-LINKS ── */}
+      <section className="relative py-16 sm:py-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted">
+            <span>Learn more:</span>
+            <Link href="/how-it-works" className="underline hover:text-text transition-colors">How it works</Link>
+            <span className="opacity-30">|</span>
+            <Link href="/pricing" className="underline hover:text-text transition-colors">Pricing</Link>
+            <span className="opacity-30">|</span>
+            <Link href="/demo-report" className="underline hover:text-text transition-colors">See a demo report</Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── FINAL CTA ── */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
-          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-        </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
@@ -367,13 +379,9 @@ export default function FaqContent() {
           <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
-          <Link
-            href="/register"
+          <SmartCta
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          >
-            Start free audit
-            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+          />
         </div>
       </section>
 
