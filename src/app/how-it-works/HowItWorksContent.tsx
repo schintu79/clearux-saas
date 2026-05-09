@@ -84,7 +84,7 @@ export default function HowItWorksContent() {
         <img
           src="/gradients/bg-howitworks.jpg"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
+          className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
@@ -136,8 +136,8 @@ export default function HowItWorksContent() {
                   <span className="font-heading text-[4rem] sm:text-[5rem] font-bold text-muted leading-none block mb-4">
                     {step.num}
                   </span>
-                  <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                    <StepIcon size={20} className="text-[#BFFA60]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
+                    <StepIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">
                     {step.title}
@@ -178,8 +178,8 @@ export default function HowItWorksContent() {
                   key={mod.title}
                   className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-6">
-                    <ModIcon size={20} className="text-[#BFFA60]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-6">
+                    <ModIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">
                     {mod.title}
@@ -199,7 +199,7 @@ export default function HowItWorksContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">

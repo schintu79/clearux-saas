@@ -32,7 +32,7 @@ export function HeroReportMockup() {
       transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
     >
       {/* Main card — dark glass with subtle indigo glow */}
-      <div className="relative rounded-2xl sm:rounded-3xl bg-[rgba(255,255,255,0.03)] border border-border overflow-hidden backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]">
+      <div className="relative rounded-2xl sm:rounded-3xl bg-[rgba(255,255,255,0.03)] border border-border overflow-hidden backdrop-blur-xl shadow-none dark:shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]">
         {/* Top bar — browser chrome */}
         <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 border-b border-border bg-card">
           <div className="flex items-center gap-1.5">
@@ -111,7 +111,7 @@ export function ReportShowcase() {
   return (
     <div ref={ref} className="relative">
       <motion.div
-        className="rounded-2xl bg-[rgba(255,255,255,0.03)] border border-border p-6 sm:p-8 backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]"
+        className="rounded-2xl bg-[rgba(255,255,255,0.03)] border border-border p-6 sm:p-8 backdrop-blur-xl shadow-none dark:shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]"
         initial={{ opacity: 0, y: 40 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}

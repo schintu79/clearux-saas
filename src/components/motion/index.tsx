@@ -301,7 +301,7 @@ export function FloatingOrb({
 }) {
   return (
     <motion.div
-      className={`absolute rounded-full pointer-events-none ${className}`}
+      className={`absolute rounded-full pointer-events-none hidden dark:block ${className}`}
       style={{
         width: size,
         height: size,

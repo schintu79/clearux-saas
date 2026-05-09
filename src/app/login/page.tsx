@@ -145,7 +145,7 @@ function LoginContent() {
         <img
           src="/gradients/bg-hero.jpg"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
@@ -269,7 +269,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group w-full inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 min-h-[52px] disabled:opacity-60"
+                className="group w-full inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#111114] text-base font-medium transition-all hover:opacity-90 min-h-[52px] disabled:opacity-60"
               >
                 {loading ? (
                   <>

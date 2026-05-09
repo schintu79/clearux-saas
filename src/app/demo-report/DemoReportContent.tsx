@@ -534,7 +534,7 @@ export default function DemoReportContent() {
     <main id="main-content" className="relative flex-1">
       {/* Background */}
       <div className="absolute inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block" />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
@@ -828,7 +828,7 @@ export default function DemoReportContent() {
           ════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">

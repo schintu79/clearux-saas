@@ -142,7 +142,7 @@ export default function Home() {
     <div className="bg-surface text-text min-h-screen">
       {/* Single page background */}
       <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
       <HomeJsonLd />
@@ -150,130 +150,219 @@ export default function Home() {
       <main id="main-content" role="main" aria-label="ClearUX homepage">
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO
+          SECTION 1 — HERO (two-column: text left, mockup right)
           ═══════════════════════════════════════════════════════ */}
       <section className="relative z-10 min-h-screen flex flex-col overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute inset-0 pointer-events-none hidden dark:block" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#BFFA60]/[0.03] blur-[120px]" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-16 min-h-[calc(100svh-64px)]">
-          {/* Top label */}
-          <motion.p
-            className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-6 sm:mb-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            User experience, fully auditable
-          </motion.p>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-16 min-h-[calc(100svh-84px)]">
+          {/* Two-column grid — stacks on mobile */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-          {/* Rotating headline */}
-          <div className="relative mb-5 sm:mb-10">
-            <AnimatePresence mode="wait">
-              <motion.h1
-                key={headlineIdx}
-                className="font-heading text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-bold text-text"
-                style={{ lineHeight: '1.05' }}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -50 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            {/* ── LEFT COLUMN: text content ── */}
+            <div className="text-center lg:text-left">
+              {/* Top label */}
+              <motion.p
+                className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
               >
-                {HERO_HEADLINES[headlineIdx].main}<br />
-                <span className="font-medium text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
-              </motion.h1>
-            </AnimatePresence>
+                User experience, fully auditable
+              </motion.p>
 
-            {/* Slider progress */}
-            <div className="flex items-center justify-center gap-2 mt-6">
-              {HERO_HEADLINES.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setHeadlineIdx(i)}
-                  aria-label={`Go to slide ${i + 1}`}
-                  className="relative h-[3px] rounded-full overflow-hidden cursor-pointer"
-                  style={{ width: i === headlineIdx ? 32 : 16, background: 'var(--border)', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+              {/* Rotating headline */}
+              <div className="relative mb-5 sm:mb-8">
+                <AnimatePresence mode="wait">
+                  <motion.h1
+                    key={headlineIdx}
+                    className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.25rem] lg:text-[3.5rem] font-bold text-text"
+                    style={{ lineHeight: '1.05' }}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -50 }}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  >
+                    {HERO_HEADLINES[headlineIdx].main}<br />
+                    <span className="font-medium text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
+                  </motion.h1>
+                </AnimatePresence>
+
+                {/* Slider progress */}
+                <div className="flex items-center justify-center lg:justify-start gap-2 mt-6">
+                  {HERO_HEADLINES.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setHeadlineIdx(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                      className="relative h-[3px] rounded-full overflow-hidden cursor-pointer"
+                      style={{ width: i === headlineIdx ? 32 : 16, background: 'var(--border)', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    >
+                      {i === headlineIdx && (
+                        <motion.div
+                          className="absolute inset-y-0 left-0 rounded-full bg-[#6B9A2E] dark:bg-[#BFFA60]"
+                          initial={{ width: '0%' }}
+                          animate={{ width: '100%' }}
+                          transition={{ duration: 7, ease: 'linear' }}
+                          key={`progress-${headlineIdx}`}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <motion.div
+                className="max-w-xl mx-auto lg:mx-0 mb-8"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+              >
+                <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
+                  360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
+                </p>
+                <p className="text-base sm:text-lg font-bold text-volt">
+                  First audit free.
+                </p>
+              </motion.div>
+
+              {/* CTA buttons */}
+              <motion.div
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <Link
+                  href="/register"
+                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
                 >
-                  {i === headlineIdx && (
-                    <motion.div
-                      className="absolute inset-y-0 left-0 rounded-full bg-[#BFFA60]"
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 7, ease: 'linear' }}
-                      key={`progress-${headlineIdx}`}
-                    />
-                  )}
-                </button>
-              ))}
+                  Start free audit
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+                <Link
+                  href="/how-it-works"
+                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
+                >
+                  How it works
+                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </motion.div>
+
+              {/* Trust badges */}
+              <motion.div
+                className="flex items-center justify-center lg:justify-start gap-3 sm:gap-6 mt-5 flex-wrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+              >
+                {[
+                  { icon: Shield, label: 'SSL', full: 'SSL Encrypted' },
+                  { icon: ShieldCheck, label: 'GDPR', full: 'GDPR Compliant' },
+                  { icon: CheckCircle, label: 'Stripe', full: 'Stripe Payments' },
+                ].map((badge, i) => {
+                  const BadgeIcon = badge.icon;
+                  return (
+                    <div key={i} className="flex items-center gap-2">
+                      <BadgeIcon size={16} className="text-muted" strokeWidth={1.5} />
+                      <span className="text-[13px] text-muted font-medium tracking-wide sm:hidden">{badge.label}</span>
+                      <span className="text-[13px] text-muted font-medium tracking-wide hidden sm:inline">{badge.full}</span>
+                    </div>
+                  );
+                })}
+              </motion.div>
             </div>
+
+            {/* ── RIGHT COLUMN: browser mockup ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <div className="rounded-2xl sm:rounded-3xl bg-card border border-border overflow-hidden shadow-none dark:shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]">
+                {/* Title bar */}
+                <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#EF4444]/60" />
+                    <div className="w-2 h-2 rounded-full bg-[#F59E0B]/60" />
+                    <div className="w-2 h-2 rounded-full bg-[#22C55E]/60" />
+                  </div>
+                  <div className="flex-1 mx-4 hidden sm:block">
+                    <div className="max-w-[180px] mx-auto px-3 py-1 rounded-md bg-surface border border-border text-center">
+                      <span className="text-[10px] text-muted font-mono">clearux.ai/dashboard</span>
+                    </div>
+                  </div>
+                  <div className="w-10" />
+                </div>
+
+                {/* Dashboard content */}
+                <div className="p-4 sm:p-6">
+                  {/* Header row */}
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="text-sm sm:text-base font-semibold text-text">All audits</p>
+                    <div className="px-3 py-1.5 rounded-full bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] text-[10px] sm:text-xs font-medium">
+                      New audit
+                    </div>
+                  </div>
+
+                  {/* Three pillar cards */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+                    {[
+                      { icon: Globe2, label: 'Website' },
+                      { icon: Fingerprint, label: 'Brand identity' },
+                      { icon: Layers, label: 'Design' },
+                    ].map((pillar, i) => {
+                      const Icon = pillar.icon;
+                      return (
+                        <div
+                          key={i}
+                          className="flex flex-col items-center text-center px-2 py-4 rounded-xl border border-border bg-surface"
+                        >
+                          <Icon size={18} strokeWidth={1.5} className="text-muted mb-2" />
+                          <p className="text-[10px] sm:text-xs font-medium text-text">{pillar.label}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Sample completed audits */}
+                  <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                    {[
+                      { icon: Globe2, name: 'acme.com', score: 84, scoreColor: 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10' },
+                      { icon: Fingerprint, name: 'Stripe rebrand', score: 91, scoreColor: 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10' },
+                      { icon: Layers, name: 'Checkout prototype', score: 76, scoreColor: 'text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10' },
+                    ].map((audit, i, arr) => {
+                      const Icon = audit.icon;
+                      return (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? 'border-b border-border' : ''}`}
+                        >
+                          <Icon size={14} strokeWidth={1.5} className="text-muted flex-shrink-0" />
+                          <p className="text-xs sm:text-sm font-medium text-text flex-1 min-w-0 truncate">{audit.name}</p>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <CheckCircle size={12} className="text-emerald-500" />
+                            <span className="text-[10px] text-muted hidden sm:block">Completed</span>
+                          </div>
+                          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${audit.scoreColor}`}>
+                            <span className="text-[10px] sm:text-xs font-semibold">{audit.score}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Description */}
+          {/* Discover ClearUX — below both columns */}
           <motion.div
-            className="max-w-xl mb-8 sm:mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-          >
-            <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
-              360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
-            </p>
-            <p className="text-base sm:text-lg font-bold text-volt">
-              First audit free.
-            </p>
-          </motion.div>
-
-          {/* CTA buttons */}
-          <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <Link
-              href="/register"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
-            >
-              Start free audit
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link
-              href="/how-it-works"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
-            >
-              How it works
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </motion.div>
-
-          {/* Trust badges */}
-          <motion.div
-            className="flex items-center justify-center gap-3 sm:gap-6 mt-5 flex-wrap"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-          >
-            {[
-              { icon: Shield, label: 'SSL', full: 'SSL Encrypted' },
-              { icon: ShieldCheck, label: 'GDPR', full: 'GDPR Compliant' },
-              { icon: CheckCircle, label: 'Stripe', full: 'Stripe Payments' },
-            ].map((badge, i) => {
-              const BadgeIcon = badge.icon;
-              return (
-                <div key={i} className="flex items-center gap-2">
-                  <BadgeIcon size={16} className="text-muted" strokeWidth={1.5} />
-                  <span className="text-[13px] text-muted font-medium tracking-wide sm:hidden">{badge.label}</span>
-                  <span className="text-[13px] text-muted font-medium tracking-wide hidden sm:inline">{badge.full}</span>
-                </div>
-              );
-            })}
-          </motion.div>
-
-          {/* Scroll indicator — 50px below trust badges */}
-          <motion.div
-            className="flex justify-center mt-[50px]"
+            className="flex justify-center mt-12 sm:mt-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.8 }}
@@ -287,8 +376,8 @@ export default function Home() {
               className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
             >
               <span className="text-xs tracking-[0.2em] uppercase text-volt font-medium">Discover ClearUX</span>
-              <div className="w-11 h-11 rounded-full border border-[#BFFA60]/40 group-hover:border-[#BFFA60]/70 flex items-center justify-center transition-all group-hover:bg-[#BFFA60]/[0.05]">
-                <ChevronDown size={18} className="text-[#BFFA60] group-hover:text-[#A8E54A] transition-colors" />
+              <div className="w-11 h-11 rounded-full border border-[#A8E54A]/40 dark:border-[#BFFA60]/40 group-hover:border-[#A8E54A]/70 dark:group-hover:border-[#BFFA60]/70 flex items-center justify-center transition-all group-hover:bg-[#A8E54A]/[0.08] dark:group-hover:bg-[#BFFA60]/[0.05]">
+                <ChevronDown size={18} className="text-[#6B9A2E] dark:text-[#BFFA60] group-hover:text-[#A8E54A] transition-colors" />
               </div>
             </button>
           </motion.div>
@@ -395,8 +484,8 @@ export default function Home() {
                 <StaggerItem key={i}>
                   <div className="py-8 border-t border-border">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-9 h-9 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
-                        <Icon size={18} className="text-[#BFFA60]" strokeWidth={1.5} />
+                      <div className="w-9 h-9 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
+                        <Icon size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" strokeWidth={1.5} />
                       </div>
                       <h3 className="font-heading text-lg font-medium text-text">{mod.title}</h3>
                     </div>
@@ -520,10 +609,10 @@ export default function Home() {
                 <StaggerItem key={i}>
                   <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 h-full flex flex-col">
                     <div className="flex items-center justify-between mb-5">
-                      <div className="w-11 h-11 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center">
-                        <CardIcon size={20} className="text-[#BFFA60]" />
+                      <div className="w-11 h-11 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center">
+                        <CardIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                       </div>
-                      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#BFFA60]/60">{item.label}</p>
+                      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#6B9A2E]/60 dark:text-[#BFFA60]/60">{item.label}</p>
                     </div>
                     <h3 className="font-heading text-lg font-medium text-text mb-3">{item.title}</h3>
                     <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
@@ -577,8 +666,8 @@ export default function Home() {
                     <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-muted leading-none block mb-4">
                       {item.step}
                     </span>
-                    <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                      <StepIcon size={20} className="text-[#BFFA60]" />
+                    <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
+                      <StepIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                     </div>
                     <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">{item.title}</h3>
                     <p className="font-body text-sm sm:text-base text-muted leading-relaxed flex-1">{item.desc}</p>
@@ -610,7 +699,7 @@ export default function Home() {
                 </p>
                 <Link
                   href="/demo-report"
-                  className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-[#BFFA60]/30 bg-[#BFFA60]/[0.06] hover:bg-[#BFFA60]/[0.12] text-sm font-medium text-volt transition-all"
+                  className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-[#A8E54A]/30 dark:border-[#BFFA60]/30 bg-[#A8E54A]/[0.08] dark:bg-[#BFFA60]/[0.06] hover:bg-[#A8E54A]/[0.15] dark:hover:bg-[#BFFA60]/[0.12] text-sm font-medium text-[#6B9A2E] dark:text-volt transition-all"
                 >
                   See a sample report
                   <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -639,8 +728,8 @@ export default function Home() {
               const Icon = card.icon;
               return (
                 <div key={i} className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-card border border-border hover:border-border hover:shadow-lg hover:shadow-black/20 transition-all group">
-                  <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-6">
-                    <Icon size={24} className="text-[#BFFA60]" strokeWidth={1.5} />
+                  <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-6">
+                    <Icon size={24} className="text-[#6B9A2E] dark:text-[#BFFA60]" strokeWidth={1.5} />
                   </div>
                   <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted mb-3 block">{card.label}</span>
                   <h3 className="font-heading text-base font-medium text-text mb-3 leading-tight">{card.title}</h3>
@@ -695,7 +784,7 @@ export default function Home() {
                   'Credits never expire',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#BFFA60] flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-muted font-medium">{item}</span>
                   </div>
                 ))}

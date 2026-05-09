@@ -25,7 +25,7 @@ export default function PricingContent() {
       {/* ── HERO: Big $99 ── */}
       <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
+          <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
@@ -72,7 +72,7 @@ export default function PricingContent() {
       {/* ── WHAT'S INCLUDED — glass strip ── */}
       <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
@@ -88,7 +88,7 @@ export default function PricingContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {FEATURES.map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-[#BFFA60] flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
                   <span className="text-sm sm:text-base text-muted font-medium">{item}</span>
                 </div>
               ))}
@@ -142,14 +142,14 @@ export default function PricingContent() {
               >
                 {/* Popular glow */}
                 {pack.popular && (
-                  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none" />
+                  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
                 )}
 
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{pack.name}</h3>
                     {pack.popular && (
-                      <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#BFFA60]/10 text-[#BFFA60] border border-[#BFFA60]/20">
+                      <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
                         Most popular
                       </span>
                     )}
@@ -163,7 +163,7 @@ export default function PricingContent() {
                   <p className="text-muted text-sm mb-1">
                     {pack.per} per audit <span className="opacity-30">|</span> {pack.credits} audits
                   </p>
-                  <p className="text-sm text-[#BFFA60] font-medium mb-6">Save {pack.save}%</p>
+                  <p className="text-sm text-[#6B9A2E] dark:text-[#BFFA60] font-medium mb-6">Save {pack.save}%</p>
 
                   <p className="text-sm text-muted mb-8 leading-relaxed">{pack.desc}</p>
 
@@ -188,7 +188,7 @@ export default function PricingContent() {
       {/* ── COMPARE TABLE ── */}
       <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
@@ -222,7 +222,7 @@ export default function PricingContent() {
                         <span className="flex items-center gap-3">
                           {row.plan}
                           {row.badge && (
-                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#BFFA60]/80">{row.badge}</span>
+                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#6B9A2E] dark:text-[#BFFA60]/80">{row.badge}</span>
                           )}
                         </span>
                       </td>
@@ -230,7 +230,7 @@ export default function PricingContent() {
                       <td className="px-4 sm:px-6 py-4 sm:py-5">
                         <span className="text-text font-medium">{row.per}</span>
                         {row.save && (
-                          <span className="ml-2 text-[11px] font-medium text-[#BFFA60]">save {row.save}</span>
+                          <span className="ml-2 text-[11px] font-medium text-[#6B9A2E] dark:text-[#BFFA60]">save {row.save}</span>
                         )}
                       </td>
                       <td className="px-4 sm:px-6 py-4 sm:py-5 text-muted">{row.best}</td>
@@ -247,8 +247,8 @@ export default function PricingContent() {
       <section className="py-14 sm:py-32 bg-surface">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <div className="rounded-2xl border border-border bg-card p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
-              <ShieldCheck size={28} className="text-[#BFFA60]" />
+            <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
+              <ShieldCheck size={28} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
             </div>
             <div>
               <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-3">
@@ -265,7 +265,7 @@ export default function PricingContent() {
       {/* ── FINAL CTA ── */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">

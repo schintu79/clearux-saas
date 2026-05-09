@@ -15,7 +15,7 @@ interface AuroraBackgroundProps {
 export default function AuroraBackground({ variant = 'section', className = '' }: AuroraBackgroundProps) {
   if (variant === 'hero') {
     return (
-      <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
+      <div className={`absolute inset-0 overflow-hidden pointer-events-none hidden dark:block ${className}`} aria-hidden="true">
         {/* Foundation — purple orb, top-left */}
         <div
           className="absolute -top-[15%] left-[5%] w-[55%] h-[65%] rounded-full opacity-[0.65]"
@@ -95,7 +95,7 @@ export default function AuroraBackground({ variant = 'section', className = '' }
 
   if (variant === 'cta') {
     return (
-      <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
+      <div className={`absolute inset-0 overflow-hidden pointer-events-none hidden dark:block ${className}`} aria-hidden="true">
         {/* Purple/pink/yellow — dramatic CTA glow */}
         <div
           className="absolute -top-[30%] left-[20%] w-[60%] h-[100%] opacity-[0.3]"
@@ -129,7 +129,7 @@ export default function AuroraBackground({ variant = 'section', className = '' }
 
   if (variant === 'section') {
     return (
-      <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
+      <div className={`absolute inset-0 overflow-hidden pointer-events-none hidden dark:block ${className}`} aria-hidden="true">
         {/* Purple/pink/orange wave — gentle section wash */}
         <div
           className="absolute -top-[20%] left-[30%] w-[50%] h-[60%] opacity-[0.15]"
@@ -163,7 +163,7 @@ export default function AuroraBackground({ variant = 'section', className = '' }
 
   // subtle variant
   return (
-    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none hidden dark:block ${className}`} aria-hidden="true">
       <div
         className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[50%] h-[40%] opacity-[0.1]"
         style={{ filter: 'blur(80px)' }}

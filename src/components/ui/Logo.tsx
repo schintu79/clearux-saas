@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '@/context/ThemeContext';
 
 /**
  * ClearUX "C" lettermark — used as standalone icon / favicon-style mark.
@@ -28,9 +29,9 @@ const wordmarkPaths = (
   </>
 );
 
-/** Lime accent square — always rendered in lime */
-const accentSquare = (
-  <rect x="826.96" y="491.34" width="38.67" height="38.67" fill="#bffa60" />
+/** Lime accent square */
+const accentSquare = (accentColor: string) => (
+  <rect x="826.96" y="491.34" width="38.67" height="38.67" fill={accentColor} />
 );
 
 interface IconmarkProps {
@@ -48,6 +49,9 @@ export const Iconmark: React.FC<IconmarkProps> = ({
   className = '',
   gradient = false,
 }) => {
+  const { theme } = useTheme();
+  const accentColor = theme === 'dark' ? '#BFFA60' : '#6B9A2E';
+
   return (
     <svg
       viewBox="33 402 129 136"
@@ -55,7 +59,7 @@ export const Iconmark: React.FC<IconmarkProps> = ({
       height={size}
       className={className}
       aria-hidden="true"
-      fill={gradient ? '#BFFA60' : 'currentColor'}
+      fill={gradient ? accentColor : 'currentColor'}
     >
       {iconmarkPath}
     </svg>
@@ -86,6 +90,9 @@ const Logo: React.FC<LogoProps> = ({
   variant = 'dark',
   showWordmark = true,
 }) => {
+  const { theme } = useTheme();
+  const accentColor = theme === 'dark' ? '#BFFA60' : '#6B9A2E';
+
   const textColor =
     variant === 'light'
       ? '#FFFFFF'
@@ -110,7 +117,7 @@ const Logo: React.FC<LogoProps> = ({
       role="img"
     >
       {/* C lettermark */}
-      <g fill="#BFFA60">
+      <g fill={accentColor}>
         {iconmarkPath}
       </g>
 
@@ -119,8 +126,8 @@ const Logo: React.FC<LogoProps> = ({
         {wordmarkPaths}
       </g>
 
-      {/* Lime accent square — always lime */}
-      {accentSquare}
+      {/* Accent square */}
+      {accentSquare(accentColor)}
     </svg>
   );
 };

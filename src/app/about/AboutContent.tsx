@@ -23,7 +23,7 @@ export default function AboutContent() {
         <img
           src="/gradients/bg-hero.jpg"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
+          className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
@@ -92,8 +92,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-2xl border border-border bg-card backdrop-blur-sm p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#BFFA60]/10">
-                    <ItemIcon size={20} className="text-[#BFFA60]" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10">
+                    <ItemIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-text mb-3">{item.title}</h3>
                   <p className="font-body text-muted text-[14px] leading-relaxed">{item.desc}</p>
@@ -196,8 +196,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-2xl border border-border bg-card backdrop-blur-sm p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#BFFA60]/10">
-                    <ItemIcon size={20} className="text-[#BFFA60]" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10">
+                    <ItemIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-text mb-3">{item.title}</h3>
                   <p className="font-body text-muted text-[14px] leading-relaxed">{item.desc}</p>
@@ -213,7 +213,7 @@ export default function AboutContent() {
           ═══════════════════════════════════════════════════════ */}
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
-          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block" />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">

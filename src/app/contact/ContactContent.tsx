@@ -49,7 +49,7 @@ export default function ContactContent() {
           <img
             src="/gradients/bg-howitworks.jpg"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-30"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 hidden dark:block"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
@@ -76,8 +76,8 @@ export default function ContactContent() {
             <div className="lg:col-span-2">
               {submitted ? (
                 <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
-                  <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                    <CheckCircle size={28} className="text-[#BFFA60]" />
+                  <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
+                    <CheckCircle size={28} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                   </div>
                   <p className="font-heading font-medium text-lg text-text mb-1">Message sent!</p>
                   <p className="font-body text-sm text-muted">
@@ -168,8 +168,8 @@ export default function ContactContent() {
             {/* ── Contact info cards ── */}
             <div className="flex flex-col gap-4">
               <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
-                  <Mail size={18} className="text-[#BFFA60]" />
+                <div className="w-10 h-10 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-4">
+                  <Mail size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                 </div>
                 <p className="text-sm font-medium font-body text-text mb-1">Email us</p>
                 <a
@@ -181,8 +181,8 @@ export default function ContactContent() {
               </div>
 
               <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
-                  <MessageSquare size={18} className="text-[#BFFA60]" />
+                <div className="w-10 h-10 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-4">
+                  <MessageSquare size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
                 </div>
                 <p className="text-sm font-medium font-body text-text mb-1">Response time</p>
                 <p className="text-sm font-body text-muted">Usually within 24 hours</p>
@@ -199,7 +199,7 @@ export default function ContactContent() {
           <img
             src="/gradients/bg-cta.jpg"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-40"
+            className="absolute inset-0 w-full h-full object-cover opacity-40 hidden dark:block"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>

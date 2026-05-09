@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
     >
       Skip to main content
     </a>
-    <nav aria-label="Main navigation" className="sticky top-0 z-50 nav-bg backdrop-blur-xl border-b border-[var(--border)]">
+    <nav aria-label="Main navigation" className="sticky top-0 z-50 nav-bg backdrop-blur-xl border-b border-transparent dark:border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}

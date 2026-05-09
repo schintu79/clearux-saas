@@ -377,15 +377,15 @@ export default function HowItWorks() {
   return (
     <>
     <section className="relative py-32 sm:py-40 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
-      {/* Decorative orbs */}
+      {/* Decorative orbs — dark mode only */}
       <motion.div
-        className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
+        className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none hidden dark:block"
         style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }}
         animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
         transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute bottom-[15%] right-[-5%] w-[350px] h-[350px] rounded-full pointer-events-none"
+        className="absolute bottom-[15%] right-[-5%] w-[350px] h-[350px] rounded-full pointer-events-none hidden dark:block"
         style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 70%)', filter: 'blur(80px)' }}
         animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 3 }}

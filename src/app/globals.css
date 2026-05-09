@@ -73,8 +73,8 @@ select:focus-visible {
   --text:        #0F0F0F;
   --surface:     #EDEEE9;
   --surface-alt: #E4E5E0;
-  --card:        #EDEEE9;
-  --card-hover:  #E4E5E0;
+  --card:        rgba(255,255,255,0.5);
+  --card-hover:  rgba(255,255,255,0.7);
   --input-bg:    #F7F8F5;
   --placeholder: #9CA3AF;
   --sidebar:     #E4E5E0;
@@ -140,7 +140,7 @@ select:focus-visible {
 /* .theme-light removed — unified theme toggle on <html> handles both modes */
 
 /* ── Navbar background — semi-transparent surface ──────────── */
-.nav-bg { background: rgba(237,238,233,0.92); }
+.nav-bg { background: rgba(255,255,255,0.97); }
 .dark .nav-bg { background: rgba(17,17,20,0.95); }
 
 /* ══════════════════════════════════════════════════════════════
@@ -189,6 +189,7 @@ select:focus-visible {
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 60%);
   pointer-events: none;
 }
+:root:not(.dark) .bg-dotgrid::before { display: none; }
 
 .bg-dotgrid::after {
   content: '';
@@ -197,6 +198,7 @@ select:focus-visible {
   background: linear-gradient(to bottom, transparent 70%, var(--surface) 100%);
   pointer-events: none;
 }
+:root:not(.dark) .bg-dotgrid::after { display: none; }
 
 /* Cross-grid */
 .bg-crossgrid {
@@ -215,6 +217,7 @@ select:focus-visible {
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%);
   pointer-events: none;
 }
+:root:not(.dark) .bg-crossgrid::before { display: none; }
 
 .bg-crossgrid::after {
   content: '';
@@ -223,6 +226,7 @@ select:focus-visible {
   background: linear-gradient(to bottom, transparent 60%, var(--surface) 100%);
   pointer-events: none;
 }
+:root:not(.dark) .bg-crossgrid::after { display: none; }
 
 /* ═══════════════════════════════════════════════════════════════
    HERO — Deep dark with aurora glow
@@ -230,9 +234,10 @@ select:focus-visible {
 
 .hero-dark {
   position: relative;
-  background: #111114;
+  background: var(--surface);
   overflow: hidden;
 }
+.dark .hero-dark { background: #111114; }
 
 .hero-dark::before {
   content: '';
@@ -249,6 +254,7 @@ select:focus-visible {
     radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%);
   pointer-events: none;
 }
+:root:not(.dark) .hero-dark::before { display: none; }
 
 .hero-dark::after {
   content: '';
@@ -258,6 +264,7 @@ select:focus-visible {
     radial-gradient(ellipse 60% 50% at 50% 0%, rgba(99,102,241,.06), transparent 60%);
   pointer-events: none;
 }
+:root:not(.dark) .hero-dark::after { display: none; }
 
 .hero-dark-fade {
   position: absolute;
@@ -432,7 +439,18 @@ select:focus-visible {
 
 /* Volt-colored text — for stats, prices, labels */
 .text-volt {
+  color: #6B9A2E;
+}
+.dark .text-volt {
   color: #BFFA60;
+}
+
+/* Volt-colored SVG fill — for logo marks */
+.fill-volt {
+  fill: #6B9A2E;
+}
+.dark .fill-volt {
+  fill: #BFFA60;
 }
 
 /* ══════════════════════════════════════════════════════════════
