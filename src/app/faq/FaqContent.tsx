@@ -356,22 +356,8 @@ export default function FaqContent() {
         <div className="relative z-10 pb-16" />
       </div>
 
-      {/* ── CROSS-LINKS ── */}
-      <section className="relative py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted">
-            <span>Learn more:</span>
-            <Link href="/how-it-works" className="underline hover:text-text transition-colors">How it works</Link>
-            <span className="opacity-30">|</span>
-            <Link href="/pricing" className="underline hover:text-text transition-colors">Pricing</Link>
-            <span className="opacity-30">|</span>
-            <Link href="/demo-report" className="underline hover:text-text transition-colors">See a demo report</Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── FINAL CTA ── */}
-      <section className="relative py-28 sm:py-36 overflow-hidden">
+      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>

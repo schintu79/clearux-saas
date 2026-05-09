@@ -212,7 +212,7 @@ export default function AboutContent() {
       {/* ═══════════════════════════════════════════════════════
           5. FINAL CTA BAND
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 overflow-hidden">
+      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>

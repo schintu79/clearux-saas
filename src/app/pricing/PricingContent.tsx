@@ -234,7 +234,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── GUARANTEE ── */}
-      <section className="py-14 sm:py-32 bg-surface">
+      <section className="relative z-10 py-14 sm:py-32 bg-surface">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <div className="rounded-2xl border border-border bg-card p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
@@ -253,7 +253,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── CROSS-LINKS ── */}
-      <section className="relative py-16 sm:py-20">
+      <section className="relative z-10 py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted">
             <span>Learn more:</span>
@@ -267,7 +267,7 @@ export default function PricingContent() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="relative py-28 sm:py-36 overflow-hidden">
+      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
