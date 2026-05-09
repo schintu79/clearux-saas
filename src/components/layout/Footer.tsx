@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="bg-[#0F0F0F] py-14 border-t border-white/[0.06]">
+    <footer role="contentinfo" aria-label="Site footer" className="relative z-10 bg-[#0F0F0F] py-14 border-t border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
 
         {/* Top: Brand + Links */}
