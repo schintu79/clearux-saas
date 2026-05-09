@@ -65,20 +65,20 @@ select:focus-visible {
   --gradient-brand-subtle: linear-gradient(135deg, rgba(99,102,241,.05) 0%, rgba(167,139,250,.03) 50%, rgba(99,102,241,.02) 100%);
   --gradient-brand-text: #111111;
 
-  /* Neutral palette — clean white base */
+  /* Neutral palette — Bone base */
   --navy:        #111111;
-  --off:         #F7F7F8;
+  --off:         #E4E5E0;
   --muted:       #6B7280;
-  --border:      #E5E7EB;
-  --text:        #111111;
-  --surface:     #FFFFFF;
-  --surface-alt: #F7F7F8;
-  --card:        #FFFFFF;
-  --card-hover:  #FAFAFA;
-  --input-bg:    #FFFFFF;
+  --border:      #D5D6D1;
+  --text:        #0F0F0F;
+  --surface:     #EDEEE9;
+  --surface-alt: #E4E5E0;
+  --card:        #EDEEE9;
+  --card-hover:  #E4E5E0;
+  --input-bg:    #F7F8F5;
   --placeholder: #9CA3AF;
-  --sidebar:     #FFFFFF;
-  --sidebar-text:#111111;
+  --sidebar:     #E4E5E0;
+  --sidebar-text:#0F0F0F;
 
   /* Spacing */
   --section-gap: 6rem;
@@ -137,57 +137,11 @@ select:focus-visible {
 .dark-only { display: none; }
 .dark .dark-only { display: block; }
 
-/* ── Dashboard light-mode scope ────────────────────────────── */
-/* When the dashboard is set to light mode, this class resets
-   CSS variables to the light palette within its container,
-   overriding the always-dark <html>. Public pages are unaffected. */
-.theme-light {
-  --brand:       #111111;
-  --brand-hover: #333333;
-  --brand-light: #F0F0F0;
-  --hero-bg:     #111111;
-  --accent:      #BFFA60;
-  --accent-dk:   #A8E54A;
-  --accent-lt:   #F7FEE7;
-  --accent-glow: rgba(191,250,96,0.10);
-  --lime:        #BFFA60;
-  --lime-hover:  #A8E54A;
-  --lime-soft:   #F7FEE7;
-  --color-success:  #22C55E;
-  --color-warning:  #EAB308;
-  --color-danger:   #EF4444;
-  --color-info:     #3B82F6;
-  --color-foundation:  #6B5B95;
-  --color-human:       #EC4899;
-  --color-tech:        #F59E0B;
-  --color-future:      #22C55E;
-  --color-trust:       #3B82F6;
-  --blue:        #111111;
-  --blue-dk:     #000000;
-  --blue-lt:     #F7F7F8;
-  --gradient-brand: #111111;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(99,102,241,.05) 0%, rgba(167,139,250,.03) 50%, rgba(99,102,241,.02) 100%);
-  --gradient-brand-text: #111111;
-  --navy:        #111111;
-  --off:         #F7F7F8;
-  --muted:       #6B7280;
-  --border:      #E5E7EB;
-  --text:        #111111;
-  --surface:     #FFFFFF;
-  --surface-alt: #F7F7F8;
-  --card:        #FFFFFF;
-  --card-hover:  #FAFAFA;
-  --input-bg:    #FFFFFF;
-  --placeholder: #9CA3AF;
-  --sidebar:     #FFFFFF;
-  --sidebar-text:#111111;
-}
+/* .theme-light removed — unified theme toggle on <html> handles both modes */
 
 /* ── Navbar background — semi-transparent surface ──────────── */
-/* Public site is always dark, so nav-bg defaults to dark.
-   .theme-light scopes light mode to dashboard only. */
-.nav-bg { background: rgba(17,17,20,0.95); }
-.theme-light .nav-bg { background: rgba(255,255,255,0.95); }
+.nav-bg { background: rgba(237,238,233,0.92); }
+.dark .nav-bg { background: rgba(17,17,20,0.95); }
 
 /* ══════════════════════════════════════════════════════════════
    AURORA BACKGROUNDS — Flowing blue/purple gradient blobs

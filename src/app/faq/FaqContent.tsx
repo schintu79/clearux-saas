@@ -148,22 +148,22 @@ const TAB_ALL = 'All';
 
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+    <div className="rounded-xl overflow-hidden bg-card border border-border">
       <button
         onClick={onToggle}
-        className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3 p-5 text-left hover:bg-card transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-relaxed">{q}</span>
+        <span className="flex-1 font-heading font-medium text-text text-[15px] leading-relaxed">{q}</span>
         <ChevronDown
           size={16}
-          className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && (
         <div className="px-5 pb-5 pt-0">
-          <div className="border-t border-white/[0.04] pt-4">
-            <p className="font-body text-sm text-white/65 leading-[1.8]">{a}</p>
+          <div className="border-t border-border pt-4">
+            <p className="font-body text-sm text-muted leading-[1.8]">{a}</p>
           </div>
         </div>
       )}
@@ -226,46 +226,46 @@ export default function FaqContent() {
       <div className="relative">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         {/* ── HERO ── */}
         <section className="relative z-10 py-28 sm:py-36 lg:py-44">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               SUPPORT CENTRE
             </p>
 
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-3" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-3" style={{ lineHeight: '1.1' }}>
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 
-            <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-lg mb-10">
+            <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-lg mb-10">
               Everything you need to know about ClearUX audits, pricing, and reports.
             </p>
 
             {/* Search Box */}
             <div className="max-w-md">
               <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.06] text-white text-base font-body placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-border bg-card-hover text-text text-base font-body placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-border transition-all"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-white/60 hover:text-white transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
                   >
                     Clear
                   </button>
                 )}
               </div>
               {searchQuery && (
-                <p className="font-body text-xs text-white/60 mt-2">
+                <p className="font-body text-xs text-muted mt-2">
                   {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
                 </p>
               )}
@@ -283,8 +283,8 @@ export default function FaqContent() {
                   onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
                   className={`text-xs font-medium px-4 py-2 rounded-lg transition-all ${
                     activeTab === tab
-                      ? 'text-white bg-white/[0.08]'
-                      : 'text-white/50 bg-white/[0.04] hover:bg-white/[0.06]'
+                      ? 'text-text bg-card-hover'
+                      : 'text-muted bg-card hover:bg-card-hover'
                   }`}
                 >
                   {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
@@ -299,11 +299,11 @@ export default function FaqContent() {
           <section className="relative z-10">
             <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-10">
               <div className="py-12">
-                <Search size={24} className="text-white/50 mb-3" />
-                <p className="font-heading text-white font-medium text-sm mb-1">No results found</p>
-                <p className="font-body text-white/50 text-xs">
+                <Search size={24} className="text-muted mb-3" />
+                <p className="font-heading text-text font-medium text-sm mb-1">No results found</p>
+                <p className="font-body text-muted text-xs">
                   Try a different search term, or{' '}
-                  <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-white transition-colors">
+                  <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-text transition-colors">
                     browse all questions
                   </button>
                 </p>
@@ -320,13 +320,13 @@ export default function FaqContent() {
                 {/* Section header */}
                 {(activeTab === TAB_ALL || searchQuery) && (
                   <div className="flex items-center gap-3 mb-5">
-                    <h2 className="font-heading font-medium text-xl sm:text-2xl text-white">
+                    <h2 className="font-heading font-medium text-xl sm:text-2xl text-text">
                       {section.title}
                     </h2>
-                    <span className="font-body text-[11px] font-medium text-white/50">
+                    <span className="font-body text-[11px] font-medium text-muted">
                       {section.items.length}
                     </span>
-                    <div className="flex-1 h-px bg-white/[0.06]" />
+                    <div className="flex-1 h-px bg-card-hover" />
                   </div>
                 )}
 
@@ -358,13 +358,13 @@ export default function FaqContent() {
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link

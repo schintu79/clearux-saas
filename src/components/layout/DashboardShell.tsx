@@ -75,7 +75,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className={clsx('flex h-screen bg-surface', theme === 'light' && 'theme-light')} style={{ fontFamily: 'var(--font-body)' }}>
+    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

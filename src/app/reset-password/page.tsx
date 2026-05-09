@@ -108,10 +108,10 @@ export default function ResetPasswordPage() {
           <div className="auth-glow" />
           <div className="relative z-10 flex flex-col">
             <div className="mb-16">
-              <h1 className="text-3xl font-heading font-medium text-white mb-3">
+              <h1 className="text-3xl font-heading font-medium text-text mb-3">
                 ClearUX
               </h1>
-              <p className="text-sm text-white/80 opacity-85">
+              <p className="text-sm text-muted opacity-85">
                 Expert UX audits powered by AI. Discover usability issues in minutes — not weeks.
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function ResetPasswordPage() {
           <div className="auth-form-wrap">
             <div className="flex items-center justify-center gap-2">
               <span className="spinner" />
-              <p className="text-sm text-white/50">Verifying reset link...</p>
+              <p className="text-sm text-muted">Verifying reset link...</p>
             </div>
           </div>
         </div>
@@ -137,19 +137,19 @@ export default function ResetPasswordPage() {
         <div className="relative z-10 flex flex-col">
           {/* Logo & Tagline */}
           <div className="mb-16">
-            <h1 className="text-3xl font-heading font-medium text-white mb-3">
+            <h1 className="text-3xl font-heading font-medium text-text mb-3">
               ClearUX
             </h1>
-            <p className="text-sm text-white/80 opacity-85">
+            <p className="text-sm text-muted opacity-85">
               Expert UX audits powered by AI. Discover usability issues in minutes — not weeks.
             </p>
           </div>
 
           {/* Info Card */}
           <div className="mt-auto">
-            <div className="bg-white bg-opacity-8 border border-white border-opacity-10 rounded-xl p-6 backdrop-blur-sm">
-              <h3 className="text-sm font-medium text-white mb-2">Security matters</h3>
-              <p className="text-xs text-white/80 opacity-80">
+            <div className="bg-card border border-border rounded-xl p-6 backdrop-blur-sm">
+              <h3 className="text-sm font-medium text-text mb-2">Security matters</h3>
+              <p className="text-xs text-muted opacity-80">
                 Choose a strong password with at least 8 characters, including a mix of letters, numbers, and symbols for maximum protection.
               </p>
             </div>
@@ -161,10 +161,10 @@ export default function ResetPasswordPage() {
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="mb-8">
-            <h2 className="text-2xl font-heading font-medium text-white mb-2">
+            <h2 className="text-2xl font-heading font-medium text-text mb-2">
               Create new password
             </h2>
-            <p className="text-sm text-white/50">
+            <p className="text-sm text-muted">
               Set a strong password to secure your account
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                     disabled={loading || !!success}
                   >
                     {showPassword ? (
@@ -240,7 +240,7 @@ export default function ResetPasswordPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
                     disabled={loading || !!success}
                   >
                     {showConfirmPassword ? (

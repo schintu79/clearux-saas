@@ -26,18 +26,18 @@ export default function PricingContent() {
       <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-pricing.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-50" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             Transparent pricing
           </p>
 
           <div className="mb-6">
-            <h1 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05', marginBottom: 0 }}>
+            <h1 className="font-heading text-text max-w-4xl" style={{ lineHeight: '1.05', marginBottom: 0 }}>
               <span className="text-volt font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
-              <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-bold text-white/60 ml-3 sm:ml-5">per audit</span>
+              <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-bold text-muted ml-3 sm:ml-5">per audit</span>
             </h1>
           </div>
 
@@ -45,7 +45,7 @@ export default function PricingContent() {
             First one free.
           </p>
 
-          <p className="text-white/65 text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
+          <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit — including your free first one — runs the
             full 96-checkpoint analysis across six modules and 24 categories. Credits never expire.
           </p>
@@ -60,7 +60,7 @@ export default function PricingContent() {
             </Link>
             <a
               href="#packs"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
             >
               View packs
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -73,31 +73,31 @@ export default function PricingContent() {
       <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-features.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             Every audit includes
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-white mb-10" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-10" style={{ lineHeight: '1.1' }}>
             96 checkpoints. <span className="text-lime-gradient">Zero compromises.</span>
           </h2>
 
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8 lg:p-10">
+          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8 lg:p-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {FEATURES.map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                  <span className="text-sm sm:text-base text-white/70 font-medium">{item}</span>
+                  <span className="text-sm sm:text-base text-muted font-medium">{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Value anchor */}
-          <p className="text-sm text-white/70 mt-6">
-            At $99 per audit, that&apos;s <span className="font-medium text-white/70">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
+          <p className="text-sm text-muted mt-6">
+            At $99 per audit, that&apos;s <span className="font-medium text-muted">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
           </p>
 
           {/* Delivery & fulfillment clarity */}
@@ -107,9 +107,9 @@ export default function PricingContent() {
               { title: 'Credits never expire', desc: 'Use credits whenever you\'re ready. Share across your team. Re-audit the same site as often as you like.' },
               { title: 'Satisfaction guaranteed', desc: 'Not happy? Contact support@clearux.ai and we\'ll resolve it or provide a credit for a new audit.' },
             ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <p className="text-sm font-medium text-white mb-1.5">{item.title}</p>
-                <p className="text-xs text-white/50 leading-relaxed">{item.desc}</p>
+              <div key={i} className="rounded-xl border border-border bg-card p-5">
+                <p className="text-sm font-medium text-text mb-1.5">{item.title}</p>
+                <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -118,15 +118,15 @@ export default function PricingContent() {
 
       {/* ── CREDIT PACKS ── */}
       <section id="packs" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
-        <div className="absolute inset-0 bg-[#111114]" />
+        <div className="absolute inset-0 bg-surface" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             Need more audits?
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-white mb-3" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.1' }}>
             Save up to <span className="text-lime-gradient">50%</span> with packs
           </h2>
-          <p className="text-white/65 text-base max-w-xl mb-14 leading-relaxed">
+          <p className="text-muted text-base max-w-xl mb-14 leading-relaxed">
             Same 96-checkpoint audit. Packs simply lower the per-audit cost. No features are locked behind tiers.
           </p>
 
@@ -136,8 +136,8 @@ export default function PricingContent() {
                 key={pack.name}
                 className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
                   pack.popular
-                    ? 'border-[#BFFA60]/30 bg-white/[0.04]'
-                    : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]'
+                    ? 'border-[#BFFA60]/30 bg-card'
+                    : 'border-border bg-card hover:border-muted hover:bg-card'
                 }`}
               >
                 {/* Popular glow */}
@@ -147,7 +147,7 @@ export default function PricingContent() {
 
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-heading text-xl font-bold text-white" style={{ marginBottom: 0 }}>{pack.name}</h3>
+                    <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{pack.name}</h3>
                     {pack.popular && (
                       <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#BFFA60]/10 text-[#BFFA60] border border-[#BFFA60]/20">
                         Most popular
@@ -160,12 +160,12 @@ export default function PricingContent() {
                     <span className="text-volt text-lg font-medium">$</span>
                     <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">{pack.price.toLocaleString()}</span>
                   </div>
-                  <p className="text-white/65 text-sm mb-1">
-                    {pack.per} per audit <span className="text-white/20">|</span> {pack.credits} audits
+                  <p className="text-muted text-sm mb-1">
+                    {pack.per} per audit <span className="opacity-30">|</span> {pack.credits} audits
                   </p>
                   <p className="text-sm text-[#BFFA60] font-medium mb-6">Save {pack.save}%</p>
 
-                  <p className="text-sm text-white/70 mb-8 leading-relaxed">{pack.desc}</p>
+                  <p className="text-sm text-muted mb-8 leading-relaxed">{pack.desc}</p>
 
                   <Link
                     href="/register"
@@ -189,24 +189,24 @@ export default function PricingContent() {
       <section className="relative py-14 sm:py-32 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-howitworks.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">At a glance</p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-white mb-10" style={{ lineHeight: '1.1' }}>
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">At a glance</p>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-10" style={{ lineHeight: '1.1' }}>
             Compare plans
           </h2>
 
-          <div className="rounded-2xl border border-white/[0.08] overflow-hidden backdrop-blur-sm">
+          <div className="rounded-2xl border border-border overflow-hidden backdrop-blur-sm">
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
               <table className="w-full text-sm border-collapse min-w-[540px]">
                 <thead>
-                  <tr className="bg-white/[0.04]">
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/60 uppercase tracking-[0.2em]">Plan</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/60 uppercase tracking-[0.2em]">Price</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/60 uppercase tracking-[0.2em]">Per Audit</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-white/60 uppercase tracking-[0.2em]">Best For</th>
+                  <tr className="bg-card">
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Plan</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Price</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Per Audit</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Best For</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -217,8 +217,8 @@ export default function PricingContent() {
                     { plan: 'Agency', price: '$999', per: '$66.60', best: 'Multiple client sites + white-label', badge: null, save: '33%' },
                     { plan: 'Scale', price: '$2,499', per: '$49.98', best: 'Continuous auditing across teams', badge: null, save: '50%' },
                   ].map((row, i) => (
-                    <tr key={i} className={`border-t border-white/[0.06] ${i % 2 === 0 ? 'bg-white/[0.02]' : 'bg-white/[0.04]'}`}>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-white">
+                    <tr key={i} className={`border-t border-border ${i % 2 === 0 ? 'bg-card' : 'bg-card'}`}>
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-text">
                         <span className="flex items-center gap-3">
                           {row.plan}
                           {row.badge && (
@@ -228,12 +228,12 @@ export default function PricingContent() {
                       </td>
                       <td className="px-4 sm:px-6 py-4 sm:py-5 font-heading font-medium text-volt text-lg">{row.price}</td>
                       <td className="px-4 sm:px-6 py-4 sm:py-5">
-                        <span className="text-white font-medium">{row.per}</span>
+                        <span className="text-text font-medium">{row.per}</span>
                         {row.save && (
                           <span className="ml-2 text-[11px] font-medium text-[#BFFA60]">save {row.save}</span>
                         )}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 text-white/65">{row.best}</td>
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 text-muted">{row.best}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -244,17 +244,17 @@ export default function PricingContent() {
       </section>
 
       {/* ── GUARANTEE ── */}
-      <section className="py-14 sm:py-32 bg-[#111114]">
+      <section className="py-14 sm:py-32 bg-surface">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
+          <div className="rounded-2xl border border-border bg-card p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
             <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
               <ShieldCheck size={28} className="text-[#BFFA60]" />
             </div>
             <div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white mb-3">
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-3">
                 30-day money-back guarantee
               </h2>
-              <p className="text-sm sm:text-base text-white/65 leading-relaxed max-w-lg">
+              <p className="text-sm sm:text-base text-muted leading-relaxed max-w-lg">
                 Not satisfied with your audit? We'll refund your credits within 30 days, no questions asked. We stand behind the quality of every report.
               </p>
             </div>
@@ -266,13 +266,13 @@ export default function PricingContent() {
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
           <Link

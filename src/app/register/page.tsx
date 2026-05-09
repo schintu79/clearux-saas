@@ -31,8 +31,8 @@ function getPasswordChecks(pw: string) {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
       </div>
     }>
       <RegisterContent />
@@ -158,14 +158,14 @@ function RegisterContent() {
 
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#111114] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-surface relative overflow-hidden">
       <Navbar />
 
       {/* Background */}
@@ -175,7 +175,7 @@ function RegisterContent() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
       {/* Content */}
@@ -184,29 +184,29 @@ function RegisterContent() {
 
           {/* Heading */}
           <div className="text-center mb-10">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/60 mb-3">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-3">
               Create account
             </p>
             <h1
-              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-white mb-3"
+              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-text mb-3"
               style={{ lineHeight: '1.1' }}
             >
               Get your free <span className="text-lime-gradient">UX audit.</span>
             </h1>
-            <p className="text-base text-white/60 leading-relaxed max-w-md mx-auto">
+            <p className="text-base text-muted leading-relaxed max-w-md mx-auto">
               96 checkpoints across 6 modules. No credit card required. No subscription. Your first audit is completely free.
             </p>
           </div>
 
           {/* Pending URL badge */}
           {pendingUrl && (
-            <div className="mb-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm px-5 py-3 text-center">
-              <p className="text-sm text-white/50 font-medium truncate">Auditing: {pendingUrl}</p>
+            <div className="mb-6 rounded-2xl border border-border bg-card backdrop-blur-sm px-5 py-3 text-center">
+              <p className="text-sm text-muted font-medium truncate">Auditing: {pendingUrl}</p>
             </div>
           )}
 
           {/* Card */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 sm:p-10">
+          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
             {error && (
               <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-6">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -226,7 +226,7 @@ function RegisterContent() {
               type="button"
               onClick={() => handleOAuth('google')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[52px] rounded-full border border-white/[0.10] bg-white/[0.04] hover:bg-white/[0.08] transition-colors text-base font-medium text-white disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[52px] rounded-full border border-border bg-card hover:bg-card-hover transition-colors text-base font-medium text-text disabled:opacity-50"
             >
               {oauthLoading === 'google' ? (
                 <span className="spinner" />
@@ -243,15 +243,15 @@ function RegisterContent() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">
-              <div className="flex-1 h-px bg-white/[0.08]" />
-              <span className="text-xs text-white/60 uppercase tracking-wider">or</span>
-              <div className="flex-1 h-px bg-white/[0.08]" />
+              <div className="flex-1 h-px bg-card-hover" />
+              <span className="text-xs text-muted uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-card-hover" />
             </div>
 
             {/* Email form */}
             <form onSubmit={handleSubmit} className="space-y-5" aria-label="Create account form">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-white/80 mb-2">Full Name</label>
+                <label htmlFor="fullName" className="block text-sm font-medium text-muted mb-2">Full Name</label>
                 <input
                   id="fullName"
                   type="text"
@@ -261,14 +261,14 @@ function RegisterContent() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="Sarah Chen"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.fullName ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 text-base font-body ${errors.fullName ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.fullName && <p className="text-xs text-red-400 mt-2">{errors.fullName}</p>}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-muted mb-2">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -278,14 +278,14 @@ function RegisterContent() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.email && <p className="text-xs text-red-400 mt-2">{errors.email}</p>}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-muted mb-2">Password</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -296,13 +296,13 @@ function RegisterContent() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a strong password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -315,13 +315,13 @@ function RegisterContent() {
                     {passwordChecks.map((check) => (
                       <div key={check.label} className="flex items-center gap-2">
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                          check.met ? 'bg-[#BFFA60]' : 'bg-white/[0.10]'
+                          check.met ? 'bg-[#BFFA60]' : 'bg-card-hover'
                         }`}>
                           {check.met && (
                             <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           )}
                         </div>
-                        <span className={`text-xs transition-colors ${check.met ? 'text-[#BFFA60]' : 'text-white/60'}`}>
+                        <span className={`text-xs transition-colors ${check.met ? 'text-[#BFFA60]' : 'text-muted'}`}>
                           {check.label}
                         </span>
                       </div>
@@ -334,7 +334,7 @@ function RegisterContent() {
               {/* Show confirm password only after all password checks pass */}
               {passwordChecks.every(c => c.met) && (
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">Confirm Password</label>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-muted mb-2">Confirm Password</label>
                 <div className="relative">
                   <input
                     id="confirmPassword"
@@ -345,13 +345,13 @@ function RegisterContent() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat your password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
@@ -361,14 +361,14 @@ function RegisterContent() {
                 {formData.confirmPassword.length > 0 && (
                   <div className="flex items-center gap-2 mt-2">
                     <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                      formData.password === formData.confirmPassword ? 'bg-[#BFFA60]' : 'bg-white/[0.10]'
+                      formData.password === formData.confirmPassword ? 'bg-[#BFFA60]' : 'bg-card-hover'
                     }`}>
                       {formData.password === formData.confirmPassword && (
                         <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       )}
                     </div>
                     <span className={`text-xs transition-colors ${
-                      formData.password === formData.confirmPassword ? 'text-[#BFFA60]' : 'text-white/60'
+                      formData.password === formData.confirmPassword ? 'text-[#BFFA60]' : 'text-muted'
                     }`}>
                       {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
                     </span>
@@ -388,7 +388,7 @@ function RegisterContent() {
                   className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
                     marketingEmails
                       ? 'bg-[#BFFA60] border-[#BFFA60]'
-                      : 'bg-white/[0.06] border-white/[0.10]'
+                      : 'bg-card-hover border-border'
                   }`}
                 >
                   {marketingEmails && (
@@ -397,7 +397,7 @@ function RegisterContent() {
                 </button>
                 <label
                   onClick={() => setMarketingEmails(prev => !prev)}
-                  className="text-sm text-white/60 leading-relaxed cursor-pointer select-none"
+                  className="text-sm text-muted leading-relaxed cursor-pointer select-none"
                 >
                   Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
                 </label>
@@ -425,7 +425,7 @@ function RegisterContent() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-white/50 leading-relaxed">
+            <p className="mt-6 text-center text-xs text-muted leading-relaxed">
               Your audit results are private and encrypted. We never share your data.
             </p>
           </div>
@@ -434,14 +434,14 @@ function RegisterContent() {
           <div className="mt-6">
             <button
               onClick={() => setFaqOpen(prev => !prev)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-white/60 hover:text-white/80 transition-colors py-2 font-medium"
+              className="w-full flex items-center justify-center gap-1.5 text-sm text-muted hover:text-muted transition-colors py-2 font-medium"
             >
               What happens after I sign up?
               <ChevronDown size={14} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
             </button>
             {faqOpen && (
-              <div className="mt-2 p-5 rounded-2xl bg-white/[0.05] border border-white/[0.10]">
-                <p className="text-sm text-white/60 leading-relaxed">
+              <div className="mt-2 p-5 rounded-2xl bg-card border border-border">
+                <p className="text-sm text-muted leading-relaxed">
                   You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 96 checkpoints in 6 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
                 </p>
               </div>
@@ -449,7 +449,7 @@ function RegisterContent() {
           </div>
 
           {/* Sign in link */}
-          <p className="mt-6 text-center text-sm text-white/60">
+          <p className="mt-6 text-center text-sm text-muted">
             Already have an account?{' '}
             <Link
               href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'}

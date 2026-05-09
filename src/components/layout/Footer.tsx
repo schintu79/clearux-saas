@@ -1,11 +1,15 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/ui/Logo';
+
 const Footer: React.FC = () => {
   const currentYear = 2026;
 
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="bg-[#0C0C0F] py-14 border-t border-white/[0.06]">
+    <footer role="contentinfo" aria-label="Site footer" className="bg-[#0F0F0F] py-14 border-t border-white/[0.06]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
 
         {/* Top: Brand + Links */}
@@ -13,7 +17,9 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><Logo height={28} variant="light" /></div>
+            <div className="mb-3">
+              <Logo height={28} variant="light" />
+            </div>
             <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
               Full clarity, at your fingertips. 360° UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
             </p>

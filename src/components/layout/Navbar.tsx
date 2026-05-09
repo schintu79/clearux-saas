@@ -3,9 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut, LayoutDashboard, Coins, ArrowUpRight } from 'lucide-react';
+import { Settings, LogOut, LayoutDashboard, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Logo from '@/components/ui/Logo';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
   const initials = name
@@ -22,23 +24,10 @@ function UserAvatar({ name, email }: { name?: string | null; email?: string }) {
 const Navbar: React.FC = () => {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (loading || !user) return;
-    const load = () =>
-      fetch('/api/credits')
-        .then((r) => r.json())
-        .then((d) => setCredits(d.credits ?? 0))
-        .catch(() => {});
-    load();
-    const onFocus = () => load();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [loading, user]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -77,7 +66,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center" aria-label="ClearUX home">
-            <Logo height={28} variant="light" />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </Link>
 
           {/* Desktop Navigation */}
@@ -95,18 +84,10 @@ const Navbar: React.FC = () => {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle variant="icon" />
+
             {isLoggedIn ? (
               <>
-              {credits !== null && (
-                <Link
-                  href="/dashboard/buy-credits"
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--card)] border border-[var(--border)] hover:bg-[var(--card-hover)] transition-colors"
-                >
-                  <Coins size={13} className="text-[var(--muted)]" />
-                  <span className="text-xs font-medium text-[var(--text)]">{credits}</span>
-                </Link>
-              )}
-
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
@@ -174,6 +155,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle variant="icon" />
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}

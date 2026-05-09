@@ -68,22 +68,22 @@ const MODULES = [
 function HomeFaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06]">
+    <div className="rounded-xl overflow-hidden bg-card border border-border">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3 p-5 text-left hover:bg-card transition-colors"
         aria-expanded={open}
       >
-        <span className="flex-1 font-heading font-medium text-white text-[15px] leading-relaxed">{q}</span>
+        <span className="flex-1 font-heading font-medium text-text text-[15px] leading-relaxed">{q}</span>
         <ChevronDown
           size={16}
-          className={`text-white/50 flex-shrink-0 mt-0.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
         <div className="px-5 pb-5 pt-0">
-          <div className="border-t border-white/[0.04] pt-4">
-            <p className="font-body text-sm text-white/65 leading-[1.8]">{a}</p>
+          <div className="border-t border-border pt-4">
+            <p className="font-body text-sm text-muted leading-[1.8]">{a}</p>
           </div>
         </div>
       )}
@@ -139,11 +139,11 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-[#111114] text-white min-h-screen">
+    <div className="bg-surface text-text min-h-screen">
       {/* Single page background */}
       <div className="fixed inset-0" aria-hidden="true">
         <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
       <HomeJsonLd />
       <Navbar />
@@ -160,7 +160,7 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col items-center justify-center text-center py-16 min-h-[calc(100svh-64px)]">
           {/* Top label */}
           <motion.p
-            className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-6 sm:mb-10"
+            className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-6 sm:mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -173,7 +173,7 @@ export default function Home() {
             <AnimatePresence mode="wait">
               <motion.h1
                 key={headlineIdx}
-                className="font-heading text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-bold text-white"
+                className="font-heading text-[2rem] sm:text-[3rem] md:text-[4rem] lg:text-[5rem] font-bold text-text"
                 style={{ lineHeight: '1.05' }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -194,7 +194,7 @@ export default function Home() {
                   onClick={() => setHeadlineIdx(i)}
                   aria-label={`Go to slide ${i + 1}`}
                   className="relative h-[3px] rounded-full overflow-hidden cursor-pointer"
-                  style={{ width: i === headlineIdx ? 32 : 16, background: 'rgba(255,255,255,0.12)', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                  style={{ width: i === headlineIdx ? 32 : 16, background: 'var(--border)', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
                 >
                   {i === headlineIdx && (
                     <motion.div
@@ -217,7 +217,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
           >
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
+            <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
               360° clarity on every layer of user experience. We audit your website, your brand identity, and your design — for humans and AI agents alike. No hidden issues, ever.
             </p>
             <p className="text-base sm:text-lg font-bold text-volt">
@@ -234,14 +234,14 @@ export default function Home() {
           >
             <Link
               href="/register"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
             >
               Start free audit
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               href="/how-it-works"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
             >
               How it works
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -263,9 +263,9 @@ export default function Home() {
               const BadgeIcon = badge.icon;
               return (
                 <div key={i} className="flex items-center gap-2">
-                  <BadgeIcon size={16} className="text-white/45" strokeWidth={1.5} />
-                  <span className="text-[13px] text-white/50 font-medium tracking-wide sm:hidden">{badge.label}</span>
-                  <span className="text-[13px] text-white/50 font-medium tracking-wide hidden sm:inline">{badge.full}</span>
+                  <BadgeIcon size={16} className="text-muted" strokeWidth={1.5} />
+                  <span className="text-[13px] text-muted font-medium tracking-wide sm:hidden">{badge.label}</span>
+                  <span className="text-[13px] text-muted font-medium tracking-wide hidden sm:inline">{badge.full}</span>
                 </div>
               );
             })}
@@ -301,13 +301,13 @@ export default function Home() {
       <section id="trust-numbers" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal>
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               Why now
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               Two audiences. <span className="text-lime-gradient">One interface.</span>
             </h2>
-            <p className="text-white/70 text-base sm:text-lg max-w-3xl leading-relaxed mb-16 sm:mb-20">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-16 sm:mb-20">
               Your product now serves humans and language models. The teams that audit fast and audit often will own the next decade. Clarity. Rigor. Speed. ClearUX makes it continuous, not annual.
             </p>
           </ScrollReveal>
@@ -319,7 +319,7 @@ export default function Home() {
                 { countTo: 6, suffix: '', label: 'Modules', desc: 'complete coverage' },
                 { static: '<10', label: 'Minutes', desc: 'to full report' },
               ].map((stat, i) => (
-                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-white/[0.06] sm:pl-8' : ''}`}>
+                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-border sm:pl-8' : ''}`}>
                   <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light leading-none mb-2">
                     {'countTo' in stat ? (
                       <CountUp to={stat.countTo!} suffix={stat.suffix || ''} />
@@ -327,8 +327,8 @@ export default function Home() {
                       <span className="text-volt">{(stat as any).static}</span>
                     )}
                   </p>
-                  <p className="text-base font-medium text-white/70">{stat.label}</p>
-                  <p className="text-sm text-white/55">{stat.desc}</p>
+                  <p className="text-base font-medium text-muted">{stat.label}</p>
+                  <p className="text-sm text-muted">{stat.desc}</p>
                 </div>
               ))}
             </div>
@@ -342,13 +342,13 @@ export default function Home() {
       <section id="the-problem" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               The problem
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               UX audits are <span className="text-lime-gradient">broken.</span>
             </h2>
-            <p className="text-white/70 text-base sm:text-lg max-w-3xl leading-relaxed">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
               Agencies cost $10-50k and take weeks. In-house audits need senior expertise most teams don't have. So products ship with issues that quietly kill conversion and retention.
             </p>
           </ScrollReveal>
@@ -360,10 +360,10 @@ export default function Home() {
               { label: 'Free tools', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks dark patterns, AI readiness, or conversion psychology.' },
             ].map((item, i) => (
               <StaggerItem key={i}>
-                <div className="border-t border-white/[0.06] pt-8">
-                  <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-white/50 mb-3">{item.label}</p>
+                <div className="border-t border-border pt-8">
+                  <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted mb-3">{item.label}</p>
                   <p className="font-heading text-2xl sm:text-3xl font-medium text-volt mb-2">{item.stat}</p>
-                  <p className="text-base text-white/70 leading-relaxed">{item.desc}</p>
+                  <p className="text-base text-muted leading-relaxed">{item.desc}</p>
                 </div>
               </StaggerItem>
             ))}
@@ -377,13 +377,13 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               What we audit
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               6 modules. 96 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
             </h2>
-            <p className="text-white/70 text-base sm:text-lg max-w-3xl leading-relaxed">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
               We audit feeling, not function alone. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO — prioritised with concrete fixes.
             </p>
           </ScrollReveal>
@@ -393,14 +393,14 @@ export default function Home() {
               const Icon = mod.icon;
               return (
                 <StaggerItem key={i}>
-                  <div className="py-8 border-t border-white/[0.06]">
+                  <div className="py-8 border-t border-border">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-9 h-9 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
                         <Icon size={18} className="text-[#BFFA60]" strokeWidth={1.5} />
                       </div>
-                      <h3 className="font-heading text-lg font-medium text-white">{mod.title}</h3>
+                      <h3 className="font-heading text-lg font-medium text-text">{mod.title}</h3>
                     </div>
-                    <p className="text-sm text-white/70 leading-relaxed">{mod.desc}</p>
+                    <p className="text-sm text-muted leading-relaxed">{mod.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -422,13 +422,13 @@ export default function Home() {
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
-                      <div key={j} className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
-                          <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
+                      <div key={j} className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid var(--border)' }}>
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-card-hover">
+                          <CardIcon size={19} className="text-muted" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] tracking-[0.12em] uppercase text-white/45 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-white/60 leading-tight">{card.label}</p>
+                          <p className="text-[11px] tracking-[0.12em] uppercase text-muted mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-muted leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -450,13 +450,13 @@ export default function Home() {
                   ].map((card, j) => {
                     const CardIcon = card.icon;
                     return (
-                      <div key={j} className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.06]">
-                          <CardIcon size={19} className="text-white/40" strokeWidth={1.5} />
+                      <div key={j} className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid var(--border)' }}>
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-card-hover">
+                          <CardIcon size={19} className="text-muted" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[11px] tracking-[0.12em] uppercase text-white/45 mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-white/60 leading-tight">{card.label}</p>
+                          <p className="text-[11px] tracking-[0.12em] uppercase text-muted mb-1.5 font-medium">{card.subtitle}</p>
+                          <p className="text-[15px] font-medium text-muted leading-tight">{card.label}</p>
                         </div>
                       </div>
                     );
@@ -466,8 +466,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
-          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(17,17,20,1) 0%, rgba(17,17,20,1) 20%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, var(--surface) 0%, var(--surface) 20%, transparent 100%)' }} />
+          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--surface) 0%, var(--surface) 20%, transparent 100%)' }} />
         </div>
       </section>
 
@@ -477,13 +477,13 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               Why ClearUX
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               What others <span className="text-lime-gradient">miss.</span>
             </h2>
-            <p className="text-white/70 text-base sm:text-lg max-w-3xl leading-relaxed">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
               Research tools tell you what users did. Analytics tell you where they dropped. Agencies sell you hours. ClearUX gives product teams shipping fast 360° clarity on every layer of user experience. We identify every issue, ranked and explained. You decide what to fix.
             </p>
           </ScrollReveal>
@@ -518,15 +518,15 @@ export default function Home() {
               const CardIcon = item.icon;
               return (
                 <StaggerItem key={i}>
-                  <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 h-full flex flex-col">
+                  <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 h-full flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                       <div className="w-11 h-11 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center">
                         <CardIcon size={20} className="text-[#BFFA60]" />
                       </div>
                       <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#BFFA60]/60">{item.label}</p>
                     </div>
-                    <h3 className="font-heading text-lg font-medium text-white mb-3">{item.title}</h3>
-                    <p className="text-sm text-white/70 leading-relaxed">{item.desc}</p>
+                    <h3 className="font-heading text-lg font-medium text-text mb-3">{item.title}</h3>
+                    <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -541,10 +541,10 @@ export default function Home() {
       <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               How it works
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               Audit your product. Get <span className="text-lime-gradient">clarity.</span>
             </h2>
           </ScrollReveal>
@@ -573,15 +573,15 @@ export default function Home() {
               const StepIcon = item.icon;
               return (
                 <StaggerItem key={i} className="flex">
-                  <div className="flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 flex-1">
-                    <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.10] leading-none block mb-4">
+                  <div className="flex flex-col rounded-2xl border border-border bg-card backdrop-blur-sm p-8 flex-1">
+                    <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-muted leading-none block mb-4">
                       {item.step}
                     </span>
                     <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-5">
                       <StepIcon size={20} className="text-[#BFFA60]" />
                     </div>
-                    <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">{item.title}</h3>
-                    <p className="font-body text-sm sm:text-base text-white/65 leading-relaxed flex-1">{item.desc}</p>
+                    <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">{item.title}</h3>
+                    <p className="font-body text-sm sm:text-base text-muted leading-relaxed flex-1">{item.desc}</p>
                   </div>
                 </StaggerItem>
               );
@@ -596,16 +596,16 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               What you get
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               A report your team{' '}
               <span className="text-lime-gradient">can act on.</span>
             </h2>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-white/[0.06] pb-8">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-border pb-8">
               <div className="max-w-2xl">
-                <p className="text-white/70 text-base sm:text-lg leading-relaxed mb-4">
+                <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
                   Every finding ranked by severity and business impact, with specific fixes your team can ship in their next sprint.
                 </p>
                 <Link
@@ -617,11 +617,11 @@ export default function Home() {
                 </Link>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <button type="button" aria-label="Scroll left" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: -400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors">
-                  <ArrowRight size={16} className="text-white/40 rotate-180" />
+                <button type="button" aria-label="Scroll left" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: -400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-border flex items-center justify-center hover:border-muted transition-colors">
+                  <ArrowRight size={16} className="text-muted rotate-180" />
                 </button>
-                <button type="button" aria-label="Scroll right" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: 400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center hover:border-white/30 transition-colors">
-                  <ArrowRight size={16} className="text-white/40" />
+                <button type="button" aria-label="Scroll right" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: 400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-border flex items-center justify-center hover:border-muted transition-colors">
+                  <ArrowRight size={16} className="text-muted" />
                 </button>
               </div>
             </div>
@@ -638,13 +638,13 @@ export default function Home() {
             ].map((card, i) => {
               const Icon = card.icon;
               return (
-                <div key={i} className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:shadow-lg hover:shadow-black/20 transition-all group">
+                <div key={i} className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-card border border-border hover:border-border hover:shadow-lg hover:shadow-black/20 transition-all group">
                   <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-6">
                     <Icon size={24} className="text-[#BFFA60]" strokeWidth={1.5} />
                   </div>
-                  <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-white/45 mb-3 block">{card.label}</span>
-                  <h3 className="font-heading text-base font-medium text-white mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-sm text-white/70 leading-relaxed">{card.desc}</p>
+                  <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted mb-3 block">{card.label}</span>
+                  <h3 className="font-heading text-base font-medium text-text mb-3 leading-tight">{card.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{card.desc}</p>
                 </div>
               );
             })}
@@ -658,27 +658,27 @@ export default function Home() {
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               Pricing
             </p>
             <div className="mb-6">
-              <h2 className="font-heading text-white max-w-4xl" style={{ lineHeight: '1.05' }}>
+              <h2 className="font-heading text-text max-w-4xl" style={{ lineHeight: '1.05' }}>
                 <span className="text-volt font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
-                <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-medium text-white/60 ml-3 sm:ml-5">per audit</span>
+                <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-medium text-muted ml-3 sm:ml-5">per audit</span>
               </h2>
             </div>
             <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-bold text-volt mb-6">
               First one free.
             </p>
-            <p className="text-white/65 text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
               No subscription. No feature gates. Every audit gets all 6 modules, 96 checkpoints, and full reports. Credits never expire.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <Link href="/register" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]">
+              <Link href="/register" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]">
                 Start free audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
-              <Link href="/pricing" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]">
+              <Link href="/pricing" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]">
                 View all plans
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
@@ -686,7 +686,7 @@ export default function Home() {
           </ScrollReveal>
 
           <ScrollReveal>
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8">
+            <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
                 {[
                   'All 6 modules, 96 checkpoints',
@@ -696,7 +696,7 @@ export default function Home() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-white/70 font-medium">{item}</span>
+                    <span className="text-sm text-muted font-medium">{item}</span>
                   </div>
                 ))}
               </div>
@@ -711,10 +711,10 @@ export default function Home() {
       <section id="faq" className="relative z-10 py-14 sm:py-32">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               FAQ
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text">
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h2>
           </ScrollReveal>
@@ -730,7 +730,7 @@ export default function Home() {
           <ScrollReveal delay={0.3} className="mt-8 max-w-3xl">
             <Link
               href="/faq"
-              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-white/20 hover:border-white/40 text-sm font-medium text-white transition-all"
+              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-border hover:border-border text-sm font-medium text-text transition-all"
             >
               Read all FAQ
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -745,34 +745,34 @@ export default function Home() {
       <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
               Get started
             </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-6">
+            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
               Ready to see what you&apos;re{' '}
               <span className="text-lime-gradient">missing?</span>
             </h2>
-            <p className="text-white/70 text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
+            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
               Your first audit is free. 96 checkpoints, 6 modules, full report in minutes. Senior UX rigor, at startup pace.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
               <Link
                 href="/register"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#0F0F0F] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
               >
                 Start free audit
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
                 href="/how-it-works"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-white/20 text-white text-base font-medium transition-all hover:border-white/40 whitespace-nowrap min-h-[48px]"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
               >
                 How it works
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
-            <p className="text-xs text-white/60 mt-3 tracking-wide">No credit card required. Results in minutes.</p>
+            <p className="text-xs text-muted mt-3 tracking-wide">No credit card required. Results in minutes.</p>
           </ScrollReveal>
         </div>
       </section>

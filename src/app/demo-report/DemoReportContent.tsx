@@ -254,7 +254,7 @@ function ScoreRing({ score, size = 110 }: { score: number; size?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="font-heading text-3xl font-light text-white">{score}</span>
+        <span className="font-heading text-3xl font-light text-text">{score}</span>
       </div>
     </div>
   )
@@ -301,24 +301,24 @@ function DemoScoreChart() {
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines))
 
   return (
-    <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+    <div className="mb-6 rounded-xl border border-border bg-card overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-white/[0.02] transition-colors"
+        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-card transition-colors"
       >
         <div className="w-7 h-7 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
           <TrendingUp size={14} className="text-[#6366F1]" />
         </div>
         <div className="flex-1 text-left">
-          <span className="text-sm font-medium text-white">Score Over Time</span>
-          <span className="text-[10px] text-white/40 ml-2">3 audits · {DEMO_SITE}</span>
+          <span className="text-sm font-medium text-text">Score Over Time</span>
+          <span className="text-[10px] text-muted ml-2">3 audits · {DEMO_SITE}</span>
         </div>
         <span className="text-xs font-medium text-emerald-400">+17 pts</span>
-        <ChevronDown size={14} className={`text-white/40 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-white/[0.04]">
+        <div className="px-4 pb-4 pt-1 border-t border-border">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
             {gridScores.map((s, i) => {
               const y = PAD_T + chartH - ((s - minScore) / range) * chartH
@@ -370,12 +370,12 @@ function DemoCheckpointHealth() {
   const [expandedCat, setExpandedCat] = useState<string | null>(null)
 
   return (
-    <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-white/[0.04]">
+    <div className="mb-6 rounded-xl border border-border bg-card overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-border">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-[#BFFA60]" />
-          <h3 className="text-xs font-medium text-white">64-Checkpoint Health</h3>
-          <span className="text-[10px] text-white/40 ml-auto">7 issues across 24 categories</span>
+          <h3 className="text-xs font-medium text-text">64-Checkpoint Health</h3>
+          <span className="text-[10px] text-muted ml-auto">7 issues across 24 categories</span>
         </div>
       </div>
       <div className="divide-y divide-white/[0.03]">
@@ -390,15 +390,15 @@ function DemoCheckpointHealth() {
             <div key={catIdx}>
               <button
                 onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
-                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-white/[0.02] transition-colors text-left"
+                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-card transition-colors text-left"
               >
                 <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
-                <span className="text-[11px] font-medium text-white flex-1 truncate">{cat.name}</span>
+                <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {passCount > 0 && <span className="text-[9px] font-medium text-emerald-400">{passCount} pass</span>}
                   {failCount > 0 && <span className="text-[9px] font-medium text-red-500">{failCount} fail</span>}
                 </div>
-                <ChevronDown size={12} className={`text-white/40 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isExpanded && (
                 <div className="px-5 pb-3 space-y-1.5">
@@ -436,10 +436,10 @@ function DemoFindingCard({ finding }: { finding: typeof DEMO_FINDINGS[0] }) {
   const pillar = PILLAR_CONFIG[finding.pillarIdx]
 
   const sevConfig: Record<string, { border: string; bg: string; dot: string; text: string }> = {
-    critical: { border: 'border-white/[0.06]', bg: 'bg-white/[0.02]', dot: 'bg-red-500', text: 'text-red-400' },
-    high: { border: 'border-white/[0.06]', bg: 'bg-white/[0.02]', dot: 'bg-orange-500', text: 'text-orange-400' },
-    medium: { border: 'border-white/[0.06]', bg: 'bg-white/[0.02]', dot: 'bg-yellow-500', text: 'text-yellow-400' },
-    low: { border: 'border-white/[0.06]', bg: 'bg-white/[0.02]', dot: 'bg-blue-500', text: 'text-blue-400' },
+    critical: { border: 'border-border', bg: 'bg-card', dot: 'bg-red-500', text: 'text-red-400' },
+    high: { border: 'border-border', bg: 'bg-card', dot: 'bg-orange-500', text: 'text-orange-400' },
+    medium: { border: 'border-border', bg: 'bg-card', dot: 'bg-yellow-500', text: 'text-yellow-400' },
+    low: { border: 'border-border', bg: 'bg-card', dot: 'bg-blue-500', text: 'text-blue-400' },
   }
   const sev = sevConfig[finding.severity] || sevConfig.medium
 
@@ -447,33 +447,33 @@ function DemoFindingCard({ finding }: { finding: typeof DEMO_FINDINGS[0] }) {
     <div className={`rounded-xl border ${sev.border} ${sev.bg} overflow-hidden transition-all`}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-4 text-left hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-card transition-colors"
       >
         <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <SeverityBadge severity={finding.severity} />
-            <span className="inline-flex items-center gap-1 text-[11px] text-white/40 max-w-[260px] truncate">
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted max-w-[260px] truncate">
               <ExternalLink size={10} className="flex-shrink-0" />
               {finding.page_url.replace('https://www.', '')}
             </span>
           </div>
-          <h4 className="font-medium text-white text-sm leading-snug">{finding.title}</h4>
+          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
         </div>
-        <ChevronDown size={16} className={`text-white/40 flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-muted flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-white/[0.04] mx-4 space-y-3">
-          <p className="text-white/50 text-sm leading-relaxed pt-3">{finding.description}</p>
+        <div className="px-4 pb-4 pt-0 border-t border-border mx-4 space-y-3">
+          <p className="text-muted text-sm leading-relaxed pt-3">{finding.description}</p>
 
           {finding.recommendation && (
-            <div className="p-3 bg-white/[0.03] rounded-lg border border-white/[0.04]">
+            <div className="p-3 bg-card rounded-lg border border-border">
               <div className="flex gap-2.5">
                 <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillar.iconColor}`} />
                 <div>
-                  <p className="text-[11px] font-medium text-white mb-1">Recommendation</p>
-                  <p className="text-sm text-white/50 leading-relaxed">{finding.recommendation}</p>
+                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
+                  <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
                 </div>
               </div>
             </div>
@@ -483,24 +483,24 @@ function DemoFindingCard({ finding }: { finding: typeof DEMO_FINDINGS[0] }) {
             <div className="flex items-start gap-2.5 p-3 bg-emerald-500/[0.05] rounded-lg border border-emerald-500/15">
               <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-white mb-0.5">Expected Impact</p>
+                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
                 <p className="text-sm text-emerald-400 leading-relaxed">{finding.impact}</p>
               </div>
             </div>
           )}
 
           {/* Status toggle (demo only — non-functional) */}
-          <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+          <div className="p-3 rounded-lg bg-card border border-border">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-white uppercase tracking-wide">Status</span>
+              <span className="text-[11px] font-medium text-text uppercase tracking-wide">Status</span>
               <div className="flex flex-wrap gap-1.5">
                 {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => (
                   <span
                     key={s}
                     className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg ${
                       i === 0
-                        ? 'bg-white/[0.04] text-white/60 ring-1 ring-white/10'
-                        : 'text-white/30'
+                        ? 'bg-card text-muted ring-1 ring-white/10'
+                        : 'text-muted'
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-gray-400' : 'bg-white/10'}`} />
@@ -535,7 +535,7 @@ export default function DemoReportContent() {
       {/* Background */}
       <div className="absolute inset-0" aria-hidden="true">
         <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
@@ -544,23 +544,23 @@ export default function DemoReportContent() {
           <span className="px-3 py-1 rounded-full bg-[#BFFA60]/10 text-[#BFFA60] text-xs font-medium">
             Sample Report
           </span>
-          <span className="text-xs text-white/40">This is a visual demo of the ClearUX dashboard</span>
+          <span className="text-xs text-muted">This is a visual demo of the ClearUX dashboard</span>
         </div>
 
         {/* ── Back link (demo) ── */}
-        <div className="flex items-center gap-1.5 text-sm text-white/40 mb-6">
-          <span className="text-white/30">&#8592;</span>
+        <div className="flex items-center gap-1.5 text-sm text-muted mb-6">
+          <span className="text-muted">&#8592;</span>
           <span>Back to {DEMO_SITE} Audits</span>
         </div>
 
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-medium font-heading text-white mb-1 truncate">
+            <h1 className="text-xl sm:text-2xl font-medium font-heading text-text mb-1 truncate">
               {DEMO_SITE}
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
-              <p className="text-white/40 text-sm">{DEMO_DATE}</p>
+              <p className="text-muted text-sm">{DEMO_DATE}</p>
               <span className="inline-flex items-center gap-1 text-xs text-[#BFFA60]">
                 <ExternalLink size={11} />
                 Visit site
@@ -568,7 +568,7 @@ export default function DemoReportContent() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 border border-white/[0.08]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-muted border border-border">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
             </div>
           </div>
@@ -577,7 +577,7 @@ export default function DemoReportContent() {
         {/* ════════════════════════════════════════════════
             HERO SCORE CARD
             ════════════════════════════════════════════════ */}
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden mb-6">
+        <div className="rounded-xl border border-border bg-card overflow-hidden mb-6">
           {/* Brand accent */}
           <div className="h-1.5 bg-[#BFFA60]" />
 
@@ -589,7 +589,7 @@ export default function DemoReportContent() {
 
               <div className="flex-1 min-w-0 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                  <h2 className="text-xl font-medium font-heading text-white">Overall Score</h2>
+                  <h2 className="text-xl font-medium font-heading text-text">Overall Score</h2>
                   <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
                     DEMO_SCORE >= 70 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
                   }`}>
@@ -605,7 +605,7 @@ export default function DemoReportContent() {
                     return (
                       <div key={pillar.name} className="flex items-center gap-1.5">
                         <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
-                        <span className="text-xs text-white/40">{pillar.name}</span>
+                        <span className="text-xs text-muted">{pillar.name}</span>
                         <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
                       </div>
                     )
@@ -614,29 +614,29 @@ export default function DemoReportContent() {
 
                 {/* Action buttons */}
                 <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 mt-4">
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Download size={12} /> PDF
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Download size={12} /> Word
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <RefreshCw size={12} /> Re-audit
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Search size={12} /> Deeper
                   </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-white/[0.02] border border-white/[0.08] text-white text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
+                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
                     <Share2 size={12} /> Share
                   </span>
                 </div>
-                <p className="text-[11px] text-white/30 mt-2">1 credit per audit</p>
+                <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
               </div>
             </div>
 
             {/* Issue summary strip */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-white/[0.04]">
-              <span className="text-sm font-medium text-white">{DEMO_TOTAL_ISSUES} issues found</span>
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border">
+              <span className="text-sm font-medium text-text">{DEMO_TOTAL_ISSUES} issues found</span>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 {severityCounts.critical > 0 && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
@@ -649,10 +649,10 @@ export default function DemoReportContent() {
                   </span>
                 )}
                 {severityCounts.medium > 0 && (
-                  <span className="text-[11px] text-white/40 bg-white/[0.04] px-2 py-0.5 rounded-full">{severityCounts.medium} medium</span>
+                  <span className="text-[11px] text-muted bg-card px-2 py-0.5 rounded-full">{severityCounts.medium} medium</span>
                 )}
                 {severityCounts.low > 0 && (
-                  <span className="text-[11px] text-white/40 bg-white/[0.04] px-2 py-0.5 rounded-full">{severityCounts.low} low</span>
+                  <span className="text-[11px] text-muted bg-card px-2 py-0.5 rounded-full">{severityCounts.low} low</span>
                 )}
               </div>
             </div>
@@ -665,21 +665,21 @@ export default function DemoReportContent() {
         {/* ── Improvement tip ── */}
         <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#BFFA60]/[0.05] border border-[#BFFA60]/20">
           <RefreshCw size={15} className="text-[#BFFA60] flex-shrink-0" />
-          <p className="text-xs text-white/50">
-            <span className="font-medium text-white/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+          <p className="text-xs text-muted">
+            <span className="font-medium text-muted">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
           </p>
         </div>
 
         {/* ── Tab Navigation ── */}
-        <div className="flex items-center gap-1 bg-white/[0.04] rounded-xl p-1 mb-6">
+        <div className="flex items-center gap-1 bg-card rounded-xl p-1 mb-6">
           {(['overview', 'findings', 'pages'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all ${
                 activeTab === tab
-                  ? 'bg-white/[0.06] text-white shadow-sm'
-                  : 'text-white/40 hover:text-white/60'
+                  ? 'bg-card-hover text-text shadow-sm'
+                  : 'text-muted hover:text-muted'
               }`}
             >
               {tab === 'overview' && 'Overview'}
@@ -695,9 +695,9 @@ export default function DemoReportContent() {
         {activeTab === 'overview' && (
           <>
             {/* Executive Summary */}
-            <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-              <h3 className="text-sm font-medium text-white mb-2">Executive Summary</h3>
-              <p className="text-sm text-white/50 leading-relaxed">
+            <div className="mb-6 rounded-xl border border-border bg-card p-5">
+              <h3 className="text-sm font-medium text-text mb-2">Executive Summary</h3>
+              <p className="text-sm text-muted leading-relaxed">
                 Acme.com scores {DEMO_SCORE}/100 overall with strong ethical UX practices and navigation structure, but significant gaps in accessibility, AI readiness, and trust signals. Two critical issues — missing alt text and no structured data — should be addressed immediately for the highest impact. Fixing the 2 critical and 2 high-severity findings could improve the overall score by an estimated 20-25 points.
               </p>
             </div>
@@ -719,16 +719,16 @@ export default function DemoReportContent() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
-                          <PillarIcon size={18} className="text-white" />
+                          <PillarIcon size={18} className="text-text" />
                         </div>
                         <div>
-                          <h2 className="font-heading font-medium text-lg text-white">{pillar.name}</h2>
-                          <p className="text-xs text-white/40">4 categories evaluated</p>
+                          <h2 className="font-heading font-medium text-lg text-text">{pillar.name}</h2>
+                          <p className="text-xs text-muted">4 categories evaluated</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className={`text-2xl font-medium font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
-                        <p className="text-[11px] text-white/40">{scoreLabel(avgScore)}</p>
+                        <p className="text-[11px] text-muted">{scoreLabel(avgScore)}</p>
                       </div>
                     </div>
 
@@ -738,22 +738,22 @@ export default function DemoReportContent() {
                         const globalIdx = pillar.range[0] + relIdx
                         const Icon = CATEGORY_ICONS[globalIdx]
                         return (
-                          <div key={globalIdx} className="bg-white/[0.04] backdrop-blur-sm rounded-lg p-3 border border-white/[0.04]">
+                          <div key={globalIdx} className="bg-card backdrop-blur-sm rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-2.5 mb-1.5">
                               <div className={`w-6 h-6 rounded-md ${pillar.iconBg} flex items-center justify-center flex-shrink-0`}>
                                 <Icon size={12} className={pillar.iconColor} />
                               </div>
-                              <p className="text-xs font-medium text-white truncate flex-1">{cat.name}</p>
+                              <p className="text-xs font-medium text-text truncate flex-1">{cat.name}</p>
                               <span className={`text-xs font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
                             </div>
-                            <div className="w-full bg-white/[0.06] rounded-full h-1.5">
+                            <div className="w-full bg-card-hover rounded-full h-1.5">
                               <div
                                 className={`h-full rounded-full ${pillar.scoreBg}`}
                                 style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
                               />
                             </div>
                             {cat.summary && (
-                              <p className="text-[10px] text-white/35 mt-2 line-clamp-2 leading-relaxed">{cat.summary}</p>
+                              <p className="text-[10px] text-muted mt-2 line-clamp-2 leading-relaxed">{cat.summary}</p>
                             )}
                           </div>
                         )
@@ -766,7 +766,7 @@ export default function DemoReportContent() {
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-2 px-1">
                         <span className={`text-xs font-medium ${pillar.iconColor}`}>{pillarFindings[0].category}</span>
-                        <span className="text-[11px] text-white/40">{pillarFindings.length} finding{pillarFindings.length !== 1 ? 's' : ''}</span>
+                        <span className="text-[11px] text-muted">{pillarFindings.length} finding{pillarFindings.length !== 1 ? 's' : ''}</span>
                       </div>
                       <div className="space-y-2">
                         {pillarFindings.map((finding, i) => (
@@ -804,17 +804,17 @@ export default function DemoReportContent() {
               { url: 'https://www.acme.com/about', title: 'About — Acme', status: 200, time: 760 },
               { url: 'https://www.acme.com/checkout', title: 'Checkout — Acme', status: 200, time: 2100 },
             ].map((page, i) => (
-              <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-                  <Globe size={16} className="text-white/30" />
+              <div key={i} className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center flex-shrink-0">
+                  <Globe size={16} className="text-muted" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{page.title}</p>
-                  <p className="text-xs text-white/30 truncate">{page.url}</p>
+                  <p className="text-sm font-medium text-text truncate">{page.title}</p>
+                  <p className="text-xs text-muted truncate">{page.url}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-xs text-emerald-400 font-medium">{page.status}</span>
-                  <span className="text-xs text-white/30">{page.time}ms</span>
+                  <span className="text-xs text-muted">{page.time}ms</span>
                 </div>
               </div>
             ))}
@@ -829,13 +829,13 @@ export default function DemoReportContent() {
       <section className="relative py-28 sm:py-36 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <img src="/gradients/bg-cta.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
           </p>
           <Link

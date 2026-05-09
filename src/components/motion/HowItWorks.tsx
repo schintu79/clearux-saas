@@ -16,9 +16,9 @@ import {
 
 /* ── Shared dark card shell ────────────────────────────────── */
 const CARD_OUTER = 'w-full mx-auto'
-const CARD_INNER = 'rounded-2xl bg-[#111111] border border-white/[0.08] p-7 sm:p-9'
+const CARD_INNER = 'rounded-2xl bg-surface border border-border p-7 sm:p-9'
 const CARD_HEADER = 'flex items-center justify-between mb-6'
-const CARD_ICON_BOX = 'w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center'
+const CARD_ICON_BOX = 'w-10 h-10 rounded-xl bg-card-hover flex items-center justify-center'
 
 /* ── Step 1: Page Capture — URL submitted, site pages detected ─ */
 function PageCaptureVisual({ inView }: { inView: boolean }) {
@@ -55,8 +55,8 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
               <ScanLine size={20} className="text-[#34D399]" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">Site Crawl</p>
-              <p className="text-xs text-white/40">Discovering pages</p>
+              <p className="text-sm font-medium text-text">Site Crawl</p>
+              <p className="text-xs text-muted">Discovering pages</p>
             </div>
           </div>
           {step >= 3 && (
@@ -77,8 +77,8 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
           animate={step >= 1 ? { opacity: 1 } : {}}
           transition={{ duration: 0.4 }}
         >
-          <div className="flex-1 px-4 py-3 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center">
-            <span className="text-sm text-white/70 font-mono">acme.com</span>
+          <div className="flex-1 px-4 py-3 rounded-xl bg-card-hover border border-border flex items-center">
+            <span className="text-sm text-muted font-mono">acme.com</span>
           </div>
           <motion.div
             className="px-5 py-3 rounded-xl bg-[#10B981] text-[#111] text-sm font-medium flex items-center gap-2 flex-shrink-0"
@@ -101,11 +101,11 @@ function PageCaptureVisual({ inView }: { inView: boolean }) {
                 initial={{ opacity: 0, x: -16 }}
                 animate={isVisible ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.35, delay: i * 0.08 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border"
               >
-                <Icon size={15} className="text-white/30 flex-shrink-0" />
-                <span className="text-sm text-white/50 font-mono">{page.path}</span>
-                <span className="text-xs text-white/30 ml-auto">{page.label}</span>
+                <Icon size={15} className="text-muted flex-shrink-0" />
+                <span className="text-sm text-muted font-mono">{page.path}</span>
+                <span className="text-xs text-muted ml-auto">{page.label}</span>
                 {step >= 4 && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -166,15 +166,15 @@ function ScanningGrid({ inView }: { inView: boolean }) {
               <Brain size={20} className="text-[#34D399]" />
             </motion.div>
             <div>
-              <p className="text-sm font-medium text-white">Analysing acme.com</p>
-              <p className="text-xs text-white/40">96 checkpoints across 6 modules</p>
+              <p className="text-sm font-medium text-text">Analysing acme.com</p>
+              <p className="text-xs text-muted">96 checkpoints across 6 modules</p>
             </div>
           </div>
           <span className="text-[#34D399] font-heading text-3xl font-medium">{progress}%</span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 rounded-full bg-white/[0.06] mb-6 overflow-hidden">
+        <div className="h-2 rounded-full bg-card-hover mb-6 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-[#10B981]"
             style={{ width: `${progress}%` }}
@@ -195,11 +195,11 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 ${
                   isActive
                     ? 'bg-[#10B981]/[0.08] border-[#10B981]/20'
-                    : 'bg-white/[0.02] border-white/[0.06]'
+                    : 'bg-card border-border'
                 }`}
               >
-                <Icon size={16} className={isActive ? 'text-[#34D399]' : 'text-white/30'} />
-                <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-white/30'}`}>
+                <Icon size={16} className={isActive ? 'text-[#34D399]' : 'text-muted'} />
+                <span className={`text-sm font-medium ${isActive ? 'text-text' : 'text-muted'}`}>
                   {cp.label}
                 </span>
                 {isActive && (
@@ -256,8 +256,8 @@ function ResultsReveal({ inView }: { inView: boolean }) {
               <BarChart3 size={20} className="text-[#34D399]" />
             </div>
             <div>
-              <p className="text-sm font-medium text-white">Audit Complete</p>
-              <p className="text-xs text-white/40">acme.com</p>
+              <p className="text-sm font-medium text-text">Audit Complete</p>
+              <p className="text-xs text-muted">acme.com</p>
             </div>
           </div>
           <motion.div
@@ -267,7 +267,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
             <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+              <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border)" strokeWidth="5" />
               <motion.circle
                 cx="40" cy="40" r="34" fill="none" stroke="#10B981" strokeWidth="5"
                 strokeLinecap="round"
@@ -277,7 +277,7 @@ function ResultsReveal({ inView }: { inView: boolean }) {
                 transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-medium text-white">
+            <span className="absolute inset-0 flex items-center justify-center font-heading text-2xl font-medium text-text">
               {score}
             </span>
           </motion.div>
@@ -298,12 +298,12 @@ function ResultsReveal({ inView }: { inView: boolean }) {
               transition={{ delay: 0.8 + i * 0.1, duration: 0.4 }}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-white/50">{p.label}</span>
-                <span className="text-xs font-medium text-white">{p.value}</span>
+                <span className="text-xs text-muted">{p.label}</span>
+                <span className="text-xs font-medium text-text">{p.value}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-card-hover overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-white/80"
+                  className="h-full rounded-full bg-muted"
                   initial={{ width: 0 }}
                   animate={inView ? { width: `${p.value}%` } : {}}
                   transition={{ duration: 0.8, delay: 1 + i * 0.1, ease: 'easeOut' }}
@@ -315,21 +315,21 @@ function ResultsReveal({ inView }: { inView: boolean }) {
 
         {/* Top findings */}
         <div className="space-y-2.5">
-          <p className="text-xs font-medium uppercase tracking-wider text-white/30 mb-3">Top findings</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted mb-3">Top findings</p>
           {findings.map((f, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 15 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 1.4 + i * 0.15, duration: 0.4 }}
-              className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+              className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border"
             >
-              <span className={`${f.color} text-white text-[10px] font-medium px-2 py-1 rounded mt-0.5 flex-shrink-0`}>
+              <span className={`${f.color} text-text text-[10px] font-medium px-2 py-1 rounded mt-0.5 flex-shrink-0`}>
                 {f.severity}
               </span>
               <div>
-                <p className="text-sm font-medium text-white leading-snug">{f.label}</p>
-                <p className="text-xs text-white/40 mt-0.5">{f.cat}</p>
+                <p className="text-sm font-medium text-text leading-snug">{f.label}</p>
+                <p className="text-xs text-muted mt-0.5">{f.cat}</p>
               </div>
             </motion.div>
           ))}
@@ -469,10 +469,10 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-white mb-3" style={{ lineHeight: '1.15' }}>
+          <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-text mb-3" style={{ lineHeight: '1.15' }}>
             Ready to see what you&apos;re missing?
           </h3>
-          <p className="text-white/70 text-sm sm:text-base mb-8 max-w-md mx-auto">
+          <p className="text-muted text-sm sm:text-base mb-8 max-w-md mx-auto">
             Your first audit is free. Results in under 10 minutes.
           </p>
           <Link

@@ -42,12 +42,14 @@ export function ThemeProvider({
     }
   }, [])
 
-  // Persist preference to cookie. The public site is always dark (hardcoded
-  // in layout.tsx via the `dark` class on <html>). Dashboard pages scope their
-  // own theme via the `theme-light` CSS-variable class on DashboardShell.
-  // We NEVER touch <html> classList because removing `dark` would break
-  // public pages during SPA navigation.
+  // Sync dark class on <html> and persist to cookie
   useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
     setThemeCookie(theme)
   }, [theme])
 

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function FaqPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#111114]">
+    <div className="flex flex-col min-h-screen bg-surface">
       <FaqJsonLd />
       <Navbar />
       <FaqContent />

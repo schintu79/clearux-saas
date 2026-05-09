@@ -135,7 +135,7 @@ export default function WhatIsAUxAuditPage() {
             </p>
 
             <div className="space-y-6">
-              <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
+              <div className="p-6 rounded-2xl border border-border bg-card">
                 <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Accessibility
                 </h3>
@@ -147,7 +147,7 @@ export default function WhatIsAUxAuditPage() {
                   issues by severity.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
+              <div className="p-6 rounded-2xl border border-border bg-card">
                 <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Usability
                 </h3>
@@ -158,7 +158,7 @@ export default function WhatIsAUxAuditPage() {
                   load. Each issue is mapped to a recognised usability heuristic.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
+              <div className="p-6 rounded-2xl border border-border bg-card">
                 <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Conversion & Engagement
                 </h3>
@@ -170,7 +170,7 @@ export default function WhatIsAUxAuditPage() {
                   revenue gains.
                 </p>
               </div>
-              <div className="p-6 rounded-2xl border border-border/20 dark:border-white/[0.05] bg-card shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-none">
+              <div className="p-6 rounded-2xl border border-border bg-card">
                 <h3 className="font-heading font-medium text-lg text-text mb-2">
                   Ethical Design
                 </h3>

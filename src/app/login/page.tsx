@@ -17,8 +17,8 @@ const loginSchema = z.object({
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
       </div>
     }>
       <LoginContent />
@@ -130,14 +130,14 @@ function LoginContent() {
 
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#111114]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-surface">
+        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#111114] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-surface relative overflow-hidden">
       <Navbar />
 
       {/* Background */}
@@ -147,7 +147,7 @@ function LoginContent() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
       {/* Content */}
@@ -156,22 +156,22 @@ function LoginContent() {
 
           {/* Heading */}
           <div className="text-center mb-10">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/60 mb-3">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-3">
               Sign in
             </p>
             <h1
-              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-white mb-3"
+              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-text mb-3"
               style={{ lineHeight: '1.1' }}
             >
               Welcome <span className="text-lime-gradient">back.</span>
             </h1>
-            <p className="text-base text-white/60 leading-relaxed">
+            <p className="text-base text-muted leading-relaxed">
               Sign in to access your audits, reports, and brand identities.
             </p>
           </div>
 
           {/* Card */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 sm:p-10">
+          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
             {error && (
               <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-6">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -191,7 +191,7 @@ function LoginContent() {
               type="button"
               onClick={() => handleOAuth('google')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[52px] rounded-full border border-white/[0.10] bg-white/[0.04] hover:bg-white/[0.08] transition-colors text-base font-medium text-white disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[52px] rounded-full border border-border bg-card hover:bg-card-hover transition-colors text-base font-medium text-text disabled:opacity-50"
             >
               {oauthLoading === 'google' ? (
                 <span className="spinner" />
@@ -208,15 +208,15 @@ function LoginContent() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">
-              <div className="flex-1 h-px bg-white/[0.08]" />
-              <span className="text-xs text-white/60 uppercase tracking-wider">or</span>
-              <div className="flex-1 h-px bg-white/[0.08]" />
+              <div className="flex-1 h-px bg-card-hover" />
+              <span className="text-xs text-muted uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-card-hover" />
             </div>
 
             {/* Email form */}
             <form onSubmit={handleSubmit} className="space-y-5" aria-label="Sign in form">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-muted mb-2">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -226,14 +226,14 @@ function LoginContent() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.email && <p className="text-xs text-red-400 mt-2">{errors.email}</p>}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-muted mb-2">Password</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -244,13 +244,13 @@ function LoginContent() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -261,7 +261,7 @@ function LoginContent() {
               </div>
 
               <div className="flex items-center justify-end pt-1">
-                <Link href="/forgot-password" className="text-sm text-white/60 hover:text-white/70 transition-colors">
+                <Link href="/forgot-password" className="text-sm text-muted hover:text-muted transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -289,12 +289,12 @@ function LoginContent() {
             </form>
           </div>
 
-          <p className="mt-6 text-center text-xs text-white/50 leading-relaxed">
+          <p className="mt-6 text-center text-xs text-muted leading-relaxed">
             Your audit results are private and encrypted. We never share your data.
           </p>
 
           {/* Sign up link */}
-          <p className="mt-4 text-center text-sm text-white/60">
+          <p className="mt-4 text-center text-sm text-muted">
             Don&apos;t have an account?{' '}
             <Link
               href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'}

@@ -51,22 +51,22 @@ export default function ContactContent() {
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             GET IN TOUCH
           </p>
 
           <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white max-w-3xl"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text max-w-3xl"
             style={{ lineHeight: '1.1' }}
           >
             Contact <span className="text-lime-gradient">us.</span>
           </h1>
 
-          <p className="text-white/65 text-base sm:text-lg max-w-xl leading-relaxed mt-3 mb-14">
+          <p className="text-muted text-base sm:text-lg max-w-xl leading-relaxed mt-3 mb-14">
             Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
           </p>
 
@@ -75,17 +75,17 @@ export default function ContactContent() {
             {/* ── Form card ── */}
             <div className="lg:col-span-2">
               {submitted ? (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 sm:p-10">
+                <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
                   <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-5">
                     <CheckCircle size={28} className="text-[#BFFA60]" />
                   </div>
-                  <p className="font-heading font-medium text-lg text-white mb-1">Message sent!</p>
-                  <p className="font-body text-sm text-white/65">
+                  <p className="font-heading font-medium text-lg text-text mb-1">Message sent!</p>
+                  <p className="font-body text-sm text-muted">
                     Thanks for reaching out. We&rsquo;ll reply within 24 hours.
                   </p>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8 md:p-10">
+                <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8 md:p-10">
                   <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
                     {error && (
                       <div className="rounded-lg p-4 text-sm font-body text-red-400 border border-red-800 bg-red-900/20">
@@ -94,7 +94,7 @@ export default function ContactContent() {
                     )}
 
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium font-body text-white mb-1.5">
+                      <label htmlFor="name" className="block text-sm font-medium font-body text-text mb-1.5">
                         Name
                       </label>
                       <input
@@ -104,13 +104,13 @@ export default function ContactContent() {
                         autoComplete="name"
                         aria-required="true"
                         required
-                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className="rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="Your name"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium font-body text-white mb-1.5">
+                      <label htmlFor="email" className="block text-sm font-medium font-body text-text mb-1.5">
                         Email
                       </label>
                       <input
@@ -120,13 +120,13 @@ export default function ContactContent() {
                         autoComplete="email"
                         aria-required="true"
                         required
-                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className="rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="you@example.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium font-body text-white mb-1.5">
+                      <label htmlFor="message" className="block text-sm font-medium font-body text-text mb-1.5">
                         Message
                       </label>
                       <textarea
@@ -135,7 +135,7 @@ export default function ContactContent() {
                         rows={5}
                         aria-required="true"
                         required
-                        className="rounded-2xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
+                        className="rounded-2xl bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
                         placeholder="How can we help?"
                       />
                     </div>
@@ -167,25 +167,25 @@ export default function ContactContent() {
 
             {/* ── Contact info cards ── */}
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6">
+              <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
                 <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
                   <Mail size={18} className="text-[#BFFA60]" />
                 </div>
-                <p className="text-sm font-medium font-body text-white mb-1">Email us</p>
+                <p className="text-sm font-medium font-body text-text mb-1">Email us</p>
                 <a
                   href="mailto:support@clearux.ai"
-                  className="text-sm font-body text-white/65 hover:text-white/70 transition-colors"
+                  className="text-sm font-body text-muted hover:text-muted transition-colors"
                 >
                   support@clearux.ai
                 </a>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6">
+              <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
                 <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
                   <MessageSquare size={18} className="text-[#BFFA60]" />
                 </div>
-                <p className="text-sm font-medium font-body text-white mb-1">Response time</p>
-                <p className="text-sm font-body text-white/65">Usually within 24 hours</p>
+                <p className="text-sm font-medium font-body text-text mb-1">Response time</p>
+                <p className="text-sm font-body text-muted">Usually within 24 hours</p>
               </div>
             </div>
 
@@ -201,17 +201,17 @@ export default function ContactContent() {
             alt=""
             className="absolute inset-0 w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4"
             style={{ lineHeight: '1.1' }}
           >
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
-          <p className="text-white/65 text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
             Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
           </p>
           <Link

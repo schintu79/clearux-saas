@@ -101,17 +101,20 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Always dark mode — no theme toggle on the public site.
-  const initialTheme = 'dark' as const
-
   return (
     <html
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable} dark`}
+      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
     >
       <head>
+        {/* Prevent flash of wrong theme — runs before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )clearux-theme=(light|dark)/);var t=m?m[1]:window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(e){}})()`,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -142,7 +145,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning className="font-body antialiased bg-surface text-text">
-        <ThemeProvider initialTheme={initialTheme}>
+        <ThemeProvider>
           <AuthProvider>
             {children}
             <ScrollToTop />
