@@ -103,7 +103,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'Is my data secure?',
-        a: 'We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We are GDPR compliant and use SSL encryption throughout.',
+        a: "We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We're GDPR compliant and use SSL encryption throughout.",
       },
       {
         q: 'Can I get a refund?',
@@ -236,7 +236,7 @@ export default function FaqContent() {
               SUPPORT CENTRE
             </p>
 
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3" style={{ lineHeight: '1.1' }}>
+            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-3" style={{ lineHeight: '1.1' }}>
               Frequently asked <span className="text-lime-gradient">questions.</span>
             </h1>
 
@@ -247,25 +247,25 @@ export default function FaqContent() {
             {/* Search Box */}
             <div className="max-w-md">
               <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.06] text-white text-base font-body placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
+                  className="w-full pl-10 pr-16 py-3 rounded-full border border-white/[0.1] bg-white/[0.06] text-white text-base font-body placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/10 focus:border-white/20 transition-all"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-white/40 hover:text-white transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-white/60 hover:text-white transition-colors"
                   >
                     Clear
                   </button>
                 )}
               </div>
               {searchQuery && (
-                <p className="font-body text-xs text-white/40 mt-2">
+                <p className="font-body text-xs text-white/60 mt-2">
                   {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
                 </p>
               )}
@@ -323,7 +323,7 @@ export default function FaqContent() {
                     <h2 className="font-heading font-medium text-xl sm:text-2xl text-white">
                       {section.title}
                     </h2>
-                    <span className="font-body text-[11px] font-medium text-white/30">
+                    <span className="font-body text-[11px] font-medium text-white/50">
                       {section.items.length}
                     </span>
                     <div className="flex-1 h-px bg-white/[0.06]" />
@@ -361,7 +361,7 @@ export default function FaqContent() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
@@ -371,7 +371,7 @@ export default function FaqContent() {
             href="/register"
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

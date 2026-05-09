@@ -184,11 +184,11 @@ function RegisterContent() {
 
           {/* Heading */}
           <div className="text-center mb-10">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-3">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/60 mb-3">
               Create account
             </p>
             <h1
-              className="font-heading text-[2rem] sm:text-[2.75rem] font-light text-white mb-3"
+              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-white mb-3"
               style={{ lineHeight: '1.1' }}
             >
               Get your free <span className="text-lime-gradient">UX audit.</span>
@@ -244,7 +244,7 @@ function RegisterContent() {
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">
               <div className="flex-1 h-px bg-white/[0.08]" />
-              <span className="text-xs text-white/40 uppercase tracking-wider">or</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">or</span>
               <div className="flex-1 h-px bg-white/[0.08]" />
             </div>
 
@@ -261,7 +261,7 @@ function RegisterContent() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="Sarah Chen"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.fullName ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.fullName ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.fullName && <p className="text-xs text-red-400 mt-2">{errors.fullName}</p>}
@@ -278,7 +278,7 @@ function RegisterContent() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.email && <p className="text-xs text-red-400 mt-2">{errors.email}</p>}
@@ -296,13 +296,13 @@ function RegisterContent() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a strong password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -315,13 +315,13 @@ function RegisterContent() {
                     {passwordChecks.map((check) => (
                       <div key={check.label} className="flex items-center gap-2">
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                          check.met ? 'bg-[#84CC16]' : 'bg-white/[0.10]'
+                          check.met ? 'bg-[#BFFA60]' : 'bg-white/[0.10]'
                         }`}>
                           {check.met && (
                             <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           )}
                         </div>
-                        <span className={`text-xs transition-colors ${check.met ? 'text-[#84CC16]' : 'text-white/40'}`}>
+                        <span className={`text-xs transition-colors ${check.met ? 'text-[#BFFA60]' : 'text-white/60'}`}>
                           {check.label}
                         </span>
                       </div>
@@ -345,13 +345,13 @@ function RegisterContent() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat your password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
@@ -361,14 +361,14 @@ function RegisterContent() {
                 {formData.confirmPassword.length > 0 && (
                   <div className="flex items-center gap-2 mt-2">
                     <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                      formData.password === formData.confirmPassword ? 'bg-[#84CC16]' : 'bg-white/[0.10]'
+                      formData.password === formData.confirmPassword ? 'bg-[#BFFA60]' : 'bg-white/[0.10]'
                     }`}>
                       {formData.password === formData.confirmPassword && (
                         <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       )}
                     </div>
                     <span className={`text-xs transition-colors ${
-                      formData.password === formData.confirmPassword ? 'text-[#84CC16]' : 'text-white/40'
+                      formData.password === formData.confirmPassword ? 'text-[#BFFA60]' : 'text-white/60'
                     }`}>
                       {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
                     </span>
@@ -387,7 +387,7 @@ function RegisterContent() {
                   onClick={() => setMarketingEmails(prev => !prev)}
                   className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
                     marketingEmails
-                      ? 'bg-[#84CC16] border-[#84CC16]'
+                      ? 'bg-[#BFFA60] border-[#BFFA60]'
                       : 'bg-white/[0.06] border-white/[0.10]'
                   }`}
                 >
@@ -397,7 +397,7 @@ function RegisterContent() {
                 </button>
                 <label
                   onClick={() => setMarketingEmails(prev => !prev)}
-                  className="text-sm text-white/40 leading-relaxed cursor-pointer select-none"
+                  className="text-sm text-white/60 leading-relaxed cursor-pointer select-none"
                 >
                   Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
                 </label>
@@ -425,7 +425,7 @@ function RegisterContent() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-white/30 leading-relaxed">
+            <p className="mt-6 text-center text-xs text-white/50 leading-relaxed">
               Your audit results are private and encrypted. We never share your data.
             </p>
           </div>
@@ -449,11 +449,11 @@ function RegisterContent() {
           </div>
 
           {/* Sign in link */}
-          <p className="mt-6 text-center text-sm text-white/40">
+          <p className="mt-6 text-center text-sm text-white/60">
             Already have an account?{' '}
             <Link
               href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'}
-              className="font-medium text-lime-gradient hover:underline transition-colors"
+              className="font-medium text-volt hover:underline transition-colors"
             >
               Sign in
             </Link>

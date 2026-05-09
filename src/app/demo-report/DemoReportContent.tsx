@@ -250,7 +250,7 @@ function ScoreRing({ score, size = 110 }: { score: number; size?: number }) {
           cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s ease' }}
+          style={{ transition: 'stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
@@ -373,7 +373,7 @@ function DemoCheckpointHealth() {
     <div className="mb-6 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
       <div className="px-5 py-3.5 border-b border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <CheckCircle2 size={14} className="text-[#84CC16]" />
+          <CheckCircle2 size={14} className="text-[#BFFA60]" />
           <h3 className="text-xs font-medium text-white">64-Checkpoint Health</h3>
           <span className="text-[10px] text-white/40 ml-auto">7 issues across 24 categories</span>
         </div>
@@ -541,7 +541,7 @@ export default function DemoReportContent() {
       <div className="relative z-10 max-w-4xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
         {/* ── Sample report banner ── */}
         <div className="flex items-center gap-3 mb-6">
-          <span className="px-3 py-1 rounded-full bg-[#84CC16]/10 text-[#84CC16] text-xs font-medium">
+          <span className="px-3 py-1 rounded-full bg-[#BFFA60]/10 text-[#BFFA60] text-xs font-medium">
             Sample Report
           </span>
           <span className="text-xs text-white/40">This is a visual demo of the ClearUX dashboard</span>
@@ -561,7 +561,7 @@ export default function DemoReportContent() {
             </h1>
             <div className="flex items-center gap-3 flex-wrap">
               <p className="text-white/40 text-sm">{DEMO_DATE}</p>
-              <span className="inline-flex items-center gap-1 text-xs text-[#84CC16]">
+              <span className="inline-flex items-center gap-1 text-xs text-[#BFFA60]">
                 <ExternalLink size={11} />
                 Visit site
               </span>
@@ -579,7 +579,7 @@ export default function DemoReportContent() {
             ════════════════════════════════════════════════ */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden mb-6">
           {/* Brand accent */}
-          <div className="h-1.5 bg-[#84CC16]" />
+          <div className="h-1.5 bg-[#BFFA60]" />
 
           <div className="p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -663,8 +663,8 @@ export default function DemoReportContent() {
         <DemoScoreChart />
 
         {/* ── Improvement tip ── */}
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#84CC16]/[0.05] border border-[#84CC16]/20">
-          <RefreshCw size={15} className="text-[#84CC16] flex-shrink-0" />
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#BFFA60]/[0.05] border border-[#BFFA60]/20">
+          <RefreshCw size={15} className="text-[#BFFA60] flex-shrink-0" />
           <p className="text-xs text-white/50">
             <span className="font-medium text-white/70">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
           </p>
@@ -832,17 +832,17 @@ export default function DemoReportContent() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
           </p>
           <Link
             href="/register"
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

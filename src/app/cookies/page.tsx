@@ -27,7 +27,7 @@ export default function CookiesPage() {
 
             <section>
               <h2 className="font-heading font-medium text-xl text-text mb-3">Cookies we use</h2>
-              <p className="mb-3">ClearUX uses only essential cookies. We do not use advertising, analytics, or third-party tracking cookies.</p>
+              <p className="mb-3">ClearUX uses only essential cookies. We don't use advertising, analytics, or third-party tracking cookies.</p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
                   <thead>
@@ -69,7 +69,7 @@ export default function CookiesPage() {
             <section>
               <h2 className="font-heading font-medium text-xl text-text mb-3">Third-party cookies</h2>
               <p>
-                We do not use advertising or third-party tracking cookies. Stripe, our payment processor,
+                We don't use advertising or third-party tracking cookies. Stripe, our payment processor,
                 may set its own cookies during checkout — these are governed by{' '}
                 <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">Stripe&rsquo;s privacy policy</a>.
               </p>

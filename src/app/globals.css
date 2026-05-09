@@ -5,7 +5,7 @@
 /* ── Global focus-visible ring ────────────────────────────── */
 /* Ensures keyboard navigation is always visible (WCAG 2.4.7) */
 *:focus-visible {
-  outline: 2px solid var(--accent, #84CC16);
+  outline: 2px solid var(--accent, #BFFA60);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -14,7 +14,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent, #84CC16);
+  box-shadow: 0 0 0 2px var(--accent, #BFFA60);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -32,14 +32,14 @@ select:focus-visible {
   --hero-bg:     #111111;
 
   /* Accent — lime spectrum */
-  --accent:      #84CC16;
-  --accent-dk:   #65A30D;
+  --accent:      #BFFA60;
+  --accent-dk:   #A8E54A;
   --accent-lt:   #F7FEE7;
-  --accent-glow: rgba(132,204,22,0.10);
+  --accent-glow: rgba(191,250,96,0.10);
 
   /* Lime primary */
-  --lime:        #84CC16;
-  --lime-hover:  #65A30D;
+  --lime:        #BFFA60;
+  --lime-hover:  #A8E54A;
   --lime-soft:   #F7FEE7;
 
   /* Status/semantic colors */
@@ -93,7 +93,7 @@ select:focus-visible {
   --hero-bg:     #111114;
 
   --lime:        #BEF264;
-  --lime-hover:  #84CC16;
+  --lime-hover:  #BFFA60;
   --lime-soft:   rgba(190,242,100,0.08);
 
   --color-success:  #4ADE80;
@@ -110,12 +110,12 @@ select:focus-visible {
   --blue:        #FFFFFF;
   --blue-dk:     #FFFFFF;
   --blue-lt:     #18181C;
-  --accent:      #84CC16;
-  --accent-dk:   #65A30D;
-  --accent-lt:   rgba(132,204,22,0.06);
+  --accent:      #BFFA60;
+  --accent-dk:   #A8E54A;
+  --accent-lt:   rgba(191,250,96,0.06);
 
-  --gradient-brand: linear-gradient(135deg, #84CC16, #BEF264, #84CC16);
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(132,204,22,.06) 0%, rgba(190,242,100,.04) 50%, rgba(132,204,22,.02) 100%);
+  --gradient-brand: #BFFA60;
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(191,250,96,.06) 0%, rgba(190,242,100,.04) 50%, rgba(191,250,96,.02) 100%);
   --gradient-brand-text: #FFFFFF;
 
   --navy:        #FFFFFF;
@@ -146,12 +146,12 @@ select:focus-visible {
   --brand-hover: #333333;
   --brand-light: #F0F0F0;
   --hero-bg:     #111111;
-  --accent:      #84CC16;
-  --accent-dk:   #65A30D;
+  --accent:      #BFFA60;
+  --accent-dk:   #A8E54A;
   --accent-lt:   #F7FEE7;
-  --accent-glow: rgba(132,204,22,0.10);
-  --lime:        #84CC16;
-  --lime-hover:  #65A30D;
+  --accent-glow: rgba(191,250,96,0.10);
+  --lime:        #BFFA60;
+  --lime-hover:  #A8E54A;
   --lime-soft:   #F7FEE7;
   --color-success:  #22C55E;
   --color-warning:  #EAB308;
@@ -380,9 +380,9 @@ select:focus-visible {
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
-/* Lime gradient background for icon containers */
+/* Volt solid background for icon containers and CTAs */
 .bg-lime-gradient {
-  background: linear-gradient(135deg, #84CC16 0%, #BEF264 50%, #84CC16 100%);
+  background: #BFFA60;
 }
 
 /* Hide scrollbar utility */
@@ -433,8 +433,8 @@ select:focus-visible {
   --surface-alt: #18181C;
   --input-bg:    rgba(255,255,255,0.04);
   --placeholder: #4B5066;
-  --accent:      #84CC16;
-  --accent-dk:   #65A30D;
+  --accent:      #BFFA60;
+  --accent-dk:   #A8E54A;
   --gradient-brand-text: #F0F0F5;
 }
 
@@ -462,21 +462,23 @@ select:focus-visible {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LIME GRADIENT TEXT
+   VOLT ACCENT — Two styles
    ══════════════════════════════════════════════════════════════ */
 
+/* Highlight block — Ink text on Volt surface (for heading accents) */
 .text-lime-gradient {
-  background: linear-gradient(135deg, #84CC16 0%, #BEF264 40%, #ECFCCB 70%, #84CC16 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: lime-shimmer 4s ease-in-out infinite;
+  background-color: #BFFA60;
+  color: #0F0F0F;
+  padding: 0.04em 0.2em;
+  margin: 0 -0.08em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  display: inline;
 }
 
-@keyframes lime-shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+/* Volt-colored text — for stats, prices, labels */
+.text-volt {
+  color: #BFFA60;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -491,7 +493,7 @@ body {
   background: var(--surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 16px;
   line-height: 1.7;
   letter-spacing: -0.011em;
@@ -569,7 +571,7 @@ article, .prose {
   color: var(--text);
   background: var(--input-bg);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
 }
 
@@ -586,11 +588,11 @@ article, .prose {
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(132,204,22,.10);
+  box-shadow: 0 0 0 3px rgba(191,250,96,.10);
 }
 
 .dark .input:focus {
-  box-shadow: 0 0 0 3px rgba(132,204,22,.12);
+  box-shadow: 0 0 0 3px rgba(191,250,96,.12);
 }
 
 .input::placeholder {
@@ -621,7 +623,7 @@ article, .prose {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   text-decoration: none;
   letter-spacing: -0.01em;
@@ -660,7 +662,7 @@ article, .prose {
   font-size: 0.8125rem;
   color: var(--muted);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 44px;
   padding: 0.5rem 0;
 }
@@ -820,10 +822,10 @@ article, .prose {
   100% { top: 105%; }
 }
 
-.animate-fade-up        { animation: fade-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
-.animate-fade-in        { animation: fade-in 0.4s ease-out both; }
-.animate-scale-in       { animation: scale-in 0.35s ease-out both; }
-.animate-slide-in-left  { animation: slide-in-left 0.4s ease-out both; }
+.animate-fade-up        { animation: fade-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.animate-fade-in        { animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.animate-scale-in       { animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.animate-slide-in-left  { animation: slide-in-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .animate-float          { animation: float 7s ease-in-out infinite; }
 .animate-float-slow     { animation: float-slow 9s ease-in-out infinite; }
 .animate-glow-pulse     { animation: glow-pulse 5s ease-in-out infinite; }
@@ -907,4 +909,11 @@ article, .prose {
   .auth-page { grid-template-columns: 1fr; }
   .auth-left  { display: none; }
   .auth-right { padding: 2rem 1.5rem; align-items: center; justify-content: flex-start; padding-top: 2rem; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ICONS — Brand-standard 1.5px stroke width
+   ══════════════════════════════════════════════════════════════ */
+svg.lucide {
+  stroke-width: 1.5px;
 }

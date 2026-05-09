@@ -156,11 +156,11 @@ function LoginContent() {
 
           {/* Heading */}
           <div className="text-center mb-10">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/40 mb-3">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/60 mb-3">
               Sign in
             </p>
             <h1
-              className="font-heading text-[2rem] sm:text-[2.75rem] font-light text-white mb-3"
+              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-white mb-3"
               style={{ lineHeight: '1.1' }}
             >
               Welcome <span className="text-lime-gradient">back.</span>
@@ -209,7 +209,7 @@ function LoginContent() {
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">
               <div className="flex-1 h-px bg-white/[0.08]" />
-              <span className="text-xs text-white/40 uppercase tracking-wider">or</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">or</span>
               <div className="flex-1 h-px bg-white/[0.08]" />
             </div>
 
@@ -226,7 +226,7 @@ function LoginContent() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
                   disabled={loading}
                 />
                 {errors.email && <p className="text-xs text-red-400 mt-2">{errors.email}</p>}
@@ -244,13 +244,13 @@ function LoginContent() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Enter your password"
-                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
+                    className={`w-full rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors z-10 p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white/60 hover:text-white/70 transition-colors z-10 p-1"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -261,7 +261,7 @@ function LoginContent() {
               </div>
 
               <div className="flex items-center justify-end pt-1">
-                <Link href="/forgot-password" className="text-sm text-white/40 hover:text-white/70 transition-colors">
+                <Link href="/forgot-password" className="text-sm text-white/60 hover:text-white/70 transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -289,16 +289,16 @@ function LoginContent() {
             </form>
           </div>
 
-          <p className="mt-6 text-center text-xs text-white/30 leading-relaxed">
+          <p className="mt-6 text-center text-xs text-white/50 leading-relaxed">
             Your audit results are private and encrypted. We never share your data.
           </p>
 
           {/* Sign up link */}
-          <p className="mt-4 text-center text-sm text-white/40">
+          <p className="mt-4 text-center text-sm text-white/60">
             Don&apos;t have an account?{' '}
             <Link
               href={pendingUrl ? `/register?url=${encodeURIComponent(pendingUrl)}` : '/register'}
-              className="font-medium text-lime-gradient hover:underline transition-colors"
+              className="font-medium text-volt hover:underline transition-colors"
             >
               Sign up
             </Link>

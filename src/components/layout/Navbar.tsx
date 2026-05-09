@@ -56,7 +56,7 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks = [
-    { label: 'How It Works', href: '/how-it-works' },
+    { label: 'How it works', href: '/how-it-works' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Contact', href: '/contact' },
@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center" aria-label="ClearUX home">
-            <Logo height={28} variant="light" iconGradient />
+            <Logo height={28} variant="light" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -165,7 +165,7 @@ const Navbar: React.FC = () => {
                   href="/register"
                   className="text-xs font-medium text-[#111114] bg-lime-gradient hover:opacity-90 rounded-full px-5 py-2.5 transition-all hover:-translate-y-0.5 flex items-center gap-1.5"
                 >
-                  Start Free Audit
+                  Start free audit
                   <ArrowUpRight size={14} />
                 </Link>
               </>
@@ -224,7 +224,7 @@ const Navbar: React.FC = () => {
                       Login
                     </Link>
                     <Link href="/register" onClick={() => setIsOpen(false)} className="text-sm font-medium text-[#111114] bg-lime-gradient rounded-full px-7 py-[1.2rem] text-center min-h-[48px] flex items-center justify-center mt-1">
-                      Start Free Audit
+                      Start free audit
                     </Link>
                   </>
                 )}

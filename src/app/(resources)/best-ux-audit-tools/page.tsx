@@ -65,8 +65,8 @@ export default function BestUxAuditToolsPage() {
             audits. This guide compares three approaches — manual
             consultancies, single-purpose accessibility tools, and
             comprehensive AI-powered platforms — so you can make an informed
-            decision. We are upfront: ClearUX is one of the tools covered,
-            but we have done our best to be fair and factual.
+            decision. We're upfront: ClearUX is one of the tools covered,
+            but we've done our best to be fair and factual.
           </p>
 
           {/* ── Approach 1: Manual ── */}

@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><Logo height={28} variant="light" iconGradient /></div>
+            <div className="mb-3"><Logo height={28} variant="light" /></div>
             <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
               Full clarity, at your fingertips. 360° UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
             </p>
@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
               <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'How It Works', href: '/how-it-works' },
+                  { label: 'How it works', href: '/how-it-works' },
                   { label: 'Pricing', href: '/pricing' },
                   { label: 'FAQ', href: '/faq' },
                 ].map((link) => (
@@ -64,8 +64,8 @@ const Footer: React.FC = () => {
               <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Company</h4>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'About Us', href: '/about' },
-                  { label: 'Contact Us', href: '/contact' },
+                  { label: 'About us', href: '/about' },
+                  { label: 'Contact us', href: '/contact' },
                   { label: 'Login', href: '/login' },
                   { label: 'Dashboard', href: '/dashboard' },
                 ].map((link) => (
@@ -82,9 +82,9 @@ const Footer: React.FC = () => {
               <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Legal</h4>
               <ul className="space-y-2.5">
                 {[
-                  { label: 'Privacy Policy', href: '/privacy' },
-                  { label: 'Terms of Service', href: '/terms' },
-                  { label: 'Cookie Policy', href: '/cookies' },
+                  { label: 'Privacy policy', href: '/privacy' },
+                  { label: 'Terms of service', href: '/terms' },
+                  { label: 'Cookie policy', href: '/cookies' },
                 ].map((link) => (
                   <li key={link.label}>
                     <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">

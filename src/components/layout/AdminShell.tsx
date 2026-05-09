@@ -108,7 +108,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         {/* Header with Admin badge */}
         <div className="px-5 py-4 flex items-center justify-between border-b border-border">
           <Link href="/admin" className="flex items-center">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </Link>
           <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin
@@ -121,8 +121,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             href="/dashboard"
             className="flex items-center gap-2 w-full px-3 py-2 text-[13px] font-medium text-muted hover:text-text rounded-lg hover:bg-surface transition-all"
           >
-            <ArrowLeft size={14} strokeWidth={2} />
-            Back to Dashboard
+            <ArrowLeft size={14} strokeWidth={1.5} />
+            Back to dashboard
           </Link>
         </div>
 
@@ -144,7 +144,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
                         : 'text-muted hover:text-text hover:bg-surface/60'
                     )}
                   >
-                    <Icon size={16} strokeWidth={active ? 2 : 1.75} />
+                    <Icon size={16} strokeWidth={1.5} />
                     <span>{item.label}</span>
                     {active && (
                       <ChevronRight size={12} className="ml-auto text-muted/50" />
@@ -208,7 +208,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </span>
           <span className="ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
             Admin

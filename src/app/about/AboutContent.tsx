@@ -37,7 +37,7 @@ export default function AboutContent() {
             About ClearUX
           </p>
 
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white leading-[1.1] mb-3">
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white leading-[1.1] mb-3">
             Full clarity,{' '}
             <span className="text-lime-gradient">at your fingertips.</span>
           </h1>
@@ -56,7 +56,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             The origin story
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-10">
             Why ClearUX exists
           </h2>
 
@@ -92,8 +92,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
-                    <ItemIcon size={20} className="text-[#84CC16]" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#BFFA60]/10">
+                    <ItemIcon size={20} className="text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/65 text-[14px] leading-relaxed">{item.desc}</p>
@@ -112,7 +112,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             The founder
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-10">
             Built by someone who lived the problem
           </h2>
 
@@ -165,7 +165,7 @@ export default function AboutContent() {
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-white/50 mb-4">
             Our commitment
           </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4">
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4">
             Clarity. Rigour. <span className="text-lime-gradient">Speed.</span>
           </h2>
           <p className="font-body text-base sm:text-lg text-white/65 leading-relaxed max-w-xl mb-14">
@@ -196,8 +196,8 @@ export default function AboutContent() {
                   key={item.title}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-7"
                 >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#84CC16]/10">
-                    <ItemIcon size={20} className="text-[#84CC16]" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#BFFA60]/10">
+                    <ItemIcon size={20} className="text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading font-medium text-lg text-white mb-3">{item.title}</h3>
                   <p className="font-body text-white/65 text-[14px] leading-relaxed">{item.desc}</p>
@@ -217,7 +217,7 @@ export default function AboutContent() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
@@ -227,7 +227,7 @@ export default function AboutContent() {
             href="/register"
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

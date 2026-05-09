@@ -1002,7 +1002,7 @@ function PillarSection({
                 </div>
                 <div className="w-full bg-border/15 dark:bg-white/[0.06] rounded-full h-1.5">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${pillar.scoreBg}`}
+                    className={`h-full rounded-full transition-all duration-300 ${pillar.scoreBg}`}
                     style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
                   />
                 </div>

@@ -46,6 +46,7 @@ const config: Config = {
         heading: ["var(--font-heading)", "var(--font-body)", "system-ui", "sans-serif"],
         manrope: ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
         handwriting: ["var(--font-handwriting)", "cursive"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
     },
   },

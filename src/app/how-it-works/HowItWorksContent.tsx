@@ -98,7 +98,7 @@ export default function HowItWorksContent() {
             HOW IT WORKS
           </p>
           <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-3"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-3"
             style={{ lineHeight: '1.1' }}
           >
             Audit your product. Get{' '}
@@ -119,7 +119,7 @@ export default function HowItWorksContent() {
             THE PROCESS
           </p>
           <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-10"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-10"
             style={{ lineHeight: '1.1' }}
           >
             Three steps to <span className="text-lime-gradient">clarity.</span>
@@ -133,11 +133,11 @@ export default function HowItWorksContent() {
                   key={step.num}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
-                  <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-white/[0.10] leading-none block mb-4">
+                  <span className="font-heading text-[4rem] sm:text-[5rem] font-bold text-white/[0.10] leading-none block mb-4">
                     {step.num}
                   </span>
-                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-5">
-                    <StepIcon size={20} className="text-[#84CC16]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-5">
+                    <StepIcon size={20} className="text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {step.title}
@@ -161,7 +161,7 @@ export default function HowItWorksContent() {
             WHAT WE EVALUATE
           </p>
           <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4"
             style={{ lineHeight: '1.1' }}
           >
             Six modules. <span className="text-lime-gradient">Complete coverage.</span>
@@ -178,8 +178,8 @@ export default function HowItWorksContent() {
                   key={mod.title}
                   className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#84CC16]/10 flex items-center justify-center mb-6">
-                    <ModIcon size={20} className="text-[#84CC16]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#BFFA60]/10 flex items-center justify-center mb-6">
+                    <ModIcon size={20} className="text-[#BFFA60]" />
                   </div>
                   <h3 className="font-heading text-lg sm:text-xl font-medium text-white mb-3">
                     {mod.title}
@@ -203,7 +203,7 @@ export default function HowItWorksContent() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#111114] via-transparent to-[#111114]" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4" style={{ lineHeight: '1.1' }}>
+          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4" style={{ lineHeight: '1.1' }}>
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
@@ -213,7 +213,7 @@ export default function HowItWorksContent() {
             href="/register"
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

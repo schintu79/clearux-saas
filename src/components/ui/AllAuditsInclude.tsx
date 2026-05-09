@@ -27,8 +27,8 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
           const ItemIcon = item.Icon
           return (
             <div key={i} className={`bg-card dark:bg-white/[0.03] rounded-xl border border-border dark:border-white/[0.06] ${compact ? 'p-3.5 flex items-start gap-3' : 'p-5'}`}>
-              <div className={`rounded-lg bg-[#84CC16]/10 flex items-center justify-center flex-shrink-0 ${compact ? 'w-8 h-8' : 'w-10 h-10 mb-3'}`}>
-                <ItemIcon size={compact ? 14 : 18} className="text-[#84CC16]" />
+              <div className={`rounded-lg bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0 ${compact ? 'w-8 h-8' : 'w-10 h-10 mb-3'}`}>
+                <ItemIcon size={compact ? 14 : 18} className="text-[#BFFA60]" />
               </div>
               <div>
                 <p className={`font-medium text-text ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1.5'}`}>{item.title}</p>

@@ -48,7 +48,6 @@ export const Iconmark: React.FC<IconmarkProps> = ({
   className = '',
   gradient = false,
 }) => {
-  const gradientId = `clearux-icon-grad-${Math.random().toString(36).slice(2, 8)}`;
   return (
     <svg
       viewBox="33 402 129 136"
@@ -56,17 +55,8 @@ export const Iconmark: React.FC<IconmarkProps> = ({
       height={size}
       className={className}
       aria-hidden="true"
-      fill={gradient ? `url(#${gradientId})` : 'currentColor'}
+      fill={gradient ? '#BFFA60' : 'currentColor'}
     >
-      {gradient && (
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#84CC16" />
-            <stop offset="50%" stopColor="#BEF264" />
-            <stop offset="100%" stopColor="#84CC16" />
-          </linearGradient>
-        </defs>
-      )}
       {iconmarkPath}
     </svg>
   );
@@ -86,9 +76,7 @@ interface LogoProps {
  * Variants control the text color:
  * - `dark`: dark text (for light backgrounds)
  * - `light`: white text (for dark backgrounds)
- * - `lime`: lime gradient text
  *
- * `iconGradient` fills the "C" with the lime gradient (default: true).
  * `showWordmark` controls whether the full wordmark is shown (default: true).
  *   When false, renders only the "C" Iconmark.
  */
@@ -96,22 +84,17 @@ const Logo: React.FC<LogoProps> = ({
   className = '',
   height = 24,
   variant = 'dark',
-  iconGradient = true,
   showWordmark = true,
 }) => {
-  const gradientId = `clearux-logo-grad-${Math.random().toString(36).slice(2, 8)}`;
-
   const textColor =
     variant === 'light'
       ? '#FFFFFF'
       : variant === 'dark'
         ? '#0f0f0f'
-        : variant === 'lime'
-          ? `url(#${gradientId}-text)`
-          : 'currentColor';
+        : 'currentColor';
 
   if (!showWordmark) {
-    return <Iconmark size={height} className={className} gradient={iconGradient} />;
+    return <Iconmark size={height} className={className} gradient />;
   }
 
   // Full logo viewBox: tight crop around all content
@@ -126,25 +109,8 @@ const Logo: React.FC<LogoProps> = ({
       aria-label="ClearUX"
       role="img"
     >
-      <defs>
-        {iconGradient && (
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#84CC16" />
-            <stop offset="50%" stopColor="#BEF264" />
-            <stop offset="100%" stopColor="#84CC16" />
-          </linearGradient>
-        )}
-        {variant === 'lime' && (
-          <linearGradient id={`${gradientId}-text`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#84CC16" />
-            <stop offset="50%" stopColor="#BEF264" />
-            <stop offset="100%" stopColor="#84CC16" />
-          </linearGradient>
-        )}
-      </defs>
-
       {/* C lettermark */}
-      <g fill={iconGradient ? `url(#${gradientId})` : textColor}>
+      <g fill="#BFFA60">
         {iconmarkPath}
       </g>
 

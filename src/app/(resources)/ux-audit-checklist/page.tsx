@@ -51,7 +51,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
   {
     title: 'Pillar 1: Accessibility',
     intro:
-      'Accessibility is not optional — it is a baseline requirement. These four categories ensure your product works for every user, including those who rely on assistive technology.',
+      "Accessibility isn't optional — it's a baseline requirement. These four categories ensure your product works for every user, including those who rely on assistive technology.",
     categories: [
       {
         name: 'Visual & Colour Accessibility',
@@ -71,7 +71,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
       {
         name: 'Motion, Media & Cognitive Accessibility',
         description:
-          'Respect prefers-reduced-motion, provide captions and transcripts for media, avoid auto-playing content, and ensure animations do not trigger seizures. Reading level and plain-language principles also fall here.',
+          "Respect prefers-reduced-motion, provide captions and transcripts for media, avoid auto-playing content, and ensure animations don't trigger seizures. Reading level and plain-language principles also fall here.",
       },
     ],
   },
@@ -98,7 +98,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
       {
         name: 'Mobile & Responsive Design',
         description:
-          'Test on real devices, not just resized browser windows. Touch targets should be at least 44px, horizontal scrolling should not occur, and interactive elements should not overlap or become unreachable on smaller screens.',
+          "Test on real devices, not resized browser windows. Touch targets should be at least 44px, horizontal scrolling shouldn't occur, and interactive elements shouldn't overlap or become unreachable on smaller screens.",
       },
     ],
   },
@@ -120,7 +120,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
       {
         name: 'Content Strategy & Messaging',
         description:
-          'Does the copy speak to user needs or just list features? Evaluate headline clarity, value proposition placement, reading level, and whether microcopy (button labels, tooltips, empty states) guides users effectively.',
+          "Does the copy speak to user needs or only list features? Evaluate headline clarity, value proposition placement, reading level, and whether microcopy (button labels, tooltips, empty states) guides users effectively.",
       },
       {
         name: 'Performance & Page Speed',
@@ -142,7 +142,7 @@ const pillars: { title: string; intro: string; categories: Category[] }[] = [
       {
         name: 'Privacy & Consent',
         description:
-          'Cookie banners should offer genuine choice (not just "Accept"). Data collection should follow minimisation principles. Privacy policies should be readable. Pre-checked consent boxes violate GDPR and should be flagged.',
+          "Cookie banners should offer genuine choice (not only \"Accept\"). Data collection should follow minimisation principles. Privacy policies should be readable. Pre-checked consent boxes violate GDPR and should be flagged.",
       },
       {
         name: 'Transparency & Honest Communication',

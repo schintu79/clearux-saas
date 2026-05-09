@@ -56,7 +56,7 @@ export default function TermsPage() {
             <section>
               <h2 className="font-medium text-lg text-text mb-2">5. Intellectual Property</h2>
               <p>
-                The ClearUX platform, branding, and underlying technology are our intellectual property.
+                ClearUX, its branding, and underlying technology are our intellectual property.
                 Reports generated for your audits belong to you — you may share, distribute, or use them
                 as you see fit. You retain ownership of any data you submit to the platform.
               </p>

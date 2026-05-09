@@ -192,7 +192,7 @@ function ScanningGrid({ inView }: { inView: boolean }) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={inView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ duration: 0.4, delay: cp.delay }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-500 ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 ${
                   isActive
                     ? 'bg-[#10B981]/[0.08] border-[#10B981]/20'
                     : 'bg-white/[0.02] border-white/[0.06]'
@@ -479,7 +479,7 @@ export default function HowItWorks() {
             href="/register"
             className="group inline-flex items-center gap-3 bg-[#111] text-[#34D399] text-base sm:text-lg font-medium px-10 sm:px-14 py-4 sm:py-5 rounded-2xl transition-all duration-300 hover:shadow-[0_8px_40px_rgba(0,0,0,0.3)] hover:-translate-y-1"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>

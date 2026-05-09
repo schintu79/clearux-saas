@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import { DM_Sans, Caveat } from 'next/font/google'
+import { DM_Sans, Caveat, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
@@ -32,6 +32,12 @@ const caveat = Caveat({
   subsets: ['latin'],
   variable: '--font-handwriting',
   weight: ['400', '500', '600', '700'],
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500', '700'],
 })
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
@@ -103,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} dark`}
+      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable} dark`}
     >
       <head>
         <script

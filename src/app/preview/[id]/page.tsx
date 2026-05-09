@@ -268,7 +268,7 @@ export default function PreviewPage() {
                     style={{
                       width: `${Math.min(progress, 90)}%`,
                     }}
-                    className="h-full bg-brand rounded-full transition-all duration-500"
+                    className="h-full bg-brand rounded-full transition-all duration-300"
                   />
                 </div>
               </div>

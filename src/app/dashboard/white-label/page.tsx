@@ -25,7 +25,7 @@ interface WhiteLabelFormData {
   is_active: boolean;
 }
 
-const DEFAULT_COLOR = '#84CC16';
+const DEFAULT_COLOR = '#BFFA60';
 
 const WhiteLabelPage: React.FC = () => {
   const { user, loading: userLoading } = useAuth();
@@ -128,7 +128,7 @@ const WhiteLabelPage: React.FC = () => {
 
     // Validate color
     if (form.brand_color && !/^#[0-9A-Fa-f]{6}$/.test(form.brand_color)) {
-      setErrorMsg('Brand color must be a valid hex (e.g. #84CC16)');
+      setErrorMsg('Brand color must be a valid hex (e.g. #BFFA60)');
       return;
     }
 
@@ -370,7 +370,7 @@ const WhiteLabelPage: React.FC = () => {
                 name="brand_color"
                 value={form.brand_color}
                 onChange={handleChange}
-                placeholder="#84CC16"
+                placeholder="#BFFA60"
                 className={`${inputClass} max-w-[140px] font-mono`}
                 disabled={!canEdit}
                 maxLength={7}

@@ -76,7 +76,7 @@ export default function AuroraBackground({ variant = 'section', className = '' }
           <div
             className="absolute top-0 left-0 w-[15%] h-full"
             style={{
-              background: 'linear-gradient(90deg, transparent, rgba(132,204,22,0.04), transparent)',
+              background: 'linear-gradient(90deg, transparent, rgba(191,250,96,0.04), transparent)',
               animation: 'sweep-x 8s ease-in-out infinite',
             }}
           />

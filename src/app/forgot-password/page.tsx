@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
             <div className="bg-white bg-opacity-8 border border-white border-opacity-10 rounded-xl p-6 backdrop-blur-sm">
               <h3 className="text-sm font-medium text-white mb-2">Need help?</h3>
               <p className="text-xs text-white/80 opacity-80">
-                We'll send you a secure password reset link via email. You'll be able to create a new password in just a few minutes.
+                We'll send you a secure password reset link via email. You'll be able to create a new password in a few minutes.
               </p>
             </div>
           </div>

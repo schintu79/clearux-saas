@@ -322,7 +322,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
             href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl || `https://${domain}`)}`}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
-            <Sparkles size={13} /> Start Audit
+            <Sparkles size={13} /> Start audit
           </Link>
         </div>
       ) : (

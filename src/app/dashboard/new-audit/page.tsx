@@ -956,7 +956,7 @@ const NewAuditInner: React.FC = () => {
               href="/dashboard/buy-credits"
               className="text-xs font-medium text-text hover:underline transition-colors whitespace-nowrap ml-3"
             >
-              Buy Credits &rarr;
+              Buy credits &rarr;
             </Link>
           </div>
         </div>
@@ -974,7 +974,7 @@ const NewAuditInner: React.FC = () => {
         onClick={handleSubmit}
         disabled={loading || brandUploading || (auditType === 'brand_identity' && !showNewBrand && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0)) || (auditType === 'brand_identity' && showNewBrand && (newBrandFiles.length === 0 || !newBrandName.trim()))}
         className="w-full flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
-        style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
+        style={{ background: '#BFFA60' }}
       >
         {loading || brandUploading ? (
           <>
@@ -986,7 +986,7 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : firstAuditFree ? (
           <>
-            Start Free Audit
+            Start free audit
             <ArrowRight size={20} />
           </>
         ) : hasCredits ? (

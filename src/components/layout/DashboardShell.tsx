@@ -51,8 +51,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
-    { label: 'Brand Identity', href: '/dashboard/brand-identity', icon: Fingerprint },
-    { label: 'White Label', href: '/dashboard/white-label', icon: Paintbrush },
+    { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
+    { label: 'White label', href: '/dashboard/white-label', icon: Paintbrush },
     { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
@@ -94,19 +94,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="px-5 py-4 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </Link>
         </div>
 
-        {/* New Audit CTA */}
+        {/* New audit CTA */}
         <div className="px-3 pt-3 pb-1">
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
             className="flex items-center justify-center gap-2 w-full px-3 py-2.5 text-[13px] font-medium text-[#111111] rounded-lg transition-all hover:shadow-sm active:scale-[0.98]"
-            style={{ background: 'linear-gradient(135deg, #84CC16, #BEF264, #84CC16)' }}
+            style={{ background: '#BFFA60' }}
           >
-            <PlusCircle size={14} strokeWidth={2.5} />
+            <PlusCircle size={14} strokeWidth={1.5} />
             New Audit
           </Link>
         </div>
@@ -126,12 +126,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     className={clsx(
                       'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-[#84CC16]/10 text-text font-medium'
+                        ? 'bg-[#BFFA60]/10 text-text font-medium'
                         : 'text-muted hover:text-text hover:bg-surface/60'
                     )}
                   >
                     <span className="relative">
-                      <Icon size={16} strokeWidth={active ? 2 : 1.75} />
+                      <Icon size={16} strokeWidth={1.5} />
                       {(item as any).badge && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EF4444]" />
                       )}
@@ -172,7 +172,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 href="/dashboard/buy-credits"
                 className="block text-center text-[11px] font-medium text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
               >
-                {credits === 0 ? 'Buy Credits' : 'Buy More'}
+                {credits === 0 ? 'Buy credits' : 'Buy more'}
               </Link>
             </div>
           </div>
@@ -213,7 +213,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all"
             >
               <ShieldCheck size={15} strokeWidth={1.75} />
-              Admin Panel
+              Admin panel
             </Link>
           )}
 
@@ -242,7 +242,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </span>
         </div>
 

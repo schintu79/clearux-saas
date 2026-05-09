@@ -60,7 +60,7 @@ export default function ContactContent() {
           </p>
 
           <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white max-w-3xl"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white max-w-3xl"
             style={{ lineHeight: '1.1' }}
           >
             Contact <span className="text-lime-gradient">us.</span>
@@ -76,8 +76,8 @@ export default function ContactContent() {
             <div className="lg:col-span-2">
               {submitted ? (
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-8 sm:p-10">
-                  <div className="w-14 h-14 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-5">
-                    <CheckCircle size={28} className="text-[#84CC16]" />
+                  <div className="w-14 h-14 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-5">
+                    <CheckCircle size={28} className="text-[#BFFA60]" />
                   </div>
                   <p className="font-heading font-medium text-lg text-white mb-1">Message sent!</p>
                   <p className="font-body text-sm text-white/65">
@@ -104,7 +104,7 @@ export default function ContactContent() {
                         autoComplete="name"
                         aria-required="true"
                         required
-                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="Your name"
                       />
                     </div>
@@ -120,7 +120,7 @@ export default function ContactContent() {
                         autoComplete="email"
                         aria-required="true"
                         required
-                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className="rounded-full bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full"
                         placeholder="you@example.com"
                       />
                     </div>
@@ -135,7 +135,7 @@ export default function ContactContent() {
                         rows={5}
                         aria-required="true"
                         required
-                        className="rounded-2xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
+                        className="rounded-2xl bg-white/[0.06] border border-white/[0.10] text-white placeholder:text-white/50 focus:border-white/20 focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
                         placeholder="How can we help?"
                       />
                     </div>
@@ -156,7 +156,7 @@ export default function ContactContent() {
                       ) : (
                         <>
                           <Send size={16} />
-                          Send Message
+                          Send message
                         </>
                       )}
                     </button>
@@ -168,8 +168,8 @@ export default function ContactContent() {
             {/* ── Contact info cards ── */}
             <div className="flex flex-col gap-4">
               <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
-                  <Mail size={18} className="text-[#84CC16]" />
+                <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
+                  <Mail size={18} className="text-[#BFFA60]" />
                 </div>
                 <p className="text-sm font-medium font-body text-white mb-1">Email us</p>
                 <a
@@ -181,8 +181,8 @@ export default function ContactContent() {
               </div>
 
               <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#84CC16]/10 flex items-center justify-center mb-4">
-                  <MessageSquare size={18} className="text-[#84CC16]" />
+                <div className="w-10 h-10 rounded-xl bg-[#BFFA60]/10 flex items-center justify-center mb-4">
+                  <MessageSquare size={18} className="text-[#BFFA60]" />
                 </div>
                 <p className="text-sm font-medium font-body text-white mb-1">Response time</p>
                 <p className="text-sm font-body text-white/65">Usually within 24 hours</p>
@@ -206,19 +206,19 @@ export default function ContactContent() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-light text-white mb-4"
+            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-white mb-4"
             style={{ lineHeight: '1.1' }}
           >
             Start your audit <span className="text-lime-gradient">today</span>
           </h2>
           <p className="text-white/65 text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — just actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
           </p>
           <Link
             href="/register"
             className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
           >
-            Start Free Audit
+            Start free audit
             <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
