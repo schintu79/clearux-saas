@@ -94,7 +94,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="px-5 py-4 flex items-center border-b border-border">
           <Link href="/dashboard" className="flex items-center">
-            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </Link>
         </div>
 
@@ -242,7 +242,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
           </button>
           <span className="ml-3">
-            <Logo height={100} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} iconGradient />
           </span>
         </div>
 

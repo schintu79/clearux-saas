@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center" aria-label="ClearUX home">
-            <Logo height={110} variant="light" iconGradient />
+            <Logo height={28} variant="light" iconGradient />
           </Link>
 
           {/* Desktop Navigation */}

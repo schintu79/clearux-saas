@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
 
           {/* Brand column */}
           <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3"><Logo height={110} variant="light" iconGradient /></div>
+            <div className="mb-3"><Logo height={28} variant="light" iconGradient /></div>
             <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
               Full clarity, at your fingertips. 360° UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
             </p>
