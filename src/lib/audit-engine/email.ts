@@ -338,22 +338,31 @@ export async function sendFreeAuditReady(
   email: string,
   auditId: string,
   productUrl: string,
+  auditType: 'website' | 'brand_identity' | 'design' = 'website',
 ): Promise<{ success: boolean; error?: string }> {
   const reportUrl = `${APP_URL}/dashboard/audits/${auditId}`
 
-  let domain = productUrl
-  try { domain = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+  const isBrand = auditType === 'brand_identity'
+  const isDesign = auditType === 'design'
+
+  let displayName = productUrl
+  if (!isBrand && !isDesign) {
+    try { displayName = new URL(productUrl).hostname.replace(/^www\./, '') } catch {}
+  }
+
+  const typeLabel = isBrand ? 'brand identity audit' : isDesign ? 'design audit' : 'UX audit'
+  const fieldLabel = isBrand ? 'Brand' : isDesign ? 'Design' : 'Website'
 
   const content = `
-    <h1>Your free UX audit is ready</h1>
+    <h1>Your free ${typeLabel} is ready</h1>
     <!--HEADER-->
-    <p>Your complimentary UX audit for <strong>${domain}</strong> is complete and ready to review.</p>
+    <p>Your complimentary ${typeLabel} for <strong>${displayName}</strong> is complete and ready to review.</p>
 
     <div class="info-box">
       <table width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
         <tr>
-          <td style="padding:8px 0;color:#71717a">Website</td>
-          <td style="padding:8px 0;text-align:right;font-weight:600;color:#111">${domain}</td>
+          <td style="padding:8px 0;color:#71717a">${fieldLabel}</td>
+          <td style="padding:8px 0;text-align:right;font-weight:600;color:#111">${displayName}</td>
         </tr>
         <tr>
           <td style="padding:8px 0;color:#71717a;border-top:1px solid #f0f0f0">Price</td>
@@ -376,7 +385,7 @@ export async function sendFreeAuditReady(
   return send(
     'ClearUX <audits@clearux.ai>',
     email,
-    `Your free UX audit for ${domain} is ready`,
-    emailLayout(content, `Your free UX audit for ${domain} is complete. View your report now.`),
+    `Your free ${typeLabel} for ${displayName} is ready`,
+    emailLayout(content, `Your free ${typeLabel} for ${displayName} is complete. View your report now.`),
   )
 }

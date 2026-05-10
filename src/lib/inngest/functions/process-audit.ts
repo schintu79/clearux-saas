@@ -159,6 +159,7 @@ export const processAuditFn = inngest.createFunction(
         userEmail: (audit as any).profiles?.email || '',
         productUrl: (audit as any).product_url as string,
         plan: (audit as any).plan as string,
+        auditType: ((audit as any).audit_type as string) || 'website',
         userFocus: (audit as any).ux_concern as string | null,
         language: ((audit as any).language as string) || 'en',
         depthMode: ((audit as any).depth_mode as string) || 'standard',
@@ -1131,11 +1132,12 @@ RULES FOR RE-AUDIT:
       // Send email notification
       if (auditDetails.userEmail) {
         try {
+          const emailAuditType = (auditDetails.auditType || 'website') as 'website' | 'brand_identity' | 'design'
           const isFreeAudit = auditDetails.plan === 'free_preview'
           if (isFreeAudit) {
-            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl)
+            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
           } else {
-            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl)
+            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
           }
         } catch (emailErr) {
           console.error('[inngest] Email error (non-fatal):', emailErr)

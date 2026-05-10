@@ -1072,6 +1072,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const completedRef = useRef(false); // Once true, never revert to in-progress UI
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const [showStickyScore, setShowStickyScore] = useState(false);
 
@@ -1147,6 +1148,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           payment: null,
         } as AuditWithReport;
 
+        // Guard: once we've seen 'completed', never revert to an in-progress state
+        if (completedRef.current && auditData.status !== 'completed' && auditData.status !== 'failed') {
+          // Server briefly reported a non-completed status (e.g. during Inngest replay)
+          // — ignore it to prevent UI from looping back to the progress screen
+          return 'completed';
+        }
+        if (auditData.status === 'completed') {
+          completedRef.current = true;
+        }
+
         setAudit(combined);
 
         if (auditData.status === 'completed') {
@@ -1210,7 +1221,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
     const verifyAndPoll = async () => {
       await new Promise((r) => setTimeout(r, 2000));
-      if (!active) return;
+      if (!active || completedRef.current) return;
       const status = await fetchAuditDetail(true);
 
       if (status === 'pending_payment') {
@@ -1231,9 +1242,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         }
       }
 
-      if (active) {
+      if (active && !completedRef.current) {
         pollRef.current = setInterval(async () => {
-          if (!active) return;
+          if (!active || completedRef.current) return;
           const s = await fetchAuditDetail(true);
           if (s === 'completed' || s === 'failed') {
             if (pollRef.current) clearInterval(pollRef.current);
@@ -1250,10 +1261,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   useEffect(() => {
     if (isPaymentReturn) return;
     if (!audit) return;
+    if (completedRef.current) return; // Already completed — no more polling
     const inProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
     if (!inProgress) return;
 
     pollRef.current = setInterval(async () => {
+      if (completedRef.current) { if (pollRef.current) clearInterval(pollRef.current); return; }
       const s = await fetchAuditDetail(true);
       if (s === 'completed' || s === 'failed') {
         if (pollRef.current) clearInterval(pollRef.current);
