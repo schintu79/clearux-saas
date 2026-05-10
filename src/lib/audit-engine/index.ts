@@ -148,7 +148,11 @@ async function _processAuditInner(auditId: string): Promise<void> {
         let block = ''
         if (p.url) block += `URL: ${p.url}\n`
         if (p.title) block += `Title: ${p.title}\n`
-        if (p.h1) block += `H1: ${p.h1}\n`
+        if (p.h1) {
+          block += `H1: ${p.h1}\n`
+        } else {
+          block += `H1: [not captured ��� may exist in JS-rendered or streamed content]\n`
+        }
         if (p.metaDescription) block += `Meta Description: ${p.metaDescription}\n`
         if (p.contentText) block += `Content:\n${p.contentText}\n`
         return block

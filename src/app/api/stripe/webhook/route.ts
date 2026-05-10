@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
-import { sendPaymentConfirmation, sendCreditsPurchased } from '@/lib/audit-engine/email'
+import { sendPaymentConfirmation } from '@/lib/audit-engine/email'
 
 /**
  * POST /api/stripe/webhook
@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
         // ── Credit pack purchase — add credits to profile ──
         if (paymentType === 'credit_pack') {
           const creditsToAdd = parseInt(meta.credits || '0', 10)
-          const pack = meta.pack as string | undefined // 'starter' | 'growth' | 'agency' | 'scale'
           if (creditsToAdd > 0) {
             // Fetch current balance
             const { data: prof } = await supabase
@@ -72,8 +71,7 @@ export async function POST(request: NextRequest) {
               .single()
             const current = (prof as any)?.credits ?? 0
 
-            // Always add credits first (core operation that must not fail)
-            const { error: creditError } = await supabase
+            await supabase
               .from('profiles')
               .update({
                 credits: current + creditsToAdd,
@@ -81,55 +79,7 @@ export async function POST(request: NextRequest) {
               } as any)
               .eq('id', userId)
 
-            if (creditError) {
-              console.error(`Failed to add credits for user ${userId}:`, creditError)
-              return NextResponse.json({ error: 'Failed to add credits' }, { status: 500 })
-            }
-
             console.log(`Added ${creditsToAdd} credits to user ${userId}. New balance: ${current + creditsToAdd}`)
-
-            // Update package tier & white-label flag (non-critical — don't block credits)
-            try {
-              const tierRank: Record<string, number> = { starter: 0, growth: 1, agency: 2, scale: 3 }
-              const { data: tierProf } = await supabase
-                .from('profiles')
-                .select('package_tier')
-                .eq('id', userId)
-                .single()
-              const currentTier = (tierProf as any)?.package_tier ?? 'starter'
-              const newTier = (tierRank[pack || 'starter'] ?? 0) > (tierRank[currentTier] ?? 0) ? pack : currentTier
-              const isWhiteLabel = tierRank[newTier || 'starter'] >= 2
-
-              await supabase
-                .from('profiles')
-                .update({ package_tier: newTier, white_label: isWhiteLabel } as any)
-                .eq('id', userId)
-
-              console.log(`Updated tier for user ${userId}: ${newTier}, white_label: ${isWhiteLabel}`)
-            } catch (tierErr) {
-              console.warn(`Non-critical: failed to update tier for user ${userId}:`, tierErr)
-            }
-
-            // Send credits purchased email (non-blocking)
-            try {
-              const { data: userProf } = await supabase
-                .from('profiles')
-                .select('email, credits')
-                .eq('id', userId)
-                .single()
-              if (userProf && (userProf as any).email) {
-                const packNames: Record<string, string> = { starter: 'Starter', growth: 'Growth', agency: 'Agency', scale: 'Scale' }
-                await sendCreditsPurchased(
-                  (userProf as any).email,
-                  creditsToAdd,
-                  (userProf as any).credits ?? creditsToAdd,
-                  packNames[pack || 'starter'] || pack || 'Credit Pack',
-                  session.amount_total || 0,
-                )
-              }
-            } catch (emailErr) {
-              console.warn(`Non-critical: credits email failed for user ${userId}:`, emailErr)
-            }
           }
           return NextResponse.json({ received: true }, { status: 200 })
         }
@@ -204,7 +154,7 @@ export async function POST(request: NextRequest) {
         // @ts-ignore Supabase type inference issue with generics
         const { data: audit } = await supabase
           .from('audits')
-          .select('product_url, audit_type, brand_identity_id')
+          .select('product_url')
           // @ts-ignore Supabase type inference issue with generics
           .eq('id', auditId)
           .single()
@@ -226,24 +176,21 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Trigger audit processing — direct execution with Inngest as backup
-        const aw = audit as any
-        const auditType = aw?.audit_type || (aw?.brand_identity_id && !aw?.product_url ? 'brand_identity' : 'website')
-        const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-        console.log(`[webhook] Starting ${auditType} audit ${auditId}`)
-        if (auditType === 'website') {
+        // Trigger audit processing via Inngest (background job)
+        try {
+          console.log(`[webhook] Sending Inngest event for audit ${auditId}`)
+          const sendResult = await inngest.send({
+            name: 'audit/process',
+            data: { auditId },
+          })
+          console.log(`[webhook] Inngest event sent:`, JSON.stringify(sendResult))
+        } catch (inngestErr) {
+          console.error(`[webhook] Inngest send FAILED for audit ${auditId}:`, inngestErr)
           const { processAudit } = await import('@/lib/audit-engine')
           processAudit(auditId).catch((err) => {
-            console.error(`[webhook] processAudit failed:`, err)
-          })
-        } else if (auditType === 'brand_identity') {
-          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-          processBrandAudit(auditId).catch((err) => {
-            console.error(`[webhook] processBrandAudit failed:`, err)
+            console.error(`[webhook] Fallback processAudit failed:`, err)
           })
         }
-        // Also try Inngest if configured (non-blocking)
-        inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
         console.log(`Payment processed for audit ${auditId}`)
         return NextResponse.json({ received: true }, { status: 200 })

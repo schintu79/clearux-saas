@@ -85,20 +85,20 @@ export default function ForgotPasswordPage() {
         <div className="relative z-10 flex flex-col">
           {/* Logo & Tagline */}
           <div className="mb-16">
-            <h1 className="text-3xl font-heading font-medium text-text mb-3">
+            <h1 className="text-3xl font-manrope font-bold text-white mb-3">
               ClearUX
             </h1>
-            <p className="text-sm text-muted opacity-85">
+            <p className="text-sm text-white/80 opacity-85">
               Expert UX audits powered by AI. Discover usability issues in minutes — not weeks.
             </p>
           </div>
 
           {/* Info Card */}
           <div className="mt-auto">
-            <div className="bg-card border border-border rounded-xl p-6 backdrop-blur-sm">
-              <h3 className="text-sm font-medium text-text mb-2">Need help?</h3>
-              <p className="text-xs text-muted opacity-80">
-                We'll send you a secure password reset link via email. You'll be able to create a new password in a few minutes.
+            <div className="bg-white bg-opacity-8 border border-white border-opacity-10 rounded-xl p-6 backdrop-blur-sm">
+              <h3 className="text-sm font-medium text-white mb-2">Need help?</h3>
+              <p className="text-xs text-white/80 opacity-80">
+                We'll send you a secure password reset link via email. You'll be able to create a new password in just a few minutes.
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
       <div className="auth-right">
         <div className="auth-form-wrap">
           <div className="mb-8">
-            <h2 className="text-2xl font-heading font-medium text-text mb-2">
+            <h2 className="text-2xl font-manrope font-bold text-text mb-2">
               Reset password
             </h2>
             <p className="text-sm text-muted">

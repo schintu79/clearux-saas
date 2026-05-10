@@ -1,126 +1,60 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { useTheme } from '@/context/ThemeContext';
-import Logo from '@/components/ui/Logo';
 
 const Footer: React.FC = () => {
   const currentYear = 2026;
 
+  const footerLinks = {
+    Product: [
+      { label: 'How It Works', href: '/#how-it-works' },
+      { label: 'Pricing', href: '/#pricing' },
+      { label: 'FAQ', href: '/#faq' },
+    ],
+    Support: [
+      { label: 'Contact Us', href: '/contact' },
+      { label: 'support@clearux.ai', href: 'mailto:support@clearux.ai' },
+    ],
+    Legal: [
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Service', href: '/terms' },
+      { label: 'Cookie Policy', href: '/cookies' },
+    ],
+  };
+
   return (
-    <footer role="contentinfo" aria-label="Site footer" className="relative z-10 bg-[#0F0F0F] py-14 border-t border-white/[0.06]">
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-
-        {/* Top: Brand + Links */}
-        <div className="flex flex-col md:flex-row gap-12 md:gap-16 mb-12">
-
-          {/* Brand column */}
-          <div className="md:max-w-[260px] flex-shrink-0">
-            <div className="mb-3">
-              <Logo height={28} variant="light" />
-            </div>
-            <p className="font-body text-sm text-white/70 leading-relaxed mb-5">
-              Full clarity, at your fingertips. 360° UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
+    <footer className="border-t border-border bg-sidebar py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+          <div className="col-span-1">
+            <h3 className="font-manrope font-bold text-xl mb-2 text-sidebar-text">Clear<span className="text-accent">UX</span></h3>
+            <p className="font-inter text-sm text-muted">
+              AI-powered UX audits.<br />Professional reports in minutes.
             </p>
-
-            {/* Social links */}
-            <div className="flex items-center gap-3">
-              <a
-                href="https://www.instagram.com/clear_ux"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow ClearUX on Instagram"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-white bg-white/[0.06] hover:bg-white/[0.10] transition-all"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-              </a>
-              <a
-                href="https://www.linkedin.com/company/clearux"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow ClearUX on LinkedIn"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-white bg-white/[0.06] hover:bg-white/[0.10] transition-all"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-              </a>
-            </div>
           </div>
 
-          {/* Link columns */}
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8">
-            <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Product</h4>
+          {Object.entries(footerLinks).map(([section, links]) => (
+            <div key={section}>
+              <h4 className="font-inter font-semibold text-xs uppercase tracking-wider text-muted mb-4">{section}</h4>
               <ul className="space-y-2.5">
-                {[
-                  { label: 'How it works', href: '/how-it-works' },
-                  { label: 'Pricing', href: '/pricing' },
-                  { label: 'FAQ', href: '/faq' },
-                ].map((link) => (
+                {links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
+                    <Link
+                      href={link.href}
+                      className="font-inter text-sm text-muted hover:text-sidebar-text transition-colors"
+                    >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
-
-            <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Company</h4>
-              <ul className="space-y-2.5">
-                {[
-                  { label: 'About us', href: '/about' },
-                  { label: 'Contact us', href: '/contact' },
-                  { label: 'Login', href: '/login' },
-                  { label: 'Dashboard', href: '/dashboard' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-body font-medium text-xs uppercase tracking-wider text-white/70 mb-4">Legal</h4>
-              <ul className="space-y-2.5">
-                {[
-                  { label: 'Privacy policy', href: '/privacy' },
-                  { label: 'Terms of service', href: '/terms' },
-                  { label: 'Cookie policy', href: '/cookies' },
-                ].map((link) => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="font-body text-sm text-white/70 hover:text-white transition-colors">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <a href="mailto:support@clearux.ai" className="font-body text-sm text-white/70 hover:text-white transition-colors">
-                    support@clearux.ai
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-body text-xs text-white/70">
+        <div className="pt-8">
+          <p className="font-inter text-xs text-muted/60 text-center">
             &copy; {currentYear} ClearUX. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-white/70">
-            <span className="flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              SSL Encrypted
-            </span>
-            <span>GDPR Compliant</span>
-            <span>Powered by Stripe</span>
-          </div>
         </div>
       </div>
     </footer>

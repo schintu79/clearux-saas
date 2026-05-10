@@ -30,8 +30,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'icon', className }
           className={clsx(
             'flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 shadow-sm',
             isDark
-              ? 'translate-x-7 bg-white text-gray-900 shadow-md'
-              : 'translate-x-0 bg-gray-800 text-white shadow-md'
+              ? 'translate-x-7 bg-indigo-500 text-white shadow-md'
+              : 'translate-x-0 bg-white text-amber-600 shadow-md'
           )}
         >
           {isDark ? <Moon size={13} /> : <Sun size={13} />}
@@ -47,8 +47,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'icon', className }
       className={clsx(
         'p-2 rounded-lg transition-colors duration-200',
         isDark
-          ? 'text-white hover:bg-white/10'
-          : 'text-gray-700 hover:bg-off',
+          ? 'text-yellow-400 hover:bg-white/10'
+          : 'text-muted hover:bg-off',
         className
       )}
     >

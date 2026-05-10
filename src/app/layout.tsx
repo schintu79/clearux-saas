@@ -115,34 +115,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){try{var m=document.cookie.match(/(?:^|; )clearux-theme=(light|dark)/);var t=m?m[1]:'dark';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark')}catch(e){document.documentElement.classList.add('dark')}})()`,
           }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SoftwareApplication',
-              name: 'ClearUX',
-              url: siteUrl,
-              applicationCategory: 'BusinessApplication',
-              operatingSystem: 'Web',
-              description: 'AI-powered UX audit tool that analyses websites across 96 checkpoints in 24 categories. Professional consultant-grade reports in minutes.',
-              offers: {
-                '@type': 'Offer',
-                price: '99',
-                priceCurrency: 'USD',
-                priceValidUntil: '2027-12-31',
-                availability: 'https://schema.org/InStock',
-              },
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                ratingCount: '47',
-                bestRating: '5',
-              },
-              featureList: '64 UX checkpoints, 16 audit categories, 6 module framework, PDF & Word reports, AI discoverability review, dark pattern detection, accessibility audit, mobile UX analysis',
-            }),
-          }}
-        />
       </head>
       <body suppressHydrationWarning className="font-body antialiased bg-surface text-text">
         <ThemeProvider>

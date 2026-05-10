@@ -5,11 +5,8 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { after } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
-
-export const maxDuration = 300
 
 export async function POST(
   request: NextRequest,
@@ -46,11 +43,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const retriableStatuses = ['failed', 'crawling', 'analysing', 'generating_report']
-    const auditStatus = (audit as any).status as string
-    if (!retriableStatuses.includes(auditStatus)) {
+    if ((audit as any).status !== 'failed') {
       return NextResponse.json(
-        { error: 'Only failed or stuck audits can be retried' },
+        { error: 'Only failed audits can be retried' },
         { status: 400 },
       )
     }
@@ -80,11 +75,10 @@ export async function POST(
       } as any)
       .eq('id', auditId)
 
-    // Clean up old findings, report, and snapshots so they get regenerated
+    // Clean up old findings and report so they get regenerated
     await db.from('audit_findings').delete().eq('audit_id', auditId)
     await db.from('reports').delete().eq('audit_id', auditId)
     await db.from('audit_pages').delete().eq('audit_id', auditId)
-    await db.from('brand_audit_file_snapshots').delete().eq('audit_id', auditId)
 
     // Log retry
     await db.from('audit_logs').insert({
@@ -95,25 +89,11 @@ export async function POST(
       metadata: {},
     } as any)
 
-    // Trigger audit processing via after() — keeps function alive after response
-    const ar = audit as any
-    const auditType = ar.audit_type || (ar.brand_identity_id && !ar.product_url ? 'brand_identity' : 'website')
-    const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    console.log(`[retry] Scheduling ${auditType} audit ${auditId} via after()`)
-    after(async () => {
-      try {
-        if (auditType === 'website') {
-          const { processAudit } = await import('@/lib/audit-engine')
-          await processAudit(auditId)
-        } else if (auditType === 'brand_identity') {
-          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-          await processBrandAudit(auditId)
-        }
-      } catch (err) {
-        console.error(`[retry] ${auditType} audit ${auditId} failed:`, err)
-      }
+    // Re-trigger processing via Inngest
+    await inngest.send({
+      name: 'audit/process',
+      data: { auditId },
     })
-    inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
 
     return NextResponse.json({
       status: 'payment_received',

@@ -2,861 +2,994 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ArrowRight, CheckCircle, Shield,
-  FileText, Share2, RefreshCw, BarChart3, ListChecks,
-  Sparkles, ChevronDown, ShieldCheck, Layers, Users, Accessibility,
-  Rocket, Eye, Globe2, Fingerprint, Code2, Search,
-} from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { Brain, CheckCircle, Star, Eye, Target, Map, MousePointerClick, Zap, Smartphone, Shield, Type, Gauge, ArrowRight, ArrowUp, Layers, Accessibility, FileCheck, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
-import SmartCta from "@/components/ui/SmartCta";
 import Footer from "@/components/layout/Footer";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
-import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/components/motion';
+import { useUser } from '@/hooks/useUser';
 
-/* ── FAQ data ─────────────────────────────────────────────── */
-const TOP_FAQS = [
-  { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
-  { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
-  { q: 'What does the audit cover?', a: 'Six modules: Foundation (structural and technical baseline), Human Experience (clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). We audit websites, brand identities, and designs — the complete picture.' },
-  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes for $99 — covering your website, brand identity, and design with the same depth and rigour.' },
-  { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
-];
+/* ── Animated counter ────────────────────────────────────── */
+function useCountUp(end: number, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = performance.now();
+          const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(eased * end));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+  return { count, ref };
+}
 
-/* ── Rotating hero headlines ─────────────────────────────── */
-const HERO_HEADLINES = [
-  { main: 'Professional-grade UX insights.', accent: 'In minutes.' },
-  { main: 'Actionable clarity.', accent: 'At your fingertips.' },
-  { main: 'Audit for the future.', accent: 'Starting today.' },
-];
+/* ── Fade-in on scroll ───────────────────────────────────── */
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.15 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, visible };
+}
 
-/* ── 6 Audit Modules ─────────────────────────────────────── */
-const MODULES = [
-  {
-    icon: Layers,
-    title: 'Foundation',
-    desc: 'The structural and technical baseline a great experience is built on — visual design, messaging, navigation, and content quality.',
-  },
-  {
-    icon: Users,
-    title: 'Human Experience',
-    desc: 'How your product feels to use — clarity, flow, cognitive load, wellbeing, and whether your UX respects users in stressed or impaired states.',
-  },
-  {
-    icon: Accessibility,
-    title: 'Inclusive Design',
-    desc: 'Accessibility and equity for every user, every ability, every context — from WCAG compliance to cognitive accessibility and mobile experience.',
-  },
-  {
-    icon: Rocket,
-    title: 'Future Readiness',
-    desc: 'AI discoverability and how your product holds up as discovery and interaction shift — performance, agent readiness, and internationalisation.',
-  },
-  {
-    icon: Fingerprint,
-    title: 'Brand Consistency',
-    desc: 'Whether what users see matches what your brand promises — voice, visual identity, and tone alignment across every surface.',
-  },
-  {
-    icon: Code2,
-    title: 'SEO Structure',
-    desc: 'Whether your product is findable, legible, and ranked the way it deserves — heading hierarchy, meta tags, structured data, and crawlability.',
-  },
-];
+/* ── Rotating words — fixed to always keep 2-line headline ── */
+const HERO_WORDS = ['Conversions', 'Usability', 'Engagement', 'Accessibility', 'Mobile UX', 'Trust'];
 
-/* ── FAQ accordion item (matches FAQ page design) ─────────── */
-function HomeFaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
+function RotatingWord() {
+  const [idx, setIdx] = useState(0);
+  const [fade, setFade] = useState(true);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => { setIdx((i) => (i + 1) % HERO_WORDS.length); setFade(true); }, 200);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
   return (
-    <div className="rounded-xl overflow-hidden bg-card border border-border">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-5 text-left hover:bg-card transition-colors"
-        aria-expanded={open}
-      >
-        <span className="flex-1 font-heading font-medium text-text text-[15px] leading-relaxed">{q}</span>
-        <ChevronDown
-          size={16}
-          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && (
-        <div className="px-5 pb-5 pt-0">
-          <div className="border-t border-border pt-4">
-            <p className="font-body text-sm text-muted leading-[1.8]">{a}</p>
+    <span
+      className={`transition-opacity duration-300 bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent ${fade ? 'opacity-100' : 'opacity-0'}`}
+    >
+      {HERO_WORDS[idx]}
+    </span>
+  );
+}
+
+/* ── Rotating testimonials ──────────────────────────────── */
+function RotatingReview({ reviews }: { reviews: { quote: string; author: string; title: string; company: string; initials: string }[] }) {
+  const [idx, setIdx] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  const next = () => { setFade(false); setTimeout(() => { setIdx((i) => (i + 1) % reviews.length); setFade(true); }, 250); };
+  const prev = () => { setFade(false); setTimeout(() => { setIdx((i) => (i - 1 + reviews.length) % reviews.length); setFade(true); }, 250); };
+
+  useEffect(() => {
+    const interval = setInterval(next, 5000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const r = reviews[idx];
+  return (
+    <div className="relative max-w-2xl mx-auto text-center">
+      <div className={`transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+        <p className="text-text text-base md:text-lg font-medium mb-4 leading-relaxed">&ldquo;{r.quote}&rdquo;</p>
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">{r.initials}</div>
+          <div className="text-left">
+            <p className="text-text text-sm font-semibold">{r.author}</p>
+            <p className="text-muted text-xs">{r.title}, {r.company}</p>
           </div>
         </div>
-      )}
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-5">
+        <button onClick={prev} aria-label="Previous review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+          <ChevronLeft size={14} className="text-muted" />
+        </button>
+        <div className="flex gap-1.5">
+          {reviews.map((_, i) => (
+            <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-accent w-4' : 'bg-border'}`} />
+          ))}
+        </div>
+        <button onClick={next} aria-label="Next review" className="w-8 h-8 rounded-full border border-border/40 dark:border-white/[0.04] bg-card hover:border-accent/40 flex items-center justify-center transition-colors">
+          <ChevronRight size={14} className="text-muted" />
+        </button>
+      </div>
     </div>
   );
 }
 
-/* ── Rotating number counter ─────────────────────────────── */
-function CountUp({ to, suffix = '', duration = 1.8 }: { to: number; suffix?: string; duration?: number }) {
-  const [count, setCount] = useState(0);
-  const [started, setStarted] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
-
+/* ── Scroll-to-top button ───────────────────────────────── */
+function ScrollToTop() {
+  const [show, setShow] = useState(false);
   useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
-      { threshold: 0.3 },
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [started]);
-
-  useEffect(() => {
-    if (!started) return;
-    const steps = Math.ceil(duration * 30); // ~30fps
-    const increment = to / steps;
-    let current = 0;
-    let frame = 0;
-    const timer = setInterval(() => {
-      frame++;
-      current = Math.min(Math.round(increment * frame), to);
-      setCount(current);
-      if (frame >= steps) clearInterval(timer);
-    }, duration * 1000 / steps);
-    return () => clearInterval(timer);
-  }, [started, to, duration]);
-
-  return <span ref={ref} className="text-volt">{count}{suffix}</span>;
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (!show) return null;
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Back to top"
+      className="fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full bg-accent text-white shadow-lg shadow-accent/30 flex items-center justify-center hover:bg-accent-dk transition-all hover:scale-105"
+    >
+      <ArrowUp size={18} />
+    </button>
+  );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAIN PAGE
-   ═══════════════════════════════════════════════════════════════ */
 export default function Home() {
-  const [headlineIdx, setHeadlineIdx] = useState(0);
+  const router = useRouter();
+  const { user } = useUser();
+  const [heroUrl, setHeroUrl] = useState('');
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeadlineIdx((prev) => (prev + 1) % HERO_HEADLINES.length);
-    }, 7000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleHeroSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = heroUrl.trim();
+    if (!trimmed) return;
+    const encoded = encodeURIComponent(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    router.push(user ? `/dashboard/new-audit?url=${encoded}` : `/register?url=${encoded}`);
+  };
+
+  // Animated counters
+  const c1 = useCountUp(48, 1800);
+  const c2 = useCountUp(12, 1400);
+  const c3 = useCountUp(6, 1200);
+  const c4 = useCountUp(10, 1000);
+
+  const howRef = useScrollReveal();
+  const catRef = useScrollReveal();
+  const previewRef = useScrollReveal();
+  const priceRef = useScrollReveal();
+  const testRef = useScrollReveal();
+  const faqRef = useScrollReveal();
+
+  const auditCategories = [
+    { icon: Eye, title: "First Impression", desc: "How users perceive your product at first glance" },
+    { icon: Brain, title: "AI Discoverability", desc: "SEO and AI model indexing optimisation", featured: true },
+    { icon: Target, title: "Value Proposition", desc: "Clear communication of your unique value" },
+    { icon: Map, title: "Navigation", desc: "Intuitive structure and findability" },
+    { icon: MousePointerClick, title: "Conversion & CTAs", desc: "Effective call-to-actions and conversion paths" },
+    { icon: Zap, title: "Onboarding", desc: "Seamless user onboarding experience" },
+    { icon: Smartphone, title: "Mobile Experience", desc: "Responsive and optimized mobile design" },
+    { icon: Shield, title: "Trust & Credibility", desc: "Security and trustworthiness signals" },
+    { icon: Type, title: "Content & Copy", desc: "Clear, compelling, well-structured messaging" },
+    { icon: Gauge, title: "Performance", desc: "Speed, load times, and responsiveness" },
+    { icon: Layers, title: "Visual Hierarchy", desc: "Layout flow, spacing, and element prioritisation" },
+    { icon: Accessibility, title: "Accessibility", desc: "Inclusive design for all users and assistive tech" },
+  ];
+
+  const testimonials = [
+    { quote: "ClearUX identified critical issues we completely missed. The audit was thorough and actionable.", author: "Sarah Chen", title: "Product Manager", company: "TechFlow", initials: "SC" },
+    { quote: "Worth every penny. We implemented the recommendations and saw a 34% increase in conversions.", author: "Marcus Webb", title: "Founder", company: "Velocity Labs", initials: "MW" },
+    { quote: "The AI-powered analysis is impressive. It caught UX issues our team had overlooked for months.", author: "Elena Rodriguez", title: "Design Lead", company: "Creative Studio", initials: "ER" },
+    { quote: "The report was incredibly detailed — the prioritised recommendations saved us weeks of guesswork.", author: "James Kim", title: "CTO", company: "LaunchPad", initials: "JK" },
+    { quote: "As an agency, we now include ClearUX audits in every client proposal. It's a game-changer.", author: "Diana Torres", title: "Agency Director", company: "PixelCraft", initials: "DT" },
+  ];
 
   return (
     <div className="bg-surface text-text min-h-screen">
-      {/* Single page background */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
       <HomeJsonLd />
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold">
+        Skip to content
+      </a>
       <Navbar />
-      <main id="main-content" role="main" aria-label="ClearUX homepage">
+      <main id="main-content">
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 1 — HERO (two-column: text left, mockup right)
+          SOCIAL PROOF — rotating reviews above hero
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 min-h-screen flex flex-col overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none hidden dark:block" aria-hidden="true">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#BFFA60]/[0.03] blur-[120px]" />
+      <section className="bg-surface-alt border-b border-border/50 dark:border-white/[0.03] py-6 px-4">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {[
+                { bg: '#8B5CF6', initials: 'SC' },
+                { bg: '#A78BFA', initials: 'MW' },
+                { bg: '#7C3AED', initials: 'ER' },
+                { bg: '#6D28D9', initials: 'JK' },
+                { bg: '#C4B5FD', initials: 'DT' },
+              ].map((p, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-full border-2 border-surface-alt flex items-center justify-center text-white text-[10px] font-bold"
+                  style={{ backgroundColor: p.bg, zIndex: 5 - i }}
+                >
+                  {p.initials}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-3.5 h-3.5 fill-accent text-accent" />
+              ))}
+            </div>
+            <span className="text-muted text-xs">Trusted by product teams worldwide</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          HERO
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative pt-16 pb-14 sm:pt-28 sm:pb-24 px-4 md:px-6 lg:px-8 overflow-hidden">
+        {/* ── Animated grid background ── */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Grid lines */}
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, currentColor 1px, transparent 1px),
+                linear-gradient(to bottom, currentColor 1px, transparent 1px)
+              `,
+              backgroundSize: '60px 60px',
+            }}
+          />
+
+          {/* Animated vertical accent line — sweeps left to right */}
+          <div
+            className="absolute top-0 bottom-0 w-px opacity-20"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, var(--accent), transparent)',
+              animation: 'gridSweepX 8s ease-in-out infinite',
+            }}
+          />
+          {/* Second vertical line — offset timing */}
+          <div
+            className="absolute top-0 bottom-0 w-px opacity-10"
+            style={{
+              background: 'linear-gradient(to bottom, transparent, var(--accent), transparent)',
+              animation: 'gridSweepX 8s ease-in-out 4s infinite',
+            }}
+          />
+
+          {/* Animated horizontal accent line — sweeps top to bottom */}
+          <div
+            className="absolute left-0 right-0 h-px opacity-20"
+            style={{
+              background: 'linear-gradient(to right, transparent, var(--accent), transparent)',
+              animation: 'gridSweepY 10s ease-in-out infinite',
+            }}
+          />
+          {/* Second horizontal line */}
+          <div
+            className="absolute left-0 right-0 h-px opacity-10"
+            style={{
+              background: 'linear-gradient(to right, transparent, var(--accent), transparent)',
+              animation: 'gridSweepY 10s ease-in-out 5s infinite',
+            }}
+          />
+
+          {/* Glowing intersection dots — subtle pulsing */}
+          <div className="absolute top-[30%] left-[25%] w-1.5 h-1.5 rounded-full bg-accent/30 animate-pulse" />
+          <div className="absolute top-[60%] left-[70%] w-1 h-1 rounded-full bg-accent/20 animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-[20%] left-[55%] w-1 h-1 rounded-full bg-purple-400/25 animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[75%] left-[35%] w-1 h-1 rounded-full bg-accent/15 animate-pulse" style={{ animationDelay: '3s' }} />
+
+          {/* Radial fade — fades grid out at edges */}
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 40%, transparent 30%, var(--surface) 100%)' }} />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-16 min-h-[calc(100svh-84px)]">
-          {/* Two-column grid — stacks on mobile */}
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-accent/[0.06] blur-[160px] pointer-events-none" />
+        <div className="absolute top-40 right-[10%] w-[400px] h-[400px] rounded-full bg-purple-500/[0.04] blur-[120px] pointer-events-none" />
 
-            {/* ── LEFT COLUMN: text content ── */}
-            <div className="text-center lg:text-left">
-              {/* Top label */}
-              <motion.p
-                className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
+        <div className="max-w-3xl mx-auto text-center relative">
+          {/* Badge */}
+          <div className="animate-fade-up inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent/10 border border-accent/20 mb-8">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-sm font-semibold text-accent tracking-wide">AI-Powered UX Audits</span>
+          </div>
+
+          {/*
+            Force the H1 to always be exactly 2 lines.
+            Line 1: "Find & fix UX issues impacting"
+            Line 2: the rotating word (centered, on its own line)
+          */}
+          <h1 className="animate-fade-up delay-100 font-manrope text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6" style={{ lineHeight: '1.15' }}>
+            Find &amp; fix UX issues impacting
+            <br />
+            <RotatingWord />
+          </h1>
+
+          <p className="animate-fade-up delay-200 text-base sm:text-lg md:text-xl text-muted mb-8 sm:mb-12 max-w-xl mx-auto" style={{ lineHeight: '1.7' }}>
+            48 checkpoints. 12 categories. Professional report with prioritised fixes — delivered in minutes.
+          </p>
+
+          {/* URL Input */}
+          <form onSubmit={handleHeroSubmit} className="animate-fade-up delay-300 max-w-xl mx-auto mb-8">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <label htmlFor="hero-url-input" className="sr-only">Website URL to audit</label>
+                <input
+                  id="hero-url-input"
+                  type="text"
+                  value={heroUrl}
+                  onChange={(e) => setHeroUrl(e.target.value)}
+                  placeholder="yourwebsite.com"
+                  aria-label="Website URL to audit"
+                  className="w-full px-5 py-4 text-base rounded-xl bg-card border border-border/50 dark:border-white/[0.04] text-text placeholder:text-placeholder focus:outline-none focus:border-accent/50 focus:shadow-[0_0_0_4px_rgba(139,92,246,0.1)] transition-all"
+                />
+              </div>
+              <button
+                type="submit"
+                className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-accent text-white rounded-xl font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20 hover:shadow-accent/30 flex-shrink-0"
               >
-                The complete UX audit platform
-              </motion.p>
+                Audit My Site
+                <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </form>
 
-              {/* Rotating headline */}
-              <div className="relative mb-5 sm:mb-8">
-                <AnimatePresence mode="wait">
-                  <motion.h1
-                    key={headlineIdx}
-                    className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.25rem] lg:text-[3.5rem] font-bold text-text"
-                    style={{ lineHeight: '1.05' }}
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -50 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          {/* Pricing highlights — bold, accent color */}
+          <div className="animate-fade-up delay-400 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-bold text-accent">
+            <span>From $99 per audit</span>
+            <span className="opacity-40">·</span>
+            <span>No subscription</span>
+            <span className="opacity-40">·</span>
+            <span>Results in minutes</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          VALUE PROPOSITION + STATS + HOW IT WORKS
+          Stripe-inspired unified section
+          ═══════════════════════════════════════════════════════ */}
+      <section id="how-it-works" className="relative overflow-hidden bg-surface-alt">
+        {/* Background grid — subtle */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
+        }} />
+
+        {/* ── TOP: Bold statement + Stats ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-28 pb-20">
+          <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-start">
+            {/* Left: Statement */}
+            <div>
+              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">Built for product teams</p>
+              <h2 className="font-manrope text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-text mb-6" style={{ lineHeight: '1.4' }}>
+                <span className="text-text">Audit with confidence.</span>{' '}
+                <span className="text-muted">Deep analysis across 12 UX categories with AI-powered precision, delivered in minutes not weeks.</span>
+              </h2>
+              <p className="text-muted text-base md:text-lg leading-relaxed max-w-lg">
+                Every audit evaluates 48 professional checkpoints — from first impression and navigation to mobile experience and AI discoverability.
+              </p>
+            </div>
+
+            {/* Right: Stats grid */}
+            <div className="grid grid-cols-2 gap-6 lg:pt-4">
+              {([
+                { counter: c1, suffix: '+', label: 'UX checkpoints', desc: 'Professional evaluation criteria', prefix: '' },
+                { counter: c2, suffix: '', label: 'Audit categories', desc: 'Full-spectrum UX coverage', prefix: '' },
+                { counter: c3, suffix: '', label: 'Languages', desc: 'Localised report output', prefix: '' },
+                { counter: c4, suffix: '', label: 'Min to report', desc: 'From URL to full analysis', prefix: '<' },
+              ] as const).map((stat, idx) => {
+                const counter = (stat as { counter: typeof c1 }).counter;
+                const gradients = [
+                  'from-accent to-purple-400',
+                  'from-purple-400 to-pink-400',
+                  'from-pink-400 to-orange-400',
+                  'from-accent to-emerald-400',
+                ];
+                return (
+                  <div
+                    key={idx}
+                    ref={counter.ref}
+                    className="relative p-5 rounded-2xl bg-card/50 border border-border/30 dark:border-white/[0.03] hover:border-accent/20 transition-all duration-300"
                   >
-                    {HERO_HEADLINES[headlineIdx].main}<br />
-                    <span className="font-medium text-lime-gradient">{HERO_HEADLINES[headlineIdx].accent}</span>
-                  </motion.h1>
-                </AnimatePresence>
+                    <p className={`font-manrope text-4xl md:text-5xl font-extrabold mb-1 bg-gradient-to-r ${gradients[idx]} bg-clip-text text-transparent`} suppressHydrationWarning>
+                      {mounted
+                        ? `${stat.prefix}${counter.count}${stat.suffix}`
+                        : '\u00A0'
+                      }
+                    </p>
+                    <p className="text-sm font-semibold text-text mb-0.5">{stat.label}</p>
+                    <p className="text-xs text-muted">{stat.desc}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-                {/* Slider progress */}
-                <div className="flex items-center justify-center lg:justify-start gap-2 mt-6">
-                  {HERO_HEADLINES.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setHeadlineIdx(i)}
-                      aria-label={`Go to slide ${i + 1}`}
-                      className="relative h-[3px] rounded-full overflow-hidden cursor-pointer"
-                      style={{ width: i === headlineIdx ? 32 : 16, background: 'var(--border)', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
-                    >
-                      {i === headlineIdx && (
-                        <motion.div
-                          className="absolute inset-y-0 left-0 rounded-full bg-[#6B9A2E] dark:bg-[#BFFA60]"
-                          initial={{ width: '0%' }}
-                          animate={{ width: '100%' }}
-                          transition={{ duration: 7, ease: 'linear' }}
-                          key={`progress-${headlineIdx}`}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
+        {/* ── Accent divider line ── */}
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        </div>
+
+        {/* ── BOTTOM: How it works — 3 steps ── */}
+        <div className="relative max-w-6xl mx-auto px-4 md:px-6 lg:px-8 pt-20 pb-28">
+          <div
+            ref={howRef.ref}
+            className={`transition-all duration-700 ${howRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          >
+            <div className="grid lg:grid-cols-[1fr_2fr] gap-16 lg:gap-20 items-start">
+              {/* Left: Section intro */}
+              <div>
+                <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">How it works</p>
+                <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-tight mb-4">
+                  Three steps to better UX.
+                </h2>
+                <p className="text-muted text-base leading-relaxed">
+                  No setup, no integration, no waiting. Just paste your URL and get a professional audit report.
+                </p>
               </div>
 
-              {/* Description */}
-              <motion.div
-                className="max-w-xl mx-auto lg:mx-0 mb-8"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.15 }}
-              >
-                <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
-                  ClearUX audits your website, brand identity, and design — all in one platform. 96 checkpoints across 6 modules. Every issue ranked by severity, backed by evidence, with clear fixes your team can ship today.
-                </p>
-                <p className="text-base sm:text-lg font-bold text-volt">
-                  First audit free.
-                </p>
-              </motion.div>
-
-              {/* CTA buttons */}
-              <motion.div
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <SmartCta iconSize={15} />
-                <Link
-                  href="/how-it-works"
-                  className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
-                >
-                  How it works
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </motion.div>
-
-              {/* Trust badges */}
-              <motion.div
-                className="flex items-center justify-center lg:justify-start gap-3 sm:gap-6 mt-5 flex-wrap"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-              >
+              {/* Right: Steps */}
+              <div className="space-y-0">
                 {[
-                  { icon: Shield, label: 'SSL', full: 'SSL Encrypted' },
-                  { icon: ShieldCheck, label: 'GDPR', full: 'GDPR Compliant' },
-                  { icon: CheckCircle, label: 'Stripe', full: 'Stripe Payments' },
-                ].map((badge, i) => {
-                  const BadgeIcon = badge.icon;
+                  { step: '01', icon: Target, title: 'Paste your URL', desc: 'Just the link — we detect your industry, audience, and tech stack automatically. Works with any publicly accessible website.' },
+                  { step: '02', icon: Brain, title: 'AI audits your site', desc: 'We crawl every page and evaluate 48 checkpoints across 12 UX categories with AI-powered precision.' },
+                  { step: '03', icon: FileCheck, title: 'Get your report', desc: 'PDF + Word report with scores, severity-ranked issues, screenshots, and actionable fixes — ready in minutes.' },
+                ].map((item, idx) => {
+                  const Icon = item.icon;
                   return (
-                    <div key={i} className="flex items-center gap-2">
-                      <BadgeIcon size={16} className="text-muted" strokeWidth={1.5} />
-                      <span className="text-[13px] text-muted font-medium tracking-wide sm:hidden">{badge.label}</span>
-                      <span className="text-[13px] text-muted font-medium tracking-wide hidden sm:inline">{badge.full}</span>
+                    <div
+                      key={item.step}
+                      className="group relative flex gap-5 py-7"
+                      style={howRef.visible ? { animation: `fade-up 0.6s ease-out ${200 + idx * 150}ms both` } : { opacity: 0 }}
+                    >
+                      {/* Step number + icon */}
+                      <div className="flex-shrink-0 relative">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/20 flex items-center justify-center group-hover:border-accent/40 transition-colors">
+                          <Icon size={22} className="text-accent" />
+                        </div>
+                        {/* Vertical connector */}
+                        {idx < 2 && (
+                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-accent/20 to-transparent" />
+                        )}
+                      </div>
+                      {/* Content */}
+                      <div className="pt-1">
+                        <div className="flex items-center gap-3 mb-1.5">
+                          <span className="text-[10px] font-bold text-accent/50 tracking-widest">{item.step}</span>
+                          <h3 className="font-manrope text-lg font-bold text-text">{item.title}</h3>
+                        </div>
+                        <p className="text-muted text-sm leading-relaxed max-w-md">{item.desc}</p>
+                      </div>
                     </div>
                   );
                 })}
-              </motion.div>
-            </div>
-
-            {/* ── RIGHT COLUMN: browser mockup ── */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              <div className="rounded-2xl sm:rounded-3xl bg-card border border-border overflow-hidden shadow-none dark:shadow-[0_0_60px_-15px_rgba(99,102,241,0.15)]">
-                {/* Title bar */}
-                <div className="flex items-center justify-between px-4 sm:px-5 py-2.5 border-b border-border">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[#EF4444]/60" />
-                    <div className="w-2 h-2 rounded-full bg-[#F59E0B]/60" />
-                    <div className="w-2 h-2 rounded-full bg-[#22C55E]/60" />
-                  </div>
-                  <div className="flex-1 mx-4 hidden sm:block">
-                    <div className="max-w-[180px] mx-auto px-3 py-1 rounded-md bg-surface border border-border text-center">
-                      <span className="text-[10px] text-muted font-mono">clearux.ai/dashboard</span>
-                    </div>
-                  </div>
-                  <div className="w-10" />
-                </div>
-
-                {/* Dashboard content */}
-                <div className="p-4 sm:p-6">
-                  {/* Header row */}
-                  <div className="flex items-center justify-between mb-5">
-                    <p className="text-sm sm:text-base font-semibold text-text">All audits</p>
-                    <div className="px-3 py-1.5 rounded-full bg-[#0F0F0F] dark:bg-white text-white dark:text-[#0F0F0F] text-[10px] sm:text-xs font-medium">
-                      New audit
-                    </div>
-                  </div>
-
-                  {/* Three pillar cards */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
-                    {[
-                      { icon: Globe2, label: 'Website' },
-                      { icon: Fingerprint, label: 'Brand identity' },
-                      { icon: Layers, label: 'Design' },
-                    ].map((pillar, i) => {
-                      const Icon = pillar.icon;
-                      return (
-                        <div
-                          key={i}
-                          className="flex flex-col items-center text-center px-2 py-4 rounded-xl border border-border bg-surface"
-                        >
-                          <Icon size={18} strokeWidth={1.5} className="text-muted mb-2" />
-                          <p className="text-[10px] sm:text-xs font-medium text-text">{pillar.label}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Sample completed audits */}
-                  <div className="rounded-xl border border-border bg-surface overflow-hidden">
-                    {[
-                      { icon: Globe2, name: 'acme.com', score: 84, scoreColor: 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10' },
-                      { icon: Fingerprint, name: 'Stripe rebrand', score: 91, scoreColor: 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10' },
-                      { icon: Layers, name: 'Checkout prototype', score: 76, scoreColor: 'text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10' },
-                    ].map((audit, i, arr) => {
-                      const Icon = audit.icon;
-                      return (
-                        <div
-                          key={i}
-                          className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? 'border-b border-border' : ''}`}
-                        >
-                          <Icon size={14} strokeWidth={1.5} className="text-muted flex-shrink-0" />
-                          <p className="text-xs sm:text-sm font-medium text-text flex-1 min-w-0 truncate">{audit.name}</p>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <CheckCircle size={12} className="text-emerald-500" />
-                            <span className="text-[10px] text-muted hidden sm:block">Completed</span>
-                          </div>
-                          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${audit.scoreColor}`}>
-                            <span className="text-[10px] sm:text-xs font-semibold">{audit.score}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Discover ClearUX — below both columns */}
-          <motion.div
-            className="flex justify-center mt-12 sm:mt-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById('trust-numbers');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="group flex flex-col items-center gap-2 sm:gap-3 animate-bounce-slow cursor-pointer"
-            >
-              <span className="text-xs tracking-[0.2em] uppercase text-volt font-medium">Discover ClearUX</span>
-              <div className="w-11 h-11 rounded-full border border-[#A8E54A]/40 dark:border-[#BFFA60]/40 group-hover:border-[#A8E54A]/70 dark:group-hover:border-[#BFFA60]/70 flex items-center justify-center transition-all group-hover:bg-[#A8E54A]/[0.08] dark:group-hover:bg-[#BFFA60]/[0.05]">
-                <ChevronDown size={18} className="text-[#6B9A2E] dark:text-[#BFFA60] group-hover:text-[#A8E54A] transition-colors" />
-              </div>
-            </button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 2 — TWO AUDIENCES (trust numbers + rotating counters)
-          ═══════════════════════════════════════════════════════ */}
-      <section id="trust-numbers" className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal>
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              Why now
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Clarity at scale. <span className="text-lime-gradient">Speed by default.</span>
-            </h2>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-16 sm:mb-20">
-              Your product serves humans and AI simultaneously. The teams that audit fast and audit often will own the next decade. ClearUX makes quality continuous — not annual, not optional.
-            </p>
-          </ScrollReveal>
-
-          <ScrollReveal>
-            <div className="grid sm:grid-cols-3 gap-6">
-              {[
-                { countTo: 96, suffix: '', label: 'Checkpoints', desc: 'across every audit' },
-                { countTo: 6, suffix: '', label: 'Modules', desc: 'complete coverage' },
-                { static: '<10', label: 'Minutes', desc: 'to full report' },
-              ].map((stat, i) => (
-                <div key={i} className={`text-left ${i > 0 ? 'sm:border-l sm:border-border sm:pl-8' : ''}`}>
-                  <p className="font-heading text-[5rem] sm:text-[6rem] md:text-[7rem] font-light leading-none mb-2">
-                    {'countTo' in stat ? (
-                      <CountUp to={stat.countTo!} suffix={stat.suffix || ''} />
-                    ) : (
-                      <span className="text-volt">{(stat as any).static}</span>
-                    )}
-                  </p>
-                  <p className="text-base font-medium text-muted">{stat.label}</p>
-                  <p className="text-sm text-muted">{stat.desc}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 3 — THE PROBLEM
-          ═══════════════════════════════════════════════════════ */}
-      <section id="the-problem" className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              The problem
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              UX audits are <span className="text-lime-gradient">overdue for a reset.</span>
-            </h2>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              Agencies cost $10-50k and take weeks. Free tools stop at surface metrics. Meanwhile, UX issues are quietly killing conversion and retention across your website, brand, and product.
-            </p>
-          </ScrollReveal>
-
-          <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.08}>
-            {[
-              { label: 'Traditional agencies', stat: '$10-50k', desc: '2-6 weeks delivery, $10-50k budgets. Reserved for enterprise teams with deep pockets.' },
-              { label: 'In-house teams', stat: 'Senior hire', desc: 'Most teams lack specialised UX research expertise. The ones who have it are too busy to audit.' },
-              { label: 'Automated tools', stat: 'Shallow', desc: 'Run a handful of checks and call it done. Miss dark patterns, cognitive load, conversion psychology, and everything qualitative.' },
-              { label: 'Free scanners', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks brand alignment, AI readiness, or the experience end to end.' },
-            ].map((item, i) => (
-              <StaggerItem key={i}>
-                <div className="border-t border-border pt-8">
-                  <p className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted mb-3">{item.label}</p>
-                  <p className="font-heading text-2xl sm:text-3xl font-medium text-volt mb-2">{item.stat}</p>
-                  <p className="text-base text-muted leading-relaxed">{item.desc}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 4 — WHAT WE AUDIT (6 modules)
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              What we audit
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              6 modules. 96 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
-            </h2>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              Website, brand identity, and design — audited across every dimension that matters. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO. Concrete, prioritised fixes for each.
-            </p>
-          </ScrollReveal>
-
-          <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-0" staggerDelay={0.08}>
-            {MODULES.map((mod, i) => {
-              const Icon = mod.icon;
-              return (
-                <StaggerItem key={i}>
-                  <div className="py-8 border-t border-border">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-9 h-9 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
-                        <Icon size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" strokeWidth={1.5} />
-                      </div>
-                      <h3 className="font-heading text-lg font-medium text-text">{mod.title}</h3>
-                    </div>
-                    <p className="text-sm text-muted leading-relaxed">{mod.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerReveal>
-        </div>
-
-        {/* Scrolling showcase */}
-        <div className="mt-16 sm:mt-24 space-y-4 overflow-hidden relative opacity-90 -mx-6 sm:-mx-10 lg:-mx-16" aria-hidden="true" role="presentation">
-          <div className="relative">
-            <div className="flex gap-2.5 w-max" style={{ animation: 'scroll-left 40s linear infinite' }}>
-              {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-2.5">
-                  {[
-                    { label: 'Dark Pattern Scanner', subtitle: 'Human Experience', icon: ShieldCheck },
-                    { label: 'Cognitive Load Test', subtitle: 'Inclusive Design', icon: Accessibility },
-                    { label: 'AI Discoverability', subtitle: 'Future Readiness', icon: Rocket },
-                    { label: 'Conversion Friction Map', subtitle: 'Human Experience', icon: Users },
-                  ].map((card, j) => {
-                    const CardIcon = card.icon;
-                    return (
-                      <div key={j} className="relative w-[290px] sm:w-[340px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid var(--border)' }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-card-hover">
-                          <CardIcon size={19} className="text-muted" strokeWidth={1.5} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] tracking-[0.12em] uppercase text-muted mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-muted leading-tight">{card.label}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="flex gap-2.5 w-max" style={{ animation: 'scroll-right 45s linear infinite' }}>
-              {[...Array(2)].map((_, setIdx) => (
-                <div key={setIdx} className="flex gap-2.5">
-                  {[
-                    { label: 'Trust Signal Audit', subtitle: 'Foundation', icon: Shield },
-                    { label: 'WCAG Compliance', subtitle: 'Inclusive Design', icon: Eye },
-                    { label: 'Brand Voice Check', subtitle: 'Brand Consistency', icon: Fingerprint },
-                    { label: 'Structured Data', subtitle: 'SEO Structure', icon: Code2 },
-                  ].map((card, j) => {
-                    const CardIcon = card.icon;
-                    return (
-                      <div key={j} className="relative w-[270px] sm:w-[320px] rounded-xl overflow-hidden flex-shrink-0 px-6 py-6 flex items-start gap-4" style={{ border: '1px solid var(--border)' }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-card-hover">
-                          <CardIcon size={19} className="text-muted" strokeWidth={1.5} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] tracking-[0.12em] uppercase text-muted mb-1.5 font-medium">{card.subtitle}</p>
-                          <p className="text-[15px] font-medium text-muted leading-tight">{card.label}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="absolute inset-y-0 left-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to right, var(--surface) 0%, var(--surface) 20%, transparent 100%)' }} />
-          <div className="absolute inset-y-0 right-0 w-48 sm:w-72 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--surface) 0%, var(--surface) 20%, transparent 100%)' }} />
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 5 — WHY CLEARUX (what others miss)
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              Why ClearUX
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Depth others <span className="text-lime-gradient">don&apos;t offer.</span>
-            </h2>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              ClearUX goes beyond surface checks. We evaluate live content, real interaction flows, responsive behaviour, trust signals in context, brand alignment, and how AI agents read your product. The full picture — not a partial snapshot.
-            </p>
-          </ScrollReveal>
-
-          <StaggerReveal className="grid sm:grid-cols-2 gap-6" staggerDelay={0.08}>
-            {[
-              {
-                icon: Globe2,
-                title: 'Website, brand, and design',
-                desc: 'Three audit types in one platform. Paste a URL, upload brand files, or submit a design — ClearUX evaluates all of them with the same rigour and depth.',
-                label: 'Complete coverage',
-              },
-              {
-                icon: Eye,
-                title: 'End-to-end experience analysis',
-                desc: 'Dark patterns, conversion friction, cognitive load, broken flows, brand misalignment — we audit the full experience as your users encounter it.',
-                label: 'Beyond surface checks',
-              },
-              {
-                icon: Sparkles,
-                title: 'AI discoverability',
-                desc: 'The only platform auditing how LLMs read and surface your product. Structured data, semantic markup, agent readiness — critical for the next generation of discovery.',
-                label: 'Future-ready',
-              },
-              {
-                icon: RefreshCw,
-                title: 'Continuous improvement',
-                desc: 'Re-audit after every change. Track fixes, prove improvement, catch regressions. Quality as a continuous metric — not a one-off exercise.',
-                label: 'Built for modern teams',
-              },
-            ].map((item, i) => {
-              const CardIcon = item.icon;
-              return (
-                <StaggerItem key={i}>
-                  <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 h-full flex flex-col">
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="w-11 h-11 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center">
-                        <CardIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                      </div>
-                      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#6B9A2E]/60 dark:text-[#BFFA60]/60">{item.label}</p>
-                    </div>
-                    <h3 className="font-heading text-lg font-medium text-text mb-3">{item.title}</h3>
-                    <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — HOW IT WORKS (matching How it works page process section)
-          ═══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="relative z-10 py-14 sm:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              How it works
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Three steps to <span className="text-lime-gradient">clarity.</span>
-            </h2>
-          </ScrollReveal>
-
-          <StaggerReveal className="grid md:grid-cols-3 gap-6" staggerDelay={0.12}>
-            {[
-              {
-                step: '01',
-                title: 'Choose your audit',
-                desc: 'Paste a website URL, upload your brand identity files, or submit a design. ClearUX handles all three — no code, no setup.',
-                icon: Search,
-              },
-              {
-                step: '02',
-                title: 'We run 96 checkpoints',
-                desc: 'Every input evaluated across 6 modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Scored by severity and business impact.',
-                icon: Globe2,
-              },
-              {
-                step: '03',
-                title: 'You decide what to fix',
-                desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link, track progress from your dashboard. We identify. You decide.',
-                icon: FileText,
-              },
-            ].map((item, i) => {
-              const StepIcon = item.icon;
-              return (
-                <StaggerItem key={i} className="flex">
-                  <div className="flex flex-col rounded-2xl border border-border bg-card backdrop-blur-sm p-8 flex-1">
-                    <span className="font-heading text-[4rem] sm:text-[5rem] font-light text-muted leading-none block mb-4">
-                      {item.step}
-                    </span>
-                    <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                      <StepIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                    </div>
-                    <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">{item.title}</h3>
-                    <p className="font-body text-sm sm:text-base text-muted leading-relaxed flex-1">{item.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 7 — WHAT YOU GET
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              What you get
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              A report your team{' '}
-              <span className="text-lime-gradient">can act on.</span>
-            </h2>
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-border pb-8">
-              <div className="max-w-2xl">
-                <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
-                  Every finding ranked by severity and business impact, with specific fixes your team can ship in their next sprint.
-                </p>
-                <Link
-                  href="/demo-report"
-                  className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-[#A8E54A]/30 dark:border-[#BFFA60]/30 bg-[#A8E54A]/[0.08] dark:bg-[#BFFA60]/[0.06] hover:bg-[#A8E54A]/[0.15] dark:hover:bg-[#BFFA60]/[0.12] text-sm font-medium text-[#6B9A2E] dark:text-volt transition-all"
-                >
-                  See a sample report
-                  <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <button type="button" aria-label="Scroll left" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: -400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-border flex items-center justify-center hover:border-muted transition-colors">
-                  <ArrowRight size={16} className="text-muted rotate-180" />
-                </button>
-                <button type="button" aria-label="Scroll right" onClick={() => { const el = document.getElementById('feature-cards-scroll'); if (el) el.scrollBy({ left: 400, behavior: 'smooth' }); }} className="w-11 h-11 rounded-full border border-border flex items-center justify-center hover:border-muted transition-colors">
-                  <ArrowRight size={16} className="text-muted" />
-                </button>
               </div>
             </div>
-          </ScrollReveal>
-
-          <div id="feature-cards-scroll" className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {[
-              { icon: ListChecks, title: 'Prioritised findings', label: 'Severity ranked', desc: 'Critical issues surface first. Ranked by severity and business impact so your team knows exactly where to start.' },
-              { icon: FileText, title: 'PDF & Word export', label: 'One-click', desc: 'Professional reports ready for stakeholders. White-label available for agencies.' },
-              { icon: Share2, title: 'Team sharing', label: 'Shareable', desc: 'One link for your full score, breakdown, and recommendations. No account needed to view.' },
-              { icon: CheckCircle, title: 'Track every fix', label: 'Dashboard', desc: 'Status tracking for every finding — open, in progress, fixed. Real-time progress at a glance.' },
-              { icon: RefreshCw, title: 'Re-audit', label: 'Continuous', desc: 'Re-audit the same URL to verify fixes or dig deeper. Track your score improvement over time.' },
-              { icon: BarChart3, title: 'Module scores', label: '6 Modules', desc: 'Each module scored individually. See exactly where you excel and where to improve.' },
-            ].map((card, i) => {
-              const Icon = card.icon;
-              return (
-                <div key={i} className="relative w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] rounded-xl p-6 sm:p-8 flex-shrink-0 bg-card border border-border hover:border-border hover:shadow-lg hover:shadow-black/20 transition-all group">
-                  <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-6">
-                    <Icon size={24} className="text-[#6B9A2E] dark:text-[#BFFA60]" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted mb-3 block">{card.label}</span>
-                  <h3 className="font-heading text-base font-medium text-text mb-3 leading-tight">{card.title}</h3>
-                  <p className="text-sm text-muted leading-relaxed">{card.desc}</p>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 8 — PRICING
+          WHAT WE AUDIT — visual break with surface bg
           ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              Pricing
-            </p>
-            <div className="mb-6">
-              <h2 className="font-heading text-text max-w-4xl" style={{ lineHeight: '1.05' }}>
-                <span className="text-volt font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
-                <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-medium text-muted ml-3 sm:ml-5">per audit</span>
+      <section id="features" className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface overflow-hidden">
+        {/* Decorative accent glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] rounded-full bg-accent/[0.03] blur-[120px] pointer-events-none" />
+
+        <div
+          ref={catRef.ref}
+          className={`max-w-6xl mx-auto relative transition-all duration-700 ${catRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          {/* Header — left-aligned Stripe style */}
+          <div className="grid lg:grid-cols-[1fr_1.5fr] gap-10 lg:gap-20 items-end mb-14">
+            <div>
+              <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">What we audit</p>
+              <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
+                12 categories.<br />48 checkpoints.
               </h2>
             </div>
-            <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-bold text-volt mb-6">
-              First one free.
+            <p className="text-muted text-base md:text-lg leading-relaxed lg:pb-1">
+              Every audit covers the full spectrum of user experience — from first impression and visual design to AI discoverability and accessibility. No blind spots.
             </p>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-              No subscription. No feature gates. Every audit gets all 6 modules, 96 checkpoints, and full reports. Credits never expire.
-            </p>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <SmartCta iconSize={15} />
-              <Link href="/pricing" className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]">
-                View all plans
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-          </ScrollReveal>
+          </div>
 
-          <ScrollReveal>
-            <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-8">
+          {/* Accent divider */}
+          <div className="h-px bg-gradient-to-r from-accent/40 via-accent/20 to-transparent mb-12" />
+
+          {/* Category grid — 4 columns on desktop, elegant minimal cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {auditCategories.map((cat, idx) => {
+              const Icon = cat.icon;
+              const isFeatured = 'featured' in cat && cat.featured;
+              return (
+                <div
+                  key={idx}
+                  className={`group relative rounded-xl p-4 border transition-all duration-300 ${
+                    isFeatured
+                      ? 'bg-gradient-to-br from-accent/10 via-purple-500/[0.06] to-violet-500/[0.03] border-accent/30 hover:border-accent/50 shadow-sm shadow-accent/5'
+                      : 'bg-card/50 border-border/30 dark:border-white/[0.03] hover:border-accent/25 hover:bg-card'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isFeatured
+                        ? 'bg-accent/20 group-hover:bg-accent/25'
+                        : 'bg-accent/10 group-hover:bg-accent/15'
+                    }`}>
+                      <Icon size={15} className="text-accent" />
+                    </div>
+                    <h3 className="font-semibold text-text text-[15px]">{cat.title}</h3>
+                  </div>
+                  <p className="text-muted text-xs leading-relaxed pl-11">{cat.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          AUDIT PREVIEW — simulated screens
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-28 px-4 md:px-6 lg:px-8 bg-surface-alt overflow-hidden">
+        {/* Subtle grid bg */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
+
+        <div
+          ref={previewRef.ref}
+          className={`max-w-6xl mx-auto relative transition-all duration-700 ${previewRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-16">
+            <p className="text-accent text-sm font-semibold tracking-wide uppercase mb-4">See it in action</p>
+            <h2 className="font-manrope text-3xl sm:text-4xl font-bold text-text leading-snug">
+              From URL to actionable insights
+            </h2>
+            <p className="text-muted text-base md:text-lg mt-4 max-w-2xl mx-auto">
+              A complete UX audit delivered as a professional report — scores, findings, and prioritised recommendations.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+
+            {/* ── Card 1: Score Overview ── */}
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">Audit Score</span>
+              </div>
+              <div className="p-6 flex flex-col items-center">
+                {/* Score ring */}
+                <div className="relative w-32 h-32 mb-5">
+                  <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" className="text-border/40" strokeWidth="8" />
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="url(#scoreGrad)" strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray={`${0.73 * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
+                    />
+                    <defs>
+                      <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="var(--accent)" />
+                        <stop offset="100%" stopColor="#a855f7" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-extrabold font-manrope text-text">73</span>
+                    <span className="text-[10px] text-muted font-medium uppercase tracking-wide">/ 100</span>
+                  </div>
+                </div>
+                {/* Mini category scores */}
+                <div className="w-full space-y-2.5">
+                  {[
+                    { name: 'First Impression', score: 82, color: 'bg-emerald-500' },
+                    { name: 'Navigation', score: 68, color: 'bg-accent' },
+                    { name: 'Mobile Experience', score: 55, color: 'bg-amber-500' },
+                    { name: 'AI Discoverability', score: 41, color: 'bg-red-500' },
+                  ].map((item) => (
+                    <div key={item.name}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-muted">{item.name}</span>
+                        <span className="text-xs font-semibold text-text">{item.score}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-border/40 overflow-hidden">
+                        <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.score}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Card 2: Findings List ── */}
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">Key Findings</span>
+              </div>
+              <div className="p-4 space-y-3">
                 {[
-                  'All 6 modules, 96 checkpoints',
-                  'PDF & Word reports included',
-                  'Track fixes and re-audit anytime',
-                  'Credits never expire',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-muted font-medium">{item}</span>
+                  { severity: 'Critical', color: 'bg-red-500', title: 'No mobile-responsive navigation', category: 'Mobile Experience' },
+                  { severity: 'High', color: 'bg-orange-500', title: 'CTA buttons below the fold on landing', category: 'Conversion & CTAs' },
+                  { severity: 'High', color: 'bg-orange-500', title: 'Missing structured data for AI indexing', category: 'AI Discoverability' },
+                  { severity: 'Medium', color: 'bg-amber-500', title: 'Inconsistent heading hierarchy', category: 'Visual Hierarchy' },
+                  { severity: 'Medium', color: 'bg-amber-500', title: 'No loading states on async actions', category: 'Onboarding' },
+                  { severity: 'Low', color: 'bg-blue-500', title: 'Alt text missing on 3 hero images', category: 'Accessibility' },
+                ].map((finding, i) => (
+                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-surface/60 dark:bg-white/[0.02] border border-border/20 dark:border-white/[0.04]">
+                    <span className={`mt-0.5 flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase tracking-wider ${finding.color}`}>
+                      {finding.severity}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-text leading-snug">{finding.title}</p>
+                      <p className="text-[10px] text-muted mt-0.5">{finding.category}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          </ScrollReveal>
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 9 — FAQ (matching FAQ page card design)
-          ═══════════════════════════════════════════════════════ */}
-      <section id="faq" className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              FAQ
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text">
-              Frequently asked <span className="text-lime-gradient">questions.</span>
-            </h2>
-          </ScrollReveal>
-
-          <StaggerReveal className="max-w-3xl space-y-3" staggerDelay={0.06}>
-            {TOP_FAQS.map((item, idx) => (
-              <StaggerItem key={idx}>
-                <HomeFaqItem q={item.q} a={item.a} />
-              </StaggerItem>
-            ))}
-          </StaggerReveal>
-
-          <ScrollReveal delay={0.3} className="mt-8 max-w-3xl">
-            <Link
-              href="/faq"
-              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full border border-border hover:border-border text-sm font-medium text-text transition-all"
-            >
-              Read all FAQ
-              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 10 — FINAL CTA
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <ScrollReveal className="mb-16 sm:mb-20">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              Get started
-            </p>
-            <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Ready for{' '}
-              <span className="text-lime-gradient">clarity?</span>
-            </h2>
-            <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-              Your first audit is free — no expiration, no catches. 96 checkpoints in minutes, the kind of depth that used to take weeks and cost thousands. Website, brand, or design — your call.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-              <SmartCta iconSize={15} />
-              <Link
-                href="/how-it-works"
-                className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
-              >
-                How it works
-                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+            {/* ── Card 3: Report Preview ── */}
+            <div className="rounded-2xl border border-border/40 dark:border-white/[0.03] bg-card shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-border/30 dark:border-white/[0.03] flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                </div>
+                <span className="text-[11px] text-muted ml-1 font-medium">PDF Report</span>
+              </div>
+              <div className="p-5">
+                {/* Mock report page */}
+                <div className="bg-white dark:bg-white/[0.02] rounded-lg border border-border/30 dark:border-white/[0.03] p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                      <FileText size={12} className="text-accent" />
+                    </div>
+                    <span className="text-xs font-bold text-text dark:text-white/80">ClearUX Audit Report</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="h-2 w-24 rounded bg-accent/30 mb-2" />
+                      <div className="space-y-1.5">
+                        <div className="h-1.5 w-full rounded bg-border/40" />
+                        <div className="h-1.5 w-5/6 rounded bg-border/40" />
+                        <div className="h-1.5 w-4/6 rounded bg-border/40" />
+                      </div>
+                    </div>
+                    <div className="h-px bg-border/30" />
+                    <div>
+                      <div className="h-2 w-20 rounded bg-accent/30 mb-2" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
+                        <div className="h-10 rounded bg-accent/[0.06] border border-accent/10" />
+                      </div>
+                    </div>
+                    <div className="h-px bg-border/30" />
+                    <div>
+                      <div className="h-2 w-28 rounded bg-orange-400/30 mb-2" />
+                      <div className="space-y-1.5">
+                        <div className="h-1.5 w-full rounded bg-border/40" />
+                        <div className="h-1.5 w-3/4 rounded bg-border/40" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Download buttons */}
+                <div className="flex gap-2 mt-4">
+                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
+                    <FileText size={12} className="text-accent" />
+                    <span className="text-[11px] font-semibold text-accent">PDF</span>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-accent/10 border border-accent/20">
+                    <FileText size={12} className="text-accent" />
+                    <span className="text-[11px] font-semibold text-accent">DOCX</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-muted mt-3 tracking-wide">No credit card required. Results in minutes.</p>
-          </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          PRICING
+          ═══════════════════════════════════════════════════════ */}
+      <section id="pricing" className="relative py-28 px-4 md:px-6 lg:px-8 bg-gradient-to-b from-[#faf9fe] via-[#f7f5fc] to-[#faf9fe] dark:from-[#0e0e16] dark:via-[#12121c] dark:to-[#0e0e16]">
+        <div
+          ref={priceRef.ref}
+          className={`max-w-5xl mx-auto relative transition-all duration-700 ${priceRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-6">
+            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Pricing</p>
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
+              Simple credit-based pricing
+            </h2>
+            <p className="text-muted text-lg max-w-xl mx-auto">
+              1 credit = 1 full audit. No tiers. No feature limits.
+            </p>
+          </div>
+
+          {/* ── Every audit includes — shared benefits strip ── */}
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-14 py-4 border-y border-border/30 dark:border-white/[0.03]">
+            {['48-point deep analysis', '12 UX categories', 'AI discoverability audit', 'PDF + DOCX reports', 'Issue screenshots'].map((f, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-accent" />
+                <span className="text-xs text-muted font-medium">{f}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { name: 'Starter', credits: 1, price: 99, per: '$99', save: null, savePercent: 0, cta: 'Start Auditing', popular: false, desc: 'Try your first audit' },
+              { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: '19%', savePercent: 19, cta: 'Get 5 Audits', popular: true, desc: 'Best for growing teams' },
+              { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: '33%', savePercent: 33, cta: 'Get 15 Audits', popular: false, desc: 'For agencies & studios' },
+              { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: '50%', savePercent: 50, cta: 'Get 50 Audits', popular: false, desc: 'Enterprise volume' },
+            ].map((tier, idx) => (
+              <div
+                key={idx}
+                className={`group relative rounded-2xl flex flex-col transition-all duration-300 overflow-hidden ${
+                  tier.popular
+                    ? 'border border-accent/40 dark:border-accent/20 hover:border-accent/60 shadow-xl shadow-accent/10 dark:shadow-accent/5 lg:scale-[1.03]'
+                    : 'border border-border/50 dark:border-transparent hover:border-accent/25 hover:shadow-lg hover:shadow-accent/5 dark:bg-[#161622] dark:hover:bg-[#1a1a2a]'
+                }`}
+              >
+                {/* Top gradient bar */}
+                <div className={`h-1 w-full ${
+                  tier.popular
+                    ? 'bg-gradient-to-r from-accent via-purple-400 to-accent'
+                    : 'bg-gradient-to-r from-transparent via-accent/15 dark:via-accent/[0.08] to-transparent'
+                }`} />
+
+                {tier.popular && (
+                  <span className="absolute top-4 right-4 bg-gradient-to-r from-accent to-purple-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-accent/30 z-10">
+                    Most Popular
+                  </span>
+                )}
+
+                <div className={`p-6 pb-5 flex flex-col flex-1 ${
+                  tier.popular
+                    ? 'bg-gradient-to-b from-accent/[0.06] to-transparent'
+                    : 'bg-card'
+                }`}>
+                  {/* Plan name */}
+                  <h3 className="font-manrope font-bold text-lg text-text mb-0.5">{tier.name}</h3>
+                  <p className="text-xs text-muted mb-4">{tier.desc}</p>
+
+                  {/* Price */}
+                  <div className="mb-0.5">
+                    <span className="font-manrope text-4xl font-extrabold text-text">${tier.price.toLocaleString()}</span>
+                  </div>
+
+                  {/* Per-audit cost */}
+                  <p className="text-sm text-muted mb-5">
+                    {tier.per}<span className="text-muted/50"> / audit</span>
+                  </p>
+
+                  {/* Credit count — visual pill with icon */}
+                  <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 mb-4 ${
+                    tier.popular
+                      ? 'bg-accent/10 dark:bg-accent/[0.08] border border-accent/15 dark:border-transparent'
+                      : 'bg-surface-alt/50 dark:bg-white/[0.04] border border-border/30 dark:border-transparent'
+                  }`}>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                      tier.popular
+                        ? 'bg-accent/20'
+                        : 'bg-accent/10'
+                    }`}>
+                      <Zap className="w-4 h-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-text leading-tight">
+                        {tier.credits} credit{tier.credits !== 1 ? 's' : ''}
+                      </p>
+                      <p className="text-[10px] text-muted leading-tight">
+                        {tier.credits} full audit{tier.credits !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    {tier.save && (
+                      <span className="ml-auto text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-md">
+                        -{tier.save}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Savings detail */}
+                  {tier.save ? (
+                    <div className="mb-5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 h-1 rounded-full bg-border/30 dark:bg-white/[0.06] overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400 transition-all duration-500"
+                            style={{ width: `${tier.savePercent * 2}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted/60">
+                        Save ${(tier.credits * 99 - tier.price).toLocaleString()} vs individual pricing
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mb-5" />
+                  )}
+
+                  {/* CTA — pushed to bottom */}
+                  <div className="mt-auto">
+                    <Link
+                      href="/register"
+                      className={`flex items-center justify-center gap-2 text-sm font-bold rounded-xl py-3 transition-all duration-200 ${
+                        tier.popular
+                          ? 'bg-gradient-to-r from-accent to-purple-500 text-white hover:brightness-110 shadow-lg shadow-accent/25'
+                          : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
+                      }`}
+                    >
+                      {tier.cta}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Trust & Security bar ── */}
+          <div className="mt-12 rounded-2xl bg-gradient-to-r from-[#1a1136] via-[#1e1542] to-[#1a1136] border border-accent/10 px-6 sm:px-8 py-6 shadow-lg shadow-accent/5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+              {/* Left: Stripe badge */}
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-accent" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white/90">Secure payments via</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/stripe.svg" alt="Stripe" className="h-7" />
+                </div>
+              </div>
+
+              {/* Center: Trust signals */}
+              <div className="flex items-center gap-4 text-xs text-white/80 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  SSL encrypted
+                </span>
+                <span className="text-white/30">|</span>
+                <span>Credits never expire</span>
+                <span className="text-white/30">|</span>
+                <span>No subscription</span>
+              </div>
+
+              {/* Right: Card brand icons */}
+              <div className="flex items-center gap-2.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/visa.svg" alt="Visa" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/mastercard.svg" alt="Mastercard" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/applepay.svg" alt="Apple Pay" className="h-6 rounded" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/gpay.svg" alt="Google Pay" className="h-6 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          TESTIMONIALS — rotating, alternating bg
+          ═══════════════════════════════════════════════════════ */}
+      <section className="py-28 px-4 md:px-6 lg:px-8 bg-surface-alt">
+        <div
+          ref={testRef.ref}
+          className={`max-w-5xl mx-auto transition-all duration-700 ${testRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-14">
+            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">Testimonials</p>
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-2">
+              Loved by product teams
+            </h2>
+            <div className="flex justify-center gap-0.5 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-accent text-accent" />
+              ))}
+            </div>
+          </div>
+          <RotatingReview reviews={testimonials} />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          FAQ
+          ═══════════════════════════════════════════════════════ */}
+      <section id="faq" className="py-28 px-4 md:px-6 lg:px-8 bg-surface">
+        <div
+          ref={faqRef.ref}
+          className={`max-w-2xl mx-auto transition-all duration-700 ${faqRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        >
+          <div className="text-center mb-14">
+            <p className="text-accent text-sm font-medium tracking-wide uppercase mb-3">FAQ</p>
+            <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text">
+              Frequently asked questions
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {[
+              { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 48 checkpoints, and generates a full professional report.' },
+              { q: 'What does the audit cover?', a: 'We evaluate 12 categories: First Impression, AI Discoverability, Value Proposition, Navigation, Conversion & CTAs, Onboarding, Mobile Experience, Trust & Credibility, Content Quality, Performance, Visual Hierarchy, and Accessibility.' },
+              { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all 48 checkpoints, PDF & Word reports, and prioritised recommendations.' },
+              { q: 'What format is the report?', a: 'You get a professional PDF and a Word document with overall scores, category breakdowns, detailed findings, and actionable recommendations.' },
+              { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL. We handle JavaScript-rendered sites, SPAs, and multi-page websites.' },
+              { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Payments are processed via Stripe. We do not store or share your website data beyond generating your report.' },
+              { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese.' },
+              { q: 'Can I get a refund?', a: 'If you\u2019re unsatisfied, contact support@clearux.ai and we\u2019ll resolve it or provide a credit for a new audit.' },
+            ].map((item, idx) => (
+              <details key={idx} className="group rounded-xl border border-border/40 dark:border-white/[0.03] bg-card overflow-hidden">
+                <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-card-hover transition-colors">
+                  <h3 className="font-medium text-text text-sm pr-4">{item.q}</h3>
+                  <ArrowRight size={14} className="text-muted flex-shrink-0 transform group-open:rotate-90 transition-transform" />
+                </summary>
+                <div className="px-5 pb-5">
+                  <p className="text-muted text-sm leading-relaxed">{item.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          FINAL CTA
+          ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-28 px-4 md:px-6 lg:px-8 overflow-hidden bg-surface-alt">
+        <div className="absolute inset-0 bg-gradient-to-t from-accent/[0.04] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/[0.06] blur-[120px] pointer-events-none" />
+
+        <div className="max-w-2xl mx-auto text-center relative">
+          <h2 className="font-manrope text-3xl md:text-4xl font-bold text-text mb-4">
+            Ready to improve your UX?
+          </h2>
+          <p className="text-muted text-lg mb-8">
+            Get your comprehensive audit report in minutes.
+          </p>
+          <Link
+            href="/register"
+            className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-xl text-base font-semibold hover:bg-accent-dk transition-all shadow-lg shadow-accent/20"
+          >
+            Audit My Site Now
+            <ArrowRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <p className="text-muted/60 text-sm mt-4">No subscription required.</p>
         </div>
       </section>
 
       </main>
-      <div className="relative z-10">
-        <Footer />
-      </div>
+      <Footer />
+      <ScrollToTop />
     </div>
   );
 }

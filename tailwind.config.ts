@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ['variant', '&:is(.dark *):not(.theme-light *)'],
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -33,20 +33,10 @@ const config: Config = {
         "sidebar-text":"var(--sidebar-text)",
         background: "var(--surface)",
         foreground: "var(--text)",
-        brand:      "var(--brand)",
-        "brand-hover": "var(--brand-hover)",
-        "brand-light": "var(--brand-light)",
-        lime:       "var(--lime)",
-        "lime-hover":"var(--lime-hover)",
-        "lime-soft": "var(--lime-soft)",
       },
       fontFamily: {
-        body:    ["var(--font-body)", "system-ui", "sans-serif"],
-        inter:   ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
-        heading: ["var(--font-heading)", "var(--font-body)", "system-ui", "sans-serif"],
-        manrope: ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
-        handwriting: ["var(--font-handwriting)", "cursive"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        inter:   ["var(--font-inter)", "system-ui", "sans-serif"],
+        manrope: ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
     },
   },

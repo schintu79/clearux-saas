@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 
-const RESTARTABLE = ['crawling', 'analysing', 'generating_report', 'payment_received', 'failed']
+const RESTARTABLE = ['crawling', 'analysing', 'generating_report', 'payment_received']
 
 // How long an audit can be in a processing state before we consider it stuck
 const STUCK_AFTER_MS = 3 * 60 * 1000 // 3 minutes
@@ -39,10 +39,10 @@ export async function POST(
       )
     }
 
-    // Check if actually stuck (not just started) — skip for failed audits
+    // Check if actually stuck (not just started)
     const updatedAt = new Date(a.updated_at).getTime()
     const elapsed = Date.now() - updatedAt
-    if (a.status !== 'failed' && elapsed < STUCK_AFTER_MS) {
+    if (elapsed < STUCK_AFTER_MS) {
       const remaining = Math.ceil((STUCK_AFTER_MS - elapsed) / 1000)
       return NextResponse.json(
         { error: `Audit is still processing. Wait ${remaining}s before restarting.` },
@@ -73,18 +73,11 @@ export async function POST(
       metadata: {},
     } as any)
 
-    // Trigger audit processing — direct execution with Inngest as backup
-    const auditType = (a as any).audit_type || ((a as any).brand_identity_id && !(a as any).product_url ? 'brand_identity' : 'website')
-    const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-    console.log(`[restart] Starting ${auditType} audit ${auditId}`)
-    if (auditType === 'website') {
-      const { processAudit } = await import('@/lib/audit-engine')
-      processAudit(auditId).catch((err) => console.error(`[restart] processAudit failed:`, err))
-    } else if (auditType === 'brand_identity') {
-      const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-      processBrandAudit(auditId).catch((err) => console.error(`[restart] processBrandAudit failed:`, err))
-    }
-    inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
+    // Fire off processing via Inngest
+    await inngest.send({
+      name: 'audit/process',
+      data: { auditId },
+    })
 
     return NextResponse.json({ ok: true, message: 'Audit restarted' })
   } catch (err) {

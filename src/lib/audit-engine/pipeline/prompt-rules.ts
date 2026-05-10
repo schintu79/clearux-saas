@@ -47,6 +47,8 @@ The content provided is extracted text, NOT raw HTML source code. This means:
 - You CANNOT verify JavaScript behavior (form validation, error messages, loading states, success states, interactive components). NEVER flag "form lacks error feedback" or "no success state after submission" — you can't see client-side behavior.
 - You CANNOT test mobile responsiveness, keyboard navigation, screen reader behavior, or touch interactions. NEVER flag these as issues.
 - "The provided content does not show X" is NOT evidence that X is missing. It means you can't see it. THESE ARE DIFFERENT THINGS. Never conflate them.
+- When the H1 field shows "[not captured]" — this does NOT mean the page lacks an H1. Many modern sites (React, Next.js, Vue) render H1 elements via JavaScript, Suspense boundaries, or streaming HTML that simple text extraction cannot capture. NEVER flag "missing H1" when the capture status is uncertain.
+- Similarly, robots.txt and sitemap.xml existence CANNOT be verified from page text content. These files live at server-level paths and require separate HTTP requests. NEVER flag them as missing based on text extraction alone.
 If an issue depends on seeing CSS, HTML attributes, JavaScript behavior, or visual rendering that you cannot access from text content — DO NOT INCLUDE IT.
 `.trim()
 

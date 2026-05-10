@@ -64,7 +64,7 @@ export const SYNONYM_GROUPS: string[][] = [
   ['content', 'copy', 'text', 'messaging', 'message', 'wording', 'language'],
   ['error', 'failure', 'issue', 'problem'],
   ['button', 'action', 'control', 'element'],
-  ['headline', 'heading', 'title', 'hero'],
+  ['headline', 'heading', 'title', 'hero', 'h1'],
   ['free', 'trial', 'freemium', 'offer'],
   ['trust', 'credibility', 'confidence', 'reassurance', 'proof'],
   ['consent', 'checkbox', 'opt-in', 'opt-out', 'subscribe', 'updates'],
@@ -74,6 +74,11 @@ export const SYNONYM_GROUPS: string[][] = [
   ['form', 'input', 'field', 'fields', 'label', 'labels'],
   ['clarity', 'clear', 'explicit', 'transparent', 'transparency'],
   ['technical', 'non-technical', 'jargon', 'terminology'],
+  ['cta', 'call-to-action', 'call to action', 'conversion', 'convert'],
+  ['dark', 'patterns', 'manipulative', 'deceptive', 'confirmshaming'],
+  ['seo', 'search', 'crawl', 'index', 'indexing', 'ranking'],
+  ['sitemap', 'robots', 'crawlability', 'discoverability'],
+  ['page', 'screen', 'view', 'route', 'section'],
 ]
 
 // ── Topic fingerprints ───────────────────────────────────────
@@ -92,6 +97,11 @@ export const TOPIC_PATTERNS: { topic: string; keywords: string[] }[] = [
   { topic: 'structured_data', keywords: ['schema', 'json-ld', 'structured', 'breadcrumb', 'rich', 'snippet'] },
   { topic: 'meta_tags', keywords: ['meta', 'open graph', 'twitter', 'card', 'og:'] },
   { topic: 'focus_a11y', keywords: ['focus', 'indicator', 'keyboard', 'wcag', 'screen reader'] },
+  { topic: 'heading_seo', keywords: ['h1', 'heading', 'headline', 'semantic', 'structure', 'hierarchy'] },
+  { topic: 'robots_sitemap', keywords: ['robots', 'sitemap', 'crawl', 'index', 'discoverability', 'xml'] },
+  { topic: 'dark_patterns', keywords: ['dark', 'pattern', 'manipul', 'confirmshaming', 'deceptive', 'urgency'] },
+  { topic: 'cta_clarity', keywords: ['cta', 'call', 'action', 'button', 'conversion', 'click'] },
+  { topic: 'mobile_responsive', keywords: ['mobile', 'responsive', 'touch', 'viewport', 'breakpoint', 'adaptive'] },
 ]
 
 // ── Similarity thresholds ────────────────────────────────────

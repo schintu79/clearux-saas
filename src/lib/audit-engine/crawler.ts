@@ -23,16 +23,11 @@ export interface CrawledPage {
 
 function extractTextContent(html: string): string {
   let text = html
-    // Remove non-content elements
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
     .replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, '')
     .replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, '')
-    // Remove demo/example/illustrative content — these are display examples,
-    // not actual features or patterns on the site being audited
-    .replace(/<(?:aside|div|section|article)\b[^>]*data-demo=["']true["'][^>]*>[\s\S]*?<\/(?:aside|div|section|article)>/gi, '')
-    .replace(/<(?:aside|div|section|article)\b[^>]*role=["']presentation["'][^>]*aria-label=["'][^"']*(?:example|demo|illustrative)[^"']*["'][^>]*>[\s\S]*?<\/(?:aside|div|section|article)>/gi, '')
 
   text = text
     .replace(/<[^>]*>/g, ' ')
@@ -148,7 +143,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache',
         Pragma: 'no-cache',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
@@ -160,7 +155,6 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       },
       signal: controller.signal,
       redirect: 'follow',
-      cache: 'no-store',
     })
 
     const html = await response.text()
@@ -216,8 +210,6 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-Return-Format': 'text',
-      'X-No-Cache': 'true',
-      'Cache-Control': 'no-cache',
     }
 
     // Use Jina API key if available (higher rate limits)
@@ -229,7 +221,6 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     const response = await fetch(jinaUrl, {
       headers,
       signal: controller.signal,
-      cache: 'no-store',
     })
 
     if (!response.ok) {
@@ -753,26 +744,9 @@ export async function crawlPages(
 
       const allDiscovered = [...allDiscoveredMap.values()]
 
-      // Filter out infrastructure/non-content URLs before queuing
-      const EXCLUDED_PATH_PREFIXES = [
-        '/cdn-cgi/',          // Cloudflare email protection, challenges, etc.
-        '/_next/',            // Next.js internal assets
-        '/api/',              // API endpoints (not user-facing pages)
-        '/wp-admin/',         // WordPress admin
-        '/wp-json/',          // WordPress REST API
-        '/wp-includes/',      // WordPress internals
-        '/feed',              // RSS feeds
-        '/xmlrpc.php',        // WordPress XML-RPC
-      ]
-
-      function isExcludedPath(url: URL): boolean {
-        const path = url.pathname.toLowerCase()
-        return EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))
-      }
-
       // Level 1: pages to crawl from all sources
       const level1ToVisit = allDiscovered
-        .filter((link) => link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link))
+        .filter((link) => link.hostname === baseHostname && !visited.has(link.toString()))
         .slice(0, Math.min(40, maxPages - 1))
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
@@ -821,7 +795,7 @@ export async function crawlPages(
           }
 
           for (const link of l2Links) {
-            if (link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link)) {
+            if (link.hostname === baseHostname && !visited.has(link.toString())) {
               level2Candidates.push(link)
               visited.add(link.toString())
             }

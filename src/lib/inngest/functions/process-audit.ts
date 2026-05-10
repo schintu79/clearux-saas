@@ -14,20 +14,10 @@
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from '@/lib/audit-engine/crawler'
-import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, runFullAnalysis, generateReport } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
-import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
-import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
-import {
-  identifyDuplicates,
-  identifySpeculativeFindings,
-  scoreFindings,
-  recordFindingShown,
-  recordAuditStats,
-  postAuditLearn,
-} from '@/lib/audit-engine/pipeline'
-import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
-import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
+import { sendAuditComplete } from '@/lib/audit-engine/email'
+import { captureAuditScreenshots, uploadScreenshot } from '@/lib/audit-engine/screenshots'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -66,66 +56,37 @@ async function auditLog(
   }
 }
 
-/* ── Refund credit helper ── */
-async function refundCredit(auditId: string) {
-  try {
-    const db = getDb()
-    // Find the payment record for this audit
-    const { data: payment } = await db
-      .from('payments')
-      .select('user_id, stripe_payment_intent_id')
-      .eq('audit_id', auditId)
-      .single()
+/* ── UX Categories (must match analyzer.ts) ── */
 
-    if (!payment) return // No payment to refund (e.g., free first audit)
-
-    const paymentId = (payment as any).stripe_payment_intent_id as string
-    const userId = (payment as any).user_id as string
-
-    // Only refund credit-based or free-first payments (not Stripe payments)
-    if (paymentId.startsWith('credit_') || paymentId.startsWith('free_first_')) {
-      if (paymentId.startsWith('credit_')) {
-        // Add credit back
-        const { data: profile } = await db
-          .from('profiles')
-          .select('credits')
-          .eq('id', userId)
-          .single()
-
-        const currentCredits = (profile as any)?.credits ?? 0
-        await db
-          .from('profiles')
-          .update({ credits: currentCredits + 1, updated_at: new Date().toISOString() } as any)
-          .eq('id', userId)
-      }
-
-      await auditLog(auditId, 'credit_refunded', 'success',
-        paymentId.startsWith('free_first_') ? 'Free first audit — no credit to refund' : '1 credit refunded to user')
-    }
-  } catch (err) {
-    console.error('[inngest] Refund error (non-fatal):', err)
-  }
-}
-
-/* ── UX Categories — sourced from analyzer.ts (single source of truth) ── */
-
-const UX_CATEGORY_NAMES = UX_CATEGORIES.map((c) => c.name)
+const UX_CATEGORY_NAMES = [
+  'First Impression & Visual Design',
+  'Value Proposition & Messaging',
+  'Navigation & Information Architecture',
+  'Calls-to-Action & Conversion',
+  'Performance & Page Speed',
+  'Mobile Experience',
+  'Trust & Credibility',
+  'Content Quality & Readability',
+  'Technical SEO & Accessibility',
+  'AI Discoverability & LLM Readiness',
+  'Visual Hierarchy & Layout',
+  'Accessibility & Inclusive Design',
+]
 
 /* ── The Inngest function ── */
 
 export const processAuditFn = inngest.createFunction(
   {
     id: 'process-audit',
-    retries: 0, // Don't retry — failed audits refund credits and show error UI
+    retries: 1,
     concurrency: {
-      limit: 3, // Lower concurrency to avoid API rate limits across parallel audits
+      limit: 5, // Max 5 audits processing simultaneously (Inngest free plan limit)
     },
     triggers: [{ event: 'audit/process' as const }],
   },
   async ({ event, step }: { event: { data: { auditId: string } }; step: any }) => {
     const auditId = event.data.auditId
 
-    try {
     // ──────────────────────────────────────────────────────────
     // STEP 1: Fetch audit details
     // ──────────────────────────────────────────────────────────
@@ -140,32 +101,12 @@ export const processAuditFn = inngest.createFunction(
 
       if (error || !audit) throw new Error(`Audit not found: ${error?.message}`)
 
-      // Parse selected_modules: new slug-based system
-      const rawModules = (audit as any).selected_modules
-      const selectedModules: string[] | null = Array.isArray(rawModules) && rawModules.length > 0
-        ? rawModules.filter((v: any) => typeof v === 'string')
-        : null
-
-      // Backward compat: if no selected_modules, check legacy selected_pillars
-      const rawPillars = (audit as any).selected_pillars
-      const selectedPillars: number[] | null = Array.isArray(rawPillars) && rawPillars.length > 0
-        ? rawPillars.filter((v: any) => typeof v === 'number' && v >= 0 && v <= 3)
-        : null
-
-      // Brand identity ID for brand consistency module
-      const brandIdentityId: string | null = (audit as any).brand_identity_id || null
-
       return {
         userEmail: (audit as any).profiles?.email || '',
         productUrl: (audit as any).product_url as string,
         plan: (audit as any).plan as string,
-        auditType: ((audit as any).audit_type as string) || 'website',
         userFocus: (audit as any).ux_concern as string | null,
         language: ((audit as any).language as string) || 'en',
-        depthMode: ((audit as any).depth_mode as string) || 'standard',
-        selectedModules, // null = complete audit, ['foundation', 'seo_structure'] = partial
-        selectedPillars, // legacy fallback
-        brandIdentityId, // for brand consistency module
       }
     })
 
@@ -176,7 +117,7 @@ export const processAuditFn = inngest.createFunction(
       await setStatus(auditId, 'crawling')
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
-      const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
+      const maxPages = auditDetails.plan === 'starter' ? 8 : 25
       const crawledPages = await crawlPages(auditDetails.productUrl, maxPages)
 
       if (crawledPages.length === 0 || !crawledPages[0].contentText) {
@@ -236,711 +177,155 @@ export const processAuditFn = inngest.createFunction(
         pageCount: crawledPages.length,
         pageContent, // Passed to analysis steps
         firstPageUrl: crawledPages[0]?.url || '',
-        crawledUrls: crawledPages.map((p) => p.url).filter(Boolean) as string[],
       }
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 3: Build site context map + set status to analysing
-    // Creates a summary of what exists across ALL pages so the
-    // analyzer has cross-page awareness (e.g., "founder bio exists
-    // on /about" prevents false positive on homepage)
+    // STEP 3: Set status to analysing
     // ──────────────────────────────────────────────────────────
-    const siteContext = await step.run('build-site-context', async () => {
+    await step.run('set-analysing', async () => {
       await setStatus(auditId, 'analysing')
-
-      // Build a structured map of what each page contains
-      const lines: string[] = []
-      const pages = crawlResult.pageContent.split('\n---\n')
-      for (const page of pages) {
-        const urlMatch = page.match(/^URL: (.+)$/m)
-        const titleMatch = page.match(/^Title: (.+)$/m)
-        const h1Match = page.match(/^H1: (.+)$/m)
-        if (urlMatch) {
-          const url = urlMatch[1]
-          const title = titleMatch?.[1] || ''
-          const h1 = h1Match?.[1] || ''
-          const contentPreview = page.replace(/^(URL|Title|H1|Meta Description|Content):.*\n?/gm, '').trim().substring(0, 300)
-          lines.push(`- ${url} | "${title}" | H1: "${h1}" | Preview: ${contentPreview}...`)
-        }
-      }
-
-      const siteMap = `SITE MAP — What exists across ALL crawled pages:
-${lines.join('\n')}
-
-IMPORTANT CROSS-PAGE CONTEXT:
-The content below is from the ENTIRE site, not just one page. Before flagging something as "missing" (e.g., "no founder credentials", "no pricing transparency", "no FAQ"), check if it exists on ANY of the pages listed above. Many sites spread content across dedicated pages (About, Pricing, FAQ, Contact). Only flag something as missing if it genuinely doesn't exist ANYWHERE on the site.`
-
-      // Fetch user's site notes + FULL previous audit baseline
-      const noteDb = getDb()
-      let domain = ''
-      try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
-
-      const { data: auditOwner } = await noteDb.from('audits').select('user_id').eq('id', auditId).single()
-      const userId = (auditOwner as any)?.user_id
-
-      let userContext = ''
-      let previousCategoryScores: Array<{ name: string; score: number; summary: string }> = []
-      let previousOverallScore = 0
-      let previousTotalFindings = 0
-      let previousRawFindings: Array<{
-        title: string; severity: string; description: string; recommendation: string;
-        estimated_impact: string | null; target_element: string | null; page_url: string | null;
-        sort_order: number; status: string; dismissed: boolean; dismissal_reason: string | null;
-      }> = []
-      let previousExecutiveSummary = ''
-      let previousReportJson: any = null
-      if (domain && userId) {
-        // Fetch site notes + previous audit ID in parallel
-        const [siteNotesRes, prevAuditsRes] = await Promise.all([
-          noteDb.from('site_notes')
-            .select('note_type, title, content, category, finding_ref')
-            .eq('user_id', userId).eq('domain', domain).eq('is_active', true)
-            .order('created_at', { ascending: false }).limit(20),
-          noteDb.from('audits')
-            .select('id, product_url').eq('user_id', userId).neq('id', auditId)
-            .eq('status', 'completed').ilike('product_url', `%${domain}%`)
-            .order('completed_at', { ascending: false }).limit(1),
-        ])
-
-        // Site notes (dismissals, context, discussions)
-        if (siteNotesRes.data && siteNotesRes.data.length > 0) {
-          const noteLines = (siteNotesRes.data as any[]).map((n) => {
-            const typeLabel = n.note_type === 'dismissal' ? 'SKIP' : n.note_type === 'discussion' ? 'CONTEXT' : 'NOTE'
-            return `  [${typeLabel}] ${n.title}: ${n.content}`
-          })
-          userContext = `\nCLIENT NOTES — RESPECT THESE:\n${noteLines.join('\n')}\nDo NOT re-flag [SKIP] findings.`
-        }
-
-        // FULL previous audit baseline — scores + ALL findings with statuses
-        if (prevAuditsRes.data && prevAuditsRes.data.length > 0) {
-          const prevAuditId = (prevAuditsRes.data[0] as any).id
-
-          // Fetch previous report scores + all findings (FULL data for baseline copy)
-          const [prevReportRes, prevFindingsRes] = await Promise.all([
-            noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
-            noteDb.from('audit_findings')
-              .select('title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason')
-              .eq('audit_id', prevAuditId)
-              .order('sort_order', { ascending: true }).limit(60),
-          ])
-
-          // Previous category scores + full report as baseline
-          if (prevReportRes.data) {
-            const prevReport = prevReportRes.data as any
-            previousOverallScore = prevReport.overall_score || 0
-            previousExecutiveSummary = prevReport.executive_summary || ''
-            previousReportJson = prevReport.raw_json || null
-            const prevCatScores = prevReport.raw_json?.categoryScores
-            if (Array.isArray(prevCatScores) && prevCatScores.length > 0) {
-              // Store for deterministic baseline anchoring in generateReport
-              previousCategoryScores = prevCatScores.map((c: any) => ({
-                name: c.name as string,
-                score: c.score as number,
-                summary: (c.summary || '') as string,
-              }))
-              const scoreLines = prevCatScores.map((c: any) => `  ${c.name}: ${c.score}/100`)
-              userContext += `\n\nPREVIOUS AUDIT BASELINE (overall: ${prevReport.overall_score}/100):
-${scoreLines.join('\n')}
-
-CRITICAL — SCORE CONSISTENCY:
-The scores above are from the client's PREVIOUS audit of this SAME site. Your new scores MUST be calibrated against this baseline:
-- If the site content has NOT changed for a category, the score should be SIMILAR (within 5-10 points). Do NOT randomly assign different scores for unchanged content.
-- If the site content HAS improved (e.g., new alt text added, better CTA copy), the score should INCREASE and you should note what improved.
-- If the site content has REGRESSED, the score should DECREASE and you should explain what got worse.
-- A score swing of more than 15 points for the same unchanged content is a BUG in your analysis. Be consistent.`
-            }
-          }
-
-          // All previous findings with their current status
-          if (prevFindingsRes.data && prevFindingsRes.data.length > 0) {
-            previousTotalFindings = prevFindingsRes.data.length
-            previousRawFindings = (prevFindingsRes.data as any[]).map((f) => ({
-              title: f.title, severity: f.severity, description: f.description,
-              recommendation: f.recommendation, estimated_impact: f.estimated_impact,
-              target_element: f.target_element, page_url: f.page_url,
-              sort_order: f.sort_order, status: f.status, dismissed: f.dismissed,
-              dismissal_reason: f.dismissal_reason,
-            }))
-            const findingLines = (prevFindingsRes.data as any[]).map((f) => {
-              if (f.dismissed) return `  [SKIP] "${f.title}" — Dismissed: ${f.dismissal_reason || 'by user'}`
-              if (f.status === 'fixed') return `  [FIXED] "${f.title}" — Client says resolved`
-              if (f.status === 'in_progress') return `  [IN PROGRESS] "${f.title}" — Being worked on`
-              return `  [OPEN] "${f.title}" (${f.severity})`
-            })
-            userContext += `\n\nPREVIOUS FINDINGS (${prevFindingsRes.data.length} total):
-${findingLines.join('\n')}
-
-RULES FOR RE-AUDIT:
-- [SKIP] findings: Do NOT report these again. The client has dismissed them with a reason.
-- [FIXED] findings: Verify if the fix is visible in the current content. If fixed, do not re-report. If still broken, re-report with a note that the fix may not have been deployed.
-- [IN PROGRESS] findings: Check if the issue is still present. If still present, re-report at the same severity.
-- [OPEN] findings: These were not addressed. If still present, re-report them. If the content has changed and the issue is resolved, do not re-report.
-- NEW findings: Only report genuinely NEW issues not covered by any previous finding. Do not rephrase an existing finding as a "new" one.`
-          }
-        }
-      }
-
-      // Determine effective depth mode:
-      // - 'deep' explicitly requested → always deep (fresh AI analysis, find new issues)
-      // - 'baseline' explicitly requested → baseline (deterministic, copy previous findings)
-      // - 'standard' (default re-audit) → baseline if previous audit exists (score stability),
-      //   otherwise deep (first audit always needs full AI analysis)
-      // This ensures re-audits produce consistent scores unless the user explicitly
-      // requests a deep analysis via "Dig Deeper". Score swings of -30+ points on
-      // unchanged sites were caused by always running non-deterministic AI analysis.
-      let effectiveDepthMode: 'deep' | 'baseline' = 'deep'
-      if (auditDetails.depthMode === 'baseline') {
-        effectiveDepthMode = 'baseline'
-      } else if (auditDetails.depthMode === 'standard' && previousRawFindings.length > 0) {
-        // Standard re-audit with previous findings → use baseline for score stability
-        effectiveDepthMode = 'baseline'
-      }
-
-      const fullContext = siteMap + userContext
-
-      await auditLog(auditId, 'site_context_built', 'success',
-        `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
-      return {
-        context: fullContext,
-        effectiveDepthMode,
-        previousCategoryScores,
-        previousOverallScore,
-        previousTotalFindings,
-        previousRawFindings,
-        previousExecutiveSummary,
-        previousReportJson,
-      }
     })
 
-    const effectiveDepthMode = siteContext.effectiveDepthMode
+    // ──────────────────────────────────────────────────────────
+    // STEP 4-7: Analyze categories in 4 batches of 3
+    // Each batch is a separate step → separate serverless call
+    // ──────────────────────────────────────────────────────────
+    const BATCH_SIZE = 3
+    const batches = []
+    for (let i = 0; i < UX_CATEGORY_NAMES.length; i += BATCH_SIZE) {
+      batches.push(UX_CATEGORY_NAMES.slice(i, i + BATCH_SIZE))
+    }
 
-    console.log(`[inngest] Audit ${auditId}: depth mode = ${effectiveDepthMode} (requested: ${auditDetails.depthMode})`)
-    await step.run('log-depth-mode', async () => {
-      await auditLog(auditId, 'depth_mode', 'info',
-        `Analysis depth: ${effectiveDepthMode}${effectiveDepthMode === 'baseline' ? ' — re-audit: copying previous findings, no AI analysis' : ' — full AI analysis'}`)
-    })
+    let totalFindingsCount = 0
 
-    let verificationData: { verified: number; likelyFixed: number; poorlyFixed: number; results: Array<{ findingId: string; status: string; note: string }> } | null = null
+    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+      const batch = batches[batchIdx]
 
-    if (effectiveDepthMode === 'baseline') {
-      // ════════════════════════════════════════════════════════════
-      // BASELINE RE-AUDIT — NO AI ANALYSIS
-      // Copy previous findings based on their status:
-      //   [OPEN]        → copy as-is (issue still stands)
-      //   [IN PROGRESS] → copy as-is (still being worked on)
-      //   [FIXED]       → drop (user says it's fixed)
-      //   [DISMISSED]   → drop (user dismissed it)
-      // Score is 100% deterministic from previous baseline.
-      // Same site + no status changes = EXACT same findings + EXACT same score.
-      // ════════════════════════════════════════════════════════════
-      await step.run('baseline-copy-findings', async () => {
+      const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
         const db = getDb()
-        const prevFindings = siteContext.previousRawFindings
-        let sortOrder = 0
-        let copiedCount = 0
-        let droppedFixed = 0
-        let droppedDismissed = 0
+        let sortOrder = totalFindingsCount
+        let findingsInBatch = 0
 
-        for (const pf of prevFindings) {
-          // Skip dismissed findings
-          if (pf.dismissed) {
-            droppedDismissed++
-            continue
-          }
-          // Skip fixed findings
-          if (pf.status === 'fixed') {
-            droppedFixed++
-            continue
-          }
-          // Copy [OPEN], [IN PROGRESS], [BACKLOG] findings as-is
-          await db.from('audit_findings').insert({
-            audit_id: auditId,
-            checklist_item_id: null,
-            severity: pf.severity,
-            title: pf.title,
-            description: pf.description,
-            evidence: null,
-            page_url: pf.page_url,
-            recommendation: pf.recommendation,
-            estimated_impact: pf.estimated_impact || null,
-            target_element: pf.target_element || null,
-            screenshot_url: null,
-            sort_order: sortOrder++,
-          } as any)
-          copiedCount++
-        }
-
-        await auditLog(auditId, 'baseline_findings_copied', 'success',
-          `Baseline: ${copiedCount} findings carried forward, ${droppedFixed} fixed, ${droppedDismissed} dismissed`, {
-            copied: copiedCount,
-            dropped_fixed: droppedFixed,
-            dropped_dismissed: droppedDismissed,
-            total_previous: prevFindings.length,
-          })
-
-        return { copiedCount, droppedFixed, droppedDismissed }
-      })
-
-      // ════════════════════════════════════════════════════════════
-      // VERIFICATION STEP — AI check against freshly crawled live site
-      // Checks each copied finding to see if it's still present.
-      // Does NOT affect scores — flags findings for user confirmation.
-      // Results stored both in DB (if columns exist) and returned
-      // directly so the report step doesn't depend on DB columns.
-      // ════════════════════════════════════════════════════════════
-      verificationData = await step.run('ai-verify-findings', async () => {
-        const db = getDb()
-
-        // Fetch the findings we just copied
-        const { data: copiedFindings } = await db
-          .from('audit_findings')
-          .select('id, title, description, recommendation, page_url, severity, target_element')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
-
-        if (!copiedFindings || copiedFindings.length === 0) {
-          await auditLog(auditId, 'verification_skipped', 'info', 'No findings to verify')
-          return { verified: 0, likelyFixed: 0, poorlyFixed: 0, results: [] as Array<{ findingId: string; status: string; note: string }> }
-        }
-
-        // Use the freshly crawled page content for verification
-        const freshContent = crawlResult.pageContent
-
-        await auditLog(auditId, 'verification_started', 'info',
-          `Verifying ${copiedFindings.length} findings against live site`)
-
-        const verificationResults = await verifyFindings(
-          copiedFindings as any[],
-          freshContent,
-          auditDetails.language,
+        const batchResults = await Promise.all(
+          batch.map((categoryName) =>
+            analyzeCategory(
+              crawlResult.pageContent,
+              categoryName,
+              [], // empty = use built-in checklist items
+              auditDetails.userFocus,
+              auditDetails.language,
+            ),
+          ),
         )
 
-        // Try to update findings in DB (columns may not exist yet — graceful fallback)
-        let likelyFixedCount = 0
-        let poorlyFixedCount = 0
-        for (const result of verificationResults) {
-          try {
-            await db
-              .from('audit_findings')
-              .update({
-                verification_status: result.status,
-                verification_note: result.note,
-              } as any)
-              .eq('id', result.findingId)
-          } catch (e) {
-            // Columns may not exist yet — that's OK, results are carried in memory
+        for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
+          const findings = batchResults[catIdx]
+          const categoryName = batch[catIdx]
+
+          for (const finding of findings) {
+            await db.from('audit_findings').insert({
+              audit_id: auditId,
+              checklist_item_id: null,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              evidence: null,
+              page_url: finding.pageUrl || crawlResult.firstPageUrl,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              target_element: finding.targetElement || null,
+              screenshot_url: null,
+              sort_order: sortOrder++,
+            } as any)
           }
 
-          if (result.status === 'likely_fixed') likelyFixedCount++
-          if (result.status === 'poorly_fixed') poorlyFixedCount++
-        }
-
-        await auditLog(auditId, 'verification_completed', 'success',
-          `Verified ${verificationResults.length} findings: ${likelyFixedCount} likely fixed, ${poorlyFixedCount} poorly fixed, ${verificationResults.length - likelyFixedCount - poorlyFixedCount} confirmed open`, {
-            total_verified: verificationResults.length,
-            likely_fixed: likelyFixedCount,
-            poorly_fixed: poorlyFixedCount,
-            confirmed_open: verificationResults.length - likelyFixedCount - poorlyFixedCount,
+          findingsInBatch += findings.length
+          await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
+            findings_count: findings.length,
           })
-
-        return {
-          verified: verificationResults.length,
-          likelyFixed: likelyFixedCount,
-          poorlyFixed: poorlyFixedCount,
-          results: verificationResults.map(r => ({ findingId: r.findingId, status: r.status, note: r.note })),
         }
+
+        return { findingsInBatch, newSortOrder: sortOrder }
       })
 
-    } else {
-      // ════════════════════════════════════════════════════════════
-      // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
-      // ════════════════════════════════════════════════════════════
-      // ── Determine which modules (and thus categories) to analyze ──
-      // Module slug → category index mapping (each module = 4 categories):
-      //   foundation → 0-3, human_experience → 4-7, inclusive_design → 8-11,
-      //   future_readiness → 12-15, seo_structure → 16-19, brand_consistency → 20-23
-      const MODULE_SLUG_ORDER = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency']
-
-      let activeSlugs: string[]
-      if (auditDetails.selectedModules) {
-        // New system: explicit module slugs from DB
-        activeSlugs = auditDetails.selectedModules
-      } else if (auditDetails.selectedPillars) {
-        // Legacy fallback: convert old pillar indices to module slugs (0-3 only)
-        activeSlugs = auditDetails.selectedPillars
-          .filter((idx: number) => idx >= 0 && idx < 4)
-          .map((idx: number) => MODULE_SLUG_ORDER[idx])
-      } else {
-        // Complete audit: all modules that are includedInComplete
-        activeSlugs = [...COMPLETE_AUDIT_SLUGS]
-      }
-
-      // If brand_consistency is selected but no brand identity was provided, skip it
-      if (activeSlugs.includes('brand_consistency') && !auditDetails.brandIdentityId) {
-        activeSlugs = activeSlugs.filter(s => s !== 'brand_consistency')
-        await auditLog(auditId, 'brand_skipped', 'warning', 'Brand Consistency module skipped — no brand identity selected')
-      }
-
-      // Build the set of category indices to analyze
-      const selectedIndices = new Set<number>()
-      for (const slug of activeSlugs) {
-        const moduleIdx = MODULE_SLUG_ORDER.indexOf(slug)
-        if (moduleIdx === -1) continue
-        for (let c = moduleIdx * 4; c < moduleIdx * 4 + 4; c++) {
-          if (c < UX_CATEGORY_NAMES.length) selectedIndices.add(c)
-        }
-      }
-
-      let categoriesToAnalyze = UX_CATEGORY_NAMES.filter((_, idx) => selectedIndices.has(idx))
-
-      // ── Fetch brand content if brand_consistency module is active ──
-      let brandContext = ''
-      if (activeSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
-        try {
-          const db = getDb()
-          const { data: brandFiles } = await db
-            .from('brand_identity_files')
-            .select('file_name, file_url, file_type')
-            .eq('brand_identity_id', auditDetails.brandIdentityId)
-
-          if (brandFiles && brandFiles.length > 0) {
-            const extracted = await extractAllBrandFiles(
-              brandFiles.map((f: any) => ({
-                file_name: f.file_name as string,
-                file_url: f.file_url as string,
-                file_type: f.file_type as string | null,
-              })),
-            )
-            const textParts = extracted
-              .filter(e => e.textContent && e.textContent.length > 0)
-              .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
-            brandContext = textParts.join('\n\n---\n\n')
-            await auditLog(auditId, 'brand_files_extracted', 'success',
-              `Extracted content from ${extracted.length} brand file(s)`)
-          }
-        } catch (err) {
-          console.error('[inngest] Brand file extraction error (non-fatal):', err)
-          await auditLog(auditId, 'brand_extraction_error', 'warning',
-            `Brand file extraction failed: ${err instanceof Error ? err.message : String(err)}`)
-        }
-      }
-
-      const BATCH_SIZE = 4
-      const batches = []
-      for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
-        batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
-      }
-
-      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
-      // Brand consistency categories get extra brand context prepended
-      const brandContentWithContext = brandContext
-        ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
-        : contentWithContext
-      // Brand consistency category names (indices 20-23)
-      const brandCategoryNames = new Set(
-        UX_CATEGORY_NAMES.slice(20, 24)
-      )
-
-      let totalFindingsCount = 0
-
-      for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
-        const batch = batches[batchIdx]
-
-        const batchResult = await step.run(`analyze-batch-${batchIdx + 1}`, async () => {
-          const db = getDb()
-          let sortOrder = totalFindingsCount
-          let findingsInBatch = 0
-
-          console.log(`[inngest] Batch ${batchIdx + 1}: ${batch.join(', ')}`)
-          const batchResults = await Promise.all(
-            batch.map((categoryName) => {
-              // Use brand-enriched content for brand consistency categories
-              const content = brandCategoryNames.has(categoryName)
-                ? brandContentWithContext
-                : contentWithContext
-              return analyzeCategory(
-                content,
-                categoryName,
-                [],
-                auditDetails.userFocus,
-                auditDetails.language,
-                'deep', // Always 'deep' here — baseline path doesn't call analyzeCategory
-              )
-            }),
-          )
-
-          for (let catIdx = 0; catIdx < batchResults.length; catIdx++) {
-            const findings = batchResults[catIdx]
-            const categoryName = batch[catIdx]
-
-            for (const finding of findings) {
-              let resolvedPageUrl = crawlResult.firstPageUrl
-              const crawledUrls = crawlResult.crawledUrls || [crawlResult.firstPageUrl]
-              if (finding.pageUrl) {
-                if (crawledUrls.includes(finding.pageUrl)) {
-                  resolvedPageUrl = finding.pageUrl
-                } else {
-                  const match = crawledUrls.find((u: string) =>
-                    u.replace(/\/$/, '') === finding.pageUrl!.replace(/\/$/, '') ||
-                    finding.pageUrl!.includes(new URL(u).pathname)
-                  )
-                  if (match) resolvedPageUrl = match
-                }
-              }
-
-              await db.from('audit_findings').insert({
-                audit_id: auditId,
-                checklist_item_id: null,
-                severity: finding.severity,
-                title: finding.title,
-                description: finding.description,
-                evidence: null,
-                page_url: resolvedPageUrl,
-                recommendation: finding.recommendation,
-                estimated_impact: finding.estimatedImpact || null,
-                target_element: finding.targetElement || null,
-                screenshot_url: null,
-                sort_order: sortOrder++,
-              } as any)
-            }
-
-            findingsInBatch += findings.length
-            await auditLog(auditId, 'category_analysed', 'success', `Analyzed: ${categoryName}`, {
-              findings_count: findings.length,
-            })
-          }
-
-          return { findingsInBatch, newSortOrder: sortOrder }
-        })
-
-        totalFindingsCount = batchResult.newSortOrder
-      }
+      totalFindingsCount = batchResult.newSortOrder
     }
 
     // ──────────────────────────────────────────────────────────
-    // Deduplicate findings — remove near-duplicate findings
-    // that were flagged across multiple categories
-    // ──────────────────────────────────────────────────────────
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Deduplicate findings
-    // Logic lives in: src/lib/audit-engine/pipeline/dedup.ts
-    // ──────────────────────────────────────────────────────────
-    await step.run('deduplicate-findings', async () => {
-      const db = getDb()
-      const { data: allFindings } = await db
-        .from('audit_findings')
-        .select('id, title, description, severity, page_url, sort_order')
-        .eq('audit_id', auditId)
-        .order('sort_order', { ascending: true })
-
-      if (!allFindings || allFindings.length < 2) return
-
-      const duplicateIds = identifyDuplicates(
-        allFindings.map((f: any) => ({
-          id: f.id,
-          title: f.title || '',
-          description: f.description || '',
-          severity: f.severity || 'medium',
-          page_url: f.page_url || null,
-          sort_order: f.sort_order ?? 0,
-        }))
-      )
-
-      if (duplicateIds.length > 0) {
-        for (const id of duplicateIds) {
-          await db.from('audit_findings').delete().eq('id', id)
-        }
-        await auditLog(auditId, 'findings_deduped', 'info',
-          `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
-        console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${allFindings.length} findings`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Filter speculative findings
-    // Logic lives in: src/lib/audit-engine/pipeline/speculative-filter.ts
-    // ──────────────────────────────────────────────────────────
-    await step.run('filter-speculative-findings', async () => {
-      const db = getDb()
-      const { data: allFindings } = await db
-        .from('audit_findings')
-        .select('id, title, description')
-        .eq('audit_id', auditId)
-
-      if (!allFindings || allFindings.length === 0) return
-
-      const speculativeIds = identifySpeculativeFindings(
-        allFindings.map((f: any) => ({
-          id: f.id,
-          title: f.title || '',
-          description: f.description || '',
-        }))
-      )
-
-      if (speculativeIds.length > 0) {
-        for (const id of speculativeIds) {
-          await db.from('audit_findings').delete().eq('id', id)
-        }
-        await auditLog(auditId, 'speculative_filtered', 'info',
-          `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
-        console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Score findings by historical relevance
-    // Logic lives in: src/lib/audit-engine/pipeline/relevance-scorer.ts
-    // ──────────────────────────────────────────────────────────
-    await step.run('score-relevance', async () => {
-      try {
-        const db = getDb()
-        const { data: allFindings } = await db
-          .from('audit_findings')
-          .select('id, title, description, severity')
-          .eq('audit_id', auditId)
-
-        if (!allFindings || allFindings.length === 0) return
-
-        const { scored, removedIds } = await scoreFindings(
-          allFindings.map((f: any) => ({
-            id: f.id,
-            title: f.title || '',
-            description: f.description || '',
-            severity: f.severity || 'medium',
-          })),
-          db,
-        )
-
-        // Remove findings with very low relevance (consistently dismissed pattern)
-        if (removedIds.length > 0) {
-          for (const id of removedIds) {
-            await db.from('audit_findings').delete().eq('id', id)
-          }
-          await auditLog(auditId, 'relevance_filtered', 'info',
-            `Removed ${removedIds.length} low-relevance finding${removedIds.length > 1 ? 's' : ''} (historically dismissed >85% of the time)`)
-          console.log(`[inngest] Relevance scorer: removed ${removedIds.length} findings`)
-        }
-
-        // Log scoring summary
-        const lowCount = scored.filter(s => s.flag === 'low').length
-        const medCount = scored.filter(s => s.flag === 'medium').length
-        const noData = scored.filter(s => s.flag === 'no_data').length
-        if (lowCount > 0 || medCount > 0) {
-          console.log(`[inngest] Relevance: ${lowCount} low, ${medCount} medium, ${noData} no_data out of ${scored.length}`)
-        }
-      } catch (err) {
-        // Relevance scoring is non-fatal — audit should complete without it
-        console.error('[inngest] Relevance scorer error (non-fatal):', err)
-        await auditLog(auditId, 'relevance_error', 'warning',
-          `Relevance scoring failed: ${err instanceof Error ? err.message : String(err)}`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // Verify findings count (post-dedup + post-filter + post-relevance)
-    // ──────────────────────────────────────────────────────────
-    await step.run('verify-findings', async () => {
-      const db = getDb()
-      const { count: findingsCount } = await db
-        .from('audit_findings')
-        .select('id', { count: 'exact', head: true })
-        .eq('audit_id', auditId)
-
-      if ((findingsCount ?? 0) === 0) {
-        console.warn(`[inngest] Audit ${auditId}: zero findings — continuing`)
-        await auditLog(auditId, 'findings_warning', 'warning', 'Zero findings — site may be clean or all issues resolved')
-      } else {
-        await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 8: Capture screenshots — page overviews + highlighted findings
-    // Uses /api/screenshot endpoint so each capture gets its own
-    // serverless invocation with dedicated memory and timeout.
+    // STEP 8: Capture screenshots for top findings
     // ──────────────────────────────────────────────────────────
     await step.run('capture-screenshots', async () => {
       const db = getDb()
 
-      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing screenshots for pages and findings')
+      await auditLog(auditId, 'screenshots_started', 'info', 'Capturing screenshots for top findings')
+
+      // Fetch findings with target_element
+      const { data: findingsWithTargets } = await db
+        .from('audit_findings')
+        .select('id, title, severity, target_element, page_url')
+        .eq('audit_id', auditId)
+        .not('target_element', 'is', null)
+        .order('sort_order', { ascending: true })
+
+      const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
+        id: f.id as string,
+        title: f.title as string,
+        severity: f.severity as string,
+        targetElement: f.target_element as string | null,
+      }))
 
       try {
-        // Fetch all findings with target_element and page_url
-        const { data: findingsWithTargets, error: findingsErr } = await db
-          .from('audit_findings')
-          .select('id, title, severity, target_element, page_url')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
-
-        if (findingsErr) {
-          console.error(`[inngest] Screenshots: failed to fetch findings: ${findingsErr.message}`)
-        }
-
-        const findingsToCapture = (findingsWithTargets || []).map((f: any) => ({
-          id: f.id as string,
-          title: f.title as string,
-          severity: f.severity as string,
-          targetElement: f.target_element as string | null,
-          pageUrl: f.page_url as string | null,
-        }))
-
-        const mainUrl = crawlResult.firstPageUrl || auditDetails.productUrl
-
-        // Detailed pre-capture logging
-        const uniquePageUrls = new Set([mainUrl, ...findingsToCapture.map(f => f.pageUrl).filter(Boolean)])
-        console.log(`[inngest] Screenshots: mainUrl=${mainUrl}`)
-        console.log(`[inngest] Screenshots: ${findingsToCapture.length} findings, ${uniquePageUrls.size} unique page URLs`)
-        console.log(`[inngest] Screenshots: SCREENSHOTONE_API_KEY=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
-        console.log(`[inngest] Screenshots: SCREENSHOT_INTERNAL_KEY=${process.env.SCREENSHOT_INTERNAL_KEY ? 'set' : 'MISSING'}`)
-        await auditLog(auditId, 'screenshots_debug', 'info',
-          `Pre-capture: ${findingsToCapture.length} findings, ${uniquePageUrls.size} pages, mainUrl=${mainUrl}, s1Key=${process.env.SCREENSHOTONE_API_KEY ? 'set' : 'MISSING'}`)
-
-        const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
+        const { pageScreenshot, findingScreenshots } = await captureAuditScreenshots(
+          crawlResult.firstPageUrl || auditDetails.productUrl,
           findingsToCapture,
-          mainUrl,
-          auditId,
-          5, // capture top 5 finding screenshots (critical + high priority)
+          6, // max 6 finding screenshots
         )
 
-        // Update audit_pages with their page-level screenshots
-        for (const [url, screenshotUrl] of pageScreenshots) {
-          const { data: pages } = await db
-            .from('audit_pages')
-            .select('id')
-            .eq('audit_id', auditId)
-            .eq('url', url)
-            .limit(1)
+        // Upload page screenshot
+        if (pageScreenshot) {
+          const pageScreenshotUrl = await uploadScreenshot(auditId, 'page-overview.png', pageScreenshot)
 
-          if (pages && pages.length > 0) {
-            await db
+          // Update first audit_page with screenshot
+          if (pageScreenshotUrl) {
+            const { data: firstPage } = await db
               .from('audit_pages')
-              .update({ screenshot_url: screenshotUrl } as any)
-              .eq('id', (pages[0] as any).id)
+              .select('id')
+              .eq('audit_id', auditId)
+              .order('crawled_at', { ascending: true })
+              .limit(1)
+              .single()
+
+            if (firstPage) {
+              await db
+                .from('audit_pages')
+                .update({ screenshot_url: pageScreenshotUrl } as any)
+                .eq('id', (firstPage as any).id)
+            }
           }
         }
 
-        // Update findings with their highlighted screenshots
+        // Upload finding screenshots
         let uploadedCount = 0
-        for (const [findingId, screenshotUrl] of findingScreenshots) {
-          await db
-            .from('audit_findings')
-            .update({ screenshot_url: screenshotUrl } as any)
-            .eq('id', findingId)
-          uploadedCount++
+        for (const [findingId, buffer] of findingScreenshots) {
+          const url = await uploadScreenshot(auditId, `finding-${findingId}.png`, buffer)
+          if (url) {
+            await db
+              .from('audit_findings')
+              .update({ screenshot_url: url } as any)
+              .eq('id', findingId)
+            uploadedCount++
+          }
         }
 
-        await auditLog(auditId, 'screenshots_completed', 'success',
-          `Captured ${pageScreenshots.size} page + ${uploadedCount} finding screenshots`, {
-            page_screenshots: pageScreenshots.size,
-            finding_screenshots: uploadedCount,
-          })
+        await auditLog(auditId, 'screenshots_completed', 'success', `Captured ${uploadedCount} finding screenshot(s) + page overview`, {
+          finding_screenshots: uploadedCount,
+          has_page_screenshot: !!pageScreenshot,
+        })
       } catch (err) {
         // Screenshots are non-fatal — audit can complete without them
-        const errMsg = err instanceof Error ? err.message : String(err)
-        console.error('[inngest] Screenshot capture error (non-fatal):', errMsg)
-        console.error('[inngest] Screenshot stack:', err instanceof Error ? err.stack : 'no stack')
-        await auditLog(auditId, 'screenshots_error', 'warning', `Screenshot capture failed: ${errMsg.slice(0, 300)}`)
+        console.error('[inngest] Screenshot capture error (non-fatal):', err)
+        await auditLog(auditId, 'screenshots_error', 'warning', 'Screenshot capture failed — report will be generated without screenshots')
       }
     })
 
@@ -968,28 +353,12 @@ RULES FOR RE-AUDIT:
         .eq('id', auditId)
         .single()
 
-      const reportContentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
-
-      // Count fixed/dismissed from previous findings for baseline scoring
-      const droppedFixed = siteContext.previousRawFindings.filter((f: any) => f.status === 'fixed').length
-      const droppedDismissed = siteContext.previousRawFindings.filter((f: any) => f.dismissed).length
-
       const reportData = await generateReport(
         findings,
         audit as any,
-        reportContentWithContext,
+        crawlResult.pageContent,
         auditDetails.userFocus,
         auditDetails.language,
-        effectiveDepthMode,
-        siteContext.previousCategoryScores.length > 0 ? {
-          previousCategoryScores: siteContext.previousCategoryScores,
-          previousOverallScore: siteContext.previousOverallScore,
-          previousTotalFindings: siteContext.previousTotalFindings,
-          previousExecutiveSummary: siteContext.previousExecutiveSummary,
-          previousReportJson: siteContext.previousReportJson,
-          droppedFixed,
-          droppedDismissed,
-        } : undefined,
       )
 
       const severityCount = {
@@ -999,35 +368,6 @@ RULES FOR RE-AUDIT:
         low: findings.filter((f) => f.severity === 'low').length,
       }
 
-      // Use verification data directly from the step (not from DB columns which may not exist)
-      const vData = effectiveDepthMode === 'baseline' ? (verificationData || { likelyFixed: 0, poorlyFixed: 0, verified: 0, results: [] }) : null
-      if (vData) {
-        const likelyFixedCount = vData.likelyFixed
-        const poorlyFixedCount = vData.poorlyFixed || 0
-        const confirmedOpenCount = vData.verified - likelyFixedCount - poorlyFixedCount
-        const nothingChanged = droppedFixed === 0 && droppedDismissed === 0 && likelyFixedCount === 0 && poorlyFixedCount === 0
-
-        reportData.verificationSummary = {
-          likelyFixed: likelyFixedCount,
-          poorlyFixed: poorlyFixedCount,
-          confirmedOpen: confirmedOpenCount,
-          totalVerified: vData.verified,
-          nothingChanged,
-        }
-
-        // Store per-finding verification in report raw_json so UI can read it
-        // even if DB columns don't exist yet
-        reportData.verificationResults = vData.results
-
-        // Enrich executive summary with verification insights
-        if (likelyFixedCount > 0) {
-          reportData.executiveSummary += ` Our AI verification detected that ${likelyFixedCount} finding${likelyFixedCount > 1 ? 's appear' : ' appears'} to have been addressed on the live site. Review ${likelyFixedCount > 1 ? 'them' : 'it'} and confirm the fix to update your score.`
-        }
-        if (poorlyFixedCount > 0) {
-          reportData.executiveSummary += ` Warning: ${poorlyFixedCount} finding${poorlyFixedCount > 1 ? 's show' : ' shows'} signs of a poorly implemented fix that may have introduced new issues. Review ${poorlyFixedCount > 1 ? 'these findings' : 'this finding'} carefully.`
-        }
-      }
-
       // Generate PDF
       let pdfUrl: string | null = null
       try {
@@ -1035,15 +375,6 @@ RULES FOR RE-AUDIT:
       } catch (pdfErr) {
         console.error('[inngest] PDF generation error (non-fatal):', pdfErr)
         await auditLog(auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
-      }
-
-      // Preserve original category scores as baseline for future recalculations
-      // (when user marks findings as fixed/dismissed, scores recalculate from this baseline)
-      const reportJsonWithBaseline = {
-        ...reportData,
-        _baselineCategoryScores: reportData.categoryScores,
-        selectedPillars: auditDetails.selectedPillars, // legacy compat
-        selectedModules: auditDetails.selectedModules, // new slug-based system
       }
 
       // Insert report
@@ -1062,7 +393,7 @@ RULES FOR RE-AUDIT:
         mobile_score: reportData.mobileScore,
         ai_discoverability_score: reportData.aiDiscoverabilityScore,
         content_score: reportData.contentScore,
-        raw_json: reportJsonWithBaseline,
+        raw_json: reportData,
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
       } as any)
@@ -1072,49 +403,6 @@ RULES FOR RE-AUDIT:
         ...severityCount,
         has_pdf: !!pdfUrl,
       })
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Record patterns + run learning
-    // Logic lives in:
-    //   src/lib/audit-engine/pipeline/relevance-scorer.ts (record shown)
-    //   src/lib/audit-engine/pipeline/quality-stats.ts (aggregate stats)
-    //   src/lib/audit-engine/pipeline/pattern-learner.ts (learn from data)
-    // ──────────────────────────────────────────────────────────
-    await step.run('pipeline-learn', async () => {
-      const db = getDb()
-
-      try {
-        // 1. Fetch all final findings for this audit
-        const { data: finalFindings } = await db
-          .from('audit_findings')
-          .select('title, description, severity, sort_order')
-          .eq('audit_id', auditId)
-          .order('sort_order', { ascending: true })
-
-        if (!finalFindings || finalFindings.length === 0) return
-
-        // 2. Record each finding in the patterns table (increments total_shown)
-        for (const f of finalFindings as any[]) {
-          await recordFindingShown(db, f.title, f.severity)
-        }
-
-        // 3. Record aggregate stats for this audit
-        await recordAuditStats(db, auditId)
-
-        // 4. Run lightweight post-audit learning check
-        const titles = (finalFindings as any[]).map((f: any) => f.title)
-        const learningResult = await postAuditLearn(db, titles)
-
-        await auditLog(auditId, 'pipeline_learn', 'success',
-          `Recorded ${finalFindings.length} finding patterns | Stats updated | New insights: ${learningResult.newInsights}`)
-        console.log(`[inngest] Pipeline learn: ${finalFindings.length} patterns recorded, ${learningResult.newInsights} new insights`)
-      } catch (learnErr) {
-        // Learning is non-fatal — audit should complete even if learning fails
-        console.error('[inngest] Pipeline learn error (non-fatal):', learnErr)
-        await auditLog(auditId, 'pipeline_learn_error', 'warning',
-          `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
-      }
     })
 
     // ──────────────────────────────────────────────────────────
@@ -1132,13 +420,7 @@ RULES FOR RE-AUDIT:
       // Send email notification
       if (auditDetails.userEmail) {
         try {
-          const emailAuditType = (auditDetails.auditType || 'website') as 'website' | 'brand_identity' | 'design'
-          const isFreeAudit = auditDetails.plan === 'free_preview'
-          if (isFreeAudit) {
-            await sendFreeAuditReady(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
-          } else {
-            await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl, emailAuditType)
-          }
+          await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.productUrl)
         } catch (emailErr) {
           console.error('[inngest] Email error (non-fatal):', emailErr)
         }
@@ -1149,27 +431,5 @@ RULES FOR RE-AUDIT:
     })
 
     return { success: true, auditId }
-
-    } catch (err) {
-      // Top-level failure handler: refund credit and mark audit as failed
-      console.error(`[inngest] Audit ${auditId} FAILED:`, err)
-      try {
-        await refundCredit(auditId)
-        const db = getDb()
-        const errorMsg = err instanceof Error ? err.message : String(err)
-        await db
-          .from('audits')
-          .update({
-            status: 'failed',
-            crawl_error: errorMsg.length > 500 ? errorMsg.slice(0, 500) : errorMsg,
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq('id', auditId)
-        await auditLog(auditId, 'audit_failed', 'error', `Audit failed: ${errorMsg.slice(0, 200)}. Credit refunded.`)
-      } catch (failErr) {
-        console.error(`[inngest] Failed to handle audit failure for ${auditId}:`, failErr)
-      }
-      throw err // Re-throw so Inngest marks the run as failed
-    }
   },
 )

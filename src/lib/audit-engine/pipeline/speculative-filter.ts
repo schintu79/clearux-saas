@@ -83,6 +83,15 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /missing\s+canonical\s+(?:url|tag)/i,
   /missing\s+(?:favicon|manifest)/i,
 
+  // H1/heading — often JS-rendered and not captured by text extraction
+  /(?:missing|lacks?|no|absent)\s+(?:h1|primary\s+heading|main\s+heading)\s+(?:tag|element|heading)/i,
+  /(?:h1|primary\s+heading)\s+(?:tag\s+)?(?:is\s+)?(?:missing|absent|not\s+found|not\s+present)/i,
+  /no\s+h1\s+(?:heading|tag|element)\s+(?:found|detected|present)/i,
+
+  // Server-level files (cannot be verified from page text)
+  /missing\s+(?:robots\.?txt|sitemap\.?xml)/i,
+  /no\s+(?:robots\.?txt|sitemap\.?xml)\s+(?:found|detected|present|configured)/i,
+
   // JavaScript-dependent
   /(?:missing|lacks?|no)\s+(?:form\s+)?(?:validation|error\s+(?:message|handling|feedback))/i,
   /(?:missing|lacks?|no)\s+(?:success|confirmation)\s+(?:state|message|feedback)/i,

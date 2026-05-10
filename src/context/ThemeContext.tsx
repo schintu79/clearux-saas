@@ -32,17 +32,17 @@ export function ThemeProvider({
 }) {
   const [theme, setThemeState] = useState<Theme>(initialTheme ?? 'dark')
 
-  // On mount, read stored preference (client only).
-  // Default is always dark — only override if user explicitly chose light before.
+  // On mount, reconcile cookie / system preference (client only)
   useEffect(() => {
     const stored = getThemeCookie()
     if (stored) {
       setThemeState(stored)
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setThemeState('dark')
     }
-    // No system-preference detection — dark is always the default
   }, [])
 
-  // Sync dark class on <html> and persist to cookie
+  // Sync <html> class + cookie whenever theme changes
   useEffect(() => {
     const root = document.documentElement
     if (theme === 'dark') {

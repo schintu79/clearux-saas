@@ -41,10 +41,9 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAuthPage      = pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')
   const isDashboardPage = pathname.startsWith('/dashboard')
-  const isAdminPage     = pathname.startsWith('/admin')
 
-  // Unauthenticated user trying to access dashboard or admin → redirect to login
-  if (!user && (isDashboardPage || isAdminPage)) {
+  // Unauthenticated user trying to access dashboard → redirect to login
+  if (!user && isDashboardPage) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(redirectUrl)

@@ -25,17 +25,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'font-body font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
+      'font-inter font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
 
     const variantStyles = {
       primary:
-        'bg-brand text-surface hover:bg-brand-hover focus:ring-brand/30 active:scale-[0.98]',
+        'bg-blue text-white hover:bg-blue-dk focus:ring-blue/50 active:scale-95',
       secondary:
-        'bg-transparent border border-border text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
+        'bg-transparent border-2 border-blue text-blue hover:bg-blue-lt focus:ring-blue/50 active:scale-95',
       ghost:
-        'bg-transparent text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
+        'bg-transparent text-text hover:bg-off focus:ring-blue/50 active:scale-95',
       danger:
-        'bg-[#EF4444] text-white hover:bg-[#A93226] focus:ring-[#EF4444]/30 active:scale-[0.98]',
+        'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500/50 active:scale-95',
     };
 
     const sizeStyles = {
