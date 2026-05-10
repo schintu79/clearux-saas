@@ -185,43 +185,100 @@ function WebsiteAuditGroup({ domain, audits }: {
   );
 }
 
-/* ── Brand Identity Audit Card ──────────────────────────── */
+/* ── Brand Identity Audit Group (grouped by brand name) ──── */
 
-function BrandAuditCard({ audit }: { audit: AuditWithReport }) {
-  const meta = getStatusMeta(audit.status, 'brand_identity');
-  const StatusIcon = meta.icon;
-  const done = audit.status === 'completed';
-  const score = done ? (audit.report?.overall_score ?? null) : null;
-  const lang = langCode((audit as any).language);
-  const brandName = audit.brandName || 'Unnamed brand';
+function BrandAuditGroup({ brandName, audits }: {
+  brandName: string;
+  audits: AuditWithReport[];
+}) {
+  const hasMultiple = audits.length > 1;
+  const latest = audits[0];
+  const latestMeta = getStatusMeta(latest.status, 'brand_identity');
+  const LatestIcon = latestMeta.icon;
+  const latestDone = latest.status === 'completed';
+  const latestScore = latestDone ? (latest.report?.overall_score ?? null) : null;
+
+  const scores = audits
+    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
+    .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
+    .reverse();
+  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
+  const lang = langCode((latest as any).language);
+
+  if (!hasMultiple) {
+    return (
+      <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+        <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Fingerprint size={12} className="text-muted flex-shrink-0" />
+                <p className="font-medium text-sm text-text truncate">{brandName}</p>
+                {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
+                <ExternalLink size={10} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-muted">
+                <span>{formatDate(latest.created_at)}</span>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
+              </div>
+              {latestDone && latest.report?.executive_summary && (
+                <p className="text-muted text-[11px] mt-1 line-clamp-1">{latest.report.executive_summary}</p>
+              )}
+            </div>
+            {latestScore != null ? (
+              <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(latestScore)}`}>
+                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              </div>
+            ) : (
+              <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
+            )}
+            <ChevronRight size={14} className="text-muted flex-shrink-0" />
+          </div>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
-      <Link href={`/dashboard/audits/${audit.id}`} className="block px-4 py-3">
+      <Link
+        href={`/dashboard/audits/brand/${encodeURIComponent(brandName)}`}
+        className="block px-4 py-3"
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <Fingerprint size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{brandName}</p>
+              <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
+                {audits.length} audits
+              </span>
               {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted">
-              <span>{formatDate(audit.created_at)}</span>
+              <span>Latest: {formatDate(latest.created_at)}</span>
               <span className="text-border">·</span>
-              <span className="flex items-center gap-0.5"><StatusIcon size={10} />{meta.label}</span>
+              <span className="flex items-center gap-0.5"><LatestIcon size={10} />{latestMeta.label}</span>
+              {improvement !== 0 && (
+                <>
+                  <span className="text-border">·</span>
+                  <span className={`font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {improvement > 0 ? '+' : ''}{improvement} pts
+                  </span>
+                </>
+              )}
             </div>
-            {done && audit.report?.executive_summary && (
-              <p className="text-muted text-[11px] mt-1 line-clamp-1">{audit.report.executive_summary}</p>
-            )}
           </div>
-          {score != null ? (
-            <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(score)}`}>
-              <span className={`font-medium text-sm leading-none ${scoreColor(score)}`}>{score}</span>
-            </div>
-          ) : (
-            <Badge variant={meta.color as any} size="sm">{meta.label}</Badge>
-          )}
-          <ChevronRight size={14} className="text-muted flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {latestScore != null && (
+              <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
+                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              </div>
+            )}
+            {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
+            <ChevronRight size={14} className="text-muted flex-shrink-0" />
+          </div>
         </div>
       </Link>
     </div>
@@ -345,6 +402,18 @@ function AuditsPageInner() {
     return grouped;
   }, [filteredAudits, activeTab]);
 
+  // Brand: group by brand name
+  const brandGrouped = useMemo(() => {
+    if (activeTab !== 'brand_identity') return {};
+    const grouped: Record<string, AuditWithReport[]> = {};
+    for (const audit of filteredAudits) {
+      const name = audit.brandName || 'Unnamed brand';
+      if (!grouped[name]) grouped[name] = [];
+      grouped[name].push(audit);
+    }
+    return grouped;
+  }, [filteredAudits, activeTab]);
+
   if (authLoading || (loading && user)) {
     return (
       <div className="max-w-2xl mx-auto py-6 space-y-3">
@@ -458,11 +527,11 @@ function AuditsPageInner() {
         </div>
       )}
 
-      {/* Brand identity audit list — flat list */}
+      {/* Brand identity audit list — grouped by brand name */}
       {activeTab === 'brand_identity' && filteredAudits.length > 0 && (
         <div className="flex flex-col" style={{ gap: '12px' }}>
-          {filteredAudits.map((audit) => (
-            <BrandAuditCard key={audit.id} audit={audit} />
+          {Object.keys(brandGrouped).map((name) => (
+            <BrandAuditGroup key={name} brandName={name} audits={brandGrouped[name]} />
           ))}
         </div>
       )}

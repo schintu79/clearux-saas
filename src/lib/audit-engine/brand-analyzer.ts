@@ -185,12 +185,22 @@ Respond with ONLY valid JSON (no markdown fences):
   ]
 }
 
-## Scoring Guide
-- 90-100: Exceptional — professional, consistent, strategically strong
-- 75-89: Good — solid foundation with minor improvements needed
-- 60-74: Fair — noticeable gaps that should be addressed
-- 40-59: Needs Work — significant issues affecting brand perception
-- 0-39: Critical — fundamental problems that undermine brand credibility
+## Scoring Guide — USE THE FULL RANGE
+CRITICAL: Each category MUST receive an INDEPENDENT score based on the SPECIFIC evidence for THAT category. Do NOT default to a "safe" middle score. If 5 of 7 categories land on the same number, you are doing it wrong.
+
+Ask yourself: "Is this category GENUINELY as strong/weak as the others, or am I being lazy?" Different categories almost always have different quality levels. A brand might have excellent visual consistency (92) but weak competitive positioning (61). Score what you actually observe.
+
+Calibration anchors — use these to place your score precisely:
+- 95-100: Best-in-class — could be used as a textbook example; virtually no issues
+- 88-94: Strong — polished and professional with only nitpicks
+- 80-87: Good — solid foundation, a few clear improvements needed
+- 72-79: Decent — works but has noticeable gaps a client would want fixed
+- 60-71: Fair — multiple issues that weaken the brand perception
+- 45-59: Weak — significant problems that undermine credibility
+- 25-44: Poor — fundamental flaws across most aspects
+- 0-24: Critical — materials actively damage the brand
+
+Score to the EXACT number, not to the nearest 5 or 10. A score of 76 is different from 80.
 
 ## Severity Guide
 - critical: Fundamentally undermines brand credibility or causes confusion

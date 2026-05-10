@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
         // @ts-ignore Supabase type inference issue with generics
         const { data: audit } = await supabase
           .from('audits')
-          .select('product_url, audit_type, brand_identity_id')
+          .select('product_url, audit_type, brand_identity_id, brand_identities(name)')
           // @ts-ignore Supabase type inference issue with generics
           .eq('id', auditId)
           .single()
@@ -217,18 +217,21 @@ export async function POST(request: NextRequest) {
           .eq('id', userId)
           .single()
 
+        // Determine audit type for email and processing
+        const aw = audit as any
+        const auditType = aw?.audit_type || (aw?.brand_identity_id && !aw?.product_url ? 'brand_identity' : 'website')
+
         if (audit && (profile as any)?.email) {
           await sendPaymentConfirmation(
             (profile as any).email,
             auditId,
             session.amount_total,
-            (audit as any).product_url,
+            (audit as any).product_url || (aw?.brand_identities as any)?.name || 'your brand',
+            auditType as 'website' | 'brand_identity' | 'design',
           )
         }
 
         // Trigger audit processing — direct execution with Inngest as backup
-        const aw = audit as any
-        const auditType = aw?.audit_type || (aw?.brand_identity_id && !aw?.product_url ? 'brand_identity' : 'website')
         const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
         console.log(`[webhook] Starting ${auditType} audit ${auditId}`)
         if (auditType === 'website') {
