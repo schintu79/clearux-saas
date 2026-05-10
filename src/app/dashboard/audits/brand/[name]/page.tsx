@@ -19,7 +19,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import type { Audit, Report } from '@/types/database';
+import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
+import { PILLAR_FOR_CATEGORY } from '@/lib/audit-checkpoints';
+import type { Audit, Report, AuditFinding } from '@/types/database';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -53,11 +55,8 @@ function scoreColor(s: number) {
   return 'text-[#EF4444]';
 }
 
-function scoreBg(s: number) {
-  if (s >= 70) return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-  if (s >= 40) return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-  return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-}
+/* ── Pillar config for brand audits (6 pillars) ──────────── */
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
 
 /* ── Main Component ───────────────────────────────────────── */
 
@@ -68,8 +67,11 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
 
   const { user, loading: authLoading } = useAuth();
   const [audits, setAudits] = useState<AuditWithReport[]>([]);
+  const [findings, setFindings] = useState<AuditFinding[]>([]);
+  const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
 
   const fetchAudits = useCallback(async (userId: string) => {
     try {
@@ -107,11 +109,41 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         if (!repErr && reports) reportsMap = Object.fromEntries(reports.map((r: any) => [r.audit_id, r]));
       }
 
-      setAudits((rows || []).map((a: any) => ({
+      const enrichedAudits = (rows || []).map((a: any) => ({
         ...a,
         report: reportsMap[a.id] || null,
         brandIdentityId: a.brand_identity_id,
-      })));
+      }));
+      setAudits(enrichedAudits);
+
+      // Load findings + category scores from latest completed audit
+      const latestCompleted = enrichedAudits.find((a: AuditWithReport) => a.status === 'completed' && a.report);
+      if (latestCompleted) {
+        // Findings
+        const { data: findingsData } = await supabase
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', latestCompleted.id)
+          .order('sort_order', { ascending: true });
+        setFindings(findingsData || []);
+
+        // Category scores from raw_json
+        const rawJson = latestCompleted.report?.raw_json as any;
+        if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
+          setCategoryScores(rawJson.categoryScores);
+        }
+
+        // Build score trend from all completed audits (brand audits don't have a URL-based API)
+        const trend = enrichedAudits
+          .filter((a: AuditWithReport) => a.status === 'completed' && a.report?.overall_score != null)
+          .map((a: AuditWithReport) => ({
+            auditId: a.id,
+            date: a.completed_at || a.created_at,
+            overallScore: a.report!.overall_score!,
+          }))
+          .reverse(); // oldest first
+        setScoreTrend(trend);
+      }
     } catch (err: any) {
       console.error('[BrandAudits] fetch error:', err);
       setError(err?.message || 'Failed to load audits');
@@ -151,8 +183,12 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
       <div className="max-w-4xl mx-auto py-6 px-4 space-y-4">
         <div className="h-4 w-28 bg-off rounded animate-pulse" />
         <div className="h-7 w-48 bg-off rounded animate-pulse" />
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-off rounded-xl animate-pulse" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="h-48 bg-off rounded-xl animate-pulse" />
+          <div className="h-48 bg-off rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-off rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
@@ -163,12 +199,29 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
   const latestReport = latestCompleted?.report;
   const latestScore = latestReport?.overall_score ?? 0;
 
-  // Score trend from completed audits
-  const scores = audits
-    .filter(a => a.status === 'completed' && a.report?.overall_score != null)
-    .map(a => ({ score: a.report!.overall_score!, date: a.completed_at || a.created_at }))
-    .reverse();
-  const improvement = scores.length >= 2 ? scores[scores.length - 1].score - scores[scores.length - 2].score : 0;
+  // Severity counts from latest audit findings (exclude fixed & dismissed)
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
+  const severityCounts = {
+    critical: openFindings.filter((f) => f.severity === 'critical').length,
+    high: openFindings.filter((f) => f.severity === 'high').length,
+    medium: openFindings.filter((f) => f.severity === 'medium').length,
+    low: openFindings.filter((f) => f.severity === 'low').length,
+  };
+
+  // Pillar scores — group categoryScores by their pillar using PILLAR_FOR_CATEGORY
+  const pillarScores = PILLAR_NAMES.map((pillarName) => {
+    const cats = categoryScores.filter((c) => PILLAR_FOR_CATEGORY[c.name] === pillarName);
+    return {
+      name: pillarName,
+      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0,
+    };
+  }).filter((p) => p.score > 0); // Only show pillars that were actually audited
+
+  const handleStatCardClick = (filter: string) => {
+    if (latestCompleted && filter !== 'passed') {
+      router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4">
@@ -191,11 +244,6 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}
             {latestScore > 0 && <> · Latest score: <span className={`font-medium ${scoreColor(latestScore)}`}>{latestScore}/100</span></>}
-            {improvement !== 0 && (
-              <> · <span className={`font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                {improvement > 0 ? '+' : ''}{improvement} pts
-              </span> since last audit</>
-            )}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -225,38 +273,21 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         </div>
       )}
 
-      {/* Score overview card (if completed audits exist) */}
+      {/* ── Dashboard (only if there's a completed audit) ──── */}
       {latestCompleted && latestReport && (
-        <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-5 mb-6">
-          <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 rounded-xl border-2 flex items-center justify-center ${scoreBg(latestScore)}`}>
-              <span className={`text-2xl font-bold ${scoreColor(latestScore)}`}>{latestScore}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-medium text-text mb-1">Latest brand score</h2>
-              {latestReport.executive_summary && (
-                <p className="text-muted text-xs line-clamp-2">{latestReport.executive_summary}</p>
-              )}
-            </div>
-          </div>
-          {scores.length >= 2 && (
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <div className="flex items-center gap-4 text-xs text-muted">
-                <span>Score history:</span>
-                <div className="flex items-center gap-2">
-                  {scores.map((s, i) => (
-                    <span key={i} className={`font-medium ${scoreColor(s.score)}`}>
-                      {s.score}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <AuditDashboardOverview
+          overallScore={latestScore}
+          scoreTrend={scoreTrend}
+          severityCounts={severityCounts}
+          findings={findings}
+          pillarScores={pillarScores}
+          productUrl=""
+          latestAuditId={latestCompleted.id}
+          onStatCardClick={handleStatCardClick}
+        />
       )}
 
-      {/* Audit History */}
+      {/* ── Audit History ────────────────────────────────────── */}
       <h2 className="text-sm font-medium text-text mb-3">Audit History</h2>
 
       {audits.length === 0 ? (
@@ -290,6 +321,9 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
                       <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                      {(audit as any).depth_mode === 'deep' && (
+                        <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
+                      )}
                       {done && report?.overall_score != null && (
                         <>
                           <span className="text-border">·</span>
