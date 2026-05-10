@@ -4,8 +4,8 @@ import Footer from '@/components/layout/Footer'
 import DemoReportContent from './DemoReportContent'
 
 export const metadata: Metadata = {
-  title: 'Sample Audit Report — ClearUX',
-  description: 'See what a ClearUX audit report looks like. Visual demo of findings, scores, and recommendations across 96 checkpoints.',
+  title: 'Sample reports',
+  description: 'See what ClearUX delivers. Explore sample reports for website audits, brand identity audits, and design audits — scores, findings, and actionable recommendations.',
 }
 
 export default function DemoReportPage() {

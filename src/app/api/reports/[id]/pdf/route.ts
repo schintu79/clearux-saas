@@ -135,18 +135,30 @@ export async function GET(
     const L = getReportLabels(lang)
     const UI = getUILabels(lang)
     const pillarNames = getPillarNames(lang)
-    const PILLARS = PILLAR_STYLES.map((s, i) => ({ ...s, name: pillarNames[i] }))
+
+    const rawJson = r.raw_json || {}
+    const isBrandAudit = rawJson.type === 'brand_identity'
+
+    let domain = 'audit'
+    if (isBrandAudit) {
+      domain = rawJson.brandName || 'Brand Identity Audit'
+    } else {
+      try { domain = new URL(a.product_url).hostname.replace(/^www\./, '') } catch {}
+    }
+
+    const overall = r.overall_score ?? 0
+    // Brand audits store categories in categoryResults, website audits in categoryScores
+    const catScores: Array<{ name: string; score: number; summary: string }> =
+      isBrandAudit
+        ? (rawJson.categoryResults || rawJson._baselineCategoryScores || []).map((c: any) => ({ name: c.name, score: c.score, summary: c.summary || '' }))
+        : (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [])
+
+    const PILLARS = isBrandAudit
+      ? [{ start: 0, end: catScores.length, color: C.pillarBrand, bg: C.pillarBrandBg, name: 'Brand Identity' }]
+      : PILLAR_STYLES.map((s, i) => ({ ...s, name: pillarNames[i] }))
     const dateStr = new Date(a.created_at).toLocaleDateString(getLocale(lang), {
       year: 'numeric', month: 'long', day: 'numeric',
     })
-
-    let domain = 'audit'
-    try { domain = new URL(a.product_url).hostname.replace(/^www\./, '') } catch {}
-
-    const overall = r.overall_score ?? 0
-    const rawJson = r.raw_json || {}
-    const catScores: Array<{ name: string; score: number; summary: string }> =
-      rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : []
     const total = r.total_issues || 0
     const topRecs: string[] = rawJson.topRecommendations || (rawJson.keyRecommendation ? [rawJson.keyRecommendation] : [])
 
@@ -297,9 +309,10 @@ export async function GET(
     }
 
     // Subtitle (DOCX: size 22 = 11pt)
+    const reportTypeLabel = isBrandAudit ? 'Brand Identity Audit Report' : UI.uxAuditReport
     const subtitle = isWhiteLabel
-      ? (wlCompany ? `${wlCompany} — ${UI.uxAuditReport}` : UI.uxAuditReport)
-      : UI.reportSubtitle
+      ? (wlCompany ? `${wlCompany} — ${reportTypeLabel}` : reportTypeLabel)
+      : (isBrandAudit ? 'Brand Identity Audit Report' : UI.reportSubtitle)
     doc.fontSize(11).font('Helvetica').fillColor(C.textSec)
       .text(subtitle, leftM, doc.y + 2, { align: 'center', width: contentW })
 
@@ -314,10 +327,10 @@ export async function GET(
     doc.fontSize(14).font('Helvetica-Bold').fillColor(C.text)
       .text(getScoreLabel(overall, lang), leftM, undefined, { align: 'center', width: contentW })
 
-    // URL (DOCX: size 22 = 11pt, color textSec)
+    // URL or Brand name (DOCX: size 22 = 11pt, color textSec)
     doc.moveDown(1.5)
     doc.fontSize(11).font('Helvetica').fillColor(C.textSec)
-      .text(a.product_url, leftM, undefined, { align: 'center', width: contentW })
+      .text(isBrandAudit ? domain : (a.product_url || domain), leftM, undefined, { align: 'center', width: contentW })
 
     // Date (DOCX: size 20 = 10pt)
     doc.moveDown(0.3)

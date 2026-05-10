@@ -1,243 +1,54 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import SmartCta from '@/components/ui/SmartCta'
-import { useState } from 'react'
 import {
   ArrowRight,
-  AlertTriangle,
-  CheckCircle2,
-  Info,
   TrendingUp,
   Download,
   Share2,
   RefreshCw,
   Search,
-  ChevronDown,
+  Globe2,
+  Fingerprint,
+  Layers,
   Eye,
   Target,
-  Map,
   Type,
   MousePointerClick,
   Shield,
-  Heart,
-  Brain,
-  Sparkles,
   Smartphone,
-  Gauge,
-  Globe,
-  Zap,
   Lightbulb,
   Accessibility,
-  Scale,
-  ExternalLink,
-  Copy,
+  Code2,
+  Rocket,
+  Users,
+  Palette,
+  PenTool,
+  FileText,
+  LayoutGrid,
+  MessageSquare,
 } from 'lucide-react'
 
 /* ══════════════════════════════════════════════════════════════
-   DEMO DATA — mirrors real dashboard structure
-   ══════════════════════════════════════════════════════════════ */
-
-const DEMO_SCORE = 71
-const DEMO_SITE = 'acme.com'
-const DEMO_URL = 'https://www.acme.com'
-const DEMO_DATE = 'May 5, 2026, 02:14 PM'
-const DEMO_TOTAL_ISSUES = 7
-
-const PILLAR_CONFIG = [
-  {
-    name: 'Foundation',
-    gradient: 'from-[#6366F1] to-[#5A4A84]',
-    gradientSubtle: 'from-[#6366F1]/5 to-[#6366F1]/10',
-    border: 'border-[#6366F1]/20',
-    iconBg: 'bg-[#6366F1]/10',
-    iconColor: 'text-[#6366F1]',
-    badgeBg: 'bg-[#6366F1]',
-    scoreBg: 'bg-[#6366F1]',
-    range: [0, 4] as [number, number],
-  },
-  {
-    name: 'Human Experience',
-    gradient: 'from-pink-500 to-pink-600',
-    gradientSubtle: 'from-pink-500/5 to-pink-500/10',
-    border: 'border-pink-500/20',
-    iconBg: 'bg-pink-500/10',
-    iconColor: 'text-pink-500',
-    badgeBg: 'bg-pink-500',
-    scoreBg: 'bg-pink-500',
-    range: [4, 8] as [number, number],
-  },
-  {
-    name: 'Inclusive Design',
-    gradient: 'from-amber-500 to-amber-600',
-    gradientSubtle: 'from-amber-500/5 to-amber-500/10',
-    border: 'border-amber-500/20',
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-500',
-    badgeBg: 'bg-amber-500',
-    scoreBg: 'bg-amber-500',
-    range: [8, 12] as [number, number],
-  },
-  {
-    name: 'Future Readiness',
-    gradient: 'from-[#22C55E] to-[#236B43]',
-    gradientSubtle: 'from-[#22C55E]/5 to-[#22C55E]/10',
-    border: 'border-[#22C55E]/20',
-    iconBg: 'bg-[#22C55E]/10',
-    iconColor: 'text-[#22C55E]',
-    badgeBg: 'bg-[#22C55E]',
-    scoreBg: 'bg-[#22C55E]',
-    range: [12, 16] as [number, number],
-  },
-]
-
-const PILLAR_ICONS = [Scale, Heart, Accessibility, Brain]
-
-const CATEGORY_ICONS = [
-  Eye, Target, Map, Type,
-  MousePointerClick, Shield, AlertTriangle, Heart,
-  Accessibility, Brain, Sparkles, Smartphone,
-  Gauge, Search, Zap, Globe,
-]
-
-const CATEGORIES = [
-  { name: 'Visual Design', score: 82, summary: 'Clean layout with consistent spacing. Typography hierarchy is clear but could use stronger visual anchors on key pages.' },
-  { name: 'Value Proposition', score: 75, summary: 'Hero messaging is clear but lacks supporting evidence. Consider adding metrics or testimonials above the fold.' },
-  { name: 'Navigation', score: 88, summary: 'Well-structured navigation with clear labels. Mobile hamburger menu is accessible and keyboard-navigable.' },
-  { name: 'Content Quality', score: 79, summary: 'Copy is generally well-written but some pages exceed grade 10 reading level. Simplify pricing and legal pages.' },
-  { name: 'CTAs & Conversion', score: 64, summary: 'Primary CTA is below the fold on mobile. Button contrast is adequate but could be stronger.' },
-  { name: 'Trust & Credibility', score: 58, summary: 'Missing security badges on checkout. No visible reviews or testimonials on the pricing page.' },
-  { name: 'Ethical UX', score: 91, summary: 'No dark patterns detected. Cancellation flow is transparent. Cookie consent is properly implemented.' },
-  { name: 'Emotional Design', score: 72, summary: 'Microcopy is functional but lacks personality. Error messages could be more helpful and encouraging.' },
-  { name: 'Accessibility', score: 55, summary: 'Missing alt text on 12 images. Some interactive elements lack ARIA labels. Color contrast passes AA but fails AAA.' },
-  { name: 'Cognitive Accessibility', score: 68, summary: 'Reading level too high on pricing page. Some forms lack clear error messaging and progress indicators.' },
-  { name: 'Digital Wellbeing', score: 85, summary: 'No autoplay videos. Notifications are non-intrusive. Session timeouts are generous and well-communicated.' },
-  { name: 'Mobile Experience', score: 61, summary: 'Touch targets under 44px in navigation. Some horizontal scroll on small screens. Forms could be better optimized.' },
-  { name: 'Performance', score: 77, summary: 'LCP is 2.8s (should be under 2.5s). Images are mostly optimized but hero image could be lazy-loaded.' },
-  { name: 'AI Discoverability', score: 42, summary: 'No structured data detected. Missing JSON-LD schemas for Organization, Product, and FAQ.' },
-  { name: 'AI Agent Readiness', score: 38, summary: 'No semantic HTML landmarks. Missing <main>, <nav>, <article> elements. AI agents cannot reliably parse content.' },
-  { name: 'Cultural Sensitivity', score: 90, summary: 'Content is inclusive and culturally neutral. No problematic imagery or language detected.' },
-]
-
-const DEMO_FINDINGS = [
-  {
-    severity: 'critical' as const,
-    title: 'Missing alt text on 12 product images',
-    category: 'Accessibility',
-    pillarIdx: 2,
-    description: 'Screen readers cannot describe these images to visually impaired users. This also hurts SEO image indexing.',
-    recommendation: 'Add descriptive alt attributes to all <img> elements. Use the product name and key visual details.',
-    impact: 'Fixing this could improve your Accessibility score by 15-20 points and boost SEO rankings.',
-    page_url: 'https://www.acme.com/products',
-  },
-  {
-    severity: 'critical' as const,
-    title: 'No structured data (Schema.org) detected',
-    category: 'AI Discoverability',
-    pillarIdx: 3,
-    description: 'AI assistants and search engines cannot reliably parse your product information, pricing, or FAQs.',
-    recommendation: 'Add JSON-LD structured data for Organization, Product, and FAQPage schemas.',
-    impact: 'Essential for AI discoverability. Expected +25 point improvement in AI Discoverability score.',
-    page_url: 'https://www.acme.com',
-  },
-  {
-    severity: 'high' as const,
-    title: 'Primary CTA below the fold on mobile',
-    category: 'CTAs & Conversion',
-    pillarIdx: 1,
-    description: 'The main call-to-action button requires scrolling on screens under 768px, reducing conversion rates by an estimated 15-25%.',
-    recommendation: 'Move the primary CTA into the first viewport on mobile. Consider a sticky CTA bar.',
-    impact: 'Could increase mobile conversion rate by 15-25% based on industry benchmarks.',
-    page_url: 'https://www.acme.com',
-  },
-  {
-    severity: 'high' as const,
-    title: 'Trust signals missing from checkout page',
-    category: 'Trust & Credibility',
-    pillarIdx: 1,
-    description: 'No security badges, payment icons, or guarantee messaging visible during the checkout flow.',
-    recommendation: 'Add SSL badge, accepted payment icons, and a satisfaction guarantee near the checkout button.',
-    impact: 'Trust signals can reduce cart abandonment by 10-15%.',
-    page_url: 'https://www.acme.com/checkout',
-  },
-  {
-    severity: 'medium' as const,
-    title: 'Touch targets under 44px on mobile navigation',
-    category: 'Mobile Experience',
-    pillarIdx: 2,
-    description: 'Navigation links measure 32px tap targets, below WCAG 2.5.5 minimum of 44px, causing mis-taps on mobile.',
-    recommendation: 'Increase all interactive elements to minimum 44x44px touch targets with adequate spacing.',
-    impact: 'Improving touch targets reduces frustration and improves mobile task completion rates.',
-    page_url: 'https://www.acme.com',
-  },
-  {
-    severity: 'medium' as const,
-    title: 'Reading level exceeds grade 10 on pricing page',
-    category: 'Cognitive Accessibility',
-    pillarIdx: 2,
-    description: 'Complex sentence structure and jargon make the pricing page harder to understand for a general audience.',
-    recommendation: 'Simplify copy to grade 8 reading level. Replace jargon with plain language. Use shorter sentences.',
-    impact: 'Simpler copy improves comprehension and can increase pricing page conversion by 8-12%.',
-    page_url: 'https://www.acme.com/pricing',
-  },
-  {
-    severity: 'low' as const,
-    title: 'No semantic HTML landmarks detected',
-    category: 'AI Agent Readiness',
-    pillarIdx: 3,
-    description: 'The page lacks <main>, <nav>, and <article> elements, making it harder for AI agents to parse content structure.',
-    recommendation: 'Wrap content in semantic HTML5 elements: <main> for primary content, <nav> for navigation, <article> for standalone content.',
-    impact: 'Semantic HTML improves both accessibility scores and AI agent compatibility.',
-    page_url: 'https://www.acme.com',
-  },
-]
-
-// Demo score trend data (3 audits)
-const DEMO_TREND = [
-  { date: '2026-03-12', score: 54 },
-  { date: '2026-04-08', score: 63 },
-  { date: '2026-05-05', score: 71 },
-]
-
-// Demo checkpoints per category (4 each = 64 total)
-const DEMO_CHECKPOINTS: Record<string, string[]> = {
-  'Visual Design': ['Consistent typography', 'Color harmony', 'Visual hierarchy', 'White space balance'],
-  'Value Proposition': ['Hero messaging clarity', 'Benefit communication', 'Supporting evidence', 'Differentiation'],
-  'Navigation': ['Menu structure', 'Breadcrumb trails', 'Search functionality', 'Keyboard navigation'],
-  'Content Quality': ['Reading level', 'Grammar & spelling', 'Content freshness', 'Tone consistency'],
-  'CTAs & Conversion': ['CTA visibility', 'Button contrast', 'Action-oriented copy', 'Above-fold placement'],
-  'Trust & Credibility': ['Security badges', 'Social proof', 'Contact information', 'Privacy policy'],
-  'Ethical UX': ['Dark pattern scan', 'Cancellation transparency', 'Consent mechanisms', 'Fair pricing display'],
-  'Emotional Design': ['Microcopy quality', 'Error message tone', 'Delight moments', 'Loading state feedback'],
-  'Accessibility': ['Alt text coverage', 'ARIA labels', 'Color contrast (AA)', 'Focus indicators'],
-  'Cognitive Accessibility': ['Reading level check', 'Form error messaging', 'Progress indicators', 'Information chunking'],
-  'Digital Wellbeing': ['Autoplay behavior', 'Notification frequency', 'Session management', 'Dark mode support'],
-  'Mobile Experience': ['Touch target sizing', 'Responsive layout', 'Form optimization', 'Scroll behavior'],
-  'Performance': ['Largest Contentful Paint', 'Image optimization', 'Bundle size', 'Caching strategy'],
-  'AI Discoverability': ['JSON-LD schemas', 'Open Graph tags', 'Sitemap.xml', 'robots.txt'],
-  'AI Agent Readiness': ['Semantic HTML', 'Landmark elements', 'Heading hierarchy', 'Link text quality'],
-  'Cultural Sensitivity': ['Inclusive language', 'Diverse imagery', 'Localization readiness', 'Cultural neutrality'],
-}
-
-/* ══════════════════════════════════════════════════════════════
-   Helper components
+   SHARED HELPERS
    ══════════════════════════════════════════════════════════════ */
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-emerald-400'
-  if (s >= 40) return 'text-amber-400'
-  return 'text-red-400'
+  if (s >= 70) return 'text-emerald-600 dark:text-emerald-400'
+  if (s >= 40) return 'text-amber-600 dark:text-amber-400'
+  return 'text-red-600 dark:text-red-400'
 }
 
-function scoreLabel(s: number) {
-  if (s >= 90) return 'Excellent'
-  if (s >= 70) return 'Good'
-  if (s >= 50) return 'Needs Work'
-  return 'Critical'
+function scoreBg(s: number) {
+  if (s >= 70) return 'bg-emerald-500'
+  if (s >= 40) return 'bg-amber-500'
+  return 'bg-red-500'
 }
 
-function ScoreRing({ score, size = 110 }: { score: number; size?: number }) {
-  const strokeWidth = 7
+function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
+  const strokeWidth = 6
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - score / 100)
@@ -246,290 +57,257 @@ function ScoreRing({ score, size = 110 }: { score: number; size?: number }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
         <circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="font-heading text-3xl font-light text-text">{score}</span>
+        <span className="font-heading text-2xl font-light text-text">{score}</span>
       </div>
     </div>
   )
 }
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const config: Record<string, { dot: string; text: string }> = {
-    critical: { dot: 'bg-red-500', text: 'text-red-400' },
-    high: { dot: 'bg-orange-500', text: 'text-orange-400' },
-    medium: { dot: 'bg-yellow-500', text: 'text-yellow-400' },
-    low: { dot: 'bg-blue-500', text: 'text-blue-400' },
+function SeverityDot({ severity }: { severity: string }) {
+  const colors: Record<string, string> = {
+    critical: 'bg-red-500',
+    high: 'bg-orange-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-blue-500',
   }
-  const c = config[severity] || config.medium
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider ${c.text}`}>
-      <span className={`w-2 h-2 rounded-full ${c.dot}`} />
-      {severity}
-    </span>
-  )
-}
-
-/* ── Score Over Time Chart (static SVG demo) ── */
-function DemoScoreChart() {
-  const [expanded, setExpanded] = useState(false)
-
-  const W = 480, H = 140, PAD_L = 34, PAD_R = 16, PAD_T = 20, PAD_B = 26
-  const chartW = W - PAD_L - PAD_R
-  const chartH = H - PAD_T - PAD_B
-  const minScore = 40, maxScore = 85
-  const range = maxScore - minScore
-
-  const points = DEMO_TREND.map((t, i) => ({
-    x: PAD_L + (i / (DEMO_TREND.length - 1)) * chartW,
-    y: PAD_T + chartH - ((t.score - minScore) / range) * chartH,
-    score: t.score,
-    date: t.date,
-  }))
-
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${PAD_T + chartH} L ${points[0].x} ${PAD_T + chartH} Z`
-
-  const gridLines = 3
-  const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines))
-
-  return (
-    <div className="mb-6 rounded-xl border border-border bg-card overflow-hidden">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-card transition-colors"
-      >
-        <div className="w-7 h-7 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0">
-          <TrendingUp size={14} className="text-[#6366F1]" />
-        </div>
-        <div className="flex-1 text-left">
-          <span className="text-sm font-medium text-text">Score Over Time</span>
-          <span className="text-[10px] text-muted ml-2">3 audits · {DEMO_SITE}</span>
-        </div>
-        <span className="text-xs font-medium text-emerald-400">+17 pts</span>
-        <ChevronDown size={14} className={`text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-      </button>
-
-      {expanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-border">
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-            {gridScores.map((s, i) => {
-              const y = PAD_T + chartH - ((s - minScore) / range) * chartH
-              return (
-                <g key={i}>
-                  <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" strokeDasharray="3,3" />
-                  <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="rgba(255,255,255,0.35)" fontFamily="DM Sans">{s}</text>
-                </g>
-              )
-            })}
-            <defs>
-              <linearGradient id="demoAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366F1" stopOpacity="0.18" />
-                <stop offset="100%" stopColor="#6366F1" stopOpacity="0.02" />
-              </linearGradient>
-            </defs>
-            <path d={areaD} fill="url(#demoAreaGrad)" />
-            <path d={pathD} fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            {points.map((p, i) => {
-              const isLast = i === points.length - 1
-              return (
-                <g key={i}>
-                  <circle cx={p.x} cy={p.y} r={isLast ? 4 : 3} fill={isLast ? '#6366F1' : 'transparent'} stroke="#6366F1" strokeWidth="2" />
-                  {isLast && (
-                    <g>
-                      <rect x={p.x - 13} y={p.y - 20} width="26" height="14" rx="4" fill="#6366F1" />
-                      <text x={p.x} y={p.y - 10.5} textAnchor="middle" fontSize="8" fontWeight="500" fill="white" fontFamily="DM Sans">{p.score}</text>
-                    </g>
-                  )}
-                </g>
-              )
-            })}
-            {points.map((p, i) => {
-              const d = new Date(p.date)
-              const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`
-              return (
-                <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="rgba(255,255,255,0.35)" fontFamily="DM Sans">{label}</text>
-              )
-            })}
-          </svg>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ── Checkpoint Health Panel ── */
-function DemoCheckpointHealth() {
-  const [expandedCat, setExpandedCat] = useState<string | null>(null)
-
-  return (
-    <div className="mb-6 rounded-xl border border-border bg-card overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-border">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 size={14} className="text-[#BFFA60]" />
-          <h3 className="text-xs font-medium text-text">64-Checkpoint Health</h3>
-          <span className="text-[10px] text-muted ml-auto">7 issues across 24 categories</span>
-        </div>
-      </div>
-      <div className="divide-y divide-white/[0.03]">
-        {CATEGORIES.map((cat, catIdx) => {
-          const checkpoints = DEMO_CHECKPOINTS[cat.name] || []
-          const catFindings = DEMO_FINDINGS.filter(f => f.category === cat.name)
-          const failCount = Math.min(catFindings.length, checkpoints.length)
-          const passCount = checkpoints.length - failCount
-          const isExpanded = expandedCat === cat.name
-
-          return (
-            <div key={catIdx}>
-              <button
-                onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
-                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-card transition-colors text-left"
-              >
-                <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
-                <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[9px] font-medium text-emerald-400">{passCount} pass</span>}
-                  {failCount > 0 && <span className="text-[9px] font-medium text-red-500">{failCount} fail</span>}
-                </div>
-                <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-              </button>
-              {isExpanded && (
-                <div className="px-5 pb-3 space-y-1.5">
-                  {checkpoints.map((checkpoint, i) => {
-                    const hasFinding = i < failCount
-                    return (
-                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-red-900/[0.08]' : 'bg-emerald-500/[0.05]'}`}>
-                        {hasFinding ? (
-                          <AlertTriangle size={11} className="text-red-400 flex-shrink-0 mt-0.5" />
-                        ) : (
-                          <CheckCircle2 size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                        )}
-                        <p className={`text-[11px] font-medium flex-1 ${hasFinding ? 'text-red-400' : 'text-emerald-400'}`}>
-                          {checkpoint}
-                        </p>
-                        <span className={`text-[9px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-emerald-500'}`}>
-                          {hasFinding ? 'Fail' : 'Pass'}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-/* ── Finding Card (collapsible) ── */
-function DemoFindingCard({ finding }: { finding: typeof DEMO_FINDINGS[0] }) {
-  const [open, setOpen] = useState(false)
-  const pillar = PILLAR_CONFIG[finding.pillarIdx]
-
-  const sevConfig: Record<string, { border: string; bg: string; dot: string; text: string }> = {
-    critical: { border: 'border-border', bg: 'bg-card', dot: 'bg-red-500', text: 'text-red-400' },
-    high: { border: 'border-border', bg: 'bg-card', dot: 'bg-orange-500', text: 'text-orange-400' },
-    medium: { border: 'border-border', bg: 'bg-card', dot: 'bg-yellow-500', text: 'text-yellow-400' },
-    low: { border: 'border-border', bg: 'bg-card', dot: 'bg-blue-500', text: 'text-blue-400' },
-  }
-  const sev = sevConfig[finding.severity] || sevConfig.medium
-
-  return (
-    <div className={`rounded-xl border ${sev.border} ${sev.bg} overflow-hidden transition-all`}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-4 text-left hover:bg-card transition-colors"
-      >
-        <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <SeverityBadge severity={finding.severity} />
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted max-w-[260px] truncate">
-              <ExternalLink size={10} className="flex-shrink-0" />
-              {finding.page_url.replace('https://www.', '')}
-            </span>
-          </div>
-          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
-        </div>
-        <ChevronDown size={16} className={`text-muted flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-border mx-4 space-y-3">
-          <p className="text-muted text-sm leading-relaxed pt-3">{finding.description}</p>
-
-          {finding.recommendation && (
-            <div className="p-3 bg-card rounded-lg border border-border">
-              <div className="flex gap-2.5">
-                <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillar.iconColor}`} />
-                <div>
-                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
-                  <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {finding.impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/[0.05] rounded-lg border border-emerald-500/15">
-              <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
-                <p className="text-sm text-emerald-400 leading-relaxed">{finding.impact}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Status toggle (demo only — non-functional) */}
-          <div className="p-3 rounded-lg bg-card border border-border">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-text uppercase tracking-wide">Status</span>
-              <div className="flex flex-wrap gap-1.5">
-                {['Open', 'In Progress', 'Fixed', 'Backlog'].map((s, i) => (
-                  <span
-                    key={s}
-                    className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg ${
-                      i === 0
-                        ? 'bg-card text-muted ring-1 ring-white/10'
-                        : 'text-muted'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-gray-400' : 'bg-white/10'}`} />
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+  return <span className={`w-2 h-2 rounded-full ${colors[severity] || colors.medium}`} />
 }
 
 /* ══════════════════════════════════════════════════════════════
-   Main Component
+   WEBSITE AUDIT DEMO DATA
+   ══════════════════════════════════════════════════════════════ */
+
+const WEBSITE_MODULES = [
+  { name: 'Foundation', score: 81, icon: Layers, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
+  { name: 'Human Experience', score: 71, icon: Users, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  { name: 'Inclusive Design', score: 67, icon: Accessibility, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  { name: 'Future Readiness', score: 52, icon: Rocket, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { name: 'Brand Consistency', score: 78, icon: Fingerprint, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { name: 'SEO Structure', score: 73, icon: Code2, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+]
+
+const WEBSITE_FINDINGS = [
+  { severity: 'critical', title: 'No structured data (Schema.org) detected', category: 'Future Readiness' },
+  { severity: 'critical', title: 'Missing alt text on 12 product images', category: 'Inclusive Design' },
+  { severity: 'high', title: 'Primary CTA below the fold on mobile', category: 'Human Experience' },
+  { severity: 'high', title: 'Trust signals missing from checkout page', category: 'Foundation' },
+  { severity: 'medium', title: 'Touch targets under 44px on mobile navigation', category: 'Inclusive Design' },
+  { severity: 'medium', title: 'Reading level exceeds grade 10 on pricing', category: 'Human Experience' },
+  { severity: 'low', title: 'No semantic HTML landmarks detected', category: 'SEO Structure' },
+]
+
+/* ══════════════════════════════════════════════════════════════
+   BRAND IDENTITY AUDIT DEMO DATA
+   ══════════════════════════════════════════════════════════════ */
+
+const BRAND_MODULES = [
+  { name: 'Visual Consistency', score: 88, icon: Palette, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
+  { name: 'Tone of Voice', score: 74, icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  { name: 'Professionalism', score: 91, icon: Shield, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  { name: 'Value Proposition', score: 69, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { name: 'Structure & Organisation', score: 82, icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { name: 'Competitive Positioning', score: 71, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { name: 'Wording Quality', score: 77, icon: Type, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+]
+
+const BRAND_FINDINGS = [
+  { severity: 'high', title: 'Value proposition lacks supporting proof points', category: 'Value Proposition' },
+  { severity: 'high', title: 'Tone shifts between formal and casual across documents', category: 'Tone of Voice' },
+  { severity: 'medium', title: 'Competitive positioning is generic — no clear differentiator', category: 'Competitive Positioning' },
+  { severity: 'medium', title: 'Secondary colour usage inconsistent across brand assets', category: 'Visual Consistency' },
+  { severity: 'low', title: 'Headline copy relies on cliches in 3 documents', category: 'Wording Quality' },
+]
+
+/* ══════════════════════════════════════════════════════════════
+   DESIGN AUDIT DEMO DATA
+   ══════════════════════════════════════════════════════════════ */
+
+const DESIGN_MODULES = [
+  { name: 'Visual Hierarchy', score: 76, icon: Eye, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
+  { name: 'Component Consistency', score: 83, icon: Layers, color: 'text-pink-500', bg: 'bg-pink-500/10' },
+  { name: 'Accessibility', score: 62, icon: Accessibility, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  { name: 'Responsive Design', score: 71, icon: Smartphone, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { name: 'Interaction Design', score: 79, icon: MousePointerClick, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { name: 'Design System Alignment', score: 85, icon: PenTool, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+]
+
+const DESIGN_FINDINGS = [
+  { severity: 'critical', title: 'Colour contrast fails WCAG AA on 4 text elements', category: 'Accessibility' },
+  { severity: 'high', title: 'No visible focus states on interactive components', category: 'Accessibility' },
+  { severity: 'high', title: 'Information hierarchy unclear on dashboard view', category: 'Visual Hierarchy' },
+  { severity: 'medium', title: 'Touch targets under 44px on mobile breakpoint', category: 'Responsive Design' },
+  { severity: 'medium', title: 'Button component has 3 inconsistent variants', category: 'Component Consistency' },
+  { severity: 'low', title: 'Loading state missing on data table component', category: 'Interaction Design' },
+]
+
+/* ══════════════════════════════════════════════════════════════
+   AUDIT TYPE TABS
+   ══════════════════════════════════════════════════════════════ */
+
+type AuditType = 'website' | 'brand' | 'design'
+
+const AUDIT_TYPES = [
+  { key: 'website' as const, label: 'Website audit', icon: Globe2, site: 'acme.com', score: 71 },
+  { key: 'brand' as const, label: 'Brand identity audit', icon: Fingerprint, site: 'Stripe Rebrand Guidelines', score: 79 },
+  { key: 'design' as const, label: 'Design audit', icon: PenTool, site: 'Checkout Redesign v2.1', score: 76 },
+]
+
+/* ══════════════════════════════════════════════════════════════
+   REPORT MOCKUP COMPONENT
+   ══════════════════════════════════════════════════════════════ */
+
+function ReportMockup({
+  auditType,
+  site,
+  score,
+  modules,
+  findings,
+}: {
+  auditType: AuditType
+  site: string
+  score: number
+  modules: { name: string; score: number; icon: any; color: string; bg: string }[]
+  findings: { severity: string; title: string; category: string }[]
+}) {
+  const criticalCount = findings.filter(f => f.severity === 'critical').length
+  const highCount = findings.filter(f => f.severity === 'high').length
+
+  return (
+    <div className="space-y-4">
+      {/* Score card */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="h-1 bg-[var(--volt)]" />
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+            <ScoreRing score={score} />
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <h3 className="text-lg font-medium font-heading text-text mb-0.5">{site}</h3>
+              <p className="text-xs text-muted mb-3">
+                {findings.length} findings across {modules.length} modules
+              </p>
+
+              {/* Issue summary */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
+                {criticalCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> {criticalCount} critical
+                  </span>
+                )}
+                {highCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" /> {highCount} high
+                  </span>
+                )}
+                <span className="text-[11px] text-muted">
+                  {findings.length - criticalCount - highCount} more
+                </span>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-2">
+                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+                  <Download size={11} /> PDF
+                </span>
+                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+                  <Download size={11} /> Word
+                </span>
+                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+                  <Share2 size={11} /> Share
+                </span>
+                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
+                  <RefreshCw size={11} /> Re-audit
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Module scores grid */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h4 className="text-sm font-medium text-text mb-4">Module scores</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {modules.map((mod) => {
+            const Icon = mod.icon
+            return (
+              <div key={mod.name} className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border">
+                <div className={`w-8 h-8 rounded-lg ${mod.bg} flex items-center justify-center flex-shrink-0`}>
+                  <Icon size={14} className={mod.color} strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-text truncate">{mod.name}</p>
+                  <div className="w-full bg-border/50 rounded-full h-1 mt-1">
+                    <div className={`h-full rounded-full ${scoreBg(mod.score)}`} style={{ width: `${mod.score}%`, opacity: 0.8 }} />
+                  </div>
+                </div>
+                <span className={`text-sm font-medium flex-shrink-0 ${scoreColor(mod.score)}`}>{mod.score}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Top findings */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-medium text-text">Top findings</h4>
+          <span className="text-[11px] text-muted">Ranked by severity</span>
+        </div>
+        <div className="space-y-2">
+          {findings.slice(0, 5).map((finding, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-surface border border-border">
+              <SeverityDot severity={finding.severity} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text leading-snug">{finding.title}</p>
+                <p className="text-[11px] text-muted mt-0.5">{finding.category}</p>
+              </div>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted flex-shrink-0">
+                {finding.severity}
+              </span>
+            </div>
+          ))}
+        </div>
+        {findings.length > 5 && (
+          <p className="text-xs text-muted mt-3 text-center">
+            + {findings.length - 5} more findings in the full report
+          </p>
+        )}
+      </div>
+
+      {/* Recommendation preview */}
+      <div className="rounded-xl border border-[var(--volt)]/20 bg-[var(--volt)]/[0.03] p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[var(--volt)]/10 flex items-center justify-center flex-shrink-0">
+            <Lightbulb size={14} className="text-[var(--volt)]" />
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-text mb-1">Top recommendation</h4>
+            <p className="text-sm text-muted leading-relaxed">
+              {auditType === 'website' && 'Add JSON-LD structured data for Organization, Product, and FAQPage schemas. This is the highest-impact fix — essential for AI discoverability and expected to improve your Future Readiness score by 25+ points.'}
+              {auditType === 'brand' && 'Add specific proof points (metrics, case studies, testimonials) to support each value proposition claim. Generic statements reduce trust and make differentiation harder.'}
+              {auditType === 'design' && 'Fix colour contrast on the 4 failing text elements — they currently sit at 3.2:1 ratio against WCAG AA minimum of 4.5:1. This blocks accessibility compliance.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════���══
+   MAIN COMPONENT
    ══════════════════════════════════════════════════════════════ */
 
 export default function DemoReportContent() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages'>('overview')
-
-  const severityCounts = {
-    critical: DEMO_FINDINGS.filter(f => f.severity === 'critical').length,
-    high: DEMO_FINDINGS.filter(f => f.severity === 'high').length,
-    medium: DEMO_FINDINGS.filter(f => f.severity === 'medium').length,
-    low: DEMO_FINDINGS.filter(f => f.severity === 'low').length,
-  }
+  const [activeType, setActiveType] = useState<AuditType>('website')
 
   return (
     <main id="main-content" className="relative flex-1">
@@ -539,305 +317,129 @@ export default function DemoReportContent() {
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
-        {/* ── Sample report banner ── */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="px-3 py-1 rounded-full bg-[#BFFA60]/10 text-[#BFFA60] text-xs font-medium">
-            Sample Report
-          </span>
-          <span className="text-xs text-muted">This is a visual demo of the ClearUX dashboard</span>
-        </div>
-
-        {/* ── Back link (demo) ── */}
-        <div className="flex items-center gap-1.5 text-sm text-muted mb-6">
-          <span className="text-muted">&#8592;</span>
-          <span>Back to {DEMO_SITE} Audits</span>
-        </div>
-
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-medium font-heading text-text mb-1 truncate">
-              {DEMO_SITE}
-            </h1>
-            <div className="flex items-center gap-3 flex-wrap">
-              <p className="text-muted text-sm">{DEMO_DATE}</p>
-              <span className="inline-flex items-center gap-1 text-xs text-[#BFFA60]">
-                <ExternalLink size={11} />
-                Visit site
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-muted border border-border">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* ════════════════════════════════════════════════
-            HERO SCORE CARD
-            ════════════════════════════════════════════════ */}
-        <div className="rounded-xl border border-border bg-card overflow-hidden mb-6">
-          {/* Brand accent */}
-          <div className="h-1.5 bg-[#BFFA60]" />
-
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-              <div className="flex-shrink-0">
-                <ScoreRing score={DEMO_SCORE} size={110} />
-              </div>
-
-              <div className="flex-1 min-w-0 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                  <h2 className="text-xl font-medium font-heading text-text">Overall Score</h2>
-                  <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
-                    DEMO_SCORE >= 70 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
-                  }`}>
-                    {scoreLabel(DEMO_SCORE)}
-                  </span>
-                </div>
-
-                {/* Pillar mini-scores */}
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                  {PILLAR_CONFIG.map((pillar) => {
-                    const cats = CATEGORIES.slice(pillar.range[0], pillar.range[1])
-                    const avg = Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length)
-                    return (
-                      <div key={pillar.name} className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
-                        <span className="text-xs text-muted">{pillar.name}</span>
-                        <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Action buttons */}
-                <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 mt-4">
-                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
-                    <Download size={12} /> PDF
-                  </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
-                    <Download size={12} /> Word
-                  </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
-                    <RefreshCw size={12} /> Re-audit
-                  </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
-                    <Search size={12} /> Deeper
-                  </span>
-                  <span className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-[11px] sm:text-xs font-medium px-2 sm:px-3 py-2 rounded-lg cursor-default">
-                    <Share2 size={12} /> Share
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
-              </div>
-            </div>
-
-            {/* Issue summary strip */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border">
-              <span className="text-sm font-medium text-text">{DEMO_TOTAL_ISSUES} issues found</span>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                {severityCounts.critical > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> {severityCounts.critical} critical
-                  </span>
-                )}
-                {severityCounts.high > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" /> {severityCounts.high} high
-                  </span>
-                )}
-                {severityCounts.medium > 0 && (
-                  <span className="text-[11px] text-muted bg-card px-2 py-0.5 rounded-full">{severityCounts.medium} medium</span>
-                )}
-                {severityCounts.low > 0 && (
-                  <span className="text-[11px] text-muted bg-card px-2 py-0.5 rounded-full">{severityCounts.low} low</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Score Over Time ── */}
-        <DemoScoreChart />
-
-        {/* ── Improvement tip ── */}
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#BFFA60]/[0.05] border border-[#BFFA60]/20">
-          <RefreshCw size={15} className="text-[#BFFA60] flex-shrink-0" />
-          <p className="text-xs text-muted">
-            <span className="font-medium text-muted">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+      <div className="relative z-10 max-w-5xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
+        {/* ── Page header ── */}
+        <div className="text-center mb-12">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
+            Sample reports
+          </p>
+          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
+            See what ClearUX <span className="text-lime-gradient">delivers.</span>
+          </h1>
+          <p className="text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Three audit types, one standard of depth. Explore how each report surfaces actionable insights with evidence, severity rankings, and specific recommendations.
           </p>
         </div>
 
-        {/* ── Tab Navigation ── */}
-        <div className="flex items-center gap-1 bg-card rounded-xl p-1 mb-6">
-          {(['overview', 'findings', 'pages'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all ${
-                activeTab === tab
-                  ? 'bg-card-hover text-text shadow-sm'
-                  : 'text-muted hover:text-muted'
-              }`}
-            >
-              {tab === 'overview' && 'Overview'}
-              {tab === 'findings' && `Findings (${DEMO_FINDINGS.length})`}
-              {tab === 'pages' && 'Pages (5)'}
-            </button>
-          ))}
+        {/* ── Audit type tabs ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-10">
+          {AUDIT_TYPES.map((type) => {
+            const Icon = type.icon
+            const isActive = activeType === type.key
+            return (
+              <button
+                key={type.key}
+                onClick={() => setActiveType(type.key)}
+                className={`flex-1 flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all text-left ${
+                  isActive
+                    ? 'border-[var(--volt)]/40 bg-[var(--volt)]/[0.05] shadow-sm'
+                    : 'border-border bg-card hover:border-border hover:bg-card'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  isActive ? 'bg-[var(--volt)]/15' : 'bg-surface'
+                }`}>
+                  <Icon size={16} className={isActive ? 'text-[var(--volt)]' : 'text-muted'} strokeWidth={1.5} />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-sm font-medium ${isActive ? 'text-text' : 'text-muted'}`}>{type.label}</p>
+                  <p className="text-[11px] text-muted truncate">{type.site}</p>
+                </div>
+                {isActive && (
+                  <span className="ml-auto text-sm font-medium text-[var(--volt)] flex-shrink-0">{type.score}/100</span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
-        {/* ════════════════════════════════════════════════
-            TAB: OVERVIEW
-            ════════════════════════════════════════════════ */}
-        {activeTab === 'overview' && (
-          <>
-            {/* Executive Summary */}
-            <div className="mb-6 rounded-xl border border-border bg-card p-5">
-              <h3 className="text-sm font-medium text-text mb-2">Executive Summary</h3>
-              <p className="text-sm text-muted leading-relaxed">
-                Acme.com scores {DEMO_SCORE}/100 overall with strong ethical UX practices and navigation structure, but significant gaps in accessibility, AI readiness, and trust signals. Two critical issues — missing alt text and no structured data — should be addressed immediately for the highest impact. Fixing the 2 critical and 2 high-severity findings could improve the overall score by an estimated 20-25 points.
-              </p>
-            </div>
+        {/* ── Report mockup ── */}
+        {activeType === 'website' && (
+          <ReportMockup
+            auditType="website"
+            site="acme.com"
+            score={71}
+            modules={WEBSITE_MODULES}
+            findings={WEBSITE_FINDINGS}
+          />
+        )}
 
-            {/* 64-Checkpoint Health */}
-            <DemoCheckpointHealth />
+        {activeType === 'brand' && (
+          <ReportMockup
+            auditType="brand"
+            site="Stripe Rebrand Guidelines"
+            score={79}
+            modules={BRAND_MODULES}
+            findings={BRAND_FINDINGS}
+          />
+        )}
 
-            {/* Pillar sections */}
-            {PILLAR_CONFIG.map((pillar, pIdx) => {
-              const pillarCats = CATEGORIES.slice(pillar.range[0], pillar.range[1])
-              const avgScore = Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
-              const pillarFindings = DEMO_FINDINGS.filter(f => f.pillarIdx === pIdx)
-              const PillarIcon = PILLAR_ICONS[pIdx]
+        {activeType === 'design' && (
+          <ReportMockup
+            auditType="design"
+            site="Checkout Redesign v2.1"
+            score={76}
+            modules={DESIGN_MODULES}
+            findings={DESIGN_FINDINGS}
+          />
+        )}
 
+        {/* ── What you get strip ── */}
+        <div className="mt-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+          <h3 className="text-sm font-medium text-text mb-4">Every audit includes</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: FileText, label: 'PDF and Word exports', desc: 'Professional reports ready for stakeholders' },
+              { icon: Share2, label: 'Shareable link', desc: 'One link for your full report — no account needed to view' },
+              { icon: RefreshCw, label: 'Re-audit and track', desc: 'Verify fixes and watch your score improve over time' },
+              { icon: Search, label: 'Dig deeper mode', desc: 'Run a deeper analysis on specific modules for more findings' },
+            ].map((item, i) => {
+              const Icon = item.icon
               return (
-                <div key={pillar.name} className="mb-8">
-                  {/* Pillar header */}
-                  <div className={`rounded-xl bg-gradient-to-r ${pillar.gradientSubtle} border ${pillar.border} p-5 mb-4`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center`}>
-                          <PillarIcon size={18} className="text-text" />
-                        </div>
-                        <div>
-                          <h2 className="font-heading font-medium text-lg text-text">{pillar.name}</h2>
-                          <p className="text-xs text-muted">4 categories evaluated</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-2xl font-medium font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
-                        <p className="text-[11px] text-muted">{scoreLabel(avgScore)}</p>
-                      </div>
-                    </div>
-
-                    {/* Category score bars */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {pillarCats.map((cat, relIdx) => {
-                        const globalIdx = pillar.range[0] + relIdx
-                        const Icon = CATEGORY_ICONS[globalIdx]
-                        return (
-                          <div key={globalIdx} className="bg-card backdrop-blur-sm rounded-lg p-3 border border-border">
-                            <div className="flex items-center gap-2.5 mb-1.5">
-                              <div className={`w-6 h-6 rounded-md ${pillar.iconBg} flex items-center justify-center flex-shrink-0`}>
-                                <Icon size={12} className={pillar.iconColor} />
-                              </div>
-                              <p className="text-xs font-medium text-text truncate flex-1">{cat.name}</p>
-                              <span className={`text-xs font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
-                            </div>
-                            <div className="w-full bg-card-hover rounded-full h-1.5">
-                              <div
-                                className={`h-full rounded-full ${pillar.scoreBg}`}
-                                style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
-                              />
-                            </div>
-                            {cat.summary && (
-                              <p className="text-[10px] text-muted mt-2 line-clamp-2 leading-relaxed">{cat.summary}</p>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
+                <div key={i} className="flex flex-col gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--volt)]/10 flex items-center justify-center">
+                    <Icon size={14} className="text-[var(--volt)]" strokeWidth={1.5} />
                   </div>
-
-                  {/* Findings for this pillar */}
-                  {pillarFindings.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2 px-1">
-                        <span className={`text-xs font-medium ${pillar.iconColor}`}>{pillarFindings[0].category}</span>
-                        <span className="text-[11px] text-muted">{pillarFindings.length} finding{pillarFindings.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {pillarFindings.map((finding, i) => (
-                          <DemoFindingCard key={i} finding={finding} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-sm font-medium text-text">{item.label}</p>
+                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
                 </div>
               )
             })}
-          </>
-        )}
-
-        {/* ════════════════════════════════════════════════
-            TAB: FINDINGS
-            ════════════════════════════════════════════════ */}
-        {activeTab === 'findings' && (
-          <div className="space-y-2">
-            {DEMO_FINDINGS.map((finding, i) => (
-              <DemoFindingCard key={i} finding={finding} />
-            ))}
           </div>
-        )}
-
-        {/* ════════════════════════════════════════════════
-            TAB: PAGES
-            ════════════════════════════════════════════════ */}
-        {activeTab === 'pages' && (
-          <div className="space-y-3">
-            {[
-              { url: 'https://www.acme.com', title: 'Home — Acme', status: 200, time: 1240 },
-              { url: 'https://www.acme.com/products', title: 'Products — Acme', status: 200, time: 1890 },
-              { url: 'https://www.acme.com/pricing', title: 'Pricing — Acme', status: 200, time: 980 },
-              { url: 'https://www.acme.com/about', title: 'About — Acme', status: 200, time: 760 },
-              { url: 'https://www.acme.com/checkout', title: 'Checkout — Acme', status: 200, time: 2100 },
-            ].map((page, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-card flex items-center justify-center flex-shrink-0">
-                  <Globe size={16} className="text-muted" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text truncate">{page.title}</p>
-                  <p className="text-xs text-muted truncate">{page.url}</p>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-xs text-emerald-400 font-medium">{page.status}</span>
-                  <span className="text-xs text-muted">{page.time}ms</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
+        </div>
       </div>
 
-      {/* ════════════════════════════════════════════════
-          FINAL CTA — full-width, matches other pages
-          ════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════
+          FINAL CTA
+          ══════════════════════════════════════════════════ */}
       <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Start your audit <span className="text-lime-gradient">today</span>
+            Ready for your own <span className="text-lime-gradient">report?</span>
           </h2>
           <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
+            Your first audit is free. No credit card, no commitment — actionable insights in minutes.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <SmartCta iconSize={15} />
+            <Link
+              href="/how-it-works"
+              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
+            >
+              How it works
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
         </div>
       </section>
     </main>

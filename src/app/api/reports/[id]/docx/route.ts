@@ -208,18 +208,32 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
     const lang = a.language || 'en'
     const L = getReportLabels(lang)
     const UI = getUILabels(lang)
-    const PILLARS = buildPillars(lang)
+
+    const rawJson = r.raw_json || {}
+    const isBrandAudit = rawJson.type === 'brand_identity'
+
+    let domain = 'audit'
+    if (isBrandAudit) {
+      domain = rawJson.brandName || a.brand_name || 'Brand Audit'
+    } else {
+      try { domain = new URL(a.product_url).hostname.replace(/^www\./, '') } catch {}
+    }
+
+    const overall = r.overall_score ?? 0
+    const catScores: Array<{ name: string; score: number; summary: string }> = isBrandAudit
+      ? (rawJson.categoryResults || rawJson._baselineCategoryScores || []).map((c: any) => ({
+          name: c.name || c.slug || 'Category',
+          score: typeof c.score === 'number' ? c.score : 0,
+          summary: c.summary || '',
+        }))
+      : (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [])
+
+    const PILLARS = isBrandAudit
+      ? [{ start: 0, end: catScores.length || 7, color: C.pillarBrand, bg: C.pillarBrandBg, name: 'Brand Identity' }]
+      : buildPillars(lang)
     const dateStr = new Date(a.created_at).toLocaleDateString(getLocale(lang), {
       year: 'numeric', month: 'long', day: 'numeric',
     })
-
-    let domain = 'audit'
-    try { domain = new URL(a.product_url).hostname.replace(/^www\./, '') } catch {}
-
-    const overall = r.overall_score ?? 0
-    const rawJson = r.raw_json || {}
-    const catScores: Array<{ name: string; score: number; summary: string }> =
-      rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : []
 
     const total = r.total_issues || 0
     const topRecs: string[] = rawJson.topRecommendations || (rawJson.keyRecommendation ? [rawJson.keyRecommendation] : [])
@@ -409,8 +423,8 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
 
     // Subtitle: white-label shows company name, default shows ClearUX tagline
     const subtitle = isWhiteLabel
-      ? (wlCompany ? `${wlCompany} — ${UI.uxAuditReport}` : UI.uxAuditReport)
-      : UI.reportSubtitle
+      ? (wlCompany ? `${wlCompany} — ${isBrandAudit ? 'Brand Identity Audit Report' : UI.uxAuditReport}` : (isBrandAudit ? 'Brand Identity Audit Report' : UI.uxAuditReport))
+      : (isBrandAudit ? 'Brand Identity Audit Report' : UI.reportSubtitle)
 
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -434,11 +448,11 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       children: [new TextRun({ text: getScoreLabel(overall, lang), font: 'Arial', size: 28, bold: true, color: C.text })],
     }))
 
-    // URL
+    // URL / Brand name
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      children: [new TextRun({ text: a.product_url, font: 'Arial', size: 22, color: C.textSec })],
+      children: [new TextRun({ text: isBrandAudit ? domain : (a.product_url || domain), font: 'Arial', size: 22, color: C.textSec })],
     }))
 
     // Date and issue count
