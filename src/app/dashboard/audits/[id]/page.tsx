@@ -399,7 +399,7 @@ function CheckpointHealth({ categoryScores, findings }: {
       <div className="px-5 py-3.5 border-b border-border/15 dark:border-white/[0.03]">
         <div className="flex items-center gap-2">
           <CheckCircle2 size={14} className="text-brand" />
-          <h3 className="text-xs font-medium text-text">64-Checkpoint Health</h3>
+          <h3 className="text-xs font-medium text-text">{categoryScores.length * 4}-Checkpoint Health</h3>
           <span className="text-[11px] text-muted ml-auto">
             {findings.filter(f => !f.dismissed).length} issues across {categoryScores.length} categories
           </span>
@@ -2118,7 +2118,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 );
               })}
 
-              {/* 64-Checkpoint Health — pass/fail breakdown */}
+              {/* Checkpoint Health — pass/fail breakdown */}
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
 
               {/* AI transparency note */}

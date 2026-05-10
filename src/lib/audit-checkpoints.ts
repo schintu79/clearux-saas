@@ -25,6 +25,16 @@ export const CHECKPOINT_LABELS: Record<string, string[]> = {
   'AI Discoverability & LLM Readiness': ['LLM comprehension', 'Semantic structure', 'Content accessibility', 'Machine-readable identity'],
   'AI Agent Readiness': ['Agent navigability', 'Interactive elements', 'Crawl infrastructure', 'Real-world AI test'],
   'Cultural Sensitivity & Global Readiness': ['Language clarity', 'Internationalisation', 'Cultural neutrality', 'Legal & privacy'],
+  // SEO Structure & Rules
+  'On-Page SEO Fundamentals': ['Title tags & meta descriptions', 'Heading hierarchy (H1-H6)', 'URL structure & slugs', 'Image alt text & optimisation'],
+  'Technical SEO & Crawlability': ['Robots.txt & sitemap.xml', 'Canonical URLs', 'Page speed & Core Web Vitals', 'Mobile-first indexing'],
+  'Structured Data & Rich Results': ['Schema.org markup', 'JSON-LD implementation', 'Rich snippet eligibility', 'Knowledge graph signals'],
+  'SEO Content & Link Strategy': ['Keyword targeting & density', 'Internal link architecture', 'Content depth & authority', 'External link profile'],
+  // Brand Consistency
+  'Visual Identity Alignment': ['Logo usage & placement', 'Colour palette adherence', 'Typography consistency', 'Imagery & iconography style'],
+  'Voice & Tone Alignment': ['Brand voice consistency', 'Tone-to-audience fit', 'Messaging hierarchy', 'Copy style guide adherence'],
+  'Messaging & Value Prop Alignment': ['Core value proposition clarity', 'Tagline & headline alignment', 'Feature-benefit framing', 'Competitive differentiation'],
+  'Brand Standards Compliance': ['Brand guideline adherence', 'Cross-page consistency', 'Template & layout standards', 'Legal & trademark compliance'],
 }
 
 // Short pillar labels for checkpoint grouping
@@ -45,4 +55,12 @@ export const PILLAR_FOR_CATEGORY: Record<string, string> = {
   'AI Discoverability & LLM Readiness': 'Future Readiness',
   'AI Agent Readiness': 'Future Readiness',
   'Cultural Sensitivity & Global Readiness': 'Future Readiness',
+  'On-Page SEO Fundamentals': 'SEO Structure & Rules',
+  'Technical SEO & Crawlability': 'SEO Structure & Rules',
+  'Structured Data & Rich Results': 'SEO Structure & Rules',
+  'SEO Content & Link Strategy': 'SEO Structure & Rules',
+  'Visual Identity Alignment': 'Brand Consistency',
+  'Voice & Tone Alignment': 'Brand Consistency',
+  'Messaging & Value Prop Alignment': 'Brand Consistency',
+  'Brand Standards Compliance': 'Brand Consistency',
 }
