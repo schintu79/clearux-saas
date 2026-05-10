@@ -3,12 +3,22 @@
 // Pipeline for analyzing uploaded brand materials.
 //
 // Steps:
-//   1. fetch-audit        — Load audit + brand identity details
-//   2. snapshot-files     — Record which files are being analyzed
-//   3. extract-files      — Extract text/visual content from files
-//   4. analyze-categories — AI analysis across 7 brand categories
-//   5. generate-report    — Executive summary + scores
-//   6. complete           — Mark done, send email
+//   1. fetch-audit             — Load audit + brand identity details
+//   2. snapshot-files          — Record which files are being analyzed
+//   3. extract-files           — Extract text/visual content from files
+//   4. analyze-categories      — AI analysis across 7 brand categories
+//   5. deduplicate-findings    — PROPRIETARY: merge near-duplicate findings
+//   6. filter-speculative      — PROPRIETARY: remove unverifiable findings
+//   7. score-relevance         — PROPRIETARY: score by historical dismiss rate
+//   8. generate-report         — Executive summary + scores
+//   9. pipeline-learn          — PROPRIETARY: record patterns + run learning
+//  10. complete                — Mark done, send email
+//
+// NOTE: Steps 5-7 and 9 use the same proprietary pipeline as
+// regular UX audits (src/lib/audit-engine/pipeline/). Each audit
+// type calls these functions independently — no shared runtime
+// state. They write to the same learning tables (finding_patterns,
+// global_quality_stats) which is additive by design.
 // ============================================================
 
 import { inngest } from '../client'
@@ -22,6 +32,14 @@ import {
 } from '@/lib/audit-engine/brand-analyzer'
 import { BRAND_AUDIT_CATEGORIES, calculateBrandScore } from '@/lib/brand-audit-modules'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
+import {
+  identifyDuplicates,
+  identifySpeculativeFindings,
+  scoreFindings,
+  recordFindingShown,
+  recordAuditStats,
+  postAuditLearn,
+} from '@/lib/audit-engine/pipeline'
 
 /* ── DB helpers ── */
 
@@ -253,7 +271,160 @@ export const processBrandAuditFn = inngest.createFunction(
       })
 
       // ────────────────────────────────────────────────────────
-      // STEP 5: Generate executive summary + build report
+      // STEP 5: Store raw findings in DB
+      // (Separated from report generation so pipeline can clean them first)
+      // ────────────────────────────────────────────────────────
+      await step.run('store-findings', async () => {
+        const db = getDb()
+        let sortOrder = 0
+
+        const reportData = buildBrandReport(
+          categoryResults as BrandCategoryResult[],
+          '', // placeholder — real summary generated after pipeline
+          [],
+        )
+
+        for (const catResult of reportData.categoryResults) {
+          for (const finding of catResult.findings) {
+            await db.from('audit_findings').insert({
+              audit_id: auditId,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              page_url: finding.sourceFile || null,
+              sort_order: sortOrder++,
+              status: 'open',
+            } as any)
+          }
+        }
+
+        await auditLog(auditId, 'findings_stored', 'info',
+          `Stored ${sortOrder} raw brand findings for pipeline processing`)
+      })
+
+      // ────────────────────────────────────────────────────────
+      // PROPRIETARY PIPELINE: Deduplicate findings
+      // Same engine as UX audits — independent execution
+      // Logic: src/lib/audit-engine/pipeline/dedup.ts
+      // ────────────────────────────────────────────────────────
+      await step.run('deduplicate-findings', async () => {
+        try {
+          const db = getDb()
+          const { data: allFindings } = await db
+            .from('audit_findings')
+            .select('id, title, description, severity, page_url, sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: true })
+
+          if (!allFindings || allFindings.length < 2) return
+
+          const duplicateIds = identifyDuplicates(
+            allFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title || '',
+              description: f.description || '',
+              severity: f.severity || 'medium',
+              page_url: f.page_url || null,
+              sort_order: f.sort_order ?? 0,
+            }))
+          )
+
+          if (duplicateIds.length > 0) {
+            for (const id of duplicateIds) {
+              await db.from('audit_findings').delete().eq('id', id)
+            }
+            await auditLog(auditId, 'findings_deduped', 'info',
+              `Removed ${duplicateIds.length} duplicate brand finding${duplicateIds.length > 1 ? 's' : ''}`)
+            console.log(`[inngest:brand] Dedup: removed ${duplicateIds.length} duplicates`)
+          }
+        } catch (err) {
+          console.error('[inngest:brand] Dedup error (non-fatal):', err)
+          await auditLog(auditId, 'dedup_error', 'warning',
+            `Dedup failed: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      })
+
+      // ────────────────────────────────────────────────────────
+      // PROPRIETARY PIPELINE: Filter speculative findings
+      // Logic: src/lib/audit-engine/pipeline/speculative-filter.ts
+      // ────────────────────────────────────────────────────────
+      await step.run('filter-speculative-findings', async () => {
+        try {
+          const db = getDb()
+          const { data: allFindings } = await db
+            .from('audit_findings')
+            .select('id, title, description')
+            .eq('audit_id', auditId)
+
+          if (!allFindings || allFindings.length === 0) return
+
+          const speculativeIds = identifySpeculativeFindings(
+            allFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title || '',
+              description: f.description || '',
+            }))
+          )
+
+          if (speculativeIds.length > 0) {
+            for (const id of speculativeIds) {
+              await db.from('audit_findings').delete().eq('id', id)
+            }
+            await auditLog(auditId, 'speculative_filtered', 'info',
+              `Removed ${speculativeIds.length} speculative brand finding${speculativeIds.length > 1 ? 's' : ''}`)
+            console.log(`[inngest:brand] Speculative filter: removed ${speculativeIds.length} findings`)
+          }
+        } catch (err) {
+          console.error('[inngest:brand] Speculative filter error (non-fatal):', err)
+          await auditLog(auditId, 'speculative_error', 'warning',
+            `Speculative filter failed: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      })
+
+      // ────────────────────────────────────────────────────────
+      // PROPRIETARY PIPELINE: Score findings by historical relevance
+      // Logic: src/lib/audit-engine/pipeline/relevance-scorer.ts
+      // ────────────────────────────────────────────────────────
+      await step.run('score-relevance', async () => {
+        try {
+          const db = getDb()
+          const { data: allFindings } = await db
+            .from('audit_findings')
+            .select('id, title, description, severity')
+            .eq('audit_id', auditId)
+
+          if (!allFindings || allFindings.length === 0) return
+
+          const { removedIds } = await scoreFindings(
+            allFindings.map((f: any) => ({
+              id: f.id,
+              title: f.title || '',
+              description: f.description || '',
+              severity: f.severity || 'medium',
+            })),
+            db,
+          )
+
+          if (removedIds.length > 0) {
+            for (const id of removedIds) {
+              await db.from('audit_findings').delete().eq('id', id)
+            }
+            await auditLog(auditId, 'relevance_filtered', 'info',
+              `Removed ${removedIds.length} low-relevance brand finding${removedIds.length > 1 ? 's' : ''}`)
+            console.log(`[inngest:brand] Relevance scorer: removed ${removedIds.length} findings`)
+          }
+        } catch (err) {
+          console.error('[inngest:brand] Relevance scorer error (non-fatal):', err)
+          await auditLog(auditId, 'relevance_error', 'warning',
+            `Relevance scoring failed: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      })
+
+      // ────────────────────────────────────────────────────────
+      // STEP 8: Generate executive summary + store report
+      // (Uses cleaned findings after pipeline processing)
       // ────────────────────────────────────────────────────────
       const report = await step.run('generate-report', async () => {
         await setStatus(auditId, 'generating_report')
@@ -265,44 +436,39 @@ export const processBrandAuditFn = inngest.createFunction(
           auditDetails.language,
         )
 
+        // Fetch the cleaned findings count (post-pipeline)
+        const db = getDb()
+        const { data: cleanFindings } = await db
+          .from('audit_findings')
+          .select('severity')
+          .eq('audit_id', auditId)
+
+        const findings = (cleanFindings || []) as any[]
+        const severityCount = {
+          critical: findings.filter(f => f.severity === 'critical').length,
+          high: findings.filter(f => f.severity === 'high').length,
+          medium: findings.filter(f => f.severity === 'medium').length,
+          low: findings.filter(f => f.severity === 'low').length,
+        }
+        const totalIssues = findings.length
+
+        // Build report from original category results (scores are category-level, not finding-level)
         const reportData = buildBrandReport(
           categoryResults as BrandCategoryResult[],
           executiveSummary,
           topRecommendations,
         )
 
-        // Store findings in DB
-        const db = getDb()
-        let sortOrder = 0
-
-        for (const catResult of reportData.categoryResults) {
-          for (const finding of catResult.findings) {
-            await db.from('audit_findings').insert({
-              audit_id: auditId,
-              severity: finding.severity,
-              title: finding.title,
-              description: finding.description,
-              recommendation: finding.recommendation,
-              estimated_impact: finding.estimatedImpact || null,
-              page_url: finding.sourceFile || null, // Reusing page_url field for source file
-              sort_order: sortOrder++,
-              status: 'open',
-            } as any)
-          }
-        }
-
-        // Store report
         const { error: reportErr } = await db.from('reports').insert({
           audit_id: auditId,
-          executive_summary: reportData.executiveSummary,
-          key_recommendation: reportData.keyRecommendation,
-          total_issues: reportData.totalIssues,
-          critical_count: reportData.criticalCount,
-          high_count: reportData.highCount,
-          medium_count: reportData.mediumCount,
-          low_count: reportData.lowCount,
+          executive_summary: executiveSummary,
+          key_recommendation: topRecommendations[0] || reportData.keyRecommendation,
+          total_issues: totalIssues,
+          critical_count: severityCount.critical,
+          high_count: severityCount.high,
+          medium_count: severityCount.medium,
+          low_count: severityCount.low,
           overall_score: reportData.overallScore,
-          // Store category scores in raw_json for the detail page
           raw_json: {
             type: 'brand_identity',
             categoryResults: reportData.categoryResults.map((c) => ({
@@ -311,25 +477,64 @@ export const processBrandAuditFn = inngest.createFunction(
               score: c.score,
               summary: c.summary,
             })),
-            topRecommendations: reportData.topRecommendations,
+            topRecommendations,
             filesAnalyzed: auditDetails.files.length,
             brandName: auditDetails.brandName,
+            _baselineCategoryScores: reportData.categoryResults.map((c) => ({
+              name: c.name,
+              score: c.score,
+              summary: c.summary,
+            })),
           },
         } as any)
 
         if (reportErr) throw new Error(`Failed to store report: ${reportErr.message}`)
 
         await auditLog(auditId, 'report_generated', 'success',
-          `Brand report generated: score ${reportData.overallScore}/100, ${reportData.totalIssues} findings`)
+          `Brand report generated: score ${reportData.overallScore}/100, ${totalIssues} findings (post-pipeline)`)
 
         return {
           overallScore: reportData.overallScore,
-          totalIssues: reportData.totalIssues,
+          totalIssues,
         }
       })
 
       // ────────────────────────────────────────────────────────
-      // STEP 6: Mark complete + notify user
+      // PROPRIETARY PIPELINE: Record patterns + run learning
+      // Same learning tables as UX audits — additive, no conflicts
+      // ────────────────────────────────────────────────────────
+      await step.run('pipeline-learn', async () => {
+        const db = getDb()
+
+        try {
+          const { data: finalFindings } = await db
+            .from('audit_findings')
+            .select('title, severity')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: true })
+
+          if (!finalFindings || finalFindings.length === 0) return
+
+          for (const f of finalFindings as any[]) {
+            await recordFindingShown(db, f.title, f.severity)
+          }
+
+          await recordAuditStats(db, auditId)
+
+          const titles = (finalFindings as any[]).map((f: any) => f.title)
+          const learningResult = await postAuditLearn(db, titles)
+
+          await auditLog(auditId, 'pipeline_learn', 'success',
+            `Recorded ${finalFindings.length} brand finding patterns | New insights: ${learningResult.newInsights}`)
+        } catch (learnErr) {
+          console.error('[inngest:brand] Pipeline learn error (non-fatal):', learnErr)
+          await auditLog(auditId, 'pipeline_learn_error', 'warning',
+            `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
+        }
+      })
+
+      // ────────────────────────────────────────────────────────
+      // STEP 10: Mark complete + notify user
       // ────────────────────────────────────────────────────────
       await step.run('complete', async () => {
         const db = getDb()

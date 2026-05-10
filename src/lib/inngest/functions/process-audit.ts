@@ -18,7 +18,14 @@ import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CA
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
-import { identifyDuplicates, identifySpeculativeFindings } from '@/lib/audit-engine/pipeline'
+import {
+  identifyDuplicates,
+  identifySpeculativeFindings,
+  scoreFindings,
+  recordFindingShown,
+  recordAuditStats,
+  postAuditLearn,
+} from '@/lib/audit-engine/pipeline'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import type { AuditFinding } from '@/types/database'
@@ -781,7 +788,56 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
-    // Verify findings count (post-dedup + post-filter)
+    // PROPRIETARY PIPELINE: Score findings by historical relevance
+    // Logic lives in: src/lib/audit-engine/pipeline/relevance-scorer.ts
+    // ──────────────────────────────────────────────────────────
+    await step.run('score-relevance', async () => {
+      try {
+        const db = getDb()
+        const { data: allFindings } = await db
+          .from('audit_findings')
+          .select('id, title, description, severity')
+          .eq('audit_id', auditId)
+
+        if (!allFindings || allFindings.length === 0) return
+
+        const { scored, removedIds } = await scoreFindings(
+          allFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+            severity: f.severity || 'medium',
+          })),
+          db,
+        )
+
+        // Remove findings with very low relevance (consistently dismissed pattern)
+        if (removedIds.length > 0) {
+          for (const id of removedIds) {
+            await db.from('audit_findings').delete().eq('id', id)
+          }
+          await auditLog(auditId, 'relevance_filtered', 'info',
+            `Removed ${removedIds.length} low-relevance finding${removedIds.length > 1 ? 's' : ''} (historically dismissed >85% of the time)`)
+          console.log(`[inngest] Relevance scorer: removed ${removedIds.length} findings`)
+        }
+
+        // Log scoring summary
+        const lowCount = scored.filter(s => s.flag === 'low').length
+        const medCount = scored.filter(s => s.flag === 'medium').length
+        const noData = scored.filter(s => s.flag === 'no_data').length
+        if (lowCount > 0 || medCount > 0) {
+          console.log(`[inngest] Relevance: ${lowCount} low, ${medCount} medium, ${noData} no_data out of ${scored.length}`)
+        }
+      } catch (err) {
+        // Relevance scoring is non-fatal — audit should complete without it
+        console.error('[inngest] Relevance scorer error (non-fatal):', err)
+        await auditLog(auditId, 'relevance_error', 'warning',
+          `Relevance scoring failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // Verify findings count (post-dedup + post-filter + post-relevance)
     // ──────────────────────────────────────────────────────────
     await step.run('verify-findings', async () => {
       const db = getDb()
@@ -1015,6 +1071,49 @@ RULES FOR RE-AUDIT:
         ...severityCount,
         has_pdf: !!pdfUrl,
       })
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // PROPRIETARY PIPELINE: Record patterns + run learning
+    // Logic lives in:
+    //   src/lib/audit-engine/pipeline/relevance-scorer.ts (record shown)
+    //   src/lib/audit-engine/pipeline/quality-stats.ts (aggregate stats)
+    //   src/lib/audit-engine/pipeline/pattern-learner.ts (learn from data)
+    // ──────────────────────────────────────────────────────────
+    await step.run('pipeline-learn', async () => {
+      const db = getDb()
+
+      try {
+        // 1. Fetch all final findings for this audit
+        const { data: finalFindings } = await db
+          .from('audit_findings')
+          .select('title, description, severity, sort_order')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: true })
+
+        if (!finalFindings || finalFindings.length === 0) return
+
+        // 2. Record each finding in the patterns table (increments total_shown)
+        for (const f of finalFindings as any[]) {
+          await recordFindingShown(db, f.title, f.severity)
+        }
+
+        // 3. Record aggregate stats for this audit
+        await recordAuditStats(db, auditId)
+
+        // 4. Run lightweight post-audit learning check
+        const titles = (finalFindings as any[]).map((f: any) => f.title)
+        const learningResult = await postAuditLearn(db, titles)
+
+        await auditLog(auditId, 'pipeline_learn', 'success',
+          `Recorded ${finalFindings.length} finding patterns | Stats updated | New insights: ${learningResult.newInsights}`)
+        console.log(`[inngest] Pipeline learn: ${finalFindings.length} patterns recorded, ${learningResult.newInsights} new insights`)
+      } catch (learnErr) {
+        // Learning is non-fatal — audit should complete even if learning fails
+        console.error('[inngest] Pipeline learn error (non-fatal):', learnErr)
+        await auditLog(auditId, 'pipeline_learn_error', 'warning',
+          `Learning step failed: ${learnErr instanceof Error ? learnErr.message : String(learnErr)}`)
+      }
     })
 
     // ──────────────────────────────────────────────────────────

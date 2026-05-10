@@ -11,6 +11,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import {
+  recordFindingActionInPatterns,
+  recordFindingActionInStats,
+} from '@/lib/audit-engine/pipeline'
 
 function normalizeDomain(url: string): string {
   try {
@@ -245,6 +249,27 @@ export async function PATCH(
       // Recalculate score after dismissal
       const scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
 
+      // ── LEARNING FEEDBACK: Record dismissal in pipeline ──
+      try {
+        const findingTitle = (finding as any).title || ''
+        const findingSeverity = (finding as any).severity || 'medium'
+        await recordFindingActionInPatterns(db, findingTitle, 'dismissed')
+        // Fetch sort_order for stats (need description too)
+        const { data: fullFinding } = await db
+          .from('audit_findings')
+          .select('description, sort_order')
+          .eq('id', findingId)
+          .single()
+        if (fullFinding) {
+          await recordFindingActionInStats(
+            db, findingTitle, (fullFinding as any).description || '',
+            findingSeverity, (fullFinding as any).sort_order ?? 0, 'dismissed',
+          )
+        }
+      } catch (learnErr) {
+        console.error('[findings-api] Learning feedback error (non-fatal):', learnErr)
+      }
+
       return NextResponse.json({ success: true, dismissed: true, scoreUpdate: scoreUpdate || undefined })
     }
 
@@ -277,6 +302,31 @@ export async function PATCH(
 
       if (statusChanged && involvesFixed) {
         scoreUpdate = await recalculateFromFindings(db, (finding as any).audit_id)
+      }
+
+      // ── LEARNING FEEDBACK: Record status change in pipeline ──
+      if (statusChanged && (status === 'fixed' || status === 'open')) {
+        try {
+          const findingTitle = (finding as any).title || ''
+          const findingSeverity = (finding as any).severity || 'medium'
+          const action = status === 'fixed' ? 'fixed' as const : 'accepted' as const
+          await recordFindingActionInPatterns(db, findingTitle, action)
+          if (status === 'fixed') {
+            const { data: fullFinding } = await db
+              .from('audit_findings')
+              .select('description, sort_order')
+              .eq('id', findingId)
+              .single()
+            if (fullFinding) {
+              await recordFindingActionInStats(
+                db, findingTitle, (fullFinding as any).description || '',
+                findingSeverity, (fullFinding as any).sort_order ?? 0, 'fixed',
+              )
+            }
+          }
+        } catch (learnErr) {
+          console.error('[findings-api] Learning feedback error (non-fatal):', learnErr)
+        }
       }
 
       return NextResponse.json({
