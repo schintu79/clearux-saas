@@ -18,6 +18,7 @@ import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CA
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
+import { identifyDuplicates, identifySpeculativeFindings } from '@/lib/audit-engine/pipeline'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import type { AuditFinding } from '@/types/database'
@@ -713,6 +714,10 @@ RULES FOR RE-AUDIT:
     // Deduplicate findings — remove near-duplicate findings
     // that were flagged across multiple categories
     // ──────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────
+    // PROPRIETARY PIPELINE: Deduplicate findings
+    // Logic lives in: src/lib/audit-engine/pipeline/dedup.ts
+    // ──────────────────────────────────────────────────────────
     await step.run('deduplicate-findings', async () => {
       const db = getDb()
       const { data: allFindings } = await db
@@ -723,124 +728,18 @@ RULES FOR RE-AUDIT:
 
       if (!allFindings || allFindings.length < 2) return
 
-      // Severity priority — when merging, keep the higher severity
-      const severityRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
-
-      // Common UX/audit synonym groups — words in same group are treated as identical
-      const SYNONYM_GROUPS: string[][] = [
-        ['unclear', 'ambiguous', 'vague', 'confusing', 'obscure'],
-        ['users', 'audiences', 'visitors', 'people', 'customers'],
-        ['lacks', 'missing', 'absent', 'without', 'none'],
-        ['inconsistent', 'uneven', 'irregular', 'varied', 'mixed'],
-        ['navigation', 'menu', 'navbar', 'links'],
-        ['accessibility', 'a11y', 'accessible', 'wcag'],
-        ['responsive', 'mobile', 'adaptive'],
-        ['performance', 'speed', 'loading', 'slow', 'fast'],
-        ['visual', 'design', 'aesthetic', 'appearance', 'look'],
-        ['hierarchy', 'structure', 'organization', 'layout'],
-        ['feedback', 'response', 'indication', 'notification'],
-        ['contrast', 'readability', 'legibility'],
-        ['value', 'proposition', 'benefit', 'offering'],
-        ['content', 'copy', 'text', 'messaging'],
-        ['error', 'failure', 'issue', 'problem'],
-        ['button', 'action', 'control', 'element'],
-      ]
-
-      // Build synonym lookup: word → canonical form (first word in group)
-      const synonymMap: Record<string, string> = {}
-      for (const group of SYNONYM_GROUPS) {
-        const canonical = group[0]
-        for (const word of group) {
-          synonymMap[word] = canonical
-        }
-      }
-
-      // Normalize title for comparison: lowercase, strip punctuation, collapse whitespace
-      function normalizeTitle(title: string): string {
-        return title.toLowerCase()
-          .replace(/[^a-z0-9\s]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-      }
-
-      // Extract significant words (4+ chars), replacing synonyms with canonical forms
-      function extractWords(text: string): Set<string> {
-        return new Set(
-          normalizeTitle(text)
-            .split(' ')
-            .filter(w => w.length >= 4)
-            .map(w => synonymMap[w] || w)
-        )
-      }
-
-      // Calculate word overlap ratio between two texts
-      function textSimilarity(a: string, b: string): number {
-        const wordsA = extractWords(a)
-        const wordsB = extractWords(b)
-        if (wordsA.size === 0 || wordsB.size === 0) return 0
-        let overlap = 0
-        for (const w of wordsA) {
-          if (wordsB.has(w)) overlap++
-        }
-        // Jaccard-like: overlap / smaller set size (more aggressive matching)
-        return overlap / Math.min(wordsA.size, wordsB.size)
-      }
-
-      // Combined similarity: weighted blend of title + description similarity
-      function combinedSimilarity(findingA: any, findingB: any): number {
-        const titleSim = textSimilarity(findingA.title || '', findingB.title || '')
-        const descSim = textSimilarity(findingA.description || '', findingB.description || '')
-        // Title match is more important (70%), description adds confirmation (30%)
-        return titleSim * 0.7 + descSim * 0.3
-      }
-
-      // Determine if two findings are in the same module (same group of 4 categories)
-      function sameModule(a: any, b: any): boolean {
-        const moduleA = Math.floor((a.sort_order ?? 0) / 4)
-        const moduleB = Math.floor((b.sort_order ?? 0) / 4)
-        return moduleA === moduleB
-      }
-
-      // Group duplicates with adaptive threshold
-      const BASE_THRESHOLD = 0.55    // Lower base threshold to catch synonym-heavy duplicates
-      const SAME_MODULE_THRESHOLD = 0.45 // Even lower for same-module findings (more likely dups)
-      const duplicateIds: string[] = []
-      const seen = new Set<number>()
-
-      for (let i = 0; i < allFindings.length; i++) {
-        if (seen.has(i)) continue
-        const group: number[] = [i]
-
-        for (let j = i + 1; j < allFindings.length; j++) {
-          if (seen.has(j)) continue
-          const fi = allFindings[i] as any
-          const fj = allFindings[j] as any
-          const sim = combinedSimilarity(fi, fj)
-          const threshold = sameModule(fi, fj) ? SAME_MODULE_THRESHOLD : BASE_THRESHOLD
-          if (sim >= threshold) {
-            group.push(j)
-            seen.add(j)
-          }
-        }
-
-        if (group.length > 1) {
-          // Keep the one with highest severity (lowest rank), then earliest sort_order
-          group.sort((a, b) => {
-            const sevA = severityRank[(allFindings[a] as any).severity] ?? 2
-            const sevB = severityRank[(allFindings[b] as any).severity] ?? 2
-            if (sevA !== sevB) return sevA - sevB
-            return ((allFindings[a] as any).sort_order ?? 0) - ((allFindings[b] as any).sort_order ?? 0)
-          })
-
-          // Mark all but the first (best) as duplicates
-          for (let k = 1; k < group.length; k++) {
-            duplicateIds.push((allFindings[group[k]] as any).id)
-          }
-        }
-      }
+      const duplicateIds = identifyDuplicates(
+        allFindings.map((f: any) => ({
+          id: f.id,
+          title: f.title || '',
+          description: f.description || '',
+          severity: f.severity || 'medium',
+          page_url: f.page_url || null,
+          sort_order: f.sort_order ?? 0,
+        }))
+      )
 
       if (duplicateIds.length > 0) {
-        // Delete duplicate findings
         for (const id of duplicateIds) {
           await db.from('audit_findings').delete().eq('id', id)
         }
@@ -851,7 +750,38 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
-    // Verify findings count (post-dedup)
+    // PROPRIETARY PIPELINE: Filter speculative findings
+    // Logic lives in: src/lib/audit-engine/pipeline/speculative-filter.ts
+    // ──────────────────────────────────────────────────────────
+    await step.run('filter-speculative-findings', async () => {
+      const db = getDb()
+      const { data: allFindings } = await db
+        .from('audit_findings')
+        .select('id, title, description')
+        .eq('audit_id', auditId)
+
+      if (!allFindings || allFindings.length === 0) return
+
+      const speculativeIds = identifySpeculativeFindings(
+        allFindings.map((f: any) => ({
+          id: f.id,
+          title: f.title || '',
+          description: f.description || '',
+        }))
+      )
+
+      if (speculativeIds.length > 0) {
+        for (const id of speculativeIds) {
+          await db.from('audit_findings').delete().eq('id', id)
+        }
+        await auditLog(auditId, 'speculative_filtered', 'info',
+          `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
+        console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // Verify findings count (post-dedup + post-filter)
     // ──────────────────────────────────────────────────────────
     await step.run('verify-findings', async () => {
       const db = getDb()

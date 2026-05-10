@@ -835,7 +835,7 @@ export default function Home() {
               <span className="text-lime-gradient">missing?</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-              Your first audit is free. Paste a URL and get 96 checkpoints across your live product in minutes — the kind of depth that used to take weeks and cost thousands.
+              Your first audit is free — no expiration, no catches. Paste a URL and get 96 checkpoints across your live product in minutes — the kind of depth that used to take weeks and cost thousands.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">

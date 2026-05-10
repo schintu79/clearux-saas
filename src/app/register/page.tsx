@@ -194,7 +194,7 @@ function RegisterContent() {
               Get your free <span className="text-lime-gradient">UX audit.</span>
             </h1>
             <p className="text-base text-muted leading-relaxed max-w-md mx-auto">
-              96 checkpoints across 6 modules. No credit card required. No subscription. Your first audit is completely free.
+              96 checkpoints across 6 modules. No credit card required. No subscription. Your first audit is free — no expiration, no catches.
             </p>
           </div>
 
@@ -204,6 +204,14 @@ function RegisterContent() {
               <p className="text-sm text-muted font-medium truncate">Auditing: {pendingUrl}</p>
             </div>
           )}
+
+          {/* Trust signal */}
+          <div className="flex items-center justify-center gap-2 mb-6 text-xs text-muted">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>Your data is encrypted and never shared. We take privacy seriously.</span>
+          </div>
 
           {/* Card */}
           <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">

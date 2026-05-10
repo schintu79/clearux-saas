@@ -614,6 +614,9 @@ Every finding MUST cite specific, concrete evidence you directly observed in the
 - Before flagging "missing X" (e.g., missing labels, missing alt text, missing ARIA), you MUST search the provided content for X. If you find <label htmlFor="...">, for="...", aria-label, aria-labelledby, or equivalent — the element IS labeled. Do not flag it.
 - If you cannot point to a specific quoted excerpt or HTML pattern that proves the issue, the finding does not exist. Period.
 
+CRITICAL — JAVASCRIPT-RENDERED CONTENT LIMITATION:
+The text content was captured from a single page load. Dynamic/JS-rendered elements such as rotating headlines, carousels, animated text swaps, tabbed content, and accordion sections may only show ONE state. If you see a headline or content block, it may be one of several rotating variants. NEVER judge a site's full messaging strategy based on a single captured headline — it may cycle between multiple messages. If the captured H1 seems incomplete or fragmented, consider that it may be mid-rotation. Focus on the overall site messaging across ALL pages rather than anchoring critique on a single headline snapshot.
+
 CRITICAL — YOU ARE ANALYZING TEXT CONTENT, NOT RAW HTML/CSS:
 The content provided is extracted text, NOT raw HTML source code. This means:
 - You CANNOT see CSS styles, classes, media queries, focus states, animations, or visual styling. NEVER flag issues about CSS you haven't seen (focus indicators, line-height, font-size, touch target sizes, color contrast, responsive breakpoints).

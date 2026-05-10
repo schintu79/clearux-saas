@@ -48,7 +48,7 @@ export default function PricingContent() {
 
           <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
             No subscription. No feature gates. Every audit — including your free first one — runs the
-            full 96-checkpoint analysis across your live product. Six modules, 24 categories, real evidence from the shipped experience. Credits never expire.
+            full 96-checkpoint analysis across your live product. Six modules, 24 categories, real evidence from the shipped experience. One audit = one URL. Credits never expire.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
