@@ -552,6 +552,149 @@ RULES FOR RE-AUDIT:
         }
       })
 
+      // ════════════════════════════════════════════════════════════
+      // GAP FILL — Analyze modules that didn't exist in previous audit
+      // If new modules (e.g., SEO Structure) were added after the
+      // original audit, baseline copy has nothing to carry forward.
+      // Detect those gaps and run fresh AI analysis on just the
+      // missing categories so re-audits include full coverage.
+      // ════════════════════════════════════════════════════════════
+      const MODULE_SLUG_ORDER_BL = ['foundation', 'human_experience', 'inclusive_design', 'future_readiness', 'seo_structure', 'brand_consistency']
+
+      // Determine which modules should be active for this audit
+      let activeSlugsBl: string[]
+      if (auditDetails.selectedModules) {
+        activeSlugsBl = auditDetails.selectedModules
+      } else if (auditDetails.selectedPillars) {
+        activeSlugsBl = auditDetails.selectedPillars
+          .filter((idx: number) => idx >= 0 && idx < 4)
+          .map((idx: number) => MODULE_SLUG_ORDER_BL[idx])
+      } else {
+        activeSlugsBl = [...COMPLETE_AUDIT_SLUGS]
+      }
+
+      // Skip brand_consistency if no brand identity provided
+      if (activeSlugsBl.includes('brand_consistency') && !auditDetails.brandIdentityId) {
+        activeSlugsBl = activeSlugsBl.filter(s => s !== 'brand_consistency')
+      }
+
+      // Check which modules had coverage in the previous audit
+      const prevCategoryNames = new Set(
+        siteContext.previousCategoryScores.map((c: { name: string }) => c.name)
+      )
+
+      // Find modules whose categories are ALL missing from previous scores
+      const missingModuleSlugs: string[] = []
+      for (const slug of activeSlugsBl) {
+        const moduleIdx = MODULE_SLUG_ORDER_BL.indexOf(slug)
+        if (moduleIdx === -1) continue
+        const moduleCategoryNames = UX_CATEGORY_NAMES.slice(moduleIdx * 4, moduleIdx * 4 + 4)
+        const hasAnyCoverage = moduleCategoryNames.some(name => prevCategoryNames.has(name))
+        if (!hasAnyCoverage) {
+          missingModuleSlugs.push(slug)
+        }
+      }
+
+      if (missingModuleSlugs.length > 0) {
+        await step.run('log-gap-fill', async () => {
+          await auditLog(auditId, 'gap_fill_detected', 'info',
+            `Baseline gap fill: ${missingModuleSlugs.length} new module(s) need fresh analysis: ${missingModuleSlugs.join(', ')}`)
+        })
+
+        // Build the set of category indices to analyze for missing modules
+        const gapIndices = new Set<number>()
+        for (const slug of missingModuleSlugs) {
+          const moduleIdx = MODULE_SLUG_ORDER_BL.indexOf(slug)
+          if (moduleIdx === -1) continue
+          for (let c = moduleIdx * 4; c < moduleIdx * 4 + 4; c++) {
+            if (c < UX_CATEGORY_NAMES.length) gapIndices.add(c)
+          }
+        }
+
+        const gapCategories = UX_CATEGORY_NAMES.filter((_, idx) => gapIndices.has(idx))
+        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}`
+
+        // Handle brand context for brand_consistency gap fill
+        let brandContentBl = contentWithContextBl
+        const brandCategoryNamesBl = new Set(UX_CATEGORY_NAMES.slice(20, 24))
+        if (missingModuleSlugs.includes('brand_consistency') && auditDetails.brandIdentityId) {
+          try {
+            const db = getDb()
+            const { data: brandFiles } = await db
+              .from('brand_identity_files')
+              .select('file_name, file_url, file_type')
+              .eq('brand_identity_id', auditDetails.brandIdentityId)
+
+            if (brandFiles && brandFiles.length > 0) {
+              const extracted = await extractAllBrandFiles(
+                brandFiles.map((f: any) => ({
+                  file_name: f.file_name as string,
+                  file_url: f.file_url as string,
+                  file_type: f.file_type as string | null,
+                })),
+              )
+              const textParts = extracted
+                .filter(e => e.textContent && e.textContent.length > 0)
+                .map(e => `[Brand file: ${e.fileName}]\n${e.textContent}`)
+              const brandContext = textParts.join('\n\n---\n\n')
+              brandContentBl = `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContextBl}`
+            }
+          } catch (err) {
+            console.error('[inngest] Brand file extraction error in gap fill (non-fatal):', err)
+          }
+        }
+
+        // Count existing findings to set sort_order offset
+        const existingFindingsCount = siteContext.previousRawFindings.filter(
+          (f: any) => f.status !== 'fixed' && !f.dismissed
+        ).length
+
+        // Run AI analysis on gap categories in a single batch
+        const gapBatchResult = await step.run('gap-fill-analysis', async () => {
+          const db = getDb()
+          let sortOrder = existingFindingsCount
+          let findingsInGap = 0
+
+          const gapResults = await Promise.all(
+            gapCategories.map((categoryName) => {
+              const isBrandCategory = brandCategoryNamesBl.has(categoryName)
+              const content = isBrandCategory ? brandContentBl : contentWithContextBl
+              return analyzeCategory(
+                content, categoryName, [], auditDetails.userFocus, auditDetails.language, 'deep',
+              )
+            }),
+          )
+
+          for (let catIdx = 0; catIdx < gapResults.length; catIdx++) {
+            const findings = gapResults[catIdx]
+            for (const finding of findings) {
+              await db.from('audit_findings').insert({
+                audit_id: auditId,
+                checklist_item_id: null,
+                severity: finding.severity,
+                title: finding.title,
+                description: finding.description,
+                evidence: null,
+                page_url: finding.pageUrl || crawlResult.firstPageUrl,
+                recommendation: finding.recommendation,
+                estimated_impact: finding.estimatedImpact || null,
+                target_element: finding.targetElement || null,
+                screenshot_url: null,
+                sort_order: sortOrder++,
+              } as any)
+              findingsInGap++
+            }
+          }
+
+          return { findingsInGap, categoriesAnalyzed: gapCategories.length }
+        })
+
+        await step.run('log-gap-fill-done', async () => {
+          await auditLog(auditId, 'gap_fill_completed', 'success',
+            `Gap fill: analyzed ${gapBatchResult.categoriesAnalyzed} categories, found ${gapBatchResult.findingsInGap} new findings`)
+        })
+      }
+
     } else {
       // ════════════════════════════════════════════════════════════
       // DEEP MODE (first audit or explicit Dig Deeper) — FULL AI ANALYSIS
