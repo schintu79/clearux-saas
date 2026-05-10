@@ -19,16 +19,16 @@ import { ScrollReveal, StaggerReveal, StaggerItem, AnimatedCounter } from '@/com
 const TOP_FAQS = [
   { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
   { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
-  { q: 'What does the audit cover?', a: 'Six modules across your live product: Foundation (structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). Unlike design-file linters, we audit what your users actually experience.' },
-  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes for $99. And unlike static design tools, we audit the deployed product — real content, real flows, real responsive behaviour.' },
+  { q: 'What does the audit cover?', a: 'Six modules: Foundation (structural and technical baseline), Human Experience (clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). We audit websites, brand identities, and designs — the complete picture.' },
+  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes for $99 — covering your website, brand identity, and design with the same depth and rigour.' },
   { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
 ];
 
 /* ── Rotating hero headlines ─────────────────────────────── */
 const HERO_HEADLINES = [
-  { main: 'Audit the live product.', accent: 'Not the mockup.' },
-  { main: 'The $10k audit.', accent: '$99. 10 minutes.' },
-  { main: 'UX audits are broken.', accent: 'We fixed them.' },
+  { main: 'Professional-grade UX insights.', accent: 'In minutes.' },
+  { main: 'Actionable clarity.', accent: 'At your fingertips.' },
+  { main: 'Audit for the future.', accent: 'Starting today.' },
 ];
 
 /* ── 6 Audit Modules ─────────────────────────────────────── */
@@ -171,7 +171,7 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                Live product audits, not design-file checks
+                The complete UX audit platform
               </motion.p>
 
               {/* Rotating headline */}
@@ -224,7 +224,7 @@ export default function Home() {
                 transition={{ duration: 0.3, delay: 0.15 }}
               >
                 <p className="text-muted text-base sm:text-lg leading-relaxed mb-4">
-                  Design-file linters check static mockups. ClearUX audits the shipped experience — real content, live interactions, responsive behaviour, and AI discoverability. 96 checkpoints across 6 modules. Every issue ranked with evidence.
+                  ClearUX audits your website, brand identity, and design — all in one platform. 96 checkpoints across 6 modules. Every issue ranked by severity, backed by evidence, with clear fixes your team can ship today.
                 </p>
                 <p className="text-base sm:text-lg font-bold text-volt">
                   First audit free.
@@ -389,10 +389,10 @@ export default function Home() {
               Why now
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Two audiences. <span className="text-lime-gradient">One interface.</span>
+              Clarity at scale. <span className="text-lime-gradient">Speed by default.</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-16 sm:mb-20">
-              Your product now serves humans and language models. The teams that audit fast and audit often will own the next decade. Clarity. Rigor. Speed. ClearUX makes it continuous, not annual.
+              Your product serves humans and AI simultaneously. The teams that audit fast and audit often will own the next decade. ClearUX makes quality continuous — not annual, not optional.
             </p>
           </ScrollReveal>
 
@@ -430,10 +430,10 @@ export default function Home() {
               The problem
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              UX audits are <span className="text-lime-gradient">broken.</span>
+              UX audits are <span className="text-lime-gradient">overdue for a reset.</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              Agencies cost $10-50k and take weeks. Design plugins check static files. Free tools stop at performance scores. Meanwhile, your shipped product has UX issues quietly killing conversion and retention.
+              Agencies cost $10-50k and take weeks. Free tools stop at surface metrics. Meanwhile, UX issues are quietly killing conversion and retention across your website, brand, and product.
             </p>
           </ScrollReveal>
 
@@ -441,8 +441,8 @@ export default function Home() {
             {[
               { label: 'Traditional agencies', stat: '$10-50k', desc: '2-6 weeks delivery, $10-50k budgets. Reserved for enterprise teams with deep pockets.' },
               { label: 'In-house teams', stat: 'Senior hire', desc: 'Most teams lack specialised UX research expertise. The ones who have it are too busy to audit.' },
-              { label: 'Design-file linters', stat: 'Static only', desc: 'Check contrast and spacing in Figma. Can\'t see real content, live interactions, broken flows, or how the product actually behaves.' },
-              { label: 'Free tools', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks dark patterns, AI readiness, or conversion psychology.' },
+              { label: 'Automated tools', stat: 'Shallow', desc: 'Run a handful of checks and call it done. Miss dark patterns, cognitive load, conversion psychology, and everything qualitative.' },
+              { label: 'Free scanners', stat: 'Surface only', desc: 'Lighthouse checks performance. Nobody checks brand alignment, AI readiness, or the experience end to end.' },
             ].map((item, i) => (
               <StaggerItem key={i}>
                 <div className="border-t border-border pt-8">
@@ -469,7 +469,7 @@ export default function Home() {
               6 modules. 96 checkpoints. <span className="text-lime-gradient">360° coverage.</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              We audit the shipped experience, not just the design. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO — all evaluated against your live product with concrete, prioritised fixes.
+              Website, brand identity, and design — audited across every dimension that matters. Usability, accessibility, cognitive load, dark patterns, AI discoverability, brand consistency, and SEO. Concrete, prioritised fixes for each.
             </p>
           </ScrollReveal>
 
@@ -566,10 +566,10 @@ export default function Home() {
               Why ClearUX
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              What static tools <span className="text-lime-gradient">can&apos;t see.</span>
+              Depth others <span className="text-lime-gradient">don&apos;t offer.</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed">
-              Design-file linters catch contrast ratios and spacing in a mockup. ClearUX audits what actually ships — live content, real interaction flows, responsive behaviour, trust signals in context, and how AI agents read your product. The gap between a Figma comp and a deployed product is where most UX issues live.
+              ClearUX goes beyond surface checks. We evaluate live content, real interaction flows, responsive behaviour, trust signals in context, brand alignment, and how AI agents read your product. The full picture — not a partial snapshot.
             </p>
           </ScrollReveal>
 
@@ -577,26 +577,26 @@ export default function Home() {
             {[
               {
                 icon: Globe2,
-                title: 'Live content, not lorem ipsum',
-                desc: 'Mockups use placeholder text. We audit your real headlines, real CTAs, and real error states — the content users actually see, in the layout they actually get.',
-                label: 'Only possible on live products',
+                title: 'Website, brand, and design',
+                desc: 'Three audit types in one platform. Paste a URL, upload brand files, or submit a design — ClearUX evaluates all of them with the same rigour and depth.',
+                label: 'Complete coverage',
               },
               {
                 icon: Eye,
-                title: 'Interaction flows, not static screens',
-                desc: 'Dark patterns, conversion friction, cognitive load, broken flows — none of these exist in a design file. We audit the experience end-to-end, as your users encounter it.',
-                label: 'Beyond design-file linters',
+                title: 'End-to-end experience analysis',
+                desc: 'Dark patterns, conversion friction, cognitive load, broken flows, brand misalignment — we audit the full experience as your users encounter it.',
+                label: 'Beyond surface checks',
               },
               {
                 icon: Sparkles,
                 title: 'AI discoverability',
-                desc: 'We\'re the only platform auditing how LLMs read and surface your product. Structured data, semantic markup, agent readiness — invisible in a mockup, critical in production.',
-                label: 'No other tool checks this',
+                desc: 'The only platform auditing how LLMs read and surface your product. Structured data, semantic markup, agent readiness — critical for the next generation of discovery.',
+                label: 'Future-ready',
               },
               {
                 icon: RefreshCw,
-                title: 'Continuous, not one-off',
-                desc: 'Re-audit after every deploy. Track fixes, prove improvement, catch regressions. UX quality as a continuous metric tied to your shipped product, not a point-in-time review of a comp.',
+                title: 'Continuous improvement',
+                desc: 'Re-audit after every change. Track fixes, prove improvement, catch regressions. Quality as a continuous metric — not a one-off exercise.',
                 label: 'Built for modern teams',
               },
             ].map((item, i) => {
@@ -630,7 +630,7 @@ export default function Home() {
               How it works
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Audit your product. Get <span className="text-lime-gradient">clarity.</span>
+              Three steps to <span className="text-lime-gradient">clarity.</span>
             </h2>
           </ScrollReveal>
 
@@ -831,11 +831,11 @@ export default function Home() {
               Get started
             </p>
             <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-6">
-              Ready to see what you&apos;re{' '}
-              <span className="text-lime-gradient">missing?</span>
+              Ready for{' '}
+              <span className="text-lime-gradient">clarity?</span>
             </h2>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-              Your first audit is free — no expiration, no catches. Paste a URL and get 96 checkpoints across your live product in minutes — the kind of depth that used to take weeks and cost thousands.
+              Your first audit is free — no expiration, no catches. 96 checkpoints in minutes, the kind of depth that used to take weeks and cost thousands. Website, brand, or design — your call.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">

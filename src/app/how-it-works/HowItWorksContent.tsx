@@ -106,7 +106,7 @@ export default function HowItWorksContent() {
             <span className="text-lime-gradient">360° clarity.</span>
           </h1>
           <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-2xl">
-            Design-file linters check mockups. ClearUX audits the shipped product — real content, live interactions, responsive behaviour, and AI discoverability across 96 checkpoints in 24 categories. Prioritised findings with evidence, severity rankings, and specific fixes. No consultants. No weeks of waiting.
+            ClearUX audits your website, brand identity, and design across 96 checkpoints in 6 modules. Prioritised findings with evidence, severity rankings, and specific fixes. Professional-grade depth in minutes — no consultants, no weeks of waiting.
           </p>
         </div>
       </section>

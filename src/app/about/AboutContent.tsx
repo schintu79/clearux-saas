@@ -44,7 +44,7 @@ export default function AboutContent() {
           </h1>
 
           <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-xl">
-            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your live, shipped product — not a mockup, not a design file — because that&apos;s where real UX issues live.
+            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your website, brand identity, and design — giving every team access to professional-grade insights in minutes.
           </p>
         </div>
       </section>
