@@ -296,7 +296,7 @@ async function _processBrandAuditInner(auditId: string): Promise<void> {
 
     if (auditDetails.userEmail) {
       try {
-        await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.brandName)
+        await sendAuditComplete(auditDetails.userEmail, auditId, auditDetails.brandName, 'brand_identity')
       } catch (emailErr) {
         console.error('[brand-processor] Email error (non-fatal):', emailErr)
       }
