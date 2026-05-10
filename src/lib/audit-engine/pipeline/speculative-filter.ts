@@ -53,6 +53,10 @@ export const SPECULATIVE_LANGUAGE: RegExp[] = [
   /(?:may|might)\s+(?:not\s+)?(?:have|be|include)/i,
   /potentially\s+(?:missing|lacking|absent)/i,
   /appears?\s+to\s+(?:lack|be\s+missing|not\s+have)/i,
+  /conduct\s+a\s+(?:css|accessibility|visual|manual)\s+audit/i,
+  /(?:minor|low[\s-]severity)\s+(?:localization|internationalisation|internationalization)\s+(?:gap|issue)/i,
+  /worth\s+noting\s+as\s+part\s+of/i,
+  /not\s+fully\s+optimized?\s+for\s+international/i,
 ]
 
 // ── Unverifiable topic patterns ──────────────────────────────
@@ -69,13 +73,20 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /(?:font|text)\s+size\s+(?:too\s+)?(?:small|large)/i,
   /responsive\s+design.*(?:unverified|cannot|missing)/i,
   /(?:line[\s-]?height|letter[\s-]?spacing)\s+(?:issue|missing|incorrect)/i,
+  /(?:css|typography)\s+audit/i,
+  /(?:font[\s-]?size|line[\s-]?height|line[\s-]?length|text[\s-]?size)\s+(?:below|above|not|does\s+not)/i,
+  /(?:body|base)\s+(?:text|font)\s+(?:size|readability)/i,
 
   // HTML attribute-dependent
   /missing\s+lang\s+attribute/i,
   /(?:html|root)\s+(?:element\s+)?lang/i,
+  /(?:does\s+not|doesn.t)\s+declare\s+(?:its\s+)?language/i,
+  /lang\s+attribute\s+(?:missing|absent|not\s+set|not\s+declared)/i,
+  /(?:missing|no|absent|lacks?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|declaration|tag)/i,
   /(?:missing|lacks?)\s+(?:aria|autocomplete|htmlfor|for=)/i,
   /(?:missing|lacks?)\s+(?:form\s+)?(?:label|labeling|labelling)\s+(?:attribute|association)/i,
   /(?:missing|lacks?)\s+(?:input|form)\s+(?:attribute|type)/i,
+  /(?:missing|lacks?)\s+hreflang/i,
 
   // Meta/head-dependent
   /missing\s+(?:og|open\s*graph|twitter\s*card|meta)\s+tags?/i,
