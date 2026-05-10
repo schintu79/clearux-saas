@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Coins, CheckCircle, Zap, ArrowRight } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
+import { ArrowLeft, Coins, CheckCircle, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const PACKS = [
   { id: 'starter', credits: 1, price: 99, per: '$99', save: null, popular: false },
@@ -13,7 +13,7 @@ const PACKS = [
 ] as const;
 
 export default function BuyCreditsPage() {
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useAuth();
   const [credits, setCredits] = useState<number | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
@@ -48,7 +48,7 @@ export default function BuyCreditsPage() {
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -64,20 +64,20 @@ export default function BuyCreditsPage() {
       </Link>
 
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-          <Coins size={28} className="text-accent" />
+        <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
+          <Coins size={28} className="text-[#22C55E]" />
         </div>
-        <h1 className="text-3xl font-bold font-manrope text-text mb-2">
+        <h1 className="text-3xl font-medium font-heading text-text mb-2">
           Buy Audit Credits
         </h1>
         <p className="text-muted max-w-md mx-auto">
-          Every credit = one full deep audit across all 48 checkpoints. Buy more, save more.
+          Every credit = one full deep audit across all 96 checkpoints. Buy more, save more.
         </p>
         {credits !== null && (
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
-            <Coins size={14} className="text-accent" />
-            <span className="text-sm font-semibold text-text">
-              Current balance: <span className="text-accent">{credits} credit{credits !== 1 ? 's' : ''}</span>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/20">
+            <Coins size={14} className="text-[#22C55E]" />
+            <span className="text-sm font-medium text-text">
+              Current balance: <span className="text-[#22C55E]">{credits} credit{credits !== 1 ? 's' : ''}</span>
             </span>
           </div>
         )}
@@ -88,45 +88,45 @@ export default function BuyCreditsPage() {
         {PACKS.map((pack) => (
           <div
             key={pack.id}
-            className={`relative rounded-2xl p-6 transition-all duration-200 ${
+            className={`relative rounded-xl p-6 transition-all duration-200 ${
               pack.popular
-                ? 'bg-card border-2 border-accent shadow-lg shadow-accent/10'
-                : 'bg-card border border-border hover:shadow-lg hover:border-accent/30'
+                ? 'bg-card border-2 border-brand shadow-md shadow-brand/10'
+                : 'bg-card border border-border hover:shadow-md hover:border-brand/30'
             }`}
           >
             {pack.popular && (
-              <span className="absolute -top-2.5 right-4 bg-accent text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md">
+              <span className="absolute -top-2.5 right-4 bg-brand text-surface text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
                 Customers Favourite
               </span>
             )}
 
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-manrope font-bold text-lg text-text">
+                <h3 className="font-heading font-medium text-lg text-text">
                   {pack.credits} Credit{pack.credits !== 1 ? 's' : ''}
                 </h3>
                 <p className="text-xs text-muted">{pack.per} per audit</p>
               </div>
               {pack.save && (
-                <span className="inline-flex items-center bg-accent/10 text-accent text-xs font-bold px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center bg-[#22C55E] text-white text-xs font-medium px-2.5 py-1 rounded-full">
                   Save {pack.save}
                 </span>
               )}
             </div>
 
             <div className="mb-4">
-              <span className="font-manrope text-3xl font-bold text-text">${pack.price.toLocaleString()}</span>
+              <span className="font-heading text-3xl font-medium text-text">${pack.price.toLocaleString()}</span>
             </div>
 
             <div className="space-y-1.5 mb-5">
               {[
                 `${pack.credits} full deep audit${pack.credits !== 1 ? 's' : ''}`,
-                '48 checkpoints per audit',
+                '96 checkpoints per audit',
                 'PDF + DOCX reports',
                 'Credits never expire',
               ].map((f, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <CheckCircle size={13} className="text-accent flex-shrink-0" />
+                  <CheckCircle size={13} className="text-[#22C55E] flex-shrink-0" />
                   <span className="text-xs text-muted">{f}</span>
                 </div>
               ))}
@@ -135,10 +135,10 @@ export default function BuyCreditsPage() {
             <button
               onClick={() => handlePurchase(pack.id)}
               disabled={purchasing !== null}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
                 pack.popular
-                  ? 'bg-accent text-white hover:bg-accent-dk shadow-md shadow-accent/20'
-                  : 'bg-accent/[0.15] text-accent hover:bg-accent/[0.22]'
+                  ? 'bg-brand text-surface hover:brightness-110 shadow-sm'
+                  : 'bg-off border border-border text-text hover:bg-border/50'
               }`}
             >
               {purchasing === pack.id ? (

@@ -18,15 +18,15 @@ const Badge: React.FC<BadgeProps> = ({
   className,
 }) => {
   const variantStyles = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-    active: 'bg-blue-lt text-blue',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    danger: 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-200',
+    pending: 'bg-[#EAB308]/10 text-[#EAB308] dark:bg-[#D4A84B]/15 dark:text-[#D4A84B]',
+    active: 'bg-[#3B82F6]/10 text-[#3B82F6] dark:bg-[#60A5FA]/15 dark:text-[#60A5FA]',
+    completed: 'bg-[#22C55E]/10 text-[#22C55E] dark:bg-[#4ADE80]/15 dark:text-[#4ADE80]',
+    failed: 'bg-[#EF4444]/10 text-[#EF4444] dark:bg-[#F87171]/15 dark:text-[#F87171]',
+    danger: 'bg-[#EF4444]/15 text-[#EF4444] dark:bg-[#F87171]/20 dark:text-[#F87171]',
   };
 
   const sizeStyles = {
-    sm: 'px-2 py-1 text-xs font-medium rounded',
+    sm: 'px-2.5 py-1 text-xs font-medium rounded-md',
     default: 'px-3 py-1.5 text-sm font-medium rounded-md',
   };
 

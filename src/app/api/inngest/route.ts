@@ -7,8 +7,13 @@
 import { serve } from 'inngest/next'
 import { inngest } from '@/lib/inngest/client'
 import { processAuditFn } from '@/lib/inngest/functions/process-audit'
+import { processBrandAuditFn } from '@/lib/inngest/functions/process-brand-audit'
+
+// Each Inngest step runs as a separate serverless invocation.
+// Give it the maximum time on Vercel Pro (300s).
+export const maxDuration = 300
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [processAuditFn],
+  functions: [processAuditFn, processBrandAuditFn],
 })

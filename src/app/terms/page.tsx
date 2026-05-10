@@ -11,14 +11,14 @@ export default function TermsPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[70vh] bg-surface">
+      <main id="main-content" className="min-h-[70vh] bg-surface">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <h1 className="font-manrope font-bold text-3xl sm:text-4xl text-text mb-2">Terms of Service</h1>
+          <h1 className="font-heading font-medium text-3xl sm:text-4xl text-text mb-2">Terms of Service</h1>
           <p className="text-sm text-muted mb-10">Last updated: April 2026</p>
 
           <div className="space-y-6 text-text/80 text-sm leading-relaxed">
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">1. Acceptance of Terms</h2>
+              <h2 className="font-medium text-lg text-text mb-2">1. Acceptance of Terms</h2>
               <p>
                 By creating an account or using ClearUX, you agree to these Terms of Service. If you do not agree,
                 please do not use the platform. We may update these terms from time to time — continued use after
@@ -27,7 +27,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">2. The Service</h2>
+              <h2 className="font-medium text-lg text-text mb-2">2. The Service</h2>
               <p>
                 ClearUX provides AI-powered UX audits of publicly accessible websites. You submit a URL, our engine
                 crawls and analyses the site, and we deliver a report with findings and recommendations. Reports are
@@ -36,7 +36,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">3. Accounts &amp; Credits</h2>
+              <h2 className="font-medium text-lg text-text mb-2">3. Accounts &amp; Credits</h2>
               <p>
                 You must provide accurate information when creating an account. You are responsible for maintaining
                 the security of your credentials. Credits are non-refundable, do not expire, and are tied to your
@@ -45,7 +45,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">4. Acceptable Use</h2>
+              <h2 className="font-medium text-lg text-text mb-2">4. Acceptable Use</h2>
               <p>
                 You may only audit URLs you own or have permission to audit. You must not use ClearUX to scan
                 websites for the purpose of exploiting vulnerabilities, harassing site owners, or any unlawful
@@ -54,16 +54,16 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">5. Intellectual Property</h2>
+              <h2 className="font-medium text-lg text-text mb-2">5. Intellectual Property</h2>
               <p>
-                The ClearUX platform, branding, and underlying technology are our intellectual property.
+                ClearUX, its branding, and underlying technology are our intellectual property.
                 Reports generated for your audits belong to you — you may share, distribute, or use them
                 as you see fit. You retain ownership of any data you submit to the platform.
               </p>
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">6. Limitations &amp; Disclaimers</h2>
+              <h2 className="font-medium text-lg text-text mb-2">6. Limitations &amp; Disclaimers</h2>
               <p>
                 ClearUX reports are AI-generated analysis and are provided &ldquo;as is.&rdquo; We do not
                 guarantee that implementing recommendations will produce specific results. We are not liable
@@ -73,7 +73,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">7. Termination</h2>
+              <h2 className="font-medium text-lg text-text mb-2">7. Termination</h2>
               <p>
                 You may delete your account at any time. We may suspend or terminate your account if you violate
                 these terms. Upon termination, your data will be deleted within 30 days unless required by law
@@ -82,7 +82,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">8. Governing Law</h2>
+              <h2 className="font-medium text-lg text-text mb-2">8. Governing Law</h2>
               <p>
                 These terms are governed by and construed in accordance with applicable law. Any disputes
                 will be resolved through good-faith negotiation before pursuing formal legal remedies.
@@ -90,10 +90,10 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="font-semibold text-lg text-text mb-2">9. Contact</h2>
+              <h2 className="font-medium text-lg text-text mb-2">9. Contact</h2>
               <p>
                 Questions about these terms? Contact us at{' '}
-                <a href="mailto:support@clearux.ai" className="text-accent hover:underline">support@clearux.ai</a>.
+                <a href="mailto:support@clearux.ai" className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity">support@clearux.ai</a>.
               </p>
             </section>
           </div>

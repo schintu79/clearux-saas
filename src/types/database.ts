@@ -24,6 +24,10 @@ export type FindingSeverity =
   | 'medium'
   | 'low'
 
+export type AuditDepthMode = 'standard' | 'deep'
+
+export type AuditType = 'website' | 'brand_identity' | 'design'
+
 // ── TABLE TYPES ──────────────────────────────────────────────
 
 export interface Profile {
@@ -36,18 +40,35 @@ export interface Profile {
   credits:     number
   created_at:  string
   updated_at:  string
+  // Billing / company details (optional — for invoices)
+  billing_company_name:  string | null
+  billing_vat_number:    string | null
+  billing_address_line1: string | null
+  billing_address_line2: string | null
+  billing_city:          string | null
+  billing_postal_code:   string | null
+  billing_country:       string | null
+  // White-label (Agency/Scale packages)
+  white_label:   boolean
+  package_tier:  string
+  // Admin role
+  role:          'user' | 'admin' | 'super_admin'
+  // Email preferences
+  marketing_emails: boolean
+  welcome_email_sent: boolean
 }
 
 export interface Audit {
   id:                string
   user_id:           string
   status:            AuditStatus
-  product_url:       string
+  product_url:       string | null
   product_type:      string
+  audit_type:        AuditType
   target_user:       string | null
   ux_concern:        string
   notes:             string | null
-  plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | null
+  plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | 'free_preview' | null
   language:          string | null
   pages_crawled:     number
   crawl_error:       string | null
@@ -55,6 +76,37 @@ export interface Audit {
   completed_at:      string | null
   created_at:        string
   updated_at:        string
+  // White-label branding (optional, Agency/Scale only)
+  white_label_company_name: string | null
+  white_label_logo_url:     string | null
+  // Free preview support
+  is_free_preview:    boolean
+  claimed_by:         string | null
+  free_audit_email:   string | null
+  // Sharing
+  share_token:        string | null
+  share_enabled:      boolean
+  // Depth mode: 'standard' = re-audit checks only baseline findings; 'deep' = find new issues
+  depth_mode:         AuditDepthMode
+  // Pillar selection: null = all pillars (full audit), array of indices = partial audit
+  selected_pillars:   number[] | null
+  // Brand identity for brand consistency auditing
+  brand_identity_id:  string | null
+  // Module selection (slug-based): null = complete audit
+  selected_modules:   string[] | null
+}
+
+export interface ScheduledAudit {
+  id:          string
+  user_id:     string
+  product_url: string
+  frequency:   'weekly' | 'monthly' | 'quarterly'
+  language:    string
+  is_active:   boolean
+  last_run_at: string | null
+  next_run_at: string | null
+  created_at:  string
+  updated_at:  string
 }
 
 export interface Payment {
@@ -115,6 +167,23 @@ export interface AuditPage {
   crawled_at:          string
 }
 
+export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
+export type SiteNoteType = 'context' | 'dismissal' | 'discussion'
+
+export interface SiteNote {
+  id:          string
+  user_id:     string
+  domain:      string
+  note_type:   SiteNoteType
+  category:    string | null
+  title:       string
+  content:     string
+  finding_ref: string | null
+  is_active:   boolean
+  created_at:  string
+  updated_at:  string
+}
+
 export interface AuditFinding {
   id:                string
   audit_id:          string
@@ -129,6 +198,14 @@ export interface AuditFinding {
   target_element:    string | null
   screenshot_url:    string | null
   sort_order:        number
+  status:            FindingStatus
+  status_updated_at: string | null
+  status_note:       string | null
+  dismissed:         boolean
+  dismissal_reason:  string | null
+  dismissed_at:      string | null
+  verification_status: 'confirmed_open' | 'likely_fixed' | 'poorly_fixed' | null
+  verification_note:   string | null
   created_at:        string
 }
 
@@ -165,14 +242,58 @@ export interface AuditLog {
   created_at: string
 }
 
+export interface WhiteLabelSettings {
+  id:            string
+  user_id:       string
+  company_name:  string | null
+  logo_url:      string | null
+  brand_color:   string | null
+  contact_email: string | null
+  footer_text:   string | null
+  is_active:     boolean
+  created_at:    string
+  updated_at:    string
+}
+
+export interface BrandIdentity {
+  id:          string
+  user_id:     string
+  name:        string
+  description: string | null
+  created_at:  string
+  updated_at:  string
+}
+
+export interface BrandIdentityFile {
+  id:                string
+  brand_identity_id: string
+  file_name:         string
+  file_url:          string
+  file_type:         string | null
+  file_size_bytes:   number | null
+  version:           number
+  replaces_file_id:  string | null
+  created_at:        string
+}
+
+export interface BrandAuditFileSnapshot {
+  id:            string
+  audit_id:      string
+  brand_file_id: string
+  file_name:     string
+  file_url:      string
+  created_at:    string
+}
+
 // ── VIEW TYPES ───────────────────────────────────────────────
 
 export interface AuditOverview {
   id:               string
   user_id:          string
   status:           AuditStatus
-  product_url:      string
+  product_url:      string | null
   product_type:     string
+  audit_type:       AuditType
   created_at:       string
   delivery_deadline: string | null
   completed_at:     string | null
@@ -214,7 +335,7 @@ export interface Database {
       }
       audits: {
         Row: Audit
-        Insert: Partial<Audit> & Pick<Audit, 'user_id' | 'product_url'>
+        Insert: Partial<Audit> & Pick<Audit, 'user_id'>
         Update: Partial<Audit>
       }
       payments: {
@@ -251,6 +372,26 @@ export interface Database {
         Row: AuditLog
         Insert: Partial<AuditLog> & Pick<AuditLog, 'audit_id' | 'event' | 'status'>
         Update: Partial<AuditLog>
+      }
+      white_label_settings: {
+        Row: WhiteLabelSettings
+        Insert: Partial<WhiteLabelSettings> & Pick<WhiteLabelSettings, 'user_id'>
+        Update: Partial<WhiteLabelSettings>
+      }
+      brand_identities: {
+        Row: BrandIdentity
+        Insert: Partial<BrandIdentity> & Pick<BrandIdentity, 'user_id' | 'name'>
+        Update: Partial<BrandIdentity>
+      }
+      brand_identity_files: {
+        Row: BrandIdentityFile
+        Insert: Partial<BrandIdentityFile> & Pick<BrandIdentityFile, 'brand_identity_id' | 'file_name' | 'file_url'>
+        Update: Partial<BrandIdentityFile>
+      }
+      brand_audit_file_snapshots: {
+        Row: BrandAuditFileSnapshot
+        Insert: Partial<BrandAuditFileSnapshot> & Pick<BrandAuditFileSnapshot, 'audit_id' | 'brand_file_id' | 'file_name' | 'file_url'>
+        Update: Partial<BrandAuditFileSnapshot>
       }
     }
     Views: {

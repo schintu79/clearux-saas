@@ -1,5 +1,5 @@
 // ============================================================
-// ClearUX — Edge Middleware
+// ClearUX — Proxy (formerly Middleware)
 // Rate limiting + route protection (auth guard)
 // ============================================================
 
@@ -8,6 +8,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 // ── Simple in-memory rate limiter (resets per cold start) ──
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+let lastCleanup = Date.now()
 
 function rateLimit(
   ip: string,
@@ -15,6 +16,15 @@ function rateLimit(
   windowMs: number,
 ): { allowed: boolean; remaining: number } {
   const now = Date.now()
+
+  // Clean up expired entries inline (every 60s)
+  if (now - lastCleanup > 60_000) {
+    lastCleanup = now
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key)
+    }
+  }
+
   const entry = rateLimitMap.get(ip)
 
   if (!entry || now > entry.resetAt) {
@@ -30,20 +40,12 @@ function rateLimit(
   return { allowed: true, remaining: limit - entry.count }
 }
 
-// Clean up old entries periodically (prevent memory leak)
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, val] of rateLimitMap) {
-    if (now > val.resetAt) rateLimitMap.delete(key)
-  }
-}, 60_000)
-
 // ── Route protection config ──
-const PROTECTED_PATHS = ['/dashboard']
+const PROTECTED_PATHS = ['/dashboard', '/admin']
 const RATE_LIMITED_API_PATHS = ['/api/audits', '/api/credits', '/api/stripe']
 
-// ── Helper: create Supabase client in middleware context ──
-function createMiddlewareClient(request: NextRequest, response: NextResponse) {
+// ── Helper: create Supabase client in proxy context ──
+function createProxyClient(request: NextRequest, response: NextResponse) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -53,9 +55,7 @@ function createMiddlewareClient(request: NextRequest, response: NextResponse) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // Set cookie on the request so subsequent middleware reads get it
           request.cookies.set({ name, value, ...options })
-          // Set cookie on the response so it reaches the browser
           response.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: CookieOptions) {
@@ -67,7 +67,7 @@ function createMiddlewareClient(request: NextRequest, response: NextResponse) {
   )
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
 
@@ -103,12 +103,9 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected) {
     const response = NextResponse.next()
-    const supabase = createMiddlewareClient(request, response)
+    const supabase = createProxyClient(request, response)
 
     try {
-      // Use getSession() — reads from cookie, no network call.
-      // This prevents timeouts and race conditions after login.
-      // The dashboard layout does a full getUser() verification client-side.
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
@@ -119,8 +116,6 @@ export async function middleware(request: NextRequest) {
 
       return response
     } catch {
-      // If cookie parsing fails, let the page load —
-      // the client-side auth guard will handle the redirect
       return NextResponse.next()
     }
   }
@@ -132,5 +127,6 @@ export const config = {
   matcher: [
     '/api/:path*',
     '/dashboard/:path*',
+    '/admin/:path*',
   ],
 }

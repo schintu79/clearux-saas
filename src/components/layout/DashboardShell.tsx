@@ -12,9 +12,16 @@ import {
   X,
   LogOut,
   Coins,
+  ChevronRight,
+  ShieldCheck,
+  Bell,
+  Paintbrush,
+  Fingerprint,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface DashboardShellProps {
@@ -23,18 +30,18 @@ interface DashboardShellProps {
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user, profile, signOut, loading } = useUser();
+  const { theme } = useTheme();
+  const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
-  // Fetch credits on mount + re-fetch when tab regains focus (e.g. returning from Stripe)
   useEffect(() => {
     if (!user) return;
-    const load = () =>
-      fetch('/api/credits')
-        .then((r) => r.json())
-        .then((d) => setCredits(d.credits ?? 0))
-        .catch(() => {});
+    const load = () => {
+      fetch('/api/credits').then((r) => r.json()).then((d) => setCredits(d.credits ?? 0)).catch(() => {});
+      fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
+    };
     load();
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
@@ -42,9 +49,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   }, [user]);
 
   const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'My Audits', href: '/dashboard/audits', icon: FileSearch },
-    { label: 'New Audit', href: '/dashboard/new-audit', icon: PlusCircle },
+    { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Audits', href: '/dashboard/audits', icon: FileSearch },
+    { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
+    { label: 'White label', href: '/dashboard/white-label', icon: Paintbrush },
+    { label: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unreadNotifications > 0 },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
@@ -53,16 +62,24 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const handleSignOut = async () => {
-    await signOut(); // signOut() does window.location.href = '/'
+  const handleSignOut = () => {
+    signOut();
   };
 
+  const displayName = profile?.full_name
+    || user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || null;
+  const initials = displayName
+    ? displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || '?';
+
   return (
-    <div className="flex h-screen bg-surface-alt">
+    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -70,21 +87,32 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed md:static inset-y-0 left-0 w-52 bg-sidebar text-sidebar-text flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
+          'fixed md:static inset-y-0 left-0 w-[220px] bg-card border-r border-border flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="px-4 py-4 border-b border-white/10">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-inter font-bold text-xl text-white">
-              Clear<span className="text-accent">UX</span>
-            </span>
+        <div className="px-5 py-4 flex items-center border-b border-border">
+          <Link href="/dashboard" className="flex items-center">
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
+          </Link>
+        </div>
+
+        {/* New audit CTA */}
+        <div className="px-3 pt-3 pb-1">
+          <Link
+            href="/dashboard/new-audit"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center justify-center gap-2 w-full px-3 py-2.5 text-[13px] font-medium text-[#111111] rounded-lg transition-all hover:shadow-sm active:scale-[0.98]"
+            style={{ background: '#BFFA60' }}
+          >
+            <PlusCircle size={14} strokeWidth={1.5} />
+            New Audit
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-2 overflow-y-auto">
+        <nav aria-label="Dashboard navigation" className="flex-1 px-3 py-2 overflow-y-auto">
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -96,14 +124,27 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={clsx(
-                      'flex items-center gap-2.5 px-3 py-2 rounded-md transition-colors text-xs',
+                      'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-white/10 text-white'
-                        : 'text-sidebar-text/60 hover:text-sidebar-text hover:bg-white/5'
+                        ? 'bg-[#BFFA60]/10 text-text font-medium'
+                        : 'text-muted hover:text-text hover:bg-surface/60'
                     )}
                   >
-                    <Icon size={15} />
-                    <span className="font-medium">{item.label}</span>
+                    <span className="relative">
+                      <Icon size={16} strokeWidth={1.5} />
+                      {(item as any).badge && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EF4444]" />
+                      )}
+                    </span>
+                    <span>{item.label}</span>
+                    {(item as any).badge && (
+                      <span className="ml-auto text-[11px] font-medium text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
+                        {unreadNotifications}
+                      </span>
+                    )}
+                    {active && !(item as any).badge && (
+                      <ChevronRight size={12} className="ml-auto text-muted" />
+                    )}
                   </Link>
                 </li>
               );
@@ -113,55 +154,74 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Credit balance */}
         {credits !== null && (
-          <div className="px-3 py-3 border-t border-white/10">
-            <div className="bg-white/5 rounded-lg p-3">
+          <div className="mx-3 mb-2">
+            <div className="rounded-lg border border-border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Coins size={14} className="text-accent" />
-                  <span className="text-xs font-semibold text-sidebar-text">Credits</span>
+                  <Coins size={13} className="text-[#22C55E]" />
+                  <span className="text-[11px] font-medium text-text">Credits</span>
                 </div>
-                <span className="text-lg font-bold text-accent">{credits}</span>
+                <span className="text-base font-medium text-[#22C55E] tabular-nums">{credits}</span>
               </div>
-              <p className="text-[10px] text-sidebar-text/40 mb-2">
+              <p className="text-[11px] text-muted mb-2.5 leading-snug">
                 {credits === 0
                   ? 'No credits remaining'
                   : `${credits} audit${credits !== 1 ? 's' : ''} remaining`}
               </p>
               <Link
                 href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-semibold bg-accent text-white rounded-md py-1.5 hover:bg-accent/90 transition-colors"
+                className="block text-center text-[11px] font-medium text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
               >
-                {credits === 0 ? 'Buy Credits' : 'Buy More'}
+                {credits === 0 ? 'Buy credits' : 'Buy more'}
               </Link>
             </div>
           </div>
         )}
 
         {/* Bottom section */}
-        <div className="px-2 py-2 border-t border-white/10 space-y-1">
-          <div className="flex items-center justify-between px-3 py-1.5">
-            <span className="text-[10px] text-sidebar-text/40 uppercase tracking-wider">
-              Theme
-            </span>
+        <div className="px-3 py-3 border-t border-border space-y-1">
+          <div className="flex items-center justify-between px-2 py-1">
+            <span className="text-[11px] text-muted font-medium">Theme</span>
             <ThemeToggle variant="pill" />
           </div>
 
           {!loading && user && (
-            <div className="px-3 py-2 bg-white/5 rounded-md">
-              <p className="text-xs font-medium text-sidebar-text truncate">
-                {profile?.full_name || user.email}
-              </p>
-              <p className="text-[10px] text-sidebar-text/40 truncate">
-                {user.email}
-              </p>
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
+              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[11px] font-medium text-surface flex-shrink-0">
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                {displayName && (
+                  <p className="text-[12px] font-medium text-text truncate leading-tight">
+                    {displayName}
+                  </p>
+                )}
+                <p className={clsx(
+                  'truncate leading-tight',
+                  displayName ? 'text-[11px] text-muted' : 'text-[12px] font-medium text-text'
+                )}>
+                  {user.email}
+                </p>
+              </div>
             </div>
+          )}
+
+          {/* Admin link */}
+          {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
+            <Link
+              href="/admin"
+              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all"
+            >
+              <ShieldCheck size={15} strokeWidth={1.75} />
+              Admin panel
+            </Link>
           )}
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs text-sidebar-text/60 hover:text-sidebar-text hover:bg-white/5 transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-text hover:bg-surface transition-all"
           >
-            <LogOut size={14} />
+            <LogOut size={15} strokeWidth={1.75} />
             Sign out
           </button>
         </div>
@@ -170,10 +230,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden h-12 bg-surface border-b border-border flex items-center px-3">
+        <div className="md:hidden h-16 bg-card border-b border-border flex items-center px-4">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-md hover:bg-off transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface transition-colors"
           >
             {sidebarOpen ? (
               <X size={20} className="text-text" />
@@ -181,13 +241,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <Menu size={20} className="text-text" />
             )}
           </button>
-          <span className="ml-3 font-inter font-bold text-xl text-text">
-            Clear<span className="text-accent">UX</span>
+          <span className="ml-3">
+            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
           </span>
         </div>
 
         {/* Content area */}
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto">
           <div className="p-4 sm:p-5 lg:p-6">{children}</div>
         </main>
       </div>
