@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClearUX Brand Identity Audit Report</title>
+<style>
+  /* ── Reset & Base ────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --text:        #111111;
+    --text-body:   #3D3D3D;
+    --text-sec:    #5C5C5C;
+    --text-tert:   #8A8A8A;
+    --bg:          #FFFFFF;
+    --bg-alt:      #F7F8F9;
+    --bg-off:      #F1F2F4;
+    --border:      #D4D4D4;
+    --border-lt:   #E9EAEC;
+    --green:       #16A34A;
+    --green-bg:    #F0FDF4;
+    --yellow:      #CA8A04;
+    --yellow-bg:   #FEFCE8;
+    --red:         #DC2626;
+    --red-bg:      #FEF2F2;
+    --orange:      #EA580C;
+    --orange-bg:   #FFF7ED;
+    --blue:        #2563EB;
+    --blue-bg:     #EFF6FF;
+    --purple:      #7C3AED;
+    --purple-bg:   #F5F3FF;
+    --pink:        #DB2777;
+    --pink-bg:     #FDF2F8;
+    --teal:        #0D9488;
+    --teal-bg:     #F0FDFA;
+    --amber:       #B45309;
+    --amber-bg:    #FFFBEB;
+    --indigo:      #4338CA;
+    --indigo-bg:   #EEF2FF;
+    --slate:       #475569;
+    --slate-bg:    #F8FAFC;
+
+    /* Brand identity accent — warm orange */
+    --brand-accent:    #EA580C;
+    --brand-accent-bg: #FFF7ED;
+
+    /* A4 dimensions */
+    --page-w: 210mm;
+    --page-h: 297mm;
+    --margin: 20mm;
+    --content-w: 170mm;
+  }
+
+  /* ── A4 print setup ──────────────────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--text-body);
+    background: #D0D0D0;
+    line-height: 1.55;
+    font-size: 10pt;
+  }
+
+  /* ── Report wrapper ──────────────────────────────── */
+  .report {
+    width: var(--page-w);
+    margin: 0 auto;
+  }
+
+  /* ── Each .page = one A4 sheet ───────────────────── */
+  .page {
+    width: var(--page-w);
+    min-height: var(--page-h);
+    padding: var(--margin);
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Screen: visual separation between pages */
+  @media screen {
+    .report { display: flex; flex-direction: column; gap: 6mm; padding: 6mm 0; }
+    .page { box-shadow: 0 1px 8px rgba(0,0,0,0.15); }
+  }
+
+  /* Print: clean page breaks */
+  @media print {
+    body { background: white; margin: 0; }
+    .report { width: auto; padding: 0; gap: 0; }
+    .page { width: auto; min-height: auto; padding: 0; page-break-after: always; box-shadow: none; }
+    .page:last-child { page-break-after: auto; }
+  }
+
+  /* ── Typography (pt for print accuracy) ──────────── */
+  h1, h2, h3, h4 { color: var(--text); font-weight: bold; line-height: 1.25; }
+  h1 { font-size: 26pt; }
+  h2 { font-size: 16pt; }
+  h3 { font-size: 12pt; }
+  h4 { font-size: 10pt; }
+  p  { margin-bottom: 2.5mm; }
+
+  /* ── Page Header (top of every A4 page) ──────────── */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: var(--text-tert);
+    letter-spacing: 0.3pt;
+    border-bottom: 0.5pt solid var(--border-lt);
+    padding-bottom: 2.5mm;
+    margin-bottom: 6mm;
+  }
+
+  .page-header-brand {
+    font-weight: bold;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    font-size: 7.5pt;
+  }
+
+  .page-header-center {
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+  }
+
+  .page-header-right {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Cover Page ──────────────────────────────────── */
+  .cover {
+    text-align: center;
+    padding-top: 28mm;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    color: var(--brand-accent);
+    border: 0.5pt solid var(--brand-accent);
+    padding: 2mm 5mm;
+    margin-bottom: 10mm;
+  }
+
+  .cover h1 {
+    font-size: 28pt;
+    margin-bottom: 1.5mm;
+    letter-spacing: -0.5pt;
+  }
+
+  .cover-subtitle {
+    font-size: 11pt;
+    color: var(--text-sec);
+    margin-bottom: 14mm;
+  }
+
+  .cover-score-block {
+    margin-bottom: 4mm;
+  }
+
+  .cover-score-value {
+    font-size: 56pt;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: -1.5pt;
+  }
+
+  .cover-score-max {
+    font-size: 11pt;
+    color: var(--text-tert);
+    margin-top: 1mm;
+  }
+
+  .cover-score-bar {
+    width: 50mm;
+    height: 1.2mm;
+    background: var(--bg-off);
+    margin: 4mm auto 2.5mm;
+  }
+
+  .cover-score-bar-fill {
+    height: 100%;
+  }
+
+  .cover-score-label {
+    font-size: 10pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    margin-bottom: 14mm;
+  }
+
+  .cover-meta {
+    font-size: 9pt;
+    color: var(--text-sec);
+    margin-bottom: 12mm;
+    line-height: 2;
+  }
+
+  .cover-meta strong {
+    color: var(--text);
+  }
+
+  /* Category scores row on cover */
+  .cover-categories {
+    border: 0.5pt solid var(--border);
+    text-align: left;
+  }
+
+  .cover-category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3mm 4mm;
+    border-bottom: 0.5pt solid var(--border-lt);
+  }
+
+  .cover-category-item:last-child {
+    border-bottom: none;
+  }
+
+  .cover-category-name {
+    font-size: 9pt;
+    color: var(--text-body);
+  }
+
+  .cover-category-score {
+    font-size: 12pt;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  /* ── Section title ─────────────────────────────── */
+  .section-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 1.5mm;
+  }
+
+  .section-subtitle {
+    font-size: 9pt;
+    color: var(--text-sec);
+    margin-bottom: 5mm;
+  }
+
+  .section-divider {
+    height: 0.8mm;
+    background: var(--text);
+    margin-bottom: 4mm;
+    width: 12mm;
+  }
+
+  /* ── Executive Summary ───────────────────────────── */
+  .exec-summary {
+    font-size: 10pt;
+    line-height: 1.7;
+    color: var(--text-body);
+    margin-bottom: 6mm;
+  }
+
+  .exec-summary p {
+    margin-bottom: 3mm;
+  }
+
+  /* ── Stat Cards (severity) ───────────────────────── */
+  .stat-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 6mm;
+    border: 0.5pt solid var(--border);
+  }
+
+  .stat-card {
+    flex: 1;
+    padding: 4mm 3mm;
+    text-align: center;
+    border-right: 0.5pt solid var(--border-lt);
+  }
+
+  .stat-card:last-child {
+    border-right: none;
+  }
+
+  .stat-card-count {
+    font-size: 20pt;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 1mm;
+  }
+
+  .stat-card-label {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+  }
+
+  .stat-critical { background: var(--red-bg); }
+  .stat-high { background: var(--orange-bg); }
+  .stat-medium { background: var(--amber-bg); }
+  .stat-low { background: var(--blue-bg); }
+
+  /* ── Recommendations ─────────────────────────────── */
+  .rec-header {
+    font-size: 12pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 3.5mm;
+  }
+
+  .rec-list {
+    margin-bottom: 5mm;
+  }
+
+  .rec-item {
+    display: flex;
+    gap: 3mm;
+    padding: 3.5mm 4mm;
+    border-left: 1mm solid var(--brand-accent);
+    background: var(--brand-accent-bg);
+    margin-bottom: 2mm;
+    align-items: flex-start;
+  }
+
+  .rec-num {
+    flex-shrink: 0;
+    font-size: 13pt;
+    font-weight: bold;
+    color: var(--text);
+    line-height: 1.3;
+    min-width: 5mm;
+  }
+
+  .rec-text {
+    font-size: 9pt;
+    color: var(--text-body);
+    line-height: 1.55;
+  }
+
+  /* ── Score Legend ─────────────────────────────────── */
+  .score-legend {
+    display: flex;
+    gap: 6mm;
+    padding: 3mm 4mm;
+    background: var(--bg-alt);
+    border: 0.5pt solid var(--border-lt);
+    margin-bottom: 5mm;
+    font-size: 8pt;
+    color: var(--text-sec);
+  }
+
+  .score-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+  }
+
+  .score-legend-dot {
+    width: 2.5mm;
+    height: 2.5mm;
+    display: inline-block;
+  }
+
+  /* ── Score Breakdown — Categories ───────────────── */
+  .category-group {
+    margin-bottom: 5mm;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3.5mm 4mm;
+    border: 0.5pt solid var(--border);
+    background: var(--brand-accent-bg);
+  }
+
+  .category-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5mm;
+  }
+
+  .category-header-name {
+    font-size: 11pt;
+    font-weight: bold;
+    color: var(--text);
+  }
+
+  .category-header-desc {
+    font-size: 7.5pt;
+    font-weight: normal;
+    color: var(--text-sec);
+    max-width: 120mm;
+    line-height: 1.4;
+  }
+
+  .category-header-score {
+    font-size: 20pt;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  .category-weight {
+    font-size: 7pt;
+    color: var(--text-tert);
+    text-align: right;
+    margin-top: 1mm;
+  }
+
+  .category-bar-row {
+    padding: 3mm 4mm;
+    border: 0.5pt solid var(--border-lt);
+    border-top: none;
+  }
+
+  .category-progress-bar {
+    width: 100%;
+    height: 2.5mm;
+    background: var(--bg-off);
+  }
+
+  .category-progress-fill {
+    height: 100%;
+    background: var(--brand-accent);
+  }
+
+  .category-summary {
+    padding: 3mm 4mm;
+    border: 0.5pt solid var(--border-lt);
+    border-top: none;
+    font-size: 8.5pt;
+    color: var(--text-sec);
+    line-height: 1.5;
+    background: var(--bg-alt);
+  }
+
+  /* ── Detailed Findings ───────────────────────────── */
+  .findings-category-label {
+    font-size: 10pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-top: 5mm;
+    margin-bottom: 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 0.6mm solid var(--brand-accent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .findings-category-label:first-child {
+    margin-top: 0;
+  }
+
+  .findings-category-count {
+    font-size: 7.5pt;
+    font-weight: normal;
+    color: var(--text-tert);
+  }
+
+  .finding-card {
+    border: 0.5pt solid var(--border);
+    margin-bottom: 3.5mm;
+    overflow: hidden;
+  }
+
+  .finding-card-top {
+    display: flex;
+  }
+
+  .finding-severity-bar {
+    width: 1.2mm;
+    flex-shrink: 0;
+  }
+
+  .finding-severity-bar.critical { background: var(--red); }
+  .finding-severity-bar.high { background: var(--orange); }
+  .finding-severity-bar.medium { background: var(--yellow); }
+  .finding-severity-bar.low { background: var(--blue); }
+
+  .finding-content {
+    flex: 1;
+    padding: 3.5mm 4mm;
+  }
+
+  .finding-meta {
+    display: flex;
+    align-items: center;
+    gap: 2.5mm;
+    margin-bottom: 1.5mm;
+  }
+
+  .severity-badge {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    padding: 0.8mm 2mm;
+    line-height: 1;
+  }
+
+  .severity-badge.critical { background: var(--red-bg); color: var(--red); }
+  .severity-badge.high { background: var(--orange-bg); color: var(--orange); }
+  .severity-badge.medium { background: var(--amber-bg); color: var(--amber); }
+  .severity-badge.low { background: var(--blue-bg); color: var(--blue); }
+
+  .finding-category {
+    font-size: 8pt;
+    color: var(--text-tert);
+  }
+
+  .finding-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: var(--text);
+    line-height: 1.35;
+    margin-bottom: 2mm;
+  }
+
+  .finding-description {
+    font-size: 9pt;
+    color: var(--text-body);
+    line-height: 1.6;
+    margin-bottom: 3mm;
+  }
+
+  .finding-box {
+    padding: 2.5mm 3.5mm;
+    margin-bottom: 2mm;
+    font-size: 8.5pt;
+    line-height: 1.5;
+  }
+
+  .finding-box:last-child {
+    margin-bottom: 0;
+  }
+
+  .finding-box-label {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    margin-bottom: 1mm;
+  }
+
+  .finding-box-rec {
+    background: var(--bg-off);
+    border: 0.5pt solid var(--border-lt);
+  }
+
+  .finding-box-rec .finding-box-label { color: var(--text-sec); }
+
+  .finding-box-impact {
+    background: var(--teal-bg);
+    border: 0.5pt solid #99F6E4;
+  }
+
+  .finding-box-impact .finding-box-label { color: var(--teal); }
+
+  /* ── Materials Analysed ──────────────────────────── */
+  .materials-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .materials-table th {
+    text-align: left;
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    color: var(--text-sec);
+    padding: 2.5mm 3mm;
+    border-bottom: 0.6mm solid var(--border);
+    background: var(--bg-alt);
+  }
+
+  .materials-table td {
+    padding: 2.5mm 3mm;
+    border-bottom: 0.5pt solid var(--border-lt);
+    color: var(--text-body);
+  }
+
+  .materials-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .materials-table .file-type {
+    font-size: 8pt;
+    color: var(--text-tert);
+  }
+
+  .materials-table .status-ok {
+    color: var(--green);
+    font-weight: bold;
+    font-size: 8pt;
+  }
+
+  /* ── Report Footer (last page) ───────────────────── */
+  .report-footer {
+    text-align: center;
+    margin-top: 15mm;
+  }
+
+  .footer-brand {
+    font-size: 10pt;
+    font-weight: bold;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    margin-bottom: 2mm;
+  }
+
+  .footer-text {
+    font-size: 8pt;
+    color: var(--text-tert);
+    line-height: 1.8;
+  }
+
+  /* ── Methodology note ───────────────────────────── */
+  .method-note {
+    margin-top: 5mm;
+    padding: 3mm 4mm;
+    border-left: 0.8mm solid var(--border);
+    font-size: 8pt;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+
+  /* ── Utility ─────────────────────────────────────── */
+  .text-green { color: var(--green); }
+  .text-yellow { color: var(--yellow); }
+  .text-red { color: var(--red); }
+  .text-orange { color: var(--orange); }
+  .text-blue { color: var(--blue); }
+  .text-purple { color: var(--purple); }
+  .text-teal { color: var(--teal); }
+  .text-amber { color: var(--amber); }
+  .text-brand { color: var(--brand-accent); }
+
+</style>
+</head>
+<body>
+
+<div class="report">
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 1: COVER                                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">ClearUX</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 1</span>
+    </div>
+
+    <div class="cover">
+      <div class="cover-badge">Brand Identity Audit</div>
+
+      <h1>Acme Corp</h1>
+      <div class="cover-subtitle">Brand identity materials assessment</div>
+
+      <div class="cover-score-block">
+        <span class="cover-score-value text-green">79</span>
+        <div class="cover-score-max">out of 100</div>
+        <div class="cover-score-bar">
+          <div class="cover-score-bar-fill" style="width: 79%; background: var(--green);"></div>
+        </div>
+        <div class="cover-score-label text-green">Good</div>
+      </div>
+
+      <div class="cover-meta">
+        <strong>Date:</strong> May 9, 2026<br>
+        <strong>Issues found:</strong> 9<br>
+        <strong>Categories evaluated:</strong> 7<br>
+        <strong>Language:</strong> English
+      </div>
+
+      <div class="cover-categories">
+        <div class="cover-category-item">
+          <span class="cover-category-name">Visual Consistency</span>
+          <span class="cover-category-score text-green">84</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Tone of Voice & Messaging</span>
+          <span class="cover-category-score text-green">76</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Professionalism & Polish</span>
+          <span class="cover-category-score text-green">82</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Value Proposition Strength</span>
+          <span class="cover-category-score text-green">75</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Structure & Organization</span>
+          <span class="cover-category-score text-green">80</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Competitive Positioning</span>
+          <span class="cover-category-score text-green">72</span>
+        </div>
+        <div class="cover-category-item">
+          <span class="cover-category-name">Wording Quality</span>
+          <span class="cover-category-score text-green">81</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 2: EXECUTIVE SUMMARY                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Corp</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 2</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Executive Summary</h2>
+    <p class="section-subtitle">High-level assessment and priority actions.</p>
+
+    <div class="exec-summary">
+      <p>The Acme Corp brand materials demonstrate a solid foundation with consistent use of the primary colour palette and typography across most documents. The brand voice is generally professional and appropriate for the target B2B audience.</p>
+      <p>Key areas for improvement include strengthening the competitive positioning with clearer differentiation language, tightening the value proposition to be more specific about outcomes, and addressing minor inconsistencies in tone between the sales deck and the brand guidelines document.</p>
+      <p>The overall production quality is good, though several documents would benefit from tighter formatting discipline and more rigorous proofreading of secondary materials like email templates and social media copy.</p>
+    </div>
+
+    <!-- Severity stat cards -->
+    <div class="stat-row">
+      <div class="stat-card stat-critical">
+        <div class="stat-card-count text-red">0</div>
+        <div class="stat-card-label text-red">Critical</div>
+      </div>
+      <div class="stat-card stat-high">
+        <div class="stat-card-count text-orange">2</div>
+        <div class="stat-card-label text-orange">High</div>
+      </div>
+      <div class="stat-card stat-medium">
+        <div class="stat-card-count text-amber">4</div>
+        <div class="stat-card-label text-amber">Medium</div>
+      </div>
+      <div class="stat-card stat-low">
+        <div class="stat-card-count text-blue">3</div>
+        <div class="stat-card-label text-blue">Low</div>
+      </div>
+    </div>
+
+    <!-- Top Recommendations -->
+    <div class="rec-header">Top Priority Recommendations</div>
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">1</div>
+        <div class="rec-text">Rewrite the value proposition headline to include a quantified outcome. The current version ("Helping businesses grow") is too generic and does not differentiate from competitors.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">2</div>
+        <div class="rec-text">Align tone of voice between the sales deck (casual, conversational) and brand guidelines (formal, corporate). Choose one register and apply consistently across all materials.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">3</div>
+        <div class="rec-text">Add a competitive comparison matrix to the sales deck that visually demonstrates differentiation on the three key dimensions identified in the brand strategy.</div>
+      </div>
+    </div>
+
+    <div class="method-note">
+      This report was generated by ClearUX's AI-powered brand audit engine. Each category is scored by analysing uploaded brand materials against professional brand standards. For deep qualitative brand strategy, we recommend pairing these findings with a brand consultant.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 3: SCORE BREAKDOWN                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Corp</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 3</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Score Breakdown</h2>
+    <p class="section-subtitle">Performance across 7 brand identity categories, weighted by importance.</p>
+
+    <!-- Score Legend -->
+    <div class="score-legend">
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--green);"></span>
+        70-100: Good
+      </div>
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--yellow);"></span>
+        40-69: Needs work
+      </div>
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--red);"></span>
+        0-39: Critical
+      </div>
+    </div>
+
+    <!-- ── Visual Consistency (18%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Visual Consistency</span>
+          <span class="category-header-desc">Colour palette, typography, logo usage, imagery style, and overall visual harmony.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">84</span>
+          <div class="category-weight">Weight: 18%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 84%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Tone of Voice & Messaging (16%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Tone of Voice & Messaging</span>
+          <span class="category-header-desc">Writing style consistency, brand voice clarity, and messaging alignment.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">76</span>
+          <div class="category-weight">Weight: 16%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 76%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Professionalism & Polish (12%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Professionalism & Polish</span>
+          <span class="category-header-desc">Document quality, grammar, spelling, formatting consistency, and production value.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">82</span>
+          <div class="category-weight">Weight: 12%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 82%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Value Proposition Strength (16%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Value Proposition Strength</span>
+          <span class="category-header-desc">Clarity and persuasiveness of the brand's value proposition and differentiation.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">75</span>
+          <div class="category-weight">Weight: 16%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 75%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Structure & Organization (12%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Structure & Organization</span>
+          <span class="category-header-desc">Information architecture, logical flow, section hierarchy, and ease of navigation.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">80</span>
+          <div class="category-weight">Weight: 12%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 80%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Competitive Positioning (14%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Competitive Positioning</span>
+          <span class="category-header-desc">Market positioning effectiveness, differentiation, and competitive advantages.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">72</span>
+          <div class="category-weight">Weight: 14%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 72%;"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Wording Quality (12%) ── -->
+    <div class="category-group">
+      <div class="category-header">
+        <div class="category-header-left">
+          <span class="category-header-name">Wording Quality</span>
+          <span class="category-header-desc">Precision and impact of word choices, headline effectiveness, and copywriting quality.</span>
+        </div>
+        <div>
+          <span class="category-header-score text-green">81</span>
+          <div class="category-weight">Weight: 12%</div>
+        </div>
+      </div>
+      <div class="category-bar-row">
+        <div class="category-progress-bar"><div class="category-progress-fill" style="width: 81%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 4: DETAILED FINDINGS                           -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Corp</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 4</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Detailed Findings</h2>
+    <p class="section-subtitle">All issues ranked by severity, with recommendations and expected impact.</p>
+
+    <div class="findings-category-label">
+      Value Proposition Strength
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar high"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge high">High</span>
+            <span class="finding-category">Value Proposition Strength</span>
+          </div>
+          <div class="finding-title">Value proposition lacks quantified outcomes</div>
+          <div class="finding-description">The primary value proposition "Helping businesses grow" appears across the brand deck and website copy. This is indistinguishable from thousands of competitors and does not communicate specific, measurable outcomes.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Reframe with a specific outcome: e.g., "Reduces onboarding time by 60% for mid-market SaaS teams." Include proof points from case studies.</div>
+          </div>
+          <div class="finding-box finding-box-impact">
+            <div class="finding-box-label">Expected Impact</div>
+            <div>Quantified value propositions convert 2-3x better in B2B sales materials according to industry benchmarks.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-category">Value Proposition Strength</span>
+          </div>
+          <div class="finding-title">Benefits are listed as features rather than outcomes</div>
+          <div class="finding-description">The feature list in the sales deck uses technical specifications instead of customer-centric benefits. "AI-powered analytics" does not tell the reader what they gain.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Rewrite each feature as a benefit: "AI-powered analytics" becomes "Spot revenue leaks in real time without a data team."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-category-label">
+      Tone of Voice & Messaging
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar high"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge high">High</span>
+            <span class="finding-category">Tone of Voice & Messaging</span>
+          </div>
+          <div class="finding-title">Inconsistent tone between sales deck and brand guidelines</div>
+          <div class="finding-description">The sales deck uses a casual, first-person tone ("We're here to help you crush it") while the brand guidelines specify a formal, third-person voice ("Acme Corp delivers enterprise solutions"). This creates confusion about the brand's identity.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Choose one voice register and document it with examples in the brand guidelines. Update the sales deck to match.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar low"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge low">Low</span>
+            <span class="finding-category">Tone of Voice & Messaging</span>
+          </div>
+          <div class="finding-title">Overuse of industry jargon in customer-facing materials</div>
+          <div class="finding-description">Terms like "synergistic ecosystem" and "paradigm-shifting" appear in the brand deck without context or definition.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Replace jargon with plain language. Test copy with someone outside the industry for clarity.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-category-label">
+      Competitive Positioning
+      <span class="findings-category-count">1 finding</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-category">Competitive Positioning</span>
+          </div>
+          <div class="finding-title">No competitive differentiation framework in sales materials</div>
+          <div class="finding-description">The sales deck lists features but does not position them relative to competitors. Prospects have no way to understand why Acme is different from alternatives.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add a comparison matrix or "Why Acme" section that visually maps your strengths against the top 2-3 alternatives.</div>
+          </div>
+          <div class="finding-box finding-box-impact">
+            <div class="finding-box-label">Expected Impact</div>
+            <div>Comparison frameworks reduce sales cycle length by giving prospects the information they need to decide without additional research.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 5: DETAILED FINDINGS (cont.) + MATERIALS       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Corp</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 5</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Detailed Findings</h2>
+    <p class="section-subtitle">Continued.</p>
+
+    <div class="findings-category-label">
+      Visual Consistency
+      <span class="findings-category-count">1 finding</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-category">Visual Consistency</span>
+          </div>
+          <div class="finding-title">Secondary colour used inconsistently across documents</div>
+          <div class="finding-description">The brand guidelines define a secondary blue (#2563EB), but the sales deck uses a lighter variant (#60A5FA) and the email templates use yet another shade (#3B82F6).</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Consolidate to one secondary blue value. Distribute a colour swatch file (ASE or CSS variables) to all teams creating branded materials.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-category-label">
+      Professionalism & Polish
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-category">Professionalism & Polish</span>
+          </div>
+          <div class="finding-title">Formatting inconsistencies in the sales deck</div>
+          <div class="finding-description">Three slides use different heading sizes (28pt, 32pt, 36pt) and two slides have misaligned text boxes. The footer date on slide 12 still says "2024".</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Apply the master slide template consistently. Set up a pre-send checklist for date references and alignment.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar low"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge low">Low</span>
+            <span class="finding-category">Professionalism & Polish</span>
+          </div>
+          <div class="finding-title">Minor grammatical errors in email templates</div>
+          <div class="finding-description">Two email templates contain subject-verb agreement errors and one has a duplicated paragraph.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Run all templates through a copy review process before deployment. Consider adding automated grammar checks to the workflow.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-category-label">
+      Wording Quality
+      <span class="findings-category-count">1 finding</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar low"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge low">Low</span>
+            <span class="finding-category">Wording Quality</span>
+          </div>
+          <div class="finding-title">CTAs use passive language</div>
+          <div class="finding-description">Call-to-action buttons across brand materials use passive phrasing ("Learn more", "Click here") instead of action-oriented language.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Replace with specific, outcome-driven CTAs: "Start your free audit", "See the demo", "Get your report".</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Materials Analysed -->
+    <div style="margin-top: 8mm;">
+      <div class="section-divider"></div>
+      <h2 class="section-title">Materials Analysed</h2>
+      <p class="section-subtitle">All documents evaluated during this brand audit.</p>
+
+      <table class="materials-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Document</th>
+            <th style="width: 35%;">Type</th>
+            <th style="width: 25%;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Brand Guidelines v2.1</td>
+            <td class="file-type">PDF</td>
+            <td><span class="status-ok">Analysed</span></td>
+          </tr>
+          <tr>
+            <td>Sales Deck Q2 2026</td>
+            <td class="file-type">PPTX</td>
+            <td><span class="status-ok">Analysed</span></td>
+          </tr>
+          <tr>
+            <td>Email Templates Pack</td>
+            <td class="file-type">HTML</td>
+            <td><span class="status-ok">Analysed</span></td>
+          </tr>
+          <tr>
+            <td>Logo Assets</td>
+            <td class="file-type">PNG / SVG</td>
+            <td><span class="status-ok">Analysed</span></td>
+          </tr>
+          <tr>
+            <td>Social Media Kit</td>
+            <td class="file-type">PDF</td>
+            <td><span class="status-ok">Analysed</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="report-footer">
+      <div class="footer-brand">ClearUX</div>
+      <div class="footer-text">
+        This report is confidential and intended for the recipient only.<br>
+        Generated by ClearUX &mdash; clearux.ai<br>
+        &copy; 2026 ClearUX. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

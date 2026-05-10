@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClearUX Audit Report</title>
+<style>
+  /* ── Reset & Base ────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --text:        #111111;
+    --text-body:   #3D3D3D;
+    --text-sec:    #5C5C5C;
+    --text-tert:   #8A8A8A;
+    --bg:          #FFFFFF;
+    --bg-alt:      #F7F8F9;
+    --bg-off:      #F1F2F4;
+    --border:      #D4D4D4;
+    --border-lt:   #E9EAEC;
+    --green:       #16A34A;
+    --green-bg:    #F0FDF4;
+    --yellow:      #CA8A04;
+    --yellow-bg:   #FEFCE8;
+    --red:         #DC2626;
+    --red-bg:      #FEF2F2;
+    --orange:      #EA580C;
+    --orange-bg:   #FFF7ED;
+    --blue:        #2563EB;
+    --blue-bg:     #EFF6FF;
+    --purple:      #7C3AED;
+    --purple-bg:   #F5F3FF;
+    --pink:        #DB2777;
+    --pink-bg:     #FDF2F8;
+    --teal:        #0D9488;
+    --teal-bg:     #F0FDFA;
+    --amber:       #B45309;
+    --amber-bg:    #FFFBEB;
+    --indigo:      #4338CA;
+    --indigo-bg:   #EEF2FF;
+    --slate:       #475569;
+    --slate-bg:    #F8FAFC;
+
+    /* A4 dimensions */
+    --page-w: 210mm;
+    --page-h: 297mm;
+    --margin: 20mm;
+    --content-w: 170mm; /* 210 - 2×20 */
+  }
+
+  /* ── A4 print setup ──────────────────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--text-body);
+    background: #D0D0D0;
+    line-height: 1.55;
+    font-size: 10pt;
+  }
+
+  /* ── Report wrapper ──────────────────────────────── */
+  .report {
+    width: var(--page-w);
+    margin: 0 auto;
+  }
+
+  /* ── Each .page = one A4 sheet ───────────────────── */
+  .page {
+    width: var(--page-w);
+    min-height: var(--page-h);
+    padding: var(--margin);
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Screen: visual separation between pages */
+  @media screen {
+    .report { display: flex; flex-direction: column; gap: 6mm; padding: 6mm 0; }
+    .page { box-shadow: 0 1px 8px rgba(0,0,0,0.15); }
+  }
+
+  /* Print: clean page breaks */
+  @media print {
+    body { background: white; margin: 0; }
+    .report { width: auto; padding: 0; gap: 0; }
+    .page { width: auto; min-height: auto; padding: 0; page-break-after: always; box-shadow: none; }
+    .page:last-child { page-break-after: auto; }
+  }
+
+  /* ── Typography (pt for print accuracy) ──────────── */
+  h1, h2, h3, h4 { color: var(--text); font-weight: bold; line-height: 1.25; }
+  h1 { font-size: 26pt; }
+  h2 { font-size: 16pt; }
+  h3 { font-size: 12pt; }
+  h4 { font-size: 10pt; }
+  p  { margin-bottom: 2.5mm; }
+
+  /* ── Page Header (top of every A4 page) ──────────── */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: var(--text-tert);
+    letter-spacing: 0.3pt;
+    border-bottom: 0.5pt solid var(--border-lt);
+    padding-bottom: 2.5mm;
+    margin-bottom: 6mm;
+  }
+
+  .page-header-brand {
+    font-weight: bold;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    font-size: 7.5pt;
+  }
+
+  .page-header-center {
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+  }
+
+  .page-header-right {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Footer removed — page number now in header */
+
+  /* ── Cover Page ──────────────────────────────────── */
+  .cover {
+    text-align: center;
+    padding-top: 28mm;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    color: var(--text-sec);
+    border: 0.5pt solid var(--border);
+    padding: 2mm 5mm;
+    margin-bottom: 10mm;
+  }
+
+  .cover h1 {
+    font-size: 28pt;
+    margin-bottom: 1.5mm;
+    letter-spacing: -0.5pt;
+  }
+
+  .cover-url {
+    font-size: 11pt;
+    color: var(--text-sec);
+    margin-bottom: 14mm;
+  }
+
+  .cover-score-block {
+    margin-bottom: 4mm;
+  }
+
+  .cover-score-value {
+    font-size: 56pt;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: -1.5pt;
+  }
+
+  .cover-score-max {
+    font-size: 11pt;
+    color: var(--text-tert);
+    margin-top: 1mm;
+  }
+
+  .cover-score-bar {
+    width: 50mm;
+    height: 1.2mm;
+    background: var(--bg-off);
+    margin: 4mm auto 2.5mm;
+  }
+
+  .cover-score-bar-fill {
+    height: 100%;
+  }
+
+  .cover-score-label {
+    font-size: 10pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    margin-bottom: 14mm;
+  }
+
+  .cover-meta {
+    font-size: 9pt;
+    color: var(--text-sec);
+    margin-bottom: 12mm;
+    line-height: 2;
+  }
+
+  .cover-meta strong {
+    color: var(--text);
+  }
+
+  /* Pillar scores row on cover */
+  .cover-pillars {
+    display: flex;
+    border: 0.5pt solid var(--border);
+  }
+
+  .cover-pillar {
+    flex: 1;
+    text-align: center;
+    padding: 4mm 2mm;
+    border-right: 0.5pt solid var(--border-lt);
+  }
+
+  .cover-pillar:last-child {
+    border-right: none;
+  }
+
+  .cover-pillar-score {
+    font-size: 16pt;
+    font-weight: bold;
+    line-height: 1;
+    display: block;
+    margin-bottom: 1.5mm;
+  }
+
+  .cover-pillar-name {
+    font-size: 6.5pt;
+    color: var(--text-sec);
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+  }
+
+  /* ── Section title ─────────────────────────────── */
+  .section-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 1.5mm;
+  }
+
+  .section-subtitle {
+    font-size: 9pt;
+    color: var(--text-sec);
+    margin-bottom: 5mm;
+  }
+
+  .section-divider {
+    height: 0.8mm;
+    background: var(--text);
+    margin-bottom: 4mm;
+    width: 12mm;
+  }
+
+  /* ── Executive Summary ───────────────────────────── */
+  .exec-summary {
+    font-size: 10pt;
+    line-height: 1.7;
+    color: var(--text-body);
+    margin-bottom: 6mm;
+  }
+
+  .exec-summary p {
+    margin-bottom: 3mm;
+  }
+
+  /* ── Stat Cards (severity) ───────────────────────── */
+  .stat-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 6mm;
+    border: 0.5pt solid var(--border);
+  }
+
+  .stat-card {
+    flex: 1;
+    padding: 4mm 3mm;
+    text-align: center;
+    border-right: 0.5pt solid var(--border-lt);
+  }
+
+  .stat-card:last-child {
+    border-right: none;
+  }
+
+  .stat-card-count {
+    font-size: 20pt;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 1mm;
+  }
+
+  .stat-card-label {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+  }
+
+  .stat-critical { background: var(--red-bg); }
+  .stat-high { background: var(--orange-bg); }
+  .stat-medium { background: var(--amber-bg); }
+  .stat-low { background: var(--blue-bg); }
+
+  /* ── Recommendations ─────────────────────────────── */
+  .rec-header {
+    font-size: 12pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 3.5mm;
+  }
+
+  .rec-list {
+    margin-bottom: 5mm;
+  }
+
+  .rec-item {
+    display: flex;
+    gap: 3mm;
+    padding: 3.5mm 4mm;
+    border-left: 1mm solid var(--text);
+    background: var(--bg-alt);
+    margin-bottom: 2mm;
+    align-items: flex-start;
+  }
+
+  .rec-num {
+    flex-shrink: 0;
+    font-size: 13pt;
+    font-weight: bold;
+    color: var(--text);
+    line-height: 1.3;
+    min-width: 5mm;
+  }
+
+  .rec-text {
+    font-size: 9pt;
+    color: var(--text-body);
+    line-height: 1.55;
+  }
+
+  /* ── Score Legend ─────────────────────────────────── */
+  .score-legend {
+    display: flex;
+    gap: 6mm;
+    padding: 3mm 4mm;
+    background: var(--bg-alt);
+    border: 0.5pt solid var(--border-lt);
+    margin-bottom: 5mm;
+    font-size: 8pt;
+    color: var(--text-sec);
+  }
+
+  .score-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+  }
+
+  .score-legend-dot {
+    width: 2.5mm;
+    height: 2.5mm;
+    display: inline-block;
+  }
+
+  /* ── Score Breakdown — Pillars ───────────────────── */
+  .pillar-group {
+    margin-bottom: 6mm;
+  }
+
+  .pillar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3mm 4mm;
+    margin-bottom: 0;
+    border: 0.5pt solid var(--border);
+  }
+
+  .pillar-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5mm;
+  }
+
+  .pillar-header-name {
+    font-size: 11pt;
+    font-weight: bold;
+  }
+
+  .pillar-header-desc {
+    font-size: 7.5pt;
+    font-weight: normal;
+  }
+
+  .pillar-header-score {
+    font-size: 20pt;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  .category-row {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    padding: 2.5mm 4mm;
+    border-bottom: 0.5pt solid var(--border-lt);
+    border-left: 0.5pt solid var(--border-lt);
+    border-right: 0.5pt solid var(--border-lt);
+  }
+
+  .category-name {
+    flex: 1;
+    font-size: 9pt;
+    color: var(--text-body);
+  }
+
+  .category-bar {
+    width: 25mm;
+    height: 2mm;
+    background: var(--bg-off);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .category-bar-fill {
+    height: 100%;
+  }
+
+  .category-score {
+    font-size: 9.5pt;
+    font-weight: bold;
+    width: 8mm;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Checkpoints */
+  .checkpoint-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5mm 5mm;
+    padding: 1.5mm 4mm 2.5mm;
+    border-left: 0.5pt solid var(--border-lt);
+    border-right: 0.5pt solid var(--border-lt);
+    border-bottom: 0.5pt solid var(--border-lt);
+    background: var(--bg-alt);
+  }
+
+  .checkpoint {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+    font-size: 7.5pt;
+    color: var(--text-sec);
+    width: calc(50% - 2.5mm);
+    padding: 0.5mm 0;
+  }
+
+  .ck-pass { color: var(--green); }
+  .ck-warn { color: var(--yellow); }
+  .ck-fail { color: var(--red); }
+  .ck-icon { font-weight: bold; width: 3.5mm; flex-shrink: 0; text-align: center; }
+
+  /* ── Detailed Findings ───────────────────────────── */
+  .findings-pillar-label {
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    padding: 2mm 0;
+    margin-top: 6mm;
+    margin-bottom: 1mm;
+    border-bottom: 0.6mm solid var(--text);
+  }
+
+  .findings-pillar-label:first-child {
+    margin-top: 0;
+  }
+
+  .findings-category-label {
+    font-size: 10pt;
+    font-weight: bold;
+    color: var(--text);
+    margin-top: 4mm;
+    margin-bottom: 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 0.5pt solid var(--border-lt);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .findings-category-count {
+    font-size: 7.5pt;
+    font-weight: normal;
+    color: var(--text-tert);
+  }
+
+  .finding-card {
+    border: 0.5pt solid var(--border);
+    margin-bottom: 3.5mm;
+    overflow: hidden;
+  }
+
+  .finding-card-top {
+    display: flex;
+  }
+
+  .finding-severity-bar {
+    width: 1.2mm;
+    flex-shrink: 0;
+  }
+
+  .finding-severity-bar.critical { background: var(--red); }
+  .finding-severity-bar.high { background: var(--orange); }
+  .finding-severity-bar.medium { background: var(--yellow); }
+  .finding-severity-bar.low { background: var(--blue); }
+
+  .finding-content {
+    flex: 1;
+    padding: 3.5mm 4mm;
+  }
+
+  .finding-meta {
+    display: flex;
+    align-items: center;
+    gap: 2.5mm;
+    margin-bottom: 1.5mm;
+  }
+
+  .severity-badge {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    padding: 0.8mm 2mm;
+    line-height: 1;
+  }
+
+  .severity-badge.critical { background: var(--red-bg); color: var(--red); }
+  .severity-badge.high { background: var(--orange-bg); color: var(--orange); }
+  .severity-badge.medium { background: var(--amber-bg); color: var(--amber); }
+  .severity-badge.low { background: var(--blue-bg); color: var(--blue); }
+
+  .finding-page {
+    font-size: 8pt;
+    color: var(--text-tert);
+  }
+
+  .finding-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: var(--text);
+    line-height: 1.35;
+    margin-bottom: 2mm;
+  }
+
+  .finding-description {
+    font-size: 9pt;
+    color: var(--text-body);
+    line-height: 1.6;
+    margin-bottom: 3mm;
+  }
+
+  .finding-box {
+    padding: 2.5mm 3.5mm;
+    margin-bottom: 2mm;
+    font-size: 8.5pt;
+    line-height: 1.5;
+  }
+
+  .finding-box:last-child {
+    margin-bottom: 0;
+  }
+
+  .finding-box-label {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    margin-bottom: 1mm;
+  }
+
+  .finding-box-rec {
+    background: var(--bg-off);
+    border: 0.5pt solid var(--border-lt);
+  }
+
+  .finding-box-rec .finding-box-label { color: var(--text-sec); }
+
+  .finding-box-impact {
+    background: var(--teal-bg);
+    border: 0.5pt solid #99F6E4;
+  }
+
+  .finding-box-impact .finding-box-label { color: var(--teal); }
+
+  /* ── Pages Analysed ──────────────────────────────── */
+  .pages-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .pages-table th {
+    text-align: left;
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.4pt;
+    color: var(--text-sec);
+    padding: 2.5mm 3mm;
+    border-bottom: 0.6mm solid var(--border);
+    background: var(--bg-alt);
+  }
+
+  .pages-table td {
+    padding: 2.5mm 3mm;
+    border-bottom: 0.5pt solid var(--border-lt);
+    color: var(--text-body);
+  }
+
+  .pages-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .pages-table .page-url {
+    font-size: 8pt;
+    color: var(--text-tert);
+  }
+
+  .pages-table .status-ok {
+    color: var(--green);
+    font-weight: bold;
+    font-size: 8pt;
+  }
+
+  /* ── Report Footer (last page) ───────────────────── */
+  .report-footer {
+    text-align: center;
+    margin-top: 15mm;
+  }
+
+  .footer-brand {
+    font-size: 10pt;
+    font-weight: bold;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    margin-bottom: 2mm;
+  }
+
+  .footer-text {
+    font-size: 8pt;
+    color: var(--text-tert);
+    line-height: 1.8;
+  }
+
+  /* ── Methodology note ───────────────────────────── */
+  .method-note {
+    margin-top: 5mm;
+    padding: 3mm 4mm;
+    border-left: 0.8mm solid var(--border);
+    font-size: 8pt;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+
+  /* ── Utility ─────────────────────────────────────── */
+  .text-green { color: var(--green); }
+  .text-yellow { color: var(--yellow); }
+  .text-red { color: var(--red); }
+  .text-orange { color: var(--orange); }
+  .text-blue { color: var(--blue); }
+  .text-purple { color: var(--purple); }
+  .text-pink { color: var(--pink); }
+  .text-teal { color: var(--teal); }
+  .text-amber { color: var(--amber); }
+  .text-indigo { color: var(--indigo); }
+  .text-slate { color: var(--slate); }
+
+</style>
+</head>
+<body>
+
+<div class="report">
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 1: COVER                                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">ClearUX</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 1</span>
+    </div>
+
+    <div class="cover">
+      <div class="cover-badge">UX Audit Report</div>
+
+      <h1>clearux.ai</h1>
+      <div class="cover-url">https://clearux.ai</div>
+
+      <div class="cover-score-block">
+        <span class="cover-score-value text-green">83</span>
+        <div class="cover-score-max">out of 100</div>
+        <div class="cover-score-bar">
+          <div class="cover-score-bar-fill" style="width: 83%; background: var(--green);"></div>
+        </div>
+        <div class="cover-score-label text-green">Good</div>
+      </div>
+
+      <div class="cover-meta">
+        <strong>Date:</strong> May 8, 2026<br>
+        <strong>Issues found:</strong> 12<br>
+        <strong>Categories evaluated:</strong> 24 across 6 pillars<br>
+        <strong>Checkpoints verified:</strong> 96<br>
+        <strong>Language:</strong> English
+      </div>
+
+      <div class="cover-pillars">
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-purple">86</span>
+          <span class="cover-pillar-name">Foundation</span>
+        </div>
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-pink">81</span>
+          <span class="cover-pillar-name">Human Experience</span>
+        </div>
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-amber">78</span>
+          <span class="cover-pillar-name">Inclusive Design</span>
+        </div>
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-teal">87</span>
+          <span class="cover-pillar-name">Future Readiness</span>
+        </div>
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-indigo">82</span>
+          <span class="cover-pillar-name">SEO Structure</span>
+        </div>
+        <div class="cover-pillar">
+          <span class="cover-pillar-score text-slate">85</span>
+          <span class="cover-pillar-name">Brand Consistency</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 2: EXECUTIVE SUMMARY                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 2</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Executive Summary</h2>
+    <p class="section-subtitle">High-level assessment and priority actions.</p>
+
+    <div class="exec-summary">
+      <p>ClearUX.ai presents a clean, modern interface that communicates its value proposition effectively. The site demonstrates strong visual design with consistent use of a dark theme and distinctive brand identity. Navigation is straightforward with clear information architecture.</p>
+      <p>The primary areas for improvement centre around accessibility compliance, particularly keyboard navigation and focus management, as well as mobile touch target sizing. The conversion path could be strengthened with more prominent social proof elements and clearer pricing communication above the fold.</p>
+      <p>Performance metrics are solid with good Core Web Vitals scores, and the site demonstrates awareness of modern SEO practices. The AI-related content is well-structured for LLM discoverability, which aligns with the product's positioning in the market.</p>
+    </div>
+
+    <!-- Severity stat cards -->
+    <div class="stat-row">
+      <div class="stat-card stat-critical">
+        <div class="stat-card-count text-red">1</div>
+        <div class="stat-card-label text-red">Critical</div>
+      </div>
+      <div class="stat-card stat-high">
+        <div class="stat-card-count text-orange">3</div>
+        <div class="stat-card-label text-orange">High</div>
+      </div>
+      <div class="stat-card stat-medium">
+        <div class="stat-card-count text-amber">5</div>
+        <div class="stat-card-label text-amber">Medium</div>
+      </div>
+      <div class="stat-card stat-low">
+        <div class="stat-card-count text-blue">3</div>
+        <div class="stat-card-label text-blue">Low</div>
+      </div>
+    </div>
+
+    <!-- Top Recommendations -->
+    <div class="rec-header">Top Priority Recommendations</div>
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">1</div>
+        <div class="rec-text">Add visible focus indicators and keyboard navigation support throughout the site. Several interactive elements lack proper focus states, creating barriers for keyboard-only users and failing WCAG 2.4.7.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">2</div>
+        <div class="rec-text">Increase touch target sizes to meet the 44px minimum recommended by WCAG. Several buttons and links in the navigation and pricing sections fall below this threshold on mobile devices.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">3</div>
+        <div class="rec-text">Add customer testimonials, case study metrics, or third-party review badges above the fold to strengthen social proof and reduce friction in the conversion path.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">4</div>
+        <div class="rec-text">Implement comprehensive Schema.org markup with JSON-LD for Organization, Product, and FAQ pages to improve rich snippet eligibility and search presence.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">5</div>
+        <div class="rec-text">Standardise brand voice across all pages — the About page uses a notably different tone from the marketing pages, creating an inconsistent brand experience.</div>
+      </div>
+    </div>
+
+    <div class="method-note">
+      This report was generated by ClearUX's AI-powered audit engine. Each category is scored against specific checkpoints derived from industry standards including WCAG 2.1, Nielsen Norman heuristics, and modern SEO best practices. For deep qualitative research, we recommend pairing these findings with a specialist.
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 3: SCORE BREAKDOWN (Foundation + Human Exp)    -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 3</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Score Breakdown</h2>
+    <p class="section-subtitle">Performance across 6 UX pillars and 24 categories, evaluated against 96 checkpoints.</p>
+
+    <!-- Score Legend -->
+    <div class="score-legend">
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--green);"></span>
+        70-100: Good
+      </div>
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--yellow);"></span>
+        40-69: Needs work
+      </div>
+      <div class="score-legend-item">
+        <span class="score-legend-dot" style="background: var(--red);"></span>
+        0-39: Critical
+      </div>
+    </div>
+
+    <!-- ── Foundation ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--purple-bg); border-color: #DDD6FE;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-purple">Foundation</span>
+          <span class="pillar-header-desc text-purple">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-purple">86</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Visual Design & First Impression</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 92%; background: var(--purple);"></div></div>
+        <span class="category-score text-green">92</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Above-the-fold clarity</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Visual hierarchy & flow</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Design consistency</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Professional quality</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Value Proposition & Messaging</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 88%; background: var(--purple);"></div></div>
+        <span class="category-score text-green">88</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Headline clarity</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Differentiation</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Audience fit</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Proof & evidence</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Navigation & Information Architecture</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 82%; background: var(--purple);"></div></div>
+        <span class="category-score text-green">82</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Primary navigation</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Page structure</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Footer & secondary nav</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Internal linking</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Content Quality & Readability</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 81%; background: var(--purple);"></div></div>
+        <span class="category-score text-green">81</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Scannability</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Writing quality</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Tone & voice</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Media quality</div>
+      </div>
+    </div>
+
+    <!-- ── Human Experience ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--pink-bg); border-color: #FBCFE8;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-pink">Human Experience</span>
+          <span class="pillar-header-desc text-pink">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-pink">81</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Calls-to-Action & Conversion Path</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 85%; background: var(--pink);"></div></div>
+        <span class="category-score text-green">85</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Primary CTA</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Conversion flow</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Supporting elements</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Secondary CTAs</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Trust, Credibility & Social Proof</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 72%; background: var(--pink);"></div></div>
+        <span class="category-score text-green">72</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Social proof</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Authority signals</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Transparency</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Security & safety</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Ethical UX & Dark Pattern Detection</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 90%; background: var(--pink);"></div></div>
+        <span class="category-score text-green">90</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Confirmshaming</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Fake urgency & scarcity</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Hidden costs</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Consent & privacy</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Emotional Design & Psychological Safety</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 78%; background: var(--pink);"></div></div>
+        <span class="category-score text-green">78</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Anxiety reduction</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Error handling</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Tone & respect</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Process transparency</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 4: SCORE BREAKDOWN (Inclusive + Future)         -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 4</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Score Breakdown</h2>
+    <p class="section-subtitle">Continued.</p>
+
+    <!-- ── Inclusive Design ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--amber-bg); border-color: #FDE68A;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-amber">Inclusive Design</span>
+          <span class="pillar-header-desc text-amber">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-amber">78</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Accessibility & WCAG Compliance</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 68%; background: var(--yellow);"></div></div>
+        <span class="category-score text-yellow">68</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Perceivable (contrast, alt text)</div>
+        <div class="checkpoint"><span class="ck-icon ck-fail">&#10007;</span> Operable (keyboard, focus)</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Understandable (labels, errors)</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Robust (ARIA, semantic HTML)</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Cognitive Accessibility & Neurodiversity</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 80%; background: var(--yellow);"></div></div>
+        <span class="category-score text-green">80</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Cognitive load</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Readability (fonts, spacing)</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Predictability</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Multi-modal communication</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Digital Wellbeing & Responsible Design</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 85%; background: var(--yellow);"></div></div>
+        <span class="category-score text-green">85</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Respectful engagement</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Time respect</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Inclusive of all abilities</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Healthy defaults</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Mobile Experience & Responsive Design</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 79%; background: var(--yellow);"></div></div>
+        <span class="category-score text-green">79</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Viewport & responsiveness</div>
+        <div class="checkpoint"><span class="ck-icon ck-fail">&#10007;</span> Touch targets (44px+)</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Mobile navigation</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Mobile content priority</div>
+      </div>
+    </div>
+
+    <!-- ── Future Readiness ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--teal-bg); border-color: #99F6E4;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-teal">Future Readiness</span>
+          <span class="pillar-header-desc text-teal">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-teal">87</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Performance & Technical Health</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 90%; background: var(--teal);"></div></div>
+        <span class="category-score text-green">90</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Page weight</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Render strategy</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Technical SEO</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Structured data / schema</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">AI Discoverability & LLM Readiness</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 88%; background: var(--teal);"></div></div>
+        <span class="category-score text-green">88</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> LLM comprehension</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Semantic structure</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Content accessibility</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Machine-readable identity</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">AI Agent Readiness</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 82%; background: var(--teal);"></div></div>
+        <span class="category-score text-green">82</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Agent navigability</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Interactive elements</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Crawl infrastructure</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Real-world AI test</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Cultural Sensitivity & Global Readiness</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 88%; background: var(--teal);"></div></div>
+        <span class="category-score text-green">88</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Language clarity</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Internationalisation</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Cultural neutrality</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Legal & privacy</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 5: SCORE BREAKDOWN (SEO + Brand)               -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 5</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Score Breakdown</h2>
+    <p class="section-subtitle">Continued.</p>
+
+    <!-- ── SEO Structure & Rules ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--indigo-bg); border-color: #C7D2FE;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-indigo">SEO Structure & Rules</span>
+          <span class="pillar-header-desc text-indigo">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-indigo">82</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">On-Page SEO Fundamentals</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 85%; background: var(--indigo);"></div></div>
+        <span class="category-score text-green">85</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Title tags & meta descriptions</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Heading hierarchy (H1-H6)</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> URL structure & slugs</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Image alt text & optimisation</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Technical SEO & Crawlability</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 80%; background: var(--indigo);"></div></div>
+        <span class="category-score text-green">80</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Robots.txt & sitemap.xml</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Canonical URLs</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Page speed & Core Web Vitals</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Mobile-first indexing</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Structured Data & Rich Results</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 75%; background: var(--indigo);"></div></div>
+        <span class="category-score text-green">75</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Schema.org markup</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> JSON-LD implementation</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Rich snippet eligibility</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Knowledge graph signals</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">SEO Content & Link Strategy</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 88%; background: var(--indigo);"></div></div>
+        <span class="category-score text-green">88</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Keyword targeting & density</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Internal link architecture</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Content depth & authority</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> External link profile</div>
+      </div>
+    </div>
+
+    <!-- ── Brand Consistency ── -->
+    <div class="pillar-group">
+      <div class="pillar-header" style="background: var(--slate-bg); border-color: #CBD5E1;">
+        <div class="pillar-header-left">
+          <span class="pillar-header-name text-slate">Brand Consistency</span>
+          <span class="pillar-header-desc text-slate">4 categories &middot; 16 checkpoints</span>
+        </div>
+        <span class="pillar-header-score text-slate">85</span>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Visual Identity Alignment</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 90%; background: var(--slate);"></div></div>
+        <span class="category-score text-green">90</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Logo usage & placement</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Colour palette adherence</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Typography consistency</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Imagery & iconography style</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Voice & Tone Alignment</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 78%; background: var(--slate);"></div></div>
+        <span class="category-score text-green">78</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Brand voice consistency</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Tone-to-audience fit</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Messaging hierarchy</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Copy style guide adherence</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Messaging & Value Prop Alignment</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 86%; background: var(--slate);"></div></div>
+        <span class="category-score text-green">86</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Core value proposition clarity</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Tagline & headline alignment</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Feature-benefit framing</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Competitive differentiation</div>
+      </div>
+      <div class="category-row">
+        <span class="category-name">Brand Standards Compliance</span>
+        <div class="category-bar"><div class="category-bar-fill" style="width: 84%; background: var(--slate);"></div></div>
+        <span class="category-score text-green">84</span>
+      </div>
+      <div class="checkpoint-row">
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Brand guideline adherence</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Cross-page consistency</div>
+        <div class="checkpoint"><span class="ck-icon ck-warn">&#9679;</span> Template & layout standards</div>
+        <div class="checkpoint"><span class="ck-icon ck-pass">&#10003;</span> Legal & trademark compliance</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 6: DETAILED FINDINGS (part 1)                  -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 6</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Detailed Findings</h2>
+    <p class="section-subtitle">All issues ranked by severity, with recommendations and expected impact.</p>
+
+    <div class="findings-pillar-label">Inclusive Design</div>
+
+    <div class="findings-category-label">
+      Accessibility & WCAG Compliance
+      <span class="findings-category-count">3 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar critical"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge critical">Critical</span>
+            <span class="finding-page">clearux.ai (sitewide)</span>
+          </div>
+          <div class="finding-title">Missing keyboard focus indicators on interactive elements</div>
+          <div class="finding-description">Several interactive elements including navigation links, CTA buttons, and form inputs lack visible focus indicators. This fails WCAG 2.1 SC 2.4.7 (Focus Visible). All :focus styles appear suppressed via outline: none without replacement.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add a consistent focus ring (2px solid outline with 2px offset) to all interactive elements. Use :focus-visible to show focus styles only for keyboard navigation.</div>
+          </div>
+          <div class="finding-box finding-box-impact">
+            <div class="finding-box-label">Expected Impact</div>
+            <div>Resolves WCAG AA compliance gap. Enables navigation for ~2.5% of users who rely on keyboard input.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar high"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge high">High</span>
+            <span class="finding-page">clearux.ai (dashboard)</span>
+          </div>
+          <div class="finding-title">Incomplete ARIA labels on icon-only buttons</div>
+          <div class="finding-description">Several icon-only buttons in the dashboard navigation and toolbar lack accessible labels. Screen reader users cannot determine the purpose of these controls.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add aria-label attributes to all icon-only buttons describing their function (e.g., aria-label="Toggle dark mode").</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-page">clearux.ai/register</span>
+          </div>
+          <div class="finding-title">Form errors not programmatically associated with inputs</div>
+          <div class="finding-description">Error messages appear visually near inputs but lack aria-describedby linking. Screen readers may not announce errors when the user focuses the problematic field.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Link error messages to inputs using aria-describedby and add role="alert" to error containers.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-category-label">
+      Mobile Experience & Responsive Design
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar high"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge high">High</span>
+            <span class="finding-page">clearux.ai (navigation)</span>
+          </div>
+          <div class="finding-title">Touch targets below 44px minimum on mobile</div>
+          <div class="finding-description">Several navigation links render at 32-36px on mobile viewports, below WCAG's 44px minimum. This increases mis-tap risk for users with motor impairments.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Set min-height: 44px on all tappable elements at mobile breakpoints. Use padding to maintain visual balance.</div>
+          </div>
+          <div class="finding-box finding-box-impact">
+            <div class="finding-box-label">Expected Impact</div>
+            <div>Meets WCAG 2.5.5 (Target Size). Reduces mobile bounce from accidental taps.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 7: DETAILED FINDINGS (part 2)                  -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 7</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Detailed Findings</h2>
+    <p class="section-subtitle">Continued.</p>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar low"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge low">Low</span>
+            <span class="finding-page">clearux.ai/pricing</span>
+          </div>
+          <div class="finding-title">Horizontal scroll on pricing cards at narrow viewports</div>
+          <div class="finding-description">Pricing cards don't fully reflow at 320-380px widths, causing a small horizontal scroll on smaller devices.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Stack pricing cards vertically below 480px and reduce card padding to fit within the viewport.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-pillar-label">Human Experience</div>
+
+    <div class="findings-category-label">
+      Trust, Credibility & Social Proof
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar high"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge high">High</span>
+            <span class="finding-page">clearux.ai (homepage)</span>
+          </div>
+          <div class="finding-title">No customer testimonials or social proof above the fold</div>
+          <div class="finding-description">The homepage lacks testimonials, review scores, or third-party badges in the hero area. For B2B SaaS, above-the-fold social proof is a critical trust signal.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add 2-3 short customer quotes with company logos above the fold, or display aggregate ratings from G2/Capterra.</div>
+          </div>
+          <div class="finding-box finding-box-impact">
+            <div class="finding-box-label">Expected Impact</div>
+            <div>Social proof typically increases B2B SaaS conversion by 15-30% by reducing evaluation anxiety.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-page">clearux.ai/pricing</span>
+          </div>
+          <div class="finding-title">Pricing page lacks trust reinforcement at decision point</div>
+          <div class="finding-description">Plan options are presented without satisfaction guarantee, security badges, or customer count to reduce purchase anxiety.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add satisfaction guarantee, Stripe security badge, and a brief testimonial near pricing cards.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-pillar-label">SEO Structure & Rules</div>
+
+    <div class="findings-category-label">
+      Structured Data & Rich Results
+      <span class="findings-category-count">2 findings</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-page">clearux.ai (sitewide)</span>
+          </div>
+          <div class="finding-title">Missing JSON-LD structured data for Organization and Product</div>
+          <div class="finding-description">No Schema.org markup detected for Organization, Product, or SoftwareApplication, limiting rich snippet eligibility.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Add JSON-LD blocks for Organization (homepage), Product/SoftwareApplication (product pages), and FAQPage (FAQ section).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar low"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge low">Low</span>
+            <span class="finding-page">clearux.ai/faq</span>
+          </div>
+          <div class="finding-title">FAQ page not using FAQPage schema markup</div>
+          <div class="finding-description">FAQ content uses a standard accordion but lacks FAQPage schema for rich snippets in search results.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Wrap FAQ content in FAQPage + Question + acceptedAnswer schema. Low-effort, high-reward SEO gain.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-pillar-label">Brand Consistency</div>
+
+    <div class="findings-category-label">
+      Voice & Tone Alignment
+      <span class="findings-category-count">1 finding</span>
+    </div>
+
+    <div class="finding-card">
+      <div class="finding-card-top">
+        <div class="finding-severity-bar medium"></div>
+        <div class="finding-content">
+          <div class="finding-meta">
+            <span class="severity-badge medium">Medium</span>
+            <span class="finding-page">clearux.ai/about</span>
+          </div>
+          <div class="finding-title">About page uses a different tone from marketing pages</div>
+          <div class="finding-description">The About page shifts to a notably more casual tone compared to the professional voice on the homepage and product pages, creating brand inconsistency.</div>
+          <div class="finding-box finding-box-rec">
+            <div class="finding-box-label">Recommendation</div>
+            <div>Align About page tone with the rest of the site. Create a brief voice guide covering formality and vocabulary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PAGE 8: PAGES ANALYSED + FOOTER                     -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">clearux.ai</span>
+      <span class="page-header-center">Confidential</span>
+      <span class="page-header-right">Page 8</span>
+    </div>
+
+    <div class="section-divider"></div>
+    <h2 class="section-title">Pages Analysed</h2>
+    <p class="section-subtitle">All pages crawled and evaluated during this audit.</p>
+
+    <table class="pages-table">
+      <thead>
+        <tr>
+          <th style="width: 30%;">Page</th>
+          <th style="width: 55%;">URL</th>
+          <th style="width: 15%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Home</td>
+          <td class="page-url">https://clearux.ai/</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>How it Works</td>
+          <td class="page-url">https://clearux.ai/how-it-works</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>Pricing</td>
+          <td class="page-url">https://clearux.ai/pricing</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>FAQ</td>
+          <td class="page-url">https://clearux.ai/faq</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>About</td>
+          <td class="page-url">https://clearux.ai/about</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>Contact</td>
+          <td class="page-url">https://clearux.ai/contact</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>Login</td>
+          <td class="page-url">https://clearux.ai/login</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+        <tr>
+          <td>Register</td>
+          <td class="page-url">https://clearux.ai/register</td>
+          <td><span class="status-ok">200 OK</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="report-footer">
+      <div class="footer-brand">ClearUX</div>
+      <div class="footer-text">
+        This report is confidential and intended for the recipient only.<br>
+        Generated by ClearUX &mdash; clearux.ai<br>
+        &copy; 2026 ClearUX. All rights reserved.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

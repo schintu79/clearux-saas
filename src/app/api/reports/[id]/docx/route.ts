@@ -1,6 +1,8 @@
 // ============================================================
 // ClearUX API — GET /api/reports/:id/docx
-// Premium branded UX audit Word document — Dashboard-matching layout
+// Premium branded UX audit Word document
+// Colors and structure match the canonical HTML report templates
+// in src/lib/report-template/*.html
 // ============================================================
 
 export const runtime = 'nodejs'
@@ -35,41 +37,41 @@ import path from 'path'
 const C = {
   white: 'FFFFFF',
   bg: 'F9FAFB',
-  text: '1D1D1F',
-  textBody: '4A4A4F',     // darker grey for readability/printing
-  textSec: '6E6E73',
-  textTert: '86868B',
-  border: 'D2D2D7',
-  borderLight: 'E8E8ED',
-  accent: '8B5CF6',
+  text: '111111',
+  textBody: '3D3D3D',     // match HTML template
+  textSec: '5C5C5C',
+  textTert: '8A8A8A',
+  border: 'D4D4D4',
+  borderLight: 'E9EAEC',
+  accent: '7C3AED',
   accentLight: 'F5F3FF',
   accentLighter: 'FAF8FF',
-  // Scores
-  scoreGreen: '22C55E',
-  scoreYellow: 'EAB308',
-  scoreRed: 'EF4444',
-  // Severity
-  sevCritical: 'EF4444',
-  sevHigh: 'F97316',
-  sevMedium: 'EAB308',
-  sevLow: '3B82F6',
+  // Scores — match HTML template
+  scoreGreen: '16A34A',
+  scoreYellow: 'CA8A04',
+  scoreRed: 'DC2626',
+  // Severity — match HTML template
+  sevCritical: 'DC2626',
+  sevHigh: 'EA580C',
+  sevMedium: 'CA8A04',
+  sevLow: '2563EB',
   sevCriticalBg: 'FEF2F2',
   sevHighBg: 'FFF7ED',
   sevMediumBg: 'FEFCE8',
   sevLowBg: 'EFF6FF',
-  // Pillars
-  pillarFoundation: '8B5CF6',
+  // Pillars — match HTML template (report-template.html)
+  pillarFoundation: '7C3AED',
   pillarFoundationBg: 'F5F3FF',
-  pillarHuman: 'EC4899',
+  pillarHuman: 'DB2777',
   pillarHumanBg: 'FDF2F8',
-  pillarInclusive: 'F59E0B',
+  pillarInclusive: 'B45309',
   pillarInclusiveBg: 'FFFBEB',
-  pillarFuture: '10B981',
-  pillarFutureBg: 'ECFDF5',
-  pillarSeo: '3B82F6',
-  pillarSeoBg: 'EFF6FF',
-  pillarBrand: 'F97316',
-  pillarBrandBg: 'FFF7ED',
+  pillarFuture: '0D9488',
+  pillarFutureBg: 'F0FDFA',
+  pillarSeo: '4338CA',
+  pillarSeoBg: 'EEF2FF',
+  pillarBrand: '475569',
+  pillarBrandBg: 'F8FAFC',
   // Recommendation / Impact
   recBg: 'F5F3FF',
   impactBg: 'ECFDF5',
