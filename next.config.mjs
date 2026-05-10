@@ -7,8 +7,10 @@ const nextConfig = {
   // Increase serverless function timeout for Inngest steps
   // (crawling + AI analysis can take up to 5 minutes per step)
   // Requires Vercel Pro plan ($20/month)
-  serverActions: {
-    bodySizeLimit: '2mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 
