@@ -641,9 +641,9 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
       });
       if (res.ok) {
         setStatus(newStatus as any);
-        // Refresh scores whenever status changes to/from "fixed"
-        const involvesFixed = newStatus === 'fixed' || previousStatus === 'fixed';
-        if (involvesFixed && onScoreUpdate) {
+        // Always refresh data after status change — the server recalculates
+        // scores when status changes to/from "fixed" and updates raw_json
+        if (onScoreUpdate) {
           onScoreUpdate();
         }
       } else {

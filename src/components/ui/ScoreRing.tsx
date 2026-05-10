@@ -15,12 +15,15 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
 }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
 
-  // Animate the score on mount
+  // Animate the score on mount and when score changes (up or down)
   useEffect(() => {
     const interval = setInterval(() => {
       setAnimatedScore((prev) => {
         if (prev < score) {
           return Math.min(prev + 2, score);
+        }
+        if (prev > score) {
+          return Math.max(prev - 2, score);
         }
         return prev;
       });
