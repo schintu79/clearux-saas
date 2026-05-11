@@ -87,28 +87,28 @@ function formatDate(dateString: string) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return '[color:var(--ok)]';
-  if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return '[color:var(--severe)]';
+  if (s >= 70) return 'text-ok';
+  if (s >= 40) return 'text-warn';
+  return 'text-severe';
 }
 
 function scoreBg(s: number) {
-  if (s >= 70) return 'bg-green-50 dark:bg-green-900/20';
-  if (s >= 40) return 'bg-yellow-50 dark:bg-yellow-900/20';
-  return 'bg-red-50 dark:bg-red-900/20';
+  if (s >= 70) return 'bg-ok/10';
+  if (s >= 40) return 'bg-warn/10';
+  return 'bg-severe/10';
 }
 
 function scoreBarColor(s: number) {
-  if (s >= 70) return '[background:var(--ok)]';
-  if (s >= 40) return 'bg-yellow-500';
-  return '[background:var(--severe)]';
+  if (s >= 70) return 'bg-ok';
+  if (s >= 40) return 'bg-warn';
+  return 'bg-severe';
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string; border: string; impactBg: string }> = {
-  critical: { label: 'Critical', dot: 'bg-red-500',    text: 'text-red-600 dark:text-red-400',       bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-red-50 dark:bg-red-950/20' },
-  high:     { label: 'High',     dot: 'bg-orange-500', text: 'text-orange-600 dark:text-orange-400', bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-orange-50 dark:bg-orange-950/20' },
-  medium:   { label: 'Medium',   dot: 'bg-yellow-500', text: 'text-yellow-600 dark:text-yellow-500', bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-yellow-50 dark:bg-yellow-950/20' },
-  low:      { label: 'Low',      dot: 'bg-blue-500',   text: 'text-blue-600 dark:text-blue-400',     bg: 'bg-card', border: 'border-border/40 dark:border-white/[0.06]', impactBg: 'bg-blue-50 dark:bg-blue-950/20' },
+  critical: { label: 'Critical', dot: 'bg-severe', text: 'text-severe', bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-severe/5' },
+  high:     { label: 'High',     dot: 'bg-warn',   text: 'text-warn',   bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-warn/5' },
+  medium:   { label: 'Medium',   dot: 'bg-signal',  text: 'text-signal',  bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-signal/5' },
+  low:      { label: 'Low',      dot: 'bg-ok',     text: 'text-ok',     bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-ok/5' },
 };
 
 const statusMeta: Record<string, { label: string; description: string; icon: React.ElementType }> = {
@@ -175,14 +175,14 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
 
   if (dismissed) {
     return (
-      <div className="rounded-xl border border-border/20 dark:border-white/[0.04] bg-off/30 dark:bg-white/[0.02] p-3 opacity-60">
+      <div className="rounded-xl border border-rule/20 bg-paper-2/30 p-3 opacity-60">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
-          <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
-          <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
+          <span className="w-2 h-2 rounded-full bg-rule flex-shrink-0" />
+          <span className="text-xs text-m-muted line-through flex-1">{finding.title}</span>
+          <span className="text-[11px] text-m-muted bg-paper-2 px-2 py-0.5 rounded-full">Dismissed</span>
         </div>
         {finding.dismissal_reason && (
-          <p className="text-[11px] text-muted mt-1 ml-4">{finding.dismissal_reason}</p>
+          <p className="text-[11px] text-m-muted mt-1 ml-4">{finding.dismissal_reason}</p>
         )}
       </div>
     );
@@ -193,7 +193,7 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-4 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-black/[0.02] transition-colors"
         aria-expanded={open}
       >
         <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
@@ -203,31 +203,31 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
               {sev.label}
             </span>
             {sourceFile && (
-              <span className="text-[11px] text-muted truncate max-w-[200px]">{sourceFile}</span>
+              <span className="text-[11px] text-m-muted truncate max-w-[200px]">{sourceFile}</span>
             )}
           </div>
-          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
+          <h4 className="font-medium text-ink text-sm leading-snug">{finding.title}</h4>
         </div>
         <ChevronDown
           size={16}
-          className={clsx('text-muted flex-shrink-0 mt-1 transition-transform duration-200', open && 'rotate-180')}
+          className={clsx('text-m-muted flex-shrink-0 mt-1 transition-transform duration-200', open && 'rotate-180')}
         />
       </button>
 
       {/* Expanded detail */}
       {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-border/20 dark:border-white/[0.04] mx-4 space-y-3">
+        <div className="px-4 pb-4 pt-0 border-t border-rule/20 mx-4 space-y-3">
           {/* Description */}
-          <p className="text-muted text-sm leading-relaxed pt-3">{finding.description}</p>
+          <p className="text-m-muted text-sm leading-relaxed pt-3">{finding.description}</p>
 
           {/* Recommendation */}
           {finding.recommendation && (
-            <div className="p-3 bg-surface-alt/60 dark:bg-white/[0.03] rounded-lg border border-border/30 dark:border-white/[0.04]">
+            <div className="p-3 bg-paper-2/60 rounded-lg border border-rule/30">
               <div className="flex gap-2.5">
                 <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillarColor}`} />
                 <div>
-                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
-                  <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
+                  <p className="text-[11px] font-medium text-ink mb-1">Recommendation</p>
+                  <p className="text-sm text-m-muted leading-relaxed">{finding.recommendation}</p>
                 </div>
               </div>
             </div>
@@ -235,18 +235,18 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
 
           {/* Expected Impact */}
           {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
+            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/15">
               <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">{finding.estimated_impact}</p>
+                <p className="text-[11px] font-medium text-ink mb-0.5">Expected Impact</p>
+                <p className="text-sm text-emerald-700 leading-relaxed">{finding.estimated_impact}</p>
               </div>
             </div>
           )}
 
           {/* Status + Dismiss controls */}
-          <div className="flex items-center gap-2 pt-1 border-t border-border/20 dark:border-white/[0.04] mt-3">
-            <span className="text-[11px] text-muted mr-1">Status:</span>
+          <div className="flex items-center gap-2 pt-1 border-t border-rule/20 mt-3">
+            <span className="text-[11px] text-m-muted mr-1">Status:</span>
             {['open', 'in_progress', 'fixed'].map((s) => (
               <button
                 key={s}
@@ -256,11 +256,11 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
                   'text-[11px] font-medium px-2 py-1 rounded-md transition-colors capitalize',
                   status === s
                     ? s === 'fixed'
-                      ? 'bg-emerald-500/15 [color:var(--ok)] border border-emerald-500/20'
+                      ? 'bg-emerald-500/15 text-ok border border-emerald-500/20'
                       : s === 'in_progress'
-                        ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                        : 'bg-off dark:bg-white/[0.06] text-text border border-border/40 dark:border-white/[0.08]'
-                    : 'text-muted hover:bg-off dark:hover:bg-white/[0.04]',
+                        ? 'bg-blue-500/15 text-signal border border-blue-500/20'
+                        : 'bg-paper-2 text-ink border border-rule/40'
+                    : 'text-m-muted hover:bg-paper-2',
                 )}
               >
                 {s === 'in_progress' ? 'In Progress' : s === 'fixed' ? 'Fixed' : 'Open'}
@@ -270,7 +270,7 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
             {!showDismissForm ? (
               <button
                 onClick={() => setShowDismissForm(true)}
-                className="text-[11px] text-muted hover:text-red-500 transition-colors"
+                className="text-[11px] text-m-muted hover:text-red-500 transition-colors"
               >
                 Dismiss
               </button>
@@ -281,13 +281,13 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
                   value={dismissReason}
                   onChange={(e) => setDismissReason(e.target.value)}
                   placeholder="Reason..."
-                  className="text-[11px] px-2 py-1 rounded-md border border-border/40 dark:border-white/[0.08] bg-off dark:bg-white/[0.03] text-text w-40"
+                  className="text-[11px] px-2 py-1 rounded-md border border-rule/40 bg-paper-2 text-ink w-40"
                   onKeyDown={(e) => e.key === 'Enter' && handleDismiss()}
                 />
                 <button onClick={handleDismiss} disabled={!dismissReason.trim() || statusUpdating} className="text-[11px] font-medium text-red-500 hover:text-red-600 disabled:opacity-40">
                   Confirm
                 </button>
-                <button onClick={() => setShowDismissForm(false)} className="text-muted hover:text-text">
+                <button onClick={() => setShowDismissForm(false)} className="text-m-muted hover:text-ink">
                   <X size={12} />
                 </button>
               </div>
@@ -319,66 +319,69 @@ function CategorySection({
   const catDef = BRAND_AUDIT_CATEGORIES.find(c => c.slug === category.slug);
 
   return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
-      {/* Category header */}
-      <button onClick={onToggle} className="w-full text-left px-5 py-4 flex items-center gap-4">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: `${config.color}15` }}
-        >
-          <Icon size={18} style={{ color: config.color }} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-text">{category.name}</p>
-          {catDef && <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{catDef.description}</p>}
-        </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right">
-            <p className={clsx('text-lg font-semibold leading-none', scoreColor(category.score))}>{category.score}</p>
-            <p className="text-[10px] text-muted mt-0.5">/100</p>
+    <div className="mb-8">
+      {/* Category header — flat, editorial (matches website audit PillarSection) */}
+      <div className="border border-ink mb-4">
+        <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 border-b border-rule">
+          <div className="flex items-center gap-3">
+            <Icon size={16} style={{ color: config.color }} className="flex-shrink-0" />
+            <div>
+              <h2 className="font-sans font-medium text-[15px] text-ink">{category.name}</h2>
+              {catDef && <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{catDef.description}</p>}
+            </div>
           </div>
-          {findings.length > 0 && (
-            <span className="text-[10px] font-medium text-muted bg-off dark:bg-white/[0.04] px-1.5 py-0.5 rounded-full">
-              {findings.length} issue{findings.length !== 1 ? 's' : ''}
-            </span>
-          )}
-          <ChevronDown size={14} className={clsx('text-muted transition-transform', expanded && 'rotate-180')} />
-        </div>
-      </button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="text-right">
+              <p className={clsx('font-mono text-[20px] font-medium', scoreColor(category.score))}>{category.score}</p>
+              <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">/100</p>
+            </div>
+            {findings.length > 0 && (
+              <span className="text-[10px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                {findings.length} issue{findings.length !== 1 ? 's' : ''}
+              </span>
+            )}
+            <ChevronDown size={14} className={clsx('text-m-muted transition-transform', expanded && 'rotate-180')} />
+          </div>
+        </button>
 
+        {expanded && (
+          <>
+            {/* Score bar */}
+            <div className="px-5 py-4 border-b border-rule">
+              <div className="w-full bg-rule/50 h-[3px] rounded-full">
+                <div
+                  className={clsx('h-full rounded-full transition-all', scoreBarColor(category.score))}
+                  style={{ width: `${category.score}%`, opacity: 0.75 }}
+                />
+              </div>
+            </div>
+
+            {/* Summary */}
+            {category.summary && (
+              <div className="px-5 py-4 border-b border-rule">
+                <p className="text-sm text-ink/80 leading-relaxed">{category.summary}</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Findings listed below the header */}
       {expanded && (
-        <div className="border-t border-border/30 dark:border-white/[0.04]">
-          {/* Score bar */}
-          <div className="px-5 pt-4 pb-3">
-            <div className="w-full h-2 rounded-full bg-off dark:bg-white/[0.04]">
-              <div
-                className={clsx('h-full rounded-full transition-all', scoreBarColor(category.score))}
-                style={{ width: `${category.score}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Summary */}
-          {category.summary && (
-            <div className="px-5 pb-4">
-              <p className="text-sm text-text/80 leading-relaxed">{category.summary}</p>
-            </div>
-          )}
-
-          {/* Findings */}
+        <>
           {findings.length > 0 && (
-            <div className="px-4 pb-4 space-y-2">
+            <div className="space-y-2">
               {findings.map((f) => (
                 <BrandFindingCard key={f.id} finding={f} categoryColor={`text-[${config.color}]`} onScoreUpdate={onScoreUpdate} />
               ))}
             </div>
           )}
           {findings.length === 0 && (
-            <div className="px-5 pb-4">
-              <p className="text-xs text-muted">No specific issues found in this category.</p>
+            <div className="px-1">
+              <p className="text-xs text-m-muted">No specific issues found in this category.</p>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
@@ -634,10 +637,10 @@ export default function BrandAuditDetail({
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="h-5 w-20 bg-off rounded animate-pulse mb-6" />
-        <div className="h-8 w-72 bg-off rounded-lg animate-pulse mb-3" />
-        <div className="h-4 w-48 bg-off rounded animate-pulse mb-8" />
-        <div className="h-48 bg-off rounded-xl animate-pulse" />
+        <div className="h-5 w-20 bg-paper-2 rounded animate-pulse mb-6" />
+        <div className="h-8 w-72 bg-paper-2 rounded-lg animate-pulse mb-3" />
+        <div className="h-4 w-48 bg-paper-2 rounded animate-pulse mb-8" />
+        <div className="h-48 bg-paper-2 rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -645,14 +648,14 @@ export default function BrandAuditDetail({
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <Link href="/dashboard/audits?type=brand_identity" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6">
+        <Link href="/dashboard/audits?type=brand_identity" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6">
           <ArrowLeft size={16} /> Back to Audits
         </Link>
         <Card>
           <div className="text-center py-8">
             <AlertTriangle size={24} className="text-red-500 mx-auto mb-3" />
-            <p className="font-medium text-text mb-1">Error loading audit</p>
-            <p className="text-sm text-muted">{error || 'Audit not found'}</p>
+            <p className="font-medium text-ink mb-1">Error loading audit</p>
+            <p className="text-sm text-m-muted">{error || 'Audit not found'}</p>
           </div>
         </Card>
       </div>
@@ -679,7 +682,7 @@ export default function BrandAuditDetail({
       {/* Back */}
       <Link
         href="/dashboard/audits?type=brand_identity"
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} /> Back to Brand Audits
       </Link>
@@ -689,11 +692,11 @@ export default function BrandAuditDetail({
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Palette size={18} className="text-brand flex-shrink-0" />
-            <h1 className="text-2xl font-medium font-sans text-text truncate">{displayName}</h1>
+            <h1 className="text-2xl font-medium font-sans text-ink truncate">{displayName}</h1>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full">
+            <p className="text-m-muted text-sm">{formatDate(audit.created_at)}</p>
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
               <Palette size={10} />
               Brand Identity
             </span>
@@ -704,59 +707,59 @@ export default function BrandAuditDetail({
         <div className="flex items-center gap-2 flex-shrink-0 relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-off transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-m-muted hover:text-ink hover:bg-paper-2 transition-colors"
             aria-label="Audit settings"
           >
             <MoreVertical size={16} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-[100] w-52 rounded-xl border border-border/40 dark:border-white/[0.08] bg-white dark:bg-[#1E1E24] shadow-xl shadow-black/20 dark:shadow-black/50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 top-10 z-[100] w-52 rounded-xl border border-rule/40 bg-paper shadow-xl shadow-black/20 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
               {isCompleted && (
                 <>
                   <button
                     onClick={() => { handleShare(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
                   >
-                    <Share2 size={13} className="text-muted" />
+                    <Share2 size={13} className="text-m-muted" />
                     {shareUrl ? 'Copy share link' : 'Create share link'}
                   </button>
-                  <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+                  <div className="my-1.5 h-px bg-rule/30" />
                 </>
               )}
               {audit.brand_identity_id && (
                 <Link
                   href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
                   onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
                 >
-                  <RefreshCw size={13} className="text-muted" />
+                  <RefreshCw size={13} className="text-m-muted" />
                   Re-audit this brand
-                  <span className="ml-auto text-[11px] text-muted">1 credit</span>
+                  <span className="ml-auto text-[11px] text-m-muted">1 credit</span>
                 </Link>
               )}
               {canRetry && (
                 <button
                   onClick={() => { handleRetry(); setMenuOpen(false); }}
                   disabled={retrying}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors disabled:opacity-50"
                 >
-                  <Zap size={13} className="text-muted" />
+                  <Zap size={13} className="text-m-muted" />
                   {isStuck ? 'Restart stuck audit' : 'Retry audit'}
                 </button>
               )}
               <button
                 onClick={() => { handleRestart(); setMenuOpen(false); }}
                 disabled={restarting}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors disabled:opacity-50"
               >
-                <RefreshCw size={13} className="text-muted" />
+                <RefreshCw size={13} className="text-m-muted" />
                 Restart audit
               </button>
-              <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+              <div className="my-1.5 h-px bg-rule/30" />
               <button
                 onClick={() => { handleDelete(); setMenuOpen(false); }}
                 disabled={deleting}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
               >
                 <Trash2 size={13} />
                 Delete audit
@@ -772,8 +775,8 @@ export default function BrandAuditDetail({
           <div className="flex items-center gap-3 mb-5">
             <StatusIcon size={20} className="text-brand" />
             <div>
-              <p className="font-medium text-text">{meta.label}</p>
-              <p className="text-sm text-muted">{meta.description}</p>
+              <p className="font-medium text-ink">{meta.label}</p>
+              <p className="text-sm text-m-muted">{meta.description}</p>
             </div>
             <Loader2 size={16} className="text-brand animate-spin ml-auto" />
           </div>
@@ -787,17 +790,17 @@ export default function BrandAuditDetail({
                 <div key={step} className="flex flex-col items-center flex-1">
                   <div className={clsx(
                     'w-full h-2 rounded-full transition-colors',
-                    isActive ? 'bg-brand' : 'bg-off',
+                    isActive ? 'bg-brand' : 'bg-paper-2',
                     isCurrent && 'animate-pulse',
                   )} />
-                  <p className={clsx('text-xs font-medium mt-1.5', isActive ? 'text-brand' : 'text-muted')}>
+                  <p className={clsx('text-xs font-medium mt-1.5', isActive ? 'text-brand' : 'text-m-muted')}>
                     {labels[idx]}
                   </p>
                 </div>
               );
             })}
           </div>
-          <p className="text-sm text-muted mt-4 text-center">This page updates automatically.</p>
+          <p className="text-sm text-m-muted mt-4 text-center">This page updates automatically.</p>
         </Card>
       )}
 
@@ -806,12 +809,12 @@ export default function BrandAuditDetail({
         <Card className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isFailed ? 'bg-red-50 dark:bg-red-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20'}`}>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isFailed ? 'bg-red-50' : 'bg-yellow-50'}`}>
                 <AlertTriangle size={20} className={isFailed ? 'text-red-500' : 'text-yellow-500'} />
               </div>
               <div>
-                <p className="font-medium text-text">{isFailed ? 'Audit failed' : 'Audit appears stuck'}</p>
-                <p className="text-sm text-muted">
+                <p className="font-medium text-ink">{isFailed ? 'Audit failed' : 'Audit appears stuck'}</p>
+                <p className="text-sm text-m-muted">
                   {isFailed
                     ? ((audit as any).crawl_error || 'An error occurred during processing.')
                     : `Processing hasn't progressed in ${Math.round(stuckMinutes)} minutes. You can restart it.`}
@@ -833,129 +836,114 @@ export default function BrandAuditDetail({
       {/* ── Completed: Report ────────────────────────────── */}
       {isCompleted && report && (
         <>
-          {/* ── Score card (matches website audit layout) ───── */}
-          <Card className="mb-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-1">
-              {/* Score ring */}
-              <div className="flex-shrink-0">
-                <ScoreRing score={overallScore || 0} size={110} />
-              </div>
-
-              {/* Score details + actions */}
-              <div className="flex-1 min-w-0 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap mb-1">
-                  <h2 className="text-xl font-medium text-text">Overall Score</h2>
-                  <span className="text-xs font-medium text-muted bg-off dark:bg-white/[0.04] px-2 py-0.5 rounded-full">
-                    {categoryScores.length} of 7 categories
-                  </span>
-                  <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
-                    (overallScore || 0) >= 70
-                      ? 'bg-emerald-500/10 [color:var(--ok)]'
-                      : (overallScore || 0) >= 40
-                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                        : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
-                  }`}>
-                    {(overallScore || 0) >= 70 ? 'Good' : (overallScore || 0) >= 40 ? 'Decent' : 'Needs work'}
-                  </span>
+          {/* ── Hero Score Card (v2 editorial style matching website audit) ───── */}
+          <div className="border border-ink overflow-hidden mb-6">
+            <div className="p-6 sm:p-8">
+              {/* Mobile: centered stack — Desktop: horizontal row */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                {/* Score ring */}
+                <div className="flex-shrink-0">
+                  <ScoreRing score={overallScore || 0} size={110} strokeWidth={7} />
                 </div>
 
-                {/* Category mini-scores */}
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                  {categoryScores.map((cat) => {
-                    const config = getCategoryConfig(cat.slug);
-                    return (
-                      <div key={cat.slug} className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
-                        <span className="text-xs text-muted">{cat.name}</span>
-                        <span className={clsx('text-xs font-medium', scoreColor(cat.score))}>{cat.score}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                {/* Score details */}
+                <div className="flex-1 min-w-0 text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
+                    <h2 className="font-sans text-[22px] text-ink font-medium tracking-[-0.01em]">{displayName}</h2>
+                  </div>
+                  <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-1">
+                    {findings.length} findings · {categoryScores.length} categories
+                  </p>
 
-                {/* Action buttons */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                    <Download size={12} /> PDF
-                  </a>
-                  <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                    <Download size={12} /> Word
-                  </a>
-                  {audit.brand_identity_id && (
-                    <Link
-                      href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
-                    >
-                      <RefreshCw size={12} /> Re-audit
-                    </Link>
+                  {/* Category mini-scores with colored dots */}
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                    {categoryScores.map((cat) => {
+                      const config = getCategoryConfig(cat.slug);
+                      return (
+                        <div key={cat.slug} className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                          <span className="text-xs text-m-muted">{cat.name}</span>
+                          <span className={clsx('text-xs font-medium', scoreColor(cat.score))}>{cat.score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Severity counts in mono uppercase */}
+                  {report.total_issues > 0 && (
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
+                      {(report.critical_count || 0) > 0 && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
+                          <span className="w-2 h-2 rounded-full bg-severe" /> {report.critical_count} critical
+                        </span>
+                      )}
+                      {(report.high_count || 0) > 0 && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-warn">
+                          <span className="w-2 h-2 rounded-full bg-warn" /> {report.high_count} high
+                        </span>
+                      )}
+                      {((report.medium_count || 0) + (report.low_count || 0)) > 0 && (
+                        <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                          {(report.medium_count || 0) + (report.low_count || 0)} more
+                        </span>
+                      )}
+                    </div>
                   )}
-                  <button
-                    onClick={handleShare}
-                    disabled={shareLoading}
-                    className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
-                  >
-                    {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
-                  </button>
                 </div>
-                <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
               </div>
             </div>
 
-            {/* Issue summary strip */}
-            {report.total_issues > 0 && (
-              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
-                <span className="text-sm font-medium text-text">
-                  {report.total_issues} issues found
-                </span>
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  {(report.critical_count || 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      {report.critical_count} critical
-                    </span>
-                  )}
-                  {(report.high_count || 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                      {report.high_count} high
-                    </span>
-                  )}
-                  {(report.medium_count || 0) > 0 && (
-                    <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{report.medium_count} medium</span>
-                  )}
-                  {(report.low_count || 0) > 0 && (
-                    <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{report.low_count} low</span>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
+            {/* Action strip */}
+            <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
+              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
+                <Download size={12} /> PDF
+              </a>
+              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
+                <Download size={12} /> Word
+              </a>
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors disabled:opacity-50"
+              >
+                {shareCopied ? <><Check size={12} className="text-ok" /> Copied</> : <><Share2 size={12} /> Share</>}
+              </button>
+              {audit.brand_identity_id && (
+                <Link
+                  href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
+                  className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
+                >
+                  <RefreshCw size={12} /> Re-audit
+                </Link>
+              )}
+            </div>
+          </div>
 
           {/* Share URL */}
           {shareUrl && (
-            <p className="text-center text-[11px] text-muted mb-4">
+            <p className="text-center text-[11px] text-m-muted mb-4">
               Share link: <span className="font-mono text-brand">{shareUrl}</span>
             </p>
           )}
 
           {/* Track progress tip */}
-          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 border border-brand/20">
             <RefreshCw size={15} className="text-brand flex-shrink-0" />
-            <p className="text-xs text-muted">
-              <span className="font-medium text-text">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+            <p className="text-xs text-m-muted">
+              <span className="font-medium text-ink">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
 
           {/* Executive summary */}
           {report.executive_summary && (
             <Card className="mb-6">
-              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Executive Summary</p>
-              <p className="text-sm text-text/80 leading-relaxed">{report.executive_summary}</p>
+              <p className="text-xs font-medium text-m-muted uppercase tracking-wider mb-2">Executive Summary</p>
+              <p className="text-sm text-ink/80 leading-relaxed">{report.executive_summary}</p>
             </Card>
           )}
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-5 p-1 bg-off/60 dark:bg-white/[0.03] rounded-xl border border-border/30 dark:border-white/[0.04]">
+          <div className="flex gap-1 mb-5 p-1 bg-paper-2/60 rounded-xl border border-rule/30">
             {(['overview', 'findings'] as const).map((tab) => (
               <button
                 key={tab}
@@ -963,8 +951,8 @@ export default function BrandAuditDetail({
                 className={clsx(
                   'flex-1 text-xs font-medium py-2 px-3 rounded-lg transition-all capitalize',
                   activeTab === tab
-                    ? 'bg-card text-text shadow-sm border border-border/40 dark:border-white/[0.06]'
-                    : 'text-muted hover:text-text hover:bg-card/50',
+                    ? 'bg-paper text-ink shadow-sm border border-rule/40'
+                    : 'text-m-muted hover:text-ink hover:bg-paper/50',
                 )}
               >
                 {tab === 'overview' ? 'Overview' : `Findings (${findings.length})`}
@@ -976,32 +964,38 @@ export default function BrandAuditDetail({
           {activeTab === 'overview' && (
             <div className="space-y-3">
               {/* Category score bars overview */}
-              <Card className="mb-2">
-                <p className="text-xs font-medium text-muted uppercase tracking-wider mb-4">Score by Category</p>
-                <div className="space-y-3">
-                  {categoryScores.map((cat) => {
+              <div className="border border-ink mb-6 overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-rule">
+                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">Score by Category</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  {categoryScores.map((cat, idx) => {
                     const config = getCategoryConfig(cat.slug);
                     const Icon = config.icon;
                     return (
                       <button
                         key={cat.slug}
                         onClick={() => toggleCategory(cat.slug)}
-                        className="w-full flex items-center gap-3 group"
+                        className={`flex items-center gap-4 px-5 py-4 border-b border-rule ${idx % 2 === 0 ? 'sm:border-r' : ''} hover:bg-paper-2 transition-colors`}
                       >
-                        <Icon size={14} style={{ color: config.color }} className="flex-shrink-0" />
-                        <span className="text-xs text-text min-w-[140px] text-left truncate">{cat.name}</span>
-                        <div className="flex-1 h-2 rounded-full bg-off dark:bg-white/[0.04]">
-                          <div
-                            className={clsx('h-full rounded-full transition-all', scoreBarColor(cat.score))}
-                            style={{ width: `${cat.score}%` }}
-                          />
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Icon size={14} style={{ color: config.color }} className="flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-sans font-medium text-ink mb-1.5 text-left">{cat.name}</p>
+                            <div className="w-full bg-rule/50 h-[3px] rounded-full">
+                              <div
+                                className={clsx('h-full rounded-full transition-all', scoreBarColor(cat.score))}
+                                style={{ width: `${cat.score}%`, opacity: 0.75 }}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <span className={clsx('text-xs font-semibold min-w-[32px] text-right', scoreColor(cat.score))}>{cat.score}</span>
+                        <span className={clsx('font-mono text-[16px] font-medium flex-shrink-0', scoreColor(cat.score))}>{cat.score}</span>
                       </button>
                     );
                   })}
                 </div>
-              </Card>
+              </div>
 
               {/* Detailed category sections */}
               {categoryScores.map((cat) => (
@@ -1024,8 +1018,8 @@ export default function BrandAuditDetail({
                 <Card>
                   <div className="text-center py-8">
                     <CheckCircle2 size={24} className="text-green-500 mx-auto mb-3" />
-                    <p className="font-medium text-text">No issues found</p>
-                    <p className="text-sm text-muted mt-1">Your brand materials look great!</p>
+                    <p className="font-medium text-ink">No issues found</p>
+                    <p className="text-sm text-m-muted mt-1">Your brand materials look great!</p>
                   </div>
                 </Card>
               )}
