@@ -2,11 +2,11 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown, ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import { useAuth } from '@/context/AuthContext'
-import Navbar from '@/components/layout/Navbar'
+import { MarketingBody } from '@/components/marketing/MarketingBody'
+import { Logo } from '@/components/marketing/Logo'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -28,12 +28,83 @@ function getPasswordChecks(pw: string) {
   ]
 }
 
+function AlertIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+      <circle cx="8" cy="8" r="7" stroke="var(--severe)" strokeWidth="1.5" fill="none" />
+      <path d="M8 5v3.5" stroke="var(--severe)" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="11.5" r="0.75" fill="var(--severe)" />
+    </svg>
+  )
+}
+
+function SuccessIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+      <circle cx="8" cy="8" r="7" stroke="var(--ok)" strokeWidth="1.5" fill="none" />
+      <path d="M5 8.5L7 10.5L11 6" stroke="var(--ok)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function CheckIcon({ met }: { met: boolean }) {
+  return (
+    <div className={`w-4 h-4 flex items-center justify-center shrink-0 transition-colors ${met ? 'text-signal' : 'text-rule'}`}>
+      {met ? (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6.5L4.5 9L10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        </svg>
+      )}
+    </div>
+  )
+}
+
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  )
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+      <path d="M3.5 5.5L7 9L10.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-surface">
-        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
-      </div>
+      <MarketingBody>
+        <div className="flex items-center justify-center min-h-screen bg-paper">
+          <div className="w-6 h-6 border-2 border-rule border-t-ink rounded-full animate-spin" />
+        </div>
+      </MarketingBody>
     }>
       <RegisterContent />
     </Suspense>
@@ -158,73 +229,62 @@ function RegisterContent() {
 
   if (authLoading || authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface">
-        <div className="w-8 h-8 border-2 border-border border-t-white rounded-full animate-spin" />
-      </div>
+      <MarketingBody>
+        <div className="flex items-center justify-center min-h-screen bg-paper">
+          <div className="w-6 h-6 border-2 border-rule border-t-ink rounded-full animate-spin" />
+        </div>
+      </MarketingBody>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface relative overflow-hidden">
-      <Navbar />
+    <MarketingBody>
+      <div className="min-h-screen flex flex-col bg-paper">
+        {/* Header */}
+        <header className="py-6 px-8 max-sm:px-5">
+          <Logo size={26} />
+        </header>
 
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-        <img
-          src="/gradients/bg-hero.jpg"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* Content */}
-      <section className="relative z-10 flex-1 flex items-center justify-center py-16 sm:py-24 px-6 sm:px-10">
-        <div className="w-full max-w-xl">
-
-          {/* Heading */}
-          <div className="text-center mb-10">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-3">
-              Create account
-            </p>
-            <h1
-              className="font-heading text-[2rem] sm:text-[2.75rem] font-bold text-text mb-3"
-              style={{ lineHeight: '1.1' }}
-            >
-              Get your free <span className="text-lime-gradient">UX audit.</span>
-            </h1>
-            <p className="text-base text-muted leading-relaxed max-w-md mx-auto">
-              96 checkpoints across 6 modules. No credit card required. No subscription. Your first audit is free — no expiration, no catches.
-            </p>
-          </div>
-
-          {/* Pending URL badge */}
-          {pendingUrl && (
-            <div className="mb-6 rounded-2xl border border-border bg-card backdrop-blur-sm px-5 py-3 text-center">
-              <p className="text-sm text-muted font-medium truncate">Auditing: {pendingUrl}</p>
+        {/* Content */}
+        <section className="flex-1 flex items-center justify-center px-8 pb-16 max-sm:px-5">
+          <div className="w-full max-w-[460px]">
+            {/* Heading */}
+            <div className="mb-8">
+              <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-4 block">Create account</span>
+              <h1 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-3" style={{ fontSize: 'clamp(32px, 5vw, 48px)' }}>
+                Get your free <em className="italic text-signal">UX audit.</em>
+              </h1>
+              <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">
+                96 checkpoints across 6 modules. No credit card required. Your first audit is free — no catches.
+              </p>
             </div>
-          )}
 
-          {/* Trust signal */}
-          <div className="flex items-center justify-center gap-2 mb-6 text-xs text-muted">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <span>Your data is encrypted and never shared. We take privacy seriously.</span>
-          </div>
+            {/* Pending URL badge */}
+            {pendingUrl && (
+              <div className="mb-6 border border-rule bg-paper-2 px-5 py-3">
+                <p className="text-[13px] font-mono text-ink-2 truncate">Auditing: {pendingUrl}</p>
+              </div>
+            )}
 
-          {/* Card */}
-          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
+            {/* Trust signal */}
+            <div className="flex items-center gap-2 mb-6">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span className="font-sans text-[12px] text-m-muted">Your data is encrypted and never shared.</span>
+            </div>
+
+            {/* Alerts */}
             {error && (
-              <div role="alert" aria-live="assertive" className="alert-error flex items-start gap-3 mb-6">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div role="alert" aria-live="assertive" className="flex items-start gap-3 mb-6 p-4 border border-severe/30 bg-severe/5 font-sans text-[14px] text-ink-2">
+                <AlertIcon />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div role="status" aria-live="polite" className="alert-success flex items-start gap-3 mb-6">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div role="status" aria-live="polite" className="flex items-start gap-3 mb-6 p-4 border border-ok/30 bg-ok/5 font-sans text-[14px] text-ink-2">
+                <SuccessIcon />
                 <span>{success}</span>
               </div>
             )}
@@ -234,10 +294,10 @@ function RegisterContent() {
               type="button"
               onClick={() => handleOAuth('google')}
               disabled={!!oauthLoading || loading}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 min-h-[52px] rounded-full border border-border bg-card hover:bg-card-hover transition-colors text-base font-medium text-text disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 border border-rule bg-paper hover:bg-paper-2 transition-colors text-[15px] font-sans font-medium text-ink disabled:opacity-50"
             >
               {oauthLoading === 'google' ? (
-                <span className="spinner" />
+                <div className="w-5 h-5 border-2 border-rule border-t-ink rounded-full animate-spin" />
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -251,15 +311,15 @@ function RegisterContent() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-8">
-              <div className="flex-1 h-px bg-card-hover" />
-              <span className="text-xs text-muted uppercase tracking-wider">or</span>
-              <div className="flex-1 h-px bg-card-hover" />
+              <div className="flex-1 h-px bg-rule" />
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-m-muted">or</span>
+              <div className="flex-1 h-px bg-rule" />
             </div>
 
             {/* Email form */}
             <form onSubmit={handleSubmit} className="space-y-5" aria-label="Create account form">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-muted mb-2">Full Name</label>
+                <label htmlFor="fullName" className="block font-mono text-[11px] tracking-[0.06em] uppercase text-m-muted mb-2">Full Name</label>
                 <input
                   id="fullName"
                   type="text"
@@ -269,14 +329,14 @@ function RegisterContent() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="Sarah Chen"
-                  className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 text-base font-body ${errors.fullName ? 'border-red-500/50' : ''}`}
+                  className={`w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none px-5 py-3.5 text-[15px] font-sans transition-colors ${errors.fullName ? 'border-severe' : ''}`}
                   disabled={loading}
                 />
-                {errors.fullName && <p className="text-xs text-red-400 mt-2">{errors.fullName}</p>}
+                {errors.fullName && <p className="text-[12px] text-severe mt-1.5 font-sans">{errors.fullName}</p>}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-muted mb-2">Email</label>
+                <label htmlFor="email" className="block font-mono text-[11px] tracking-[0.06em] uppercase text-m-muted mb-2">Email</label>
                 <input
                   id="email"
                   type="email"
@@ -286,14 +346,14 @@ function RegisterContent() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 text-base font-body ${errors.email ? 'border-red-500/50' : ''}`}
+                  className={`w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none px-5 py-3.5 text-[15px] font-sans transition-colors ${errors.email ? 'border-severe' : ''}`}
                   disabled={loading}
                 />
-                {errors.email && <p className="text-xs text-red-400 mt-2">{errors.email}</p>}
+                {errors.email && <p className="text-[12px] text-severe mt-1.5 font-sans">{errors.email}</p>}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-muted mb-2">Password</label>
+                <label htmlFor="password" className="block font-mono text-[11px] tracking-[0.06em] uppercase text-m-muted mb-2">Password</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -304,17 +364,17 @@ function RegisterContent() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a strong password"
-                    className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.password ? 'border-red-500/50' : ''}`}
+                    className={`w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none px-5 py-3.5 pr-12 text-[15px] font-sans transition-colors ${errors.password ? 'border-severe' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors z-10 p-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-m-muted hover:text-ink transition-colors"
                     tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
                 </div>
 
@@ -322,27 +382,21 @@ function RegisterContent() {
                   <div className="mt-3 space-y-1.5">
                     {passwordChecks.map((check) => (
                       <div key={check.label} className="flex items-center gap-2">
-                        <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                          check.met ? 'bg-[#BFFA60]' : 'bg-card-hover'
-                        }`}>
-                          {check.met && (
-                            <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          )}
-                        </div>
-                        <span className={`text-xs transition-colors ${check.met ? 'text-[#BFFA60]' : 'text-muted'}`}>
+                        <CheckIcon met={check.met} />
+                        <span className={`text-[12px] font-sans transition-colors ${check.met ? 'text-signal' : 'text-m-muted'}`}>
                           {check.label}
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
-                {errors.password && <p className="text-xs text-red-400 mt-2">{errors.password}</p>}
+                {errors.password && <p className="text-[12px] text-severe mt-1.5 font-sans">{errors.password}</p>}
               </div>
 
-              {/* Show confirm password only after all password checks pass */}
+              {/* Confirm password — only after all checks pass */}
               {passwordChecks.every(c => c.met) && (
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-muted mb-2">Confirm Password</label>
+                <label htmlFor="confirmPassword" className="block font-mono text-[11px] tracking-[0.06em] uppercase text-m-muted mb-2">Confirm Password</label>
                 <div className="relative">
                   <input
                     id="confirmPassword"
@@ -353,125 +407,114 @@ function RegisterContent() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repeat your password"
-                    className={`w-full rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-6 py-4 pr-12 text-base font-body ${errors.confirmPassword ? 'border-red-500/50' : ''}`}
+                    className={`w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none px-5 py-3.5 pr-12 text-[15px] font-sans transition-colors ${errors.confirmPassword ? 'border-severe' : ''}`}
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(prev => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted hover:text-muted transition-colors z-10 p-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-m-muted hover:text-ink transition-colors"
                     tabIndex={-1}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
                 </div>
                 {formData.confirmPassword.length > 0 && (
                   <div className="flex items-center gap-2 mt-2">
-                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                      formData.password === formData.confirmPassword ? 'bg-[#BFFA60]' : 'bg-card-hover'
-                    }`}>
-                      {formData.password === formData.confirmPassword && (
-                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      )}
-                    </div>
-                    <span className={`text-xs transition-colors ${
-                      formData.password === formData.confirmPassword ? 'text-[#BFFA60]' : 'text-muted'
+                    <CheckIcon met={formData.password === formData.confirmPassword} />
+                    <span className={`text-[12px] font-sans transition-colors ${
+                      formData.password === formData.confirmPassword ? 'text-signal' : 'text-m-muted'
                     }`}>
                       {formData.password === formData.confirmPassword ? 'Passwords match' : 'Passwords do not match'}
                     </span>
                   </div>
                 )}
-                {errors.confirmPassword && <p className="text-xs text-red-400 mt-2">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && <p className="text-[12px] text-severe mt-1.5 font-sans">{errors.confirmPassword}</p>}
               </div>
               )}
 
               {/* Marketing consent */}
-              <div className="flex items-start gap-3 pt-2">
+              <div className="flex items-start gap-3 pt-1">
                 <button
                   type="button"
                   role="checkbox"
                   aria-checked={marketingEmails}
                   onClick={() => setMarketingEmails(prev => !prev)}
-                  className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+                  className={`mt-0.5 w-5 h-5 flex items-center justify-center shrink-0 border transition-colors ${
                     marketingEmails
-                      ? 'bg-[#BFFA60] border-[#BFFA60]'
-                      : 'bg-card-hover border-border'
+                      ? 'bg-signal border-signal'
+                      : 'bg-paper-2 border-rule'
                   }`}
                 >
                   {marketingEmails && (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6L5.5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6L5.5 8.5L9.5 3.5" stroke="var(--paper)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   )}
                 </button>
                 <label
                   onClick={() => setMarketingEmails(prev => !prev)}
-                  className="text-sm text-muted leading-relaxed cursor-pointer select-none"
+                  className="text-[13px] font-sans text-ink-2 leading-relaxed cursor-pointer select-none"
                 >
-                  Send me product updates, tips, and occasional promotions. You can unsubscribe anytime.
+                  Send me product updates and tips. You can unsubscribe anytime.
                 </label>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="group w-full inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#111114] text-base font-medium transition-all hover:opacity-90 min-h-[52px] disabled:opacity-60"
+                className="group w-full flex items-center justify-center gap-2 bg-ink text-paper font-sans font-medium text-[15px] px-6 py-4 transition-all hover:bg-signal disabled:opacity-50"
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <div className="w-4 h-4 border-2 border-paper/30 border-t-paper rounded-full animate-spin" />
                     Creating account...
                   </>
                 ) : (
                   <>
                     Create account
-                    <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                    <ArrowRightIcon />
                   </>
                 )}
               </button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-muted leading-relaxed">
-              Your audit results are private and encrypted. We never share your data.
-              <br />
+            <p className="mt-6 text-center text-[12px] font-sans text-m-muted leading-relaxed">
               By creating an account you agree to our{' '}
-              <Link href="/terms" className="underline hover:text-text transition-colors">terms</Link>{' '}and{' '}
-              <Link href="/privacy" className="underline hover:text-text transition-colors">privacy policy</Link>.
+              <Link href="/terms" className="underline decoration-signal decoration-1 underline-offset-2 hover:text-signal transition-colors">terms</Link>{' '}and{' '}
+              <Link href="/privacy" className="underline decoration-signal decoration-1 underline-offset-2 hover:text-signal transition-colors">privacy policy</Link>.
+            </p>
+
+            {/* FAQ toggle */}
+            <div className="mt-6">
+              <button
+                onClick={() => setFaqOpen(prev => !prev)}
+                className="w-full flex items-center justify-center gap-1.5 text-[13px] font-sans text-m-muted hover:text-ink transition-colors py-2"
+              >
+                What happens after I sign up?
+                <ChevronIcon open={faqOpen} />
+              </button>
+              {faqOpen && (
+                <div className="mt-2 p-5 border border-rule bg-paper-2">
+                  <p className="text-[13px] font-sans text-ink-2 leading-relaxed">
+                    You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 96 checkpoints in 6 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Sign in link */}
+            <p className="mt-6 text-center text-[14px] font-sans text-ink-2">
+              Already have an account?{' '}
+              <Link
+                href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'}
+                className="font-medium text-ink underline decoration-signal decoration-2 underline-offset-2 hover:text-signal transition-colors"
+              >
+                Sign in
+              </Link>
             </p>
           </div>
-
-          {/* FAQ toggle */}
-          <div className="mt-6">
-            <button
-              onClick={() => setFaqOpen(prev => !prev)}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-muted hover:text-muted transition-colors py-2 font-medium"
-            >
-              What happens after I sign up?
-              <ChevronDown size={14} className={`transition-transform ${faqOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {faqOpen && (
-              <div className="mt-2 p-5 rounded-2xl bg-card border border-border">
-                <p className="text-sm text-muted leading-relaxed">
-                  You&apos;ll land on your dashboard where you can paste any website URL. Our AI crawls and analyses it across 96 checkpoints in 6 modules in under 10 minutes. You get an interactive report plus PDF and Word downloads — your first audit is completely free.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Sign in link */}
-          <p className="mt-6 text-center text-sm text-muted">
-            Already have an account?{' '}
-            <Link
-              href={pendingUrl ? `/login?redirectTo=${encodeURIComponent(postAuthRedirect)}` : '/login'}
-              className="font-medium text-volt hover:underline transition-colors"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </MarketingBody>
   )
 }

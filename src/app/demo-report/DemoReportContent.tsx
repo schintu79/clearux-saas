@@ -2,62 +2,34 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import SmartCta from '@/components/ui/SmartCta'
-import {
-  ArrowRight,
-  TrendingUp,
-  Download,
-  Share2,
-  RefreshCw,
-  Search,
-  Globe2,
-  Fingerprint,
-  Layers,
-  Eye,
-  Target,
-  Type,
-  MousePointerClick,
-  Shield,
-  Smartphone,
-  Lightbulb,
-  Accessibility,
-  Code2,
-  Rocket,
-  Users,
-  Palette,
-  PenTool,
-  FileText,
-  LayoutGrid,
-  MessageSquare,
-} from 'lucide-react'
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 
-/* ══════════════════════════════════════════════════════════════
-   SHARED HELPERS
-   ══════════════════════════════════════════════════════════════ */
+/* ── Helpers ── */
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-emerald-600 dark:text-emerald-400'
-  if (s >= 40) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+  if (s >= 70) return 'text-ok'
+  if (s >= 40) return 'text-warn'
+  return 'text-severe'
 }
 
 function scoreBg(s: number) {
-  if (s >= 70) return 'bg-emerald-500'
-  if (s >= 40) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (s >= 70) return 'bg-ok'
+  if (s >= 40) return 'bg-warn'
+  return 'bg-severe'
 }
 
-function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
-  const strokeWidth = 6
+function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
+  const strokeWidth = 5
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference * (1 - score / 100)
-  const color = score >= 70 ? '#22C55E' : score >= 40 ? '#EAB308' : '#EF4444'
+  const color = score >= 70 ? 'var(--ok)' : score >= 40 ? 'var(--warn)' : 'var(--severe)'
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--rule)" strokeWidth={strokeWidth} />
         <circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
@@ -65,7 +37,7 @@ function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="font-heading text-2xl font-light text-text">{score}</span>
+        <span className="font-serif text-[24px] text-ink">{score}</span>
       </div>
     </div>
   )
@@ -73,29 +45,34 @@ function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
 
 function SeverityDot({ severity }: { severity: string }) {
   const colors: Record<string, string> = {
-    critical: 'bg-red-500',
-    high: 'bg-orange-500',
-    medium: 'bg-yellow-500',
-    low: 'bg-blue-500',
+    critical: 'bg-severe',
+    high: 'bg-warn',
+    medium: 'bg-signal',
+    low: 'bg-ok',
   }
   return <span className={`w-2 h-2 rounded-full ${colors[severity] || colors.medium}`} />
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WEBSITE AUDIT DEMO DATA
-   ══════════════════════════════════════════════════════════════ */
+/* ── Demo Data ── */
 
 const WEBSITE_MODULES = [
-  { name: 'Foundation', score: 81, icon: Layers, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
-  { name: 'Human Experience', score: 71, icon: Users, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-  { name: 'Inclusive Design', score: 67, icon: Accessibility, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { name: 'Future Readiness', score: 52, icon: Rocket, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { name: 'Brand Consistency', score: 78, icon: Fingerprint, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  { name: 'SEO Structure', score: 73, icon: Code2, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { name: 'Foundation', score: 81 },
+  { name: 'Human Experience', score: 71 },
+  { name: 'Inclusive Design', score: 67 },
+  { name: 'Future Readiness', score: 52 },
+  { name: 'Brand Consistency', score: 78 },
+  { name: 'SEO Structure', score: 73 },
 ]
 
 const WEBSITE_FINDINGS = [
-  { severity: 'critical', title: 'No structured data (Schema.org) detected', category: 'Future Readiness' },
+  {
+    severity: 'critical',
+    title: 'No structured data (Schema.org) detected',
+    category: 'Future Readiness',
+    observation: 'We crawled all 47 public pages and found zero JSON-LD, Microdata, or RDFa markup. Search engines and AI assistants have no machine-readable context about your products, pricing, or FAQs.',
+    impact: 'Without structured data, your pages are invisible to AI-powered search (Google SGE, Perplexity, ChatGPT browse). Rich results (star ratings, pricing, FAQ dropdowns) cannot appear — reducing click-through rate by an estimated 20-35% on eligible pages.',
+    fix: 'Add JSON-LD blocks for Organization (homepage), Product (each product page), and FAQPage (FAQ section). Use Google\'s Structured Data Markup Helper to generate the initial code, then validate with the Rich Results Test. Estimated effort: 2-4 hours for a developer.',
+  },
   { severity: 'critical', title: 'Missing alt text on 12 product images', category: 'Inclusive Design' },
   { severity: 'high', title: 'Primary CTA below the fold on mobile', category: 'Human Experience' },
   { severity: 'high', title: 'Trust signals missing from checkout page', category: 'Foundation' },
@@ -104,43 +81,49 @@ const WEBSITE_FINDINGS = [
   { severity: 'low', title: 'No semantic HTML landmarks detected', category: 'SEO Structure' },
 ]
 
-/* ══════════════════════════════════════════════════════════════
-   BRAND IDENTITY AUDIT DEMO DATA
-   ══════════════════════════════════════════════════════════════ */
-
 const BRAND_MODULES = [
-  { name: 'Visual Consistency', score: 88, icon: Palette, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
-  { name: 'Tone of Voice', score: 74, icon: MessageSquare, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-  { name: 'Professionalism', score: 91, icon: Shield, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { name: 'Value Proposition', score: 69, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { name: 'Structure & Organisation', score: 82, icon: LayoutGrid, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  { name: 'Competitive Positioning', score: 71, icon: TrendingUp, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-  { name: 'Wording Quality', score: 77, icon: Type, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+  { name: 'Visual Consistency', score: 88 },
+  { name: 'Tone of Voice', score: 74 },
+  { name: 'Professionalism', score: 91 },
+  { name: 'Value Proposition', score: 69 },
+  { name: 'Structure & Organisation', score: 82 },
+  { name: 'Competitive Positioning', score: 71 },
+  { name: 'Wording Quality', score: 77 },
 ]
 
 const BRAND_FINDINGS = [
-  { severity: 'high', title: 'Value proposition lacks supporting proof points', category: 'Value Proposition' },
+  {
+    severity: 'high',
+    title: 'Value proposition lacks supporting proof points',
+    category: 'Value Proposition',
+    observation: 'Across 14 reviewed brand documents, value proposition statements rely on generic claims ("best-in-class", "industry-leading") with zero supporting evidence. No case studies, metrics, or customer testimonials back up the claims.',
+    impact: 'Unsupported claims erode trust with sophisticated buyers. Research shows B2B prospects are 63% more likely to shortlist vendors who prove claims with specific numbers. Without proof points, your brand reads as aspirational rather than credible.',
+    fix: 'Attach one concrete proof point per claim — a metric, customer quote, or case study reference. Example: replace "industry-leading uptime" with "99.97% uptime over 24 months, verified by an independent monitor." Audit all 14 docs systematically.',
+  },
   { severity: 'high', title: 'Tone shifts between formal and casual across documents', category: 'Tone of Voice' },
   { severity: 'medium', title: 'Competitive positioning is generic — no clear differentiator', category: 'Competitive Positioning' },
   { severity: 'medium', title: 'Secondary colour usage inconsistent across brand assets', category: 'Visual Consistency' },
   { severity: 'low', title: 'Headline copy relies on cliches in 3 documents', category: 'Wording Quality' },
 ]
 
-/* ══════════════════════════════════════════════════════════════
-   DESIGN AUDIT DEMO DATA
-   ══════════════════════════════════════════════════════════════ */
-
 const DESIGN_MODULES = [
-  { name: 'Visual Hierarchy', score: 76, icon: Eye, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10' },
-  { name: 'Component Consistency', score: 83, icon: Layers, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-  { name: 'Accessibility', score: 62, icon: Accessibility, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { name: 'Responsive Design', score: 71, icon: Smartphone, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { name: 'Interaction Design', score: 79, icon: MousePointerClick, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  { name: 'Design System Alignment', score: 85, icon: PenTool, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { name: 'Visual Hierarchy', score: 76 },
+  { name: 'Component Consistency', score: 83 },
+  { name: 'Accessibility', score: 62 },
+  { name: 'Responsive Design', score: 71 },
+  { name: 'Interaction Design', score: 79 },
+  { name: 'Design System Alignment', score: 85 },
 ]
 
 const DESIGN_FINDINGS = [
-  { severity: 'critical', title: 'Colour contrast fails WCAG AA on 4 text elements', category: 'Accessibility' },
+  {
+    severity: 'critical',
+    title: 'Colour contrast fails WCAG AA on 4 text elements',
+    category: 'Accessibility',
+    observation: 'Four text elements use a 3.2:1 contrast ratio against their backgrounds — below the WCAG AA minimum of 4.5:1. Affected: the secondary button label, placeholder text in the search field, the breadcrumb trail, and the disabled-state helper text.',
+    impact: 'Roughly 1 in 12 men and 1 in 200 women have colour vision deficiency. Low-contrast text is unreadable for these users and strains everyone else. WCAG AA compliance is also a legal requirement in many jurisdictions — failure exposes liability.',
+    fix: 'Darken the affected text colours to meet 4.5:1 minimum. For the secondary button, change #9CA3AF to #6B7280. For placeholder text, use #6B7280 instead of #D1D5DB. Test with the WebAIM contrast checker before shipping.',
+  },
   { severity: 'high', title: 'No visible focus states on interactive components', category: 'Accessibility' },
   { severity: 'high', title: 'Information hierarchy unclear on dashboard view', category: 'Visual Hierarchy' },
   { severity: 'medium', title: 'Touch targets under 44px on mobile breakpoint', category: 'Responsive Design' },
@@ -148,22 +131,21 @@ const DESIGN_FINDINGS = [
   { severity: 'low', title: 'Loading state missing on data table component', category: 'Interaction Design' },
 ]
 
-/* ══════════════════════════════════════════════════════════════
-   AUDIT TYPE TABS
-   ══════════════════════════════════════════════════════════════ */
-
 type AuditType = 'website' | 'brand' | 'design'
 
 const AUDIT_TYPES = [
-  { key: 'website' as const, label: 'Website audit', icon: Globe2, site: 'acme.com', score: 71 },
-  { key: 'brand' as const, label: 'Brand identity audit', icon: Fingerprint, site: 'Stripe Rebrand Guidelines', score: 79 },
-  { key: 'design' as const, label: 'Design audit', icon: PenTool, site: 'Checkout Redesign v2.1', score: 76 },
+  { key: 'website' as const, label: 'Website audit', site: 'acme.com', score: 71 },
+  { key: 'brand' as const, label: 'Brand identity', site: 'Stripe Rebrand Guidelines', score: 79 },
+  { key: 'design' as const, label: 'Design audit', site: 'Checkout Redesign v2.1', score: 76 },
 ]
 
-/* ══════════════════════════════════════════════════════════════
-   REPORT MOCKUP COMPONENT
-   ══════════════════════════════════════════════════════════════ */
+const RECOMMENDATIONS: Record<AuditType, string> = {
+  website: 'Add JSON-LD structured data for Organization, Product, and FAQPage schemas. This is the highest-impact fix — essential for AI discoverability and expected to improve your Future Readiness score by 25+ points.',
+  brand: 'Add specific proof points (metrics, case studies, testimonials) to support each value proposition claim. Generic statements reduce trust and make differentiation harder.',
+  design: 'Fix colour contrast on the 4 failing text elements — they currently sit at 3.2:1 ratio against WCAG AA minimum of 4.5:1. This blocks accessibility compliance.',
+}
 
+/* ── Report Mockup ── */
 function ReportMockup({
   auditType,
   site,
@@ -174,270 +156,243 @@ function ReportMockup({
   auditType: AuditType
   site: string
   score: number
-  modules: { name: string; score: number; icon: any; color: string; bg: string }[]
-  findings: { severity: string; title: string; category: string }[]
+  modules: { name: string; score: number }[]
+  findings: { severity: string; title: string; category: string; observation?: string; impact?: string; fix?: string }[]
 }) {
   const criticalCount = findings.filter(f => f.severity === 'critical').length
   const highCount = findings.filter(f => f.severity === 'high').length
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Score card */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="h-1 bg-[var(--volt)]" />
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-            <ScoreRing score={score} />
-            <div className="flex-1 min-w-0 text-center sm:text-left">
-              <h3 className="text-lg font-medium font-heading text-text mb-0.5">{site}</h3>
-              <p className="text-xs text-muted mb-3">
-                {findings.length} findings across {modules.length} modules
-              </p>
+      <div className="border border-ink">
+        <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <ScoreRing score={score} size={88} />
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <h3 className="font-sans text-[22px] text-ink font-medium tracking-[-0.01em] mb-0.5">{site}</h3>
+            <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-4">
+              {findings.length} findings · {modules.length} modules
+            </p>
 
-              {/* Issue summary */}
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
-                {criticalCount > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> {criticalCount} critical
-                  </span>
-                )}
-                {highCount > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" /> {highCount} high
-                  </span>
-                )}
-                <span className="text-[11px] text-muted">
-                  {findings.length - criticalCount - highCount} more
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-5">
+              {criticalCount > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
+                  <span className="w-2 h-2 rounded-full bg-severe" /> {criticalCount} critical
                 </span>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-2">
-                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
-                  <Download size={11} /> PDF
+              )}
+              {highCount > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-warn">
+                  <span className="w-2 h-2 rounded-full bg-warn" /> {highCount} high
                 </span>
-                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
-                  <Download size={11} /> Word
-                </span>
-                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
-                  <Share2 size={11} /> Share
-                </span>
-                <span className="flex items-center gap-1.5 bg-surface border border-border text-text text-[11px] font-medium px-2.5 py-1.5 rounded-lg">
-                  <RefreshCw size={11} /> Re-audit
-                </span>
-              </div>
+              )}
+              <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                {findings.length - criticalCount - highCount} more
+              </span>
             </div>
           </div>
         </div>
+        <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
+          {['PDF', 'Word', 'Share', 'Re-audit'].map((action) => (
+            <span key={action} className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors cursor-default">
+              {action}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Module scores grid */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h4 className="text-sm font-medium text-text mb-4">Module scores</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {modules.map((mod) => {
-            const Icon = mod.icon
-            return (
-              <div key={mod.name} className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border">
-                <div className={`w-8 h-8 rounded-lg ${mod.bg} flex items-center justify-center flex-shrink-0`}>
-                  <Icon size={14} className={mod.color} strokeWidth={1.5} />
+      {/* Module scores */}
+      <div className="border border-ink">
+        <div className="px-6 py-4 border-b border-rule">
+          <h4 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">Module scores</h4>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {modules.map((mod, i) => (
+            <div key={mod.name} className={`flex items-center gap-4 px-5 py-4 border-b border-rule ${i % 3 !== 2 ? 'lg:border-r' : ''} ${i % 2 !== 1 ? 'sm:max-lg:border-r' : ''}`}>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-sans font-medium text-ink mb-1.5">{mod.name}</p>
+                <div className="w-full bg-rule/50 h-[3px] rounded-full">
+                  <div className={`h-full rounded-full ${scoreBg(mod.score)}`} style={{ width: `${mod.score}%`, opacity: 0.75 }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-text truncate">{mod.name}</p>
-                  <div className="w-full bg-border/50 rounded-full h-1 mt-1">
-                    <div className={`h-full rounded-full ${scoreBg(mod.score)}`} style={{ width: `${mod.score}%`, opacity: 0.8 }} />
-                  </div>
-                </div>
-                <span className={`text-sm font-medium flex-shrink-0 ${scoreColor(mod.score)}`}>{mod.score}</span>
               </div>
-            )
-          })}
+              <span className={`font-mono text-[16px] font-medium flex-shrink-0 ${scoreColor(mod.score)}`}>{mod.score}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Top findings */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-medium text-text">Top findings</h4>
-          <span className="text-[11px] text-muted">Ranked by severity</span>
+      <div className="border border-ink">
+        <div className="px-6 py-4 border-b border-rule flex items-center justify-between">
+          <h4 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">Top findings</h4>
+          <span className="font-mono text-[10px] text-m-muted tracking-[0.08em] uppercase">Ranked by severity</span>
         </div>
-        <div className="space-y-2">
+        <div>
           {findings.slice(0, 5).map((finding, i) => (
-            <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-surface border border-border">
-              <SeverityDot severity={finding.severity} />
+            <div key={i} className={`flex items-start gap-3.5 px-6 py-4 ${i < Math.min(findings.length, 5) - 1 ? 'border-b border-rule' : ''}`}>
+              <span className="mt-1.5"><SeverityDot severity={finding.severity} /></span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text leading-snug">{finding.title}</p>
-                <p className="text-[11px] text-muted mt-0.5">{finding.category}</p>
+                <p className="text-[14px] font-sans text-ink leading-[1.45]">{finding.title}</p>
+                <p className="text-[11px] font-mono text-m-muted tracking-[0.04em] mt-1">{finding.category}</p>
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted flex-shrink-0">
+              <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-m-muted flex-shrink-0 mt-0.5">
                 {finding.severity}
               </span>
             </div>
           ))}
         </div>
         {findings.length > 5 && (
-          <p className="text-xs text-muted mt-3 text-center">
-            + {findings.length - 5} more findings in the full report
-          </p>
+          <div className="px-6 py-3 border-t border-rule">
+            <p className="font-mono text-[11px] text-m-muted text-center tracking-[0.06em] uppercase">
+              + {findings.length - 5} more findings in the full report
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Recommendation preview */}
-      <div className="rounded-xl border border-[var(--volt)]/20 bg-[var(--volt)]/[0.03] p-5">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--volt)]/10 flex items-center justify-center flex-shrink-0">
-            <Lightbulb size={14} className="text-[var(--volt)]" />
+      {/* Finding anatomy — expanded first finding */}
+      {findings[0]?.observation && (
+        <div className="border border-ink">
+          <div className="px-6 py-4 border-b border-rule">
+            <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-signal block mb-2">Anatomy of a finding</span>
+            <div className="flex items-center gap-3">
+              <SeverityDot severity={findings[0].severity} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-sans font-medium text-ink">{findings[0].title}</p>
+                <p className="text-[11px] font-mono text-m-muted tracking-[0.04em] mt-0.5">{findings[0].category} · {findings[0].severity}</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-sm font-medium text-text mb-1">Top recommendation</h4>
-            <p className="text-sm text-muted leading-relaxed">
-              {auditType === 'website' && 'Add JSON-LD structured data for Organization, Product, and FAQPage schemas. This is the highest-impact fix — essential for AI discoverability and expected to improve your Future Readiness score by 25+ points.'}
-              {auditType === 'brand' && 'Add specific proof points (metrics, case studies, testimonials) to support each value proposition claim. Generic statements reduce trust and make differentiation harder.'}
-              {auditType === 'design' && 'Fix colour contrast on the 4 failing text elements — they currently sit at 3.2:1 ratio against WCAG AA minimum of 4.5:1. This blocks accessibility compliance.'}
-            </p>
+
+          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-rule">
+            <div className="p-6">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-m-muted block mb-3">What we observed</span>
+              <p className="font-sans text-[13px] text-ink-2 leading-[1.65]">{findings[0].observation}</p>
+            </div>
+            <div className="p-6">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-severe block mb-3">Business impact</span>
+              <p className="font-sans text-[13px] text-ink-2 leading-[1.65]">{findings[0].impact}</p>
+            </div>
+            <div className="p-6">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-ok block mb-3">The fix</span>
+              <p className="font-sans text-[13px] text-ink-2 leading-[1.65]">{findings[0].fix}</p>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Top recommendation */}
+      <div className="border border-signal/30 bg-signal/5 p-6">
+        <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Top recommendation</span>
+        <p className="font-sans text-[14px] text-ink-2 leading-[1.65]">
+          {RECOMMENDATIONS[auditType]}
+        </p>
       </div>
     </div>
   )
 }
 
-/* ═══════════════════════════════════════════════════════════���══
-   MAIN COMPONENT
-   ══════════════════════════════════════════════════════════════ */
-
+/* ── Main Component ── */
 export default function DemoReportContent() {
   const [activeType, setActiveType] = useState<AuditType>('website')
 
-  return (
-    <main id="main-content" className="relative flex-1">
-      {/* Background */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
+  const dataMap = {
+    website: { site: 'acme.com', score: 71, modules: WEBSITE_MODULES, findings: WEBSITE_FINDINGS },
+    brand: { site: 'Stripe Rebrand Guidelines', score: 79, modules: BRAND_MODULES, findings: BRAND_FINDINGS },
+    design: { site: 'Checkout Redesign v2.1', score: 76, modules: DESIGN_MODULES, findings: DESIGN_FINDINGS },
+  }
 
-      <div className="relative z-10 max-w-5xl mx-auto pt-20 sm:pt-36 pb-16 px-4 sm:px-6">
-        {/* ── Page header ── */}
-        <div className="text-center mb-12">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Sample reports
-          </p>
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            See what ClearUX <span className="text-lime-gradient">delivers.</span>
+  const active = dataMap[activeType]
+
+  return (
+    <main>
+      {/* Hero */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="Sample reports" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            See what ClearUX <em className="italic text-signal">delivers.</em>
           </h1>
-          <p className="text-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-[18px] leading-[1.55] text-ink-2 max-w-[600px] font-sans">
             Three audit types, one standard of depth. Explore how each report surfaces actionable insights with evidence, severity rankings, and specific recommendations.
           </p>
         </div>
+      </section>
 
-        {/* ── Audit type tabs ── */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-10">
-          {AUDIT_TYPES.map((type) => {
-            const Icon = type.icon
-            const isActive = activeType === type.key
-            return (
-              <button
-                key={type.key}
-                onClick={() => setActiveType(type.key)}
-                className={`flex-1 flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all text-left ${
-                  isActive
-                    ? 'border-[var(--volt)]/40 bg-[var(--volt)]/[0.05] shadow-sm'
-                    : 'border-border bg-card hover:border-border hover:bg-card'
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  isActive ? 'bg-[var(--volt)]/15' : 'bg-surface'
-                }`}>
-                  <Icon size={16} className={isActive ? 'text-[var(--volt)]' : 'text-muted'} strokeWidth={1.5} />
-                </div>
-                <div className="min-w-0">
-                  <p className={`text-sm font-medium ${isActive ? 'text-text' : 'text-muted'}`}>{type.label}</p>
-                  <p className="text-[11px] text-muted truncate">{type.site}</p>
-                </div>
-                {isActive && (
-                  <span className="ml-auto text-sm font-medium text-[var(--volt)] flex-shrink-0">{type.score}/100</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* ── Report mockup ── */}
-        {activeType === 'website' && (
-          <ReportMockup
-            auditType="website"
-            site="acme.com"
-            score={71}
-            modules={WEBSITE_MODULES}
-            findings={WEBSITE_FINDINGS}
-          />
-        )}
-
-        {activeType === 'brand' && (
-          <ReportMockup
-            auditType="brand"
-            site="Stripe Rebrand Guidelines"
-            score={79}
-            modules={BRAND_MODULES}
-            findings={BRAND_FINDINGS}
-          />
-        )}
-
-        {activeType === 'design' && (
-          <ReportMockup
-            auditType="design"
-            site="Checkout Redesign v2.1"
-            score={76}
-            modules={DESIGN_MODULES}
-            findings={DESIGN_FINDINGS}
-          />
-        )}
-
-        {/* ── What you get strip ── */}
-        <div className="mt-10 rounded-xl border border-border bg-card p-5 sm:p-6">
-          <h3 className="text-sm font-medium text-text mb-4">Every audit includes</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { icon: FileText, label: 'PDF and Word exports', desc: 'Professional reports ready for stakeholders' },
-              { icon: Share2, label: 'Shareable link', desc: 'One link for your full report — no account needed to view' },
-              { icon: RefreshCw, label: 'Re-audit and track', desc: 'Verify fixes and watch your score improve over time' },
-              { icon: Search, label: 'Dig deeper mode', desc: 'Run a deeper analysis on specific modules for more findings' },
-            ].map((item, i) => {
-              const Icon = item.icon
+      {/* Report explorer */}
+      <section className="py-[80px] border-b border-rule max-sm:py-12">
+        <div className="max-w-[1080px] mx-auto px-8 max-sm:px-5">
+          {/* Audit type tabs */}
+          <div className="flex gap-0 border border-ink mb-10 max-sm:flex-col">
+            {AUDIT_TYPES.map((type, i) => {
+              const isActive = activeType === type.key
               return (
-                <div key={i} className="flex flex-col gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--volt)]/10 flex items-center justify-center">
-                    <Icon size={14} className="text-[var(--volt)]" strokeWidth={1.5} />
-                  </div>
-                  <p className="text-sm font-medium text-text">{item.label}</p>
-                  <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
-                </div>
+                <button
+                  key={type.key}
+                  onClick={() => setActiveType(type.key)}
+                  className={`flex-1 px-5 py-4 text-left transition-all ${
+                    i < AUDIT_TYPES.length - 1 ? 'sm:border-r border-ink max-sm:border-b' : ''
+                  } ${isActive ? 'bg-ink text-paper' : 'hover:bg-paper-2'}`}
+                >
+                  <p className={`text-[14px] font-sans font-medium ${isActive ? 'text-paper' : 'text-ink'}`}>{type.label}</p>
+                  <p className={`text-[11px] font-mono tracking-[0.04em] mt-0.5 ${isActive ? 'text-paper/60' : 'text-m-muted'}`}>{type.site}</p>
+                </button>
               )
             })}
           </div>
-        </div>
-      </div>
 
-      {/* ══════════════════════════════════════════════════
-          FINAL CTA
-          ══════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Ready for your own <span className="text-lime-gradient">report?</span>
+          <ReportMockup
+            auditType={activeType}
+            site={active.site}
+            score={active.score}
+            modules={active.modules}
+            findings={active.findings}
+          />
+
+          {/* What you get */}
+          <div className="border border-ink mt-8 p-6">
+            <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-5">Every audit includes</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { label: 'PDF + Word exports', desc: 'Professional reports ready for stakeholders' },
+                { label: 'Shareable link', desc: 'One link for your full report — no account needed to view' },
+                { label: 'Re-audit and track', desc: 'Verify fixes and watch your score improve over time' },
+                { label: 'Dig deeper mode', desc: 'Run a deeper analysis on specific modules for more findings' },
+              ].map((item) => (
+                <div key={item.label}>
+                  <p className="text-[14px] font-sans font-medium text-ink mb-1">{item.label}</p>
+                  <p className="text-[13px] font-sans text-ink-2 leading-[1.5]">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Ready for your own <em className="italic text-signal">report?</em>
           </h2>
-          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — actionable insights in minutes.
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
+            Your first audit is free. No credit card, no commitment.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <SmartCta iconSize={15} />
+          <div className="flex gap-3 justify-center flex-wrap">
+            <a
+              href="/register"
+              className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
+            >
+              Start free audit
+              <ArrowRightIcon size={14} />
+            </a>
             <Link
               href="/how-it-works"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
+              className="inline-flex items-center gap-2 font-sans font-medium text-[14px] rounded-full px-6 py-4 border border-paper/20 transition-all hover:border-paper/50"
+              style={{ color: 'var(--paper)' }}
             >
               How it works
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRightIcon size={12} />
             </Link>
           </div>
         </div>

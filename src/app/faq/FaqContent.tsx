@@ -1,9 +1,8 @@
-'use client';
+'use client'
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { ArrowRight, Search, ChevronDown } from 'lucide-react';
-import SmartCta from '@/components/ui/SmartCta';
+import { useState, useMemo } from 'react'
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 
 /* ── FAQ Data ───────────────────────────────────────────────── */
 
@@ -11,366 +10,271 @@ const FAQ_SECTIONS = [
   {
     title: 'General',
     items: [
-      {
-        q: 'How long does an audit take?',
-        a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 96 checkpoints across six modules, and generates a full professional report.',
-      },
-      {
-        q: 'What does the audit cover?',
-        a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user, every ability, every context), Future Readiness (AI discoverability and how your product holds up as discovery shifts), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (whether your product is findable, legible, and ranked the way it deserves). Available for websites, brand identity materials, and design files.',
-      },
-      {
-        q: 'What types of audits do you offer?',
-        a: 'Three types: Website audits (paste a URL and we crawl your site), Brand Identity audits (upload your brand guidelines, logo, and materials for analysis), and Design audits (coming soon — review designs before production). Every audit type uses the same 6-module, 96-checkpoint framework.',
-      },
-      {
-        q: 'Can I audit any website?',
-        a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn\'t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.',
-      },
-      {
-        q: 'What languages are supported?',
-        a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese. All findings, recommendations, and the full report are translated.',
-      },
-      {
-        q: 'How does ClearUX compare to hiring a UX consultant?',
-        a: 'A traditional UX audit costs $5,000–$15,000 and takes 2–4 weeks. ClearUX delivers 96 checkpoints across six modules in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.',
-      },
-      {
-        q: 'Can I track which findings have been fixed?',
-        a: 'Yes. Every finding has a status you can update: Open, In Progress, Fixed, or Backlog. Your dashboard tracks how many issues you\'ve resolved over time, giving you a clear picture of progress.',
-      },
-      {
-        q: 'Can I share audit results with my team?',
-        a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown — no account needed. You can revoke the link at any time.',
-      },
-      {
-        q: 'Can I re-audit the same website to measure improvement?',
-        a: 'Absolutely. Re-auditing the same URL is the best way to prove progress. Your dashboard shows re-audit badges and your stats track average scores over time. Audit the same site before and after implementing fixes to see your score improve.',
-      },
+      { q: 'How long does an audit take?', a: 'Most audits complete in under 10 minutes. Our AI crawls your website, analyses every page against 96 checkpoints across six modules, and generates a full professional report.' },
+      { q: 'What does the audit cover?', a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use — clarity, flow, cognitive load, wellbeing), Inclusive Design (accessibility and equity for every user, every ability, every context), Future Readiness (AI discoverability and how your product holds up as discovery shifts), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (whether your product is findable, legible, and ranked the way it deserves). Available for websites, brand identity materials, and design files.' },
+      { q: 'What types of audits do you offer?', a: 'Three types: Website audits (paste a URL and we crawl your site), Brand Identity audits (upload your brand guidelines, logo, and materials for analysis), and Design audits (coming soon — review designs before production). Every audit type uses the same 6-module, 96-checkpoint framework.' },
+      { q: 'Can I audit any website?', a: 'Yes. ClearUX works with any publicly accessible URL — dynamic apps, single-page applications, and traditional multi-page sites. Content behind logins (admin panels, member areas) isn\'t accessible to our crawler. For complex multi-step flows like checkouts, findings cover the accessible steps.' },
+      { q: 'What languages are supported?', a: 'Reports are available in English, Spanish, French, German, Italian, and Portuguese. All findings, recommendations, and the full report are translated.' },
+      { q: 'How does ClearUX compare to hiring a UX consultant?', a: 'A traditional UX audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across six modules in minutes for a fraction of the cost. It\'s ideal for quick, comprehensive baseline assessments. For deep qualitative research (user interviews, usability testing), we recommend pairing ClearUX findings with a specialist.' },
+      { q: 'Can I track which findings have been fixed?', a: 'Yes. Every finding has a status you can update: Open, In Progress, Fixed, or Backlog. Your dashboard tracks how many issues you\'ve resolved over time, giving you a clear picture of progress.' },
+      { q: 'Can I share audit results with my team?', a: 'Yes. Every completed audit has a "Share audit" button that generates a read-only link. Anyone with the link can view the scores, executive summary, and category breakdown — no account needed. You can revoke the link at any time.' },
+      { q: 'Can I re-audit the same website to measure improvement?', a: 'Absolutely. Re-auditing the same URL is the best way to prove progress. Your dashboard shows re-audit badges and your stats track average scores over time. Audit the same site before and after implementing fixes to see your score improve.' },
     ],
   },
   {
     title: 'Audit & AI',
     items: [
-      {
-        q: 'How does the AI analysis work?',
-        a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 96 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.',
-      },
-      {
-        q: 'What format is the report?',
-        a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.',
-      },
-      {
-        q: 'What should I know before running an audit?',
-        a: 'ClearUX analyses all publicly visible pages on your site. For the most comprehensive results, ensure your site is live and publicly accessible. The audit is designed to catch the issues that matter most to real users — the same issues a specialist consultant would prioritise.',
-      },
-      {
-        q: 'What about white-label reports?',
-        a: 'Agency and Scale package customers can add their own company logo and name to reports. The ClearUX branding is replaced with yours in both PDF and Word exports — perfect for client-facing deliverables.',
-      },
-      {
-        q: 'What is the free preview audit?',
-        a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.',
-      },
+      { q: 'How does the AI analysis work?', a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 96 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.' },
+      { q: 'What format is the report?', a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.' },
+      { q: 'What should I know before running an audit?', a: 'ClearUX analyses all publicly visible pages on your site. For the most comprehensive results, ensure your site is live and publicly accessible. The audit is designed to catch the issues that matter most to real users — the same issues a specialist consultant would prioritise.' },
+      { q: 'What about white-label reports?', a: 'Agency and Scale package customers can add their own company logo and name to reports. The ClearUX branding is replaced with yours in both PDF and Word exports — perfect for client-facing deliverables.' },
+      { q: 'What is the free preview audit?', a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.' },
     ],
   },
   {
     title: 'How Our AI Works',
     items: [
-      {
-        q: 'What AI powers the audits?',
-        a: 'ClearUX uses Anthropic\'s Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 96 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards. The system doesn\'t just ask the AI generic questions — it runs multi-pass analysis: first crawling and extracting your actual page content (text, structure, semantic HTML, visual hierarchy), then cross-referencing findings across pages for context-aware evaluation, and finally scoring each finding against severity and business-impact models calibrated from hundreds of real audits. The result is findings that reference specific elements on your site with the depth of a senior consultant, not the surface-level flags of an automated scanner.',
-      },
-      {
-        q: 'What are the known limitations?',
-        a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation. The AI may also miss highly context-specific design decisions that are intentional for your audience — that\'s why we built the dismiss-with-reason feature.',
-      },
-      {
-        q: 'How does the AI improve over time?',
-        a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked — the AI will verify whether the fix holds on re-audit. Your audits get more accurate with every iteration.',
-      },
-      {
-        q: 'Does ClearUX replace a human UX auditor?',
-        a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 96 checkpoints across six modules in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist. Many teams use ClearUX to identify what to focus on, then bring in a human expert for the critical issues.',
-      },
+      { q: 'What AI powers the audits?', a: 'ClearUX uses Anthropic\'s Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation. Each of the 96 checkpoints is backed by a deeply engineered prompt chain that encodes real-world heuristics from Nielsen Norman Group research, WCAG 2.2 success criteria, FTC dark pattern enforcement actions, behavioural psychology literature, and emerging AI agent interaction standards.' },
+      { q: 'What are the known limitations?', a: 'Our AI analyses publicly visible page content. It cannot test JavaScript-heavy interactions (hover states, multi-step flows behind authentication), real page load speed, or actual user behaviour. For accessibility compliance, we strongly recommend pairing ClearUX findings with manual testing using screen readers and keyboard navigation.' },
+      { q: 'How does the AI improve over time?', a: 'When you dismiss a finding with a reason or add a site note, that context is stored and injected into your next audit. The AI reads your feedback and skips previously dismissed issues. Findings you mark as "fixed" are also tracked — the AI will verify whether the fix holds on re-audit.' },
+      { q: 'Does ClearUX replace a human UX auditor?', a: 'No. ClearUX is designed to complement human expertise, not replace it. It covers 96 checkpoints across six modules in minutes — the kind of breadth that would take a consultant days. But for deep qualitative research (user interviews, usability testing, nuanced accessibility compliance), we recommend working with a specialist.' },
     ],
   },
   {
     title: 'Account & Billing',
     items: [
-      {
-        q: 'How do credits work?',
-        a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.',
-      },
-      {
-        q: 'Is my data secure?',
-        a: "We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We're GDPR compliant and use SSL encryption throughout.",
-      },
-      {
-        q: 'Can I get a refund?',
-        a: 'If you\'re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.',
-      },
-      {
-        q: 'Can I buy more credits later?',
-        a: 'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.',
-      },
-      {
-        q: 'What payment methods are accepted?',
-        a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.',
-      },
+      { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
+      { q: 'Is my data secure?', a: 'We only analyse publicly visible content. Your website data is never stored or shared — only your report. Payments are processed securely via Stripe. We\'re GDPR compliant and use SSL encryption throughout.' },
+      { q: 'Can I get a refund?', a: 'If you\'re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we\'ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports.' },
+      { q: 'Can I buy more credits later?', a: 'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.' },
+      { q: 'What payment methods are accepted?', a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.' },
     ],
   },
   {
     title: 'Trust & Accuracy',
     items: [
-      {
-        q: 'Is ClearUX 100% accurate?',
-        a: 'No, and we believe honesty about this is important. Our AI catches issues that traditional tools miss — dark patterns, emotional design gaps, cognitive accessibility barriers, AI readiness gaps — but no automated system is perfect. We recommend human review for accessibility-critical and security-sensitive findings. That\'s why every finding includes a status tracker: your team can verify, dismiss with a reason, or mark as fixed. The AI learns from your feedback on re-audits.',
-      },
-      {
-        q: 'What if the audit flags something incorrectly?',
-        a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience" or "Addressed on our About page"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, use our contact form or email support@clearux.ai and we\'ll review it within 24 hours. We actively use feedback to improve our analysis engine.',
-      },
-      {
-        q: 'Can I share the report with clients or my team?',
-        a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, module breakdown, top recommendations, and executive summary — no ClearUX account needed. You can revoke the link at any time. PDF and Word exports are also available for offline sharing.',
-      },
-      {
-        q: 'How does ClearUX handle false positives?',
-        a: 'Our analysis engine uses cross-page awareness — it checks if content exists on other pages before flagging it as "missing" (e.g., it won\'t flag missing founder credentials if your About page has them). You can also add site notes that persist across audits, giving the AI permanent context about your design decisions. Every re-audit gets smarter based on your previous feedback.',
-      },
+      { q: 'Is ClearUX 100% accurate?', a: 'No, and we believe honesty about this is important. Our AI catches issues that traditional tools miss — dark patterns, emotional design gaps, cognitive accessibility barriers, AI readiness gaps — but no automated system is perfect. We recommend human review for accessibility-critical and security-sensitive findings.' },
+      { q: 'What if the audit flags something incorrectly?', a: 'Dismiss it directly from your dashboard with a reason (e.g., "This is intentional for our audience"). The AI will skip that finding on future re-audits. If you believe the finding is a systemic error, use our contact form and we\'ll review it within 24 hours.' },
+      { q: 'Can I share the report with clients or my team?', a: 'Yes. Every completed audit has a "Share" button that generates a read-only link. Anyone with the link can see the overall score, module breakdown, top recommendations, and executive summary — no ClearUX account needed.' },
+      { q: 'How does ClearUX handle false positives?', a: 'Our analysis engine uses cross-page awareness — it checks if content exists on other pages before flagging it as "missing". You can also add site notes that persist across audits, giving the AI permanent context about your design decisions.' },
     ],
   },
-];
+]
 
-const TAB_ALL = 'All';
+const TAB_ALL = 'All'
 
-/* ── Accordion Item ──────────────────────────────────────────── */
+/* ── Chevron Icon ── */
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+      <path d="M3.5 5.25L7 8.75L10.5 5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
+/* ── Search Icon ── */
+function SearchIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-4 top-1/2 -translate-y-1/2 text-m-muted">
+      <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 10L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/* ── Accordion Item ── */
 function FaqItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="rounded-xl overflow-hidden bg-card border border-border">
+    <div className="border-b border-rule last:border-b-0">
       <button
         onClick={onToggle}
-        className="w-full flex items-start gap-3 p-5 text-left hover:bg-card transition-colors"
+        className="w-full flex items-center gap-3 py-5 px-1 text-left hover:text-signal transition-colors group"
         aria-expanded={isOpen}
       >
-        <span className="flex-1 font-heading font-medium text-text text-[15px] leading-relaxed">{q}</span>
-        <ChevronDown
-          size={16}
-          className={`text-muted flex-shrink-0 mt-0.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <span className="flex-1 font-sans font-medium text-ink text-[15px] leading-relaxed group-hover:text-signal transition-colors">{q}</span>
+        <ChevronIcon open={isOpen} />
       </button>
       {isOpen && (
-        <div className="px-5 pb-5 pt-0">
-          <div className="border-t border-border pt-4">
-            <p className="font-body text-sm text-muted leading-[1.8]">{a}</p>
-          </div>
+        <div className="pb-5 px-1">
+          <p className="font-sans text-[14px] text-ink-2 leading-[1.75]">{a}</p>
         </div>
       )}
     </div>
-  );
+  )
 }
 
-/* ── Main Content ──────────────────────────────────────────── */
-
+/* ── Main Content ── */
 export default function FaqContent() {
-  const [activeTab, setActiveTab] = useState(TAB_ALL);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState(TAB_ALL)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set())
 
-  const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)];
+  const tabs = [TAB_ALL, ...FAQ_SECTIONS.map(s => s.title)]
 
-  // Filter sections by tab and search
-  // When searching, always search ALL sections (ignore active tab)
   const { visibleSections, totalVisible } = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
+    const query = searchQuery.toLowerCase().trim()
 
     if (!query) {
-      const tabFiltered = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab);
-      const total = tabFiltered.reduce((sum, s) => sum + s.items.length, 0);
-      return { visibleSections: tabFiltered, totalVisible: total };
+      const tabFiltered = activeTab === TAB_ALL ? FAQ_SECTIONS : FAQ_SECTIONS.filter(s => s.title === activeTab)
+      const total = tabFiltered.reduce((sum, s) => sum + s.items.length, 0)
+      return { visibleSections: tabFiltered, totalVisible: total }
     }
 
-    // Search across ALL sections — split query into words for broader matching
-    const words = query.split(/\s+/).filter(w => w.length > 0);
+    const words = query.split(/\s+/).filter(w => w.length > 0)
     const filtered = FAQ_SECTIONS.map(section => ({
       ...section,
       items: section.items.filter(item => {
-        const text = `${item.q} ${item.a}`.toLowerCase();
-        return words.every(word => text.includes(word));
+        const text = `${item.q} ${item.a}`.toLowerCase()
+        return words.every(word => text.includes(word))
       }),
-    })).filter(section => section.items.length > 0);
+    })).filter(section => section.items.length > 0)
 
-    const total = filtered.reduce((sum, s) => sum + s.items.length, 0);
-    return { visibleSections: filtered, totalVisible: total };
-  }, [activeTab, searchQuery]);
+    const total = filtered.reduce((sum, s) => sum + s.items.length, 0)
+    return { visibleSections: filtered, totalVisible: total }
+  }, [activeTab, searchQuery])
 
   const toggleItem = (key: string) => {
     setOpenItems(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
-  const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
+  const totalQuestions = FAQ_SECTIONS.reduce((sum, s) => sum + s.items.length, 0)
 
   return (
-    <main id="main-content" className="flex-1">
-      {/* ── Single page background ── */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* ── ONE background for the entire page ── */}
-      <div className="relative">
-
-        {/* ── HERO ── */}
-        <section className="relative z-10 py-28 sm:py-36 lg:py-44">
-          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-              SUPPORT CENTRE
-            </p>
-
-            <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-3" style={{ lineHeight: '1.1' }}>
-              Frequently asked <span className="text-lime-gradient">questions.</span>
-            </h1>
-
-            <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-lg mb-10">
-              Everything you need to know about ClearUX audits, pricing, and reports.
-            </p>
-
-            {/* Search Box */}
-            <div className="max-w-md">
-              <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search FAQs..."
-                  className="w-full pl-10 pr-16 py-3 rounded-full border border-border bg-card-hover text-text text-base font-body placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-border transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-text transition-colors"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              {searchQuery && (
-                <p className="font-body text-xs text-muted mt-2">
-                  {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* ── CATEGORY TABS ── */}
-        <section className="relative z-10">
-          <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12">
-            <div className="flex flex-wrap items-center gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => { setActiveTab(tab); setOpenItems(new Set()); }}
-                  className={`text-xs font-medium px-4 py-2 rounded-lg transition-all ${
-                    activeTab === tab
-                      ? 'text-text bg-card-hover'
-                      : 'text-muted bg-card hover:bg-card-hover'
-                  }`}
-                >
-                  {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── FAQ SECTIONS ── */}
-        {visibleSections.length === 0 ? (
-          <section className="relative z-10">
-            <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-10">
-              <div className="py-12">
-                <Search size={24} className="text-muted mb-3" />
-                <p className="font-heading text-text font-medium text-sm mb-1">No results found</p>
-                <p className="font-body text-muted text-xs">
-                  Try a different search term, or{' '}
-                  <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL); }} className="underline hover:text-text transition-colors">
-                    browse all questions
-                  </button>
-                </p>
-              </div>
-            </div>
-          </section>
-        ) : (
-          visibleSections.map((section, sIdx) => (
-            <section
-              key={section.title}
-              className={`relative z-10 ${sIdx < visibleSections.length - 1 ? 'pb-10' : 'pb-8'}`}
-            >
-              <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-                {/* Section header */}
-                {(activeTab === TAB_ALL || searchQuery) && (
-                  <div className="flex items-center gap-3 mb-5">
-                    <h2 className="font-heading font-medium text-xl sm:text-2xl text-text">
-                      {section.title}
-                    </h2>
-                    <span className="font-body text-[11px] font-medium text-muted">
-                      {section.items.length}
-                    </span>
-                    <div className="flex-1 h-px bg-card-hover" />
-                  </div>
-                )}
-
-                {/* Accordion items */}
-                <div className="space-y-3 max-w-3xl">
-                  {section.items.map((faq, i) => {
-                    const key = `${section.title}-${i}`;
-                    return (
-                      <FaqItem
-                        key={key}
-                        q={faq.q}
-                        a={faq.a}
-                        isOpen={openItems.has(key)}
-                        onToggle={() => toggleItem(key)}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          ))
-        )}
-
-        {/* Spacer before CTA */}
-        <div className="relative z-10 pb-16" />
-      </div>
-
-      {/* ── FINAL CTA ── */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Start your audit <span className="text-lime-gradient">today</span>
-          </h2>
-          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
+    <main>
+      {/* Hero */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="Support centre" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            Frequently asked <em className="italic text-signal">questions.</em>
+          </h1>
+          <p className="text-[18px] leading-[1.55] text-ink-2 max-w-[480px] mb-10 font-sans">
+            Everything you need to know about ClearUX audits, pricing, and reports.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+
+          {/* Search */}
+          <div className="max-w-md relative">
+            <SearchIcon />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search FAQs..."
+              className="w-full pl-11 pr-16 py-3 rounded-full border border-rule bg-paper-2 text-ink text-[15px] font-sans placeholder:text-m-muted focus:outline-none focus:border-ink transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-mono text-m-muted hover:text-ink transition-colors uppercase tracking-[0.06em]"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="font-mono text-[11px] text-m-muted mt-3 tracking-[0.06em] uppercase">
+              {totalVisible} result{totalVisible !== 1 ? 's' : ''} found
+            </p>
+          )}
         </div>
       </section>
 
+      {/* Tabs + Questions */}
+      <section className="py-[80px] max-sm:py-12">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          {/* Category tabs */}
+          <div className="flex flex-wrap items-center gap-2 mb-12">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setOpenItems(new Set()) }}
+                className={`text-[12px] font-mono tracking-[0.08em] uppercase px-4 py-2 rounded-full transition-all border ${
+                  activeTab === tab
+                    ? 'bg-ink text-paper border-ink'
+                    : 'text-ink-2 border-rule hover:border-ink'
+                }`}
+              >
+                {tab === TAB_ALL ? `All (${totalQuestions})` : tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Sections */}
+          {visibleSections.length === 0 ? (
+            <div className="py-16">
+              <p className="font-sans text-ink font-medium text-[15px] mb-2">No results found</p>
+              <p className="font-sans text-ink-2 text-[14px]">
+                Try a different search term, or{' '}
+                <button onClick={() => { setSearchQuery(''); setActiveTab(TAB_ALL) }} className="underline hover:text-signal transition-colors">
+                  browse all questions
+                </button>
+              </p>
+            </div>
+          ) : (
+            <div className="max-w-3xl space-y-14">
+              {visibleSections.map((section) => (
+                <div key={section.title}>
+                  {(activeTab === TAB_ALL || searchQuery) && (
+                    <div className="flex items-center gap-4 mb-6">
+                      <h2 className="font-serif text-[22px] text-ink font-normal tracking-[-0.01em]">{section.title}</h2>
+                      <span className="font-mono text-[11px] text-m-muted tracking-[0.08em]">{section.items.length}</span>
+                      <div className="flex-1 h-px bg-rule" />
+                    </div>
+                  )}
+                  <div>
+                    {section.items.map((faq, i) => {
+                      const key = `${section.title}-${i}`
+                      return (
+                        <FaqItem
+                          key={key}
+                          q={faq.q}
+                          a={faq.a}
+                          isOpen={openItems.has(key)}
+                          onToggle={() => toggleItem(key)}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Still have questions?
+          </h2>
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
+            Reach out anytime — or start your first free audit and see the results for yourself.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <a
+              href="/contact"
+              className="inline-flex items-center gap-2 font-sans font-medium text-[14px] rounded-full px-6 py-3 border border-paper/20 transition-all hover:border-paper/50"
+              style={{ color: 'var(--paper)' }}
+            >
+              Contact us
+            </a>
+            <a
+              href="/register"
+              className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-3 transition-all"
+            >
+              Start free audit
+              <ArrowRightIcon size={14} />
+            </a>
+          </div>
+        </div>
+      </section>
     </main>
-  );
+  )
 }

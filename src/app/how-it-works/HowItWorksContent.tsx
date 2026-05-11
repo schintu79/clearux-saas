@@ -1,214 +1,125 @@
 'use client'
 
-import Link from 'next/link'
-import SmartCta from '@/components/ui/SmartCta'
-import {
-  ArrowRight,
-  Layers,
-  Users,
-  Accessibility,
-  Rocket,
-  Fingerprint,
-  Code2,
-  Search,
-  Globe2,
-  FileText,
-} from 'lucide-react'
-
-/* ═══════════════════════════════════════════════════════════════
-   Data
-   ═══════════════════════════════════════════════════════════════ */
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { Button } from '@/components/marketing/Button'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 
 const MODULES = [
-  {
-    icon: Layers,
-    title: 'Foundation',
-    desc: 'The structural and technical baseline a great experience is built on — visual design, value proposition, navigation, and content quality.',
-  },
-  {
-    icon: Users,
-    title: 'Human Experience',
-    desc: 'How your product feels to use — clarity, flow, cognitive load, and wellbeing. We audit feeling, not function alone, including how flows land for users in stressed or impaired states.',
-  },
-  {
-    icon: Accessibility,
-    title: 'Inclusive Design',
-    desc: 'Accessibility and equity for every user, every ability, every context. WCAG compliance, cognitive accessibility, digital wellbeing, and mobile experience.',
-  },
-  {
-    icon: Rocket,
-    title: 'Future Readiness',
-    desc: 'AI discoverability and how your product holds up as discovery and interaction shift. Performance, agent readiness, and internationalisation.',
-  },
-  {
-    icon: Fingerprint,
-    title: 'Brand Consistency',
-    desc: 'Whether what users see matches what the brand promises — voice, visual identity, and tone alignment across every surface.',
-  },
-  {
-    icon: Code2,
-    title: 'SEO Structure',
-    desc: 'Whether your product is findable, legible, and ranked the way it deserves. Technical SEO, meta tags, heading hierarchy, and structured data.',
-  },
+  { num: '01', title: 'Foundation', desc: 'Visual design, messaging, navigation, content quality. The structural baseline a great experience is built on.', count: 16, range: 'F-01 → F-16' },
+  { num: '02', title: 'Human Experience', desc: 'Clarity, cognitive load, dark patterns, conversion friction. Whether your UX respects users in stressed or impaired states.', count: 22, range: 'HX-01 → HX-22' },
+  { num: '03', title: 'Inclusive Design', desc: 'WCAG compliance, cognitive accessibility, mobile context, equity across abilities. Every user, every context.', count: 18, range: 'ID-01 → ID-18' },
+  { num: '04', title: 'Future Readiness', desc: 'How LLMs and AI agents read your product. Performance, agent readiness, internationalisation. The discovery layer of the next decade.', count: 14, range: 'FR-01 → FR-14' },
+  { num: '05', title: 'Brand Consistency', desc: 'Voice, visual identity, tone alignment. Whether what users see matches what your brand promises — surface to surface.', count: 14, range: 'BC-01 → BC-14' },
+  { num: '06', title: 'SEO Structure', desc: 'Heading hierarchy, meta tags, structured data, crawlability. Whether your product is findable, legible, and ranked the way it deserves.', count: 12, range: 'SEO-01 → SEO-12' },
 ]
 
 const STEPS = [
-  {
-    num: '01',
-    title: 'Choose your audit',
-    desc: 'Paste a website URL, upload brand identity files (PDF, DOCX, images), or submit a design. ClearUX handles all three.',
-    icon: Search,
-  },
-  {
-    num: '02',
-    title: 'We run 96 checkpoints',
-    desc: 'Every input analysed across six modules and 24 categories. Every score is evidence-based — no subjective hand-waving.',
-    icon: Globe2,
-  },
-  {
-    num: '03',
-    title: 'You decide what to fix',
-    desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link. We identify. You decide.',
-    icon: FileText,
-  },
+  { num: '01', title: 'Choose your audit', desc: 'Paste a website URL, upload brand identity files (PDF, DOCX, images), or submit a design. ClearUX handles all three.' },
+  { num: '02', title: 'We run 96 checkpoints', desc: 'Every input analysed across six modules and 24 categories. Every score is evidence-based — no subjective hand-waving.' },
+  { num: '03', title: 'You decide what to fix', desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link. We identify. You decide.' },
 ]
-
-/* ═══════════════════════════════════════════════════════════════
-   Component
-   ═══════════════════════════════════════════════════════════════ */
 
 export default function HowItWorksContent() {
   return (
-    <main id="main-content" className="relative flex-1">
-      {/* ── Single page background ── */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img
-          src="/gradients/bg-hero.jpg"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════
-          1. HERO
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-36">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            HOW IT WORKS
-          </p>
-          <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-3"
-            style={{ lineHeight: '1.1' }}
-          >
-            Audit your product. Get{' '}
-            <span className="text-lime-gradient">360° clarity.</span>
+    <main>
+      {/* Hero */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="How it works" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            Audit your product. Get <em className="italic text-signal">360° clarity.</em>
           </h1>
-          <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-2xl">
-            ClearUX audits your website, brand identity, and design across 96 checkpoints in 6 modules. Prioritised findings with evidence, severity rankings, and specific fixes. Professional-grade depth in minutes — no consultants, no weeks of waiting.
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans">
+            ClearUX audits your website, brand identity, and design across 96 checkpoints in 6 modules. Prioritised findings with evidence, severity rankings, and specific fixes. Professional-grade depth in minutes.
           </p>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          2. THREE-STEP PROCESS
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            THE PROCESS
-          </p>
-          <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-10"
-            style={{ lineHeight: '1.1' }}
-          >
-            Three steps to <span className="text-lime-gradient">clarity.</span>
+      {/* Three-step process */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="02" label="The process" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-14" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Three steps to <em className="italic text-signal">clarity.</em>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STEPS.map((step) => {
-              const StepIcon = step.icon
-              return (
-                <div
-                  key={step.num}
-                  className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8"
-                >
-                  <span className="font-heading text-[4rem] sm:text-[5rem] font-bold text-muted leading-none block mb-4">
-                    {step.num}
+          <div className="grid md:grid-cols-3 gap-0 border border-ink">
+            {STEPS.map((step, i) => (
+              <div
+                key={step.num}
+                className={`p-8 ${i < STEPS.length - 1 ? 'md:border-r border-ink max-md:border-b' : ''}`}
+              >
+                <span className="font-serif text-[56px] text-m-muted-2 font-normal leading-none block mb-5" style={{ color: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}>
+                  {step.num}
+                </span>
+                <h3 className="font-sans text-[17px] font-medium text-ink mb-3">{step.title}</h3>
+                <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Six modules — matches homepage InstrumentGrid */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
+            <div>
+              <SectionMarker number="03" label="The instrument" />
+              <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
+                Six modules. <em className="italic text-signal">Ninety-six</em> checkpoints.
+              </h2>
+            </div>
+            <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans">
+              Each audit runs the full battery. No tiered plans, no &ldquo;upgrade to unlock accessibility.&rdquo; Foundation through SEO Structure — same depth, every time, every input.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 border-t border-l border-ink max-md:grid-cols-2 max-sm:grid-cols-1">
+            {MODULES.map((mod) => (
+              <div
+                key={mod.num}
+                className="border-r border-b border-ink p-7 sm:p-8 bg-paper hover:bg-paper-2 transition-colors min-h-[280px] flex flex-col"
+              >
+                <div className="font-mono text-[11px] text-signal font-semibold tracking-[0.08em] mb-3.5">
+                  {mod.num} / {mod.title}
+                </div>
+                <h3 className="font-serif font-normal text-[30px] tracking-[-0.015em] leading-[1.05] mb-3.5 text-ink">
+                  {mod.title}
+                </h3>
+                <p className="text-[14px] leading-[1.55] text-ink-2 mb-auto pb-6 font-sans">
+                  {mod.desc}
+                </p>
+                <div className="flex justify-between items-baseline pt-[18px] border-t border-dashed border-rule-2 font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+                  <span>
+                    <strong className="font-serif text-[28px] font-normal text-ink normal-case tracking-[-0.02em]">{mod.count}</strong>{' '}
+                    checkpoints
                   </span>
-                  <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                    <StepIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                  </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">
-                    {step.title}
-                  </h3>
-                  <p className="font-body text-sm sm:text-base text-muted leading-relaxed">
-                    {step.desc}
-                  </p>
+                  <span>{mod.range}</span>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          3. SIX MODULES
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            WHAT WE EVALUATE
-          </p>
-          <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4"
-            style={{ lineHeight: '1.1' }}
-          >
-            Six modules. <span className="text-lime-gradient">Complete coverage.</span>
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Start your audit <em className="italic text-signal">today</em>
           </h2>
-          <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-xl mb-10">
-            96 checkpoints across six modules that go beyond traditional audits — evaluating the dimensions most tools still ignore.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MODULES.map((mod) => {
-              const ModIcon = mod.icon
-              return (
-                <div
-                  key={mod.title}
-                  className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-6">
-                    <ModIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                  </div>
-                  <h3 className="font-heading text-lg sm:text-xl font-medium text-text mb-3">
-                    {mod.title}
-                  </h3>
-                  <p className="font-body text-sm sm:text-base text-muted leading-relaxed">
-                    {mod.desc}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          4. FINAL CTA
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Start your audit <span className="text-lime-gradient">today</span>
-          </h2>
-          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+          <a
+            href="/register"
+            className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
+          >
+            Start free audit
+            <ArrowRightIcon size={14} />
+          </a>
         </div>
       </section>
     </main>

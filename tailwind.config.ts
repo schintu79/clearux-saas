@@ -12,7 +12,26 @@ const config: Config = {
       borderColor: {
         DEFAULT: "var(--border)",
       },
+      maxWidth: {
+        'mkt': '1320px',
+      },
       colors: {
+        /* Marketing V2 tokens */
+        paper: 'var(--paper)',
+        'paper-2': 'var(--paper-2)',
+        'paper-3': 'var(--paper-3)',
+        ink: 'var(--ink)',
+        'ink-2': 'var(--ink-2)',
+        'm-muted': 'var(--m-muted)',
+        'm-muted-2': 'var(--m-muted-2)',
+        rule: 'var(--rule)',
+        'rule-2': 'var(--rule-2)',
+        signal: 'var(--signal)',
+        'signal-hot': 'var(--signal-hot)',
+        severe: 'var(--severe)',
+        warn: 'var(--warn)',
+        ok: 'var(--ok)',
+        /* Existing tokens */
         blue:       "var(--blue)",
         "blue-dk":  "var(--blue-dk)",
         "blue-lt":  "var(--blue-lt)",
@@ -41,6 +60,10 @@ const config: Config = {
         "lime-soft": "var(--lime-soft)",
       },
       fontFamily: {
+        /* Marketing V2 fonts */
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        sans: ["var(--font-sans)", "-apple-system", "sans-serif"],
+        /* Existing fonts */
         body:    ["var(--font-body)", "system-ui", "sans-serif"],
         inter:   ["var(--font-body)", "system-ui", "sans-serif"], /* backward compat */
         heading: ["var(--font-heading)", "var(--font-body)", "system-ui", "sans-serif"],

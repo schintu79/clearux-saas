@@ -1,18 +1,20 @@
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import PricingContent from './PricingContent';
+import type { Metadata } from 'next'
+import { MarketingBody } from '@/components/marketing/MarketingBody'
+import { Nav } from '@/components/marketing/Nav'
+import { Footer } from '@/components/marketing/Footer'
+import PricingContent from './PricingContent'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Pricing',
   description: 'AI-powered UX audits from $9.90 each. First audit free. Subscribe from $29/mo or buy credit packs. 96 checkpoints, PDF + DOCX reports.',
-};
+}
 
 export default function PricingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-surface">
-      <Navbar />
+    <MarketingBody>
+      <Nav />
       <PricingContent />
       <Footer />
-    </div>
-  );
+    </MarketingBody>
+  )
 }

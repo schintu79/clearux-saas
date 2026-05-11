@@ -56,16 +56,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPrice: 14900,
     yearlyPrice: 11900,
     whiteLabel: true,
-    teamSeats: 5,
-    apiAccess: true,
     features: [
       '30 audits per month',
       'Unlimited re-audits',
       'PDF + DOCX reports',
       'Priority processing',
       'White-label reports',
-      'Team seats (up to 5)',
-      'API access',
+      'Dedicated support',
     ],
   },
 ]

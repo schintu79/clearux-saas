@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
-import { DM_Sans, Caveat, JetBrains_Mono } from 'next/font/google'
+import { DM_Sans, Caveat, JetBrains_Mono, Instrument_Serif, Geist } from 'next/font/google'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AuthProvider } from '@/context/AuthContext'
 import CookieConsent from '@/components/ui/CookieConsent'
@@ -38,6 +38,21 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500', '700'],
+})
+
+/* Marketing V2 fonts */
+const instrumentSerif = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+})
+
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
 })
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
@@ -106,7 +121,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       dir="ltr"
       suppressHydrationWarning
-      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
+      className={`${justSans.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${geistSans.variable}`}
     >
       <head>
         {/* Prevent flash of wrong theme — runs before React hydrates */}

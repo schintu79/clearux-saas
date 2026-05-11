@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
+import { MarketingBody } from '@/components/marketing/MarketingBody'
+import { Nav } from '@/components/marketing/Nav'
+import { Footer } from '@/components/marketing/Footer'
 import AboutContent from './AboutContent'
 
 export const metadata: Metadata = {
@@ -10,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-surface">
-      <Navbar />
+    <MarketingBody>
+      <Nav />
       <AboutContent />
       <Footer />
-    </div>
+    </MarketingBody>
   )
 }

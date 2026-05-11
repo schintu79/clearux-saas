@@ -1,137 +1,90 @@
 'use client'
 
-import Link from 'next/link'
-import SmartCta from '@/components/ui/SmartCta'
 import Image from 'next/image'
-import {
-  ArrowRight,
-  Eye,
-  Shield,
-  Heart,
-  Sparkles,
-  ExternalLink,
-} from 'lucide-react'
-
-/* ═══════════════════════════════════════════════════════════════
-   AboutContent — Why ClearUX exists, founder, values
-   ═══════════════════════════════════════════════════════════════ */
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { Button } from '@/components/marketing/Button'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 
 export default function AboutContent() {
   return (
-    <main className="relative flex-1">
-      {/* ── Single page background ── */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img
-          src="/gradients/bg-hero.jpg"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════
-          1. HERO
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            About ClearUX
-          </p>
-
-          <h1 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text leading-[1.1] mb-3">
-            Full clarity,{' '}
-            <span className="text-lime-gradient">at your fingertips.</span>
+    <main>
+      {/* Hero */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="About" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            Full clarity, <em className="italic text-signal">at your fingertips.</em>
           </h1>
-
-          <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-xl">
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[600px] font-sans">
             ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your website, brand identity, and design — giving every team access to professional-grade insights in minutes.
           </p>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          2. WHY WE EXIST — Origin story
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            The origin story
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-10">
-            Why ClearUX exists
+      {/* Origin story */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="02" label="Origin" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Why ClearUX <em className="italic text-signal">exists</em>
           </h2>
 
-          {/* Quote */}
-          <div className="mb-14 p-6 sm:p-8 rounded-2xl border border-border bg-card backdrop-blur-sm">
-            <p className="font-body text-text font-medium text-lg sm:text-xl leading-relaxed max-w-2xl">
+          {/* Pull quote */}
+          <div className="mb-14 border-l-[3px] border-signal pl-8 py-2">
+            <p className="font-serif italic text-[24px] text-ink leading-[1.4] max-w-[640px]">
               &ldquo;What if the depth of a senior consultant&apos;s review could be available to anyone, in minutes, at a fraction of the cost?&rdquo;
             </p>
           </div>
 
-          {/* Three story blocks */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-0 border border-ink">
             {[
               {
-                icon: Eye,
                 title: 'The problem we saw',
                 desc: 'After 20+ years in digital, the pattern was clear: companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
               },
               {
-                icon: Shield,
                 title: 'What kept going wrong',
                 desc: 'Dark patterns eroding trust. Inaccessible interfaces excluding real users. Products invisible to AI models. These cost businesses revenue and cost users their dignity.',
               },
               {
-                icon: Sparkles,
                 title: 'What we built instead',
-                desc: 'Not a checklist tool. A structured audit framework — six modules, 96 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes, at a fraction of the cost.',
+                desc: 'Not a checklist tool. A structured audit framework — six modules, 96 checkpoints — that gives teams 360° clarity on their user experience. Senior UX rigor, in minutes.',
               },
-            ].map((item) => {
-              const ItemIcon = item.icon
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-border bg-card backdrop-blur-sm p-7"
-                >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10">
-                    <ItemIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                  </div>
-                  <h3 className="font-heading font-medium text-lg text-text mb-3">{item.title}</h3>
-                  <p className="font-body text-muted text-[14px] leading-relaxed">{item.desc}</p>
-                </div>
-              )
-            })}
+            ].map((item, i) => (
+              <div
+                key={item.title}
+                className={`p-8 ${i < 2 ? 'md:border-r border-ink max-md:border-b' : ''}`}
+              >
+                <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">{item.title}</h3>
+                <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          3. FOUNDER
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            The founder
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-10">
-            Built by someone who lived the problem
+      {/* Founder */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="03" label="Founder" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Built by someone who <em className="italic text-signal">lived the problem</em>
           </h2>
 
-          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
-            <div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
+          <div className="border border-ink p-10 max-sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start gap-8">
               <Image
                 src="/team-stefano.jpg"
                 alt="Stefano Schintu"
-                width={80}
-                height={80}
-                className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                width={96}
+                height={96}
+                className="w-24 h-24 object-cover flex-shrink-0"
               />
-
               <div className="flex-1">
-                <h3 className="font-heading font-medium text-xl text-text mb-1">Stefano Schintu</h3>
-                <p className="font-body text-muted text-sm mb-4">Founder &amp; Product Lead</p>
+                <h3 className="font-serif text-[24px] text-ink font-normal tracking-[-0.01em] mb-1">Stefano Schintu</h3>
+                <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-6">Founder &amp; Product Lead</p>
 
-                <div className="space-y-4 font-body text-muted text-[15px] leading-relaxed">
+                <div className="space-y-4 font-sans text-[15px] text-ink-2 leading-[1.65]">
                   <p>
                     20+ years in digital product design, UX strategy, and conversion optimisation. Worked with founders, product managers, and design leads at SaaS companies and digital product teams — from early-stage MVPs to products serving millions.
                   </p>
@@ -147,10 +100,10 @@ export default function AboutContent() {
                   href="https://www.linkedin.com/in/stefanoschintu"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-6 text-sm font-medium text-text hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-2 mt-8 font-sans text-[14px] font-medium text-ink hover:text-signal transition-colors"
                 >
-                  <ExternalLink size={14} />
                   Connect on LinkedIn
+                  <ArrowRightIcon size={12} />
                 </a>
               </div>
             </div>
@@ -158,71 +111,61 @@ export default function AboutContent() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          4. OUR VALUES
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-14 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Our commitment
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4">
-            Clarity. Rigour. <span className="text-lime-gradient">Speed.</span>
+      {/* Values */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="04" label="Values" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Clarity. Rigour. <em className="italic text-signal">Speed.</em>
           </h2>
-          <p className="font-body text-base sm:text-lg text-muted leading-relaxed max-w-xl mb-14">
+          <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[520px] mb-14 font-sans">
             We hold ourselves to the same standard we measure others by.
           </p>
 
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-3 gap-0 border border-ink">
             {[
               {
-                icon: Shield,
                 title: 'Ethical by default',
                 desc: 'Every audit checks for dark patterns, manipulative design, and cognitive overload. We refuse to use them ourselves — no subscription traps, no pressure tactics, no hidden costs.',
               },
               {
-                icon: Eye,
                 title: 'Evidence over opinion',
-                desc: 'Scores are backed by 64 measurable checkpoints across six modules. No subjective hand-waving. Every finding links to evidence you can verify.',
+                desc: 'Scores are backed by measurable checkpoints across six modules. No subjective hand-waving. Every finding links to evidence you can verify.',
               },
               {
-                icon: Heart,
                 title: 'Accessible to all',
                 desc: 'Audits from $9.90 deliver what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
               },
-            ].map((item) => {
-              const ItemIcon = item.icon
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-border bg-card backdrop-blur-sm p-7"
-                >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5 bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10">
-                    <ItemIcon size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                  </div>
-                  <h3 className="font-heading font-medium text-lg text-text mb-3">{item.title}</h3>
-                  <p className="font-body text-muted text-[14px] leading-relaxed">{item.desc}</p>
-                </div>
-              )
-            })}
+            ].map((item, i) => (
+              <div
+                key={item.title}
+                className={`p-8 ${i < 2 ? 'sm:border-r border-ink max-sm:border-b' : ''}`}
+              >
+                <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">{item.title}</h3>
+                <p className="font-sans text-[15px] text-ink-2 leading-[1.6]">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════
-          5. FINAL CTA BAND
-          ═══════════════════════════════════════════════════════ */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Start your audit <span className="text-lime-gradient">today</span>
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Start your audit <em className="italic text-signal">today</em>
           </h2>
-          <p className="text-muted text-base md:text-lg max-w-md mx-auto leading-relaxed mb-10">
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
             Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+          <a
+            href="/register"
+            className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
+          >
+            Start free audit
+            <ArrowRightIcon size={14} />
+          </a>
         </div>
       </section>
     </main>

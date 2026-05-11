@@ -1,432 +1,312 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { CheckCircle, ArrowRight, ShieldCheck, CreditCard, Zap } from 'lucide-react';
-import Link from 'next/link';
-import SmartCta from '@/components/ui/SmartCta';
-import { SUBSCRIPTION_PLANS, CREDIT_PACKS, formatPrice } from '@/lib/pricing';
+import { useState } from 'react'
+import Link from 'next/link'
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { Button } from '@/components/marketing/Button'
+import { ArrowRightIcon } from '@/components/marketing/icons'
+import { SUBSCRIPTION_PLANS, CREDIT_PACKS, formatPrice } from '@/lib/pricing'
+import type { BillingInterval } from '@/lib/pricing'
 
-const FEATURES = [
-  'All 6 modules, 360 coverage',
-  'PDF + Word reports included',
-  'ClearUX AI severity scoring',
-  'Issue screenshots with highlights',
-  'Track fixes and re-audit anytime',
-  '96 checkpoints per audit',
-];
+type PricingMode = 'subscribe' | 'credits'
 
-type PricingMode = 'subscription' | 'credits';
-type BillingInterval = 'monthly' | 'yearly';
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+      <path d="M3 7.5L5.5 10L11 4" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function CheckCell() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
+      <path d="M3.5 8.5L6 11L12.5 5" stroke="var(--signal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export default function PricingContent() {
-  const [mode, setMode] = useState<PricingMode>('subscription');
-  const [interval, setInterval] = useState<BillingInterval>('monthly');
+  const [mode, setMode] = useState<PricingMode>('subscribe')
+  const [interval, setInterval] = useState<BillingInterval>('monthly')
 
   return (
-    <main id="main-content" className="flex-1">
-      {/* ── Background ── */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* ── HERO ── */}
-      <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Transparent pricing
-          </p>
-
-          <h1 className="font-heading text-text max-w-4xl mb-6" style={{ lineHeight: '1.05' }}>
-            <span className="text-[2.5rem] sm:text-[3.5rem] md:text-[4.5rem] lg:text-[5.5rem] font-bold">
-              Plans that <span className="text-lime-gradient">scale with you</span>
-            </span>
+    <main>
+      {/* Hero */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="Pricing" />
+          <h1 className="font-serif font-normal text-ink leading-[0.92] tracking-[-0.03em] mb-6" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            Plans that <em className="italic text-signal">scale with you.</em>
           </h1>
-
-          <p className="font-heading text-[1.5rem] sm:text-[2rem] font-bold text-volt mb-6">
-            First audit free. Always.
-          </p>
-
-          <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-            Subscribe for unlimited re-audits and ongoing monitoring, or buy credit packs for
-            project-based work. Every plan runs the full 96-checkpoint analysis. No feature gates.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-            <SmartCta
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-lime-gradient text-[#111114] text-base font-medium transition-all hover:opacity-90 whitespace-nowrap min-h-[48px]"
-              iconSize={15}
-            />
-            <a
-              href="#plans"
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
-            >
-              View plans
-              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHAT'S INCLUDED ── */}
-      <section className="relative py-14 sm:py-32 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Every audit includes
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-10" style={{ lineHeight: '1.1' }}>
-            96 checkpoints. <span className="text-lime-gradient">Zero compromises.</span>
-          </h2>
-
-          <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8 lg:p-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-              {FEATURES.map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                  <span className="text-sm sm:text-base text-muted font-medium">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Free audit callout */}
-          <div className="mt-8 rounded-2xl border border-[#BFFA60]/20 bg-[#BFFA60]/[0.04] p-6 sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
-                <Zap size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-              </div>
-              <div>
-                <p className="text-base font-medium text-text mb-1">Your first audit is free</p>
-                <p className="text-sm text-muted leading-relaxed">
-                  Full 96-checkpoint analysis, viewable in your dashboard. PDF and DOCX downloads
-                  are available on paid plans.
-                  No credit card required to get started.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── PLANS ── */}
-      <section id="plans" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
-        <div className="absolute inset-0 bg-surface" />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Choose your plan
-          </p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.1' }}>
-            Subscribe or <span className="text-lime-gradient">pay as you go</span>
-          </h2>
-          <p className="text-muted text-base max-w-xl mb-10 leading-relaxed">
-            Subscriptions include unlimited re-audits. Credit packs never expire.
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[600px] mb-10 font-sans">
+            Subscribe for ongoing audits and unlimited re-audits, or buy credit packs for project-based work. Every plan runs the full 96-checkpoint analysis. No feature gates. First audit free, always.
           </p>
 
           {/* Mode toggle */}
-          <div className="flex items-center gap-3 mb-8">
+          <div className="inline-flex rounded-full border border-rule p-1 mb-4">
             <button
-              onClick={() => setMode('subscription')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-                mode === 'subscription'
-                  ? 'bg-white text-[#111114] shadow-sm'
-                  : 'bg-transparent text-muted border border-border hover:text-text'
+              onClick={() => setMode('subscribe')}
+              className={`px-6 py-2.5 rounded-full text-[13px] font-medium font-sans transition-all ${
+                mode === 'subscribe' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink'
               }`}
             >
-              <CreditCard size={15} />
               Subscriptions
             </button>
             <button
               onClick={() => setMode('credits')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
-                mode === 'credits'
-                  ? 'bg-white text-[#111114] shadow-sm'
-                  : 'bg-transparent text-muted border border-border hover:text-text'
+              className={`px-6 py-2.5 rounded-full text-[13px] font-medium font-sans transition-all ${
+                mode === 'credits' ? 'bg-ink text-paper' : 'text-ink-2 hover:text-ink'
               }`}
             >
-              <Zap size={15} />
               Credit packs
             </button>
           </div>
 
-          {/* Subscription plans */}
-          {mode === 'subscription' && (
-            <>
-              {/* Billing interval toggle */}
-              <div className="flex items-center gap-3 mb-8">
-                <button
-                  onClick={() => setInterval('monthly')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    interval === 'monthly'
-                      ? 'bg-off text-text'
-                      : 'text-muted hover:text-text'
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setInterval('yearly')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                    interval === 'yearly'
-                      ? 'bg-off text-text'
-                      : 'text-muted hover:text-text'
-                  }`}
-                >
-                  Yearly
-                  <span className="text-[10px] font-medium tracking-[0.1em] uppercase text-[#6B9A2E] dark:text-[#BFFA60]">
-                    save 20%
-                  </span>
-                </button>
-              </div>
+          {mode === 'subscribe' && (
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={() => setInterval('monthly')}
+                className={`text-[13px] font-sans transition-colors ${interval === 'monthly' ? 'text-ink font-medium' : 'text-m-muted hover:text-ink-2'}`}
+              >
+                Monthly
+              </button>
+              <span className="text-rule">|</span>
+              <button
+                onClick={() => setInterval('yearly')}
+                className={`text-[13px] font-sans transition-colors ${interval === 'yearly' ? 'text-ink font-medium' : 'text-m-muted hover:text-ink-2'}`}
+              >
+                Yearly
+              </button>
+              {interval === 'yearly' && (
+                <span className="text-[11px] font-mono tracking-[0.06em] uppercase text-signal ml-1">Save 20%</span>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
 
-              <div className="grid sm:grid-cols-3 gap-5">
-                {SUBSCRIPTION_PLANS.map((plan) => {
-                  const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
-                        plan.popular
-                          ? 'border-[#BFFA60]/30 bg-card'
-                          : 'border-border bg-card hover:border-muted hover:bg-card'
-                      }`}
-                    >
-                      {plan.popular && (
-                        <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
-                      )}
-
-                      <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                          <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{plan.name}</h3>
-                          {plan.popular && (
-                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
-                              Most popular
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-1 mb-1">
-                          <span className="text-volt text-lg font-medium">$</span>
-                          <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">
-                            {Math.round(price / 100)}
-                          </span>
-                          <span className="text-muted text-base ml-1">/mo</span>
-                        </div>
-                        {interval === 'yearly' && (
-                          <p className="text-sm text-muted mb-1">
-                            <span className="line-through opacity-50">{formatPrice(plan.monthlyPrice)}/mo</span>
-                            {' '}billed annually
-                          </p>
-                        )}
-                        <p className="text-sm text-muted mb-6">
-                          {plan.auditsPerMonth} new audits/mo + unlimited re-audits
-                        </p>
-
-                        <div className="space-y-3 mb-8">
-                          {plan.features.map((feat, i) => (
-                            <div key={i} className="flex items-start gap-2.5">
-                              <CheckCircle size={15} className="text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-muted">{feat}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        <Link
-                          href="/register"
-                          className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
-                            plan.popular
-                              ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
-                              : 'bg-white text-[#111114] hover:bg-white/90'
-                          }`}
-                        >
-                          Start free trial
-                          <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                        </Link>
-                      </div>
+      {/* Plans */}
+      <section className="py-[80px] border-b border-rule max-sm:py-12">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          {/* Subscription cards */}
+          {mode === 'subscribe' && (
+            <div className="grid lg:grid-cols-3 gap-0 border border-ink max-lg:grid-cols-1">
+              {SUBSCRIPTION_PLANS.map((plan, i) => {
+                const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative px-8 py-10 ${i < SUBSCRIPTION_PLANS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                      plan.popular ? 'bg-ink text-paper' : ''
+                    }`}
+                  >
+                    {plan.popular && (
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
+                        Most popular
+                      </span>
+                    )}
+                    <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-6" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 60%, transparent)' : 'var(--m-muted)' }}>
+                      {plan.name}
+                    </h3>
+                    <div className="mb-1">
+                      <span className="font-serif text-[48px] font-normal tracking-[-0.03em]" style={{ lineHeight: 1 }}>
+                        {formatPrice(price)}
+                      </span>
+                      <span className="text-[14px] font-sans ml-1" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
+                        / mo
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </>
+                    {interval === 'yearly' && (
+                      <p className="text-[12px] font-sans mb-5" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 50%, transparent)' : 'var(--m-muted)' }}>
+                        Billed yearly at {formatPrice(price * 12)}
+                      </p>
+                    )}
+                    {interval === 'monthly' && <div className="mb-5" />}
+                    <p className="text-[15px] font-sans font-medium mb-7" style={{ color: plan.popular ? 'var(--paper)' : 'var(--ink)' }}>
+                      {plan.auditsPerMonth} audits per month + unlimited re-audits
+                    </p>
+                    <ul className="list-none space-y-3 mb-9">
+                      {plan.features.slice(1).map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
+                          <CheckIcon />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      href="/register"
+                      variant={plan.popular ? 'primary' : 'ghost'}
+                      className="w-full justify-center"
+                    >
+                      Start free trial
+                      <ArrowRightIcon size={14} />
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
           )}
 
           {/* Credit packs */}
           {mode === 'credits' && (
-            <>
-              <p className="text-sm text-muted mb-8">
-                No subscription. Buy credits, use anytime. Credits never expire. Re-audits cost 1 credit.
-              </p>
-              <div className="grid sm:grid-cols-3 gap-5">
-                {CREDIT_PACKS.map((pack) => (
-                  <div
-                    key={pack.id}
-                    className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
-                      pack.popular
-                        ? 'border-[#BFFA60]/30 bg-card'
-                        : 'border-border bg-card hover:border-muted hover:bg-card'
-                    }`}
-                  >
-                    {pack.popular && (
-                      <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
-                    )}
-
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{pack.name}</h3>
-                        {pack.popular && (
-                          <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
-                            Best value
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Price */}
-                      <div className="flex items-baseline gap-1 mb-1">
-                        <span className="text-volt text-lg font-medium">$</span>
-                        <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">
-                          {Math.round(pack.price / 100)}
-                        </span>
-                      </div>
-                      <p className="text-muted text-sm mb-1">
-                        {pack.perAudit} per audit <span className="opacity-30">|</span> {pack.credits} credits
-                      </p>
-                      {pack.savePercent && (
-                        <p className="text-sm text-[#6B9A2E] dark:text-[#BFFA60] font-medium mb-6">Save {pack.savePercent}%</p>
-                      )}
-                      {!pack.savePercent && <div className="mb-6" />}
-
-                      <div className="space-y-3 mb-8">
-                        {pack.features.map((feat, i) => (
-                          <div key={i} className="flex items-start gap-2.5">
-                            <CheckCircle size={15} className="text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-muted">{feat}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <Link
-                        href="/register"
-                        className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
-                          pack.popular
-                            ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
-                            : 'bg-white text-[#111114] hover:bg-white/90'
-                        }`}
-                      >
-                        Buy {pack.credits} credits
-                        <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                      </Link>
-                    </div>
+            <div className="grid lg:grid-cols-3 gap-0 border border-ink max-lg:grid-cols-1">
+              {CREDIT_PACKS.map((pack, i) => (
+                <div
+                  key={pack.id}
+                  className={`relative px-8 py-10 ${i < CREDIT_PACKS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                    pack.popular ? 'bg-ink text-paper' : ''
+                  }`}
+                >
+                  {pack.popular && (
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-signal text-paper text-[10px] font-mono tracking-[0.1em] uppercase px-4 py-1 rounded-full">
+                      Best value
+                    </span>
+                  )}
+                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-6" style={{ color: pack.popular ? 'color-mix(in srgb, var(--paper) 60%, transparent)' : 'var(--m-muted)' }}>
+                    {pack.name}
+                  </h3>
+                  <div className="mb-1">
+                    <span className="font-serif text-[48px] font-normal tracking-[-0.03em]" style={{ lineHeight: 1 }}>
+                      {formatPrice(pack.price)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </>
+                  <p className="text-[14px] font-sans mb-5" style={{ color: pack.popular ? 'color-mix(in srgb, var(--paper) 55%, transparent)' : 'var(--m-muted)' }}>
+                    {pack.perAudit} per audit · {pack.credits} credits
+                  </p>
+                  {pack.savePercent && (
+                    <span className="inline-block text-[11px] font-mono tracking-[0.06em] uppercase text-signal mb-5">
+                      Save {pack.savePercent}%
+                    </span>
+                  )}
+                  {!pack.savePercent && <div className="mb-5" />}
+                  <ul className="list-none space-y-3 mb-9">
+                    {pack.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: pack.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
+                        <CheckIcon />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    href="/register"
+                    variant={pack.popular ? 'primary' : 'ghost'}
+                    className="w-full justify-center"
+                  >
+                    Buy credits
+                    <ArrowRightIcon size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
 
-      {/* ── COMPARE TABLE ── */}
-      <section className="relative py-14 sm:py-32 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">At a glance</p>
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-10" style={{ lineHeight: '1.1' }}>
-            Compare plans
+      {/* Compare table */}
+      <section className="py-[80px] border-b border-rule max-sm:py-12">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="02" label="Compare" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Compare <em className="italic text-signal">plans</em>
           </h2>
 
-          <div className="rounded-2xl border border-border overflow-hidden backdrop-blur-sm">
-            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <table className="w-full text-sm border-collapse min-w-[640px]">
-                <thead>
-                  <tr className="bg-card">
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Feature</th>
-                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Free</th>
-                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Credits</th>
-                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Subscription</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {([
-                    { feature: '96-checkpoint analysis', free: true, credits: true, sub: true },
-                    { feature: 'Dashboard access', free: true, credits: true, sub: true },
-                    { feature: 'PDF + DOCX reports', free: false, credits: true, sub: true },
-                    { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
-                    { feature: 'White-label reports', free: false, credits: 'Scale pack', sub: 'Pro + Agency' },
-                    { feature: 'Priority processing', free: false, credits: false, sub: 'Pro + Agency' },
-                    { feature: 'Team seats', free: false, credits: false, sub: 'Agency (5)' },
-                    { feature: 'API access', free: false, credits: false, sub: 'Agency' },
-                  ] as { feature: string; free: boolean | string; credits: boolean | string; sub: boolean | string }[]).map((row, i) => (
-                    <tr key={i} className="border-t border-border">
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-text">{row.feature}</td>
-                      {(['free', 'credits', 'sub'] as const).map((col) => {
-                        const val = row[col];
-                        return (
-                          <td key={col} className="px-4 sm:px-6 py-4 sm:py-5 text-center">
-                            {val === true ? (
-                              <CheckCircle size={16} className="text-[#6B9A2E] dark:text-[#BFFA60] mx-auto" />
-                            ) : val === false ? (
-                              <span className="text-muted opacity-40">-</span>
-                            ) : (
-                              <span className="text-sm text-muted">{val}</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
+          <div className="border border-ink overflow-x-auto">
+            <table className="w-full border-collapse min-w-[640px]">
+              <thead>
+                <tr>
+                  {['Feature', 'Free', 'Credits', 'Subscription'].map((h) => (
+                    <th key={h} className="bg-ink text-paper font-mono text-[10px] font-medium tracking-[0.1em] uppercase px-6 py-4 text-left first:text-left text-center">
+                      {h}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  { feature: '96-checkpoint analysis', free: true, credits: true, sub: true },
+                  { feature: 'Dashboard access', free: true, credits: true, sub: true },
+                  { feature: 'PDF + DOCX reports', free: false, credits: true, sub: true },
+                  { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
+                  { feature: 'White-label reports', free: false, credits: 'Scale pack', sub: 'Pro + Agency' },
+                  { feature: 'Priority processing', free: false, credits: false, sub: 'Pro + Agency' },
+                  { feature: 'Team seats', free: false, credits: false, sub: 'Agency (5)' },
+                  { feature: 'API access', free: false, credits: false, sub: 'Agency' },
+                ] as { feature: string; free: boolean | string; credits: boolean | string; sub: boolean | string }[]).map((row, ri) => (
+                  <tr key={ri} className="border-b border-rule last:border-b-0 hover:bg-paper-2 transition-colors">
+                    <td className="px-6 py-4 text-[14px] font-sans font-medium text-ink">{row.feature}</td>
+                    {(['free', 'credits', 'sub'] as const).map((col) => {
+                      const val = row[col]
+                      return (
+                        <td key={col} className="px-6 py-4 text-center">
+                          {val === true ? (
+                            <CheckCell />
+                          ) : val === false ? (
+                            <span className="text-m-muted opacity-40">—</span>
+                          ) : (
+                            <span className="text-[13px] font-sans text-ink-2">{val}</span>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* ── GUARANTEE ── */}
-      <section className="relative z-10 py-14 sm:py-32 bg-surface">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <div className="rounded-2xl border border-border bg-card p-8 sm:p-12 flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
-              <ShieldCheck size={28} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-            </div>
+      {/* Guarantee */}
+      <section className="py-[80px] border-b border-rule max-sm:py-12">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <div className="border border-ink p-10 max-sm:p-6 flex flex-col sm:flex-row items-start gap-8">
+            <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal shrink-0 mt-1">Guarantee</span>
             <div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text mb-3">
+              <h3 className="font-serif text-[28px] text-ink font-normal tracking-[-0.01em] mb-3">
                 30-day money-back guarantee
-              </h2>
-              <p className="text-sm sm:text-base text-muted leading-relaxed max-w-lg">
-                Not satisfied with your audit? We&apos;ll refund your purchase within 30 days, no questions asked.
-                Cancel subscriptions anytime with no penalty.
+              </h3>
+              <p className="font-sans text-[15px] text-ink-2 leading-[1.6] max-w-[520px]">
+                Not satisfied with your audit? We&apos;ll refund your purchase within 30 days, no questions asked. Cancel subscriptions anytime with no penalty.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── CROSS-LINKS ── */}
-      <section className="relative z-10 py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-muted">
+      {/* Cross-links */}
+      <section className="py-12 border-b border-rule">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[13px] font-sans text-m-muted">
             <span>Learn more:</span>
-            <Link href="/how-it-works" className="underline hover:text-text transition-colors">How it works</Link>
+            <Link href="/how-it-works" className="underline hover:text-signal transition-colors">How it works</Link>
             <span className="opacity-30">|</span>
-            <Link href="/demo-report" className="underline hover:text-text transition-colors">See a demo report</Link>
+            <Link href="/demo-report" className="underline hover:text-signal transition-colors">See a sample report</Link>
             <span className="opacity-30">|</span>
-            <Link href="/faq" className="underline hover:text-text transition-colors">FAQ</Link>
+            <Link href="/faq" className="underline hover:text-signal transition-colors">FAQ</Link>
           </div>
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4" style={{ lineHeight: '1.1' }}>
-            Start your audit <span className="text-lime-gradient">today</span>
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Start your audit <em className="italic text-signal">today</em>
           </h2>
-          <p className="text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment. Actionable UX insights in minutes.
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
+            Your first audit is free. No credit card, no commitment.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+          <a
+            href="/register"
+            className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
+          >
+            Start free audit
+            <ArrowRightIcon size={14} />
+          </a>
         </div>
       </section>
     </main>
-  );
+  )
 }

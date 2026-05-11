@@ -1,21 +1,22 @@
-import type { Metadata } from 'next';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import FaqContent from './FaqContent';
-import { FaqJsonLd } from '@/components/seo/JsonLd';
+import type { Metadata } from 'next'
+import { MarketingBody } from '@/components/marketing/MarketingBody'
+import { Nav } from '@/components/marketing/Nav'
+import { Footer } from '@/components/marketing/Footer'
+import { FaqJsonLd } from '@/components/seo/JsonLd'
+import FaqContent from './FaqContent'
 
 export const metadata: Metadata = {
   title: 'FAQ — ClearUX',
   description: 'Everything you need to know about ClearUX audits, pricing, and reports.',
-};
+}
 
 export default function FaqPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-surface">
+    <MarketingBody>
       <FaqJsonLd />
-      <Navbar />
+      <Nav />
       <FaqContent />
       <Footer />
-    </div>
-  );
+    </MarketingBody>
+  )
 }

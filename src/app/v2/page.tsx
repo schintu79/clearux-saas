@@ -10,7 +10,6 @@ import { FindingAnatomy } from '@/components/marketing/FindingAnatomy'
 import { Pricing } from '@/components/marketing/Pricing'
 import { Coda } from '@/components/marketing/Coda'
 import { Footer } from '@/components/marketing/Footer'
-import { HomeJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'ClearUX — The audit your team actually ships from.',
@@ -18,10 +17,9 @@ export const metadata: Metadata = {
     'AI-powered UX audits: 96 checkpoints, 6 modules. Severity-ranked, evidence-backed, shippable fixes. First audit free.',
 }
 
-export default function HomePage() {
+export default function MarketingV2Page() {
   return (
     <MarketingBody>
-      <HomeJsonLd />
       <Nav />
       <main>
         <Hero />

@@ -1,110 +1,97 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import Link from 'next/link';
-import { Mail, MessageSquare, Send, CheckCircle, ArrowRight } from 'lucide-react';
-import SmartCta from '@/components/ui/SmartCta';
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 
 export default function ContactContent() {
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-    const form = e.currentTarget;
-    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
-    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
+    const form = e.currentTarget
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value
+    const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message }),
-      });
+      })
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to send message.');
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to send message.')
       }
 
-      setSubmitted(true);
+      setSubmitted(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const inputBase = 'w-full bg-paper-2 border border-rule text-ink placeholder:text-m-muted focus:border-ink focus:outline-none font-sans text-[15px] transition-colors'
 
   return (
-    <main id="main-content" className="flex-1">
-      {/* ── Single page background ── */}
-      <div className="fixed inset-0" aria-hidden="true">
-        <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
-        <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
-      </div>
-
-      {/* ── HERO + FORM ── */}
-      <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            GET IN TOUCH
-          </p>
-
-          <h1
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text max-w-3xl"
-            style={{ lineHeight: '1.1' }}
-          >
-            Contact <span className="text-lime-gradient">us.</span>
+    <main>
+      {/* Hero + Form */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="01" label="Contact" />
+          <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-4" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
+            Get in <em className="italic text-signal">touch.</em>
           </h1>
-
-          <p className="text-muted text-base sm:text-lg max-w-xl leading-relaxed mt-3 mb-14">
-            Have a question, feedback, or need help with your audit? We&rsquo;ll get back to you within 24 hours.
+          <p className="text-[18px] leading-[1.55] text-ink-2 max-w-[500px] mb-14 font-sans">
+            Have a question, feedback, or need help with your audit? We&apos;ll get back to you within 24 hours.
           </p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-
-            {/* ── Form card ── */}
-            <div className="lg:col-span-2">
+          <div className="grid lg:grid-cols-[2fr_1fr] gap-12 items-start">
+            {/* Form */}
+            <div>
               {submitted ? (
-                <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-8 sm:p-10">
-                  <div className="w-14 h-14 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-5">
-                    <CheckCircle size={28} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                  </div>
-                  <p className="font-heading font-medium text-lg text-text mb-1">Message sent!</p>
-                  <p className="font-body text-sm text-muted mb-6">
-                    Thanks for reaching out. We&rsquo;ll reply within 24 hours.
+                <div className="border border-ink p-10">
+                  <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-4 block">Sent</span>
+                  <h3 className="font-serif text-[28px] text-ink font-normal mb-3">Message sent!</h3>
+                  <p className="font-sans text-[15px] text-ink-2 mb-8">
+                    Thanks for reaching out. We&apos;ll reply within 24 hours.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => setSubmitted(false)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-sm font-medium text-text hover:bg-card-hover transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-rule text-[14px] font-medium font-sans text-ink hover:border-ink transition-colors"
                     >
                       Send another message
                     </button>
-                    <SmartCta
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0F0F0F] text-white dark:bg-white dark:text-[#111114] text-sm font-medium hover:opacity-90 transition-all"
-                      iconSize={14}
-                    />
+                    <a
+                      href="/register"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-ink text-paper text-[14px] font-medium font-sans hover:bg-signal transition-colors"
+                    >
+                      Start free audit
+                      <ArrowRightIcon size={12} />
+                    </a>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6 sm:p-8 md:p-10">
+                <div className="border border-ink p-10 max-sm:p-6">
                   <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
                     {error && (
-                      <div className="rounded-lg p-4 text-sm font-body text-red-400 border border-red-800 bg-red-900/20">
+                      <div className="rounded-lg p-4 text-[14px] font-sans text-severe border border-severe/30 bg-severe/5">
                         {error}
                       </div>
                     )}
 
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium font-body text-text mb-1.5">
+                      <label htmlFor="name" className="block text-[13px] font-medium font-sans text-ink mb-2">
                         Name
                       </label>
                       <input
@@ -114,13 +101,13 @@ export default function ContactContent() {
                         autoComplete="name"
                         aria-required="true"
                         required
-                        className="rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className={`${inputBase} rounded-full px-5 py-3`}
                         placeholder="Your name"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium font-body text-text mb-1.5">
+                      <label htmlFor="email" className="block text-[13px] font-medium font-sans text-ink mb-2">
                         Email
                       </label>
                       <input
@@ -130,13 +117,13 @@ export default function ContactContent() {
                         autoComplete="email"
                         aria-required="true"
                         required
-                        className="rounded-full bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full"
+                        className={`${inputBase} rounded-full px-5 py-3`}
                         placeholder="you@example.com"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium font-body text-text mb-1.5">
+                      <label htmlFor="message" className="block text-[13px] font-medium font-sans text-ink mb-2">
                         Message
                       </label>
                       <textarea
@@ -145,7 +132,7 @@ export default function ContactContent() {
                         rows={5}
                         aria-required="true"
                         required
-                        className="rounded-2xl bg-card-hover border border-border text-text placeholder:text-muted focus:border-border focus:outline-none px-5 py-3 text-base font-body w-full resize-y"
+                        className={`${inputBase} rounded-xl px-5 py-3 resize-y`}
                         placeholder="How can we help?"
                       />
                     </div>
@@ -153,7 +140,7 @@ export default function ContactContent() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px] disabled:opacity-60"
+                      className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-ink text-paper text-[15px] font-medium font-sans hover:bg-signal transition-all disabled:opacity-60"
                     >
                       {loading ? (
                         <>
@@ -165,8 +152,8 @@ export default function ContactContent() {
                         </>
                       ) : (
                         <>
-                          <Send size={16} />
                           Send message
+                          <ArrowRightIcon size={14} />
                         </>
                       )}
                     </button>
@@ -175,52 +162,45 @@ export default function ContactContent() {
               )}
             </div>
 
-            {/* ── Contact info cards ── */}
-            <div className="flex flex-col gap-4">
-              <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-4">
-                  <Mail size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                </div>
-                <p className="text-sm font-medium font-body text-text mb-1">Email us</p>
+            {/* Contact info */}
+            <div className="flex flex-col gap-0 border border-ink">
+              <div className="p-7 border-b border-ink">
+                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Email</span>
                 <a
                   href="mailto:support@clearux.ai"
-                  className="text-sm font-body text-muted hover:text-muted transition-colors"
+                  className="font-sans text-[15px] text-ink hover:text-signal transition-colors"
                 >
                   support@clearux.ai
                 </a>
               </div>
-
-              <div className="rounded-2xl border border-border bg-card backdrop-blur-sm p-6">
-                <div className="w-10 h-10 rounded-xl bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center mb-4">
-                  <MessageSquare size={18} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
-                </div>
-                <p className="text-sm font-medium font-body text-text mb-1">Response time</p>
-                <p className="text-sm font-body text-muted">Usually within 24 hours</p>
+              <div className="p-7">
+                <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal mb-3 block">Response time</span>
+                <p className="font-sans text-[15px] text-ink-2">Usually within 24 hours</p>
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* ── STANDARD FINAL CTA ── */}
-      <section className="relative z-10 py-28 sm:py-36 overflow-hidden">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
-          <h2
-            className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-text mb-4"
-            style={{ lineHeight: '1.1' }}
-          >
-            Start your audit <span className="text-lime-gradient">today</span>
+      {/* CTA */}
+      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+            Start your audit <em className="italic text-signal">today</em>
           </h2>
-          <p className="text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-10">
-            Your first audit is free. No credit card, no commitment — actionable UX insights in minutes.
+          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
+            Your first audit is free. No credit card, no commitment.
           </p>
-          <SmartCta
-            className="group inline-flex items-center gap-2.5 px-7 py-[1.2rem] rounded-full bg-white text-[#111114] text-base font-medium transition-all hover:bg-white/90 whitespace-nowrap min-h-[48px]"
-          />
+          <a
+            href="/register"
+            className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
+          >
+            Start free audit
+            <ArrowRightIcon size={14} />
+          </a>
         </div>
       </section>
-
     </main>
-  );
+  )
 }

@@ -889,3 +889,113 @@ article, .prose {
 svg.lucide {
   stroke-width: 1.5px;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MARKETING V2 — "The Instrument" design tokens
+   Scoped to body.marketing-v2 so product pages are unaffected
+   ══════════════════════════════════════════════════════════════ */
+
+body.marketing-v2 {
+  --paper: #F2EDE3;
+  --paper-2: #EAE3D4;
+  --paper-3: #E0D8C5;
+  --ink: #14130F;
+  --ink-2: #2A2823;
+  --m-muted: #6B6759;
+  --m-muted-2: #8A857A;
+  --rule: #D4CCB8;
+  --rule-2: #C2B89E;
+  --signal: #5E6B2F;
+  --signal-hot: #4A5424;
+  --signal-soft: rgba(94, 107, 47, 0.12);
+  --signal-soft-2: rgba(94, 107, 47, 0.22);
+  --severe: #8B3A2C;
+  --warn: #9A7A2C;
+  --ok: #3F6B3F;
+  --grain-opacity: 0.35;
+  --grain-blend: multiply;
+  --specimen-bg: #14130F;
+  --specimen-fg: #F2EDE3;
+  --specimen-rule: rgba(242, 237, 227, 0.12);
+  --specimen-muted: rgba(242, 237, 227, 0.55);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.08), 0 20px 50px rgba(20,19,15,0.18), 0 40px 100px rgba(20,19,15,0.10);
+  --shadow-offset: var(--ink-2);
+
+  background: var(--paper);
+  color: var(--ink);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body.marketing-v2 {
+  --paper: #14130F;
+  --paper-2: #1F1D18;
+  --paper-3: #2A2823;
+  --ink: #F2EDE3;
+  --ink-2: #D9D2C2;
+  --m-muted: #8A857A;
+  --m-muted-2: #6B6759;
+  --rule: rgba(242, 237, 227, 0.12);
+  --rule-2: rgba(242, 237, 227, 0.22);
+  --signal: #A4B26A;
+  --signal-hot: #B8C77A;
+  --signal-soft: rgba(164, 178, 106, 0.15);
+  --signal-soft-2: rgba(164, 178, 106, 0.28);
+  --severe: #C97262;
+  --warn: #D9B85E;
+  --ok: #7AAE7A;
+  --grain-opacity: 0.18;
+  --grain-blend: screen;
+  --specimen-bg: #0A0907;
+  --specimen-fg: #F2EDE3;
+  --specimen-rule: rgba(242, 237, 227, 0.10);
+  --specimen-muted: rgba(242, 237, 227, 0.5);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 20px 50px rgba(0,0,0,0.5), 0 40px 100px rgba(0,0,0,0.35);
+  --shadow-offset: rgba(164, 178, 106, 0.25);
+}
+
+/* Grain overlay — marketing pages only */
+body.marketing-v2::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+  mix-blend-mode: var(--grain-blend);
+  opacity: var(--grain-opacity);
+}
+
+/* Marketing V2 ticker animation */
+@keyframes m-scroll-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Marketing V2 checkpoint fade-in */
+@keyframes m-fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Marketing V2 pulse dot */
+@keyframes m-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(63, 107, 63, 0.5); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+@keyframes m-pulse-signal {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Coda CTA — olive bg, hover to paper */
+.coda-cta {
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  color: #FFFFFF;
+}
+.coda-cta:hover {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--ink);
+}
