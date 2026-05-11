@@ -18,7 +18,7 @@ export function InstrumentGrid() {
         {/* Section head */}
         <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
           <div>
-            <SectionMarker number="02" label="The instrument" />
+            <SectionMarker number="03" label="The instrument" />
             <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
               Six modules. <em className="italic text-signal">Ninety-six</em> checkpoints.
             </h2>
