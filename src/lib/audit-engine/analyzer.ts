@@ -946,9 +946,74 @@ export async function generateReport(
       }
     })
 
+    // ════════════════════════════════════════════════════════════
+    // GAP-FILL SCORING — Include scores for newly analyzed modules
+    // If the user selected modules (e.g. SEO) that weren't in the
+    // previous audit, gap-fill created findings for them but the
+    // baseline scoring above only maps previous categories. We must
+    // also score the gap-filled categories from their findings.
+    // ════════════════════════════════════════════════════════════
+    const allCategoryNames = getCategoryNames(language)
+    const prevCatNameSet = new Set(prev.previousCategoryScores.map(c => c.name))
+    const selectedModules: string[] | null = (auditData as any).selected_modules ?? null
+    const hasBrandIdentity = !!(auditData as any).brand_identity_id
+
+    const MODULE_RANGES_BL: Record<string, [number, number]> = {
+      foundation: [0, 4], human_experience: [4, 8], inclusive_design: [8, 12],
+      future_readiness: [12, 16], seo_structure: [16, 20], brand_consistency: [20, 24],
+    }
+
+    // Determine which category indices should be active for this audit
+    const activeIndices = new Set<number>()
+    if (selectedModules && selectedModules.length > 0) {
+      for (const mod of selectedModules) {
+        if (mod === 'brand_consistency' && !hasBrandIdentity) continue
+        const r = MODULE_RANGES_BL[mod]
+        if (r) { for (let i = r[0]; i < r[1]; i++) activeIndices.add(i) }
+      }
+    }
+
+    // Find categories that should be active but weren't in previous audit
+    if (activeIndices.size > 0) {
+      const severityPenalty: Record<string, number> = { critical: 15, high: 10, medium: 5, low: 2 }
+
+      for (let gi = 0; gi < allCategoryNames.length; gi++) {
+        if (!activeIndices.has(gi)) continue
+        const catName = allCategoryNames[gi]
+        if (prevCatNameSet.has(catName)) continue // already scored above
+
+        // This is a gap-filled category — score from findings
+        const catWords = catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+        const catFindings = findings.filter(f => {
+          const text = `${f.title} ${f.description}`.toLowerCase()
+          return catWords.some(w => text.includes(w))
+        })
+
+        let score: number
+        let summary: string
+        if (catFindings.length === 0) {
+          score = 75
+          summary = 'No specific issues identified in this category.'
+        } else {
+          score = 85
+          for (const f of catFindings) { score -= severityPenalty[f.severity] || 5 }
+          score = Math.max(0, Math.min(100, Math.round(score)))
+          const top = catFindings[0]
+          summary = catFindings.length === 1
+            ? `1 issue found: ${top.title}.`
+            : `${catFindings.length} issues found. Top priority: ${top.title}.`
+        }
+        categoryScores.push({ name: catName, score, summary })
+      }
+    }
+
     // Calculate pillar averages and overall from deterministic category scores
+    // Use name-based lookup (not positional slicing) to handle gap-filled categories correctly
     const pillarAvg = (start: number, end: number) => {
-      const cats = categoryScores.slice(start, Math.min(end, categoryScores.length))
+      const cats = categoryScores.filter((c) => {
+        const idx = allCategoryNames.indexOf(c.name)
+        return idx >= start && idx < end
+      })
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
     const allScores = categoryScores.map(c => c.score)
