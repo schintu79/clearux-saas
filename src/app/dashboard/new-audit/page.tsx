@@ -62,7 +62,7 @@ const NewAuditInner: React.FC = () => {
   const [scopeOpen, setScopeOpen] = useState(false);
   const isCompleteAudit = COMPLETE_AUDIT_SLUGS.every((s) => selectedModules.includes(s));
 
-  const isWhiteLabelEligible = packageTier === 'growth' || packageTier === 'agency' || packageTier === 'scale';
+  const isWhiteLabelEligible = packageTier === 'pro' || packageTier === 'agency' || packageTier === 'scale';
 
   // Brand identity selection (shared between website + brand identity audit)
   const [brandIdentities, setBrandIdentities] = useState<{ id: string; name: string; fileCount: number }[]>([]);
@@ -950,7 +950,7 @@ const NewAuditInner: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text">No credits remaining</p>
-              <p className="text-xs text-muted">This audit costs $99 or buy a credit pack to save.</p>
+              <p className="text-xs text-muted">Subscribe or buy credits to run this audit.</p>
             </div>
             <Link
               href="/dashboard/buy-credits"
@@ -996,7 +996,7 @@ const NewAuditInner: React.FC = () => {
           </>
         ) : (
           <>
-            Start {auditType === 'brand_identity' ? 'Brand ' : ''}Audit — $99
+            Start {auditType === 'brand_identity' ? 'Brand ' : ''}Audit — $13
             <ArrowRight size={20} />
           </>
         )}

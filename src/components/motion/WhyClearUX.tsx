@@ -472,7 +472,7 @@ export default function WhyClearUX() {
             Why ClearUX
           </h2>
           <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. ClearUX is the only audit that covers all four — in minutes, for $99.
+            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. ClearUX is the only audit that covers all four — in minutes, from $9.90 per audit.
           </p>
         </motion.div>
 
@@ -539,7 +539,7 @@ export default function WhyClearUX() {
           transition={{ duration: 0.7 }}
         >
           <h3 className="font-heading text-2xl sm:text-3xl md:text-4xl font-medium text-text mb-3" style={{ lineHeight: '1.15' }}>
-            All four. In every audit. For $99.
+            All four. In every audit. From $9.90.
           </h3>
           <p className="text-muted text-sm sm:text-base mb-8 max-w-md mx-auto">
             No credit card required for your first audit.

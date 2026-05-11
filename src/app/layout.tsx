@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     template: '%s | ClearUX',
     default:  'ClearUX: AI UX Audits in Minutes',
   },
-  description: 'Get a consultant-grade UX audit for $99. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+  description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
   keywords: [
     'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
@@ -67,14 +67,14 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'ClearUX',
-    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, $99',
-    description: 'Get a consultant-grade UX audit for $99. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, from $9.90',
+    description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
     images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — AI-powered UX audits in minutes' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, $99',
-    description: 'Get a consultant-grade UX audit for $99. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, from $9.90',
+    description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
     images: ['/api/og'],
   },
   icons: {

@@ -20,7 +20,7 @@ const TOP_FAQS = [
   { q: 'How accurate is ClearUX?', a: 'Every finding includes specific evidence — screenshots, element selectors, or metrics — so you can verify instantly. We prioritise precision over volume: fewer, higher-confidence findings you can act on today. For deep qualitative research like user interviews, pair ClearUX with a specialist.' },
   { q: 'How long does it take?', a: 'Most audits complete in under 10 minutes. Your report arrives via email and is available in your dashboard with downloadable PDF and Word versions.' },
   { q: 'What does the audit cover?', a: 'Six modules: Foundation (structural and technical baseline), Human Experience (clarity, flow, cognitive load), Inclusive Design (accessibility and equity for every user), Future Readiness (AI discoverability and agent readiness), Brand Consistency (whether what users see matches what the brand promises), and SEO Structure (findability, legibility, and ranking). We audit websites, brand identities, and designs — the complete picture.' },
-  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes for $99 — covering your website, brand identity, and design with the same depth and rigour.' },
+  { q: 'How does this compare to a UX consultant?', a: 'A traditional audit costs $5,000-$15,000 and takes 2-4 weeks. ClearUX delivers 96 checkpoints across 6 modules in minutes from $9.90 per audit — covering your website, brand identity, and design with the same depth and rigour.' },
   { q: 'Can I re-audit to track improvement?', a: 'Yes. Re-audits verify whether previous findings are fixed, still present, or dismissed. Your score improves predictably as you resolve issues. Hit "Dig Deeper" anytime for a full fresh analysis.' },
 ];
 
@@ -748,7 +748,7 @@ export default function Home() {
             </p>
             <div className="mb-6">
               <h2 className="font-heading text-text max-w-4xl" style={{ lineHeight: '1.05' }}>
-                <span className="text-volt font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>
+                <span className="text-volt font-medium text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem]">From $9.90</span>
                 <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-medium text-muted ml-3 sm:ml-5">per audit</span>
               </h2>
             </div>
@@ -756,7 +756,7 @@ export default function Home() {
               First one free.
             </p>
             <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-              No subscription. No feature gates. Every audit gets all 6 modules, 96 checkpoints, and full reports. Credits never expire.
+              Subscribe from $29/mo for unlimited re-audits, or buy credit packs starting at $39. Every audit gets all 6 modules, 96 checkpoints, and full reports.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <SmartCta iconSize={15} />

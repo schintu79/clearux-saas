@@ -1,30 +1,29 @@
 // ============================================================
 // ClearUX API — POST /api/stripe/checkout
 // Creates Stripe checkout sessions for:
-//   1. Single audit purchase ($99)
-//   2. Credit pack purchases (5, 15, 50 credits)
+//   1. Single audit purchase (pay-per-audit)
+//   2. Credit pack purchases (3, 10, 30 credits)
+//   3. Subscription plans (starter, pro, agency)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { stripe } from '@/lib/stripe'
 import { createServerSupabase } from '@/lib/supabase-server'
+import { CREDIT_PACKS, SUBSCRIPTION_PLANS } from '@/lib/pricing'
 
 const singleAuditSchema = z.object({
   audit_id: z.string().uuid('Invalid audit ID'),
 })
 
 const creditPackSchema = z.object({
-  pack: z.enum(['starter', 'growth', 'agency', 'scale']),
+  pack: z.enum(['starter', 'growth', 'scale']),
 })
 
-// ── Credit packs ────────────────────────────────────────────
-const CREDIT_PACKS = {
-  starter: { credits: 1,  amount: 9900,   name: 'ClearUX Starter',  desc: '1 audit credit' },
-  growth:  { credits: 5,  amount: 39900,  name: 'ClearUX Growth',   desc: '5 audit credits — $79.80/audit' },
-  agency:  { credits: 15, amount: 99900,  name: 'ClearUX Agency',   desc: '15 audit credits — $66.60/audit' },
-  scale:   { credits: 50, amount: 249900, name: 'ClearUX Scale',    desc: '50 audit credits — $49.98/audit' },
-} as const
+const subscriptionSchema = z.object({
+  subscription: z.enum(['starter', 'pro', 'agency']),
+  interval: z.enum(['monthly', 'yearly']).default('monthly'),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,21 +35,90 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://clearux.ai'
 
-    // Get user email
+    // Get user email and Stripe customer ID
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email')
+      .select('email, stripe_customer_id')
       .eq('id', user.id)
       .single()
     const userEmail = (profile as any)?.email || user.email || ''
+    let stripeCustomerId = (profile as any)?.stripe_customer_id as string | undefined
 
-    // ── Credit pack purchase (no audit_id needed) ──────────
+    // ── Subscription purchase ───────────────────────────────
+    if (body.subscription) {
+      const parsed = subscriptionSchema.safeParse(body)
+      if (!parsed.success)
+        return NextResponse.json({ error: 'Invalid subscription plan' }, { status: 400 })
+
+      const plan = SUBSCRIPTION_PLANS.find((p) => p.id === parsed.data.subscription)
+      if (!plan)
+        return NextResponse.json({ error: 'Plan not found' }, { status: 400 })
+
+      const isYearly = parsed.data.interval === 'yearly'
+      const unitAmount = isYearly ? plan.yearlyPrice : plan.monthlyPrice
+      const intervalStr = isYearly ? 'year' as const : 'month' as const
+
+      // Create or reuse Stripe customer
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          metadata: { user_id: user.id },
+        })
+        stripeCustomerId = customer.id
+        // Save customer ID to profile (best-effort)
+        await supabase
+          .from('profiles')
+          .update({ stripe_customer_id: stripeCustomerId } as any)
+          .eq('id', user.id)
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: stripeCustomerId,
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `ClearUX ${plan.name}`,
+              description: `${plan.auditsPerMonth} audits/month + unlimited re-audits`,
+            },
+            unit_amount: isYearly ? plan.yearlyPrice * 12 : unitAmount,
+            recurring: { interval: intervalStr },
+          },
+          quantity: 1,
+        }],
+        metadata: {
+          user_id: user.id,
+          type: 'subscription',
+          plan: plan.id,
+          interval: parsed.data.interval,
+          audits_per_month: plan.auditsPerMonth.toString(),
+        },
+        subscription_data: {
+          metadata: {
+            user_id: user.id,
+            plan: plan.id,
+            interval: parsed.data.interval,
+            audits_per_month: plan.auditsPerMonth.toString(),
+          },
+        },
+        success_url: `${appUrl}/dashboard?subscribed=${plan.id}`,
+        cancel_url: `${appUrl}/dashboard/buy-credits?cancelled=true`,
+      })
+
+      if (!session.url) throw new Error('Failed to create checkout session')
+      return NextResponse.json({ url: session.url })
+    }
+
+    // ── Credit pack purchase ────────────────────────────────
     if (body.pack) {
       const parsed = creditPackSchema.safeParse(body)
       if (!parsed.success)
         return NextResponse.json({ error: 'Invalid pack' }, { status: 400 })
 
-      const pack = CREDIT_PACKS[parsed.data.pack]
+      const pack = CREDIT_PACKS.find((p) => p.id === parsed.data.pack)
+      if (!pack)
+        return NextResponse.json({ error: 'Pack not found' }, { status: 400 })
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -58,8 +126,11 @@ export async function POST(request: NextRequest) {
         line_items: [{
           price_data: {
             currency: 'usd',
-            product_data: { name: pack.name, description: pack.desc },
-            unit_amount: pack.amount,
+            product_data: {
+              name: `ClearUX ${pack.name} Pack`,
+              description: `${pack.credits} audit credits — ${pack.perAudit}/audit`,
+            },
+            unit_amount: pack.price,
           },
           quantity: 1,
         }],
@@ -77,14 +148,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url })
     }
 
-    // ── Single audit purchase ($99) ─────────────────────────
+    // ── Single audit purchase ───────────────────────────────
     const parsed = singleAuditSchema.safeParse(body)
     if (!parsed.success)
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
 
     const { audit_id } = parsed.data
 
-    // Fetch audit
     const { data: audit, error: auditError } = await supabase
       .from('audits')
       .select('*')
@@ -98,6 +168,7 @@ export async function POST(request: NextRequest) {
     if ((audit as any).status !== 'pending_payment')
       return NextResponse.json({ error: 'Audit is not pending payment' }, { status: 400 })
 
+    // Single audit price = same as 1 credit from starter pack ($13)
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: userEmail,
@@ -105,10 +176,10 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'ClearUX Full Audit',
-            description: `Deep AI-powered UX audit — ${(audit as any).product_url}`,
+            name: 'ClearUX Audit',
+            description: `AI-powered UX audit — ${(audit as any).product_url}`,
           },
-          unit_amount: 9900,
+          unit_amount: 1300,
         },
         quantity: 1,
       }],

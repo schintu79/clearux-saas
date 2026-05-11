@@ -4,7 +4,7 @@ import PricingContent from './PricingContent';
 
 export const metadata = {
   title: 'Pricing',
-  description: '360° UX audits starting at $99. First audit free. Simple credit-based pricing — no subscriptions. Senior UX rigor, in minutes.',
+  description: 'AI-powered UX audits from $9.90 each. First audit free. Subscribe from $29/mo or buy credit packs. 96 checkpoints, PDF + DOCX reports.',
 };
 
 export default function PricingPage() {

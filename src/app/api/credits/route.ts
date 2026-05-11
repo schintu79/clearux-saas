@@ -1,7 +1,7 @@
 // ============================================================
 // ClearUX API — /api/credits
-// GET  → returns credit balance for current user
-// POST → deducts 1 credit for a new audit
+// GET  → returns credit balance + subscription status
+// POST → uses 1 credit or 1 subscription audit for a new audit
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,12 +9,9 @@ import { after } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 
-// Keep the serverless function alive while the audit runs in the background.
-// Without this, Vercel kills the container as soon as the response is sent,
-// which terminates the fire-and-forget processAudit / processBrandAudit promise.
 export const maxDuration = 300 // 5 minutes (Vercel Pro max)
 
-/* ── GET — credit balance ───────────────────────────────── */
+/* ── GET — credit balance + subscription info ───────────── */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -25,7 +22,7 @@ export async function GET(request: NextRequest) {
     const db = createServiceSupabase()
     const { data: profile } = await db
       .from('profiles')
-      .select('credits, package_tier')
+      .select('credits, package_tier, subscription_plan, subscription_status, subscription_interval, audits_remaining, audits_per_month, white_label')
       .eq('id', user.id)
       .single()
 
@@ -37,11 +34,25 @@ export async function GET(request: NextRequest) {
       .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
 
     const firstAuditFree = (completedAudits ?? 0) === 0
+    const p = profile as any
 
     return NextResponse.json({
-      credits: (profile as any)?.credits ?? 0,
-      package_tier: (profile as any)?.package_tier ?? 'starter',
+      credits: p?.credits ?? 0,
+      package_tier: p?.package_tier ?? 'starter',
       first_audit_free: firstAuditFree,
+      // Subscription fields
+      subscription_plan: p?.subscription_plan ?? null,
+      subscription_status: p?.subscription_status ?? null,
+      subscription_interval: p?.subscription_interval ?? null,
+      audits_remaining: p?.audits_remaining ?? 0,
+      audits_per_month: p?.audits_per_month ?? 0,
+      white_label: p?.white_label ?? false,
+      // Can the user run an audit right now?
+      can_audit: firstAuditFree
+        || (p?.credits ?? 0) > 0
+        || (p?.subscription_status === 'active' && (p?.audits_remaining ?? 0) > 0),
+      // Does this user get free re-audits?
+      unlimited_reaudits: p?.subscription_status === 'active',
     })
   } catch (err) {
     console.error('GET /api/credits error:', err)
@@ -49,7 +60,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/* ── POST — use 1 credit for an audit ───────────────────── */
+/* ── POST — use 1 credit/subscription-audit for an audit ── */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabase()
@@ -57,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { audit_id, is_free_first } = await request.json()
+    const { audit_id, is_free_first, is_reaudit } = await request.json()
     if (!audit_id)
       return NextResponse.json({ error: 'audit_id required' }, { status: 400 })
 
@@ -71,7 +82,7 @@ export async function POST(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .in('status', ['completed', 'failed', 'analysing', 'crawling', 'generating_report', 'payment_received'])
-        .neq('id', audit_id) // exclude the audit we just created
+        .neq('id', audit_id)
 
       if ((existingAudits ?? 0) === 0) {
         usingFreeFirst = true
@@ -79,71 +90,95 @@ export async function POST(request: NextRequest) {
     }
 
     if (!usingFreeFirst) {
-      // Check balance
       const { data: profile } = await db
         .from('profiles')
-        .select('credits')
+        .select('credits, subscription_plan, subscription_status, audits_remaining')
         .eq('id', user.id)
         .single()
 
-      const balance = profile?.credits ?? 0
-      if (balance < 1)
-        return NextResponse.json({ error: 'No credits available' }, { status: 400 })
+      const p = profile as any
+      const hasSubscription = p?.subscription_status === 'active'
+      const subscriptionAuditsLeft = p?.audits_remaining ?? 0
+      const creditBalance = p?.credits ?? 0
 
-      // Deduct 1 credit (atomic decrement via rpc or update)
-      const { error: deductErr } = await db
-        .from('profiles')
-        .update({
-          credits: balance - 1,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq('id', user.id)
-        .gte('credits', 1) // safety: only deduct if still >= 1
+      // For re-audits: subscribers get them free, credit users pay 1 credit
+      if (is_reaudit && hasSubscription) {
+        // Free re-audit for subscribers — no deduction needed
+      } else if (hasSubscription && subscriptionAuditsLeft > 0) {
+        // Use subscription allowance
+        const { error: deductErr } = await db
+          .from('profiles')
+          .update({
+            audits_remaining: subscriptionAuditsLeft - 1,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', user.id)
 
-      if (deductErr) {
-        console.error('Credit deduct error:', deductErr)
-        return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
+        if (deductErr) {
+          console.error('Subscription audit deduct error:', deductErr)
+          return NextResponse.json({ error: 'Failed to use subscription audit' }, { status: 500 })
+        }
+      } else if (creditBalance > 0) {
+        // Use credits
+        const { error: deductErr } = await db
+          .from('profiles')
+          .update({
+            credits: creditBalance - 1,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', user.id)
+          .gte('credits', 1)
+
+        if (deductErr) {
+          console.error('Credit deduct error:', deductErr)
+          return NextResponse.json({ error: 'Failed to deduct credit' }, { status: 500 })
+        }
+      } else {
+        return NextResponse.json({ error: 'No audits available. Subscribe or buy credits.' }, { status: 400 })
       }
     }
 
-    const balance = usingFreeFirst
-      ? ((await db.from('profiles').select('credits').eq('id', user.id).single()).data?.credits ?? 0)
-      : ((await db.from('profiles').select('credits').eq('id', user.id).single()).data?.credits ?? 0)
+    const { data: updatedProfile } = await db
+      .from('profiles')
+      .select('credits, audits_remaining')
+      .eq('id', user.id)
+      .single()
+    const balance = (updatedProfile as any)?.credits ?? 0
+    const auditsRemaining = (updatedProfile as any)?.audits_remaining ?? 0
 
-    // Create a payment record for audit tracking
+    // Create a payment record
     await db.from('payments').insert({
       audit_id,
       user_id: user.id,
       amount_cents: 0,
       currency: 'usd',
       status: 'succeeded',
-      stripe_payment_intent_id: usingFreeFirst ? `free_first_${Date.now()}` : `credit_${Date.now()}`,
+      stripe_payment_intent_id: usingFreeFirst
+        ? `free_first_${Date.now()}`
+        : is_reaudit
+          ? `reaudit_${Date.now()}`
+          : `credit_${Date.now()}`,
     } as any)
 
-    // Update audit status to payment_received
+    // Update audit status
     await db
       .from('audits')
-      .update({
-        status: 'payment_received',
-        updated_at: new Date().toISOString(),
-      } as any)
+      .update({ status: 'payment_received', updated_at: new Date().toISOString() } as any)
       .eq('id', audit_id)
 
     // Log it
     await db.from('audit_logs').insert({
       audit_id,
-      event: usingFreeFirst ? 'free_first_audit' : 'credit_used',
+      event: usingFreeFirst ? 'free_first_audit' : is_reaudit ? 'reaudit' : 'credit_used',
       status: 'success',
       message: usingFreeFirst
         ? 'Free first audit — no credit deducted'
-        : `1 credit deducted. Remaining: ${balance}`,
-      metadata: usingFreeFirst
-        ? { free_first: true }
-        : { credits_before: balance + 1, credits_after: balance },
+        : is_reaudit
+          ? 'Re-audit (subscription — free)'
+          : `1 credit/audit deducted. Credits: ${balance}, Sub audits: ${auditsRemaining}`,
     } as any)
 
-    // Determine audit type for correct Inngest dispatch
-    // Smart inference: check audit_type first, then fall back to brand_identity_id + product_url
+    // Determine audit type and trigger processing
     const { data: auditRecord } = await db
       .from('audits')
       .select('audit_type, brand_identity_id, product_url')
@@ -153,9 +188,6 @@ export async function POST(request: NextRequest) {
     const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
-    // Trigger audit processing using next/server `after()` — this keeps the
-    // serverless function alive AFTER the response is sent, so the audit
-    // runs to completion without being killed by Vercel's container recycling.
     console.log(`[credits] Scheduling ${auditType} audit ${audit_id} via after()`)
     after(async () => {
       try {
@@ -170,14 +202,14 @@ export async function POST(request: NextRequest) {
         console.error(`[credits] ${auditType} audit ${audit_id} failed:`, err)
       }
     })
-    // Also try Inngest if configured (non-blocking)
     inngest.send({ name: eventName, data: { auditId: audit_id } }).catch(() => {})
 
     return NextResponse.json({
       success: true,
       credits_remaining: balance,
+      audits_remaining: auditsRemaining,
       free_first: usingFreeFirst,
-      message: usingFreeFirst ? 'Free first audit started' : 'Credit applied, audit processing started',
+      message: usingFreeFirst ? 'Free first audit started' : 'Audit processing started',
     })
   } catch (err) {
     console.error('POST /api/credits error:', err)

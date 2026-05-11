@@ -1,54 +1,55 @@
 'use client';
 
-import { CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle, ArrowRight, ShieldCheck, CreditCard, Zap } from 'lucide-react';
 import Link from 'next/link';
 import SmartCta from '@/components/ui/SmartCta';
+import { SUBSCRIPTION_PLANS, CREDIT_PACKS, formatPrice } from '@/lib/pricing';
 
 const FEATURES = [
-  'All 6 modules, 360° coverage',
-  'PDF & Word reports included',
+  'All 6 modules, 360 coverage',
+  'PDF + Word reports included',
   'ClearUX AI severity scoring',
   'Issue screenshots with highlights',
   'Track fixes and re-audit anytime',
-  'Credits never expire',
+  '96 checkpoints per audit',
 ];
 
-const PACKS = [
-  { name: 'Growth', credits: 5, price: 399, per: '$79.80', save: 19, desc: 'Quarterly audits to track improvement', popular: true },
-  { name: 'Agency', credits: 15, price: 999, per: '$66.60', save: 33, desc: 'White-label reports for client sites', popular: false },
-  { name: 'Scale', credits: 50, price: 2499, per: '$49.98', save: 50, desc: 'Continuous auditing across teams', popular: false },
-];
+type PricingMode = 'subscription' | 'credits';
+type BillingInterval = 'monthly' | 'yearly';
 
 export default function PricingContent() {
+  const [mode, setMode] = useState<PricingMode>('subscription');
+  const [interval, setInterval] = useState<BillingInterval>('monthly');
+
   return (
     <main id="main-content" className="flex-1">
-      {/* ── Single page background ── */}
+      {/* ── Background ── */}
       <div className="fixed inset-0" aria-hidden="true">
         <img src="/gradients/bg-hero.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 hidden dark:block" />
         <div className="absolute inset-0 bg-gradient-to-b from-surface via-transparent to-surface" />
       </div>
 
-      {/* ── HERO: Big $99 ── */}
+      {/* ── HERO ── */}
       <section className="relative py-28 sm:py-36 lg:py-44 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             Transparent pricing
           </p>
 
-          <div className="mb-6">
-            <h1 className="font-heading text-text max-w-4xl" style={{ lineHeight: '1.05', marginBottom: 0 }}>
-              <span className="text-volt font-medium text-[4rem] sm:text-[5rem] md:text-[6rem] lg:text-[8rem]">$99</span>{' '}
-              <span className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-bold text-muted ml-3 sm:ml-5">per audit</span>
-            </h1>
-          </div>
+          <h1 className="font-heading text-text max-w-4xl mb-6" style={{ lineHeight: '1.05' }}>
+            <span className="text-[2.5rem] sm:text-[3.5rem] md:text-[4.5rem] lg:text-[5.5rem] font-bold">
+              Plans that <span className="text-lime-gradient">scale with you</span>
+            </span>
+          </h1>
 
-          <p className="font-heading text-[1.5rem] sm:text-[2rem] md:text-[2.5rem] font-bold text-volt mb-6">
-            First one free.
+          <p className="font-heading text-[1.5rem] sm:text-[2rem] font-bold text-volt mb-6">
+            First audit free. Always.
           </p>
 
           <p className="text-muted text-base sm:text-lg max-w-3xl leading-relaxed mb-12">
-            No subscription. No feature gates. Every audit — including your free first one — runs the
-            full 96-checkpoint analysis across your live product. Six modules, 24 categories, real evidence from the shipped experience. One audit = one URL. Credits never expire.
+            Subscribe for unlimited re-audits and ongoing monitoring, or buy credit packs for
+            project-based work. Every plan runs the full 96-checkpoint analysis. No feature gates.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
@@ -57,19 +58,18 @@ export default function PricingContent() {
               iconSize={15}
             />
             <a
-              href="#packs"
+              href="#plans"
               className="group inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full border border-border text-text text-base font-medium transition-all hover:border-border whitespace-nowrap min-h-[48px]"
             >
-              View packs
+              View plans
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── WHAT'S INCLUDED — glass strip ── */}
+      {/* ── WHAT'S INCLUDED ── */}
       <section className="relative py-14 sm:py-32 overflow-hidden">
-
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
             Every audit includes
@@ -89,99 +89,243 @@ export default function PricingContent() {
             </div>
           </div>
 
-          {/* Value anchor */}
-          <p className="text-sm text-muted mt-6">
-            At $99 per audit, that&apos;s <span className="font-medium text-muted">$1.55 per checkpoint</span> — compared to $100+ per checkpoint with traditional UX consultants.
-          </p>
-
-          {/* Delivery & fulfillment clarity */}
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { title: 'Delivered in minutes', desc: 'Report arrives via email and your dashboard within 10 minutes of purchase. Download as PDF or Word.' },
-              { title: 'Credits never expire', desc: 'Use credits whenever you\'re ready. Share across your team. Re-audit the same site as often as you like.' },
-              { title: 'Satisfaction guaranteed', desc: 'Not happy? Contact support@clearux.ai and we\'ll resolve it or provide a credit for a new audit.' },
-            ].map((item, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-5">
-                <p className="text-sm font-medium text-text mb-1.5">{item.title}</p>
-                <p className="text-xs text-muted leading-relaxed">{item.desc}</p>
+          {/* Free audit callout */}
+          <div className="mt-8 rounded-2xl border border-[#BFFA60]/20 bg-[#BFFA60]/[0.04] p-6 sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0">
+                <Zap size={20} className="text-[#6B9A2E] dark:text-[#BFFA60]" />
               </div>
-            ))}
+              <div>
+                <p className="text-base font-medium text-text mb-1">Your first audit is free</p>
+                <p className="text-sm text-muted leading-relaxed">
+                  Full 96-checkpoint analysis, viewable in your dashboard. PDF and DOCX downloads
+                  are available on paid plans.
+                  No credit card required to get started.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── CREDIT PACKS ── */}
-      <section id="packs" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
+      {/* ── PLANS ── */}
+      <section id="plans" className="relative py-14 sm:py-32 overflow-hidden scroll-mt-8">
         <div className="absolute inset-0 bg-surface" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Need more audits?
+            Choose your plan
           </p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-3" style={{ lineHeight: '1.1' }}>
-            Save up to <span className="text-lime-gradient">50%</span> with packs
+            Subscribe or <span className="text-lime-gradient">pay as you go</span>
           </h2>
-          <p className="text-muted text-base max-w-xl mb-14 leading-relaxed">
-            Same 96-checkpoint audit. Packs simply lower the per-audit cost. No features are locked behind tiers.
+          <p className="text-muted text-base max-w-xl mb-10 leading-relaxed">
+            Subscriptions include unlimited re-audits. Credit packs never expire.
           </p>
 
-          <div className="grid sm:grid-cols-3 gap-5">
-            {PACKS.map((pack) => (
-              <div
-                key={pack.name}
-                className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
-                  pack.popular
-                    ? 'border-[#BFFA60]/30 bg-card'
-                    : 'border-border bg-card hover:border-muted hover:bg-card'
-                }`}
-              >
-                {/* Popular glow */}
-                {pack.popular && (
-                  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
-                )}
+          {/* Mode toggle */}
+          <div className="flex items-center gap-3 mb-8">
+            <button
+              onClick={() => setMode('subscription')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                mode === 'subscription'
+                  ? 'bg-white text-[#111114] shadow-sm'
+                  : 'bg-transparent text-muted border border-border hover:text-text'
+              }`}
+            >
+              <CreditCard size={15} />
+              Subscriptions
+            </button>
+            <button
+              onClick={() => setMode('credits')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                mode === 'credits'
+                  ? 'bg-white text-[#111114] shadow-sm'
+                  : 'bg-transparent text-muted border border-border hover:text-text'
+              }`}
+            >
+              <Zap size={15} />
+              Credit packs
+            </button>
+          </div>
 
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{pack.name}</h3>
-                    {pack.popular && (
-                      <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
-                        Most popular
-                      </span>
-                    )}
-                  </div>
+          {/* Subscription plans */}
+          {mode === 'subscription' && (
+            <>
+              {/* Billing interval toggle */}
+              <div className="flex items-center gap-3 mb-8">
+                <button
+                  onClick={() => setInterval('monthly')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    interval === 'monthly'
+                      ? 'bg-off text-text'
+                      : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setInterval('yearly')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                    interval === 'yearly'
+                      ? 'bg-off text-text'
+                      : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Yearly
+                  <span className="text-[10px] font-medium tracking-[0.1em] uppercase text-[#6B9A2E] dark:text-[#BFFA60]">
+                    save 20%
+                  </span>
+                </button>
+              </div>
 
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-volt text-lg font-medium">$</span>
-                    <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">{pack.price.toLocaleString()}</span>
-                  </div>
-                  <p className="text-muted text-sm mb-1">
-                    {pack.per} per audit <span className="opacity-30">|</span> {pack.credits} audits
-                  </p>
-                  <p className="text-sm text-[#6B9A2E] dark:text-[#BFFA60] font-medium mb-6">Save {pack.save}%</p>
+              <div className="grid sm:grid-cols-3 gap-5">
+                {SUBSCRIPTION_PLANS.map((plan) => {
+                  const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
+                        plan.popular
+                          ? 'border-[#BFFA60]/30 bg-card'
+                          : 'border-border bg-card hover:border-muted hover:bg-card'
+                      }`}
+                    >
+                      {plan.popular && (
+                        <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
+                      )}
 
-                  <p className="text-sm text-muted mb-8 leading-relaxed">{pack.desc}</p>
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{plan.name}</h3>
+                          {plan.popular && (
+                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
+                              Most popular
+                            </span>
+                          )}
+                        </div>
 
-                  <Link
-                    href="/register"
-                    className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
+                        {/* Price */}
+                        <div className="flex items-baseline gap-1 mb-1">
+                          <span className="text-volt text-lg font-medium">$</span>
+                          <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">
+                            {Math.round(price / 100)}
+                          </span>
+                          <span className="text-muted text-base ml-1">/mo</span>
+                        </div>
+                        {interval === 'yearly' && (
+                          <p className="text-sm text-muted mb-1">
+                            <span className="line-through opacity-50">{formatPrice(plan.monthlyPrice)}/mo</span>
+                            {' '}billed annually
+                          </p>
+                        )}
+                        <p className="text-sm text-muted mb-6">
+                          {plan.auditsPerMonth} new audits/mo + unlimited re-audits
+                        </p>
+
+                        <div className="space-y-3 mb-8">
+                          {plan.features.map((feat, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <CheckCircle size={15} className="text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-muted">{feat}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Link
+                          href="/register"
+                          className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
+                            plan.popular
+                              ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
+                              : 'bg-white text-[#111114] hover:bg-white/90'
+                          }`}
+                        >
+                          Start free trial
+                          <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Credit packs */}
+          {mode === 'credits' && (
+            <>
+              <p className="text-sm text-muted mb-8">
+                No subscription. Buy credits, use anytime. Credits never expire. Re-audits cost 1 credit.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-5">
+                {CREDIT_PACKS.map((pack) => (
+                  <div
+                    key={pack.id}
+                    className={`group relative rounded-2xl border p-7 sm:p-8 transition-all duration-300 overflow-hidden ${
                       pack.popular
-                        ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
-                        : 'bg-white text-[#111114] hover:bg-white/90'
+                        ? 'border-[#BFFA60]/30 bg-card'
+                        : 'border-border bg-card hover:border-muted hover:bg-card'
                     }`}
                   >
-                    Buy {pack.credits} audits
-                    <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
+                    {pack.popular && (
+                      <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#BFFA60]/[0.06] blur-3xl pointer-events-none hidden dark:block" />
+                    )}
+
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-heading text-xl font-bold text-text" style={{ marginBottom: 0 }}>{pack.name}</h3>
+                        {pack.popular && (
+                          <span className="text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full bg-[#A8E54A]/15 dark:bg-[#BFFA60]/10 text-[#6B9A2E] dark:text-[#BFFA60] border border-[#A8E54A]/25 dark:border-[#BFFA60]/20">
+                            Best value
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Price */}
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="text-volt text-lg font-medium">$</span>
+                        <span className="font-heading text-5xl sm:text-6xl font-medium text-volt">
+                          {Math.round(pack.price / 100)}
+                        </span>
+                      </div>
+                      <p className="text-muted text-sm mb-1">
+                        {pack.perAudit} per audit <span className="opacity-30">|</span> {pack.credits} credits
+                      </p>
+                      {pack.savePercent && (
+                        <p className="text-sm text-[#6B9A2E] dark:text-[#BFFA60] font-medium mb-6">Save {pack.savePercent}%</p>
+                      )}
+                      {!pack.savePercent && <div className="mb-6" />}
+
+                      <div className="space-y-3 mb-8">
+                        {pack.features.map((feat, i) => (
+                          <div key={i} className="flex items-start gap-2.5">
+                            <CheckCircle size={15} className="text-[#6B9A2E] dark:text-[#BFFA60] flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-muted">{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Link
+                        href="/register"
+                        className={`group/btn inline-flex items-center justify-center gap-2.5 px-7 py-[1.2rem] rounded-full text-base font-medium transition-all whitespace-nowrap w-full min-h-[48px] ${
+                          pack.popular
+                            ? 'bg-lime-gradient text-[#111114] hover:opacity-90'
+                            : 'bg-white text-[#111114] hover:bg-white/90'
+                        }`}
+                      >
+                        Buy {pack.credits} credits
+                        <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </section>
 
       {/* ── COMPARE TABLE ── */}
       <section className="relative py-14 sm:py-32 overflow-hidden">
-
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-muted mb-4">At a glance</p>
           <h2 className="font-heading text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] font-bold text-text mb-10" style={{ lineHeight: '1.1' }}>
@@ -190,40 +334,42 @@ export default function PricingContent() {
 
           <div className="rounded-2xl border border-border overflow-hidden backdrop-blur-sm">
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <table className="w-full text-sm border-collapse min-w-[540px]">
+              <table className="w-full text-sm border-collapse min-w-[640px]">
                 <thead>
                   <tr className="bg-card">
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Plan</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Price</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Per Audit</th>
-                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Best For</th>
+                    <th className="text-left px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Feature</th>
+                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Free</th>
+                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Credits</th>
+                    <th className="text-center px-4 sm:px-6 py-4 text-[11px] font-medium text-muted uppercase tracking-[0.2em]">Subscription</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { plan: 'Free Audit', price: '$0', per: 'Free (1 audit)', best: 'First-time users evaluating the platform', badge: null, save: null },
-                    { plan: 'Single Audit', price: '$99', per: '$99.00', best: 'One-off baseline or pre-launch check', badge: null, save: null },
-                    { plan: 'Growth', price: '$399', per: '$79.80', best: 'Quarterly audits per release cycle', badge: 'Popular', save: '19%' },
-                    { plan: 'Agency', price: '$999', per: '$66.60', best: 'Multiple client sites + white-label', badge: null, save: '33%' },
-                    { plan: 'Scale', price: '$2,499', per: '$49.98', best: 'Continuous auditing across teams', badge: null, save: '50%' },
-                  ].map((row, i) => (
-                    <tr key={i} className={`border-t border-border ${i % 2 === 0 ? 'bg-card' : 'bg-card'}`}>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-text">
-                        <span className="flex items-center gap-3">
-                          {row.plan}
-                          {row.badge && (
-                            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#6B9A2E] dark:text-[#BFFA60]/80">{row.badge}</span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-heading font-medium text-volt text-lg">{row.price}</td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5">
-                        <span className="text-text font-medium">{row.per}</span>
-                        {row.save && (
-                          <span className="ml-2 text-[11px] font-medium text-[#6B9A2E] dark:text-[#BFFA60]">save {row.save}</span>
-                        )}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 sm:py-5 text-muted">{row.best}</td>
+                  {([
+                    { feature: '96-checkpoint analysis', free: true, credits: true, sub: true },
+                    { feature: 'Dashboard access', free: true, credits: true, sub: true },
+                    { feature: 'PDF + DOCX reports', free: false, credits: true, sub: true },
+                    { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
+                    { feature: 'White-label reports', free: false, credits: 'Scale pack', sub: 'Pro + Agency' },
+                    { feature: 'Priority processing', free: false, credits: false, sub: 'Pro + Agency' },
+                    { feature: 'Team seats', free: false, credits: false, sub: 'Agency (5)' },
+                    { feature: 'API access', free: false, credits: false, sub: 'Agency' },
+                  ] as { feature: string; free: boolean | string; credits: boolean | string; sub: boolean | string }[]).map((row, i) => (
+                    <tr key={i} className="border-t border-border">
+                      <td className="px-4 sm:px-6 py-4 sm:py-5 font-medium text-text">{row.feature}</td>
+                      {(['free', 'credits', 'sub'] as const).map((col) => {
+                        const val = row[col];
+                        return (
+                          <td key={col} className="px-4 sm:px-6 py-4 sm:py-5 text-center">
+                            {val === true ? (
+                              <CheckCircle size={16} className="text-[#6B9A2E] dark:text-[#BFFA60] mx-auto" />
+                            ) : val === false ? (
+                              <span className="text-muted opacity-40">-</span>
+                            ) : (
+                              <span className="text-sm text-muted">{val}</span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
@@ -245,7 +391,8 @@ export default function PricingContent() {
                 30-day money-back guarantee
               </h2>
               <p className="text-sm sm:text-base text-muted leading-relaxed max-w-lg">
-                Not satisfied with your audit? We'll refund your credits within 30 days, no questions asked. We stand behind the quality of every report.
+                Not satisfied with your audit? We&apos;ll refund your purchase within 30 days, no questions asked.
+                Cancel subscriptions anytime with no penalty.
               </p>
             </div>
           </div>

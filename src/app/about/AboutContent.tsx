@@ -188,7 +188,7 @@ export default function AboutContent() {
               {
                 icon: Heart,
                 title: 'Accessible to all',
-                desc: 'A $99 audit delivers what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
+                desc: 'Audits from $9.90 deliver what used to cost $5K-15K from a consultant. Quality UX review shouldn\'t be a luxury reserved for well-funded teams.',
               },
             ].map((item) => {
               const ItemIcon = item.icon

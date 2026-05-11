@@ -48,9 +48,17 @@ export interface Profile {
   billing_city:          string | null
   billing_postal_code:   string | null
   billing_country:       string | null
-  // White-label (Agency/Scale packages)
+  // White-label (Agency/Scale packages or Pro+ subscriptions)
   white_label:   boolean
   package_tier:  string
+  // Subscription
+  subscription_plan:     string | null  // 'starter' | 'pro' | 'agency' | null
+  subscription_status:   string | null  // 'active' | 'cancelled' | 'past_due' | null
+  subscription_interval: string | null  // 'monthly' | 'yearly' | null
+  stripe_customer_id:    string | null
+  stripe_subscription_id: string | null
+  audits_remaining:      number         // monthly allowance remaining
+  audits_per_month:      number         // monthly allowance total
   // Admin role
   role:          'user' | 'admin' | 'super_admin'
   // Email preferences

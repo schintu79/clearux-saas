@@ -438,7 +438,7 @@ export default function PreviewPage() {
                   href={`/register?redirect=/dashboard/audits/${auditId}&claim=${auditId}`}
                   className="flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 font-body text-sm font-medium bg-brand text-surface transition-all hover:shadow-lg active:scale-95"
                 >
-                  Unlock Full Audit — $99
+                  Unlock Full Audit — from $9.90
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
