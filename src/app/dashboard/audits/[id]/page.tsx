@@ -95,74 +95,14 @@ const CATEGORY_ICONS: React.ElementType[] = [
   Eye, MessageSquare, Target, CheckCircle2,         // Brand Consistency (20-23)
 ];
 
-/* Pillar visual config — names come from translations at render time */
+/* Pillar visual config — v2 token-based, uniform across all modules */
 const PILLAR_STYLE = [
-  {
-    color: 'violet',
-    gradient: 'from-[#6366F1] to-[#5A4A84]',
-    gradientSubtle: 'from-[#6366F1]/5 to-[#6366F1]/10 dark:from-[#6366F1]/10 dark:to-[#6366F1]/5',
-    border: 'border-[#6366F1]/20 dark:border-[#6366F1]/15',
-    iconBg: 'bg-[#6366F1]/10',
-    iconColor: 'text-[#6366F1]',
-    badgeBg: 'bg-[#6366F1]',
-    scoreBg: 'bg-[#6366F1]',
-    range: [0, 4] as [number, number],
-  },
-  {
-    color: 'pink',
-    gradient: 'from-pink-500 to-pink-600',
-    gradientSubtle: 'from-pink-50 to-pink-100/50 dark:from-pink-950/30 dark:to-pink-900/10',
-    border: 'border-pink-200 dark:border-pink-800/40',
-    iconBg: 'bg-pink-500/10',
-    iconColor: 'text-pink-500',
-    badgeBg: 'bg-pink-500',
-    scoreBg: 'bg-pink-500',
-    range: [4, 8] as [number, number],
-  },
-  {
-    color: 'amber',
-    gradient: 'from-amber-500 to-amber-600',
-    gradientSubtle: 'from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10',
-    border: 'border-amber-200 dark:border-amber-800/40',
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-500',
-    badgeBg: 'bg-amber-500',
-    scoreBg: 'bg-amber-500',
-    range: [8, 12] as [number, number],
-  },
-  {
-    color: 'emerald',
-    gradient: 'from-emerald-500 to-emerald-700',
-    gradientSubtle: 'from-emerald-500/5 to-emerald-500/10 dark:from-emerald-500/10 dark:to-emerald-500/5',
-    border: 'border-emerald-500/20 dark:border-emerald-500/15',
-    iconBg: 'bg-emerald-500/10',
-    iconColor: '[color:var(--ok)]',
-    badgeBg: '[background:var(--ok)]',
-    scoreBg: '[background:var(--ok)]',
-    range: [12, 16] as [number, number],
-  },
-  {
-    color: 'cyan',
-    gradient: 'from-[#06B6D4] to-[#0E7490]',
-    gradientSubtle: 'from-[#06B6D4]/5 to-[#06B6D4]/10 dark:from-[#06B6D4]/10 dark:to-[#06B6D4]/5',
-    border: 'border-[#06B6D4]/20 dark:border-[#06B6D4]/15',
-    iconBg: 'bg-[#06B6D4]/10',
-    iconColor: 'text-[#06B6D4]',
-    badgeBg: 'bg-[#06B6D4]',
-    scoreBg: 'bg-[#06B6D4]',
-    range: [16, 20] as [number, number],
-  },
-  {
-    color: 'rose',
-    gradient: 'from-[#F43F5E] to-[#BE123C]',
-    gradientSubtle: 'from-[#F43F5E]/5 to-[#F43F5E]/10 dark:from-[#F43F5E]/10 dark:to-[#F43F5E]/5',
-    border: 'border-[#F43F5E]/20 dark:border-[#F43F5E]/15',
-    iconBg: 'bg-[#F43F5E]/10',
-    iconColor: 'text-[#F43F5E]',
-    badgeBg: 'bg-[#F43F5E]',
-    scoreBg: 'bg-[#F43F5E]',
-    range: [20, 24] as [number, number],
-  },
+  { range: [0, 4] as [number, number] },
+  { range: [4, 8] as [number, number] },
+  { range: [8, 12] as [number, number] },
+  { range: [12, 16] as [number, number] },
+  { range: [16, 20] as [number, number] },
+  { range: [20, 24] as [number, number] },
 ];
 
 /** Build full PILLAR_CONFIG with translated names */
@@ -198,52 +138,52 @@ function buildSeverityConfig(L: UILabels) {
     critical: {
       badge: 'danger' as const,
       label: L.severityCritical,
-      bg: 'bg-card',
-      border: 'border-border/40 dark:border-white/[0.06]',
-      dot: 'bg-red-500',
-      text: 'text-red-600 dark:text-red-400',
-      impactBg: 'bg-red-50 dark:bg-red-950/20',
+      bg: 'bg-paper',
+      border: 'border-rule',
+      dot: 'bg-severe',
+      text: 'text-severe',
+      impactBg: 'bg-severe/5',
     },
     high: {
       badge: 'failed' as const,
       label: L.severityHigh,
-      bg: 'bg-card',
-      border: 'border-border/40 dark:border-white/[0.06]',
-      dot: 'bg-orange-500',
-      text: 'text-orange-600 dark:text-orange-400',
-      impactBg: 'bg-orange-50 dark:bg-orange-950/20',
+      bg: 'bg-paper',
+      border: 'border-rule',
+      dot: 'bg-warn',
+      text: 'text-warn',
+      impactBg: 'bg-warn/5',
     },
     medium: {
       badge: 'pending' as const,
       label: L.severityMedium,
-      bg: 'bg-card',
-      border: 'border-border/40 dark:border-white/[0.06]',
-      dot: 'bg-yellow-500',
-      text: 'text-yellow-600 dark:text-yellow-500',
-      impactBg: 'bg-yellow-50 dark:bg-yellow-950/20',
+      bg: 'bg-paper',
+      border: 'border-rule',
+      dot: 'bg-signal',
+      text: 'text-signal',
+      impactBg: 'bg-signal/5',
     },
     low: {
       badge: 'active' as const,
       label: L.severityLow,
-      bg: 'bg-card',
-      border: 'border-border/40 dark:border-white/[0.06]',
-      dot: 'bg-blue-500',
-      text: 'text-blue-600 dark:text-blue-400',
-      impactBg: 'bg-blue-50 dark:bg-blue-950/20',
+      bg: 'bg-paper',
+      border: 'border-rule',
+      dot: 'bg-ok',
+      text: 'text-ok',
+      impactBg: 'bg-ok/5',
     },
   };
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return '[color:var(--ok)]';
-  if (s >= 40) return 'text-amber-600 dark:text-amber-400';
-  return '[color:var(--severe)]';
+  if (s >= 70) return 'text-ok';
+  if (s >= 40) return 'text-warn';
+  return 'text-severe';
 }
 
 function scoreBg(s: number) {
-  if (s >= 70) return '[background:var(--ok)]';
-  if (s >= 40) return 'bg-amber-500';
-  return 'bg-red-500';
+  if (s >= 70) return 'bg-ok';
+  if (s >= 40) return 'bg-warn';
+  return 'bg-severe';
 }
 
 function buildStatusMeta(L: UILabels): Record<
@@ -354,7 +294,7 @@ function RotatingCheckpoints() {
   return (
     <div className="mt-5 text-center">
       <p
-        className={`text-sm font-medium text-text transition-opacity duration-300 ${
+        className={`text-sm font-medium text-ink transition-opacity duration-300 ${
           fade ? 'opacity-100' : 'opacity-0'
         }`}
       >
@@ -395,17 +335,16 @@ function CheckpointHealth({ categoryScores, findings }: {
   }
 
   return (
-    <div className="mb-6 rounded-xl border border-border/20 dark:border-white/[0.04] bg-card overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-border/15 dark:border-white/[0.03]">
+    <div className="mb-6 border border-ink overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-rule">
         <div className="flex items-center gap-2">
-          <CheckCircle2 size={14} className="text-brand" />
-          <h3 className="text-xs font-medium text-text">{categoryScores.length * 4}-Checkpoint Health</h3>
-          <span className="text-[11px] text-muted ml-auto">
-            {findings.filter(f => !f.dismissed).length} issues across {categoryScores.length} categories
+          <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">{categoryScores.length * 4}-Checkpoint health</h3>
+          <span className="text-[11px] font-mono text-m-muted ml-auto tracking-[0.06em] uppercase">
+            {findings.filter(f => !f.dismissed).length} issues · {categoryScores.length} categories
           </span>
         </div>
       </div>
-      <div className="divide-y divide-border/10 dark:divide-white/[0.03]">
+      <div className="divide-y divide-rule">
         {categoryScores.map((cat, catIdx) => {
           const checkpoints = CHECKPOINT_LABELS[cat.name] || ['Check 1', 'Check 2', 'Check 3', 'Check 4'];
           const catFindings = findingsByCategory[cat.name] || [];
@@ -417,15 +356,15 @@ function CheckpointHealth({ categoryScores, findings }: {
             <div key={catIdx}>
               <button
                 onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
-                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-brand/5 dark:hover:bg-brand/[0.04] transition-colors text-left"
+                className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-paper-2 transition-colors text-left"
               >
-                <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
-                <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
+                <span className={`text-[11px] font-mono font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
+                <span className="text-[11px] font-medium text-ink flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[11px] font-medium [color:var(--ok)]">{passCount} pass</span>}
-                  {failCount > 0 && <span className="text-[11px] font-medium text-red-500">{failCount} fail</span>}
+                  {passCount > 0 && <span className="text-[11px] font-mono font-medium text-ok">{passCount} pass</span>}
+                  {failCount > 0 && <span className="text-[11px] font-mono font-medium text-severe">{failCount} fail</span>}
                 </div>
-                <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown size={12} className={`text-m-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
               {isExpanded && (
                 <div className="px-5 pb-3 space-y-1.5">
@@ -433,21 +372,21 @@ function CheckpointHealth({ categoryScores, findings }: {
                     const hasFinding = i < failCount;
                     const finding = hasFinding ? catFindings[i] : null;
                     return (
-                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-red-50/40 dark:bg-red-900/[0.06]' : 'bg-emerald-500/5'}`}>
+                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-severe/5' : 'bg-ok/5'}`}>
                         {hasFinding ? (
-                          <AlertTriangle size={11} className="text-red-400 flex-shrink-0 mt-0.5" />
+                          <AlertTriangle size={11} className="text-severe flex-shrink-0 mt-0.5" />
                         ) : (
-                          <CheckCircle2 size={11} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                          <CheckCircle2 size={11} className="text-ok flex-shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className={`text-[11px] font-medium ${hasFinding ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                          <p className={`text-[11px] font-medium ${hasFinding ? 'text-severe' : 'text-ok'}`}>
                             {checkpoint}
                           </p>
                           {finding && (
-                            <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
+                            <p className="text-[11px] text-m-muted mt-0.5 line-clamp-1">{finding.title}</p>
                           )}
                         </div>
-                        <span className={`text-[11px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : '[color:var(--ok)]'}`}>
+                        <span className={`text-[11px] font-mono font-medium flex-shrink-0 ${hasFinding ? 'text-severe' : 'text-ok'}`}>
                           {hasFinding ? 'Fail' : 'Pass'}
                         </span>
                       </div>
@@ -513,38 +452,36 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
   return (
-    <div className="mb-6 rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden shadow-sm">
+    <div className="mb-6 border border-ink overflow-hidden">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-off/30 dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full px-4 py-3 flex items-center gap-2.5 hover:bg-paper-2 transition-colors"
       >
-        <div className="w-7 h-7 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
-          <TrendingUp size={14} className="text-brand" />
-        </div>
+        <TrendingUp size={14} className="text-signal flex-shrink-0" />
         <div className="flex-1 text-left">
-          <span className="text-sm font-medium text-text">Score Over Time</span>
-          <span className="text-[11px] text-muted ml-2">{trend.length} audits · {domain}</span>
+          <span className="text-sm font-medium text-ink">Score over time</span>
+          <span className="text-[11px] font-mono text-m-muted ml-2 tracking-[0.06em] uppercase">{trend.length} audits · {domain}</span>
         </div>
         {improvement !== 0 && (
-          <span className={`text-xs font-medium ${improvement > 0 ? '[color:var(--ok)]' : '[color:var(--severe)]'}`}>
+          <span className={`text-xs font-mono font-medium ${improvement > 0 ? 'text-ok' : 'text-severe'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
-        <ChevronDown size={14} className={`text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`text-m-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Expanded chart */}
       {expanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-border/15 dark:border-white/[0.04]">
+        <div className="px-4 pb-4 pt-1 border-t border-rule">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
             {/* Grid */}
             {gridScores.map((s, i) => {
               const y = PAD_T + chartH - ((s - minScore) / range) * chartH;
               return (
                 <g key={i}>
-                  <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--border)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
-                  <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--muted)" fontFamily="var(--font-inter)">{s}</text>
+                  <line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y} stroke="var(--rule)" strokeWidth="0.5" strokeDasharray="3,3" opacity="0.5" />
+                  <text x={PAD_L - 6} y={y + 3} textAnchor="end" fontSize="8" fill="var(--m-muted)" fontFamily="var(--font-inter)">{s}</text>
                 </g>
               );
             })}
@@ -579,7 +516,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
                   <circle
                     cx={p.x} cy={p.y}
                     r={isHovered ? 5 : isCurrent ? 4 : 3}
-                    fill={isHovered ? '#6366F1' : isCurrent ? '#6366F1' : 'var(--card)'}
+                    fill={isHovered ? '#6366F1' : isCurrent ? '#6366F1' : 'var(--paper)'}
                     stroke="#6366F1"
                     strokeWidth="2"
                     className="transition-all duration-150"
@@ -604,7 +541,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
               const d = new Date(p.date);
               const label = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
               return (
-                <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--muted)" fontFamily="var(--font-inter)">{label}</text>
+                <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill="var(--m-muted)" fontFamily="var(--font-inter)">{label}</text>
               );
             })}
           </svg>
@@ -615,10 +552,10 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
 }
 
 const FINDING_STATUSES = [
-  { key: 'open', label: 'Open', color: 'text-muted', bg: 'bg-off', dot: 'bg-gray-400' },
-  { key: 'in_progress', label: 'In Progress', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', dot: 'bg-amber-500' },
-  { key: 'fixed', label: 'Fixed', color: '[color:var(--ok)]', bg: 'bg-emerald-500/8', dot: '[background:var(--ok)]' },
-  { key: 'backlog', label: 'Backlog', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', dot: 'bg-blue-500' },
+  { key: 'open', label: 'Open', color: 'text-m-muted', bg: 'bg-paper-2', dot: 'bg-m-muted' },
+  { key: 'in_progress', label: 'In Progress', color: 'text-warn', bg: 'bg-warn/5', dot: 'bg-warn' },
+  { key: 'fixed', label: 'Fixed', color: 'text-ok', bg: 'bg-ok/5', dot: 'bg-ok' },
+  { key: 'backlog', label: 'Backlog', color: 'text-signal', bg: 'bg-signal/5', dot: 'bg-signal' },
 ] as const;
 
 function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
@@ -677,43 +614,43 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
   if (dismissed) {
     return (
-      <div className="rounded-xl border border-border/20 dark:border-white/[0.04] bg-off/30 dark:bg-white/[0.02] p-3 opacity-60">
+      <div className="border border-rule p-3 opacity-60">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-border flex-shrink-0" />
-          <span className="text-xs text-muted line-through flex-1">{finding.title}</span>
-          <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">Dismissed</span>
+          <span className="w-2 h-2 rounded-full bg-m-muted flex-shrink-0" />
+          <span className="text-xs text-m-muted line-through flex-1">{finding.title}</span>
+          <span className="text-[11px] font-mono text-m-muted bg-paper-2 px-2 py-0.5 tracking-[0.06em] uppercase">Dismissed</span>
         </div>
         {finding.dismissal_reason && (
-          <p className="text-[11px] text-muted mt-1 ml-4">{finding.dismissal_reason}</p>
+          <p className="text-[11px] text-m-muted mt-1 ml-4">{finding.dismissal_reason}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div className={`rounded-xl border ${sev.border} ${sev.bg} shadow-sm overflow-hidden transition-all`}>
+    <div className={`border ${sev.border} overflow-hidden transition-all`}>
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 p-4 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-paper-2 transition-colors"
         aria-expanded={open}
       >
-        <div className={`w-2 h-2 rounded-full ${sev.dot} flex-shrink-0 mt-1.5`} />
+        <span className="mt-1.5"><span className={`block w-2 h-2 rounded-full ${sev.dot}`} /></span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[11px] font-medium uppercase tracking-wider ${sev.text}`}>
+            <span className={`text-[11px] font-mono font-medium uppercase tracking-[0.06em] ${sev.text}`}>
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-ok bg-ok/10 px-2 py-0.5 tracking-[0.06em] uppercase">
                 <Eye size={10} />
-                Likely Fixed
+                Likely fixed
               </span>
             )}
             {(finding as any).verification_status === 'poorly_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-severe bg-severe/10 px-2 py-0.5 tracking-[0.06em] uppercase">
                 <AlertTriangle size={10} />
-                Poorly Fixed
+                Poorly fixed
               </span>
             )}
             {finding.page_url && (
@@ -722,7 +659,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-[11px] text-muted hover:text-brand transition-colors max-w-[260px] truncate"
+                className="inline-flex items-center gap-1 text-[11px] font-mono text-m-muted hover:text-signal transition-colors max-w-[260px] truncate"
                 title={finding.page_url}
               >
                 <ExternalLink size={10} className="flex-shrink-0" />
@@ -736,32 +673,32 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               </a>
             )}
           </div>
-          <h4 className="font-medium text-text text-sm leading-snug">{finding.title}</h4>
+          <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
         </div>
         <ChevronDown
-          size={16}
-          className={`text-muted flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          size={14}
+          className={`text-m-muted flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Expanded detail */}
       {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-border/20 dark:border-white/[0.04] mx-4 space-y-3">
+        <div className="px-4 pb-4 pt-0 border-t border-rule mx-4 space-y-3">
           {/* Description */}
-          <p className="text-muted text-sm leading-relaxed pt-3">
+          <p className="text-ink-2 text-[13px] leading-[1.65] pt-3">
             {finding.description}
           </p>
 
           {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
-              <Eye size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15">
+              <Eye size={14} className="text-ok flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-text mb-0.5">AI Verification</p>
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">
+                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">AI verification</p>
+                <p className="text-[13px] text-ok leading-[1.65]">
                   {(finding as any).verification_note}
                 </p>
-                <p className="text-[11px] text-muted mt-1">
+                <p className="text-[11px] text-m-muted mt-1">
                   Mark this finding as &quot;Fixed&quot; to confirm and update your score.
                 </p>
               </div>
@@ -770,14 +707,14 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* AI Verification Note — Poorly Fixed */}
           {(finding as any).verification_status === 'poorly_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-red-50/60 dark:bg-red-950/20 rounded-lg border border-red-200/40 dark:border-red-800/20">
-              <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 bg-severe/5 border border-severe/15">
+              <AlertTriangle size={14} className="text-severe flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-text mb-0.5">Regression Detected</p>
-                <p className="text-sm text-red-700 dark:text-red-400 leading-relaxed">
+                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">Regression detected</p>
+                <p className="text-[13px] text-severe leading-[1.65]">
                   {(finding as any).verification_note}
                 </p>
-                <p className="text-[11px] text-muted mt-1">
+                <p className="text-[11px] text-m-muted mt-1">
                   The attempted fix introduced new issues. Review and address the regression to improve your score.
                 </p>
               </div>
@@ -786,12 +723,12 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* Recommendation */}
           {finding.recommendation && (
-            <div className="p-3 bg-surface-alt/60 dark:bg-white/[0.03] rounded-lg border border-border/30 dark:border-white/[0.04]">
+            <div className="p-3 bg-signal/5 border border-signal/15">
               <div className="flex gap-2.5">
-                <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillarColor}`} />
+                <Lightbulb size={14} className="flex-shrink-0 mt-0.5 text-signal" />
                 <div>
-                  <p className="text-[11px] font-medium text-text mb-1">Recommendation</p>
-                  <p className="text-sm text-muted leading-relaxed">{finding.recommendation}</p>
+                  <p className="text-[11px] font-mono font-medium text-ink mb-1 tracking-[0.06em] uppercase">Recommendation</p>
+                  <p className="text-[13px] text-ink-2 leading-[1.65]">{finding.recommendation}</p>
                 </div>
               </div>
             </div>
@@ -799,23 +736,23 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* Estimated Impact */}
           {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
-              <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15">
+              <TrendingUp size={14} className="text-ok flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
-                <p className="text-sm text-emerald-700 dark:text-emerald-400 leading-relaxed">{finding.estimated_impact}</p>
+                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">Expected impact</p>
+                <p className="text-[13px] text-ok leading-[1.65]">{finding.estimated_impact}</p>
               </div>
             </div>
           )}
 
           {/* Screenshot with highlighted element */}
           {finding.screenshot_url && (
-            <div className="rounded-lg overflow-hidden border border-border/30 dark:border-white/[0.04]">
-              <div className="px-3 py-2 bg-surface-alt/60 dark:bg-white/[0.03] border-b border-border/20 dark:border-white/[0.04] flex items-center gap-2">
+            <div className="overflow-hidden border border-rule">
+              <div className="px-3 py-2 bg-paper-2 border-b border-rule flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
-                <span className="text-[11px] font-medium text-text">Visual Evidence</span>
+                <span className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Visual evidence</span>
                 {finding.page_url && (
-                  <span className="text-[11px] text-muted ml-auto font-mono truncate max-w-[200px]">
+                  <span className="text-[11px] text-m-muted ml-auto font-mono truncate max-w-[200px]">
                     {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
                   </span>
                 )}
@@ -824,16 +761,16 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               <img
                 src={finding.screenshot_url}
                 alt={`Screenshot showing: ${finding.title}`}
-                className="w-full max-h-80 object-contain bg-off dark:bg-off"
+                className="w-full max-h-80 object-contain bg-paper-2"
                 loading="lazy"
               />
             </div>
           )}
 
           {/* Status toggle + Dismiss */}
-          <div className="mt-1 p-3 rounded-lg bg-surface-alt/60 dark:bg-white/[0.03] border border-border/20 dark:border-white/[0.04]">
+          <div className="mt-1 p-3 bg-paper-2 border border-rule">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-text uppercase tracking-wide">Status</span>
+              <span className="text-[11px] font-mono font-medium text-ink uppercase tracking-[0.06em]">Status</span>
               <div className="flex flex-wrap gap-1.5">
                 {FINDING_STATUSES.map((s) => {
                   const active = status === s.key;
@@ -842,8 +779,8 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
                       key={s.key}
                       onClick={() => handleStatusChange(s.key)}
                       disabled={statusUpdating}
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg transition-all ${
-                        active ? `${s.bg} ${s.color} ring-1 ring-current/20 shadow-sm` : 'text-muted hover:bg-off dark:hover:bg-white/[0.04]'
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-mono font-medium px-3 py-1.5 transition-all tracking-[0.04em] ${
+                        active ? `${s.bg} ${s.color} border border-current/20` : 'text-m-muted hover:bg-paper-2'
                       } disabled:opacity-50`}
                     >
                       <span className={`w-2 h-2 rounded-full ${active ? s.dot : 'bg-border'}`} />
@@ -855,7 +792,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               <div className="ml-auto">
                 <button
                   onClick={() => setShowDismissForm(!showDismissForm)}
-                  className="text-[11px] font-medium text-muted hover:text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                  className="text-[11px] font-mono font-medium text-m-muted hover:text-severe px-2 py-1 hover:bg-severe/5 transition-colors tracking-[0.06em] uppercase"
                 >
                   Dismiss
                 </button>
@@ -865,26 +802,26 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* Dismiss form */}
           {showDismissForm && (
-            <div className="mt-2 p-3 rounded-lg bg-red-50/50 dark:bg-red-900/10 border border-red-200/30 dark:border-red-800/20">
-              <p className="text-[11px] font-medium text-text mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
+            <div className="mt-2 p-3 bg-severe/5 border border-severe/15">
+              <p className="text-[11px] font-medium text-ink mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
               <textarea
                 value={dismissReason}
                 onChange={(e) => setDismissReason(e.target.value)}
                 placeholder="e.g. This is addressed on our About page, or: This is intentional for our target audience..."
-                className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-card text-text placeholder:text-placeholder focus:outline-none focus:border-brand resize-none"
+                className="w-full px-3 py-2 text-xs border border-rule bg-paper text-ink placeholder:text-m-muted focus:outline-none focus:border-signal resize-none"
                 rows={2}
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleDismiss}
                   disabled={statusUpdating || !dismissReason.trim()}
-                  className="text-[11px] font-medium text-white px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50"
+                  className="text-[11px] font-mono font-medium text-paper px-3 py-1.5 bg-severe hover:opacity-90 transition-colors disabled:opacity-50 tracking-[0.06em] uppercase"
                 >
                   Dismiss and skip on re-audit
                 </button>
                 <button
                   onClick={() => setShowDismissForm(false)}
-                  className="text-[11px] font-medium text-muted px-3 py-1.5 rounded-lg hover:bg-off transition-colors"
+                  className="text-[11px] font-mono font-medium text-m-muted px-3 py-1.5 hover:bg-paper-2 transition-colors tracking-[0.06em] uppercase"
                 >
                   Cancel
                 </button>
@@ -903,7 +840,7 @@ function ExpandableSummary({ text }: { text: string }) {
   return (
     <p
       onClick={() => setExpanded(!expanded)}
-      className={`text-xs leading-relaxed cursor-pointer text-muted hover:text-text transition-colors ${expanded ? '' : 'line-clamp-2'}`}
+      className={`text-xs leading-relaxed cursor-pointer text-m-muted hover:text-ink transition-colors ${expanded ? '' : 'line-clamp-2'}`}
       title={expanded ? 'Click to collapse' : 'Click to read more'}
     >
       {text}
@@ -966,51 +903,42 @@ function PillarSection({
 
   return (
     <div className="mb-8">
-      {/* Pillar header */}
-      <div className={`rounded-xl bg-gradient-to-r ${pillar.gradientSubtle} border ${pillar.border} p-5 mb-4`}>
-        <div className="flex items-center justify-between mb-4">
+      {/* Pillar header — flat, editorial */}
+      <div className="border border-ink mb-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-rule">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-sm`}>
-              {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'text-white' })}
-            </div>
+            {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 16, className: 'text-signal flex-shrink-0' })}
             <div>
-              <h2 className="font-sans font-medium text-lg text-text">{pillar.name}</h2>
-              <p className="text-xs text-muted">{pillarCats.length} {L.categoriesEvaluated}</p>
+              <h2 className="font-sans font-medium text-[15px] text-ink">{pillar.name}</h2>
+              <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{pillarCats.length} {L.categoriesEvaluated}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className={`text-2xl font-medium font-sans ${scoreColor(avgScore)}`}>{avgScore}</p>
-            <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
+            <p className={`font-mono text-[20px] font-medium ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
 
-        {/* Category score bars */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {/* Category score bars — matching demo-report module scores grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2">
           {pillarCats.map((cat, relIdx) => {
             const globalIdx = pillar.range[0] + relIdx;
-            const Icon = getCategoryIcon(cat.name, globalIdx);
             return (
-              <div key={globalIdx} className="bg-card/80 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg p-3 border border-border/20 dark:border-white/[0.04]">
-                <div className="flex items-center gap-2.5 mb-1.5">
-                  <div className={`w-6 h-6 rounded-md ${pillar.iconBg} flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={12} className={pillar.iconColor} />
+              <div key={globalIdx} className={`flex items-center gap-4 px-5 py-4 border-b border-rule ${relIdx % 2 === 0 ? 'sm:border-r' : ''}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-sans font-medium text-ink mb-1.5">{cat.name}</p>
+                  <div className="w-full bg-rule/50 h-[3px] rounded-full">
+                    <div className={`h-full rounded-full ${scoreBg(cat.score)}`} style={{ width: `${cat.score}%`, opacity: 0.75 }} />
                   </div>
-                  <p className="text-xs font-medium text-text truncate flex-1">{cat.name}</p>
-                  <span className={`text-xs font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
-                    {cat.score}
-                  </span>
+                  {cat.summary && cat.summary.trim() && (
+                    <div className="mt-2">
+                      <ExpandableSummary text={cat.summary} />
+                    </div>
+                  )}
                 </div>
-                <div className="w-full bg-border/15 dark:bg-white/[0.06] rounded-full h-1.5">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${pillar.scoreBg}`}
-                    style={{ width: `${cat.score}%`, opacity: cat.score >= 70 ? 0.8 : cat.score >= 40 ? 0.7 : 0.9 }}
-                  />
-                </div>
-                {cat.summary && cat.summary.trim() && (
-                  <div className="mt-2 p-2.5 rounded-lg bg-off/40 dark:bg-white/[0.03] border border-border/10 dark:border-white/[0.03]">
-                    <ExpandableSummary text={cat.summary} />
-                  </div>
-                )}
+                <span className={`font-mono text-[16px] font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
+                  {cat.score}
+                </span>
               </div>
             );
           })}
@@ -1029,14 +957,14 @@ function PillarSection({
         return (
           <div key={catName} className="mb-4">
             <div className="flex items-center gap-2 mb-2 px-1">
-              <span className={`text-xs font-medium ${pillar.iconColor}`}>{catName}</span>
-              <span className="text-[11px] text-muted">
+              <span className="text-xs font-medium text-ink">{catName}</span>
+              <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
                 {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
               </span>
             </div>
             <div className="space-y-2">
               {sorted.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} pillarColor={pillar.iconColor} categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
+                <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
               ))}
             </div>
           </div>
@@ -1419,10 +1347,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   if (userLoading || loading) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="h-5 w-20 bg-off rounded animate-pulse mb-6" />
-        <div className="h-8 w-72 bg-off rounded-lg animate-pulse mb-3" />
-        <div className="h-4 w-48 bg-off rounded animate-pulse mb-8" />
-        <div className="h-48 bg-off rounded-xl animate-pulse" />
+        <div className="h-5 w-20 bg-paper-2 rounded animate-pulse mb-6" />
+        <div className="h-8 w-72 bg-paper-2 rounded-lg animate-pulse mb-3" />
+        <div className="h-4 w-48 bg-paper-2 rounded animate-pulse mb-8" />
+        <div className="h-48 bg-paper-2 rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -1430,12 +1358,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   if (error || !audit) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-4">
-        <Link href="/dashboard/audits" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors">
+        <Link href="/dashboard/audits" className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors">
           <ArrowLeft size={16} />
           Back to Audits
         </Link>
-        <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <p className="text-red-800 dark:text-red-300 text-sm">{error || 'Audit not found'}</p>
+        <div className="p-6 rounded-xl bg-red-50 border border-red-200">
+          <p className="text-red-800 text-sm">{error || 'Audit not found'}</p>
         </div>
       </div>
     );
@@ -1529,7 +1457,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Sticky Score Bar — fixed to top of main content area ── */}
       {isCompleted && showStickyScore && (
         <div className="fixed top-0 right-0 left-0 md:left-[220px] z-40">
-          <div className="border-b border-border/30 dark:border-white/[0.06] bg-card/95 backdrop-blur-md shadow-sm">
+          <div className="border-b border-rule/30 bg-paper/95 backdrop-blur-md">
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium text-white ${
@@ -1538,8 +1466,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {calculatedOverallScore}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text truncate">{formatUrl(audit.product_url || '')}</p>
-                  <p className="text-[11px] text-muted">{getScoreLabel(calculatedOverallScore, auditLang)}</p>
+                  <p className="text-sm font-medium text-ink truncate">{formatUrl(audit.product_url || '')}</p>
+                  <p className="text-[11px] text-m-muted">{getScoreLabel(calculatedOverallScore, auditLang)}</p>
                 </div>
               </div>
               <div className="hidden sm:flex items-center gap-3">
@@ -1552,11 +1480,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   const wasAudited = hasData && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true)));
                   return (
                     <div key={pillar.name} className={`flex items-center gap-1 ${!wasAudited ? 'opacity-30' : ''}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${pillar.badgeBg}`} />
+                      <div className={`w-1.5 h-1.5 rounded-full ${scoreBg(avg)}`} />
                       {wasAudited ? (
                         <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
                       ) : (
-                        <span className="text-xs text-muted">--</span>
+                        <span className="text-xs text-m-muted">--</span>
                       )}
                     </div>
                   );
@@ -1570,7 +1498,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
       <Link
         href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/audits'}
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
         {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Audits'}
@@ -1579,13 +1507,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-medium font-sans text-text mb-1 truncate">
+          <h1 className="text-2xl font-medium font-sans text-ink mb-1 truncate">
             {formatUrl(audit.product_url || '')}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
+            <p className="text-m-muted text-sm">{formatDate(audit.created_at)}</p>
             {(audit as any).depth_mode === 'deep' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand dark:text-brand bg-brand/10 dark:bg-brand/15 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-signal bg-signal/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Search size={10} />
                 Deep Mode
               </span>
@@ -1594,7 +1522,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               href={audit.product_url || ''}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-signal hover:text-signal/80 transition-colors"
             >
               <ExternalLink size={11} />
               Visit site
@@ -1604,65 +1532,65 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         <div className="flex items-center gap-2 flex-shrink-0 relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-text hover:bg-off transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-m-muted hover:text-ink hover:bg-paper-2 transition-colors"
             aria-label="Audit settings"
           >
             <MoreVertical size={16} />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-[100] w-52 rounded-xl border border-border/40 dark:border-white/[0.08] bg-white dark:bg-[#1E1E24] shadow-xl shadow-black/20 dark:shadow-black/50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 top-10 z-[100] w-52 rounded-xl border border-rule/40 bg-paper py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
               {isCompleted && (
                 <>
                   <button
                     onClick={() => { handleShare(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
                   >
-                    <Share2 size={13} className="text-muted" />
+                    <Share2 size={13} className="text-m-muted" />
                     {shareUrl ? 'Copy share link' : 'Create share link'}
                   </button>
                   {(shareUrl || (audit as any).share_enabled) && (
                     <button
                       onClick={handleRevokeShare}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LinkIcon size={13} />
                       Revoke share link
                     </button>
                   )}
-                  <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+                  <div className="my-1.5 h-px bg-rule/30" />
                 </>
               )}
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
                 onClick={() => setMenuOpen(false)}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
               >
-                <RefreshCw size={13} className="text-muted" />
+                <RefreshCw size={13} className="text-m-muted" />
                 Re-audit this site
-                <span className="ml-auto text-[11px] text-muted">1 credit</span>
+                <span className="ml-auto text-[11px] text-m-muted">1 credit</span>
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 onClick={() => setMenuOpen(false)}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
               >
-                <Search size={13} className="text-muted" />
+                <Search size={13} className="text-m-muted" />
                 Dig Deeper (find new issues)
-                <span className="ml-auto text-[11px] text-muted">1 credit</span>
+                <span className="ml-auto text-[11px] text-m-muted">1 credit</span>
               </Link>
               <button
                 onClick={() => { handleRestart(); setMenuOpen(false); }}
                 disabled={restarting}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text hover:bg-off dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors disabled:opacity-50"
               >
-                <Zap size={13} className="text-muted" />
+                <Zap size={13} className="text-m-muted" />
                 Restart audit
               </button>
-              <div className="my-1.5 h-px bg-border/30 dark:bg-white/[0.04]" />
+              <div className="my-1.5 h-px bg-rule/30" />
               <button
                 onClick={() => { handleDelete(); setMenuOpen(false); }}
                 disabled={deleting}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
               >
                 <Trash2 size={13} />
                 Delete audit
@@ -1676,10 +1604,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isPaymentReturn && verifying && (
         <Card className="mb-6">
           <div className="flex items-center gap-3">
-            <Loader2 size={20} className="text-brand animate-spin" />
+            <Loader2 size={20} className="text-signal animate-spin" />
             <div>
-              <p className="font-medium text-text">Confirming your payment...</p>
-              <p className="text-sm text-muted">This only takes a moment.</p>
+              <p className="font-medium text-ink">Confirming your payment...</p>
+              <p className="text-sm text-m-muted">This only takes a moment.</p>
             </div>
           </div>
         </Card>
@@ -1690,17 +1618,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         <Card className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
-                <Clock size={20} className="text-yellow-600 dark:text-yellow-400" />
+              <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
+                <Clock size={20} className="text-yellow-600" />
               </div>
               <div>
-                <p className="font-medium text-text">Payment required</p>
-                <p className="text-sm text-muted">Complete payment to start the audit.</p>
+                <p className="font-medium text-ink">Payment required</p>
+                <p className="text-sm text-m-muted">Complete payment to start the audit.</p>
               </div>
             </div>
             <button
               onClick={handlePayNow}
-              className="inline-flex items-center gap-2 text-sm font-medium bg-brand text-surface px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-signal text-paper px-6 py-2.5 rounded-lg transition-all hover:brightness-110"
             >
               Pay Now
             </button>
@@ -1712,12 +1640,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isInProgress && !verifying && (
         <Card className="mb-6">
           <div className="flex items-center gap-3 mb-5">
-            <StatusIcon size={20} className="text-brand" />
+            <StatusIcon size={20} className="text-signal" />
             <div>
-              <p className="font-medium text-text">{meta.label}</p>
-              <p className="text-sm text-muted">{meta.description}</p>
+              <p className="font-medium text-ink">{meta.label}</p>
+              <p className="text-sm text-m-muted">{meta.description}</p>
             </div>
-            <Loader2 size={16} className="text-brand animate-spin ml-auto" />
+            <Loader2 size={16} className="text-signal animate-spin ml-auto" />
           </div>
 
           {/* Progress steps */}
@@ -1731,11 +1659,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div
                       className={clsx(
                         'w-full h-2 rounded-full transition-colors',
-                        isActive ? 'bg-brand' : 'bg-off',
+                        isActive ? 'bg-signal' : 'bg-paper-2',
                         isCurrent && 'animate-pulse',
                       )}
                     />
-                    <p className={clsx('text-xs font-medium mt-1.5', isActive ? 'text-brand' : 'text-muted')}>
+                    <p className={clsx('text-xs font-medium mt-1.5', isActive ? 'text-signal' : 'text-m-muted')}>
                       {step.label}
                     </p>
                   </div>
@@ -1745,18 +1673,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           <RotatingCheckpoints />
-          <p className="text-sm text-muted mt-2 text-center">
+          <p className="text-sm text-m-muted mt-2 text-center">
             This page updates automatically. No need to refresh.
           </p>
 
           {/* Restart button if stuck */}
           {audit.updated_at && (Date.now() - new Date(audit.updated_at).getTime() > 3 * 60 * 1000) && (
-            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-              <p className="text-xs text-muted">Taking longer than expected?</p>
+            <div className="mt-4 pt-3 border-t border-rule flex items-center justify-between">
+              <p className="text-xs text-m-muted">Taking longer than expected?</p>
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="inline-flex items-center gap-1.5 text-xs font-medium bg-brand text-surface px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-signal text-paper px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
               >
                 {restarting ? (
                   <><Loader2 size={13} className="animate-spin" /> Restarting...</>
@@ -1771,22 +1699,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
       {/* ── Failed state ───────────────────────────────────── */}
       {audit.status === 'failed' && (
-        <div className="mb-6 p-5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+        <div className="mb-6 p-5 rounded-xl bg-red-50 border border-red-200">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-red-900 dark:text-red-200">Audit failed</p>
-              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+              <p className="font-medium text-red-900">Audit failed</p>
+              <p className="text-sm text-red-700 mt-1">
                 {audit.crawl_error || 'Something went wrong during processing.'}
               </p>
-              <div className="mt-3 p-3 rounded-lg bg-emerald-500/8 border border-emerald-200 dark:border-emerald-800/30">
+              <div className="mt-3 p-3 rounded-lg bg-emerald-500/8 border border-emerald-200">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />
+                  <p className="text-xs font-medium text-emerald-800">
                     No credits were used for this audit
                   </p>
                 </div>
-                <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5 ml-[22px]">
+                <p className="text-xs text-emerald-700 mt-0.5 ml-[22px]">
                   Your credit has been automatically refunded. You can restart the audit at no extra cost.
                 </p>
               </div>
@@ -1794,7 +1722,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleRestart}
                   disabled={restarting}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium bg-brand text-surface px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium bg-signal text-paper px-5 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
                 >
                   {restarting ? (
                     <><Loader2 size={14} className="animate-spin" /> Restarting...</>
@@ -1805,7 +1733,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-red-600 dark:hover:text-red-400 px-3 py-2.5 rounded-xl border border-border hover:border-red-300 dark:hover:border-red-700 transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-m-muted hover:text-red-600 px-3 py-2.5 rounded-xl border border-rule hover:border-red-300 transition-colors disabled:opacity-60"
                 >
                   <Trash2 size={13} />
                   {deleting ? 'Deleting...' : 'Delete'}
@@ -1822,11 +1750,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isCompleted && report && (
         <>
           {/* ── Hero Score Card ─────────────────────────────── */}
-          <div ref={scoreCardRef} className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden mb-6 shadow-lg shadow-black/[0.03]">
-            {/* Brand top accent */}
-            <div className="h-1.5 bg-brand" />
-
-            <div className="p-5 sm:p-6">
+          <div ref={scoreCardRef} className="border border-ink overflow-hidden mb-6">
+            <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 {/* Score ring */}
@@ -1837,106 +1762,63 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                    <h2 className="text-xl font-medium font-sans text-text">{L.overallScore}</h2>
-                    {isPartialAudit && (
-                      <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-                        {activeModuleCount} of {totalModuleCount} modules
-                      </span>
-                    )}
-                    <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
-                      (calculatedOverallScore) >= 70
-                        ? 'bg-emerald-500/10 [color:var(--ok)]'
-                        : (calculatedOverallScore) >= 40
-                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                          : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
-                    }`}>
-                      {getScoreLabel(calculatedOverallScore, auditLang)}
-                    </span>
+                    <h2 className="font-sans text-[22px] text-ink font-medium tracking-[-0.01em]">{formatUrl(audit.product_url || '')}</h2>
                   </div>
+                  <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-1">
+                    {findings.length} findings · {activeModuleCount} modules{isPartialAudit ? ` of ${totalModuleCount}` : ''}
+                  </p>
 
-                  {/* Pillar mini-scores — 2-column grid on mobile, inline on desktop */}
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                    {PILLAR_CONFIG.map((pillar, pIdx) => {
-                      const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
-                      const avg = pillarCats.length > 0
-                        ? Math.round(pillarCats.reduce((s, c) => s + c.score, 0) / pillarCats.length)
-                        : 0;
-                      const hasData = pillarCats.length > 0;
-                      const wasAudited = hasData && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[pIdx]) : (auditSelectedPillars?.includes(pIdx) ?? true)));
-                      return (
-                        <div key={pillar.name} className={`flex items-center gap-1.5 ${!wasAudited ? 'opacity-30' : ''}`}>
-                          <div className={`w-2 h-2 rounded-full ${pillar.badgeBg}`} />
-                          <span className="text-xs text-muted">{pillar.name}</span>
-                          {wasAudited ? (
-                            <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
-                          ) : (
-                            <span className="text-xs text-muted">--</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Action buttons — all in one row, same style */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                      <Download size={12} /> PDF
-                    </a>
-                    <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap">
-                      <Download size={12} /> Word
-                    </a>
-                    <Link
-                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
-                    >
-                      <RefreshCw size={12} /> Re-audit
-                    </Link>
-                    <Link
-                      href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors whitespace-nowrap"
-                    >
-                      <Search size={12} /> Dig Deeper
-                    </Link>
-                    <button
-                      onClick={handleShare}
-                      disabled={shareLoading}
-                      className="flex items-center justify-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {shareCopied ? <><Check size={12} className="text-emerald-500" /> Copied</> : <><Share2 size={12} /> Share</>}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-muted mt-2">1 credit per audit</p>
-                </div>
-              </div>
-
-              {/* Issue summary strip */}
-              {report.total_issues > 0 && (
-                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mt-5 pt-4 border-t border-border/30 dark:border-white/[0.04]">
-                  <span className="text-sm font-medium text-text">
-                    {report.total_issues} {L.issuesFound}
-                  </span>
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  {/* Severity counts — matching demo-report */}
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
                     {severityCounts.critical > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                        {severityCounts.critical} {L.severityCritical.toLowerCase()}
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
+                        <span className="w-2 h-2 rounded-full bg-severe" /> {severityCounts.critical} critical
                       </span>
                     )}
                     {severityCounts.high > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        {severityCounts.high} {L.severityHigh.toLowerCase()}
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-warn">
+                        <span className="w-2 h-2 rounded-full bg-warn" /> {severityCounts.high} high
                       </span>
                     )}
-                    {severityCounts.medium > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.medium} {L.severityMedium.toLowerCase()}</span>
-                    )}
-                    {severityCounts.low > 0 && (
-                      <span className="text-[11px] text-muted bg-off px-2 py-0.5 rounded-full">{severityCounts.low} {L.severityLow.toLowerCase()}</span>
+                    {(severityCounts.medium + severityCounts.low) > 0 && (
+                      <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                        {severityCounts.medium + severityCounts.low} more
+                      </span>
                     )}
                   </div>
+
+                  {/* Action buttons — matching demo-report action strip */}
                 </div>
-              )}
+              </div>
+
+            </div>
+            {/* Action strip — matching demo-report */}
+            <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
+              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
+                <Download size={12} /> PDF
+              </a>
+              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
+                <Download size={12} /> Word
+              </a>
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors disabled:opacity-50"
+              >
+                {shareCopied ? <><Check size={12} className="text-ok" /> Copied</> : <><Share2 size={12} /> Share</>}
+              </button>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
+              >
+                <RefreshCw size={12} /> Re-audit
+              </Link>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
+              >
+                <Search size={12} /> Dig deeper
+              </Link>
             </div>
           </div>
 
@@ -1944,16 +1826,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} />
 
           {/* ── Improvement tip ─────────────────────────────── */}
-          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-brand/5 dark:bg-brand/[0.08] border border-brand/20 dark:border-brand/10">
-            <RefreshCw size={15} className="text-brand flex-shrink-0" />
-            <p className="text-xs text-muted">
-              <span className="font-medium text-text">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-signal/5 border border-signal/20">
+            <RefreshCw size={15} className="text-signal flex-shrink-0" />
+            <p className="text-xs text-m-muted">
+              <span className="font-medium text-ink">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
 
           {/* ── Page Screenshot ────────────────────────────── */}
           {auditPages[0]?.screenshot_url && (
-            <div className="mb-6 rounded-xl overflow-hidden border border-border/30 dark:border-white/[0.06] shadow-sm">
+            <div className="mb-6 rounded-lg overflow-hidden border border-rule/30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={auditPages[0].screenshot_url}
@@ -1961,14 +1843,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 className="w-full h-auto max-h-96 object-cover object-top"
                 loading="lazy"
               />
-              <div className="px-4 py-2 bg-card border-t border-border/20 dark:border-white/[0.03]">
-                <p className="text-xs text-muted">{L.homepageCaptured}</p>
+              <div className="px-4 py-2 bg-paper border-t border-rule/20">
+                <p className="text-xs text-m-muted">{L.homepageCaptured}</p>
               </div>
             </div>
           )}
 
           {/* ── Tab Navigation ─────────────────────────────── */}
-          <div className="flex items-center gap-1 bg-off/80 dark:bg-white/[0.04] rounded-xl p-1 mb-6">
+          <div className="flex items-center gap-1 bg-paper-2/80 rounded-xl p-1 mb-6">
             {(['overview', 'findings', 'pages'] as const).map((tab) => (
               <button
                 key={tab}
@@ -1976,8 +1858,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 className={clsx(
                   'flex-1 text-sm font-medium py-2.5 rounded-lg transition-all',
                   activeTab === tab
-                    ? 'bg-card text-text shadow-sm'
-                    : 'text-muted hover:text-text',
+                    ? 'bg-paper text-ink'
+                    : 'text-m-muted hover:text-ink',
                 )}
               >
                 {tab === 'overview' && L.tabOverview}
@@ -1995,18 +1877,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <>
                   {/* "Nothing changed" alert */}
                   {rawJson.verificationSummary.nothingChanged && (
-                    <div className="mb-4 p-4 rounded-xl bg-off dark:bg-white/[0.03] border border-border/40 dark:border-white/[0.06] flex items-start gap-3">
-                      <Info size={16} className="text-muted flex-shrink-0 mt-0.5" />
+                    <div className="mb-4 p-4 rounded-xl bg-paper-2 border border-rule/40 flex items-start gap-3">
+                      <Info size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text mb-0.5">No changes detected</p>
-                        <p className="text-xs text-muted leading-relaxed">
+                        <p className="text-sm font-medium text-ink mb-0.5">No changes detected</p>
+                        <p className="text-xs text-m-muted leading-relaxed">
                           Nothing has changed compared to the latest audit. Your score remains the same.
                           To improve, address open findings and mark them as fixed, or run a Deep Mode audit to discover new insights.
                         </p>
                       </div>
                       <button
                         onClick={() => setVerificationAlertDismissed(true)}
-                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                        className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                       >
                         <X size={14} />
                       </button>
@@ -2015,20 +1897,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {/* "Likely fixed findings detected" alert */}
                   {rawJson.verificationSummary.likelyFixed > 0 && (
-                    <div className="mb-4 p-4 rounded-xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/15 flex items-start gap-3">
+                    <div className="mb-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
                       <Eye size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text mb-0.5">
+                        <p className="text-sm font-medium text-ink mb-0.5">
                           {rawJson.verificationSummary.likelyFixed} finding{rawJson.verificationSummary.likelyFixed > 1 ? 's' : ''} may have been fixed
                         </p>
-                        <p className="text-xs text-muted leading-relaxed">
+                        <p className="text-xs text-m-muted leading-relaxed">
                           Our AI scanned the live site and detected changes that suggest {rawJson.verificationSummary.likelyFixed > 1 ? 'these issues have' : 'this issue has'} been addressed.
                           Look for the &quot;Likely Fixed&quot; badge on findings below. Confirm the fix to update your score.
                         </p>
                       </div>
                       <button
                         onClick={() => setVerificationAlertDismissed(true)}
-                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                        className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                       >
                         <X size={14} />
                       </button>
@@ -2037,20 +1919,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {/* "Poorly fixed findings detected" alert */}
                   {rawJson.verificationSummary.poorlyFixed > 0 && (
-                    <div className="mb-4 p-4 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200/40 dark:border-red-800/20 flex items-start gap-3">
+                    <div className="mb-4 p-4 rounded-xl bg-red-50/60 border border-red-200/40 flex items-start gap-3">
                       <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text mb-0.5">
+                        <p className="text-sm font-medium text-ink mb-0.5">
                           {rawJson.verificationSummary.poorlyFixed} finding{rawJson.verificationSummary.poorlyFixed > 1 ? 's' : ''} poorly fixed
                         </p>
-                        <p className="text-xs text-muted leading-relaxed">
+                        <p className="text-xs text-m-muted leading-relaxed">
                           Our AI detected that {rawJson.verificationSummary.poorlyFixed > 1 ? 'these fixes' : 'this fix'} may have introduced new issues or made things worse.
                           Look for the &quot;Poorly Fixed&quot; badge on findings below and review the AI notes for guidance.
                         </p>
                       </div>
                       <button
                         onClick={() => setVerificationAlertDismissed(true)}
-                        className="text-muted hover:text-text transition-colors flex-shrink-0"
+                        className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                       >
                         <X size={14} />
                       </button>
@@ -2061,20 +1943,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
-                <div className="mb-6 p-5 rounded-xl border border-brand/20 dark:border-brand/10 bg-brand/5 dark:bg-brand/[0.06]">
+                <div className="mb-6 p-5 rounded-xl border border-signal/20 bg-signal/5">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand">
-                      <Zap size={14} className="text-surface" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-signal">
+                      <Zap size={14} className="text-paper" />
                     </div>
-                    <p className="text-sm font-medium text-text">{getReportLabels(auditLang).topPriorityRecommendations}</p>
+                    <p className="text-sm font-medium text-ink">{getReportLabels(auditLang).topPriorityRecommendations}</p>
                   </div>
                   <div className="space-y-3">
                     {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
                       <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-brand text-surface mt-0.5">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-signal text-paper mt-0.5">
                           {i + 1}
                         </span>
-                        <p className="text-sm text-text leading-relaxed">{rec}</p>
+                        <p className="text-sm text-ink leading-relaxed">{rec}</p>
                       </div>
                     ))}
                   </div>
@@ -2083,16 +1965,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Executive Summary */}
               {report.executive_summary && (
-                <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-sans font-medium text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
-                  <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
+                <div className="rounded-lg border border-rule/30 bg-paper p-6 mb-6">
+                  <h2 className="font-sans font-medium text-lg text-ink mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
+                  <div className="text-m-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
 
                   {/* Research note */}
-                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-surface-alt/60 dark:bg-white/[0.03] border border-border/30 dark:border-white/[0.04]">
+                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-paper-2/60 border border-rule/30">
                     <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted leading-relaxed">
+                    <p className="text-xs text-m-muted leading-relaxed">
                       {L.qualitativeNote}
                     </p>
                   </div>
@@ -2122,9 +2004,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
 
               {/* AI transparency note */}
-              <div className="mb-6 px-4 py-3 rounded-xl bg-off/40 dark:bg-white/[0.02] border border-border/15 dark:border-white/[0.03]">
-                <p className="text-[11px] text-muted/70 leading-relaxed">
-                  <span className="font-medium text-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
+              <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
+                <p className="text-[11px] text-m-muted/70 leading-relaxed">
+                  <span className="font-medium text-m-muted">About this audit</span> — This report was generated by AI analysing your publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
                 </p>
               </div>
 
@@ -2140,9 +2022,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       { score: report.content_score, label: 'Content' },
                     ].map((item, idx) =>
                       item.score != null && (
-                        <div key={idx} className="bg-card border border-border/30 dark:border-white/[0.06] rounded-xl flex flex-col items-center py-4 px-3">
+                        <div key={idx} className="bg-paper border border-rule/30 rounded-xl flex flex-col items-center py-4 px-3">
                           <ScoreRing score={item.score} size={72} strokeWidth={5} />
-                          <p className="text-xs text-muted font-medium mt-2">{item.label}</p>
+                          <p className="text-xs text-m-muted font-medium mt-2">{item.label}</p>
                         </div>
                       ),
                     )}
@@ -2152,7 +2034,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {findings.length > 0 && (
                     <div className="space-y-3">
                       {findings.map((finding) => (
-                        <FindingCard key={finding.id} finding={finding} pillarColor="text-brand" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
+                        <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
                       ))}
                     </div>
                   )}
@@ -2167,8 +2049,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {findings.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 size={32} className="[color:var(--ok)] mx-auto mb-3" />
-                  <p className="text-text font-medium">{L.noIssuesFound}</p>
-                  <p className="text-sm text-muted mt-1">{L.noIssuesDescription}</p>
+                  <p className="text-ink font-medium">{L.noIssuesFound}</p>
+                  <p className="text-sm text-m-muted mt-1">{L.noIssuesDescription}</p>
                 </div>
               ) : (
                 (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
@@ -2182,13 +2064,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <span className={`text-sm font-medium ${config.text}`}>
                           {config.label}
                         </span>
-                        <span className="text-xs text-muted">
+                        <span className="text-xs text-m-muted">
                           {items.length} issue{items.length !== 1 ? 's' : ''}
                         </span>
                       </div>
                       <div className="space-y-2">
                         {items.map((finding) => (
-                          <FindingCard key={finding.id} finding={finding} pillarColor="text-brand" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
+                          <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
                         ))}
                       </div>
                     </div>
@@ -2201,29 +2083,29 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: Pages ─────────────────────────────────── */}
           {activeTab === 'pages' && (
             <div>
-              <p className="text-sm text-muted mb-4">
+              <p className="text-sm text-m-muted mb-4">
                 {auditPages.length} {L.pagesCrawled}
               </p>
-              <div className="bg-card border border-border/30 dark:border-white/[0.06] rounded-xl overflow-hidden divide-y divide-border/30 dark:divide-white/[0.04]">
+              <div className="bg-paper border border-rule/30 rounded-lg overflow-hidden divide-y divide-rule/30">
                 {auditPages.map((pg, idx) => (
-                  <div key={idx} className="flex items-center gap-3 px-4 py-3 hover:bg-off/50 dark:hover:bg-white/[0.02] transition-colors">
-                    <span className="text-xs text-muted w-6 text-right flex-shrink-0 font-mono">{idx + 1}</span>
-                    <Globe size={14} className="text-muted flex-shrink-0" />
+                  <div key={idx} className="flex items-center gap-3 px-4 py-3 hover:bg-paper-2/50 transition-colors">
+                    <span className="text-xs text-m-muted w-6 text-right flex-shrink-0 font-mono">{idx + 1}</span>
+                    <Globe size={14} className="text-m-muted flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       {pg.title && (
-                        <p className="text-sm font-medium text-text truncate">{pg.title}</p>
+                        <p className="text-sm font-medium text-ink truncate">{pg.title}</p>
                       )}
                       <a
                         href={pg.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-brand hover:text-brand/80 hover:underline truncate block"
+                        className="text-xs text-signal hover:text-signal/80 hover:underline truncate block"
                       >
                         {pg.url}
                       </a>
                     </div>
                     {pg.status_code && pg.status_code !== 200 && (
-                      <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20">
+                      <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
                         {pg.status_code}
                       </span>
                     )}
@@ -2240,7 +2122,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 href={`/api/reports/${auditId}/pdf`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
               >
                 <Download size={14} /> PDF Report
               </a>
@@ -2248,34 +2130,34 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 href={`/api/reports/${auditId}/docx`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
               >
                 <Download size={14} /> Word Report
               </a>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
               >
                 <RefreshCw size={14} /> Re-audit
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
               >
                 <Search size={14} /> Dig Deeper
               </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="flex items-center justify-center gap-2 bg-card border border-border text-text text-sm font-medium px-5 py-3 rounded-xl hover:bg-surface-alt transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
                 {shareCopied ? <><Check size={14} className="text-emerald-500" /> Copied</> : <><Share2 size={14} /> Share</>}
               </button>
             </div>
-            <p className="text-center text-[11px] text-muted mt-2">1 credit per audit</p>
+            <p className="text-center text-[11px] text-m-muted mt-2">1 credit per audit</p>
             {shareUrl && (
-              <p className="text-center text-[11px] text-muted">
-                Share link: <span className="font-mono text-brand">{shareUrl}</span>
+              <p className="text-center text-[11px] text-m-muted">
+                Share link: <span className="font-mono text-signal">{shareUrl}</span>
               </p>
             )}
           </div>
@@ -2290,10 +2172,10 @@ const AuditDetailPage = (props: { params: Promise<{ id: string }> }) => (
   <Suspense
     fallback={
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="h-5 w-20 bg-off rounded animate-pulse mb-6" />
-        <div className="h-8 w-72 bg-off rounded-lg animate-pulse mb-3" />
-        <div className="h-4 w-48 bg-off rounded animate-pulse mb-8" />
-        <div className="h-48 bg-off rounded-xl animate-pulse" />
+        <div className="h-5 w-20 bg-paper-2 rounded animate-pulse mb-6" />
+        <div className="h-8 w-72 bg-paper-2 rounded-lg animate-pulse mb-3" />
+        <div className="h-4 w-48 bg-paper-2 rounded animate-pulse mb-8" />
+        <div className="h-48 bg-paper-2 rounded-xl animate-pulse" />
       </div>
     }
   >

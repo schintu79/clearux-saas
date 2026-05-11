@@ -230,8 +230,6 @@ export default function PricingContent() {
                   { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
                   { feature: 'White-label reports', free: false, credits: 'Scale pack', sub: 'Pro + Agency' },
                   { feature: 'Priority processing', free: false, credits: false, sub: 'Pro + Agency' },
-                  { feature: 'Team seats', free: false, credits: false, sub: 'Agency (5)' },
-                  { feature: 'API access', free: false, credits: false, sub: 'Agency' },
                 ] as { feature: string; free: boolean | string; credits: boolean | string; sub: boolean | string }[]).map((row, ri) => (
                   <tr key={ri} className="border-b border-rule last:border-b-0 hover:bg-paper-2 transition-colors">
                     <td className="px-6 py-4 text-[14px] font-sans font-medium text-ink">{row.feature}</td>

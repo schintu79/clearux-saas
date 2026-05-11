@@ -2,8 +2,38 @@
 // ClearUX Audit Engine — Robust Page Crawler
 // Multi-strategy: direct fetch → Jina Reader fallback
 // ============================================================
+// PROPRIETARY — do not distribute outside the ClearUX codebase.
+// ============================================================
 
 import type { AuditPage } from '@/types/database'
+
+/* ── Hostname normalization ───────────────────────────────── */
+
+/** Strip www. prefix for hostname comparison so keycense.com ≡ www.keycense.com */
+function normalizeHostname(hostname: string): string {
+  return hostname.replace(/^www\./i, '').toLowerCase()
+}
+
+/** Check if two hostnames are equivalent (handles www/non-www) */
+function isSameHost(a: string, b: string): boolean {
+  return normalizeHostname(a) === normalizeHostname(b)
+}
+
+/** Normalize a URL string for deduplication (strip www, trailing slash, fragment, lowercase) */
+function normalizeUrlForDedup(urlStr: string): string {
+  try {
+    const u = new URL(urlStr)
+    u.hostname = normalizeHostname(u.hostname)
+    u.hash = ''
+    // Remove trailing slash except for bare domain
+    if (u.pathname.length > 1 && u.pathname.endsWith('/')) {
+      u.pathname = u.pathname.slice(0, -1)
+    }
+    return u.toString().toLowerCase()
+  } catch {
+    return urlStr.toLowerCase()
+  }
+}
 
 export interface CrawledPage {
   url: string
@@ -78,17 +108,33 @@ function extractLinks(html: string, pageUrl: string): { links: URL[]; count: num
       const href = match[1]
       if (href.startsWith('http://') || href.startsWith('https://')) {
         const url = new URL(href)
-        if (url.hostname === baseUrl.hostname) links.push(url)
+        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
       } else if (!href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:') && !href.startsWith('javascript:')) {
         const url = new URL(href, pageUrl)
-        if (url.hostname === baseUrl.hostname) links.push(url)
+        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
       }
     } catch {
       // Skip invalid URLs
     }
   }
 
-  return { links: [...new Map(links.map((l) => [l.toString(), l])).values()], count: links.length }
+  // Also extract links from <nav> elements specifically (catches JS framework nav menus)
+  const navRegex = /<nav\b[^>]*>([\s\S]*?)<\/nav>/gi
+  let navMatch
+  while ((navMatch = navRegex.exec(html)) !== null) {
+    const navHtml = navMatch[1]
+    const navLinkRegex = /<a\s+[^>]*href=["']([^"']*)["']/gi
+    let navLink
+    while ((navLink = navLinkRegex.exec(navHtml)) !== null) {
+      try {
+        const href = navLink[1]
+        const url = href.startsWith('http') ? new URL(href) : new URL(href, pageUrl)
+        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
+      } catch { /* skip */ }
+    }
+  }
+
+  return { links: [...new Map(links.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()], count: links.length }
 }
 
 /* ── Bot-detection checks ──────────────────────────────────── */
@@ -457,7 +503,7 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
                   if (locMatch) {
                     try {
                       const u = new URL(locMatch[1].trim())
-                      if (u.hostname === hostname) urls.push(u)
+                      if (isSameHost(u.hostname, hostname)) urls.push(u)
                     } catch { /* skip */ }
                   }
                 }
@@ -475,7 +521,7 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
           if (locMatch) {
             try {
               const u = new URL(locMatch[1].trim())
-              if (u.hostname === hostname) urls.push(u)
+              if (isSameHost(u.hostname, hostname)) urls.push(u)
             } catch { /* skip */ }
           }
         }
@@ -490,7 +536,7 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
             if (locMatch) {
               try {
                 const u = new URL(locMatch[1].trim())
-                if (u.hostname === hostname) urls.push(u)
+                if (isSameHost(u.hostname, hostname)) urls.push(u)
               } catch { /* skip */ }
             }
           }
@@ -508,22 +554,38 @@ async function discoverSitemapUrls(baseUrl: string, hostname: string): Promise<U
 /* ── Strategy B: Common page path probing ────────────────── */
 
 const COMMON_PATHS = [
-  '/about', '/about-us', '/contact', '/contact-us',
-  '/pricing', '/plans', '/services', '/features',
-  '/blog', '/news', '/faq', '/faqs', '/help',
-  '/terms', '/terms-of-service', '/privacy', '/privacy-policy',
-  '/products', '/solutions', '/team', '/careers',
-  '/case-studies', '/testimonials', '/reviews',
-  '/how-it-works', '/why-us', '/demo', '/get-started',
-  '/login', '/signup', '/register',
+  // Core pages
+  '/about', '/about-us', '/contact', '/contact-us', '/support',
+  '/pricing', '/plans', '/services', '/features', '/integrations',
+  '/blog', '/news', '/faq', '/faqs', '/help', '/help-center',
+  '/terms', '/terms-of-service', '/terms-and-conditions',
+  '/privacy', '/privacy-policy', '/cookie-policy', '/cookies',
+  '/products', '/solutions', '/team', '/careers', '/jobs',
+  '/case-studies', '/testimonials', '/reviews', '/customers',
+  '/how-it-works', '/why-us', '/demo', '/get-started', '/tour',
+  '/login', '/signup', '/register', '/sign-up', '/sign-in',
+  // E-commerce
+  '/shop', '/store', '/collections', '/categories', '/catalog',
+  '/cart', '/checkout', '/account', '/orders', '/wishlist',
+  // Documentation & resources
+  '/docs', '/documentation', '/resources', '/guides', '/tutorials',
+  '/changelog', '/release-notes', '/roadmap', '/status',
+  '/api', '/developers', '/partners', '/affiliates',
+  // Legal & trust
+  '/security', '/compliance', '/gdpr', '/accessibility',
+  '/sitemap', '/imprint', '/impressum', '/legal',
+  // Marketing
+  '/use-cases', '/industries', '/enterprise', '/startup',
+  '/webinar', '/webinars', '/events', '/podcast',
+  '/press', '/media', '/brand', '/community', '/forum',
 ]
 
 async function probeCommonPaths(baseUrl: string, hostname: string): Promise<URL[]> {
   const found: URL[] = []
 
-  // Probe in batches of 6 for speed
-  for (let i = 0; i < COMMON_PATHS.length; i += 6) {
-    const batch = COMMON_PATHS.slice(i, i + 6)
+  // Probe in batches of 10 for speed (HEAD requests are lightweight)
+  for (let i = 0; i < COMMON_PATHS.length; i += 10) {
+    const batch = COMMON_PATHS.slice(i, i + 10)
     const results = await Promise.all(
       batch.map(async (path) => {
         try {
@@ -543,8 +605,9 @@ async function probeCommonPaths(baseUrl: string, hostname: string): Promise<URL[
           // Accept 200 responses, reject redirects to homepage (common SPA pattern)
           if (res.ok) {
             const finalUrl = new URL(res.url)
-            // Make sure it didn't redirect back to homepage
-            if (finalUrl.pathname !== '/' && finalUrl.hostname === hostname) {
+            // Make sure it didn't redirect back to homepage or a catch-all
+            const isHomepageRedirect = finalUrl.pathname === '/' || normalizeUrlForDedup(finalUrl.toString()) === normalizeUrlForDedup(baseUrl + '/')
+            if (!isHomepageRedirect && isSameHost(finalUrl.hostname, hostname)) {
               return new URL(probeUrl)
             }
           }
@@ -578,10 +641,10 @@ function extractLinksFromText(text: string, pageUrl: string): URL[] {
       const href = match[2]
       if (href.startsWith('http://') || href.startsWith('https://')) {
         const url = new URL(href)
-        if (url.hostname === baseUrl.hostname) links.push(url)
+        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
       } else if (!href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
         const url = new URL(href, pageUrl)
-        if (url.hostname === baseUrl.hostname) links.push(url)
+        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
       }
     } catch {
       // Skip invalid URLs
@@ -593,7 +656,7 @@ function extractLinksFromText(text: string, pageUrl: string): URL[] {
   while ((match = urlRegex.exec(text)) !== null) {
     try {
       const url = new URL(match[0])
-      if (url.hostname === baseUrl.hostname) links.push(url)
+      if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
     } catch {
       // Skip invalid URLs
     }
@@ -679,6 +742,14 @@ export async function crawlPages(
   const pages: CrawledPage[] = []
   const visited = new Set<string>()
 
+  /** Mark a URL as visited using normalized key */
+  function markVisited(urlStr: string) {
+    visited.add(normalizeUrlForDedup(urlStr))
+  }
+  function isVisited(urlStr: string): boolean {
+    return visited.has(normalizeUrlForDedup(urlStr))
+  }
+
   try {
     // Normalize URL
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -686,7 +757,7 @@ export async function crawlPages(
     }
 
     const baseUrl = new URL(url)
-    const baseHostname = baseUrl.hostname
+    let baseHostname = baseUrl.hostname
 
     // Fetch initial page with all strategies
     let firstPage = await fetchPageRobust(url)
@@ -702,20 +773,37 @@ export async function crawlPages(
 
     if (!firstPage) return pages
 
+    // Resolve actual hostname from fetched page URL (handles redirects like keycense.com → www.keycense.com)
+    try {
+      const resolvedUrl = new URL(firstPage.url)
+      if (isSameHost(resolvedUrl.hostname, baseHostname) && resolvedUrl.hostname !== baseHostname) {
+        console.log(`[crawler] Resolved hostname: ${baseHostname} → ${resolvedUrl.hostname}`)
+        baseHostname = resolvedUrl.hostname
+      }
+    } catch { /* keep original */ }
+
     pages.push(firstPage)
-    visited.add(baseUrl.toString())
-    visited.add(firstPage.url) // also mark the actual resolved URL
+    markVisited(baseUrl.toString())
+    markVisited(firstPage.url) // also mark the actual resolved URL
 
     // If maxPages > 1, discover pages using ALL strategies in parallel
     if (maxPages > 1) {
-      const baseOrigin = baseUrl.origin // e.g. https://keycense.com
+      // Use resolved hostname for discovery (so probed URLs match the actual site)
+      const resolvedOrigin = `${baseUrl.protocol}//${baseHostname}`
 
       // ── Run all 3 discovery strategies in parallel ──
       const [sitemapUrls, commonPathUrls, htmlLinks] = await Promise.all([
-        // Strategy A: Sitemap discovery
-        discoverSitemapUrls(baseOrigin, baseHostname).catch(() => [] as URL[]),
+        // Strategy A: Sitemap discovery (try both original and resolved origins)
+        (async () => {
+          const urls = await discoverSitemapUrls(resolvedOrigin, baseHostname).catch(() => [] as URL[])
+          // Also try the original origin if different
+          if (urls.length === 0 && resolvedOrigin !== baseUrl.origin) {
+            return discoverSitemapUrls(baseUrl.origin, baseHostname).catch(() => [] as URL[])
+          }
+          return urls
+        })(),
         // Strategy B: Common page path probing
-        probeCommonPaths(baseOrigin, baseHostname).catch(() => [] as URL[]),
+        probeCommonPaths(resolvedOrigin, baseHostname).catch(() => [] as URL[]),
         // Strategy C: HTML/text link extraction (original approach)
         (async () => {
           // If we have raw HTML, extract links from it (static sites)
@@ -741,14 +829,16 @@ export async function crawlPages(
       const allDiscoveredMap = new Map<string, URL>()
 
       // Sitemap URLs first (highest quality — these are pages the site wants indexed)
-      for (const u of sitemapUrls) allDiscoveredMap.set(u.toString(), u)
+      for (const u of sitemapUrls) allDiscoveredMap.set(normalizeUrlForDedup(u.toString()), u)
       // Then HTML-extracted links (direct evidence of navigation)
       for (const u of htmlLinks) {
-        if (!allDiscoveredMap.has(u.toString())) allDiscoveredMap.set(u.toString(), u)
+        const key = normalizeUrlForDedup(u.toString())
+        if (!allDiscoveredMap.has(key)) allDiscoveredMap.set(key, u)
       }
       // Then probed common paths (fallback for JS-heavy sites)
       for (const u of commonPathUrls) {
-        if (!allDiscoveredMap.has(u.toString())) allDiscoveredMap.set(u.toString(), u)
+        const key = normalizeUrlForDedup(u.toString())
+        if (!allDiscoveredMap.has(key)) allDiscoveredMap.set(key, u)
       }
 
       const allDiscovered = [...allDiscoveredMap.values()]
@@ -758,6 +848,9 @@ export async function crawlPages(
         '/cdn-cgi/',          // Cloudflare email protection, challenges, etc.
         '/_next/',            // Next.js internal assets
         '/api/',              // API endpoints (not user-facing pages)
+        '/.well-known/',      // ACME, security.txt etc.
+        '/static/',           // Static assets (often not pages)
+        '/assets/',           // Asset bundles
         '/wp-admin/',         // WordPress admin
         '/wp-json/',          // WordPress REST API
         '/wp-includes/',      // WordPress internals
@@ -765,14 +858,24 @@ export async function crawlPages(
         '/xmlrpc.php',        // WordPress XML-RPC
       ]
 
+      const EXCLUDED_EXTENSIONS = [
+        '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.ico',
+        '.css', '.js', '.json', '.xml', '.txt', '.zip', '.gz', '.tar',
+        '.mp4', '.mp3', '.wav', '.avi', '.mov', '.woff', '.woff2', '.ttf', '.eot',
+      ]
+
       function isExcludedPath(url: URL): boolean {
         const path = url.pathname.toLowerCase()
-        return EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))
+        if (EXCLUDED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) return true
+        if (EXCLUDED_EXTENSIONS.some((ext) => path.endsWith(ext))) return true
+        // Exclude query-heavy URLs (tracking, search, etc.)
+        if (url.search.length > 150) return true
+        return false
       }
 
       // Level 1: pages to crawl from all sources
       const level1ToVisit = allDiscovered
-        .filter((link) => link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link))
+        .filter((link) => isSameHost(link.hostname, baseHostname) && !isVisited(link.toString()) && !isExcludedPath(link))
         .slice(0, Math.min(40, maxPages - 1))
 
       console.log(`[crawler] Level 1: ${level1ToVisit.length} pages to crawl (merged from all strategies)`)
@@ -790,7 +893,7 @@ export async function crawlPages(
         for (const page of results) {
           if (page && pages.length < maxPages) {
             pages.push(page)
-            visited.add(page.url)
+            markVisited(page.url)
             level1Pages.push(page)
           }
         }
@@ -821,9 +924,9 @@ export async function crawlPages(
           }
 
           for (const link of l2Links) {
-            if (link.hostname === baseHostname && !visited.has(link.toString()) && !isExcludedPath(link)) {
+            if (isSameHost(link.hostname, baseHostname) && !isVisited(link.toString()) && !isExcludedPath(link)) {
               level2Candidates.push(link)
-              visited.add(link.toString())
+              markVisited(link.toString())
             }
           }
         }
