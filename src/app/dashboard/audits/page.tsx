@@ -128,7 +128,7 @@ function WebsiteAuditGroup({ domain, audits }: {
             </div>
             {latestScore != null ? (
               <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
-                <span className="font-serif font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
+                <span className="font-sans font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
@@ -228,7 +228,7 @@ function BrandAuditGroup({ brandName, audits }: {
             </div>
             {latestScore != null ? (
               <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
-                <span className="font-serif font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
+                <span className="font-sans font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
@@ -433,7 +433,7 @@ function AuditsPageInner() {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <FileSearch size={22} style={{ color: 'var(--ink)' }} />
-            <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>All Audits</h1>
+            <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>All Audits</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             {audits.length} audit{audits.length !== 1 ? 's' : ''} total

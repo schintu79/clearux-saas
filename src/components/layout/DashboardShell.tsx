@@ -159,7 +159,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   <Coins size={13} style={{ color: 'var(--signal)' }} />
                   <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Credits</span>
                 </div>
-                <span className="text-base font-serif font-normal tabular-nums" style={{ color: 'var(--signal)' }}>{credits}</span>
+                <span className="text-base font-sans font-normal tabular-nums" style={{ color: 'var(--signal)' }}>{credits}</span>
               </div>
               <p className="text-[11px] leading-snug mb-2.5" style={{ color: 'var(--m-muted)' }}>
                 {credits === 0

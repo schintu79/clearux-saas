@@ -286,7 +286,7 @@ const SettingsPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <SettingsIcon size={22} style={{ color: 'var(--ink)' }} />
-          <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>Settings</h1>
+          <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>Settings</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">Manage your account and preferences</p>
       </div>
@@ -318,7 +318,7 @@ const SettingsPage: React.FC = () => {
         <Card>
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-normal font-serif text-text">Profile Information</h2>
+              <h2 className="text-lg font-normal font-sans text-text">Profile Information</h2>
               <p className="text-sm text-muted mt-1">Update your profile details</p>
             </div>
 
@@ -371,7 +371,7 @@ const SettingsPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Building2 size={18} style={{ color: 'var(--ink)' }} />
-                <h2 className="text-lg font-normal font-serif text-text">Company & Billing</h2>
+                <h2 className="text-lg font-normal font-sans text-text">Company & Billing</h2>
               </div>
               <p className="text-sm text-muted">Optional — add company details for invoices and receipts</p>
             </div>
@@ -460,7 +460,7 @@ const SettingsPage: React.FC = () => {
           <Card>
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-normal font-serif text-text">Change Password</h2>
+                <h2 className="text-lg font-normal font-sans text-text">Change Password</h2>
                 <p className="text-sm text-muted mt-1">Update your account password</p>
               </div>
 

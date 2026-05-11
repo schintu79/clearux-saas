@@ -689,7 +689,7 @@ export default function BrandAuditDetail({
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Palette size={18} className="text-brand flex-shrink-0" />
-            <h1 className="text-2xl font-medium font-serif text-text truncate">{displayName}</h1>
+            <h1 className="text-2xl font-medium font-sans text-text truncate">{displayName}</h1>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>

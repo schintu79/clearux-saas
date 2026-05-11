@@ -60,7 +60,7 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Dashboard</h1>
+        <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Dashboard</h1>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Platform overview and quick actions</p>
       </div>
 
@@ -81,7 +81,7 @@ export default function AdminOverviewPage() {
                 </div>
                 <ArrowRight size={14} className="text-muted/40 group-hover:text-muted transition-colors" />
               </div>
-              <p className="font-serif text-[36px] font-normal tabular-nums" style={{ color: 'var(--ink)' }}>{card.value.toLocaleString()}</p>
+              <p className="font-sans text-[36px] font-normal tabular-nums" style={{ color: 'var(--ink)' }}>{card.value.toLocaleString()}</p>
               <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-0.5" style={{ color: 'var(--m-muted-2)' }}>{card.label}</p>
             </Link>
           )

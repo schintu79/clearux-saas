@@ -437,7 +437,7 @@ const NewAuditInner: React.FC = () => {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Sparkles size={28} style={{ color: 'var(--ink)' }} />
         </div>
-        <h1 className="text-3xl font-normal font-serif mb-2" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-3xl font-normal font-sans mb-2" style={{ color: 'var(--ink)' }}>
           New Audit
         </h1>
         <p className="text-muted">
@@ -938,7 +938,7 @@ const NewAuditInner: React.FC = () => {
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-serif font-normal" style={{ color: 'var(--ok)' }}>{credits}</span>
+            <span className="text-2xl font-sans font-normal" style={{ color: 'var(--ok)' }}>{credits}</span>
           </div>
         </div>
       )}

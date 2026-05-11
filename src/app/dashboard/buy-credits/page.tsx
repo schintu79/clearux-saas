@@ -86,7 +86,7 @@ export default function BuyCreditsPage() {
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
           <Crown size={28} style={{ color: 'var(--ink)' }} />
         </div>
-        <h1 className="text-3xl font-normal font-serif mb-2" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-3xl font-normal font-sans mb-2" style={{ color: 'var(--ink)' }}>
           Plans and credits
         </h1>
         <p className="text-muted max-w-md mx-auto">
@@ -184,11 +184,11 @@ export default function BuyCreditsPage() {
                   )}
 
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-serif font-normal text-lg text-text">{plan.name}</h3>
+                    <h3 className="font-sans font-normal text-lg text-text">{plan.name}</h3>
                   </div>
 
                   <div className="mb-1">
-                    <span className="font-serif text-[36px] font-normal text-text">
+                    <span className="font-sans text-[36px] font-normal text-text">
                       {formatPrice(price)}
                     </span>
                     <span className="text-sm text-muted">/mo</span>
@@ -266,7 +266,7 @@ export default function BuyCreditsPage() {
                 )}
 
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-serif font-normal text-lg text-text">
+                  <h3 className="font-sans font-normal text-lg text-text">
                     {pack.credits} Credit{pack.credits !== 1 ? 's' : ''}
                   </h3>
                   {pack.savePercent && (
@@ -277,7 +277,7 @@ export default function BuyCreditsPage() {
                 </div>
 
                 <div className="mb-1">
-                  <span className="font-serif text-3xl font-normal">
+                  <span className="font-sans text-3xl font-normal">
                     {formatPrice(pack.price)}
                   </span>
                 </div>

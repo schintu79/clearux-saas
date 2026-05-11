@@ -202,7 +202,7 @@ const NewBrandPage: React.FC = () => {
           <Fingerprint size={20} className="text-brand" />
         </div>
         <div>
-          <h1 className="text-xl font-normal font-serif" style={{ color: 'var(--ink)' }}>New Brand Identity</h1>
+          <h1 className="text-xl font-normal font-sans" style={{ color: 'var(--ink)' }}>New Brand Identity</h1>
           <p className="text-xs text-muted">
             Set up your brand and upload documents for auditing.
           </p>

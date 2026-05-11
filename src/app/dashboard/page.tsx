@@ -63,7 +63,7 @@ function OnboardingBanner() {
     <div className="mb-6 rounded-xl p-5" style={{ border: '1px solid var(--rule)', background: 'var(--signal-soft)' }}>
       <div className="flex items-center gap-2 mb-4">
         <Sparkles size={18} style={{ color: 'var(--signal)' }} />
-        <h2 className="font-serif text-[18px] font-normal" style={{ color: 'var(--ink)' }}>Welcome to ClearUX</h2>
+        <h2 className="font-sans text-[18px] font-normal" style={{ color: 'var(--ink)' }}>Welcome to ClearUX</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
@@ -241,7 +241,7 @@ function DashboardInner() {
     <div className="max-w-4xl mx-auto py-2">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-serif text-[32px] font-normal leading-tight" style={{ color: 'var(--ink)' }}>
+        <h1 className="font-sans text-[32px] font-normal leading-tight" style={{ color: 'var(--ink)' }}>
           Hey {name}
         </h1>
         <p className="text-[14px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -336,7 +336,7 @@ function DashboardInner() {
             <div className="rounded-xl p-5 transition-all hover:shadow-sm" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ border: `1px solid var(--rule)`, background: 'var(--paper-2)' }}>
-                  <span className="font-serif text-[24px] font-normal" style={{ color: scoreColor(latestScore) }}>
+                  <span className="font-sans text-[24px] font-normal" style={{ color: scoreColor(latestScore) }}>
                     {latestScore}
                   </span>
                 </div>
@@ -420,7 +420,7 @@ function DashboardInner() {
                 <TrendingUp size={14} style={{ color: 'var(--signal)' }} />
                 <p className="text-[11px] font-mono tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>Average score</p>
               </div>
-              <p className="font-serif text-[36px] font-normal" style={{ color: avgScore ? scoreColor(avgScore) : 'var(--ink)' }}>
+              <p className="font-sans text-[36px] font-normal" style={{ color: avgScore ? scoreColor(avgScore) : 'var(--ink)' }}>
                 {avgScore ?? '--'}
               </p>
               <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>across {completedCount} audit{completedCount !== 1 ? 's' : ''}</p>
@@ -430,7 +430,7 @@ function DashboardInner() {
                 <CheckCircle2 size={14} style={{ color: 'var(--ok)' }} />
                 <p className="text-[11px] font-mono tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>Completed</p>
               </div>
-              <p className="font-serif text-[36px] font-normal" style={{ color: 'var(--ink)' }}>{completedCount}</p>
+              <p className="font-sans text-[36px] font-normal" style={{ color: 'var(--ink)' }}>{completedCount}</p>
               <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>total audit{completedCount !== 1 ? 's' : ''} run</p>
             </div>
             <div className="rounded-xl p-5" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
@@ -438,7 +438,7 @@ function DashboardInner() {
                 <RefreshCw size={14} style={{ color: 'var(--warn)' }} />
                 <p className="text-[11px] font-mono tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>Re-audits</p>
               </div>
-              <p className="font-serif text-[36px] font-normal" style={{ color: 'var(--ink)' }}>
+              <p className="font-sans text-[36px] font-normal" style={{ color: 'var(--ink)' }}>
                 {audits.filter(a => a.status === 'completed' && (a as any).is_reaudit).length}
               </p>
               <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>improvement checks</p>
@@ -490,7 +490,7 @@ function DashboardInner() {
       {isNewUser && (
         <div className="text-center py-8">
           <FileSearch size={24} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
-          <h2 className="font-serif text-[18px] font-normal mb-1" style={{ color: 'var(--ink)' }}>No audits yet</h2>
+          <h2 className="font-sans text-[18px] font-normal mb-1" style={{ color: 'var(--ink)' }}>No audits yet</h2>
           <p className="text-[13px] mb-4 max-w-xs mx-auto leading-relaxed" style={{ color: 'var(--m-muted)' }}>
             Create your first audit to see how your website scores across 96 UX checkpoints.
           </p>

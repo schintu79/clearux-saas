@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Users</h1>
+        <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Users</h1>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>{total} total users</p>
       </div>
 
@@ -239,7 +239,7 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setCreditModal(null)}>
           <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-serif font-normal text-lg" style={{ color: 'var(--ink)' }}>
+              <h3 className="font-sans font-normal text-lg" style={{ color: 'var(--ink)' }}>
                 {creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
               </h3>
               <button onClick={() => setCreditModal(null)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">

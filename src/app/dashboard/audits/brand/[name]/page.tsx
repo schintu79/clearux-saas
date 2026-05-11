@@ -239,7 +239,7 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
             <Fingerprint size={20} className="text-muted flex-shrink-0" />
-            <h1 className="text-2xl font-medium font-serif text-text truncate">{brandName}</h1>
+            <h1 className="text-2xl font-medium font-sans text-text truncate">{brandName}</h1>
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}

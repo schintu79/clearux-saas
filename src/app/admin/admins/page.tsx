@@ -97,7 +97,7 @@ export default function AdminManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Management</h1>
+          <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Management</h1>
           <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Manage who has admin access to the platform</p>
         </div>
         <button
@@ -203,7 +203,7 @@ export default function AdminManagementPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
           <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-serif font-normal text-lg" style={{ color: 'var(--ink)' }}>Add Admin</h3>
+              <h3 className="font-sans font-normal text-lg" style={{ color: 'var(--ink)' }}>Add Admin</h3>
               <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
                 <X size={18} className="text-muted" />
               </button>

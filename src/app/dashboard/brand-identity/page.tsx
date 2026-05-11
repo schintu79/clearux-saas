@@ -110,7 +110,7 @@ const BrandIdentityPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Fingerprint size={22} style={{ color: 'var(--ink)' }} />
-            <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>Brand Identity</h1>
+            <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>Brand Identity</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             Manage brand identities to audit websites against your brand guidelines.

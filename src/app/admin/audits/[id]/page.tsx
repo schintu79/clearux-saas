@@ -202,7 +202,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="font-serif font-medium text-xl text-text truncate">{domain}</h1>
+                <h1 className="font-sans font-medium text-xl text-text truncate">{domain}</h1>
                 <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${statusMeta.color}`}>
                   {statusMeta.label}
                 </span>
@@ -254,7 +254,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
             {/* Score + severity summary */}
             {audit.status === 'completed' && report && (
               <div className="flex-shrink-0 text-right hidden sm:block">
-                <p className={`text-4xl font-medium font-serif ${scoreColor(overall)}`}>{overall}</p>
+                <p className={`text-4xl font-medium font-sans ${scoreColor(overall)}`}>{overall}</p>
                 <p className="text-xs text-muted">{scoreLabel(overall)}</p>
                 <p className="text-xs text-muted mt-1">{report.total_issues} issues</p>
               </div>
@@ -310,7 +310,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {/* Executive Summary */}
           {report.executive_summary && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 sm:p-6">
-              <h2 className="font-serif font-medium text-lg text-text mb-3">Executive Summary</h2>
+              <h2 className="font-sans font-medium text-lg text-text mb-3">Executive Summary</h2>
               <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                 {report.executive_summary}
               </div>
@@ -371,7 +371,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className={`text-2xl font-medium font-serif ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
+                        <p className={`text-2xl font-medium font-sans ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
                           {pillar.isAudited ? pillar.avg : '--'}
                         </p>
                         {pillar.isAudited && <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>}
@@ -408,7 +408,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {findings.length > 0 && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
               <div className="px-5 py-4 border-b border-border/15 dark:border-white/[0.04]">
-                <h2 className="font-serif font-medium text-lg text-text">All Findings ({findings.length})</h2>
+                <h2 className="font-sans font-medium text-lg text-text">All Findings ({findings.length})</h2>
               </div>
               <div className="divide-y divide-border/10 dark:divide-white/[0.03]">
                 {findings.map(f => {
