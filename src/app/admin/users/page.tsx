@@ -90,20 +90,20 @@ export default function AdminUsersPage() {
     starter: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
     growth: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     agency: 'bg-[#6366F1]/10 text-[#6366F1]',
-    scale: 'bg-[#22C55E]/10 text-[#22C55E]',
+    scale: 'bg-[var(--ok)]/10 text-[var(--ok)]',
   }
 
   const roleColors: Record<string, string> = {
     user: '',
     admin: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    super_admin: 'bg-[#EF4444]/10 text-[#EF4444]',
+    super_admin: 'bg-[var(--severe)]/10 text-[var(--severe)]',
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading font-medium text-2xl text-text">Users</h1>
-        <p className="text-sm text-muted mt-1">{total} total users</p>
+        <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Users</h1>
+        <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>{total} total users</p>
       </div>
 
       {/* Search bar */}
@@ -115,19 +115,21 @@ export default function AdminUsersPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by email, name, or company..."
-            className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
+            className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2"
+            style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
           />
         </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text font-medium hover:bg-card transition-colors"
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
         >
           Search
         </button>
       </form>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -162,7 +164,7 @@ export default function AdminUsersPage() {
                       <p className="text-[11px] text-muted truncate max-w-[200px]">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[13px] font-medium text-[#22C55E] tabular-nums">{u.credits}</span>
+                      <span className="text-[13px] font-medium tabular-nums" style={{ color: 'var(--ok)' }}>{u.credits}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-[13px] text-text tabular-nums">{u.audit_count}</span>
@@ -186,14 +188,15 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => setCreditModal({ user: u, amount: '', reason: '', type: 'add' })}
-                          className="p-1.5 rounded-lg hover:bg-[#22C55E]/10 text-muted hover:text-[#22C55E] transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[var(--ok)]/10 text-muted transition-colors"
+                          style={{ '--hover-color': 'var(--ok)' } as React.CSSProperties}
                           title="Add credits"
                         >
                           <Plus size={14} />
                         </button>
                         <button
                           onClick={() => setCreditModal({ user: u, amount: '', reason: '', type: 'remove' })}
-                          className="p-1.5 rounded-lg hover:bg-[#EF4444]/10 text-muted hover:text-[#EF4444] transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[var(--severe)]/10 text-muted transition-colors"
                           title="Remove credits"
                         >
                           <Minus size={14} />
@@ -234,9 +237,9 @@ export default function AdminUsersPage() {
       {/* Credit adjustment modal */}
       {creditModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setCreditModal(null)}>
-          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-heading font-medium text-lg text-text">
+              <h3 className="font-serif font-normal text-lg" style={{ color: 'var(--ink)' }}>
                 {creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
               </h3>
               <button onClick={() => setCreditModal(null)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
@@ -248,7 +251,7 @@ export default function AdminUsersPage() {
               {creditModal.type === 'add' ? 'Adding credits to' : 'Removing credits from'}{' '}
               <span className="font-medium text-text">{creditModal.user.full_name || creditModal.user.email}</span>
               <br />
-              <span className="text-[12px]">Current balance: <span className="font-medium text-[#22C55E]">{creditModal.user.credits}</span></span>
+              <span className="text-[12px]">Current balance: <span className="font-medium" style={{ color: 'var(--ok)' }}>{creditModal.user.credits}</span></span>
             </p>
 
             <div className="space-y-3">
@@ -286,11 +289,8 @@ export default function AdminUsersPage() {
               <button
                 onClick={handleCreditSubmit}
                 disabled={submitting || !creditModal.amount || parseInt(creditModal.amount) <= 0}
-                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-40 ${
-                  creditModal.type === 'add'
-                    ? 'bg-[#22C55E] hover:bg-[#246B43]'
-                    : 'bg-[#EF4444] hover:bg-[#A93226]'
-                }`}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-40"
+                style={{ background: creditModal.type === 'add' ? 'var(--ok)' : 'var(--severe)' }}
               >
                 {submitting ? 'Processing...' : creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
               </button>

@@ -43,7 +43,7 @@ export default function AdminOverviewPage() {
   const statCards = [
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10', href: '/admin/users' },
     { label: 'Total Audits', value: stats.totalAudits, icon: FileSearch, color: 'text-pink-500', bg: 'bg-pink-500/10', href: '/admin/audits' },
-    { label: 'Credits in Circulation', value: stats.totalCreditsInCirculation, icon: Coins, color: 'text-[#22C55E]', bg: 'bg-[#22C55E]/10', href: '/admin/users' },
+    { label: 'Credits in Circulation', value: stats.totalCreditsInCirculation, icon: Coins, color: 'text-[var(--ok)]', bg: 'bg-[var(--ok)]/10', href: '/admin/users' },
     { label: 'Completed Audits', value: stats.auditsByStatus['completed'] || 0, icon: Activity, color: 'text-amber-500', bg: 'bg-amber-500/10', href: '/admin/audits' },
   ]
 
@@ -53,15 +53,15 @@ export default function AdminOverviewPage() {
     crawling: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     analysing: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     generating_report: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    completed: 'bg-[#22C55E]/10 text-[#22C55E]',
-    failed: 'bg-[#EF4444]/10 text-[#EF4444]',
+    completed: 'bg-[var(--ok)]/10 text-[var(--ok)]',
+    failed: 'bg-[var(--severe)]/10 text-[var(--severe)]',
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-heading font-medium text-2xl text-text">Admin Dashboard</h1>
-        <p className="text-sm text-muted mt-1">Platform overview and quick actions</p>
+        <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Dashboard</h1>
+        <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Platform overview and quick actions</p>
       </div>
 
       {/* Stat cards */}
@@ -72,7 +72,8 @@ export default function AdminOverviewPage() {
             <Link
               key={card.label}
               href={card.href}
-              className="group bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all"
+              className="group rounded-xl p-5 hover:shadow-lg hover:shadow-black/[0.04] hover:-translate-y-0.5 transition-all"
+              style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className={`w-10 h-10 rounded-lg ${card.bg} flex items-center justify-center`}>
@@ -80,8 +81,8 @@ export default function AdminOverviewPage() {
                 </div>
                 <ArrowRight size={14} className="text-muted/40 group-hover:text-muted transition-colors" />
               </div>
-              <p className="text-2xl font-medium text-text tabular-nums">{card.value.toLocaleString()}</p>
-              <p className="text-[12px] text-muted mt-0.5">{card.label}</p>
+              <p className="font-serif text-[36px] font-normal tabular-nums" style={{ color: 'var(--ink)' }}>{card.value.toLocaleString()}</p>
+              <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-0.5" style={{ color: 'var(--m-muted-2)' }}>{card.label}</p>
             </Link>
           )
         })}
@@ -89,8 +90,8 @@ export default function AdminOverviewPage() {
 
       {/* Audits by status */}
       {Object.keys(stats.auditsByStatus).length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-5">
-          <h2 className="font-heading font-medium text-sm text-text mb-4">Audits by Status</h2>
+        <div className="rounded-xl p-5" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+          <h2 className="font-mono text-[10px] tracking-[0.1em] uppercase mb-4" style={{ color: 'var(--m-muted-2)' }}>Audits by Status</h2>
           <div className="flex flex-wrap gap-2">
             {Object.entries(stats.auditsByStatus).map(([status, count]) => (
               <span
@@ -107,10 +108,10 @@ export default function AdminOverviewPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent users */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="rounded-xl p-5" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-medium text-sm text-text">Recent Users</h2>
-            <Link href="/admin/users" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
+            <h2 className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--m-muted-2)' }}>Recent Users</h2>
+            <Link href="/admin/users" className="text-[12px] hover:underline font-medium" style={{ color: 'var(--ink)' }}>View all</Link>
           </div>
           <div className="space-y-2.5">
             {stats.recentUsers.map((u) => (
@@ -120,7 +121,7 @@ export default function AdminOverviewPage() {
                   <p className="text-[11px] text-muted truncate">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-[11px] text-[#22C55E] font-medium tabular-nums">{u.credits} cr</span>
+                  <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ok)' }}>{u.credits} cr</span>
                   {(u.role === 'admin' || u.role === 'super_admin') && (
                     <span className="text-[9px] font-medium uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">{u.role === 'super_admin' ? 'Super' : 'Admin'}</span>
                   )}
@@ -131,10 +132,10 @@ export default function AdminOverviewPage() {
         </div>
 
         {/* Recent audits */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="rounded-xl p-5" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-medium text-sm text-text">Recent Audits</h2>
-            <Link href="/admin/audits" className="text-[12px] text-brand hover:underline font-medium">View all</Link>
+            <h2 className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--m-muted-2)' }}>Recent Audits</h2>
+            <Link href="/admin/audits" className="text-[12px] hover:underline font-medium" style={{ color: 'var(--ink)' }}>View all</Link>
           </div>
           <div className="space-y-2.5">
             {stats.recentAudits.map((a) => (

@@ -259,7 +259,7 @@ const BrandIdentityDetailPage: React.FC = () => {
           <Fingerprint size={20} className="text-brand" />
         </div>
         <div>
-          <h1 className="text-xl font-medium font-heading text-text">{identity.name}</h1>
+          <h1 className="text-xl font-normal font-serif" style={{ color: 'var(--ink)' }}>{identity.name}</h1>
           <p className="text-xs text-muted">
             Created {new Date(identity.created_at).toLocaleDateString()}
           </p>

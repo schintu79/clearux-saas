@@ -97,12 +97,13 @@ export default function AdminManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading font-medium text-2xl text-text">Admin Management</h1>
-          <p className="text-sm text-muted mt-1">Manage who has admin access to the platform</p>
+          <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Management</h1>
+          <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Manage who has admin access to the platform</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-brand text-surface rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-all hover:brightness-110"
+          style={{ background: 'var(--ink)' }}
         >
           <UserPlus size={15} />
           Add Admin
@@ -110,7 +111,7 @@ export default function AdminManagementPage() {
       </div>
 
       {/* Admins list */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -140,7 +141,8 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-medium text-surface bg-brand flex-shrink-0"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-medium text-white flex-shrink-0"
+                          style={{ background: 'var(--ink)' }}
                         >
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
@@ -153,7 +155,7 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium uppercase px-2.5 py-1 rounded-full ${
                         admin.role === 'super_admin'
-                          ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
+                          ? 'bg-[var(--severe)]/10 text-[var(--severe)] border border-[var(--severe)]/20'
                           : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                       }`}>
                         {admin.role === 'super_admin' ? <Crown size={12} /> : <Shield size={12} />}
@@ -166,7 +168,8 @@ export default function AdminManagementPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleRemoveAdmin(admin.id)}
-                        className="text-[12px] text-[#EF4444] hover:text-[#A93226] font-medium hover:underline transition-colors"
+                        className="text-[12px] font-medium hover:underline transition-colors"
+                        style={{ color: 'var(--severe)' }}
                       >
                         Remove
                       </button>
@@ -180,7 +183,7 @@ export default function AdminManagementPage() {
       </div>
 
       {/* Info card */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="rounded-xl p-5" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-[#6366F1]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
             <ShieldCheck size={18} className="text-[#6366F1]" />
@@ -189,7 +192,7 @@ export default function AdminManagementPage() {
             <h3 className="text-sm font-medium text-text mb-1">Role Permissions</h3>
             <div className="text-[13px] text-text/65 space-y-1">
               <p><span className="font-medium text-amber-500">Admin</span> — Can view all users, audits, and manage credits. Cannot promote or demote other admins.</p>
-              <p><span className="font-medium text-[#EF4444]">Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
+              <p><span className="font-medium" style={{ color: 'var(--severe)' }}>Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
             </div>
           </div>
         </div>
@@ -198,9 +201,9 @@ export default function AdminManagementPage() {
       {/* Add admin modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-heading font-medium text-lg text-text">Add Admin</h3>
+              <h3 className="font-serif font-normal text-lg" style={{ color: 'var(--ink)' }}>Add Admin</h3>
               <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
                 <X size={18} className="text-muted" />
               </button>
@@ -231,7 +234,7 @@ export default function AdminManagementPage() {
               </div>
 
               {error && (
-                <p className="text-[13px] text-[#EF4444] bg-[#EF4444]/10 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 10%, transparent)' }}>{error}</p>
               )}
             </div>
 
@@ -245,7 +248,8 @@ export default function AdminManagementPage() {
               <button
                 onClick={handleAddAdmin}
                 disabled={submitting || !addEmail.trim()}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-brand text-surface transition-all disabled:opacity-40 hover:brightness-110"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-40 hover:brightness-110"
+                style={{ background: 'var(--ink)' }}
               >
                 {submitting ? 'Adding...' : 'Add Admin'}
               </button>

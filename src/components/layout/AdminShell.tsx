@@ -8,11 +8,8 @@ import {
   Users,
   FileSearch,
   ShieldCheck,
-  Menu,
-  X,
   LogOut,
   ArrowLeft,
-  ChevronRight,
   Bell,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -81,8 +78,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
   if (authorized === null) {
     return (
-      <div className="flex h-screen items-center justify-center bg-surface">
-        <div className="animate-pulse text-muted text-sm">Loading admin panel...</div>
+      <div className="flex h-screen items-center justify-center" style={{ background: 'var(--paper)' }}>
+        <div className="animate-pulse text-sm" style={{ color: 'var(--m-muted)' }}>Loading admin panel...</div>
       </div>
     );
   }
@@ -90,7 +87,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
   if (!authorized) return null;
 
   return (
-    <div className={`flex h-screen bg-surface ${theme === 'light' ? 'theme-light' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
+    <div className="flex h-screen" style={{ background: 'var(--paper)', fontFamily: 'var(--font-sans)' }}>
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
@@ -98,28 +95,30 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside
         className={clsx(
-          'fixed md:static inset-y-0 left-0 w-[220px] bg-card border-r border-border flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
+          'fixed md:static inset-y-0 left-0 w-[240px] flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        style={{ background: 'var(--paper-2)', borderRight: '1px solid var(--rule)' }}
       >
         {/* Header with Admin badge */}
-        <div className="px-5 py-4 flex items-center justify-between border-b border-border">
+        <div className="px-5 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--rule)' }}>
           <Link href="/admin" className="flex items-center">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
+            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
           </Link>
-          <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
+          <span className="text-[10px] font-mono uppercase tracking-[0.1em] px-2.5 py-1 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
             Admin
           </span>
         </div>
 
         {/* Back to dashboard */}
-        <div className="px-3 pt-3 pb-1">
+        <div className="px-4 pt-4 pb-2">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] font-medium text-muted hover:text-text rounded-lg hover:bg-surface transition-all"
+            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] font-medium rounded-lg transition-all"
+            style={{ color: 'var(--m-muted)' }}
           >
             <ArrowLeft size={14} strokeWidth={1.5} />
             Back to dashboard
@@ -127,7 +126,10 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav aria-label="Admin navigation" className="flex-1 px-3 py-2 overflow-y-auto">
+        <nav aria-label="Admin navigation" className="flex-1 px-3 py-3 overflow-y-auto">
+          <p className="px-3 mb-2 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--m-muted-2)' }}>
+            Administration
+          </p>
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -138,17 +140,18 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={clsx(
-                      'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
+                      'flex items-center gap-2.5 px-3 py-[8px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-surface text-text font-medium'
-                        : 'text-muted hover:text-text hover:bg-surface/60'
+                        ? 'font-medium'
+                        : 'hover:bg-[rgba(0,0,0,0.04)]'
                     )}
+                    style={{
+                      color: active ? 'var(--ink)' : 'var(--m-muted)',
+                      background: active ? 'var(--signal-soft)' : undefined,
+                    }}
                   >
-                    <Icon size={16} strokeWidth={1.5} />
+                    <Icon size={16} strokeWidth={1.5} style={{ color: active ? 'var(--signal)' : undefined }} />
                     <span>{item.label}</span>
-                    {active && (
-                      <ChevronRight size={12} className="ml-auto text-muted/50" />
-                    )}
                   </Link>
                 </li>
               );
@@ -157,27 +160,27 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         </nav>
 
         {/* Bottom section */}
-        <div className="px-3 py-3 border-t border-border space-y-1">
+        <div className="px-3 py-3 space-y-1" style={{ borderTop: '1px solid var(--rule)' }}>
           <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-[11px] text-muted font-medium">Theme</span>
+            <span className="text-[11px] font-mono uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted-2)' }}>Theme</span>
             <ThemeToggle variant="pill" />
           </div>
 
           {!loading && user && (
-            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[10px] font-medium text-surface flex-shrink-0">
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg transition-colors" style={{ cursor: 'default' }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
                 {displayName && (
-                  <p className="text-[12px] font-medium text-text truncate leading-tight">
+                  <p className="text-[12px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                     {displayName}
                   </p>
                 )}
                 <p className={clsx(
                   'truncate leading-tight',
-                  displayName ? 'text-[10px] text-muted' : 'text-[12px] font-medium text-text'
-                )}>
+                  displayName ? 'text-[10px]' : 'text-[12px] font-medium'
+                )} style={{ color: displayName ? 'var(--m-muted)' : 'var(--ink)' }}>
                   {user.email}
                 </p>
               </div>
@@ -186,7 +189,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
           <button
             onClick={() => signOut()}
-            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-text hover:bg-surface transition-all"
+            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] transition-all"
+            style={{ color: 'var(--m-muted)' }}
           >
             <LogOut size={15} strokeWidth={1.75} />
             Sign out
@@ -196,27 +200,40 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden h-14 bg-card border-b border-border flex items-center px-4">
+        <div className="md:hidden h-14 flex items-center px-4" style={{ background: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg hover:bg-surface transition-colors"
+            className="w-[44px] h-[44px] rounded-lg inline-flex items-center justify-center transition-colors"
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={sidebarOpen}
           >
-            {sidebarOpen ? (
-              <X size={20} className="text-text" />
-            ) : (
-              <Menu size={20} className="text-text" />
-            )}
+            <div className="w-5 h-3.5 flex flex-col justify-between">
+              <span
+                className="block h-[2px] w-full rounded-full transition-all duration-300 origin-center"
+                style={{
+                  background: 'var(--ink)',
+                  transform: sidebarOpen ? 'translateY(5px) rotate(45deg)' : 'none',
+                }}
+              />
+              <span
+                className="block h-[2px] w-full rounded-full transition-all duration-300 origin-center"
+                style={{
+                  background: 'var(--ink)',
+                  transform: sidebarOpen ? 'translateY(-5px) rotate(-45deg)' : 'none',
+                }}
+              />
+            </div>
           </button>
           <span className="ml-3">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
+            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
           </span>
-          <span className="ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EF4444]/8 text-[#EF4444] border border-[#EF4444]/15">
+          <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.1em] px-2.5 py-1 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
             Admin
           </span>
         </div>
 
         <main id="main-content" className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-5 lg:p-6">{children}</div>
+          <div className="p-5 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

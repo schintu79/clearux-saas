@@ -118,7 +118,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to manage settings</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-full transition-all hover:brightness-110" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
           Sign In
         </a>
       </div>
@@ -272,7 +272,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder";
+  const inputClass = "w-full px-4 py-2.5 border border-border rounded-xl font-sans text-sm transition-all focus:outline-none focus:border-text focus:shadow-[0_0_0_3px_rgba(0,0,0,.04)] bg-input-bg text-text placeholder:text-placeholder";
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -285,8 +285,8 @@ const SettingsPage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <SettingsIcon size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text">Settings</h1>
+          <SettingsIcon size={22} style={{ color: 'var(--ink)' }} />
+          <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>Settings</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">Manage your account and preferences</p>
       </div>
@@ -318,13 +318,13 @@ const SettingsPage: React.FC = () => {
         <Card>
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-medium font-heading text-text">Profile Information</h2>
+              <h2 className="text-lg font-normal font-serif text-text">Profile Information</h2>
               <p className="text-sm text-muted mt-1">Update your profile details</p>
             </div>
 
             {messages.profileSuccess && (
-              <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
-                <p className="text-[#22C55E] text-sm">{messages.profileSuccess}</p>
+              <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+                <p className="text-sm" style={{ color: 'var(--ok)' }}>{messages.profileSuccess}</p>
               </div>
             )}
             {messages.profileError && (
@@ -370,15 +370,15 @@ const SettingsPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Building2 size={18} className="text-brand" />
-                <h2 className="text-lg font-medium font-heading text-text">Company & Billing</h2>
+                <Building2 size={18} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-lg font-normal font-serif text-text">Company & Billing</h2>
               </div>
               <p className="text-sm text-muted">Optional — add company details for invoices and receipts</p>
             </div>
 
             {messages.billingSuccess && (
-              <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
-                <p className="text-[#22C55E] text-sm">{messages.billingSuccess}</p>
+              <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+                <p className="text-sm" style={{ color: 'var(--ok)' }}>{messages.billingSuccess}</p>
               </div>
             )}
             {messages.billingError && (
@@ -435,8 +435,8 @@ const SettingsPage: React.FC = () => {
             {/* Stripe portal link */}
             <div className="pt-4 border-t border-border">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <CreditCard size={18} className="text-brand" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
+                  <CreditCard size={18} style={{ color: 'var(--ink)' }} />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-text mb-0.5">Payment History</p>
@@ -460,13 +460,13 @@ const SettingsPage: React.FC = () => {
           <Card>
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-medium font-heading text-text">Change Password</h2>
+                <h2 className="text-lg font-normal font-serif text-text">Change Password</h2>
                 <p className="text-sm text-muted mt-1">Update your account password</p>
               </div>
 
               {messages.passwordSuccess && (
-                <div className="bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/20 rounded-lg p-3">
-                  <p className="text-[#22C55E] text-sm">{messages.passwordSuccess}</p>
+                <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+                  <p className="text-sm" style={{ color: 'var(--ok)' }}>{messages.passwordSuccess}</p>
                 </div>
               )}
               {messages.passwordError && (

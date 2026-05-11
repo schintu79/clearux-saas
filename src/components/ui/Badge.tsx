@@ -11,33 +11,31 @@ interface BadgeProps {
   className?: string;
 }
 
+const variantMap: Record<BadgeVariant, { bg: string; color: string }> = {
+  pending:   { bg: 'rgba(154, 122, 44, 0.10)', color: 'var(--warn)' },
+  active:    { bg: 'var(--signal-soft)',         color: 'var(--signal)' },
+  completed: { bg: 'rgba(63, 107, 63, 0.10)',   color: 'var(--ok)' },
+  failed:    { bg: 'rgba(139, 58, 44, 0.10)',   color: 'var(--severe)' },
+  danger:    { bg: 'rgba(139, 58, 44, 0.15)',   color: 'var(--severe)' },
+};
+
 const Badge: React.FC<BadgeProps> = ({
   variant,
   size = 'default',
   children,
   className,
 }) => {
-  const variantStyles = {
-    pending: 'bg-[#EAB308]/10 text-[#EAB308] dark:bg-[#D4A84B]/15 dark:text-[#D4A84B]',
-    active: 'bg-[#3B82F6]/10 text-[#3B82F6] dark:bg-[#60A5FA]/15 dark:text-[#60A5FA]',
-    completed: 'bg-[#22C55E]/10 text-[#22C55E] dark:bg-[#4ADE80]/15 dark:text-[#4ADE80]',
-    failed: 'bg-[#EF4444]/10 text-[#EF4444] dark:bg-[#F87171]/15 dark:text-[#F87171]',
-    danger: 'bg-[#EF4444]/15 text-[#EF4444] dark:bg-[#F87171]/20 dark:text-[#F87171]',
-  };
+  const v = variantMap[variant];
 
   const sizeStyles = {
-    sm: 'px-2.5 py-1 text-xs font-medium rounded-md',
-    default: 'px-3 py-1.5 text-sm font-medium rounded-md',
+    sm: 'px-2.5 py-1 text-[11px] font-mono tracking-[0.04em] uppercase rounded-full',
+    default: 'px-3 py-1.5 text-[12px] font-medium rounded-full',
   };
 
   return (
     <span
-      className={clsx(
-        variantStyles[variant],
-        sizeStyles[size],
-        'inline-block',
-        className
-      )}
+      className={clsx(sizeStyles[size], 'inline-block', className)}
+      style={{ background: v.bg, color: v.color }}
     >
       {children}
     </span>

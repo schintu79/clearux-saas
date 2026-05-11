@@ -25,7 +25,7 @@ interface WhiteLabelFormData {
   is_active: boolean;
 }
 
-const DEFAULT_COLOR = '#BFFA60';
+const DEFAULT_COLOR = '#5E6B2F';
 
 const WhiteLabelPage: React.FC = () => {
   const { user, loading: userLoading } = useAuth();
@@ -128,7 +128,7 @@ const WhiteLabelPage: React.FC = () => {
 
     // Validate color
     if (form.brand_color && !/^#[0-9A-Fa-f]{6}$/.test(form.brand_color)) {
-      setErrorMsg('Brand color must be a valid hex (e.g. #BFFA60)');
+      setErrorMsg('Brand color must be a valid hex (e.g. #5E6B2F)');
       return;
     }
 
@@ -187,7 +187,7 @@ const WhiteLabelPage: React.FC = () => {
   };
 
   const inputClass =
-    'w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder';
+    'w-full px-4 py-2.5 border border-border rounded-xl font-sans text-sm transition-all focus:outline-none focus:border-brand focus:shadow-[0_0_0_3px_rgba(124,58,237,.08)] bg-input-bg text-text placeholder:text-placeholder';
 
   if (userLoading || dataLoading) {
     return (
@@ -227,7 +227,7 @@ const WhiteLabelPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <Paintbrush size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-heading text-text">White Label</h1>
+          <h1 className="text-2xl font-medium font-serif text-text">White Label</h1>
         </div>
         <p className="text-muted text-sm mt-1 pl-[34px]">
           Customize reports with your own branding. Settings apply to all future audits.
@@ -265,9 +265,9 @@ const WhiteLabelPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Status messages */}
           {successMsg && (
-            <div className="flex items-center gap-2 bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-lg p-3">
-              <Check size={14} className="text-[#22C55E] flex-shrink-0" />
-              <p className="text-[#22C55E] text-sm">{successMsg}</p>
+            <div className="flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+              <Check size={14} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />
+              <p className="text-sm" style={{ color: 'var(--ok)' }}>{successMsg}</p>
             </div>
           )}
           {errorMsg && (
@@ -370,7 +370,7 @@ const WhiteLabelPage: React.FC = () => {
                 name="brand_color"
                 value={form.brand_color}
                 onChange={handleChange}
-                placeholder="#BFFA60"
+                placeholder="#5E6B2F"
                 className={`${inputClass} max-w-[140px] font-mono`}
                 disabled={!canEdit}
                 maxLength={7}

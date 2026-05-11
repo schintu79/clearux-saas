@@ -8,11 +8,8 @@ import {
   FileSearch,
   PlusCircle,
   Settings,
-  Menu,
-  X,
   LogOut,
   Coins,
-  ChevronRight,
   ShieldCheck,
   Bell,
   Paintbrush,
@@ -62,10 +59,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return pathname === href || pathname.startsWith(href + '/');
   };
 
-  const handleSignOut = () => {
-    signOut();
-  };
-
   const displayName = profile?.full_name
     || user?.user_metadata?.full_name
     || user?.user_metadata?.name
@@ -75,7 +68,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     : user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className="flex h-screen bg-surface" style={{ fontFamily: 'var(--font-body)' }}>
+    <div className="flex h-screen" style={{ background: 'var(--paper)', fontFamily: 'var(--font-sans)' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -84,35 +77,39 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ── */}
       <aside
         className={clsx(
-          'fixed md:static inset-y-0 left-0 w-[220px] bg-card border-r border-border flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
+          'fixed md:static inset-y-0 left-0 w-[240px] flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        style={{ background: 'var(--paper-2)', borderRight: '1px solid var(--rule)' }}
       >
         {/* Logo */}
-        <div className="px-5 py-4 flex items-center border-b border-border">
+        <div className="px-5 py-5 flex items-center" style={{ borderBottom: '1px solid var(--rule)' }}>
           <Link href="/dashboard" className="flex items-center">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
+            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
           </Link>
         </div>
 
         {/* New audit CTA */}
-        <div className="px-3 pt-3 pb-1">
+        <div className="px-4 pt-4 pb-2">
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-2 w-full px-3 py-2.5 text-[13px] font-medium text-[#111111] rounded-lg transition-all hover:shadow-sm active:scale-[0.98]"
-            style={{ background: '#BFFA60' }}
+            className="flex items-center justify-center gap-2 w-full px-3 py-2.5 text-[13px] font-medium rounded-full transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: 'var(--signal)', color: '#FFFFFF' }}
           >
             <PlusCircle size={14} strokeWidth={1.5} />
-            New Audit
+            New audit
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav aria-label="Dashboard navigation" className="flex-1 px-3 py-2 overflow-y-auto">
+        <nav aria-label="Dashboard navigation" className="flex-1 px-3 py-3 overflow-y-auto">
+          <p className="px-3 mb-2 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--m-muted-2)' }}>
+            Workspace
+          </p>
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -124,26 +121,27 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={clsx(
-                      'flex items-center gap-2.5 px-3 py-[7px] rounded-lg transition-all text-[13px]',
+                      'flex items-center gap-2.5 px-3 py-[8px] rounded-lg transition-all text-[13px]',
                       active
-                        ? 'bg-[#BFFA60]/10 text-text font-medium'
-                        : 'text-muted hover:text-text hover:bg-surface/60'
+                        ? 'font-medium'
+                        : 'hover:bg-[rgba(0,0,0,0.04)]'
                     )}
+                    style={{
+                      color: active ? 'var(--ink)' : 'var(--m-muted)',
+                      background: active ? 'var(--signal-soft)' : undefined,
+                    }}
                   >
                     <span className="relative">
-                      <Icon size={16} strokeWidth={1.5} />
+                      <Icon size={16} strokeWidth={1.5} style={{ color: active ? 'var(--signal)' : undefined }} />
                       {(item as any).badge && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EF4444]" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} />
                       )}
                     </span>
                     <span>{item.label}</span>
                     {(item as any).badge && (
-                      <span className="ml-auto text-[11px] font-medium text-white bg-[#EF4444] px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-full leading-none" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
                         {unreadNotifications}
                       </span>
-                    )}
-                    {active && !(item as any).badge && (
-                      <ChevronRight size={12} className="ml-auto text-muted" />
                     )}
                   </Link>
                 </li>
@@ -155,22 +153,23 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Credit balance */}
         {credits !== null && (
           <div className="mx-3 mb-2">
-            <div className="rounded-lg border border-border p-3">
+            <div className="rounded-lg p-3" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Coins size={13} className="text-[#22C55E]" />
-                  <span className="text-[11px] font-medium text-text">Credits</span>
+                  <Coins size={13} style={{ color: 'var(--signal)' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>Credits</span>
                 </div>
-                <span className="text-base font-medium text-[#22C55E] tabular-nums">{credits}</span>
+                <span className="text-base font-serif font-normal tabular-nums" style={{ color: 'var(--signal)' }}>{credits}</span>
               </div>
-              <p className="text-[11px] text-muted mb-2.5 leading-snug">
+              <p className="text-[11px] leading-snug mb-2.5" style={{ color: 'var(--m-muted)' }}>
                 {credits === 0
                   ? 'No credits remaining'
                   : `${credits} audit${credits !== 1 ? 's' : ''} remaining`}
               </p>
               <Link
                 href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-medium text-text border border-border rounded-lg py-1.5 transition-all hover:bg-surface"
+                className="block text-center text-[11px] font-medium rounded-full py-1.5 transition-all"
+                style={{ color: 'var(--ink)', border: '1px solid var(--rule)', background: 'transparent' }}
               >
                 {credits === 0 ? 'Buy credits' : 'Buy more'}
               </Link>
@@ -179,27 +178,27 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         )}
 
         {/* Bottom section */}
-        <div className="px-3 py-3 border-t border-border space-y-1">
+        <div className="px-3 py-3 space-y-1" style={{ borderTop: '1px solid var(--rule)' }}>
           <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-[11px] text-muted font-medium">Theme</span>
+            <span className="text-[11px] font-mono uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted-2)' }}>Theme</span>
             <ThemeToggle variant="pill" />
           </div>
 
           {!loading && user && (
-            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface transition-colors">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[11px] font-medium text-surface flex-shrink-0">
+            <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg transition-colors" style={{ cursor: 'default' }}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-medium flex-shrink-0" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
                 {displayName && (
-                  <p className="text-[12px] font-medium text-text truncate leading-tight">
+                  <p className="text-[12px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                     {displayName}
                   </p>
                 )}
                 <p className={clsx(
                   'truncate leading-tight',
-                  displayName ? 'text-[11px] text-muted' : 'text-[12px] font-medium text-text'
-                )}>
+                  displayName ? 'text-[11px]' : 'text-[12px] font-medium'
+                )} style={{ color: displayName ? 'var(--m-muted)' : 'var(--ink)' }}>
                   {user.email}
                 </p>
               </div>
@@ -210,7 +209,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
             <Link
               href="/admin"
-              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-[#EF4444] hover:bg-[#EF4444]/5 transition-all"
+              className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] transition-all"
+              style={{ color: 'var(--m-muted)' }}
             >
               <ShieldCheck size={15} strokeWidth={1.75} />
               Admin panel
@@ -218,8 +218,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           )}
 
           <button
-            onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] text-muted hover:text-text hover:bg-surface transition-all"
+            onClick={() => signOut()}
+            className="w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[13px] transition-all"
+            style={{ color: 'var(--m-muted)' }}
           >
             <LogOut size={15} strokeWidth={1.75} />
             Sign out
@@ -230,25 +231,38 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden h-16 bg-card border-b border-border flex items-center px-4">
+        <div className="md:hidden h-14 flex items-center px-4" style={{ background: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg hover:bg-surface transition-colors"
+            className="w-[44px] h-[44px] rounded-lg inline-flex items-center justify-center transition-colors"
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={sidebarOpen}
           >
-            {sidebarOpen ? (
-              <X size={20} className="text-text" />
-            ) : (
-              <Menu size={20} className="text-text" />
-            )}
+            <div className="w-5 h-3.5 flex flex-col justify-between">
+              <span
+                className="block h-[2px] w-full rounded-full transition-all duration-300 origin-center"
+                style={{
+                  background: 'var(--ink)',
+                  transform: sidebarOpen ? 'translateY(5px) rotate(45deg)' : 'none',
+                }}
+              />
+              <span
+                className="block h-[2px] w-full rounded-full transition-all duration-300 origin-center"
+                style={{
+                  background: 'var(--ink)',
+                  transform: sidebarOpen ? 'translateY(-5px) rotate(-45deg)' : 'none',
+                }}
+              />
+            </div>
           </button>
           <span className="ml-3">
-            <Logo height={28} variant={theme === 'dark' ? 'light' : 'dark'} />
+            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
           </span>
         </div>
 
         {/* Content area */}
         <main id="main-content" className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-5 lg:p-6">{children}</div>
+          <div className="p-5 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

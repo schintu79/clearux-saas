@@ -74,15 +74,15 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#22C55E]';
-  if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-[#EF4444]';
+  if (s >= 70) return 'var(--ok)';
+  if (s >= 40) return 'var(--warn)';
+  return 'var(--severe)';
 }
 
 function scoreBg(s: number) {
-  if (s >= 70) return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-  if (s >= 40) return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-  return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+  if (s >= 70) return { background: 'color-mix(in srgb, var(--ok) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--ok) 25%, transparent)' };
+  if (s >= 40) return { background: 'color-mix(in srgb, var(--warn) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--warn) 25%, transparent)' };
+  return { background: 'color-mix(in srgb, var(--severe) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--severe) 25%, transparent)' };
 }
 
 /* ── Website Audit Card (grouped by domain) ─────────────── */
@@ -107,7 +107,7 @@ function WebsiteAuditGroup({ domain, audits }: {
 
   if (!hasMultiple) {
     return (
-      <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+      <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
         <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -127,8 +127,8 @@ function WebsiteAuditGroup({ domain, audits }: {
               )}
             </div>
             {latestScore != null ? (
-              <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(latestScore)}`}>
-                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
+                <span className="font-serif font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
@@ -151,7 +151,7 @@ function WebsiteAuditGroup({ domain, audits }: {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Globe size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{domain}</p>
-              <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
                 {audits.length} audits
               </span>
               {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
@@ -163,7 +163,7 @@ function WebsiteAuditGroup({ domain, audits }: {
               {improvement !== 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={`font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                  <span className="font-medium" style={{ color: improvement > 0 ? 'var(--ok)' : 'var(--severe)' }}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 </>
@@ -207,7 +207,7 @@ function BrandAuditGroup({ brandName, audits }: {
 
   if (!hasMultiple) {
     return (
-      <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+      <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
         <Link href={`/dashboard/audits/${latest.id}`} className="block px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -227,8 +227,8 @@ function BrandAuditGroup({ brandName, audits }: {
               )}
             </div>
             {latestScore != null ? (
-              <div className={`w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ${scoreBg(latestScore)}`}>
-                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
+                <span className="font-serif font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             ) : (
               <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>
@@ -251,7 +251,7 @@ function BrandAuditGroup({ brandName, audits }: {
             <div className="flex items-center gap-1.5 mb-0.5">
               <Fingerprint size={12} className="text-muted flex-shrink-0" />
               <p className="font-medium text-sm text-text truncate">{brandName}</p>
-              <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
                 {audits.length} audits
               </span>
               {lang && <span className="text-[11px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">{lang}</span>}
@@ -263,7 +263,7 @@ function BrandAuditGroup({ brandName, audits }: {
               {improvement !== 0 && (
                 <>
                   <span className="text-border">·</span>
-                  <span className={`font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                  <span className="font-medium" style={{ color: improvement > 0 ? 'var(--ok)' : 'var(--severe)' }}>
                     {improvement > 0 ? '+' : ''}{improvement} pts
                   </span>
                 </>
@@ -432,14 +432,14 @@ function AuditsPageInner() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <FileSearch size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text">All Audits</h1>
+            <FileSearch size={22} style={{ color: 'var(--ink)' }} />
+            <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>All Audits</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             {audits.length} audit{audits.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-xl transition-all hover:brightness-110">
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full transition-all hover:brightness-110" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
           <Sparkles size={13} />
           New Audit
         </Link>
@@ -456,15 +456,17 @@ function AuditsPageInner() {
               key={tab.key}
               disabled={tab.disabled}
               onClick={() => !tab.disabled && setActiveTab(tab.key)}
-              className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all text-center ${
-                isActive
-                  ? 'border-brand bg-brand/5 dark:bg-brand/[0.03]'
-                  : tab.disabled
-                    ? 'border-border/50 opacity-50 cursor-not-allowed'
-                    : 'border-border hover:border-brand/40 cursor-pointer'
+              className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all text-center ${
+                tab.disabled
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'cursor-pointer'
               }`}
+              style={{
+                border: isActive ? '2px solid var(--ink)' : '2px solid var(--rule)',
+                background: isActive ? 'color-mix(in srgb, var(--ink) 4%, transparent)' : 'transparent',
+              }}
             >
-              <div className={`transition-colors ${isActive ? 'text-brand' : 'text-muted'}`}>
+              <div className="transition-colors" style={{ color: isActive ? 'var(--ink)' : 'var(--m-muted)' }}>
                 {tab.disabled ? <Lock size={22} /> : <Icon size={22} />}
               </div>
               <div>
@@ -473,7 +475,7 @@ function AuditsPageInner() {
                     {tab.label}
                   </p>
                   {!tab.disabled && count > 0 && (
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${isActive ? 'bg-brand/10 text-brand' : 'bg-off text-muted'}`}>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-off text-muted">
                       {count}
                     </span>
                   )}
@@ -511,7 +513,8 @@ function AuditsPageInner() {
           </p>
           <Link
             href={activeTab === 'brand_identity' ? '/dashboard/new-audit?type=brand_identity' : '/dashboard/new-audit'}
-            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-xl transition-all hover:brightness-110"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-full transition-all hover:brightness-110"
+            style={{ background: 'var(--signal)', color: '#FFFFFF' }}
           >
             <Sparkles size={13} /> Start {tabLabel} Audit
           </Link>

@@ -68,7 +68,7 @@ const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; 
   tone_of_voice:          { icon: MessageSquare, color: '#EC4899', gradient: 'from-[#EC4899]/10 to-[#EC4899]/5' },
   professionalism:        { icon: ShieldCheck,  color: '#10B981', gradient: 'from-[#10B981]/10 to-[#10B981]/5' },
   value_proposition:      { icon: Target,       color: '#F59E0B', gradient: 'from-[#F59E0B]/10 to-[#F59E0B]/5' },
-  structure_organization: { icon: Layers,       color: '#3B82F6', gradient: 'from-[#3B82F6]/10 to-[#3B82F6]/5' },
+  structure_organization: { icon: Layers,       color: 'var(--color-info)', gradient: 'from-blue-500/10 to-blue-500/5' },
   competitive_positioning:{ icon: BarChart3,    color: '#8B5CF6', gradient: 'from-[#8B5CF6]/10 to-[#8B5CF6]/5' },
   wording_quality:        { icon: Type,         color: '#14B8A6', gradient: 'from-[#14B8A6]/10 to-[#14B8A6]/5' },
 };
@@ -87,9 +87,9 @@ function formatDate(dateString: string) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#22C55E]';
+  if (s >= 70) return '[color:var(--ok)]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-[#EF4444]';
+  return '[color:var(--severe)]';
 }
 
 function scoreBg(s: number) {
@@ -99,9 +99,9 @@ function scoreBg(s: number) {
 }
 
 function scoreBarColor(s: number) {
-  if (s >= 70) return 'bg-[#22C55E]';
+  if (s >= 70) return '[background:var(--ok)]';
   if (s >= 40) return 'bg-yellow-500';
-  return 'bg-[#EF4444]';
+  return '[background:var(--severe)]';
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string; border: string; impactBg: string }> = {
@@ -235,7 +235,7 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
 
           {/* Expected Impact */}
           {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
+            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
               <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
@@ -256,7 +256,7 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
                   'text-[11px] font-medium px-2 py-1 rounded-md transition-colors capitalize',
                   status === s
                     ? s === 'fixed'
-                      ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/20'
+                      ? 'bg-emerald-500/15 [color:var(--ok)] border border-emerald-500/20'
                       : s === 'in_progress'
                         ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'
                         : 'bg-off dark:bg-white/[0.06] text-text border border-border/40 dark:border-white/[0.08]'
@@ -689,7 +689,7 @@ export default function BrandAuditDetail({
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Palette size={18} className="text-brand flex-shrink-0" />
-            <h1 className="text-2xl font-medium font-heading text-text truncate">{displayName}</h1>
+            <h1 className="text-2xl font-medium font-serif text-text truncate">{displayName}</h1>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-muted text-sm">{formatDate(audit.created_at)}</p>
@@ -850,10 +850,10 @@ export default function BrandAuditDetail({
                   </span>
                   <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
                     (overallScore || 0) >= 70
-                      ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                      ? 'bg-emerald-500/10 [color:var(--ok)]'
                       : (overallScore || 0) >= 40
                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                        : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+                        : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
                   }`}>
                     {(overallScore || 0) >= 70 ? 'Good' : (overallScore || 0) >= 40 ? 'Decent' : 'Needs work'}
                   </span>

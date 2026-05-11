@@ -28,7 +28,7 @@ const COLOR_OPTIONS = [
   { value: 'green', label: 'Green (Success)', bg: 'bg-green-500' },
   { value: 'yellow', label: 'Yellow (Warning)', bg: 'bg-yellow-500' },
   { value: 'red', label: 'Red (Error)', bg: 'bg-red-500' },
-  { value: 'violet', label: 'Violet (Brand)', bg: 'bg-brand' },
+  { value: 'violet', label: 'Violet (Brand)', bg: 'bg-[var(--ink)]' },
 ];
 
 interface Notification {
@@ -117,7 +117,7 @@ export default function AdminNotificationsPage() {
     green: 'border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800/20',
     yellow: 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800/20',
     red: 'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800/20',
-    violet: 'border-brand/20 bg-brand/5 dark:bg-brand/10 dark:border-brand/20',
+    violet: 'border-[var(--ink)]/20 bg-[var(--ink)]/5 dark:bg-[var(--ink)]/10 dark:border-[var(--ink)]/20',
   };
 
   const iconColorMap: Record<string, string> = {
@@ -125,19 +125,20 @@ export default function AdminNotificationsPage() {
     green: 'text-green-500',
     yellow: 'text-yellow-500',
     red: 'text-red-500',
-    violet: 'text-brand',
+    violet: 'text-[var(--ink)]',
   };
 
   return (
     <div className="max-w-3xl mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-medium text-text">Notifications</h1>
-          <p className="text-xs text-muted mt-0.5">Send notifications to all users</p>
+          <h1 className="font-serif font-normal text-lg" style={{ color: 'var(--ink)' }}>Notifications</h1>
+          <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-0.5" style={{ color: 'var(--m-muted-2)' }}>Send notifications to all users</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+          className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+          style={{ background: 'var(--ink)' }}
         >
           <Plus size={14} />
           New Notification
@@ -146,8 +147,8 @@ export default function AdminNotificationsPage() {
 
       {/* Create Form */}
       {showForm && (
-        <div className="mb-6 rounded-xl border border-border/40 dark:border-white/[0.06] bg-card p-5">
-          <h2 className="text-sm font-medium text-text mb-4">Create Notification</h2>
+        <div className="mb-6 rounded-xl p-5" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+          <h2 className="font-mono text-[10px] tracking-[0.1em] uppercase mb-4" style={{ color: 'var(--m-muted-2)' }}>Create Notification</h2>
 
           <div className="space-y-4">
             <div>
@@ -202,7 +203,7 @@ export default function AdminNotificationsPage() {
                 type="checkbox"
                 checked={form.show_in_overview}
                 onChange={(e) => setForm(f => ({ ...f, show_in_overview: e.target.checked }))}
-                className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
+                className="w-4 h-4 rounded border-border"
               />
               <div>
                 <span className="text-xs font-medium text-text">Show in Dashboard Overview</span>
@@ -226,7 +227,8 @@ export default function AdminNotificationsPage() {
               <button
                 onClick={handleCreate}
                 disabled={sending || !form.title.trim() || !form.message.trim()}
-                className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition-all hover:brightness-110 disabled:opacity-50"
+                style={{ background: 'var(--ink)' }}
               >
                 <Send size={13} />
                 {sending ? 'Sending...' : 'Send to all users'}
@@ -263,7 +265,7 @@ export default function AdminNotificationsPage() {
                   <div className="flex items-center gap-2 mb-0.5">
                     <p className="text-xs font-medium text-text">{n.title}</p>
                     {n.show_in_overview && (
-                      <span className="text-[9px] font-medium text-brand bg-brand/10 dark:bg-brand/15 px-1.5 py-0.5 rounded">PINNED</span>
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}>PINNED</span>
                     )}
                     {!n.is_active && (
                       <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">INACTIVE</span>
@@ -277,7 +279,7 @@ export default function AdminNotificationsPage() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => handleToggleOverview(n.id, n.show_in_overview)}
-                    className="p-1.5 rounded-md text-muted hover:text-brand hover:bg-brand/5 dark:hover:bg-brand/10 transition-colors"
+                    className="p-1.5 rounded-md text-muted hover:bg-[var(--ink)]/5 transition-colors"
                     title={n.show_in_overview ? 'Unpin from overview' : 'Pin to overview'}
                   >
                     {n.show_in_overview ? <PinOff size={13} /> : <Pin size={13} />}
@@ -291,7 +293,7 @@ export default function AdminNotificationsPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="p-1.5 rounded-md text-muted hover:text-[#EF4444] hover:bg-[#EF4444]/5 dark:hover:bg-[#EF4444]/10 transition-colors"
+                    className="p-1.5 rounded-md text-muted hover:bg-[var(--severe)]/5 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={13} />

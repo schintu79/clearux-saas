@@ -32,11 +32,11 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
     return () => clearInterval(interval);
   }, [score]);
 
-  // Determine color based on score
+  // v2 editorial score colors
   const getColor = (value: number) => {
-    if (value < 40) return '#EF4444'; // muted red
-    if (value < 70) return '#EAB308'; // muted amber
-    return '#22C55E'; // muted green
+    if (value < 40) return 'var(--severe)';
+    if (value < 70) return 'var(--warn)';
+    return 'var(--ok)';
   };
 
   const radius = (size - strokeWidth) / 2;
@@ -53,7 +53,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--border)"
+          stroke="var(--rule)"
           strokeWidth={strokeWidth}
         />
         {/* Animated progress circle */}
@@ -73,9 +73,9 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
       {/* Score text in center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="font-body font-medium text-center"
+          className="font-serif font-normal text-center"
           style={{
-            fontSize: `${size * 0.3}px`,
+            fontSize: `${size * 0.32}px`,
             color: getColor(animatedScore),
           }}
         >

@@ -43,15 +43,15 @@ function formatDate(dateString: string) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#22C55E]'
+  if (s >= 70) return '[color:var(--ok)]'
   if (s >= 40) return 'text-amber-600 dark:text-amber-400'
-  return 'text-[#EF4444]'
+  return '[color:var(--severe)]'
 }
 
 function scoreBgClass(s: number) {
-  if (s >= 70) return 'bg-[#22C55E]'
+  if (s >= 70) return '[background:var(--ok)]'
   if (s >= 40) return 'bg-amber-500'
-  return 'bg-[#EF4444]'
+  return '[background:var(--severe)]'
 }
 
 function scoreLabel(s: number) {
@@ -75,7 +75,7 @@ const PILLAR_STYLE = [
   { name: 'Foundation', color: '#6366F1', gradient: 'from-[#6366F1] to-[#5A4D80]', bg: 'bg-[#6366F1]/10', text: 'text-[#6366F1]', Icon: Scale, range: [0, 4] as [number, number] },
   { name: 'Human Experience', color: '#EC4899', gradient: 'from-pink-500 to-pink-600', bg: 'bg-pink-500/10', text: 'text-pink-500', Icon: Heart, range: [4, 8] as [number, number] },
   { name: 'Inclusive Design', color: '#F59E0B', gradient: 'from-amber-500 to-amber-600', bg: 'bg-amber-500/10', text: 'text-amber-500', Icon: Accessibility, range: [8, 12] as [number, number] },
-  { name: 'Future Readiness', color: '#22C55E', gradient: 'from-[#22C55E] to-[#246B43]', bg: 'bg-[#22C55E]/10', text: 'text-[#22C55E]', Icon: Brain, range: [12, 16] as [number, number] },
+  { name: 'Future Readiness', color: 'var(--ok)', gradient: 'from-emerald-500 to-emerald-700', bg: 'bg-emerald-500/10', text: '[color:var(--ok)]', Icon: Brain, range: [12, 16] as [number, number] },
 ]
 
 const SEVERITY_CONFIG = {
@@ -91,8 +91,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   crawling: { label: 'Crawling', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
   analysing: { label: 'Analysing', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
   generating_report: { label: 'Generating report', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' },
-  completed: { label: 'Completed', color: 'bg-[#22C55E]/10 text-[#22C55E]' },
-  failed: { label: 'Failed', color: 'bg-[#EF4444]/10 text-[#EF4444]' },
+  completed: { label: 'Completed', color: 'bg-emerald-500/10 [color:var(--ok)]' },
+  failed: { label: 'Failed', color: 'bg-red-500/10 [color:var(--severe)]' },
 }
 
 /* ── Main page ─────────────────────────────────────────────── */
@@ -202,7 +202,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="font-heading font-medium text-xl text-text truncate">{domain}</h1>
+                <h1 className="font-serif font-medium text-xl text-text truncate">{domain}</h1>
                 <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${statusMeta.color}`}>
                   {statusMeta.label}
                 </span>
@@ -254,7 +254,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
             {/* Score + severity summary */}
             {audit.status === 'completed' && report && (
               <div className="flex-shrink-0 text-right hidden sm:block">
-                <p className={`text-4xl font-medium font-heading ${scoreColor(overall)}`}>{overall}</p>
+                <p className={`text-4xl font-medium font-serif ${scoreColor(overall)}`}>{overall}</p>
                 <p className="text-xs text-muted">{scoreLabel(overall)}</p>
                 <p className="text-xs text-muted mt-1">{report.total_issues} issues</p>
               </div>
@@ -290,7 +290,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
         <div className="text-center py-12 bg-card rounded-xl border border-border/30 dark:border-white/[0.06]">
           {audit.status === 'failed' ? (
             <>
-              <AlertTriangle size={32} className="text-[#EF4444] mx-auto mb-3" />
+              <AlertTriangle size={32} className="[color:var(--severe)] mx-auto mb-3" />
               <p className="text-text font-medium">This audit failed</p>
               {audit.error_message && <p className="text-sm text-muted mt-2">{audit.error_message}</p>}
             </>
@@ -310,7 +310,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {/* Executive Summary */}
           {report.executive_summary && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 sm:p-6">
-              <h2 className="font-heading font-medium text-lg text-text mb-3">Executive Summary</h2>
+              <h2 className="font-serif font-medium text-lg text-text mb-3">Executive Summary</h2>
               <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                 {report.executive_summary}
               </div>
@@ -371,7 +371,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className={`text-2xl font-medium font-heading ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
+                        <p className={`text-2xl font-medium font-serif ${pillar.isAudited ? scoreColor(pillar.avg) : 'text-muted'}`}>
                           {pillar.isAudited ? pillar.avg : '--'}
                         </p>
                         {pillar.isAudited && <p className="text-[10px] text-muted">{scoreLabel(pillar.avg)}</p>}
@@ -408,7 +408,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
           {findings.length > 0 && (
             <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card overflow-hidden">
               <div className="px-5 py-4 border-b border-border/15 dark:border-white/[0.04]">
-                <h2 className="font-heading font-medium text-lg text-text">All Findings ({findings.length})</h2>
+                <h2 className="font-serif font-medium text-lg text-text">All Findings ({findings.length})</h2>
               </div>
               <div className="divide-y divide-border/10 dark:divide-white/[0.03]">
                 {findings.map(f => {
@@ -431,7 +431,7 @@ export default function AdminAuditDetailPage({ params }: { params: Promise<{ id:
                         )}
                         {f.verification_status && (
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                            f.verification_status === 'likely_fixed' ? 'bg-[#22C55E]/10 text-[#22C55E]'
+                            f.verification_status === 'likely_fixed' ? 'bg-emerald-500/10 [color:var(--ok)]'
                             : f.verification_status === 'poorly_fixed' ? 'bg-amber-500/10 text-amber-500'
                             : 'bg-red-500/10 text-red-500'
                           }`}>

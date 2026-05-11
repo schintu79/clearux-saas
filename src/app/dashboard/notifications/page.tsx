@@ -13,16 +13,16 @@ interface Notification {
   created_at: string;
 }
 
-const colorMap: Record<string, string> = {
-  blue: 'border-blue-200/40 bg-blue-50/60 dark:bg-blue-900/10 dark:border-blue-800/20',
-  green: 'border-green-200/40 bg-green-50/60 dark:bg-green-900/10 dark:border-green-800/20',
-  yellow: 'border-yellow-200/40 bg-yellow-50/60 dark:bg-yellow-900/10 dark:border-yellow-800/20',
-  red: 'border-red-200/40 bg-red-50/60 dark:bg-red-900/10 dark:border-red-800/20',
-  violet: 'border-brand/20 bg-brand/5 dark:bg-brand/5 dark:border-brand/10',
+const colorStyleMap: Record<string, { background: string; borderColor: string }> = {
+  blue: { background: 'color-mix(in srgb, var(--color-info) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--color-info) 20%, transparent)' },
+  green: { background: 'color-mix(in srgb, var(--ok) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--ok) 20%, transparent)' },
+  yellow: { background: 'color-mix(in srgb, var(--warn) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--warn) 20%, transparent)' },
+  red: { background: 'color-mix(in srgb, var(--severe) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--severe) 20%, transparent)' },
+  violet: { background: 'color-mix(in srgb, var(--ink) 5%, transparent)', borderColor: 'color-mix(in srgb, var(--ink) 12%, transparent)' },
 };
 
-const iconColorMap: Record<string, string> = {
-  blue: 'text-blue-500', green: 'text-green-500', yellow: 'text-yellow-500', red: 'text-red-500', violet: 'text-brand',
+const iconColorStyleMap: Record<string, string> = {
+  blue: 'var(--color-info)', green: 'var(--ok)', yellow: 'var(--warn)', red: 'var(--severe)', violet: 'var(--ink)',
 };
 
 const iconMap: Record<string, React.ElementType> = {
@@ -70,8 +70,8 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <Bell size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text">Notifications</h1>
+            <Bell size={22} style={{ color: 'var(--ink)' }} />
+            <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>Notifications</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
@@ -96,17 +96,18 @@ export default function NotificationsPage() {
             return (
               <div
                 key={n.id}
-                className={`rounded-xl border p-4 transition-all ${n.is_read ? 'opacity-60' : ''} ${colorMap[n.color] || colorMap.blue}`}
+                className={`rounded-xl p-4 transition-all ${n.is_read ? 'opacity-60' : ''}`}
+                style={{ border: '1px solid', ...(colorStyleMap[n.color] || colorStyleMap.blue) }}
                 onClick={() => !n.is_read && markAsRead(n.id)}
                 role={n.is_read ? undefined : 'button'}
               >
                 <div className="flex items-start gap-3">
-                  <Icon size={16} className={`flex-shrink-0 mt-0.5 ${iconColorMap[n.color] || iconColorMap.blue}`} />
+                  <Icon size={16} className="flex-shrink-0 mt-0.5" style={{ color: iconColorStyleMap[n.color] || iconColorStyleMap.blue }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-medium text-text">{n.title}</p>
                       {!n.is_read && (
-                        <span className="w-2 h-2 rounded-full bg-brand flex-shrink-0" />
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--signal)' }} />
                       )}
                     </div>
                     <p className="text-[11px] text-muted mt-0.5 leading-relaxed">{n.message}</p>

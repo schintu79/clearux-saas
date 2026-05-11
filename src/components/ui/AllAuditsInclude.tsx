@@ -19,7 +19,7 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
     <div
       className={`rounded-xl border border-border bg-off dark:bg-white/[0.03] dark:border-white/[0.06] ${compact ? 'p-4 sm:p-5' : 'p-6 sm:p-8'} ${className}`}
     >
-      <p className={`font-heading font-light text-text ${compact ? 'text-base mb-4' : 'text-2xl mb-8'}`}>
+      <p className={`font-serif font-light text-text ${compact ? 'text-base mb-4' : 'text-2xl mb-8'}`}>
         All audits include
       </p>
       <div className={`grid gap-4 ${compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
@@ -27,8 +27,8 @@ export default function AllAuditsInclude({ className = '', compact = false }: Al
           const ItemIcon = item.Icon
           return (
             <div key={i} className={`bg-card dark:bg-white/[0.03] rounded-xl border border-border dark:border-white/[0.06] ${compact ? 'p-3.5 flex items-start gap-3' : 'p-5'}`}>
-              <div className={`rounded-lg bg-[#BFFA60]/10 flex items-center justify-center flex-shrink-0 ${compact ? 'w-8 h-8' : 'w-10 h-10 mb-3'}`}>
-                <ItemIcon size={compact ? 14 : 18} className="text-[#BFFA60]" />
+              <div className={`rounded-lg flex items-center justify-center flex-shrink-0 ${compact ? 'w-8 h-8' : 'w-10 h-10 mb-3'}`} style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}>
+                <ItemIcon size={compact ? 14 : 18} style={{ color: 'var(--signal)' }} />
               </div>
               <div>
                 <p className={`font-medium text-text ${compact ? 'text-xs mb-0.5' : 'text-sm mb-1.5'}`}>{item.title}</p>

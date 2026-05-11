@@ -5,7 +5,7 @@
 /* ── Global focus-visible ring ────────────────────────────── */
 /* Ensures keyboard navigation is always visible (WCAG 2.4.7) */
 *:focus-visible {
-  outline: 2px solid var(--accent, #BFFA60);
+  outline: 2px solid var(--signal);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -14,7 +14,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent, #BFFA60);
+  box-shadow: 0 0 0 2px var(--signal);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -23,114 +23,165 @@ select:focus-visible {
    Dark atmospheric palette (.dark) for public website
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Light palette (dashboard / admin) ─────────────────────── */
+/* ── Light palette — v2 "The Instrument" ──────────────────── */
 :root {
-  /* Brand accent — dark for CTAs on light bg */
-  --brand:       #111111;
-  --brand-hover: #333333;
-  --brand-light: #F0F0F0;
-  --hero-bg:     #111111;
+  /* v2 editorial tokens — warm parchment palette */
+  --paper: #F2EDE3;
+  --paper-2: #EAE3D4;
+  --paper-3: #E0D8C5;
+  --ink: #14130F;
+  --ink-2: #2A2823;
+  --m-muted: #6B6759;
+  --m-muted-2: #8A857A;
+  --rule: #D4CCB8;
+  --rule-2: #C2B89E;
+  --signal: #5E6B2F;
+  --signal-hot: #4A5424;
+  --signal-soft: rgba(94, 107, 47, 0.12);
+  --signal-soft-2: rgba(94, 107, 47, 0.22);
+  --severe: #8B3A2C;
+  --warn: #9A7A2C;
+  --ok: #3F6B3F;
+  --grain-opacity: 0.35;
+  --grain-blend: multiply;
+  --specimen-bg: #14130F;
+  --specimen-fg: #F2EDE3;
+  --specimen-rule: rgba(242, 237, 227, 0.12);
+  --specimen-muted: rgba(242, 237, 227, 0.55);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.08), 0 20px 50px rgba(20,19,15,0.18), 0 40px 100px rgba(20,19,15,0.10);
+  --shadow-offset: var(--ink-2);
 
-  /* Accent — lime spectrum */
-  --accent:      #BFFA60;
-  --accent-dk:   #A8E54A;
-  --accent-lt:   #F7FEE7;
-  --accent-glow: rgba(191,250,96,0.10);
+  /* Legacy aliases — mapped to v2 tokens */
+  --brand:       var(--ink);
+  --brand-hover: var(--ink-2);
+  --brand-light: var(--paper-2);
+  --hero-bg:     var(--ink);
 
-  /* Lime primary */
-  --lime:        #BFFA60;
-  --lime-hover:  #A8E54A;
-  --lime-soft:   #F7FEE7;
+  --accent:      var(--signal);
+  --accent-dk:   var(--signal-hot);
+  --accent-lt:   var(--signal-soft);
+  --accent-glow: var(--signal-soft);
+
+  --lime:        var(--signal);
+  --lime-hover:  var(--signal-hot);
+  --lime-soft:   var(--signal-soft);
 
   /* Status/semantic colors */
-  --color-success:  #22C55E;
-  --color-warning:  #EAB308;
-  --color-danger:   #EF4444;
-  --color-info:     #3B82F6;
+  --color-success:  var(--ok);
+  --color-warning:  var(--warn);
+  --color-danger:   var(--severe);
+  --color-info:     #4A6B8A;
 
-  /* Pillar colors */
-  --color-foundation:  #6B5B95;
-  --color-human:       #EC4899;
-  --color-tech:        #F59E0B;
-  --color-future:      #22C55E;
-  --color-trust:       #3B82F6;
+  /* Pillar colors — muted editorial tones */
+  --color-foundation:  #6B5B7A;
+  --color-human:       #8B4A6B;
+  --color-tech:        #8A7A2C;
+  --color-future:      var(--ok);
+  --color-trust:       #4A6B8A;
 
-  /* Blue spectrum */
-  --blue:        #111111;
-  --blue-dk:     #000000;
-  --blue-lt:     #F7F7F8;
+  /* Blue spectrum — mapped to ink */
+  --blue:        var(--ink);
+  --blue-dk:     var(--ink);
+  --blue-lt:     var(--paper);
 
-  /* Brand gradient */
-  --gradient-brand: #111111;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(99,102,241,.05) 0%, rgba(167,139,250,.03) 50%, rgba(99,102,241,.02) 100%);
-  --gradient-brand-text: #111111;
+  /* Brand gradient — flat ink */
+  --gradient-brand: var(--ink);
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(94,107,47,.06) 0%, rgba(94,107,47,.03) 50%, rgba(94,107,47,.01) 100%);
+  --gradient-brand-text: var(--ink);
 
-  /* Neutral palette — Bone base */
-  --navy:        #111111;
-  --off:         #E4E5E0;
-  --muted:       #6B7280;
-  --border:      #D5D6D1;
-  --text:        #0F0F0F;
-  --surface:     #EDEEE9;
-  --surface-alt: #E4E5E0;
-  --card:        rgba(255,255,255,0.5);
-  --card-hover:  rgba(255,255,255,0.7);
-  --input-bg:    #F7F8F5;
-  --placeholder: #9CA3AF;
-  --sidebar:     #E4E5E0;
-  --sidebar-text:#0F0F0F;
+  /* Neutral palette — mapped to v2 paper/ink */
+  --navy:        var(--ink);
+  --off:         var(--paper-2);
+  --muted:       var(--m-muted);
+  --border:      var(--rule);
+  --text:        var(--ink);
+  --surface:     var(--paper);
+  --surface-alt: var(--paper-2);
+  --card:        rgba(255,255,255,0.45);
+  --card-hover:  rgba(255,255,255,0.65);
+  --input-bg:    var(--paper-2);
+  --placeholder: var(--m-muted-2);
+  --sidebar:     var(--paper-2);
+  --sidebar-text:var(--ink);
 
   /* Spacing */
   --section-gap: 6rem;
   --section-gap-lg: 8rem;
 }
 
-/* ── Dark palette (public website + dashboard dark mode) ───── */
+/* ── Dark palette — v2 "The Instrument" ───────────────────── */
 .dark {
-  --brand:       #FFFFFF;
-  --brand-hover: #E5E5E5;
-  --brand-light: #1A1A2E;
-  --hero-bg:     #111114;
+  --paper: #14130F;
+  --paper-2: #1F1D18;
+  --paper-3: #2A2823;
+  --ink: #F2EDE3;
+  --ink-2: #D9D2C2;
+  --m-muted: #8A857A;
+  --m-muted-2: #6B6759;
+  --rule: rgba(242, 237, 227, 0.12);
+  --rule-2: rgba(242, 237, 227, 0.22);
+  --signal: #A4B26A;
+  --signal-hot: #B8C77A;
+  --signal-soft: rgba(164, 178, 106, 0.15);
+  --signal-soft-2: rgba(164, 178, 106, 0.28);
+  --severe: #C97262;
+  --warn: #D9B85E;
+  --ok: #7AAE7A;
+  --grain-opacity: 0.18;
+  --grain-blend: screen;
+  --specimen-bg: #0A0907;
+  --specimen-fg: #F2EDE3;
+  --specimen-rule: rgba(242, 237, 227, 0.10);
+  --specimen-muted: rgba(242, 237, 227, 0.5);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 20px 50px rgba(0,0,0,0.5), 0 40px 100px rgba(0,0,0,0.35);
+  --shadow-offset: rgba(164, 178, 106, 0.25);
 
-  --lime:        #BEF264;
-  --lime-hover:  #BFFA60;
-  --lime-soft:   rgba(190,242,100,0.08);
+  /* Legacy aliases */
+  --brand:       var(--ink);
+  --brand-hover: var(--ink-2);
+  --brand-light: var(--paper-2);
+  --hero-bg:     var(--paper);
 
-  --color-success:  #4ADE80;
-  --color-warning:  #FACC15;
-  --color-danger:   #F87171;
-  --color-info:     #60A5FA;
+  --accent:      var(--signal);
+  --accent-dk:   var(--signal-hot);
+  --accent-lt:   var(--signal-soft);
 
-  --color-foundation:  #A78BFA;
-  --color-human:       #F472B6;
-  --color-tech:        #FBBF24;
-  --color-future:      #4ADE80;
-  --color-trust:       #60A5FA;
+  --lime:        var(--signal);
+  --lime-hover:  var(--signal-hot);
+  --lime-soft:   var(--signal-soft);
 
-  --blue:        #FFFFFF;
-  --blue-dk:     #FFFFFF;
-  --blue-lt:     #18181C;
-  --accent:      #BFFA60;
-  --accent-dk:   #A8E54A;
-  --accent-lt:   rgba(191,250,96,0.06);
+  --color-success:  var(--ok);
+  --color-warning:  var(--warn);
+  --color-danger:   var(--severe);
+  --color-info:     #7A9EBF;
 
-  --gradient-brand: #BFFA60;
-  --gradient-brand-subtle: linear-gradient(135deg, rgba(191,250,96,.06) 0%, rgba(190,242,100,.04) 50%, rgba(191,250,96,.02) 100%);
-  --gradient-brand-text: #FFFFFF;
+  --color-foundation:  #9A8BBF;
+  --color-human:       #BF7A9E;
+  --color-tech:        #D9B85E;
+  --color-future:      var(--ok);
+  --color-trust:       #7A9EBF;
 
-  --navy:        #FFFFFF;
-  --off:         #141418;
-  --muted:       #8B8FA3;
-  --border:      rgba(255,255,255,0.08);
-  --text:        #F0F0F5;
-  --surface:     #111114;
-  --surface-alt: #18181C;
+  --blue:        var(--ink);
+  --blue-dk:     var(--ink);
+  --blue-lt:     var(--paper-2);
+
+  --gradient-brand: var(--signal);
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(164,178,106,.08) 0%, rgba(164,178,106,.04) 50%, rgba(164,178,106,.02) 100%);
+  --gradient-brand-text: var(--ink);
+
+  --navy:        var(--ink);
+  --off:         var(--paper-2);
+  --muted:       var(--m-muted);
+  --border:      var(--rule);
+  --text:        var(--ink);
+  --surface:     var(--paper);
+  --surface-alt: var(--paper-2);
   --card:        rgba(255,255,255,0.03);
   --card-hover:  rgba(255,255,255,0.06);
   --input-bg:    rgba(255,255,255,0.04);
-  --placeholder: #4B5066;
-  --sidebar:     #111114;
-  --sidebar-text:#F0F0F5;
+  --placeholder: var(--m-muted-2);
+  --sidebar:     var(--paper);
+  --sidebar-text:var(--ink);
 }
 
 /* ── Dark-only utility — hides children in light mode ──────── */
@@ -140,8 +191,8 @@ select:focus-visible {
 /* .theme-light removed — unified theme toggle on <html> handles both modes */
 
 /* ── Navbar background — semi-transparent surface ──────────── */
-.nav-bg { background: rgba(255,255,255,0.97); }
-.dark .nav-bg { background: rgba(17,17,20,0.95); }
+.nav-bg { background: rgba(242,237,227,0.97); }
+.dark .nav-bg { background: rgba(20,19,15,0.95); }
 
 /* ══════════════════════════════════════════════════════════════
    AURORA BACKGROUNDS — Flowing blue/purple gradient blobs
@@ -341,9 +392,9 @@ select:focus-visible {
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
-/* Volt solid background for icon containers and CTAs */
+/* Signal solid background for icon containers and CTAs */
 .bg-lime-gradient {
-  background: #BFFA60;
+  background: var(--signal);
 }
 
 /* Hide scrollbar utility */
@@ -384,19 +435,26 @@ select:focus-visible {
 
 /* Force dark palette on any section */
 .dark-forced {
-  --text:        #F0F0F5;
-  --muted:       #8B8FA3;
-  --border:      rgba(255,255,255,0.08);
+  --paper: #14130F;
+  --paper-2: #1F1D18;
+  --ink: #F2EDE3;
+  --ink-2: #D9D2C2;
+  --m-muted: #8A857A;
+  --rule: rgba(242, 237, 227, 0.12);
+  --signal: #A4B26A;
+  --text:        var(--ink);
+  --muted:       var(--m-muted);
+  --border:      var(--rule);
   --card:        rgba(255,255,255,0.03);
   --card-hover:  rgba(255,255,255,0.06);
-  --off:         #141418;
-  --surface:     #111114;
-  --surface-alt: #18181C;
+  --off:         var(--paper-2);
+  --surface:     var(--paper);
+  --surface-alt: var(--paper-2);
   --input-bg:    rgba(255,255,255,0.04);
-  --placeholder: #4B5066;
-  --accent:      #BFFA60;
-  --accent-dk:   #A8E54A;
-  --gradient-brand-text: #F0F0F5;
+  --placeholder: var(--m-muted-2);
+  --accent:      var(--signal);
+  --accent-dk:   var(--signal-hot);
+  --gradient-brand-text: var(--ink);
 }
 
 /* Content above gradient/grid layers */
@@ -426,10 +484,10 @@ select:focus-visible {
    VOLT ACCENT — Two styles
    ══════════════════════════════════════════════════════════════ */
 
-/* Highlight block — Ink text on Volt surface (for heading accents) */
+/* Highlight block — Paper text on Signal surface (for heading accents) */
 .text-lime-gradient {
-  background-color: #BFFA60;
-  color: #0F0F0F;
+  background-color: var(--signal);
+  color: var(--paper);
   padding: 0.04em 0.2em;
   margin: 0 -0.08em;
   box-decoration-break: clone;
@@ -437,20 +495,20 @@ select:focus-visible {
   display: inline;
 }
 
-/* Volt-colored text — for stats, prices, labels */
+/* Signal-colored text — for stats, prices, labels */
 .text-volt {
-  color: #6B9A2E;
+  color: var(--signal);
 }
 .dark .text-volt {
-  color: #BFFA60;
+  color: var(--signal);
 }
 
-/* Volt-colored SVG fill — for logo marks */
+/* Signal-colored SVG fill — for logo marks */
 .fill-volt {
-  fill: #6B9A2E;
+  fill: var(--signal);
 }
 .dark .fill-volt {
-  fill: #BFFA60;
+  fill: var(--signal);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -506,7 +564,7 @@ article, .prose {
 }
 
 .auth-left {
-  background: #111114;
+  background: var(--ink);
   padding: 3rem 3.5rem;
   display: flex;
   flex-direction: column;
@@ -517,7 +575,7 @@ article, .prose {
 
 .auth-right {
   position: relative;
-  background: #111114;
+  background: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -550,21 +608,21 @@ article, .prose {
 /* Dark-page inputs — visible bg on dark backgrounds */
 .dark .input {
   background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.10);
-  color: #F0F0F5;
+  border-color: var(--rule);
+  color: var(--ink);
 }
 
 .dark .input::placeholder {
-  color: rgba(255,255,255,0.30);
+  color: var(--m-muted-2);
 }
 
 .input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(191,250,96,.10);
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft);
 }
 
 .dark .input:focus {
-  box-shadow: 0 0 0 3px rgba(191,250,96,.12);
+  box-shadow: 0 0 0 3px var(--signal-soft);
 }
 
 .input::placeholder {
@@ -572,8 +630,8 @@ article, .prose {
 }
 
 .input-error {
-  border-color: var(--color-danger) !important;
-  box-shadow: 0 0 0 3px rgba(239,68,68,.08) !important;
+  border-color: var(--severe) !important;
+  box-shadow: 0 0 0 3px rgba(139,58,44,.12) !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -619,12 +677,12 @@ article, .prose {
 
 /* Ensure btn-primary is visible on dark pages */
 .dark .btn-primary {
-  background: #FFFFFF;
-  color: #111114;
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .dark .btn-primary:hover:not(:disabled) {
-  background: #E5E5E5;
+  background: var(--ink-2);
 }
 
 .btn-ghost {
@@ -655,31 +713,31 @@ article, .prose {
 }
 
 .alert-error {
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  background: rgba(139, 58, 44, 0.06);
+  border: 1px solid rgba(139, 58, 44, 0.15);
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
-  color: var(--color-danger);
+  color: var(--severe);
 }
 .dark .alert-error {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.15);
-  color: #F87171;
+  background: rgba(201, 114, 98, 0.08);
+  border-color: rgba(201, 114, 98, 0.15);
+  color: var(--severe);
 }
 
 .alert-success {
-  background: #F0FDF4;
-  border: 1px solid #BBF7D0;
+  background: rgba(63, 107, 63, 0.06);
+  border: 1px solid rgba(63, 107, 63, 0.15);
   border-radius: 10px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
-  color: var(--color-success);
+  color: var(--ok);
 }
 .dark .alert-success {
-  background: rgba(34, 197, 94, 0.08);
-  border-color: rgba(34, 197, 94, 0.15);
-  color: #4ADE80;
+  background: rgba(122, 174, 122, 0.08);
+  border-color: rgba(122, 174, 122, 0.15);
+  color: var(--ok);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -895,66 +953,10 @@ svg.lucide {
    Scoped to body.marketing-v2 so product pages are unaffected
    ══════════════════════════════════════════════════════════════ */
 
-body.marketing-v2 {
-  --paper: #F2EDE3;
-  --paper-2: #EAE3D4;
-  --paper-3: #E0D8C5;
-  --ink: #14130F;
-  --ink-2: #2A2823;
-  --m-muted: #6B6759;
-  --m-muted-2: #8A857A;
-  --rule: #D4CCB8;
-  --rule-2: #C2B89E;
-  --signal: #5E6B2F;
-  --signal-hot: #4A5424;
-  --signal-soft: rgba(94, 107, 47, 0.12);
-  --signal-soft-2: rgba(94, 107, 47, 0.22);
-  --severe: #8B3A2C;
-  --warn: #9A7A2C;
-  --ok: #3F6B3F;
-  --grain-opacity: 0.35;
-  --grain-blend: multiply;
-  --specimen-bg: #14130F;
-  --specimen-fg: #F2EDE3;
-  --specimen-rule: rgba(242, 237, 227, 0.12);
-  --specimen-muted: rgba(242, 237, 227, 0.55);
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.08), 0 20px 50px rgba(20,19,15,0.18), 0 40px 100px rgba(20,19,15,0.10);
-  --shadow-offset: var(--ink-2);
+/* body.marketing-v2 tokens are now global in :root / .dark above */
 
-  background: var(--paper);
-  color: var(--ink);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.dark body.marketing-v2 {
-  --paper: #14130F;
-  --paper-2: #1F1D18;
-  --paper-3: #2A2823;
-  --ink: #F2EDE3;
-  --ink-2: #D9D2C2;
-  --m-muted: #8A857A;
-  --m-muted-2: #6B6759;
-  --rule: rgba(242, 237, 227, 0.12);
-  --rule-2: rgba(242, 237, 227, 0.22);
-  --signal: #A4B26A;
-  --signal-hot: #B8C77A;
-  --signal-soft: rgba(164, 178, 106, 0.15);
-  --signal-soft-2: rgba(164, 178, 106, 0.28);
-  --severe: #C97262;
-  --warn: #D9B85E;
-  --ok: #7AAE7A;
-  --grain-opacity: 0.18;
-  --grain-blend: screen;
-  --specimen-bg: #0A0907;
-  --specimen-fg: #F2EDE3;
-  --specimen-rule: rgba(242, 237, 227, 0.10);
-  --specimen-muted: rgba(242, 237, 227, 0.5);
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 20px 50px rgba(0,0,0,0.5), 0 40px 100px rgba(0,0,0,0.35);
-  --shadow-offset: rgba(164, 178, 106, 0.25);
-}
-
-/* Grain overlay — marketing pages only */
-body.marketing-v2::before {
+/* Grain overlay — global texture */
+body::before {
   content: '';
   position: fixed;
   inset: 0;

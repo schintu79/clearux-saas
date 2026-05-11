@@ -119,7 +119,7 @@ const NewAuditInner: React.FC = () => {
   if (userLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--ink)', borderTopColor: 'transparent' }} />
       </div>
     );
   }
@@ -128,7 +128,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 bg-brand text-surface font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
+        <a href="/login" className="inline-flex items-center gap-2 font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-full transition-all hover:brightness-110" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
           Sign In
         </a>
       </div>
@@ -435,9 +435,9 @@ const NewAuditInner: React.FC = () => {
       {/* Hero */}
       <div className="text-center mb-10">
         <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <Sparkles size={28} className="text-brand" />
+          <Sparkles size={28} style={{ color: 'var(--ink)' }} />
         </div>
-        <h1 className="text-3xl font-medium font-heading text-text mb-2">
+        <h1 className="text-3xl font-normal font-serif mb-2" style={{ color: 'var(--ink)' }}>
           New Audit
         </h1>
         <p className="text-muted">
@@ -465,15 +465,15 @@ const NewAuditInner: React.FC = () => {
                     setGeneralError('');
                   }
                 }}
-                className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 transition-all text-center ${
-                  isSelected
-                    ? 'border-brand bg-brand/5 dark:bg-brand/[0.03]'
-                    : isDisabled
-                    ? 'border-border/50 opacity-50 cursor-not-allowed'
-                    : 'border-border hover:border-brand/40 cursor-pointer'
+                className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all text-center ${
+                  isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                 }`}
+                style={{
+                  border: isSelected ? '2px solid var(--ink)' : '2px solid var(--rule)',
+                  background: isSelected ? 'color-mix(in srgb, var(--ink) 4%, transparent)' : 'transparent',
+                }}
               >
-                <div className={`transition-colors ${isSelected ? 'text-brand' : 'text-muted'}`}>
+                <div className="transition-colors" style={{ color: isSelected ? 'var(--ink)' : 'var(--m-muted)' }}>
                   {config.icon}
                 </div>
                 <div>
@@ -526,10 +526,10 @@ const NewAuditInner: React.FC = () => {
                   if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
                 }}
                 placeholder="example.com"
-                className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-body bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
+                className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-sans bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
                   urlError
                     ? 'border-red-400 dark:border-red-500 focus:border-red-500'
-                    : 'border-border focus:border-brand'
+                    : 'border-border focus:border-text'
                 }`}
               />
               {url && !urlError && (
@@ -548,7 +548,7 @@ const NewAuditInner: React.FC = () => {
           {/* Audit Scope (Module Selection) */}
           <div className="mb-6">
             <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-              <Zap size={15} className="text-brand" />
+              <Zap size={15} style={{ color: 'var(--ink)' }} />
               Audit Scope
             </label>
 
@@ -556,7 +556,7 @@ const NewAuditInner: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setScopeOpen(!scopeOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand"
+                className="w-full flex items-center justify-between px-4 py-3 border-2 border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-text"
               >
                 <span>
                   {isCompleteAudit
@@ -573,9 +573,8 @@ const NewAuditInner: React.FC = () => {
                     onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border/50"
                   >
-                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                      isCompleteAudit ? 'bg-[#22C55E]' : 'border-2 border-border'
-                    }`}>
+                    <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                      style={isCompleteAudit ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}>
                       {isCompleteAudit && <Check size={10} className="text-white" />}
                     </div>
                     <div className="text-left">
@@ -597,9 +596,8 @@ const NewAuditInner: React.FC = () => {
                         onClick={() => { if (!disabled) toggleModule(mod.slug); }}
                         className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors text-left ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                       >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-                          selected && !disabled ? 'bg-[#22C55E]' : 'border-2 border-border'
-                        }`}>
+                        <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                          style={selected && !disabled ? { background: 'var(--ok)' } : { border: '2px solid var(--rule)' }}>
                           {selected && !disabled && <Check size={10} className="text-white" />}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -636,14 +634,14 @@ const NewAuditInner: React.FC = () => {
           {brandIdentities.length > 0 && (
             <div className="mb-6">
               <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-                <Fingerprint size={15} className="text-brand" />
+                <Fingerprint size={15} style={{ color: 'var(--ink)' }} />
                 Brand Identity
                 <span className="text-xs font-normal text-muted">(optional)</span>
               </label>
               <select
                 value={selectedBrandId}
                 onChange={(e) => setSelectedBrandId(e.target.value)}
-                className="w-full px-4 py-2.5 border border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
+                className="w-full px-4 py-2.5 border border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-text appearance-none"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
               >
                 <option value="">No brand identity</option>
@@ -669,7 +667,7 @@ const NewAuditInner: React.FC = () => {
         <>
           <div className="mb-6">
             <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-              <Fingerprint size={15} className="text-brand" />
+              <Fingerprint size={15} style={{ color: 'var(--ink)' }} />
               Brand Identity
             </label>
 
@@ -682,7 +680,7 @@ const NewAuditInner: React.FC = () => {
                     <select
                       value={selectedBrandId}
                       onChange={(e) => setSelectedBrandId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-brand appearance-none"
+                      className="w-full px-4 py-3 border-2 border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:border-text appearance-none"
                       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
                     >
                       <option value="">Select a brand identity...</option>
@@ -738,7 +736,7 @@ const NewAuditInner: React.FC = () => {
               </>
             ) : (
               /* ── Inline new brand creation ── */
-              <div className="rounded-xl border-2 border-brand/30 bg-brand/[0.02] dark:bg-brand/[0.03] p-4 space-y-4">
+              <div className="rounded-xl p-4 space-y-4" style={{ border: '2px solid color-mix(in srgb, var(--ink) 20%, transparent)', background: 'color-mix(in srgb, var(--ink) 2%, transparent)' }}>
                 {/* Brand name */}
                 <div>
                   <label htmlFor="new-brand-name" className="block text-xs font-medium text-text mb-1.5">
@@ -750,7 +748,7 @@ const NewAuditInner: React.FC = () => {
                     value={newBrandName}
                     onChange={(e) => setNewBrandName(e.target.value)}
                     placeholder="e.g. My Company"
-                    className="w-full px-3 py-2.5 border-2 border-border rounded-lg font-body text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:border-brand"
+                    className="w-full px-3 py-2.5 border-2 border-border rounded-lg font-sans text-sm bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:border-text"
                   />
                 </div>
 
@@ -869,7 +867,7 @@ const NewAuditInner: React.FC = () => {
             name="language"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-border rounded-xl font-body text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-brand appearance-none cursor-pointer"
+            className="w-full px-4 py-3 border-2 border-border rounded-xl font-sans text-sm bg-input-bg text-text transition-all focus:outline-none focus:ring-0 focus:border-text appearance-none cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -892,8 +890,8 @@ const NewAuditInner: React.FC = () => {
 
       {/* White-label info */}
       {isWhiteLabelEligible && (
-        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl border border-brand/15 bg-brand/5 dark:bg-brand/[0.03]">
-          <Building2 size={15} className="text-brand flex-shrink-0" />
+        <div className="mb-6 flex items-center gap-2.5 px-4 py-3 rounded-xl" style={{ border: '1px solid color-mix(in srgb, var(--ink) 12%, transparent)', background: 'color-mix(in srgb, var(--ink) 4%, transparent)' }}>
+          <Building2 size={15} className="flex-shrink-0" style={{ color: 'var(--ink)' }} />
           <p className="text-xs text-muted flex-1">
             White-label branding is applied automatically from your{' '}
             <Link href="/dashboard/white-label" className="text-brand hover:underline font-medium">
@@ -908,9 +906,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* Free first audit banner */}
       {firstAuditFree && (
-        <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
+        <div className="mb-6 p-4 rounded-xl" style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-brand">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--ink)' }}>
               <Sparkles size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -927,9 +925,9 @@ const NewAuditInner: React.FC = () => {
 
       {/* Credits banner */}
       {!firstAuditFree && credits !== null && hasCredits && (
-        <div className="mb-6 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-[#22C55E]/10 border border-[#22C55E]/20 dark:border-[#22C55E]/15">
+        <div className="mb-6 p-4 rounded-xl" style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#22C55E] flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--ok)' }}>
               <Coins size={18} className="text-white" />
             </div>
             <div className="flex-1">
@@ -940,7 +938,7 @@ const NewAuditInner: React.FC = () => {
                 1 credit will be used. No payment needed.
               </p>
             </div>
-            <span className="text-2xl font-medium text-[#22C55E]">{credits}</span>
+            <span className="text-2xl font-serif font-normal" style={{ color: 'var(--ok)' }}>{credits}</span>
           </div>
         </div>
       )}
@@ -973,8 +971,8 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading || brandUploading || (auditType === 'brand_identity' && !showNewBrand && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0)) || (auditType === 'brand_identity' && showNewBrand && (newBrandFiles.length === 0 || !newBrandName.trim()))}
-        className="w-full flex items-center justify-center gap-2.5 font-heading font-medium text-[15px] py-3 px-6 rounded-xl active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed text-[#111111]"
-        style={{ background: '#BFFA60' }}
+        className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-full active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ background: 'var(--signal)', color: '#FFFFFF' }}
       >
         {loading || brandUploading ? (
           <>

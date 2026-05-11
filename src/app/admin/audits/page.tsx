@@ -70,8 +70,8 @@ export default function AdminAuditsPage() {
     crawling: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     analysing: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
     generating_report: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    completed: 'bg-[#22C55E]/10 text-[#22C55E]',
-    failed: 'bg-[#EF4444]/10 text-[#EF4444]',
+    completed: 'bg-[var(--ok)]/10 text-[var(--ok)]',
+    failed: 'bg-[var(--severe)]/10 text-[var(--severe)]',
   }
 
   const getScore = (audit: AdminAudit) => {
@@ -82,16 +82,16 @@ export default function AdminAuditsPage() {
 
   const scoreColor = (score: number | null) => {
     if (score === null) return 'text-muted'
-    if (score >= 80) return 'text-[#22C55E]'
-    if (score >= 60) return 'text-amber-500'
-    return 'text-[#EF4444]'
+    if (score >= 70) return 'text-[var(--ok)]'
+    if (score >= 40) return 'text-[var(--warn)]'
+    return 'text-[var(--severe)]'
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading font-medium text-2xl text-text">Audits</h1>
-        <p className="text-sm text-muted mt-1">{total} total audits</p>
+        <h1 className="font-serif font-normal text-2xl" style={{ color: 'var(--ink)' }}>Audits</h1>
+        <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>{total} total audits</p>
       </div>
 
       {/* Filters */}
@@ -104,12 +104,14 @@ export default function AdminAuditsPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by URL..."
-              className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50"
+              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2"
+            style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text font-medium hover:bg-card transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
           >
             Search
           </button>
@@ -118,7 +120,8 @@ export default function AdminAuditsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-3 py-2 bg-card border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
+          className="px-3 py-2 rounded-lg text-sm text-text focus:outline-none focus:ring-2"
+          style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -127,7 +130,7 @@ export default function AdminAuditsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -203,7 +206,8 @@ export default function AdminAuditsPage() {
                       <td className="px-4 py-3">
                         <a
                           href={`/admin/audits/${a.id}`}
-                          className="p-1.5 rounded-lg hover:bg-brand/10 text-muted hover:text-brand transition-colors inline-flex"
+                          className="p-1.5 rounded-lg text-muted transition-colors inline-flex"
+                          style={{ '--hover-bg': 'var(--ink)' } as React.CSSProperties}
                           title="View audit"
                         >
                           <ExternalLink size={14} />

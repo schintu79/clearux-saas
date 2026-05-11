@@ -50,9 +50,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#22C55E]';
+  if (s >= 70) return '[color:var(--ok)]';
   if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-[#EF4444]';
+  return '[color:var(--severe)]';
 }
 
 /* ── Pillar config for brand audits (6 pillars) ──────────── */
@@ -239,7 +239,7 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
             <Fingerprint size={20} className="text-muted flex-shrink-0" />
-            <h1 className="text-2xl font-medium font-heading text-text truncate">{brandName}</h1>
+            <h1 className="text-2xl font-medium font-serif text-text truncate">{brandName}</h1>
           </div>
           <p className="text-muted text-xs">
             {audits.length} audit{audits.length !== 1 ? 's' : ''}

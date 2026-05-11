@@ -109,8 +109,8 @@ const BrandIdentityPage: React.FC = () => {
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <Fingerprint size={22} className="text-brand" />
-            <h1 className="text-2xl font-medium font-heading text-text">Brand Identity</h1>
+            <Fingerprint size={22} style={{ color: 'var(--ink)' }} />
+            <h1 className="text-2xl font-normal font-serif" style={{ color: 'var(--ink)' }}>Brand Identity</h1>
           </div>
           <p className="text-muted text-sm mt-1 pl-[34px]">
             Manage brand identities to audit websites against your brand guidelines.
@@ -138,11 +138,12 @@ const BrandIdentityPage: React.FC = () => {
             <Link
               key={bi.id}
               href={`/dashboard/brand-identity/${bi.id}`}
-              className="block rounded-xl border border-border bg-card hover:border-brand/30 hover:bg-surface transition-all group"
+              className="block rounded-xl hover:bg-surface transition-all group"
+              style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}
             >
               <div className="flex items-center gap-3 px-4 py-3">
-                <div className="w-9 h-9 rounded-lg bg-brand/10 flex items-center justify-center flex-shrink-0">
-                  <Fingerprint size={16} className="text-brand" />
+                <div className="w-9 h-9 rounded-lg bg-off flex items-center justify-center flex-shrink-0">
+                  <Fingerprint size={16} style={{ color: 'var(--ink)' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -186,10 +187,10 @@ const BrandIdentityPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card">
+        <div className="rounded-xl" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
           <div className="text-center py-12 px-6">
-            <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto mb-3">
-              <Fingerprint size={22} className="text-brand" />
+            <div className="w-12 h-12 rounded-2xl bg-off flex items-center justify-center mx-auto mb-3">
+              <Fingerprint size={22} style={{ color: 'var(--ink)' }} />
             </div>
             <h3 className="text-base font-medium text-text mb-1">No brand identities yet</h3>
             <p className="text-sm text-muted mb-5 max-w-md mx-auto">

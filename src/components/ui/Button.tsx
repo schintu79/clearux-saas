@@ -25,7 +25,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'font-body font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
+      'font-sans font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface';
 
     const variantStyles = {
       primary:
@@ -35,7 +35,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost:
         'bg-transparent text-text hover:bg-surface-alt focus:ring-brand/20 active:scale-[0.98]',
       danger:
-        'bg-[#EF4444] text-white hover:bg-[#A93226] focus:ring-[#EF4444]/30 active:scale-[0.98]',
+        'text-white hover:bg-red-800 focus:ring-red-500/30 active:scale-[0.98] [background:var(--severe)]',
     };
 
     const sizeStyles = {

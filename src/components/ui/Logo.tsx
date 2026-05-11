@@ -50,7 +50,7 @@ export const Iconmark: React.FC<IconmarkProps> = ({
   gradient = false,
 }) => {
   const { theme } = useTheme();
-  const accentColor = theme === 'dark' ? '#BFFA60' : '#6B9A2E';
+  const accentColor = theme === 'dark' ? 'var(--signal)' : '#6B9A2E';
 
   return (
     <svg
@@ -91,7 +91,7 @@ const Logo: React.FC<LogoProps> = ({
   showWordmark = true,
 }) => {
   const { theme } = useTheme();
-  const accentColor = theme === 'dark' ? '#BFFA60' : '#6B9A2E';
+  const accentColor = theme === 'dark' ? 'var(--signal)' : '#6B9A2E';
 
   const textColor =
     variant === 'light'

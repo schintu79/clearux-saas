@@ -133,7 +133,7 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
     { key: 'critical', label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500', bgColor: 'bg-red-50 dark:bg-red-950/20', borderColor: 'border-red-200/50 dark:border-red-800/20' },
     { key: 'high', label: 'High Issues', count: severityCounts.high, description: 'High impact issues to fix', color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-950/20', borderColor: 'border-orange-200/50 dark:border-orange-800/20' },
     { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200/50 dark:border-amber-800/20' },
-    { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', color: 'text-[#22C55E] dark:text-emerald-400', dotColor: 'bg-[#22C55E]', bgColor: 'bg-[#22C55E]/5 dark:bg-emerald-950/20', borderColor: 'border-[#22C55E]/20 dark:border-emerald-800/20' },
+    { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', color: '[color:var(--ok)]', dotColor: '[background:var(--ok)]', bgColor: 'bg-emerald-500/5 dark:bg-emerald-950/20', borderColor: 'border-emerald-500/20 dark:border-emerald-800/20' },
   ];
 
   return (
@@ -148,7 +148,7 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
             <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
             <span className={`text-xs font-medium ${card.color}`}>{card.label}</span>
           </div>
-          <p className={`text-2xl font-medium font-heading ${card.color}`}>{card.count}</p>
+          <p className={`text-2xl font-medium font-serif ${card.color}`}>{card.count}</p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-[11px] text-muted">{card.description}</p>
             {card.key !== 'passed' && card.count > 0 && (
@@ -180,8 +180,8 @@ export function TopIssuesPanel({ findings, auditId }: {
       <div className="flex-1 min-w-0 h-full flex flex-col">
         <h3 className="text-sm font-medium text-text mb-3">Top Issues</h3>
         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-          <div className="w-12 h-12 rounded-xl bg-[#22C55E]/10 flex items-center justify-center mb-3">
-            <CheckCircle2 size={22} className="text-[#22C55E]" />
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3">
+            <CheckCircle2 size={22} className="[color:var(--ok)]" />
           </div>
           <p className="text-base font-medium text-text mb-1">No issues found</p>
           <p className="text-sm text-muted">Great job! Your site passed all checks.</p>
@@ -234,7 +234,7 @@ export function TopIssuesPanel({ findings, auditId }: {
 
 /* ── Heuristic Breakdown Radar Chart ─────────────────────── */
 
-const PILLAR_COLORS = ['#6366F1', '#EC4899', '#F59E0B', '#22C55E'];
+const PILLAR_COLORS = ['#6366F1', '#EC4899', '#F59E0B', 'var(--ok)'];
 
 export function HeuristicRadarChart({ pillarScores }: {
   pillarScores: Array<{ name: string; score: number }>;
@@ -389,8 +389,8 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
     const best = Math.max(...allScores);
     const worst = Math.min(...allScores);
     if (allScores.length < 2 || best === worst) return 'text-muted';
-    if (score === best) return 'text-[#22C55E] font-medium';
-    if (score === worst) return 'text-[#EF4444] font-medium';
+    if (score === best) return '[color:var(--ok)] font-medium';
+    if (score === worst) return '[color:var(--severe)] font-medium';
     return 'text-amber-600 dark:text-amber-400 font-medium';
   };
 
@@ -587,10 +587,10 @@ export function AuditDashboardOverview({
             <p className="text-xs text-muted mt-2">/100</p>
             <span className={`text-sm font-medium mt-1 px-3 py-0.5 rounded-full ${
               overallScore >= 70
-                ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                ? 'bg-emerald-500/10 [color:var(--ok)]'
                 : overallScore >= 40
                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                  : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+                  : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
             }`}>
               {overallScore >= 70 ? 'Great UX' : overallScore >= 40 ? 'Needs Work' : 'Poor UX'}
             </span>

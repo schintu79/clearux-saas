@@ -132,13 +132,13 @@ const PILLAR_STYLE = [
   },
   {
     color: 'emerald',
-    gradient: 'from-[#22C55E] to-[#236B43]',
-    gradientSubtle: 'from-[#22C55E]/5 to-[#22C55E]/10 dark:from-[#22C55E]/10 dark:to-[#22C55E]/5',
-    border: 'border-[#22C55E]/20 dark:border-[#22C55E]/15',
-    iconBg: 'bg-[#22C55E]/10',
-    iconColor: 'text-[#22C55E]',
-    badgeBg: 'bg-[#22C55E]',
-    scoreBg: 'bg-[#22C55E]',
+    gradient: 'from-emerald-500 to-emerald-700',
+    gradientSubtle: 'from-emerald-500/5 to-emerald-500/10 dark:from-emerald-500/10 dark:to-emerald-500/5',
+    border: 'border-emerald-500/20 dark:border-emerald-500/15',
+    iconBg: 'bg-emerald-500/10',
+    iconColor: '[color:var(--ok)]',
+    badgeBg: '[background:var(--ok)]',
+    scoreBg: '[background:var(--ok)]',
     range: [12, 16] as [number, number],
   },
   {
@@ -235,13 +235,13 @@ function buildSeverityConfig(L: UILabels) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return 'text-[#22C55E] dark:text-emerald-400';
+  if (s >= 70) return '[color:var(--ok)]';
   if (s >= 40) return 'text-amber-600 dark:text-amber-400';
-  return 'text-[#EF4444] dark:text-red-400';
+  return '[color:var(--severe)]';
 }
 
 function scoreBg(s: number) {
-  if (s >= 70) return 'bg-[#22C55E]';
+  if (s >= 70) return '[background:var(--ok)]';
   if (s >= 40) return 'bg-amber-500';
   return 'bg-red-500';
 }
@@ -422,7 +422,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                 <span className={`text-[11px] font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
                 <span className="text-[11px] font-medium text-text flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[11px] font-medium text-[#22C55E] dark:text-emerald-400">{passCount} pass</span>}
+                  {passCount > 0 && <span className="text-[11px] font-medium [color:var(--ok)]">{passCount} pass</span>}
                   {failCount > 0 && <span className="text-[11px] font-medium text-red-500">{failCount} fail</span>}
                 </div>
                 <ChevronDown size={12} className={`text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -433,7 +433,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                     const hasFinding = i < failCount;
                     const finding = hasFinding ? catFindings[i] : null;
                     return (
-                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-red-50/40 dark:bg-red-900/[0.06]' : 'bg-[#22C55E]/5'}`}>
+                      <div key={i} className={`flex items-start gap-2.5 py-1.5 px-3 rounded-lg ${hasFinding ? 'bg-red-50/40 dark:bg-red-900/[0.06]' : 'bg-emerald-500/5'}`}>
                         {hasFinding ? (
                           <AlertTriangle size={11} className="text-red-400 flex-shrink-0 mt-0.5" />
                         ) : (
@@ -447,7 +447,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                             <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{finding.title}</p>
                           )}
                         </div>
-                        <span className={`text-[11px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : 'text-[#22C55E] dark:text-emerald-500'}`}>
+                        <span className={`text-[11px] font-medium flex-shrink-0 ${hasFinding ? 'text-red-500' : '[color:var(--ok)]'}`}>
                           {hasFinding ? 'Fail' : 'Pass'}
                         </span>
                       </div>
@@ -527,7 +527,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
           <span className="text-[11px] text-muted ml-2">{trend.length} audits · {domain}</span>
         </div>
         {improvement !== 0 && (
-          <span className={`text-xs font-medium ${improvement > 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+          <span className={`text-xs font-medium ${improvement > 0 ? '[color:var(--ok)]' : '[color:var(--severe)]'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
@@ -617,7 +617,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
 const FINDING_STATUSES = [
   { key: 'open', label: 'Open', color: 'text-muted', bg: 'bg-off', dot: 'bg-gray-400' },
   { key: 'in_progress', label: 'In Progress', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', dot: 'bg-amber-500' },
-  { key: 'fixed', label: 'Fixed', color: 'text-[#22C55E] dark:text-emerald-400', bg: 'bg-[#22C55E]/8', dot: 'bg-[#22C55E]' },
+  { key: 'fixed', label: 'Fixed', color: '[color:var(--ok)]', bg: 'bg-emerald-500/8', dot: '[background:var(--ok)]' },
   { key: 'backlog', label: 'Backlog', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', dot: 'bg-blue-500' },
 ] as const;
 
@@ -705,7 +705,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-[#22C55E]/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                 <Eye size={10} />
                 Likely Fixed
               </span>
@@ -754,7 +754,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
+            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
               <Eye size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-text mb-0.5">AI Verification</p>
@@ -799,7 +799,7 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
           {/* Estimated Impact */}
           {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-[#22C55E]/5 dark:bg-emerald-950/20 rounded-lg border border-[#22C55E]/15">
+            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 dark:bg-emerald-950/20 rounded-lg border border-emerald-500/15">
               <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-medium text-text mb-0.5">Expected Impact</p>
@@ -974,12 +974,12 @@ function PillarSection({
               {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'text-white' })}
             </div>
             <div>
-              <h2 className="font-heading font-medium text-lg text-text">{pillar.name}</h2>
+              <h2 className="font-serif font-medium text-lg text-text">{pillar.name}</h2>
               <p className="text-xs text-muted">{pillarCats.length} {L.categoriesEvaluated}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className={`text-2xl font-medium font-heading ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className={`text-2xl font-medium font-serif ${scoreColor(avgScore)}`}>{avgScore}</p>
             <p className="text-[11px] text-muted">{getScoreLabel(avgScore, lang)}</p>
           </div>
         </div>
@@ -1533,7 +1533,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium text-white ${
-                  calculatedOverallScore >= 70 ? 'bg-[#22C55E]' : calculatedOverallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
+                  calculatedOverallScore >= 70 ? '[background:var(--ok)]' : calculatedOverallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
                 }`}>
                   {calculatedOverallScore}
                 </div>
@@ -1579,7 +1579,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="text-2xl font-medium font-heading text-text mb-1 truncate">
+          <h1 className="text-2xl font-medium font-serif text-text mb-1 truncate">
             {formatUrl(audit.product_url || '')}
           </h1>
           <div className="flex items-center gap-3 flex-wrap">
@@ -1779,7 +1779,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <p className="text-sm text-red-700 dark:text-red-400 mt-1">
                 {audit.crawl_error || 'Something went wrong during processing.'}
               </p>
-              <div className="mt-3 p-3 rounded-lg bg-[#22C55E]/8 border border-emerald-200 dark:border-emerald-800/30">
+              <div className="mt-3 p-3 rounded-lg bg-emerald-500/8 border border-emerald-200 dark:border-emerald-800/30">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                   <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">
@@ -1837,7 +1837,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Score details */}
                 <div className="flex-1 min-w-0 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
-                    <h2 className="text-xl font-medium font-heading text-text">{L.overallScore}</h2>
+                    <h2 className="text-xl font-medium font-serif text-text">{L.overallScore}</h2>
                     {isPartialAudit && (
                       <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
                         {activeModuleCount} of {totalModuleCount} modules
@@ -1845,10 +1845,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     )}
                     <span className={`text-sm font-medium px-2.5 py-0.5 rounded-full ${
                       (calculatedOverallScore) >= 70
-                        ? 'bg-[#22C55E]/10 text-[#22C55E] dark:text-emerald-400'
+                        ? 'bg-emerald-500/10 [color:var(--ok)]'
                         : (calculatedOverallScore) >= 40
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                          : 'bg-red-100 dark:bg-red-900/30 text-[#EF4444] dark:text-red-400'
+                          : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
                     }`}>
                       {getScoreLabel(calculatedOverallScore, auditLang)}
                     </span>
@@ -2015,7 +2015,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                   {/* "Likely fixed findings detected" alert */}
                   {rawJson.verificationSummary.likelyFixed > 0 && (
-                    <div className="mb-4 p-4 rounded-xl bg-[#22C55E]/5 dark:bg-emerald-950/20 border border-[#22C55E]/15 flex items-start gap-3">
+                    <div className="mb-4 p-4 rounded-xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/15 flex items-start gap-3">
                       <Eye size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text mb-0.5">
@@ -2084,7 +2084,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Executive Summary */}
               {report.executive_summary && (
                 <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-6 mb-6">
-                  <h2 className="font-heading font-medium text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
+                  <h2 className="font-serif font-medium text-lg text-text mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
                   <div className="text-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
                   </div>
@@ -2166,7 +2166,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-2">
               {findings.length === 0 ? (
                 <div className="text-center py-12">
-                  <CheckCircle2 size={32} className="text-[#22C55E] dark:text-emerald-500 mx-auto mb-3" />
+                  <CheckCircle2 size={32} className="[color:var(--ok)] mx-auto mb-3" />
                   <p className="text-text font-medium">{L.noIssuesFound}</p>
                   <p className="text-sm text-muted mt-1">{L.noIssuesDescription}</p>
                 </div>

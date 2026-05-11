@@ -231,8 +231,8 @@ function ScoreClimbVisual({ inView }: { inView: boolean }) {
           <p className="text-xs font-medium uppercase tracking-wider text-muted mb-4">Choose how to dig deeper</p>
           <div className="space-y-2.5">
             {[
-              { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: '#22C55E', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-              { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: '#BFFA60', bg: 'bg-lime-50 dark:bg-lime-900/20' },
+              { icon: RefreshCw, label: 'Verify fixes', desc: 'Re-check resolved issues only', color: 'var(--ok)', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+              { icon: Search, label: 'Deep scan', desc: 'Full re-audit, surface new issues', color: 'var(--signal)', bg: 'bg-lime-50 dark:bg-lime-900/20' },
               { icon: Target, label: 'Focus on pillars', desc: 'Target specific areas to improve', color: 'var(--brand)', bg: 'bg-off dark:bg-white/[0.04]' },
             ].map((m, i) => {
               const Icon = m.icon
