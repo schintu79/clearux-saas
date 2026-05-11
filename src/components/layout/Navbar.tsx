@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut, LayoutDashboard, ArrowUpRight } from 'lucide-react';
+import { Settings, LogOut, LayoutDashboard, ArrowUpRight, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Logo } from '@/components/marketing/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -96,6 +96,7 @@ const Navbar: React.FC = () => {
                   <span className="text-sm text-ink font-medium max-w-[120px] truncate">
                     {(profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name)?.split(' ')[0] || user?.email?.split('@')[0]}
                   </span>
+                  <ChevronDown size={14} className="text-m-muted" />
                 </button>
 
                 {menuOpen && (

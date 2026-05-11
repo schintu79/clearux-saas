@@ -230,7 +230,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
     }
 
     return {
-      url,
+      url: response.url || url, // Use resolved URL after redirects (e.g. keycense.com → www.keycense.com)
       title,
       h1,
       metaDescription,
