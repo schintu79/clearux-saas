@@ -26,7 +26,7 @@ export function Pricing() {
     <section className="py-[120px] border-b border-rule" id="pricing">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="text-center mb-16">
-          <SectionMarker number="07" label="The economics" centered />
+          <SectionMarker number="06" label="The economics" centered />
           <h2 className="font-serif font-normal text-ink leading-[0.92] tracking-[-0.03em] mb-6 max-w-[900px] mx-auto" style={{ fontSize: 'clamp(50px, 7vw, 110px)' }}>
             One tool. <em className="italic text-signal">Two ways in.</em>
           </h2>

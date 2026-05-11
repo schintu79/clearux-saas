@@ -108,11 +108,8 @@ const BrandIdentityPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Fingerprint size={22} style={{ color: 'var(--ink)' }} />
-            <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>Brand Identity</h1>
-          </div>
-          <p className="text-muted text-sm mt-1 pl-[34px]">
+          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Brand identity</h1>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             Manage brand identities to audit websites against your brand guidelines.
           </p>
         </div>
@@ -125,9 +122,9 @@ const BrandIdentityPage: React.FC = () => {
       </div>
 
       {errorMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-          <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
+        <div className="mb-4 flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <AlertCircle size={14} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+          <p className="text-sm" style={{ color: 'var(--severe)' }}>{errorMsg}</p>
         </div>
       )}
 
@@ -175,7 +172,8 @@ const BrandIdentityPage: React.FC = () => {
                   <button
                     onClick={(e) => handleDelete(e, bi.id)}
                     disabled={deletingId === bi.id}
-                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                    style={{ color: 'var(--m-muted)' }}
                     title="Delete"
                   >
                     <Trash2 size={13} />

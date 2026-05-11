@@ -268,15 +268,15 @@ const BrandIdentityDetailPage: React.FC = () => {
 
       {/* Messages */}
       {successMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-          <Check size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
-          <p className="text-green-700 dark:text-green-300 text-sm font-medium">{successMsg}</p>
+        <div className="mb-4 flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}>
+          <Check size={14} className="flex-shrink-0" style={{ color: 'var(--ok)' }} />
+          <p className="text-sm font-medium" style={{ color: 'var(--ok)' }}>{successMsg}</p>
         </div>
       )}
       {errorMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-          <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
+        <div className="mb-4 flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <AlertCircle size={14} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+          <p className="text-sm" style={{ color: 'var(--severe)' }}>{errorMsg}</p>
         </div>
       )}
 
@@ -335,10 +335,11 @@ const BrandIdentityDetailPage: React.FC = () => {
                   : dragOver
                     ? 'border-brand bg-brand/5 cursor-pointer'
                     : uploadSuccess
-                      ? 'border-green-400/40 dark:border-green-600/40 bg-green-50 dark:bg-green-900/20 cursor-pointer'
+                      ? 'cursor-pointer'
                       : 'border-border hover:border-brand/30 hover:bg-surface cursor-pointer'
                 }
               `}
+              style={uploadSuccess && !uploading && !dragOver ? { background: 'color-mix(in srgb, var(--ok) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--ok) 40%, transparent)' } : undefined}
             >
               {uploading ? (
                 <>
@@ -348,8 +349,8 @@ const BrandIdentityDetailPage: React.FC = () => {
                 </>
               ) : uploadSuccess ? (
                 <>
-                  <CheckCircle2 size={20} className="text-green-600 dark:text-green-400" />
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Files uploaded successfully</p>
+                  <CheckCircle2 size={20} style={{ color: 'var(--ok)' }} />
+                  <p className="text-sm font-medium" style={{ color: 'var(--ok)' }}>Files uploaded successfully</p>
                   <p className="text-[11px] text-muted">Drop more files or click to browse</p>
                 </>
               ) : (
@@ -403,7 +404,7 @@ const BrandIdentityDetailPage: React.FC = () => {
                     <button
                       onClick={(e) => { e.preventDefault(); handleDeleteFile(f.id); }}
                       disabled={deletingFileId === f.id}
-                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-all disabled:opacity-50"
+                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted hover:text-red-500 transition-all disabled:opacity-50"
                       title="Remove file"
                       type="button"
                     >

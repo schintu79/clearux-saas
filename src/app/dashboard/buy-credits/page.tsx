@@ -83,13 +83,10 @@ export default function BuyCreditsPage() {
       </Link>
 
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <Crown size={28} style={{ color: 'var(--ink)' }} />
-        </div>
-        <h1 className="text-3xl font-normal font-sans mb-2" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-[24px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
           Plans and credits
         </h1>
-        <p className="text-muted max-w-md mx-auto">
+        <p className="text-[14px] max-w-md mx-auto" style={{ color: 'var(--m-muted)' }}>
           Subscribe for unlimited re-audits or buy credit packs for flexible usage.
         </p>
 
@@ -218,7 +215,7 @@ export default function BuyCreditsPage() {
                       isCurrentPlan
                         ? { background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)', cursor: 'default' }
                         : plan.popular
-                          ? { background: 'var(--signal)', color: '#FFFFFF' }
+                          ? { background: 'var(--ink)', color: 'var(--paper)' }
                           : { background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }
                     }
                   >
@@ -298,7 +295,7 @@ export default function BuyCreditsPage() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full font-medium text-sm transition-all disabled:opacity-50"
                   style={
                     pack.popular
-                      ? { background: 'var(--signal)', color: '#FFFFFF' }
+                      ? { background: 'var(--ink)', color: 'var(--paper)' }
                       : { background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }
                   }
                 >

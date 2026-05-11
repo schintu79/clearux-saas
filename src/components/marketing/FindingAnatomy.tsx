@@ -13,7 +13,7 @@ export function FindingAnatomy() {
         <div className="grid lg:grid-cols-[1fr_1.3fr] gap-16 items-start max-lg:grid-cols-1">
           {/* Left */}
           <div>
-            <SectionMarker number="06" label="Anatomy of a finding" />
+            <SectionMarker number="05" label="Anatomy of a finding" />
             <h2 className="font-serif font-normal text-ink leading-[1.02] tracking-[-0.022em] mb-6" style={{ fontSize: 'clamp(40px, 4.5vw, 64px)' }}>
               What a <em className="italic text-signal">real</em> finding looks like.
             </h2>

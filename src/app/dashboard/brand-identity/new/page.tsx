@@ -210,9 +210,9 @@ const NewBrandPage: React.FC = () => {
       </div>
 
       {errorMsg && (
-        <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-          <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
+        <div className="mb-4 flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <AlertCircle size={14} className="flex-shrink-0" style={{ color: 'var(--severe)' }} />
+          <p className="text-sm" style={{ color: 'var(--severe)' }}>{errorMsg}</p>
         </div>
       )}
 
@@ -326,7 +326,7 @@ const NewBrandPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => removeFile(sf.id)}
-                        className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-muted hover:text-red-500 transition-all"
+                        className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted hover:text-red-500 transition-all"
                         title="Remove"
                       >
                         <Trash2 size={12} />

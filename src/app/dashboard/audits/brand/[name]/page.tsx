@@ -50,9 +50,9 @@ function langCode(code: string | null): string {
 }
 
 function scoreColor(s: number) {
-  if (s >= 70) return '[color:var(--ok)]';
-  if (s >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return '[color:var(--severe)]';
+  if (s >= 70) return 'text-ok';
+  if (s >= 40) return 'text-warn';
+  return 'text-severe';
 }
 
 /* ── Pillar config for brand audits (6 pillars) ──────────── */
@@ -268,8 +268,8 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <p className="text-red-700 dark:text-red-300 text-xs">{error}</p>
+        <div className="mb-4 p-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <p className="text-xs" style={{ color: 'var(--severe)' }}>{error}</p>
         </div>
       )}
 
@@ -303,8 +303,8 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
           </Link>
         </div>
       ) : (
-        <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden">
-          <div className="divide-y divide-border/20 dark:divide-white/[0.04]">
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}>
+          <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
             {audits.map((audit) => {
               const meta = statusMeta[audit.status] || statusMeta.pending_payment;
               const Icon = meta.icon;
@@ -313,14 +313,14 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
               const aLang = langCode((audit as any).language) || 'EN';
 
               return (
-                <div key={audit.id} className="flex items-center gap-2 hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors group/row">
+                <div key={audit.id} className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row">
                   <Link href={`/dashboard/audits/${audit.id}`} className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
                     <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0">
                       <span className="text-text font-medium">{formatDate(audit.created_at)}</span>
                       <span className="text-border">·</span>
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
-                      <span className="text-[11px] font-medium text-muted bg-off dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{aLang}</span>
+                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}>{aLang}</span>
                       {(audit as any).depth_mode === 'deep' && (
                         <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
                       )}

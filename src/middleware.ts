@@ -98,34 +98,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── Refresh Supabase session for ALL page routes ──
-  // This ensures the auth cookie stays fresh on marketing pages too,
-  // so the Navbar correctly shows the logged-in state everywhere.
-  const response = NextResponse.next()
-  const supabase = createProxyClient(request, response)
+  // ── Auth guard for protected routes ──
+  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
 
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
+  if (isProtected) {
+    const response = NextResponse.next()
+    const supabase = createProxyClient(request, response)
 
-    // ── Auth guard for protected routes ──
-    const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
 
-    if (isProtected && !session) {
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(loginUrl)
+      if (!session) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirectTo', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+
+      return response
+    } catch {
+      return NextResponse.next()
     }
-
-    return response
-  } catch {
-    return response
   }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  // Run on all page routes so Supabase session is refreshed everywhere.
-  // Exclude static assets and Next.js internals.
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+    '/api/:path*',
+    '/dashboard/:path*',
+    '/admin/:path*',
   ],
 }

@@ -128,7 +128,7 @@ const NewAuditInner: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-muted mb-4">Please sign in to create an audit</p>
-        <a href="/login" className="inline-flex items-center gap-2 font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-full transition-all hover:brightness-110" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
+        <a href="/login" className="inline-flex items-center gap-2 font-medium text-[15px] px-6 py-3 min-h-[48px] rounded-lg transition-all hover:opacity-90" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
           Sign In
         </a>
       </div>
@@ -434,13 +434,10 @@ const NewAuditInner: React.FC = () => {
 
       {/* Hero */}
       <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--gradient-brand-subtle)' }}>
-          <Sparkles size={28} style={{ color: 'var(--ink)' }} />
-        </div>
-        <h1 className="text-3xl font-normal font-sans mb-2" style={{ color: 'var(--ink)' }}>
-          New Audit
+        <h1 className="text-[24px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+          New audit
         </h1>
-        <p className="text-muted">
+        <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>
           {auditType === 'brand_identity'
             ? 'Upload your brand materials and get AI-powered analysis of consistency, messaging, and quality.'
             : 'Paste your URL and our AI does a deep analysis across all 96 checkpoints.'}
@@ -528,7 +525,7 @@ const NewAuditInner: React.FC = () => {
                 placeholder="example.com"
                 className={`w-full px-5 py-4 text-lg border-2 rounded-xl font-sans bg-input-bg text-text placeholder:text-placeholder transition-all focus:outline-none focus:ring-0 ${
                   urlError
-                    ? 'border-red-400 dark:border-red-500 focus:border-red-500'
+                    ? 'border-red-400 focus:border-red-500'
                     : 'border-border focus:border-text'
                 }`}
               />
@@ -541,7 +538,7 @@ const NewAuditInner: React.FC = () => {
               )}
             </div>
             {urlError && (
-              <p id="url-error" className="text-red-500 dark:text-red-400 text-sm mt-2" role="alert">{urlError}</p>
+              <p id="url-error" className="text-sm mt-2" style={{ color: 'var(--severe)' }} role="alert">{urlError}</p>
             )}
           </div>
 
@@ -567,7 +564,7 @@ const NewAuditInner: React.FC = () => {
               </button>
 
               {scopeOpen && (
-                <div className="absolute z-[100] left-0 right-0 mt-1 bg-white dark:bg-[#1E1E24] border border-border rounded-xl shadow-xl dark:shadow-black/50 overflow-hidden">
+                <div className="absolute z-[100] left-0 right-0 mt-1 rounded-xl shadow-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
                   <button
                     type="button"
                     onClick={() => { toggleCompleteAudit(); if (!isCompleteAudit) setScopeOpen(false); }}
@@ -692,9 +689,9 @@ const NewAuditInner: React.FC = () => {
                     </select>
 
                     {selectedBrand && selectedBrand.fileCount === 0 && (
-                      <div className="mt-3 p-3 rounded-lg bg-[#FFFBEB] dark:bg-[#78350F]/20 border border-[#FDE68A] dark:border-[#92400E]/40 flex items-start gap-2">
-                        <AlertCircle size={14} className="text-[#D97706] flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-[#92400E] dark:text-[#FDE68A]">
+                      <div className="mt-3 p-3 rounded-lg flex items-start gap-2" style={{ background: 'color-mix(in srgb, var(--warn) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 25%, transparent)' }}>
+                        <AlertCircle size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--warn)' }} />
+                        <p className="text-xs" style={{ color: 'var(--ink)' }}>
                           This brand has no files uploaded.{' '}
                           <Link href={`/dashboard/brand-identity/${selectedBrandId}`} className="font-medium underline">
                             Upload files
@@ -705,9 +702,9 @@ const NewAuditInner: React.FC = () => {
                     )}
 
                     {selectedBrand && selectedBrand.fileCount > 0 && (
-                      <div className="mt-3 p-3 rounded-lg bg-[#F0FDF4] dark:bg-[#166534]/20 border border-[#BBF7D0] dark:border-[#166534]/40 flex items-start gap-2">
-                        <FileText size={14} className="text-[#16A34A] flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-[#374151] dark:text-[#BBF7D0]">
+                      <div className="mt-3 p-3 rounded-lg flex items-start gap-2" style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 25%, transparent)' }}>
+                        <FileText size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--ok)' }} />
+                        <p className="text-xs" style={{ color: 'var(--ink)' }}>
                           {selectedBrand.fileCount} file{selectedBrand.fileCount !== 1 ? 's' : ''} will be analyzed.
                           The AI will evaluate visual consistency, tone of voice, professionalism, and wording quality.
                         </p>
@@ -811,8 +808,8 @@ const NewAuditInner: React.FC = () => {
 
                 {/* Upload error */}
                 {brandUploadError && (
-                  <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                    <p className="text-red-600 dark:text-red-400 text-xs">{brandUploadError}</p>
+                  <div className="p-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+                    <p className="text-xs" style={{ color: 'var(--severe)' }}>{brandUploadError}</p>
                   </div>
                 )}
 
@@ -962,8 +959,8 @@ const NewAuditInner: React.FC = () => {
 
       {/* Error */}
       {generalError && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <p className="text-red-700 dark:text-red-300 text-sm">{generalError}</p>
+        <div className="mb-6 p-4 rounded-xl" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <p className="text-sm" style={{ color: 'var(--severe)' }}>{generalError}</p>
         </div>
       )}
 
@@ -971,8 +968,8 @@ const NewAuditInner: React.FC = () => {
       <button
         onClick={handleSubmit}
         disabled={loading || brandUploading || (auditType === 'brand_identity' && !showNewBrand && (!selectedBrandId || (selectedBrand?.fileCount ?? 0) === 0)) || (auditType === 'brand_identity' && showNewBrand && (newBrandFiles.length === 0 || !newBrandName.trim()))}
-        className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-full active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ background: 'var(--signal)', color: '#FFFFFF' }}
+        className="w-full flex items-center justify-center gap-2.5 font-sans font-medium text-[15px] py-3 px-6 rounded-lg active:scale-[0.98] transition-all min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
       >
         {loading || brandUploading ? (
           <>

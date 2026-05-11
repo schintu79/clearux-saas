@@ -141,7 +141,7 @@ function WebsiteAuditGroup({ domain, audits }: {
   }
 
   return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+    <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
       <Link
         href={`/dashboard/audits/site/${encodeURIComponent(domain)}`}
         className="block px-4 py-3"
@@ -241,7 +241,7 @@ function BrandAuditGroup({ brandName, audits }: {
   }
 
   return (
-    <div className="rounded-xl border border-border/40 dark:border-white/[0.06] bg-card overflow-hidden hover:border-brand/30 transition-colors group">
+    <div className="rounded-xl overflow-hidden transition-colors group" style={{ border: '1px solid var(--rule)', background: 'var(--paper)' }}>
       <Link
         href={`/dashboard/audits/brand/${encodeURIComponent(brandName)}`}
         className="block px-4 py-3"
@@ -417,8 +417,8 @@ function AuditsPageInner() {
   if (authLoading || (loading && user)) {
     return (
       <div className="max-w-2xl mx-auto py-6 space-y-3">
-        <div className="h-5 w-32 bg-off rounded animate-pulse" />
-        {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-off rounded-lg animate-pulse" />)}
+        <div className="h-5 w-32 rounded animate-pulse" style={{ background: 'var(--paper-2)' }} />
+        {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-lg animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
       </div>
     );
   }
@@ -429,26 +429,22 @@ function AuditsPageInner() {
   return (
     <div className="max-w-2xl mx-auto py-2">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <FileSearch size={22} style={{ color: 'var(--ink)' }} />
-            <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>All Audits</h1>
-          </div>
-          <p className="text-muted text-sm mt-1 pl-[34px]">
+          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Audits</h1>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {audits.length} audit{audits.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full transition-all hover:brightness-110" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
+        <Link href="/dashboard/new-audit" className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg transition-all hover:opacity-90" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
           <Sparkles size={13} />
-          New Audit
+          New audit
         </Link>
       </div>
 
-      {/* Audit Type Selector */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      {/* Audit Type Tabs */}
+      <div className="flex gap-0 mb-6" style={{ borderBottom: '1px solid var(--rule)' }}>
         {TABS.map((tab) => {
-          const Icon = tab.icon;
           const isActive = tab.key === activeTab;
           const count = tabCounts[tab.key] || 0;
           return (
@@ -456,37 +452,23 @@ function AuditsPageInner() {
               key={tab.key}
               disabled={tab.disabled}
               onClick={() => !tab.disabled && setActiveTab(tab.key)}
-              className={`relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all text-center ${
-                tab.disabled
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'cursor-pointer'
+              className={`relative flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors ${
+                tab.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
               }`}
               style={{
-                border: isActive ? '2px solid var(--ink)' : '2px solid var(--rule)',
-                background: isActive ? 'color-mix(in srgb, var(--ink) 4%, transparent)' : 'transparent',
+                color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                borderBottom: isActive ? '2px solid var(--ink)' : '2px solid transparent',
+                marginBottom: '-1px',
               }}
             >
-              <div className="transition-colors" style={{ color: isActive ? 'var(--ink)' : 'var(--m-muted)' }}>
-                {tab.disabled ? <Lock size={22} /> : <Icon size={22} />}
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1.5">
-                  <p className={`text-sm font-medium ${isActive ? 'text-text' : 'text-muted'}`}>
-                    {tab.label}
-                  </p>
-                  {!tab.disabled && count > 0 && (
-                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-off text-muted">
-                      {count}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted leading-tight mt-0.5">
-                  {tab.description}
-                </p>
-              </div>
+              <span>{tab.label}</span>
+              {!tab.disabled && count > 0 && (
+                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
+                  {count}
+                </span>
+              )}
               {tab.disabled && (
-                <span className="absolute top-2 right-2 flex items-center gap-1 text-[10px] text-muted bg-off px-1.5 py-0.5 rounded-full">
-                  <Lock size={8} />
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
                   Soon
                 </span>
               )}
@@ -496,27 +478,27 @@ function AuditsPageInner() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <p className="text-red-700 dark:text-red-300 text-xs">{error}</p>
+        <div className="mb-4 p-3 rounded-lg" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+          <p className="text-xs" style={{ color: 'var(--severe)' }}>{error}</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && filteredAudits.length === 0 && (
         <div className="text-center py-12">
-          <TabIcon size={24} className="text-muted mx-auto mb-3" />
-          <h2 className="font-medium text-sm text-text mb-1">No {tabLabel.toLowerCase()} audits yet</h2>
-          <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
+          <TabIcon size={22} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
+          <h2 className="font-medium text-[14px] mb-1" style={{ color: 'var(--ink)' }}>No {tabLabel.toLowerCase()} audits yet</h2>
+          <p className="text-[13px] mb-4 max-w-xs mx-auto" style={{ color: 'var(--m-muted)' }}>
             {activeTab === 'website'
               ? 'Create your first audit to see how your website scores.'
               : 'Run a brand identity audit to evaluate your brand materials.'}
           </p>
           <Link
             href={activeTab === 'brand_identity' ? '/dashboard/new-audit?type=brand_identity' : '/dashboard/new-audit'}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-full transition-all hover:brightness-110"
-            style={{ background: 'var(--signal)', color: '#FFFFFF' }}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-lg transition-all hover:opacity-90"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
-            <Sparkles size={13} /> Start {tabLabel} Audit
+            <Sparkles size={13} /> Start {tabLabel} audit
           </Link>
         </div>
       )}
@@ -547,8 +529,8 @@ export default function AuditsPage() {
     <Suspense
       fallback={
         <div className="max-w-2xl mx-auto py-6 space-y-3">
-          <div className="h-5 w-32 bg-off rounded animate-pulse" />
-          {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-off rounded-lg animate-pulse" />)}
+          <div className="h-5 w-32 rounded animate-pulse" style={{ background: 'var(--paper-2)' }} />
+          {[1, 2, 3].map((i) => <div key={i} className="h-14 rounded-lg animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
         </div>
       }
     >

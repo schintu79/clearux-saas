@@ -105,10 +105,10 @@ function scoreBarColor(s: number) {
 }
 
 const SEVERITY_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string; border: string; impactBg: string }> = {
-  critical: { label: 'Critical', dot: 'bg-severe', text: 'text-severe', bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-severe/5' },
-  high:     { label: 'High',     dot: 'bg-warn',   text: 'text-warn',   bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-warn/5' },
-  medium:   { label: 'Medium',   dot: 'bg-signal',  text: 'text-signal',  bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-signal/5' },
-  low:      { label: 'Low',      dot: 'bg-ok',     text: 'text-ok',     bg: 'bg-paper', border: 'border-rule', impactBg: 'bg-ok/5' },
+  critical: { label: 'Critical', dot: 'bg-severe', text: 'text-severe', bg: 'bg-paper', border: 'border-rule/60', impactBg: 'bg-severe/5' },
+  high:     { label: 'High',     dot: 'bg-warn',   text: 'text-warn',   bg: 'bg-paper', border: 'border-rule/60', impactBg: 'bg-warn/5' },
+  medium:   { label: 'Medium',   dot: 'bg-signal',  text: 'text-signal',  bg: 'bg-paper', border: 'border-rule/60', impactBg: 'bg-signal/5' },
+  low:      { label: 'Low',      dot: 'bg-ok',     text: 'text-ok',     bg: 'bg-paper', border: 'border-rule/60', impactBg: 'bg-ok/5' },
 };
 
 const statusMeta: Record<string, { label: string; description: string; icon: React.ElementType }> = {
@@ -321,8 +321,8 @@ function CategorySection({
   return (
     <div className="mb-8">
       {/* Category header — flat, editorial (matches website audit PillarSection) */}
-      <div className="border border-ink mb-4">
-        <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 border-b border-rule">
+      <div className="border border-rule mb-4 bg-paper">
+        <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 border-b border-rule/60">
           <div className="flex items-center gap-3">
             <Icon size={16} style={{ color: config.color }} className="flex-shrink-0" />
             <div>
@@ -347,7 +347,7 @@ function CategorySection({
         {expanded && (
           <>
             {/* Score bar */}
-            <div className="px-5 py-4 border-b border-rule">
+            <div className="px-5 py-4 border-b border-rule/60">
               <div className="w-full bg-rule/50 h-[3px] rounded-full">
                 <div
                   className={clsx('h-full rounded-full transition-all', scoreBarColor(category.score))}
@@ -358,7 +358,7 @@ function CategorySection({
 
             {/* Summary */}
             {category.summary && (
-              <div className="px-5 py-4 border-b border-rule">
+              <div className="px-5 py-4 border-b border-rule/60">
                 <p className="text-sm text-ink/80 leading-relaxed">{category.summary}</p>
               </div>
             )}
@@ -837,7 +837,7 @@ export default function BrandAuditDetail({
       {isCompleted && report && (
         <>
           {/* ── Hero Score Card (v2 editorial style matching website audit) ───── */}
-          <div className="border border-ink overflow-hidden mb-6">
+          <div className="border border-rule overflow-hidden mb-6 bg-paper">
             <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -964,8 +964,8 @@ export default function BrandAuditDetail({
           {activeTab === 'overview' && (
             <div className="space-y-3">
               {/* Category score bars overview */}
-              <div className="border border-ink mb-6 overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-rule">
+              <div className="border border-rule mb-6 overflow-hidden bg-paper">
+                <div className="px-5 py-3.5 border-b border-rule bg-paper-2/40">
                   <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">Score by Category</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -976,7 +976,7 @@ export default function BrandAuditDetail({
                       <button
                         key={cat.slug}
                         onClick={() => toggleCategory(cat.slug)}
-                        className={`flex items-center gap-4 px-5 py-4 border-b border-rule ${idx % 2 === 0 ? 'sm:border-r' : ''} hover:bg-paper-2 transition-colors`}
+                        className={`flex items-center gap-4 px-5 py-4 border-b border-rule/60 ${idx % 2 === 0 ? 'sm:border-r sm:border-rule/60' : ''} hover:bg-paper-2/60 transition-colors`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Icon size={14} style={{ color: config.color }} className="flex-shrink-0" />

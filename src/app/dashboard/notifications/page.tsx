@@ -69,11 +69,8 @@ export default function NotificationsPage() {
     <div className="max-w-2xl mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Bell size={22} style={{ color: 'var(--ink)' }} />
-            <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>Notifications</h1>
-          </div>
-          <p className="text-muted text-sm mt-1 pl-[34px]">
+          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Notifications</h1>
+          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
           </p>
         </div>
@@ -81,7 +78,7 @@ export default function NotificationsPage() {
 
       {notifications.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-12 h-12 rounded-full bg-off dark:bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--paper-2)' }}>
             <Bell size={20} className="text-muted" />
           </div>
           <p className="text-sm font-medium text-text mb-1">No notifications yet</p>

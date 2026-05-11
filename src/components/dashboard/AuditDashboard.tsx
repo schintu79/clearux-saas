@@ -130,10 +130,10 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
 }) {
   const passedChecks = Math.max(0, totalCheckpoints - totalFindings);
   const cards = [
-    { key: 'critical', label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500', bgColor: 'bg-red-50 dark:bg-red-950/20', borderColor: 'border-red-200/50 dark:border-red-800/20' },
-    { key: 'high', label: 'High Issues', count: severityCounts.high, description: 'High impact issues to fix', color: 'text-orange-600 dark:text-orange-400', dotColor: 'bg-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-950/20', borderColor: 'border-orange-200/50 dark:border-orange-800/20' },
-    { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200/50 dark:border-amber-800/20' },
-    { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', color: '[color:var(--ok)]', dotColor: '[background:var(--ok)]', bgColor: 'bg-emerald-500/5 dark:bg-emerald-950/20', borderColor: 'border-emerald-500/20 dark:border-emerald-800/20' },
+    { key: 'critical', label: 'Critical Issues', count: severityCounts.critical, description: 'Needs immediate attention', colorVar: '--severe', dotColor: 'bg-red-500' },
+    { key: 'high', label: 'High Issues', count: severityCounts.high, description: 'High impact issues to fix', colorVar: '--warn', dotColor: 'bg-orange-500' },
+    { key: 'medium', label: 'Medium Issues', count: severityCounts.medium + severityCounts.low, description: 'Low impact improvements', colorVar: '--warn', dotColor: 'bg-amber-500' },
+    { key: 'passed', label: 'Passed Checks', count: passedChecks, description: 'Good practices followed', colorVar: '--ok', dotColor: '[background:var(--ok)]' },
   ];
 
   return (
@@ -142,13 +142,17 @@ export function DashboardStatCards({ severityCounts, totalCheckpoints, totalFind
         <button
           key={card.key}
           onClick={() => onCardClick?.(card.key)}
-          className={`rounded-xl border ${card.borderColor} ${card.bgColor} p-4 transition-all hover:shadow-md hover:-translate-y-0.5 text-left cursor-pointer group`}
+          className="rounded-xl border p-4 transition-all hover:shadow-md hover:-translate-y-0.5 text-left cursor-pointer group"
+          style={{
+            background: `color-mix(in srgb, var(${card.colorVar}) 8%, transparent)`,
+            borderColor: `color-mix(in srgb, var(${card.colorVar}) 20%, transparent)`,
+          }}
         >
           <div className="flex items-center gap-2 mb-2">
             <span className={`w-2 h-2 rounded-full ${card.dotColor}`} />
-            <span className={`text-xs font-medium ${card.color}`}>{card.label}</span>
+            <span className="text-xs font-medium" style={{ color: `var(${card.colorVar})` }}>{card.label}</span>
           </div>
-          <p className={`text-2xl font-medium font-sans ${card.color}`}>{card.count}</p>
+          <p className="text-2xl font-medium font-sans" style={{ color: `var(${card.colorVar})` }}>{card.count}</p>
           <div className="flex items-center justify-between mt-1">
             <p className="text-[11px] text-muted">{card.description}</p>
             {card.key !== 'passed' && card.count > 0 && (
@@ -194,7 +198,7 @@ export function TopIssuesPanel({ findings, auditId }: {
     critical: 'bg-red-500 text-white',
     high: 'bg-orange-500 text-white',
     medium: 'bg-amber-400 text-amber-900',
-    low: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    low: 'bg-blue-500/10 text-blue-600',
   };
 
   const sevDotColors: Record<string, string> = {
@@ -207,7 +211,7 @@ export function TopIssuesPanel({ findings, auditId }: {
   return (
     <div className="flex-1 min-w-0">
       <h3 className="text-sm font-medium text-text mb-3">Top Issues</h3>
-      <div className="space-y-0 divide-y divide-border/20 dark:divide-white/[0.04]">
+      <div className="space-y-0 divide-y divide-border/20">
         {sorted.map((f) => {
           const badgeColor = sevBadgeColors[f.severity] || sevBadgeColors.medium;
           const dotColor = sevDotColors[f.severity] || 'bg-gray-400';
@@ -216,7 +220,7 @@ export function TopIssuesPanel({ findings, auditId }: {
             <Link
               key={f.id}
               href={auditId ? `/dashboard/audits/${auditId}?finding=${f.id}` : '#'}
-              className="flex items-center gap-3 py-2.5 group hover:bg-brand/5 dark:hover:bg-brand/[0.03] rounded-lg px-2 -mx-2 transition-colors"
+              className="flex items-center gap-3 py-2.5 group hover:bg-brand/5 rounded-lg px-2 -mx-2 transition-colors"
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
               <span className="text-xs font-medium text-text flex-1 min-w-0 truncate group-hover:text-brand transition-colors">{f.title}</span>
@@ -391,7 +395,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
     if (allScores.length < 2 || best === worst) return 'text-muted';
     if (score === best) return '[color:var(--ok)] font-medium';
     if (score === worst) return '[color:var(--severe)] font-medium';
-    return 'text-amber-600 dark:text-amber-400 font-medium';
+    return '[color:var(--warn)] font-medium';
   };
 
   /* ── Input form (empty state or editing) ── */
@@ -410,7 +414,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
               setManualInputs(updated);
             }}
             placeholder={`competitor${i + 1}.com`}
-            className="w-full px-3 py-2.5 text-sm rounded-lg border border-border/40 dark:border-white/[0.08] bg-off/50 dark:bg-white/[0.03] text-text placeholder:text-muted/40 focus:outline-none focus:ring-2 focus:ring-brand/30"
+            className="w-full px-3 py-2.5 text-sm rounded-lg border border-rule bg-off/50 text-text placeholder:text-muted/40 focus:outline-none focus:ring-2 focus:ring-brand/30"
           />
         ))}
       </div>
@@ -438,7 +442,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
   // Empty state or editing — show the form
   if (!hasCompetitors || editing) {
     return (
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
+      <div className="rounded-xl border border-rule bg-card shadow-sm overflow-hidden mb-6">
         <div className="px-5 pt-5 pb-2 flex items-center gap-2">
           <BarChart3 size={14} className="text-brand" />
           <h3 className="text-sm font-medium text-text">Benchmarks</h3>
@@ -455,7 +459,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
         ) : !hasCompetitors && manualInputs.every(d => !d.trim()) ? (
           /* First-time empty state with CTA */
           <div className="flex flex-col items-center justify-center text-center px-6 py-8">
-            <div className="w-12 h-12 rounded-2xl bg-brand/8 dark:bg-brand/10 flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand/8 flex items-center justify-center mb-4">
               <BarChart3 size={22} className="text-brand" />
             </div>
             <p className="text-base font-medium text-text mb-1">Benchmark against competitors</p>
@@ -478,7 +482,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
   ];
 
   return (
-    <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card shadow-sm overflow-hidden mb-6">
+    <div className="rounded-xl border border-rule bg-card shadow-sm overflow-hidden mb-6">
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-medium text-text">Benchmarks</h3>
@@ -503,7 +507,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-y border-border/20 dark:border-white/[0.04]">
+            <tr className="border-y border-border/20">
               <th className="text-left font-medium text-muted py-2 px-5 w-[140px]">Category</th>
               <th className="text-center font-medium text-brand py-2 px-3">You</th>
               {maxCompetitors.map((c, i) => (
@@ -513,7 +517,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/10 dark:divide-white/[0.03]">
+          <tbody className="divide-y divide-border/10">
             {rows.map((row) => {
               const isOverall = row.label === 'Overall';
               // Collect all scores for this row to determine best/worst
@@ -523,7 +527,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
               const allScores = [row.yourScore, ...compScores.filter((s): s is number => s != null)];
 
               return (
-                <tr key={row.label} className={`hover:bg-brand/5 dark:hover:bg-brand/[0.03] transition-colors ${isOverall ? 'font-medium' : ''}`}>
+                <tr key={row.label} className={`hover:bg-brand/5 transition-colors ${isOverall ? 'font-medium' : ''}`}>
                   <td className="py-2.5 px-5 text-text">{row.label}</td>
                   <td className={`py-2.5 px-3 text-center ${scoreColor(row.yourScore, allScores)}`}>
                     {row.yourScore}
@@ -580,25 +584,25 @@ export function AuditDashboardOverview({
       {/* Row 1: UX Score + Score Over Time */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {/* UX Score Card */}
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-rule bg-card p-5 shadow-sm">
           <h3 className="text-sm font-medium text-text mb-4">UX Score</h3>
           <div className="flex flex-col items-center">
             <ScoreRing score={overallScore} size={130} strokeWidth={8} />
             <p className="text-xs text-muted mt-2">/100</p>
-            <span className={`text-sm font-medium mt-1 px-3 py-0.5 rounded-full ${
-              overallScore >= 70
-                ? 'bg-emerald-500/10 [color:var(--ok)]'
-                : overallScore >= 40
-                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                  : 'bg-red-100 dark:bg-red-900/30 [color:var(--severe)]'
-            }`}>
+            <span
+              className="text-sm font-medium mt-1 px-3 py-0.5 rounded-full"
+              style={{
+                color: overallScore >= 70 ? 'var(--ok)' : overallScore >= 40 ? 'var(--warn)' : 'var(--severe)',
+                background: `color-mix(in srgb, ${overallScore >= 70 ? 'var(--ok)' : overallScore >= 40 ? 'var(--warn)' : 'var(--severe)'} 10%, transparent)`,
+              }}
+            >
               {overallScore >= 70 ? 'Great UX' : overallScore >= 40 ? 'Needs Work' : 'Poor UX'}
             </span>
           </div>
         </div>
 
         {/* Score Over Time Card */}
-        <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-rule bg-card p-5 shadow-sm">
           {scoreTrend.length >= 2 ? (
             <ScoreOverTimeChart trend={scoreTrend} />
           ) : (
@@ -628,7 +632,7 @@ export function AuditDashboardOverview({
       />
 
       {/* Row 3: Heuristic Breakdown — full width */}
-      <div className="rounded-xl border border-border/30 dark:border-white/[0.06] bg-card p-5 shadow-sm mb-6">
+      <div className="rounded-xl border border-rule bg-card p-5 shadow-sm mb-6">
         <HeuristicRadarChart pillarScores={pillarScores} />
       </div>
 

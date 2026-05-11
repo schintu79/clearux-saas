@@ -225,11 +225,8 @@ const WhiteLabelPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <Paintbrush size={22} className="text-brand" />
-          <h1 className="text-2xl font-medium font-sans text-text">White Label</h1>
-        </div>
-        <p className="text-muted text-sm mt-1 pl-[34px]">
+        <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>White label</h1>
+        <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
           Customize reports with your own branding. Settings apply to all future audits.
         </p>
       </div>
@@ -271,8 +268,8 @@ const WhiteLabelPage: React.FC = () => {
             </div>
           )}
           {errorMsg && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-              <p className="text-red-700 dark:text-red-300 text-sm">{errorMsg}</p>
+            <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+              <p className="text-sm" style={{ color: 'var(--severe)' }}>{errorMsg}</p>
             </div>
           )}
 

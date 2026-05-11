@@ -3,7 +3,6 @@ import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Hero } from '@/components/marketing/Hero'
 import { Problem } from '@/components/marketing/Problem'
-import { Comparison } from '@/components/marketing/Comparison'
 import { InstrumentGrid } from '@/components/marketing/InstrumentGrid'
 import { CheckpointTicker } from '@/components/marketing/CheckpointTicker'
 import { BenchmarkTable } from '@/components/marketing/BenchmarkTable'
@@ -27,7 +26,6 @@ export default function HomePage() {
       <main>
         <Hero />
         <Problem />
-        <Comparison />
         <InstrumentGrid />
         <CheckpointTicker />
         <BenchmarkTable />

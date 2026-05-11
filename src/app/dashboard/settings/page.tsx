@@ -284,11 +284,8 @@ const SettingsPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <SettingsIcon size={22} style={{ color: 'var(--ink)' }} />
-          <h1 className="text-2xl font-normal font-sans" style={{ color: 'var(--ink)' }}>Settings</h1>
-        </div>
-        <p className="text-muted text-sm mt-1 pl-[34px]">Manage your account and preferences</p>
+        <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Settings</h1>
+        <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Manage your account and preferences</p>
       </div>
 
       {/* Tabs */}
@@ -328,8 +325,8 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
             {messages.profileError && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-red-700 dark:text-red-300 text-sm">{messages.profileError}</p>
+              <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+                <p className="text-sm" style={{ color: 'var(--severe)' }}>{messages.profileError}</p>
               </div>
             )}
 
@@ -382,8 +379,8 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
             {messages.billingError && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-red-700 dark:text-red-300 text-sm">{messages.billingError}</p>
+              <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+                <p className="text-sm" style={{ color: 'var(--severe)' }}>{messages.billingError}</p>
               </div>
             )}
 
@@ -470,8 +467,8 @@ const SettingsPage: React.FC = () => {
                 </div>
               )}
               {messages.passwordError && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                  <p className="text-red-700 dark:text-red-300 text-sm">{messages.passwordError}</p>
+                <div className="rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+                  <p className="text-sm" style={{ color: 'var(--severe)' }}>{messages.passwordError}</p>
                 </div>
               )}
 
@@ -495,21 +492,21 @@ const SettingsPage: React.FC = () => {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10">
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-red-900 dark:text-red-300">Danger Zone</h2>
-              <p className="text-sm text-red-800/80 dark:text-red-400/80">
+          <Card>
+            <div className="space-y-4" style={{ borderTop: '2px solid var(--severe)', marginTop: '-1px', paddingTop: '20px' }}>
+              <h2 className="text-lg font-medium" style={{ color: 'var(--severe)' }}>Danger zone</h2>
+              <p className="text-sm" style={{ color: 'var(--m-muted)' }}>
                 Once you delete your account, there is no going back. All your audits, reports, and data will be permanently removed.
               </p>
 
               {deleteError && (
-                <div className="p-3 rounded-md bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700">
-                  <p className="text-xs text-red-700 dark:text-red-300">{deleteError}</p>
+                <div className="p-3 rounded-md" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>
+                  <p className="text-xs" style={{ color: 'var(--severe)' }}>{deleteError}</p>
                 </div>
               )}
 
               <div className="pt-1">
-                <label className="block text-xs font-medium text-red-800 dark:text-red-400 mb-1.5">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--severe)' }}>
                   Type <span className="font-medium">DELETE</span> to confirm
                 </label>
                 <input
@@ -517,7 +514,8 @@ const SettingsPage: React.FC = () => {
                   value={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md border border-red-300 dark:border-red-700 bg-card dark:bg-red-900/30 text-text placeholder:text-red-300 dark:placeholder:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full max-w-[200px] px-3 py-2 text-sm rounded-md focus:outline-none"
+                  style={{ border: '1px solid var(--rule)', background: 'var(--card)', color: 'var(--ink)' }}
                 />
               </div>
 

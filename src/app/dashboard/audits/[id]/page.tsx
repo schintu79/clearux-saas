@@ -335,8 +335,8 @@ function CheckpointHealth({ categoryScores, findings }: {
   }
 
   return (
-    <div className="mb-6 border border-ink overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-rule">
+    <div className="mb-6 border border-rule overflow-hidden bg-paper">
+      <div className="px-5 py-3.5 border-b border-rule/60 bg-paper-2/40">
         <div className="flex items-center gap-2">
           <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">{categoryScores.length * 4}-Checkpoint health</h3>
           <span className="text-[11px] font-mono text-m-muted ml-auto tracking-[0.06em] uppercase">
@@ -344,7 +344,7 @@ function CheckpointHealth({ categoryScores, findings }: {
           </span>
         </div>
       </div>
-      <div className="divide-y divide-rule">
+      <div className="divide-y divide-rule/60">
         {categoryScores.map((cat, catIdx) => {
           const checkpoints = CHECKPOINT_LABELS[cat.name] || ['Check 1', 'Check 2', 'Check 3', 'Check 4'];
           const catFindings = findingsByCategory[cat.name] || [];
@@ -452,7 +452,7 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
   return (
-    <div className="mb-6 border border-ink overflow-hidden">
+    <div className="mb-6 border border-rule overflow-hidden bg-paper">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -904,8 +904,8 @@ function PillarSection({
   return (
     <div className="mb-8">
       {/* Pillar header — flat, editorial */}
-      <div className="border border-ink mb-4">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-rule">
+      <div className="border border-rule mb-4 bg-paper">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-rule/60">
           <div className="flex items-center gap-3">
             {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 16, className: 'text-signal flex-shrink-0' })}
             <div>
@@ -924,7 +924,7 @@ function PillarSection({
           {pillarCats.map((cat, relIdx) => {
             const globalIdx = pillar.range[0] + relIdx;
             return (
-              <div key={globalIdx} className={`flex items-center gap-4 px-5 py-4 border-b border-rule ${relIdx % 2 === 0 ? 'sm:border-r' : ''}`}>
+              <div key={globalIdx} className={`flex items-center gap-4 px-5 py-4 border-b border-rule/60 ${relIdx % 2 === 0 ? 'sm:border-r sm:border-rule/60' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-sans font-medium text-ink mb-1.5">{cat.name}</p>
                   <div className="w-full bg-rule/50 h-[3px] rounded-full">
@@ -1750,7 +1750,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isCompleted && report && (
         <>
           {/* ── Hero Score Card ─────────────────────────────── */}
-          <div ref={scoreCardRef} className="border border-ink overflow-hidden mb-6">
+          <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-paper">
             <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
