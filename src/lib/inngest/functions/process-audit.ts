@@ -569,6 +569,12 @@ RULES FOR RE-AUDIT:
         activeSlugsBl = auditDetails.selectedPillars
           .filter((idx: number) => idx >= 0 && idx < 4)
           .map((idx: number) => MODULE_SLUG_ORDER_BL[idx])
+        // Also include modules that are part of a complete audit but have no legacy index
+        for (const mod of AUDIT_MODULES) {
+          if (mod.includedInComplete && mod.legacyPillarIndex == null && !activeSlugsBl.includes(mod.slug)) {
+            activeSlugsBl.push(mod.slug)
+          }
+        }
       } else {
         activeSlugsBl = [...COMPLETE_AUDIT_SLUGS]
       }
@@ -714,6 +720,14 @@ RULES FOR RE-AUDIT:
         activeSlugs = auditDetails.selectedPillars
           .filter((idx: number) => idx >= 0 && idx < 4)
           .map((idx: number) => MODULE_SLUG_ORDER[idx])
+        // Also include modules that are part of a complete audit but have no legacy index
+        // (e.g. seo_structure was added after the legacy pillar system)
+        const legacyMappedSlugs = new Set(activeSlugs)
+        for (const mod of AUDIT_MODULES) {
+          if (mod.includedInComplete && mod.legacyPillarIndex == null && !legacyMappedSlugs.has(mod.slug)) {
+            activeSlugs.push(mod.slug)
+          }
+        }
       } else {
         // Complete audit: all modules that are includedInComplete
         activeSlugs = [...COMPLETE_AUDIT_SLUGS]
