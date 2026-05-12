@@ -40,7 +40,7 @@ export default function AboutContent() {
             {[
               {
                 title: 'The problem we saw',
-                desc: 'After 20+ years in digital, the pattern was clear: companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
+                desc: 'The pattern was always the same: the companies that needed UX audits the most couldn\'t afford them. Enterprise got $15K consultants. Everyone else was left guessing.',
               },
               {
                 title: 'What kept going wrong',
@@ -86,13 +86,10 @@ export default function AboutContent() {
 
                 <div className="space-y-4 font-sans text-[15px] text-ink-2 leading-[1.65]">
                   <p>
-                    20+ years in digital product design, UX strategy, and conversion optimisation. Worked with founders, product managers, and design leads at SaaS companies and digital product teams — from early-stage MVPs to products serving millions.
+                    Two decades in product design, UX strategy, and conversion optimisation — from early-stage MVPs to products serving millions. The frustration was always the same: brilliant teams shipping without a structured UX review, because the only option was a consultant charging five figures.
                   </p>
                   <p>
-                    The frustration was always the same: brilliant teams shipping products without a structured UX review — because the only option was a consultant charging five figures and taking six weeks.
-                  </p>
-                  <p>
-                    ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks, at a fraction of the cost.
+                    ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks.
                   </p>
                 </div>
 

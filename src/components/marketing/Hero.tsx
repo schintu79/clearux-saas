@@ -14,7 +14,7 @@ export function Hero() {
               The audit your team <em className="italic text-signal">actually</em> ships from.
             </h1>
             <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[520px] mb-10 font-sans">
-              ClearUX runs <strong className="font-semibold text-ink">96 checkpoints across 6 modules</strong> on your website, brand, and design — and returns a report your team can act on. Severity-ranked. Evidence-backed. No agency, no consultant, no six-week waitlist.
+              Paste a URL. Get a <strong className="font-semibold text-ink">96-checkpoint audit</strong> your team can act on — severity-ranked, evidence-backed, delivered in minutes instead of weeks.
             </p>
             <div className="flex gap-3.5 mb-14 max-sm:flex-col max-sm:items-stretch">
               <Button href="/register">

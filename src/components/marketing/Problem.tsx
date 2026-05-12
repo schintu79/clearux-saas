@@ -30,10 +30,7 @@ export function Problem() {
           </div>
           <div>
             <p className="text-[19px] leading-[1.55] text-ink-2 mb-7 font-sans">
-              The agency audit was designed for the era of quarterly releases and a single device. Today your product ships weekly, lives across screens, and is read by humans and large language models in the same breath.
-            </p>
-            <p className="text-[19px] leading-[1.55] text-ink-2 mb-7 font-sans">
-              The old playbook — six-week engagements, $30k invoices, slide decks delivered after the regression — doesn&apos;t scale.
+              Your product ships weekly, lives across screens, and is read by humans and language models alike. The old playbook — six-week engagements, $30k invoices, slide decks delivered after the regression — doesn&apos;t scale.
             </p>
 
             {/* Pull quote */}
