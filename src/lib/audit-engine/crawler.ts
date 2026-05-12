@@ -302,6 +302,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
       'X-Return-Format': 'text',
       'X-No-Cache': 'true',
       'Cache-Control': 'no-cache',
+      'X-With-Links': 'true', // Get rendered navigation links (critical for SPAs)
     }
 
     // Use Jina API key if available (higher rate limits)
@@ -326,11 +327,14 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     let title: string | null = null
     let description: string | null = null
 
+    let jinaLinksMap: Record<string, string> | null = null
     if (contentType.includes('application/json')) {
       const json = await response.json() as any
       contentText = json.data?.content || json.data?.text || json.text || ''
       title = json.data?.title || json.title || null
       description = json.data?.description || null
+      // X-With-Links: Jina returns rendered page links as { url: anchorText }
+      jinaLinksMap = json.data?.links || json.links || null
     } else {
       contentText = await response.text()
       // Try to extract title from markdown (Jina often returns "Title: ...\n")
@@ -346,7 +350,24 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
     // Extract links from the RAW markdown BEFORE cleaning (critical for discovery)
     const rawLinks = extractLinksFromText(contentText, url)
     const discoveredUrls = rawLinks.map((l) => l.toString())
-    console.log(`[crawler] Jina extracted ${discoveredUrls.length} links from raw markdown for ${url}`)
+
+    // Also include links from X-With-Links response (rendered navigation links from SPAs)
+    if (jinaLinksMap && typeof jinaLinksMap === 'object') {
+      const baseHost = new URL(url).hostname
+      for (const href of Object.keys(jinaLinksMap)) {
+        try {
+          const resolved = new URL(href, url)
+          if (isSameHost(resolved.hostname, baseHost)) {
+            const urlStr = resolved.toString()
+            if (!discoveredUrls.includes(urlStr)) {
+              discoveredUrls.push(urlStr)
+            }
+          }
+        } catch { /* skip invalid */ }
+      }
+    }
+
+    console.log(`[crawler] Jina extracted ${discoveredUrls.length} links for ${url} (markdown: ${rawLinks.length}, X-With-Links: ${jinaLinksMap ? Object.keys(jinaLinksMap).length : 0})`)
 
     // Clean up Jina markdown formatting for our purposes
     contentText = contentText
@@ -727,10 +748,13 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
     if (response.ok) {
       const html = await response.text()
       const { links } = extractLinks(html, url)
-      if (links.length >= 1) {
+      // Require at least 5 same-host links before trusting static HTML
+      // SPAs often have 1-2 static links (logo, canonical) but need Jina for nav links
+      if (links.length >= 5) {
         console.log(`[crawler] fetchLinksOnly: found ${links.length} links via direct HTML`)
         return links
       }
+      console.log(`[crawler] fetchLinksOnly: only ${links.length} links from HTML (likely SPA) — trying Jina`)
     }
   } catch {
     // Direct fetch failed — try Jina
@@ -745,6 +769,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-Return-Format': 'text',
+      'X-With-Links': 'true', // Ask Jina to include rendered navigation links
     }
     const jinaKey = process.env.JINA_API_KEY
     if (jinaKey) headers['Authorization'] = `Bearer ${jinaKey}`
@@ -756,16 +781,35 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
 
     const contentType = response.headers.get('content-type') || ''
     let text: string
+    const extraLinks: URL[] = []
     if (contentType.includes('application/json')) {
       const json = await response.json() as any
       text = json.data?.content || json.data?.text || json.text || ''
+      // X-With-Links: Jina returns a links object { url: text } in the response
+      const jinaLinks = json.data?.links || json.links
+      if (jinaLinks && typeof jinaLinks === 'object') {
+        for (const href of Object.keys(jinaLinks)) {
+          try {
+            const resolved = new URL(href, url)
+            if (isSameHost(resolved.hostname, new URL(url).hostname)) {
+              extraLinks.push(resolved)
+            }
+          } catch { /* skip invalid */ }
+        }
+        if (extraLinks.length > 0) {
+          console.log(`[crawler] fetchLinksOnly: Jina X-With-Links returned ${extraLinks.length} same-host links`)
+        }
+      }
     } else {
       text = await response.text()
     }
 
-    const links = extractLinksFromText(text, url)
-    console.log(`[crawler] fetchLinksOnly: found ${links.length} links via Jina fallback`)
-    return links
+    const textLinks = extractLinksFromText(text, url)
+    const allLinks = [...textLinks, ...extraLinks]
+    // Deduplicate
+    const deduped = [...new Map(allLinks.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()]
+    console.log(`[crawler] fetchLinksOnly: found ${deduped.length} links via Jina fallback (${textLinks.length} from text, ${extraLinks.length} from X-With-Links)`)
+    return deduped
   } catch {
     return []
   }
@@ -860,9 +904,11 @@ export async function crawlPages(
             }
           }
 
-          // C3: If HTML extraction found very few links, also try Jina for JS-rendered links
-          if (allLinks.length < 3) {
-            console.log(`[crawler] Only ${allLinks.length} links from HTML — trying Jina for JS-rendered link discovery`)
+          // C3: If HTML extraction found few links, or the page was JS-rendered (no rawHtml),
+          // try Jina for JS-rendered link discovery
+          const isSPA = !firstPage.rawHtml // Page was fetched via Jina = likely SPA/JS-rendered
+          if (allLinks.length < 8 || isSPA) {
+            console.log(`[crawler] ${isSPA ? 'SPA detected (no rawHtml)' : `Only ${allLinks.length} links from HTML`} — trying Jina for JS-rendered link discovery`)
             const fetchedLinks = await fetchLinksOnly(firstPage.url || url)
             allLinks.push(...fetchedLinks)
           }
