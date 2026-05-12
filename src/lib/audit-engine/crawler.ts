@@ -100,41 +100,79 @@ function extractMetaDescription(html: string): string | null {
 function extractLinks(html: string, pageUrl: string): { links: URL[]; count: number } {
   const baseUrl = new URL(pageUrl)
   const links: URL[] = []
+
+  function addLink(href: string) {
+    try {
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:') || href.startsWith('data:')) return
+      const url = href.startsWith('http') ? new URL(href) : new URL(href, pageUrl)
+      if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
+    } catch { /* skip invalid */ }
+  }
+
+  // 1. Standard <a href> extraction
   const linkRegex = /<a\s+[^>]*href=["']([^"']*)["']/gi
   let match
+  while ((match = linkRegex.exec(html)) !== null) addLink(match[1])
 
-  while ((match = linkRegex.exec(html)) !== null) {
-    try {
-      const href = match[1]
-      if (href.startsWith('http://') || href.startsWith('https://')) {
-        const url = new URL(href)
-        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
-      } else if (!href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:') && !href.startsWith('javascript:')) {
-        const url = new URL(href, pageUrl)
-        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
-      }
-    } catch {
-      // Skip invalid URLs
+  // 2. Also extract from <link rel="alternate/canonical"> and other <link> elements
+  const metaLinkRegex = /<link\s+[^>]*href=["']([^"']*)["'][^>]*>/gi
+  while ((match = metaLinkRegex.exec(html)) !== null) {
+    // Only include if it's a page-like link (not stylesheet, icon, etc.)
+    const tag = match[0].toLowerCase()
+    if (tag.includes('rel="alternate"') || tag.includes('rel="canonical"') || tag.includes('hreflang')) {
+      addLink(match[1])
     }
   }
 
-  // Also extract links from <nav> elements specifically (catches JS framework nav menus)
+  // 3. Extract from Next.js __NEXT_DATA__ JSON (catches client-side route links)
+  const nextDataMatch = html.match(/<script\s+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i)
+  if (nextDataMatch) {
+    // Extract all path-like strings from the JSON (e.g. "/pricing", "/about")
+    const pathRegex = /"(\/[a-zA-Z0-9][\w\-\/]*?)"/g
+    let pathMatch
+    while ((pathMatch = pathRegex.exec(nextDataMatch[1])) !== null) {
+      const path = pathMatch[1]
+      // Filter out API routes, asset paths, and query params
+      if (!path.startsWith('/api/') && !path.startsWith('/_next/') && !path.startsWith('/static/') &&
+          !path.includes('.') && path.length > 1 && path.length < 80) {
+        addLink(path)
+      }
+    }
+  }
+
+  // 4. Extract from inline <script> route definitions (common in SPAs)
+  // Catches patterns like: {path:"/pricing"} or routes:["/about","/pricing"]
+  const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
+  let scriptMatch
+  while ((scriptMatch = scriptRegex.exec(html)) !== null) {
+    const script = scriptMatch[1]
+    // Only process scripts that look like they contain route data
+    if (script.includes('path') || script.includes('route') || script.includes('href')) {
+      const routeRegex = /["'](\/[a-zA-Z][\w\-\/]{1,60})["']/g
+      let routeMatch
+      while ((routeMatch = routeRegex.exec(script)) !== null) {
+        const path = routeMatch[1]
+        if (!path.startsWith('/api/') && !path.startsWith('/_next/') && !path.startsWith('/static/') &&
+            !path.startsWith('/node_modules') && !path.includes('.') && path.length > 1) {
+          addLink(path)
+        }
+      }
+    }
+  }
+
+  // 5. Also extract links from <nav> elements specifically (catches JS framework nav menus)
   const navRegex = /<nav\b[^>]*>([\s\S]*?)<\/nav>/gi
   let navMatch
   while ((navMatch = navRegex.exec(html)) !== null) {
     const navHtml = navMatch[1]
     const navLinkRegex = /<a\s+[^>]*href=["']([^"']*)["']/gi
     let navLink
-    while ((navLink = navLinkRegex.exec(navHtml)) !== null) {
-      try {
-        const href = navLink[1]
-        const url = href.startsWith('http') ? new URL(href) : new URL(href, pageUrl)
-        if (isSameHost(url.hostname, baseUrl.hostname)) links.push(url)
-      } catch { /* skip */ }
-    }
+    while ((navLink = navLinkRegex.exec(navHtml)) !== null) addLink(navLink[1])
   }
 
-  return { links: [...new Map(links.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()], count: links.length }
+  const dedupedLinks = [...new Map(links.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()]
+  console.log(`[crawler] extractLinks: found ${dedupedLinks.length} unique internal links from HTML (${links.length} raw)`)
+  return { links: dedupedLinks, count: links.length }
 }
 
 /* ── Bot-detection checks ──────────────────────────────────── */
@@ -689,7 +727,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
     if (response.ok) {
       const html = await response.text()
       const { links } = extractLinks(html, url)
-      if (links.length >= 3) {
+      if (links.length >= 1) {
         console.log(`[crawler] fetchLinksOnly: found ${links.length} links via direct HTML`)
         return links
       }
@@ -804,26 +842,40 @@ export async function crawlPages(
         })(),
         // Strategy B: Common page path probing
         probeCommonPaths(resolvedOrigin, baseHostname).catch(() => [] as URL[]),
-        // Strategy C: HTML/text link extraction (original approach)
+        // Strategy C: HTML/text link extraction (multi-source)
         (async () => {
-          // If we have raw HTML, extract links from it (static sites)
+          const allLinks: URL[] = []
+
+          // C1: If we have raw HTML, extract links from it (static sites)
           if (firstPage.rawHtml) {
-            return extractLinks(firstPage.rawHtml, url).links
+            const htmlExtracted = extractLinks(firstPage.rawHtml, firstPage.url || url).links
+            allLinks.push(...htmlExtracted)
           }
-          // If Jina already extracted links (stored before cleanup), use those
+
+          // C2: If Jina already extracted links (stored before cleanup), add those
           if (firstPage.discoveredUrls && firstPage.discoveredUrls.length > 0) {
             console.log(`[crawler] Using ${firstPage.discoveredUrls.length} pre-extracted Jina links`)
-            return firstPage.discoveredUrls.map((u) => {
-              try { return new URL(u) } catch { return null }
-            }).filter((u): u is URL => u !== null)
+            for (const u of firstPage.discoveredUrls) {
+              try { allLinks.push(new URL(u)) } catch { /* skip */ }
+            }
           }
-          // Last resort — fetch again specifically for link discovery (uses Jina fallback)
-          const fetchedLinks = await fetchLinksOnly(url)
-          return fetchedLinks
+
+          // C3: If HTML extraction found very few links, also try Jina for JS-rendered links
+          if (allLinks.length < 3) {
+            console.log(`[crawler] Only ${allLinks.length} links from HTML — trying Jina for JS-rendered link discovery`)
+            const fetchedLinks = await fetchLinksOnly(firstPage.url || url)
+            allLinks.push(...fetchedLinks)
+          }
+
+          // Deduplicate
+          return [...new Map(allLinks.map((l) => [normalizeUrlForDedup(l.toString()), l])).values()]
         })(),
       ])
 
       console.log(`[crawler] Discovery results — sitemap: ${sitemapUrls.length}, common paths: ${commonPathUrls.length}, HTML links: ${htmlLinks.length}`)
+      if (sitemapUrls.length > 0) console.log(`[crawler] Sitemap URLs: ${sitemapUrls.slice(0, 5).map(u => u.pathname).join(', ')}${sitemapUrls.length > 5 ? '...' : ''}`)
+      if (commonPathUrls.length > 0) console.log(`[crawler] Common paths found: ${commonPathUrls.slice(0, 5).map(u => u.pathname).join(', ')}${commonPathUrls.length > 5 ? '...' : ''}`)
+      if (htmlLinks.length > 0) console.log(`[crawler] HTML links found: ${htmlLinks.slice(0, 5).map(u => u.pathname).join(', ')}${htmlLinks.length > 5 ? '...' : ''}`)
 
       // ── Merge and deduplicate all discovered URLs ──
       const allDiscoveredMap = new Map<string, URL>()

@@ -624,11 +624,11 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
 
   if (dismissed) {
     return (
-      <div className="border border-rule p-3 opacity-60">
+      <div className="rounded-xl border border-rule/20 bg-paper p-3 opacity-60">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-m-muted flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-rule flex-shrink-0" />
           <span className="text-xs text-m-muted line-through flex-1">{finding.title}</span>
-          <span className="text-[11px] font-mono text-m-muted bg-paper-2 px-2 py-0.5 tracking-[0.06em] uppercase">Dismissed</span>
+          <span className="text-[11px] font-mono text-m-muted bg-paper-2 px-2 py-0.5 rounded-full tracking-[0.06em] uppercase">Dismissed</span>
         </div>
         {finding.dismissal_reason && (
           <p className="text-[11px] text-m-muted mt-1 ml-4">{finding.dismissal_reason}</p>
@@ -638,11 +638,11 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
   }
 
   return (
-    <div className={`border ${sev.border} overflow-hidden transition-all`}>
+    <div className={`rounded-xl border ${sev.border} bg-paper overflow-hidden transition-all shadow-sm`}>
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-paper-2 transition-colors"
+        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-black/[0.02] transition-colors"
         aria-expanded={open}
       >
         <span className="mt-1.5"><span className={`block w-2 h-2 rounded-full ${sev.dot}`} /></span>
@@ -2024,7 +2024,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 );
               })}
 
-              {/* Checkpoint Health removed — category breakdown is now inside each module */}
+              {/* Checkpoint Health — category-level pass/fail summary */}
+              <CheckpointHealth categoryScores={categoryScores} findings={findings} />
 
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
