@@ -434,7 +434,7 @@ const NewAuditInner: React.FC = () => {
 
       {/* Hero */}
       <div className="text-center mb-10">
-        <h1 className="text-[24px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-xl font-medium font-sans mb-2" style={{ color: 'var(--ink)' }}>
           New audit
         </h1>
         <p className="text-[14px]" style={{ color: 'var(--m-muted)' }}>

@@ -284,12 +284,12 @@ const SettingsPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Settings</h1>
+        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Settings</h1>
         <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Manage your account and preferences</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-off mb-8">
+      <div className="flex gap-1 p-1 rounded-xl mb-8" style={{ background: 'var(--paper-2)' }}>
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -297,13 +297,14 @@ const SettingsPage: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
-                isActive
-                  ? 'bg-card text-text shadow-sm'
-                  : 'text-muted hover:text-text'
-              }`}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-all flex-1 justify-center"
+              style={{
+                color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                background: isActive ? 'var(--card)' : 'transparent',
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
             >
-              <Icon size={15} />
+              <Icon size={14} strokeWidth={1.5} />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );

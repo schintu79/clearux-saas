@@ -431,7 +431,7 @@ function AuditsPageInner() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Audits</h1>
+          <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Audits</h1>
           <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {audits.length} audit{audits.length !== 1 ? 's' : ''} total
           </p>
@@ -443,34 +443,40 @@ function AuditsPageInner() {
       </div>
 
       {/* Audit Type Tabs */}
-      <div className="flex gap-0 mb-6" style={{ borderBottom: '1px solid var(--rule)' }}>
+      <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: 'var(--paper-2)' }}>
         {TABS.map((tab) => {
           const isActive = tab.key === activeTab;
           const count = tabCounts[tab.key] || 0;
+          const Icon = tab.icon;
           return (
             <button
               key={tab.key}
               disabled={tab.disabled}
               onClick={() => !tab.disabled && setActiveTab(tab.key)}
-              className={`relative flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors ${
+              className={`relative flex items-center justify-center gap-2 flex-1 px-4 py-2.5 text-[13px] font-medium rounded-lg transition-all ${
                 tab.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
               }`}
               style={{
                 color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-                borderBottom: isActive ? '2px solid var(--ink)' : '2px solid transparent',
-                marginBottom: '-1px',
+                background: isActive ? 'var(--card)' : 'transparent',
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
               }}
             >
+              <Icon size={14} strokeWidth={1.5} />
               <span>{tab.label}</span>
               {!tab.disabled && count > 0 && (
-                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
+                <span
+                  className="text-[11px] font-medium px-1.5 py-0.5 rounded-full leading-none"
+                  style={{
+                    background: isActive ? 'var(--paper-2)' : 'var(--paper-3)',
+                    color: 'var(--m-muted)',
+                  }}
+                >
                   {count}
                 </span>
               )}
               {tab.disabled && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>
-                  Soon
-                </span>
+                <Lock size={10} className="ml-0.5" />
               )}
             </button>
           );

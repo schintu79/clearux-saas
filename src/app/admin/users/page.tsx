@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Search, ChevronLeft, ChevronRight, Plus, Minus, X } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Plus, Minus, X, Settings2 } from 'lucide-react'
 
 interface User {
   id: string
@@ -11,6 +11,10 @@ interface User {
   credits: number
   audit_count: number
   package_tier: string
+  subscription_plan: string | null
+  subscription_status: string | null
+  free_membership: boolean
+  free_membership_expiry: string | null
   role: string
   white_label: boolean
   created_at: string
@@ -24,6 +28,14 @@ interface CreditModal {
   type: 'add' | 'remove'
 }
 
+interface PlanModal {
+  user: User
+  plan: string
+  credits: string
+  freeMembership: boolean
+  expiryDate: string
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [total, setTotal] = useState(0)
@@ -33,6 +45,7 @@ export default function AdminUsersPage() {
   const [searchInput, setSearchInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [creditModal, setCreditModal] = useState<CreditModal | null>(null)
+  const [planModal, setPlanModal] = useState<PlanModal | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const fetchUsers = useCallback(() => {
@@ -86,6 +99,33 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handlePlanSubmit = async () => {
+    if (!planModal) return
+    setSubmitting(true)
+    try {
+      const body: Record<string, any> = { user_id: planModal.user.id }
+      if (planModal.plan) body.subscription_plan = planModal.plan === 'none' ? null : planModal.plan
+      if (planModal.credits) body.credits = parseInt(planModal.credits, 10)
+      body.free_membership = planModal.freeMembership
+      if (planModal.expiryDate) body.expiry_date = planModal.expiryDate
+      else body.expiry_date = null
+
+      const res = await fetch('/api/admin/users/plan', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        setPlanModal(null)
+        fetchUsers()
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const tierColors: Record<string, string> = {
     starter: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
     growth: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
@@ -102,7 +142,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Users</h1>
+        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Users</h1>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>{total} total users</p>
       </div>
 
@@ -201,6 +241,19 @@ export default function AdminUsersPage() {
                         >
                           <Minus size={14} />
                         </button>
+                        <button
+                          onClick={() => setPlanModal({
+                            user: u,
+                            plan: u.subscription_plan || 'none',
+                            credits: String(u.credits),
+                            freeMembership: u.free_membership || false,
+                            expiryDate: u.free_membership_expiry || '',
+                          })}
+                          className="p-1.5 rounded-lg hover:bg-[var(--signal)]/10 text-muted transition-colors"
+                          title="Manage plan"
+                        >
+                          <Settings2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -293,6 +346,104 @@ export default function AdminUsersPage() {
                 style={{ background: creditModal.type === 'add' ? 'var(--ok)' : 'var(--severe)' }}
               >
                 {submitting ? 'Processing...' : creditModal.type === 'add' ? 'Add Credits' : 'Remove Credits'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Plan override modal */}
+      {planModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setPlanModal(null)}>
+          <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-medium font-sans" style={{ color: 'var(--ink)' }}>
+                Manage plan
+              </h3>
+              <button onClick={() => setPlanModal(null)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
+                <X size={18} className="text-muted" />
+              </button>
+            </div>
+
+            <p className="text-sm text-muted mb-5">
+              Overriding plan for{' '}
+              <span className="font-medium text-text">{planModal.user.full_name || planModal.user.email}</span>
+            </p>
+
+            <div className="space-y-4">
+              {/* Plan tier */}
+              <div>
+                <label className="text-[12px] font-medium text-text block mb-1.5">Subscription plan</label>
+                <select
+                  value={planModal.plan}
+                  onChange={(e) => setPlanModal({ ...planModal, plan: e.target.value })}
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
+                >
+                  <option value="none">No plan</option>
+                  <option value="starter">Starter (3 audits/mo)</option>
+                  <option value="pro">Pro (10 audits/mo)</option>
+                  <option value="agency">Agency (30 audits/mo)</option>
+                </select>
+              </div>
+
+              {/* Credits */}
+              <div>
+                <label className="text-[12px] font-medium text-text block mb-1.5">Credits balance</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={planModal.credits}
+                  onChange={(e) => setPlanModal({ ...planModal, credits: e.target.value })}
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                />
+              </div>
+
+              {/* Free membership toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <label className="text-[12px] font-medium text-text block">Free membership</label>
+                  <p className="text-[11px] text-muted mt-0.5">Grant free access without payment</p>
+                </div>
+                <button
+                  onClick={() => setPlanModal({ ...planModal, freeMembership: !planModal.freeMembership })}
+                  className="relative w-10 h-5 rounded-full transition-colors"
+                  style={{ background: planModal.freeMembership ? 'var(--ok)' : 'var(--paper-3)' }}
+                >
+                  <span
+                    className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform"
+                    style={{ left: planModal.freeMembership ? '22px' : '2px' }}
+                  />
+                </button>
+              </div>
+
+              {/* Expiry date */}
+              {planModal.freeMembership && (
+                <div>
+                  <label className="text-[12px] font-medium text-text block mb-1.5">Expiry date (optional)</label>
+                  <input
+                    type="date"
+                    value={planModal.expiryDate}
+                    onChange={(e) => setPlanModal({ ...planModal, expiryDate: e.target.value })}
+                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  />
+                  <p className="text-[11px] text-muted mt-1">Leave empty for no expiry</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={() => setPlanModal(null)}
+                className="flex-1 px-4 py-2 border border-border rounded-lg text-sm font-medium text-text hover:bg-surface-alt transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePlanSubmit}
+                disabled={submitting}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-40"
+                style={{ background: 'var(--ink)' }}
+              >
+                {submitting ? 'Saving...' : 'Save changes'}
               </button>
             </div>
           </div>

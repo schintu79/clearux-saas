@@ -97,7 +97,7 @@ export default function AdminManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Management</h1>
+          <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Admin management</h1>
           <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Manage who has admin access to the platform</p>
         </div>
         <button

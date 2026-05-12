@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     let query = db
       .from('profiles')
-      .select('id, email, full_name, company, credits, audit_count, package_tier, role, white_label, created_at, updated_at', { count: 'exact' })
+      .select('id, email, full_name, company, credits, audit_count, package_tier, subscription_plan, subscription_status, free_membership, free_membership_expiry, role, white_label, created_at, updated_at', { count: 'exact' })
 
     if (search) {
       query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%,company.ilike.%${search}%`)

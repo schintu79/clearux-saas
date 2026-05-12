@@ -181,7 +181,7 @@ function DashboardInner() {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-[24px] font-semibold tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-xl font-medium font-sans tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>
           Hey {name}
         </h1>
         <p className="text-[14px] mt-0.5" style={{ color: 'var(--m-muted)' }}>

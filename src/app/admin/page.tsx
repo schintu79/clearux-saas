@@ -60,7 +60,7 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Admin Dashboard</h1>
+        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Admin dashboard</h1>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>Platform overview and quick actions</p>
       </div>
 

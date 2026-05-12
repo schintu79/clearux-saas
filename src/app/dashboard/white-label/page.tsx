@@ -225,7 +225,7 @@ const WhiteLabelPage: React.FC = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>White label</h1>
+        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>White label</h1>
         <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
           Customize reports with your own branding. Settings apply to all future audits.
         </p>

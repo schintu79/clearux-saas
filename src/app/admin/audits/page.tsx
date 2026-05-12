@@ -90,7 +90,7 @@ export default function AdminAuditsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-sans font-normal text-2xl" style={{ color: 'var(--ink)' }}>Audits</h1>
+        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Audits</h1>
         <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-1" style={{ color: 'var(--m-muted-2)' }}>{total} total audits</p>
       </div>
 

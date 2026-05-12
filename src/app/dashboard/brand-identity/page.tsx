@@ -108,7 +108,7 @@ const BrandIdentityPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Brand identity</h1>
+          <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Brand identity</h1>
           <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             Manage brand identities to audit websites against your brand guidelines.
           </p>

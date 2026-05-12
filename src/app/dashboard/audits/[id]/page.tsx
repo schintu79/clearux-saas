@@ -1874,23 +1874,41 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           )}
 
           {/* ── Tab Navigation ─────────────────────────────── */}
-          <div className="flex items-center gap-1 bg-paper-2/80 rounded-xl p-1 mb-6">
-            {(['overview', 'findings', 'pages'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={clsx(
-                  'flex-1 text-sm font-medium py-2.5 rounded-lg transition-all',
-                  activeTab === tab
-                    ? 'bg-paper text-ink'
-                    : 'text-m-muted hover:text-ink',
-                )}
-              >
-                {tab === 'overview' && L.tabOverview}
-                {tab === 'findings' && `${L.tabFindings} (${findings.length})`}
-                {tab === 'pages' && `${L.tabPages} (${auditPages.length})`}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 p-1 rounded-xl mb-6" style={{ background: 'var(--paper-2)' }}>
+            {(['overview', 'findings', 'pages'] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              const label = tab === 'overview' ? L.tabOverview
+                : tab === 'findings' ? L.tabFindings
+                : L.tabPages;
+              const count = tab === 'findings' ? findings.length
+                : tab === 'pages' ? auditPages.length
+                : null;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className="flex-1 flex items-center justify-center gap-2 text-[13px] font-medium py-2.5 rounded-lg transition-all"
+                  style={{
+                    color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                    background: isActive ? 'var(--card)' : 'transparent',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  }}
+                >
+                  <span>{label}</span>
+                  {count !== null && count > 0 && (
+                    <span
+                      className="text-[11px] font-medium px-1.5 py-0.5 rounded-full leading-none"
+                      style={{
+                        background: isActive ? 'var(--paper-2)' : 'var(--paper-3)',
+                        color: 'var(--m-muted)',
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* ── TAB: Overview ──────────────────────────────── */}

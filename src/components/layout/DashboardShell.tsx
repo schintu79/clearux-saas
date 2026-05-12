@@ -16,9 +16,12 @@ import {
   Fingerprint,
   Menu,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -28,6 +31,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const pathname = usePathname();
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
@@ -78,37 +82,44 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed md:static inset-y-0 left-0 w-[220px] flex flex-col z-50 transition-transform duration-200 transform md:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed md:static inset-y-0 left-0 flex flex-col z-50 transition-all duration-200 transform md:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          collapsed ? 'w-[60px]' : 'w-[220px]',
         )}
         style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)' }}
       >
         {/* Logo */}
-        <div className="px-5 h-14 flex items-center" style={{ borderBottom: '1px solid var(--rule)' }}>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <svg width={22} height={22} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
+        <div className={clsx('h-14 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5')} style={{ borderBottom: '1px solid var(--rule)' }}>
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <svg width={28} height={28} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
               <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
               <circle cx="16" cy="16" r="5.5" fill="currentColor" />
             </svg>
-            <span className="font-sans font-semibold text-[17px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
+            {!collapsed && (
+              <span className="font-sans font-semibold text-[18px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
+            )}
           </Link>
         </div>
 
         {/* New audit CTA */}
-        <div className="px-3 pt-4 pb-1">
+        <div className={clsx('pt-4 pb-1', collapsed ? 'px-2' : 'px-3')}>
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center justify-center gap-1.5 w-full px-3 py-2 text-[13px] font-medium rounded-lg transition-all hover:opacity-90"
+            className={clsx(
+              'flex items-center justify-center w-full rounded-lg transition-all hover:opacity-90',
+              collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-2 text-[13px] font-medium',
+            )}
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            title={collapsed ? 'New audit' : undefined}
           >
-            <PlusCircle size={14} strokeWidth={1.5} />
-            New audit
+            <PlusCircle size={collapsed ? 16 : 14} strokeWidth={1.5} />
+            {!collapsed && 'New audit'}
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav aria-label="Dashboard navigation" className="flex-1 px-2 py-3 overflow-y-auto">
+        <nav aria-label="Dashboard navigation" className={clsx('flex-1 py-3 overflow-y-auto', collapsed ? 'px-1.5' : 'px-2')}>
           <ul className="space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -119,25 +130,25 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   <Link
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
+                    title={collapsed ? item.label : undefined}
                     className={clsx(
-                      'flex items-center gap-2.5 px-3 py-[7px] rounded-md transition-all text-[13px]',
-                      active
-                        ? 'font-medium'
-                        : 'hover:bg-black/[0.04]'
+                      'flex items-center rounded-md transition-all text-[13px]',
+                      collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
+                      active ? 'font-medium' : 'hover:bg-black/[0.04]',
                     )}
                     style={{
-                      color: active ? 'var(--ink)' : 'var(--m-muted)',
+                      color: active ? 'var(--ink)' : 'var(--ink-2)',
                       background: active ? 'var(--paper-2)' : undefined,
                     }}
                   >
-                    <span className="relative">
-                      <Icon size={16} strokeWidth={1.5} />
+                    <span className="relative flex-shrink-0">
+                      <Icon size={collapsed ? 18 : 16} strokeWidth={1.5} />
                       {(item as any).badge && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} />
                       )}
                     </span>
-                    <span>{item.label}</span>
-                    {(item as any).badge && (
+                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && (item as any).badge && (
                       <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
                         {unreadNotifications}
                       </span>
@@ -150,7 +161,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         </nav>
 
         {/* Credit balance */}
-        {credits !== null && (
+        {credits !== null && !collapsed && (
           <div className="mx-3 mb-2">
             <div className="rounded-lg px-3 py-2.5" style={{ background: 'var(--paper-2)' }}>
               <div className="flex items-center justify-between">
@@ -167,10 +178,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </div>
           </div>
         )}
+        {credits !== null && collapsed && (
+          <div className="mx-1.5 mb-2">
+            <Link
+              href="/dashboard/buy-credits"
+              title={`${credits} credits`}
+              className="flex items-center justify-center w-full py-2 rounded-lg text-[11px] font-medium tabular-nums"
+              style={{ background: 'var(--paper-2)', color: 'var(--ink)' }}
+            >
+              {credits}
+            </Link>
+          </div>
+        )}
 
         {/* Bottom section */}
-        <div className="px-2 py-3 space-y-0.5" style={{ borderTop: '1px solid var(--rule)' }}>
-          {!loading && user && (
+        <div className={clsx('py-3 space-y-0.5', collapsed ? 'px-1.5' : 'px-2')} style={{ borderTop: '1px solid var(--rule)' }}>
+          {!loading && user && !collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-md">
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
                 {initials}
@@ -190,27 +213,60 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               </div>
             </div>
           )}
+          {!loading && user && collapsed && (
+            <Link
+              href="/dashboard/settings"
+              title={displayName || user.email || ''}
+              className="flex items-center justify-center py-2 rounded-md hover:bg-black/[0.04] transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+                {initials}
+              </div>
+            </Link>
+          )}
 
           {/* Admin link */}
           {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
             <Link
               href="/admin"
-              className="w-full flex items-center gap-2.5 px-3 py-[6px] rounded-md text-[13px] transition-all hover:bg-black/[0.04]"
-              style={{ color: 'var(--m-muted)' }}
+              title={collapsed ? 'Admin' : undefined}
+              className={clsx(
+                'w-full flex items-center rounded-md text-[13px] transition-all hover:bg-black/[0.04]',
+                collapsed ? 'justify-center py-2' : 'gap-2.5 px-3 py-[6px]',
+              )}
+              style={{ color: 'var(--ink-2)' }}
             >
-              <ShieldCheck size={15} strokeWidth={1.5} />
-              Admin
+              <ShieldCheck size={collapsed ? 18 : 15} strokeWidth={1.5} />
+              {!collapsed && 'Admin'}
             </Link>
           )}
 
           <button
             onClick={() => signOut()}
-            className="w-full flex items-center gap-2.5 px-3 py-[6px] rounded-md text-[13px] transition-all hover:bg-black/[0.04]"
-            style={{ color: 'var(--m-muted)' }}
+            title={collapsed ? 'Sign out' : undefined}
+            className={clsx(
+              'w-full flex items-center rounded-md text-[13px] transition-all hover:bg-black/[0.04]',
+              collapsed ? 'justify-center py-2' : 'gap-2.5 px-3 py-[6px]',
+            )}
+            style={{ color: 'var(--ink-2)' }}
           >
-            <LogOut size={15} strokeWidth={1.5} />
-            Sign out
+            <LogOut size={collapsed ? 18 : 15} strokeWidth={1.5} />
+            {!collapsed && 'Sign out'}
           </button>
+
+          {/* Theme toggle + Collapse toggle */}
+          <div className={clsx('flex items-center pt-1 mt-1', collapsed ? 'flex-col gap-1' : 'justify-between px-1')} style={{ borderTop: '1px solid var(--rule)' }}>
+            <ThemeToggle variant="icon" className="!p-1.5" />
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-black/[0.04]"
+              style={{ color: 'var(--m-muted)' }}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          </div>
         </div>
       </aside>
 

@@ -69,7 +69,7 @@ export default function NotificationsPage() {
     <div className="max-w-2xl mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[20px] font-semibold" style={{ color: 'var(--ink)' }}>Notifications</h1>
+          <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Notifications</h1>
           <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
           </p>

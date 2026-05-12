@@ -70,7 +70,6 @@ const MODULE_TINTS = [
   { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.04)',  border: 'rgba(16, 185, 129, 0.12)' },  // Professionalism — emerald
   { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.04)',  border: 'rgba(245, 158, 11, 0.12)' },  // Value Proposition — amber
   { dot: '#3B82F6', bg: 'rgba(59, 130, 246, 0.04)',  border: 'rgba(59, 130, 246, 0.12)' },  // Structure — blue
-  { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.04)',  border: 'rgba(139, 92, 246, 0.12)' },  // Competitive — violet
   { dot: '#14B8A6', bg: 'rgba(20, 184, 166, 0.04)',  border: 'rgba(20, 184, 166, 0.12)' },  // Wording — teal
 ];
 
@@ -80,13 +79,12 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   professionalism:         ShieldCheck,
   value_proposition:       Target,
   structure_organization:  Layers,
-  competitive_positioning: BarChart3,
   wording_quality:         Type,
 };
 
 const CATEGORY_SLUG_ORDER = [
   'visual_consistency', 'tone_of_voice', 'professionalism', 'value_proposition',
-  'structure_organization', 'competitive_positioning', 'wording_quality',
+  'structure_organization', 'wording_quality',
 ];
 
 function getCategoryIcon(slug: string): React.ElementType {
@@ -136,7 +134,7 @@ const statusMeta: Record<string, { label: string; description: string; icon: Rea
   pending_payment:   { label: 'Awaiting payment',       description: 'Complete payment to start the audit.',           icon: Clock },
   payment_received:  { label: 'Processing...',           description: 'Your audit has started processing.',              icon: Zap },
   crawling:          { label: 'Extracting files...',     description: 'Reading and extracting content from your brand files.', icon: FileSearch },
-  analysing:         { label: 'Analyzing brand...',      description: 'AI is evaluating your brand across 7 categories.', icon: Sparkles },
+  analysing:         { label: 'Analyzing brand...',      description: 'AI is evaluating your brand across 6 categories.', icon: Sparkles },
   generating_report: { label: 'Generating report...',    description: 'Building your comprehensive brand report.',       icon: BarChart3 },
   completed:         { label: 'Completed',               description: 'Your brand audit is complete.',                   icon: CheckCircle2 },
   failed:            { label: 'Failed',                  description: 'Something went wrong during processing.',         icon: AlertTriangle },

@@ -83,7 +83,7 @@ export default function BuyCreditsPage() {
       </Link>
 
       <div className="text-center mb-10">
-        <h1 className="text-[24px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
+        <h1 className="text-xl font-medium font-sans mb-2" style={{ color: 'var(--ink)' }}>
           Plans and credits
         </h1>
         <p className="text-[14px] max-w-md mx-auto" style={{ color: 'var(--m-muted)' }}>
