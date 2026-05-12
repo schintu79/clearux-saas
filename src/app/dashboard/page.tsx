@@ -150,7 +150,7 @@ function DashboardInner() {
   const name = profile?.full_name?.split(' ')[0] || 'there';
   const planLabel = plan
     ? plan.charAt(0).toUpperCase() + plan.slice(1)
-    : 'Free';
+    : 'Credit-based';
 
   return (
     <div>

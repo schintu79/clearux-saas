@@ -60,8 +60,8 @@ function scoreColor(s: number) {
 }
 
 /* ── Pillar config (must match audit detail page) ────────── */
-const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness'];
-const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16]];
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Brand Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
 
 /* ── Main Component ───────────────────────────────────────── */
 
@@ -207,15 +207,15 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
     low: openFindings.filter((f) => f.severity === 'low').length,
   };
 
-  // Pillar scores for radar chart
+  // Pillar scores for radar chart — only include modules that were actually audited
   const pillarScores = PILLAR_NAMES.map((name, i) => {
     const [start, end] = PILLAR_RANGES[i];
     const cats = categoryScores.filter((_, idx) => idx >= start && idx < end);
     return {
       name,
-      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 0,
+      score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : -1,
     };
-  });
+  }).filter(p => p.score >= 0);
 
   const handleStatCardClick = (filter: string) => {
     if (latestCompleted && filter !== 'passed') {

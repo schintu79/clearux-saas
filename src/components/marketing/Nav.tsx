@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Logo } from './Logo'
 import { Button } from './Button'
-import { ArrowRightIcon, MoonIcon, SunIcon } from './icons'
+import { ArrowRightIcon, MoonIcon, SunIcon, ChevronDownIcon, UserIcon, LayoutDashboardIcon, LogOutIcon } from './icons'
 import { useTheme } from '@/context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 
@@ -15,14 +15,37 @@ const NAV_LINKS = [
   { label: 'Contact', href: '/contact' },
 ]
 
+function getInitials(name: string): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
 
 export function Nav() {
   const { theme, toggleTheme } = useTheme()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const isLoggedIn = !authLoading && !!user
-  const firstName = profile?.full_name?.split(' ')[0] || ''
+  const fullName = profile?.full_name || ''
+  const firstName = fullName.split(' ')[0] || ''
+  const initials = getInitials(fullName)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [dropdownOpen])
 
   return (
     <nav className="border-b border-rule sticky top-0 z-50 backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)' }}>
@@ -51,11 +74,70 @@ export function Nav() {
             </button>
 
             {isLoggedIn ? (
-              /* Logged-in: show dashboard link */
-              <Button href="/dashboard">
-                {firstName ? `${firstName}'s dashboard` : 'Dashboard'}
-                <ArrowRightIcon />
-              </Button>
+              /* Logged-in: initials avatar + name + dropdown */
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(prev => !prev)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-full hover:bg-paper-2 transition-colors cursor-pointer"
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="true"
+                >
+                  <span
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-mono font-semibold tracking-[0.02em] shrink-0"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    {initials}
+                  </span>
+                  <span className="text-[14px] font-sans font-medium text-ink max-sm:hidden">
+                    {firstName}
+                  </span>
+                  <ChevronDownIcon
+                    size={12}
+                    className={`text-m-muted transition-transform duration-200 max-sm:hidden ${dropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {/* Dropdown menu */}
+                {dropdownOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-2 w-[200px] rounded-lg overflow-hidden shadow-lg"
+                    style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
+                  >
+                    <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--rule)' }}>
+                      <p className="text-[13px] font-sans font-medium text-ink truncate">{fullName || 'Account'}</p>
+                      <p className="text-[11px] font-mono text-m-muted truncate mt-0.5">{user?.email}</p>
+                    </div>
+                    <div className="py-1">
+                      <a
+                        href="/dashboard/account"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-sans font-medium text-ink hover:bg-paper-2 transition-colors no-underline"
+                      >
+                        <UserIcon size={15} className="text-m-muted" />
+                        My account
+                      </a>
+                      <a
+                        href="/dashboard"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-sans font-medium text-ink hover:bg-paper-2 transition-colors no-underline"
+                      >
+                        <LayoutDashboardIcon size={15} className="text-m-muted" />
+                        Dashboard
+                      </a>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--rule)' }}>
+                      <button
+                        onClick={() => { setDropdownOpen(false); signOut() }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] font-sans font-medium text-ink hover:bg-paper-2 transition-colors cursor-pointer bg-transparent"
+                        style={{ border: 'none' }}
+                      >
+                        <LogOutIcon size={15} className="text-m-muted" />
+                        Log out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               /* Logged-out: show login + register */
               <>
@@ -103,20 +185,21 @@ export function Nav() {
                 {link.label}
               </a>
             ))}
-            <div className="flex gap-3 mt-4 pt-2">
+            <div className="flex flex-col gap-1 mt-4 pt-2 border-t border-rule">
               {isLoggedIn ? (
-                <Button href="/dashboard" className="flex-1 justify-center">
-                  Dashboard
-                  <ArrowRightIcon />
-                </Button>
-              ) : (
                 <>
+                  <a href="/dashboard/account" onClick={() => setMobileOpen(false)} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors no-underline">My account</a>
+                  <a href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors no-underline">Dashboard</a>
+                  <button onClick={() => { setMobileOpen(false); signOut() }} className="block py-3 text-[16px] font-sans font-medium text-ink hover:text-signal transition-colors cursor-pointer bg-transparent border-0 text-left w-full px-0">Log out</button>
+                </>
+              ) : (
+                <div className="flex gap-3">
                   <Button href="/login" variant="ghost" className="flex-1 justify-center">Login</Button>
                   <Button href="/register" className="flex-1 justify-center">
                     Start free audit
                     <ArrowRightIcon />
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>

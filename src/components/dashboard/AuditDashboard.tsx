@@ -239,7 +239,7 @@ export function TopIssuesPanel({ findings, auditId }: {
 
 /* ── Heuristic Breakdown Radar Chart ─────────────────────── */
 
-const PILLAR_COLORS = ['#6366F1', '#EC4899', '#F59E0B', 'var(--ok)'];
+const PILLAR_COLORS = ['#6366F1', '#EC4899', '#F59E0B', 'var(--ok)', '#10B981', '#06B6D4'];
 
 export function HeuristicRadarChart({ pillarScores }: {
   pillarScores: Array<{ name: string; score: number }>;
@@ -277,7 +277,6 @@ export function HeuristicRadarChart({ pillarScores }: {
 
   return (
     <div className="flex-1 min-w-0">
-      <h3 className="text-sm font-medium text-text mb-3">Heuristic Breakdown</h3>
       <svg viewBox="0 0 640 390" className="w-full h-auto mx-auto" style={{ maxWidth: 540 }}>
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
