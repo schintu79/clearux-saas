@@ -3,7 +3,6 @@ import { SectionMarker } from './SectionMarker'
 const oldWay = [
   '$30k engagement',
   '6 weeks lead time',
-  'Slide deck delivered after the regression',
   'One-off, never re-run',
   'Built for stakeholders',
 ]
@@ -11,7 +10,6 @@ const oldWay = [
 const clearuxWay = [
   '$0 first audit',
   '<10 minutes',
-  'Severity-ranked findings, evidence-attached',
   'Re-run after every release',
   'Built for the team that ships',
 ]
@@ -30,16 +28,16 @@ export function Problem() {
           </div>
           <div>
             <p className="text-[19px] leading-[1.55] text-ink-2 mb-7 font-sans">
-              Your product ships weekly, lives across screens, and is read by humans and language models alike. The old playbook — six-week engagements, $30k invoices, slide decks delivered after the regression — doesn&apos;t scale.
+              Your product ships weekly, lives across screens, and is read by humans and language models alike. Quality has to be continuous to be credible.
             </p>
 
             {/* Pull quote */}
             <div className="border-l-2 border-signal pl-6 py-1.5 my-11 font-serif italic text-[26px] leading-[1.32] text-ink">
-              &ldquo;Quality has to be continuous to be credible. Annual audits are theatre.&rdquo;
+              Clarity. Rigour. Speed.
             </div>
 
             <p className="font-sans font-semibold text-ink mt-9 mb-0 text-[19px] leading-[1.55]">
-              ClearUX is built for the operator, not the consultant. Paste a URL. Get a senior-rigor report in minutes. Re-audit after every release.
+              ClearUX is built to improve the human experience. Paste a URL. Get a senior-rigor report in minutes.
             </p>
 
             {/* Comparison columns */}

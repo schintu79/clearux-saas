@@ -71,38 +71,40 @@ export default function AboutContent() {
             Built by someone who <em className="italic text-signal">lived the problem</em>
           </h2>
 
-          <div className="border border-ink p-10 max-sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start gap-8">
+          <div className="grid md:grid-cols-[280px_1fr] gap-0 border border-ink max-md:grid-cols-1">
+            {/* Photo column */}
+            <div className="relative aspect-[3/4] md:aspect-auto overflow-hidden bg-off">
               <Image
                 src="/team-stefano.jpg"
                 alt="Stefano Schintu"
-                width={96}
-                height={96}
-                className="w-24 h-24 object-cover flex-shrink-0"
+                fill
+                className="object-cover"
               />
-              <div className="flex-1">
-                <h3 className="font-serif text-[24px] text-ink font-normal tracking-[-0.01em] mb-1">Stefano Schintu</h3>
-                <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-6">Founder &amp; Product Lead</p>
+            </div>
 
-                <div className="space-y-4 font-sans text-[15px] text-ink-2 leading-[1.65]">
-                  <p>
-                    Two decades in product design, UX strategy, and conversion optimisation — from early-stage MVPs to products serving millions. The frustration was always the same: brilliant teams shipping without a structured UX review, because the only option was a consultant charging five figures.
-                  </p>
-                  <p>
-                    ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks.
-                  </p>
-                </div>
+            {/* Bio column */}
+            <div className="p-10 max-sm:p-6 flex flex-col justify-center">
+              <h3 className="font-serif text-[32px] text-ink font-normal tracking-[-0.015em] leading-[1.1] mb-1">Stefano Schintu</h3>
+              <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-8">Founder &amp; Product Lead</p>
 
-                <a
-                  href="https://www.linkedin.com/in/stefanoschintu"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-8 font-sans text-[14px] font-medium text-ink hover:text-signal transition-colors"
-                >
-                  Connect on LinkedIn
-                  <ArrowRightIcon size={12} />
-                </a>
+              <div className="space-y-5 font-sans text-[16px] text-ink-2 leading-[1.7]">
+                <p>
+                  Two decades in product design, UX strategy, and conversion optimisation — from early-stage MVPs to products serving millions. The frustration was always the same: brilliant teams shipping without a structured UX review, because the only option was a consultant charging five figures.
+                </p>
+                <p>
+                  ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks.
+                </p>
               </div>
+
+              <a
+                href="https://www.linkedin.com/in/stefanoschintu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-10 font-sans text-[14px] font-medium text-ink hover:text-signal transition-colors"
+              >
+                Connect on LinkedIn
+                <ArrowRightIcon size={12} />
+              </a>
             </div>
           </div>
         </div>

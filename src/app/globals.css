@@ -1052,6 +1052,13 @@ body::before {
 .dark .accent-section .accent-subdued {
   color: var(--m-muted);
 }
+/* Signal text inside accent (dark bg) needs bright olive to stay visible */
+.accent-section .text-signal {
+  color: #A4B26A;
+}
+.dark .accent-section .text-signal {
+  color: var(--signal);
+}
 
 /* Coda CTA — olive bg, hover to paper */
 .coda-cta {

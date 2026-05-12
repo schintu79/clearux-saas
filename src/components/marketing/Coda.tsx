@@ -28,7 +28,8 @@ export function Coda() {
               className="font-serif font-normal leading-[0.95] tracking-[-0.025em]"
               style={{ fontSize: 'clamp(50px, 6.5vw, 96px)', color: isDark ? 'var(--ink)' : 'var(--paper)' }}
             >
-              Run the audit. <em className="italic text-signal">Move the score.</em>
+              Run the audit.{' '}
+              <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>Move the score.</em>
             </h2>
           </div>
           <div>
