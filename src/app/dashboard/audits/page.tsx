@@ -172,8 +172,8 @@ function WebsiteAuditGroup({ domain, audits }: {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {latestScore != null && (
-              <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
-                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
+                <span className="font-sans font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             )}
             {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}
@@ -272,8 +272,8 @@ function BrandAuditGroup({ brandName, audits }: {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {latestScore != null && (
-              <div className={`w-10 h-10 rounded-md border flex items-center justify-center ${scoreBg(latestScore)}`}>
-                <span className={`font-medium text-sm leading-none ${scoreColor(latestScore)}`}>{latestScore}</span>
+              <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0" style={scoreBg(latestScore)}>
+                <span className="font-sans font-medium text-sm leading-none" style={{ color: scoreColor(latestScore) }}>{latestScore}</span>
               </div>
             )}
             {!latestDone && <Badge variant={latestMeta.color as any} size="sm">{latestMeta.label}</Badge>}

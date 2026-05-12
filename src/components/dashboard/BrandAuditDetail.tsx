@@ -20,6 +20,7 @@ import {
   Share2,
   LinkIcon,
   ChevronDown,
+  ChevronRight,
   Eye,
   MessageSquare,
   PenTool,
@@ -40,6 +41,7 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ScoreRing from '@/components/ui/ScoreRing';
+import { HeuristicRadarChart } from '@/components/dashboard/AuditDashboard';
 import type { AuditWithReport, AuditFinding, FindingSeverity, Report } from '@/types/database';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import clsx from 'clsx';
@@ -311,6 +313,33 @@ function BrandFindingCard({ finding, tintColor, onScoreUpdate }: { finding: Audi
               </div>
             )}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Heuristic Breakdown Card ───────────────────────────── */
+
+function HeuristicBreakdownCard({ categoryScores }: { categoryScores: BrandCategoryScore[] }) {
+  const [open, setOpen] = useState(false);
+  const pillarScores = categoryScores.map(c => ({ name: c.name, score: c.score }));
+
+  return (
+    <div className="rounded-xl border border-rule bg-card shadow-sm mb-6 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-black/[0.02] transition-colors"
+      >
+        <h3 className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Heuristic breakdown</h3>
+        {open
+          ? <ChevronDown size={16} style={{ color: 'var(--m-muted)' }} />
+          : <ChevronRight size={16} style={{ color: 'var(--m-muted)' }} />
+        }
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          <HeuristicRadarChart pillarScores={pillarScores} />
         </div>
       )}
     </div>
@@ -938,6 +967,11 @@ export default function BrandAuditDetail({
               <p className="text-xs font-medium text-m-muted uppercase tracking-wider mb-2">Executive Summary</p>
               <p className="text-sm text-ink/80 leading-relaxed">{report.executive_summary}</p>
             </Card>
+          )}
+
+          {/* Heuristic Breakdown — radar chart of category scores */}
+          {categoryScores.length >= 3 && (
+            <HeuristicBreakdownCard categoryScores={categoryScores} />
           )}
 
           {/* Module sections with tinted backgrounds */}
