@@ -588,7 +588,7 @@ export function AuditDashboardOverview({
   detecting?: boolean;
   onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
   onStatCardClick?: (filter: string) => void;
-  /** Hide heuristic radar + benchmarks (e.g. for brand identity audits) */
+  /** Hide benchmarks section (e.g. for brand identity audits) */
   hideBenchmarks?: boolean;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed && f.status !== 'fixed').length;
@@ -647,8 +647,8 @@ export function AuditDashboardOverview({
         onCardClick={onStatCardClick}
       />
 
-      {/* Row 3: Heuristic Breakdown — collapsible, closed by default (hidden for brand audits) */}
-      {!hideBenchmarks && (
+      {/* Row 3: Heuristic Breakdown — collapsible, closed by default */}
+      {pillarScores.length >= 3 && (
         <div className="rounded-xl border border-rule bg-card shadow-sm mb-6 overflow-hidden">
           <button
             onClick={() => setHeuristicOpen(!heuristicOpen)}

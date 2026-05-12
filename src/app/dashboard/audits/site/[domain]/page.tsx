@@ -277,7 +277,7 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
             className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
           >
             <Search size={13} />
-            Deep audit
+            Dig deeper
           </Link>
         </div>
       </div>
