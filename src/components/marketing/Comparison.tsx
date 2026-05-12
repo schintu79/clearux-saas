@@ -66,26 +66,28 @@ const sevColors: Record<string, { dot: string; text: string }> = {
 export function Comparison() {
   return (
     <>
-      {/* ── Dark interstitial banner ────────────────────────── */}
+      {/* ── Interstitial banner ─────────────────────────────── */}
       <section
         className="py-[120px] max-sm:py-[80px]"
-        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+        style={{ background: '#1A1A2E', color: '#ffffff' }}
       >
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
-          {/* Line 1 — smaller, muted: the competitor reality */}
+          {/* Line 1 — smaller, subdued: the competitor reality */}
           <p
-            className="font-serif font-normal italic leading-[1.2] tracking-[-0.01em] mx-auto mb-5 max-sm:mb-4"
-            style={{ fontSize: 'clamp(18px, 2.4vw, 28px)', color: 'var(--m-muted)', maxWidth: '720px' }}
+            className="font-serif font-normal italic leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
+            style={{ fontSize: 'clamp(18px, 2.4vw, 26px)', color: 'rgba(255,255,255,0.5)', maxWidth: '700px' }}
           >
             Other tools measure how happy Google is with your site.
           </p>
-          {/* Line 2 — larger, bright signal: our promise */}
-          <p
-            className="font-serif font-normal leading-[1.05] tracking-[-0.025em] mx-auto"
-            style={{ fontSize: 'clamp(36px, 5.6vw, 72px)', color: 'var(--signal)', maxWidth: '820px' }}
+          {/* Line 2 — large, bright white: the ClearUX promise */}
+          <h2
+            className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
+            style={{ fontSize: 'clamp(40px, 6vw, 80px)', color: '#ffffff', maxWidth: '860px' }}
           >
-            ClearUX audits the human experience.
-          </p>
+            ClearUX audits the{' '}
+            <em className="italic" style={{ color: '#A8C7FA' }}>human</em>{' '}
+            experience.
+          </h2>
         </div>
       </section>
 
@@ -141,36 +143,33 @@ export function Comparison() {
                     </span>
                   </div>
 
-                  {/* Competitor side — faded, forgettable */}
-                  <div className="px-6 py-5 opacity-60" style={{ borderBottom: '1px solid var(--rule)' }}>
+                  {/* Competitor side — readable but clearly secondary */}
+                  <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--rule)', background: 'var(--paper-2)' }}>
                     <div className="flex items-center gap-2 mb-3">
                       <span
                         className="font-mono text-[10px] tracking-[0.08em] uppercase font-medium px-2 py-0.5 rounded"
-                        style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}
+                        style={{ background: 'var(--paper-3)', color: 'var(--m-muted)' }}
                       >
                         {card.competitor.tool}
                       </span>
                     </div>
-                    <p className="text-[13px] font-sans font-medium text-m-muted leading-[1.35] mb-1.5">
+                    <p className="text-[13px] font-sans font-medium text-ink/70 leading-[1.4] mb-1.5">
                       {card.competitor.title}
                     </p>
-                    <p className="text-[12px] font-sans text-m-muted/80 leading-[1.5] mb-3">
+                    <p className="text-[12px] font-sans text-m-muted leading-[1.5] mb-3">
                       {card.competitor.detail}
                     </p>
-                    <p className="text-[11px] font-mono tracking-[0.02em] text-m-muted/60 italic">
+                    <p className="text-[11px] font-mono tracking-[0.02em] text-m-muted italic">
                       {card.competitor.verdict}
                     </p>
                   </div>
 
-                  {/* ClearUX side — bold, high-contrast, unmissable */}
-                  <div
-                    className="px-6 py-5 flex-1"
-                    style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)' }}
-                  >
+                  {/* ClearUX side — white background, bold, full contrast */}
+                  <div className="px-6 py-5 flex-1" style={{ background: 'var(--paper)' }}>
                     <div className="flex items-center gap-2 mb-3">
                       <span
                         className="font-mono text-[10px] tracking-[0.08em] uppercase font-semibold px-2.5 py-1 rounded"
-                        style={{ background: 'color-mix(in srgb, var(--signal) 16%, transparent)', color: 'var(--signal)' }}
+                        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                       >
                         ClearUX
                       </span>
@@ -181,10 +180,7 @@ export function Comparison() {
                     <p className="text-[13px] font-sans text-ink-2 leading-[1.55] mb-3">
                       {card.clearux.detail}
                     </p>
-                    <p
-                      className="text-[12px] font-mono tracking-[0.02em] font-semibold"
-                      style={{ color: 'var(--signal)' }}
-                    >
+                    <p className="text-[12px] font-mono tracking-[0.02em] font-semibold text-ink">
                       {card.clearux.verdict}
                     </p>
                   </div>
@@ -204,7 +200,7 @@ export function Comparison() {
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">modules — foundation to AI readiness</p>
             </div>
             <div className="text-center sm:px-6">
-              <p className="font-serif text-[48px] tracking-[-0.02em] leading-none mb-2" style={{ color: 'var(--signal)' }}>$0</p>
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">$0</p>
               <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">first audit, no card required</p>
             </div>
           </div>
