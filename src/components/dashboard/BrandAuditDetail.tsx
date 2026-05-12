@@ -322,13 +322,11 @@ function CategorySection({
     <div className="mb-8">
       {/* Category header — flat, editorial (matches website audit PillarSection) */}
       <div className="border border-rule mb-4 bg-paper">
-        <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 border-b border-rule/60">
-          <div className="flex items-center gap-3">
-            <Icon size={16} style={{ color: config.color }} className="flex-shrink-0" />
-            <div>
-              <h2 className="font-sans font-medium text-[15px] text-ink">{category.name}</h2>
-              {catDef && <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{catDef.description}</p>}
-            </div>
+        <button onClick={onToggle} className="w-full flex items-center gap-3 px-5 py-4 border-b border-rule/60 text-left">
+          <Icon size={16} style={{ color: config.color }} className="flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h2 className="font-sans font-medium text-[15px] text-ink truncate">{category.name}</h2>
+            {catDef && <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase truncate">{catDef.description}</p>}
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="text-right">

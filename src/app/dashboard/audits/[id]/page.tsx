@@ -905,15 +905,13 @@ function PillarSection({
     <div className="mb-8">
       {/* Pillar header — flat, editorial */}
       <div className="border border-rule mb-4 bg-paper">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-rule/60">
-          <div className="flex items-center gap-3">
-            {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 16, className: 'text-signal flex-shrink-0' })}
-            <div>
-              <h2 className="font-sans font-medium text-[15px] text-ink">{pillar.name}</h2>
-              <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{pillarCats.length} {L.categoriesEvaluated}</p>
-            </div>
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/60">
+          {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 16, className: 'text-signal flex-shrink-0' })}
+          <div className="flex-1 min-w-0 text-left">
+            <h2 className="font-sans font-medium text-[15px] text-ink truncate">{pillar.name}</h2>
+            <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{pillarCats.length} {L.categoriesEvaluated}</p>
           </div>
-          <div className="text-right">
+          <div className="text-right flex-shrink-0">
             <p className={`font-mono text-[20px] font-medium ${scoreColor(avgScore)}`}>{avgScore}</p>
             <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{getScoreLabel(avgScore, lang)}</p>
           </div>
