@@ -5,6 +5,7 @@ import { Logo } from './Logo'
 import { Button } from './Button'
 import { ArrowRightIcon, MoonIcon, SunIcon } from './icons'
 import { useTheme } from '@/context/ThemeContext'
+import { useAuth } from '@/context/AuthContext'
 
 const NAV_LINKS = [
   { label: 'How it works', href: '/how-it-works' },
@@ -17,7 +18,11 @@ const NAV_LINKS = [
 
 export function Nav() {
   const { theme, toggleTheme } = useTheme()
+  const { user, profile, loading: authLoading } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const isLoggedIn = !authLoading && !!user
+  const firstName = profile?.full_name?.split(' ')[0] || ''
 
   return (
     <nav className="border-b border-rule sticky top-0 z-50 backdrop-blur-md" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)' }}>
@@ -44,11 +49,23 @@ export function Nav() {
             >
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </button>
-            <Button href="/login" variant="ghost" className="max-lg:hidden">Login</Button>
-            <Button href="/register" className="max-sm:hidden">
-              Start free audit
-              <ArrowRightIcon />
-            </Button>
+
+            {isLoggedIn ? (
+              /* Logged-in: show dashboard link */
+              <Button href="/dashboard">
+                {firstName ? `${firstName}'s dashboard` : 'Dashboard'}
+                <ArrowRightIcon />
+              </Button>
+            ) : (
+              /* Logged-out: show login + register */
+              <>
+                <Button href="/login" variant="ghost" className="max-lg:hidden">Login</Button>
+                <Button href="/register" className="max-sm:hidden">
+                  Start free audit
+                  <ArrowRightIcon />
+                </Button>
+              </>
+            )}
 
             {/* Mobile hamburger */}
             <button
@@ -87,11 +104,20 @@ export function Nav() {
               </a>
             ))}
             <div className="flex gap-3 mt-4 pt-2">
-              <Button href="/login" variant="ghost" className="flex-1 justify-center">Login</Button>
-              <Button href="/register" className="flex-1 justify-center">
-                Start free audit
-                <ArrowRightIcon />
-              </Button>
+              {isLoggedIn ? (
+                <Button href="/dashboard" className="flex-1 justify-center">
+                  Dashboard
+                  <ArrowRightIcon />
+                </Button>
+              ) : (
+                <>
+                  <Button href="/login" variant="ghost" className="flex-1 justify-center">Login</Button>
+                  <Button href="/register" className="flex-1 justify-center">
+                    Start free audit
+                    <ArrowRightIcon />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
