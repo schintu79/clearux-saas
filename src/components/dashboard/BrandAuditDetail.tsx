@@ -63,18 +63,39 @@ interface BrandReportJson {
 
 /* ── Category icons & colors ────────────────────────────── */
 
-const CATEGORY_CONFIG: Record<string, { icon: React.ElementType; color: string; gradient: string }> = {
-  visual_consistency:     { icon: Eye,          color: '#6366F1', gradient: 'from-[#6366F1]/10 to-[#6366F1]/5' },
-  tone_of_voice:          { icon: MessageSquare, color: '#EC4899', gradient: 'from-[#EC4899]/10 to-[#EC4899]/5' },
-  professionalism:        { icon: ShieldCheck,  color: '#10B981', gradient: 'from-[#10B981]/10 to-[#10B981]/5' },
-  value_proposition:      { icon: Target,       color: '#F59E0B', gradient: 'from-[#F59E0B]/10 to-[#F59E0B]/5' },
-  structure_organization: { icon: Layers,       color: 'var(--color-info)', gradient: 'from-blue-500/10 to-blue-500/5' },
-  competitive_positioning:{ icon: BarChart3,    color: '#8B5CF6', gradient: 'from-[#8B5CF6]/10 to-[#8B5CF6]/5' },
-  wording_quality:        { icon: Type,         color: '#14B8A6', gradient: 'from-[#14B8A6]/10 to-[#14B8A6]/5' },
+/* Module tint colors — matches the website audit MODULE_TINTS pattern */
+const MODULE_TINTS = [
+  { dot: '#6366F1', bg: 'rgba(99, 102, 241, 0.04)',  border: 'rgba(99, 102, 241, 0.12)' },  // Visual Consistency — indigo
+  { dot: '#EC4899', bg: 'rgba(236, 72, 153, 0.04)',  border: 'rgba(236, 72, 153, 0.12)' },  // Tone of Voice — pink
+  { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.04)',  border: 'rgba(16, 185, 129, 0.12)' },  // Professionalism — emerald
+  { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.04)',  border: 'rgba(245, 158, 11, 0.12)' },  // Value Proposition — amber
+  { dot: '#3B82F6', bg: 'rgba(59, 130, 246, 0.04)',  border: 'rgba(59, 130, 246, 0.12)' },  // Structure — blue
+  { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.04)',  border: 'rgba(139, 92, 246, 0.12)' },  // Competitive — violet
+  { dot: '#14B8A6', bg: 'rgba(20, 184, 166, 0.04)',  border: 'rgba(20, 184, 166, 0.12)' },  // Wording — teal
+];
+
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  visual_consistency:      Eye,
+  tone_of_voice:           MessageSquare,
+  professionalism:         ShieldCheck,
+  value_proposition:       Target,
+  structure_organization:  Layers,
+  competitive_positioning: BarChart3,
+  wording_quality:         Type,
 };
 
-function getCategoryConfig(slug: string) {
-  return CATEGORY_CONFIG[slug] || { icon: Sparkles, color: '#6366F1', gradient: 'from-[#6366F1]/10 to-[#6366F1]/5' };
+const CATEGORY_SLUG_ORDER = [
+  'visual_consistency', 'tone_of_voice', 'professionalism', 'value_proposition',
+  'structure_organization', 'competitive_positioning', 'wording_quality',
+];
+
+function getCategoryIcon(slug: string): React.ElementType {
+  return CATEGORY_ICONS[slug] || Sparkles;
+}
+
+function getCategoryTint(slug: string) {
+  const idx = CATEGORY_SLUG_ORDER.indexOf(slug);
+  return MODULE_TINTS[idx >= 0 ? idx : 0];
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -124,7 +145,7 @@ const statusMeta: Record<string, { label: string; description: string; icon: Rea
 /* ── Finding Card ────────────────────────────────────────── */
 // Matches the FindingCard structure from the website audit page for visual consistency.
 
-function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: AuditFinding; categoryColor?: string; onScoreUpdate?: () => void }) {
+function BrandFindingCard({ finding, tintColor, onScoreUpdate }: { finding: AuditFinding; tintColor?: string; onScoreUpdate?: () => void }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(finding.status || 'open');
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -133,7 +154,6 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
   const [dismissReason, setDismissReason] = useState('');
   const sev = SEVERITY_CONFIG[finding.severity] || SEVERITY_CONFIG.medium;
   const sourceFile = finding.page_url; // page_url reused for source file in brand audits
-  const pillarColor = categoryColor || 'text-brand';
 
   const handleStatusChange = async (newStatus: string) => {
     setStatusUpdating(true);
@@ -224,7 +244,7 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
           {finding.recommendation && (
             <div className="p-3 bg-paper-2/60 rounded-lg border border-rule/30">
               <div className="flex gap-2.5">
-                <Lightbulb size={14} className={`flex-shrink-0 mt-0.5 ${pillarColor}`} />
+                <Lightbulb size={14} className="flex-shrink-0 mt-0.5" style={tintColor ? { color: tintColor } : undefined} />
                 <div>
                   <p className="text-[11px] font-medium text-ink mb-1">Recommendation</p>
                   <p className="text-sm text-m-muted leading-relaxed">{finding.recommendation}</p>
@@ -303,83 +323,73 @@ function BrandFindingCard({ finding, categoryColor, onScoreUpdate }: { finding: 
 
 function CategorySection({
   category,
+  categoryIndex,
   findings,
-  expanded,
-  onToggle,
   onScoreUpdate,
 }: {
   category: BrandCategoryScore;
+  categoryIndex: number;
   findings: AuditFinding[];
-  expanded: boolean;
-  onToggle: () => void;
   onScoreUpdate?: () => void;
 }) {
-  const config = getCategoryConfig(category.slug);
-  const Icon = config.icon;
+  const [expanded, setExpanded] = useState(true);
+  const Icon = getCategoryIcon(category.slug);
+  const tint = getCategoryTint(category.slug);
   const catDef = BRAND_AUDIT_CATEGORIES.find(c => c.slug === category.slug);
+  const totalFindings = findings.length;
+
+  const sorted = [...findings].sort((a, b) => {
+    const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+  });
 
   return (
-    <div className="mb-8">
-      {/* Category header — flat, editorial (matches website audit PillarSection) */}
-      <div className="border border-rule mb-4 bg-paper">
-        <button onClick={onToggle} className="w-full flex items-center gap-3 px-5 py-4 border-b border-rule/60 text-left">
-          <Icon size={16} style={{ color: config.color }} className="flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h2 className="font-sans font-medium text-[15px] text-ink truncate">{category.name}</h2>
-            {catDef && <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase truncate">{catDef.description}</p>}
-          </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="text-right">
-              <p className={clsx('font-mono text-[20px] font-medium', scoreColor(category.score))}>{category.score}</p>
-              <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">/100</p>
-            </div>
-            {findings.length > 0 && (
-              <span className="text-[10px] font-mono text-m-muted tracking-[0.06em] uppercase">
-                {findings.length} issue{findings.length !== 1 ? 's' : ''}
-              </span>
-            )}
-            <ChevronDown size={14} className={clsx('text-m-muted transition-transform', expanded && 'rotate-180')} />
-          </div>
-        </button>
+    <div className="mb-6 rounded-xl overflow-hidden" style={{ background: tint.bg, border: `1px solid ${tint.border}` }}>
+      {/* Module header — clickable toggle */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:opacity-90 transition-opacity"
+      >
+        <Icon size={18} className="flex-shrink-0" style={{ color: tint.dot }} />
+        <div className="flex-1 min-w-0">
+          <h2 className="font-sans font-medium text-[15px] text-ink truncate">{category.name}</h2>
+          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+            {catDef?.description || ''}{totalFindings > 0 ? ` · ${totalFindings} finding${totalFindings !== 1 ? 's' : ''}` : ''}
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0 mr-2">
+          <p className={clsx('font-mono text-[22px] font-medium', scoreColor(category.score))}>{category.score}</p>
+          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">/100</p>
+        </div>
+        <ChevronDown size={16} className={clsx('text-m-muted flex-shrink-0 transition-transform', expanded && 'rotate-180')} />
+      </button>
 
-        {expanded && (
-          <>
-            {/* Score bar */}
-            <div className="px-5 py-4 border-b border-rule/60">
-              <div className="w-full bg-rule/50 h-[3px] rounded-full">
-                <div
-                  className={clsx('h-full rounded-full transition-all', scoreBarColor(category.score))}
-                  style={{ width: `${category.score}%`, opacity: 0.75 }}
-                />
-              </div>
-            </div>
-
-            {/* Summary */}
-            {category.summary && (
-              <div className="px-5 py-4 border-b border-rule/60">
-                <p className="text-sm text-ink/80 leading-relaxed">{category.summary}</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Findings listed below the header */}
+      {/* Expanded content */}
       {expanded && (
-        <>
-          {findings.length > 0 && (
-            <div className="space-y-2">
-              {findings.map((f) => (
-                <BrandFindingCard key={f.id} finding={f} categoryColor={`text-[${config.color}]`} onScoreUpdate={onScoreUpdate} />
+        <div style={{ borderTop: `1px solid ${tint.border}` }}>
+          {/* Score bar + summary */}
+          <div className="px-5 py-4" style={{ borderBottom: `1px solid ${tint.border}` }}>
+            <div className="w-full h-[3px] rounded-full mb-3" style={{ background: `${tint.dot}15` }}>
+              <div className="h-full rounded-full" style={{ width: `${category.score}%`, background: tint.dot, opacity: 0.6 }} />
+            </div>
+            {category.summary && (
+              <p className="text-sm text-ink/80 leading-relaxed">{category.summary}</p>
+            )}
+          </div>
+
+          {/* Findings */}
+          {sorted.length > 0 ? (
+            <div className="px-5 py-4 space-y-2">
+              {sorted.map((f) => (
+                <BrandFindingCard key={f.id} finding={f} tintColor={tint.dot} onScoreUpdate={onScoreUpdate} />
               ))}
             </div>
-          )}
-          {findings.length === 0 && (
-            <div className="px-1">
+          ) : (
+            <div className="px-5 py-4">
               <p className="text-xs text-m-muted">No specific issues found in this category.</p>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -404,8 +414,7 @@ export default function BrandAuditDetail({
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings'>('overview');
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  // Tabs removed — modules shown directly with tinted collapsible sections
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -622,14 +631,7 @@ export default function BrandAuditDetail({
     } catch {} finally { setShareLoading(false); }
   };
 
-  const toggleCategory = (slug: string) => {
-    setExpandedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  };
+  // toggleCategory removed — each CategorySection manages its own expanded state
 
   // ── Render ──
   if (loading) {
@@ -853,13 +855,13 @@ export default function BrandAuditDetail({
                     {findings.length} findings · {categoryScores.length} categories
                   </p>
 
-                  {/* Category mini-scores with colored dots */}
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                  {/* Module mini-scores with colored dots */}
+                  <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
                     {categoryScores.map((cat) => {
-                      const config = getCategoryConfig(cat.slug);
+                      const tint = getCategoryTint(cat.slug);
                       return (
                         <div key={cat.slug} className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tint.dot }} />
                           <span className="text-xs text-m-muted">{cat.name}</span>
                           <span className={clsx('text-xs font-medium', scoreColor(cat.score))}>{cat.score}</span>
                         </div>
@@ -940,92 +942,23 @@ export default function BrandAuditDetail({
             </Card>
           )}
 
-          {/* Tabs */}
-          <div className="flex gap-1 mb-5 p-1 bg-paper-2/60 rounded-xl border border-rule/30">
-            {(['overview', 'findings'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={clsx(
-                  'flex-1 text-xs font-medium py-2 px-3 rounded-lg transition-all capitalize',
-                  activeTab === tab
-                    ? 'bg-paper text-ink shadow-sm border border-rule/40'
-                    : 'text-m-muted hover:text-ink hover:bg-paper/50',
-                )}
-              >
-                {tab === 'overview' ? 'Overview' : `Findings (${findings.length})`}
-              </button>
-            ))}
+          {/* Module sections with tinted backgrounds */}
+          {categoryScores.map((cat, idx) => (
+            <CategorySection
+              key={cat.slug}
+              category={cat}
+              categoryIndex={idx}
+              findings={findingsByCategory[cat.slug] || []}
+              onScoreUpdate={() => fetchAuditDetail(true)}
+            />
+          ))}
+
+          {/* AI transparency note */}
+          <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
+            <p className="text-[11px] text-m-muted/70 leading-relaxed">
+              <span className="font-medium text-m-muted">About this audit</span> — This report was generated by AI analysing your uploaded brand materials across {categoryScores.length} categories. It cannot test live web experiences or real user interactions. For brand compliance and legal copy, we recommend pairing these results with manual review. Dismiss any finding that doesn&apos;t apply to your context — the AI will learn from your feedback on re-audits.
+            </p>
           </div>
-
-          {/* Overview tab — category breakdown */}
-          {activeTab === 'overview' && (
-            <div className="space-y-3">
-              {/* Category score bars overview */}
-              <div className="border border-rule mb-6 overflow-hidden bg-paper">
-                <div className="px-5 py-3.5 border-b border-rule bg-paper-2/40">
-                  <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">Score by Category</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2">
-                  {categoryScores.map((cat, idx) => {
-                    const config = getCategoryConfig(cat.slug);
-                    const Icon = config.icon;
-                    return (
-                      <button
-                        key={cat.slug}
-                        onClick={() => toggleCategory(cat.slug)}
-                        className={`flex items-center gap-4 px-5 py-4 border-b border-rule/60 ${idx % 2 === 0 ? 'sm:border-r sm:border-rule/60' : ''} hover:bg-paper-2/60 transition-colors`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <Icon size={14} style={{ color: config.color }} className="flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[14px] font-sans font-medium text-ink mb-1.5 text-left">{cat.name}</p>
-                            <div className="w-full bg-rule/50 h-[3px] rounded-full">
-                              <div
-                                className={clsx('h-full rounded-full transition-all', scoreBarColor(cat.score))}
-                                style={{ width: `${cat.score}%`, opacity: 0.75 }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <span className={clsx('font-mono text-[16px] font-medium flex-shrink-0', scoreColor(cat.score))}>{cat.score}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Detailed category sections */}
-              {categoryScores.map((cat) => (
-                <CategorySection
-                  key={cat.slug}
-                  category={cat}
-                  findings={findingsByCategory[cat.slug] || []}
-                  expanded={expandedCategories.has(cat.slug)}
-                  onToggle={() => toggleCategory(cat.slug)}
-                  onScoreUpdate={() => fetchAuditDetail(true)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Findings tab — flat list of all findings */}
-          {activeTab === 'findings' && (
-            <div className="space-y-2">
-              {findings.length === 0 && (
-                <Card>
-                  <div className="text-center py-8">
-                    <CheckCircle2 size={24} className="text-green-500 mx-auto mb-3" />
-                    <p className="font-medium text-ink">No issues found</p>
-                    <p className="text-sm text-m-muted mt-1">Your brand materials look great!</p>
-                  </div>
-                </Card>
-              )}
-              {findings.map((f) => (
-                <BrandFindingCard key={f.id} finding={f} onScoreUpdate={() => fetchAuditDetail(true)} />
-              ))}
-            </div>
-          )}
 
         </>
       )}

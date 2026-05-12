@@ -95,12 +95,14 @@ const CATEGORY_ICONS: React.ElementType[] = [
   Eye, MessageSquare, Target, CheckCircle2,         // Brand Consistency (20-23)
 ];
 
-/* Category dot colors for hero card mini-scores */
-const CATEGORY_DOT_COLORS = [
-  '#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#1E3A5F', '#8B5CF6', '#14B8A6',
-  '#EF4444', '#6366F1', '#F97316', '#06B6D4', '#A855F7', '#84CC16', '#E11D48',
-  '#0EA5E9', '#D946EF', '#22C55E', '#FB923C', '#6D28D9', '#0D9488',
-  '#2563EB', '#DB2777', '#059669', '#CA8A04',
+/* Module tint colors for hero card dots and pillar sections */
+const MODULE_TINTS = [
+  { dot: '#3B82F6', bg: 'rgba(59, 130, 246, 0.04)', border: 'rgba(59, 130, 246, 0.12)' },  // Foundation — blue
+  { dot: '#EC4899', bg: 'rgba(236, 72, 153, 0.04)', border: 'rgba(236, 72, 153, 0.12)' },  // Human Experience — pink
+  { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.04)', border: 'rgba(139, 92, 246, 0.12)' },  // Inclusive Design — violet
+  { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.04)', border: 'rgba(245, 158, 11, 0.12)' },  // Future Readiness — amber
+  { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.04)', border: 'rgba(16, 185, 129, 0.12)' },  // SEO — emerald
+  { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.04)', border: 'rgba(6, 182, 212, 0.12)' },    // Brand — cyan
 ];
 
 /* Pillar visual config — v2 token-based, uniform across all modules */
@@ -874,11 +876,13 @@ function PillarSection({
   lang: string;
   onScoreUpdate?: () => void;
 }) {
+  const [expanded, setExpanded] = useState(true);
   const L = getUILabels(lang);
   const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
   const avgScore = pillarCats.length > 0
     ? Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length)
     : 0;
+  const tint = MODULE_TINTS[pillarIndex] || MODULE_TINTS[0];
 
   // Group findings by approximate category match
   const findingsByCategory: Record<string, AuditFinding[]> = {};
@@ -887,7 +891,6 @@ function PillarSection({
   for (const f of findings) {
     let matched = false;
     for (const cat of pillarCats) {
-      // Match finding to category by checking if the finding's title/description relates to the category
       const catWords = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3);
       const findingText = `${f.title} ${f.description}`.toLowerCase();
       if (catWords.some(w => findingText.includes(w))) {
@@ -900,7 +903,6 @@ function PillarSection({
     if (!matched) ungrouped.push(f);
   }
 
-  // Distribute ungrouped findings evenly
   if (ungrouped.length > 0 && pillarCats.length > 0) {
     ungrouped.forEach((f, i) => {
       const catName = pillarCats[i % pillarCats.length].name;
@@ -909,73 +911,79 @@ function PillarSection({
     });
   }
 
-  return (
-    <div className="mb-8">
-      {/* Pillar header — flat, editorial */}
-      <div className="border border-rule mb-4 bg-paper">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/60">
-          {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 16, className: 'text-signal flex-shrink-0' })}
-          <div className="flex-1 min-w-0 text-left">
-            <h2 className="font-sans font-medium text-[15px] text-ink truncate">{pillar.name}</h2>
-            <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{pillarCats.length} {L.categoriesEvaluated}</p>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <p className={`font-mono text-[20px] font-medium ${scoreColor(avgScore)}`}>{avgScore}</p>
-            <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">{getScoreLabel(avgScore, lang)}</p>
-          </div>
-        </div>
+  const totalFindings = findings.length;
 
-        {/* Category score bars — matching demo-report module scores grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2">
-          {pillarCats.map((cat, relIdx) => {
-            const globalIdx = pillar.range[0] + relIdx;
-            return (
-              <div key={globalIdx} className={`flex items-center gap-4 px-5 py-4 border-b border-rule/60 ${relIdx % 2 === 0 ? 'sm:border-r sm:border-rule/60' : ''}`}>
+  return (
+    <div className="mb-6 rounded-xl overflow-hidden" style={{ background: tint.bg, border: `1px solid ${tint.border}` }}>
+      {/* Module header — clickable toggle */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:opacity-90 transition-opacity"
+      >
+        {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'flex-shrink-0', style: { color: tint.dot } })}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-sans font-medium text-[15px] text-ink truncate">{pillar.name}</h2>
+          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+            {pillarCats.length} categories{totalFindings > 0 ? ` · ${totalFindings} finding${totalFindings !== 1 ? 's' : ''}` : ''}
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0 mr-2">
+          <p className={`font-mono text-[22px] font-medium ${scoreColor(avgScore)}`}>{avgScore}</p>
+          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">/100</p>
+        </div>
+        <ChevronDown size={16} className={`text-m-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div style={{ borderTop: `1px solid ${tint.border}` }}>
+          {/* Category score bars */}
+          <div className="grid grid-cols-1 sm:grid-cols-2">
+            {pillarCats.map((cat, relIdx) => (
+              <div
+                key={relIdx}
+                className={`flex items-center gap-4 px-5 py-3.5 ${relIdx % 2 === 0 && pillarCats.length > 1 ? 'sm:border-r' : ''}`}
+                style={{ borderBottom: `1px solid ${tint.border}`, borderRightColor: tint.border }}
+              >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-sans font-medium text-ink mb-1.5">{cat.name}</p>
-                  <div className="w-full bg-rule/50 h-[3px] rounded-full">
-                    <div className={`h-full rounded-full ${scoreBg(cat.score)}`} style={{ width: `${cat.score}%`, opacity: 0.75 }} />
+                  <p className="text-[13px] font-sans font-medium text-ink mb-1">{cat.name}</p>
+                  <div className="w-full h-[3px] rounded-full" style={{ background: `${tint.dot}15` }}>
+                    <div className="h-full rounded-full" style={{ width: `${cat.score}%`, background: tint.dot, opacity: 0.6 }} />
                   </div>
-                  {cat.summary && cat.summary.trim() && (
-                    <div className="mt-2">
-                      <ExpandableSummary text={cat.summary} />
-                    </div>
-                  )}
                 </div>
-                <span className={`font-mono text-[16px] font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
+                <span className={`font-mono text-[15px] font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
                   {cat.score}
                 </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Findings grouped by category */}
+          {Object.entries(findingsByCategory).map(([catName, catFindings]) => {
+            if (catFindings.length === 0) return null;
+            const sorted = [...catFindings].sort((a, b) => {
+              const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+              return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
+            });
+
+            return (
+              <div key={catName} className="px-5 py-4" style={{ borderTop: `1px solid ${tint.border}` }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-ink">{catName}</span>
+                  <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                    {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {sorted.map((finding) => (
+                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
+                  ))}
+                </div>
               </div>
             );
           })}
         </div>
-      </div>
-
-      {/* Findings for this pillar */}
-      {Object.entries(findingsByCategory).map(([catName, catFindings]) => {
-        if (catFindings.length === 0) return null;
-        // Sort by severity
-        const sorted = [...catFindings].sort((a, b) => {
-          const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-          return (order[a.severity] ?? 4) - (order[b.severity] ?? 4);
-        });
-
-        return (
-          <div key={catName} className="mb-4">
-            <div className="flex items-center gap-2 mb-2 px-1">
-              <span className="text-xs font-medium text-ink">{catName}</span>
-              <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
-                {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {sorted.map((finding) => (
-                <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+      )}
     </div>
   );
 }
@@ -1774,16 +1782,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     {findings.length} findings · {activeModuleCount} modules{isPartialAudit ? ` of ${totalModuleCount}` : ''}
                   </p>
 
-                  {/* Category mini-scores with colored dots */}
+                  {/* Module mini-scores with colored dots */}
                   {categoryScores.length > 0 && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-                      {categoryScores.map((cat, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length] }} />
-                          <span className="text-xs text-m-muted">{cat.name}</span>
-                          <span className={`text-xs font-medium ${scoreColor(cat.score)}`}>{cat.score}</span>
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3">
+                      {PILLAR_CONFIG.map((pillar, idx) => {
+                        const cats = categoryScores.filter((_, i) => i >= pillar.range[0] && i < pillar.range[1]);
+                        if (cats.length === 0) return null;
+                        const avg = Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length);
+                        return (
+                          <div key={idx} className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: MODULE_TINTS[idx].dot }} />
+                            <span className="text-xs text-m-muted">{pillar.name}</span>
+                            <span className={`text-xs font-medium ${scoreColor(avg)}`}>{avg}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -2011,8 +2024,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 );
               })}
 
-              {/* Checkpoint Health — pass/fail breakdown */}
-              <CheckpointHealth categoryScores={categoryScores} findings={findings} />
+              {/* Checkpoint Health removed — category breakdown is now inside each module */}
 
               {/* AI transparency note */}
               <div className="mb-6 px-4 py-3 rounded-xl bg-paper-2/40 border border-rule/15">
