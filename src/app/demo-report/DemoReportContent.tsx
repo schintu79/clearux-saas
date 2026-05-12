@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { ArrowRightIcon } from '@/components/marketing/icons'
+import { Coda } from '@/components/marketing/Coda'
 
 /* ── Helpers ── */
 
@@ -369,34 +370,7 @@ export default function DemoReportContent() {
       </section>
 
       {/* CTA */}
-      <section className="accent-section relative overflow-hidden" style={{ padding: '100px 0' }}>
-        <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
-          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}>
-            Ready for your own <em className="italic text-signal">report?</em>
-          </h2>
-          <p className="accent-subdued text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto">
-            Your first audit is free. No credit card, no commitment.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <a
-              href="/register"
-              className="coda-cta inline-flex items-center gap-2 font-sans font-medium text-[15px] rounded-full px-8 py-4 transition-all"
-            >
-              Start free audit
-              <ArrowRightIcon size={14} />
-            </a>
-            <Link
-              href="/how-it-works"
-              className="inline-flex items-center gap-2 font-sans font-medium text-[14px] rounded-full px-6 py-4 border border-paper/20 transition-all hover:border-paper/50"
-              style={{ color: 'var(--paper)' }}
-            >
-              How it works
-              <ArrowRightIcon size={12} />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <Coda />
     </main>
   )
 }
