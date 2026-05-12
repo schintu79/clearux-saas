@@ -1,4 +1,7 @@
+'use client'
+
 import { SectionMarker } from './SectionMarker'
+import { useTheme } from '@/context/ThemeContext'
 
 const PILLARS = [
   {
@@ -16,34 +19,59 @@ const PILLARS = [
 ]
 
 export function HumanExperience() {
-  return (
-    <section className="py-[100px] border-b border-rule max-sm:py-16">
-      <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="grid lg:grid-cols-[1fr_1.2fr] gap-20 items-start max-lg:grid-cols-1 max-lg:gap-10">
-          <div>
-            <SectionMarker number="03" label="Human experience" />
-            <h2
-              className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.022em] mb-6"
-              style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
-            >
-              We audit how it <em className="italic text-signal">feels,</em> not just how it works.
-            </h2>
-            <p className="text-[17px] text-ink-2 leading-[1.55] font-sans max-w-[480px]">
-              Cognitive load, dark patterns, and user wellbeing are first-class checks — not edge cases. This is what separates a UX audit from a tech scan.
-            </p>
-          </div>
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
-          <div className="space-y-0 border border-ink">
-            {PILLARS.map((pillar, i) => (
-              <div
-                key={pillar.title}
-                className={`p-7 sm:p-8 ${i < PILLARS.length - 1 ? 'border-b border-ink' : ''}`}
+  return (
+    <section
+      className="py-[120px] max-sm:py-[80px]"
+      style={{
+        background: isDark ? 'var(--paper)' : 'var(--ink)',
+        color: isDark ? 'var(--ink)' : '#ffffff',
+      }}
+    >
+      <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+        {/* Big statement heading */}
+        <div className="mb-20 max-sm:mb-12">
+          <SectionMarker number="03" label="Human experience" dark={!isDark} />
+          <h2
+            className="font-serif font-normal leading-[0.96] tracking-[-0.025em] mb-6"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff' }}
+          >
+            We audit how it{' '}
+            <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>feels,</em>{' '}
+            not just how it works.
+          </h2>
+          <p
+            className="text-[19px] leading-[1.55] font-sans max-w-[600px]"
+            style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.55)' }}
+          >
+            Cognitive load, dark patterns, and user wellbeing are first-class checks — not edge cases. This is what separates a UX audit from a tech scan.
+          </p>
+        </div>
+
+        {/* Three pillar cards */}
+        <div className="grid md:grid-cols-3 gap-0" style={{ border: `1px solid ${isDark ? 'var(--rule)' : 'rgba(255,255,255,0.15)'}` }}>
+          {PILLARS.map((pillar, i) => (
+            <div
+              key={pillar.title}
+              className={`p-8 max-sm:p-6 ${i < PILLARS.length - 1 ? 'md:border-r max-md:border-b' : ''}`}
+              style={{ borderColor: isDark ? 'var(--rule)' : 'rgba(255,255,255,0.15)' }}
+            >
+              <h3
+                className="font-sans text-[17px] font-semibold mb-3"
+                style={{ color: isDark ? 'var(--ink)' : '#ffffff' }}
               >
-                <h3 className="font-sans text-[17px] font-medium text-ink mb-2">{pillar.title}</h3>
-                <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">{pillar.desc}</p>
-              </div>
-            ))}
-          </div>
+                {pillar.title}
+              </h3>
+              <p
+                className="font-sans text-[14px] leading-[1.65]"
+                style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.6)' }}
+              >
+                {pillar.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

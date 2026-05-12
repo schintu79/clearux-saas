@@ -4,6 +4,7 @@ import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { Coda } from '@/components/marketing/Coda'
+import { useTheme } from '@/context/ThemeContext'
 
 const MODULES = [
   { num: '01', title: 'Foundation', desc: 'Visual design, messaging, navigation, content quality. The structural baseline a great experience is built on.', count: 16, range: 'F-01 → F-16' },
@@ -21,6 +22,9 @@ const STEPS = [
 ]
 
 export default function HowItWorksContent() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <main>
       {/* Hero */}
@@ -61,24 +65,43 @@ export default function HowItWorksContent() {
         </div>
       </section>
 
-      {/* Human experience callout */}
-      <section className="py-[100px] border-b border-rule max-sm:py-16">
+      {/* Human experience callout — dark standout */}
+      <section
+        className="py-[120px] max-sm:py-[80px]"
+        style={{
+          background: isDark ? 'var(--paper)' : 'var(--ink)',
+          color: isDark ? 'var(--ink)' : '#ffffff',
+        }}
+      >
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="03" label="Beyond technical" />
-          <div className="grid lg:grid-cols-[1fr_1fr] gap-16 items-start max-lg:grid-cols-1 max-lg:gap-8">
-            <div>
-              <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-                We audit how it <em className="italic text-signal">feels.</em>
-              </h2>
-              <p className="text-[17px] text-ink-2 leading-[1.55] font-sans max-w-[480px]">
-                Cognitive load, dark patterns, and user wellbeing are first-class checks — not afterthoughts. This is what separates a UX audit from a tech scan.
+          <SectionMarker number="03" label="Beyond technical" dark={!isDark} />
+          <h2
+            className="font-serif font-normal leading-[0.96] tracking-[-0.025em] mb-6"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff' }}
+          >
+            We audit how it{' '}
+            <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>feels.</em>
+          </h2>
+          <p
+            className="text-[19px] leading-[1.55] font-sans max-w-[600px] mb-16 max-sm:mb-10"
+            style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.55)' }}
+          >
+            Cognitive load, dark patterns, and user wellbeing are first-class checks — not afterthoughts. This is what separates a UX audit from a tech scan.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-0" style={{ border: `1px solid ${isDark ? 'var(--rule)' : 'rgba(255,255,255,0.15)'}` }}>
+            <div className="p-8 max-sm:p-6 md:border-r max-md:border-b" style={{ borderColor: isDark ? 'var(--rule)' : 'rgba(255,255,255,0.15)' }}>
+              <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-4" style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)' }}>Example finding</h3>
+              <p className="font-sans text-[15px] font-semibold mb-2" style={{ color: isDark ? 'var(--ink)' : '#ffffff' }}>Checkout flow creates unnecessary anxiety</p>
+              <p className="font-sans text-[14px] leading-[1.65]" style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.6)' }}>
+                The payment form shows a countdown timer and &ldquo;Only 1 left&rdquo; badge on a subscription product with unlimited inventory. Users who notice the manipulation lose trust in all pricing claims.
               </p>
             </div>
-            <div className="border border-ink p-8 max-sm:p-6">
-              <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">Example finding</h3>
-              <p className="font-sans text-[15px] font-medium text-ink mb-2">Checkout flow creates unnecessary anxiety</p>
-              <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
-                The payment form shows a countdown timer and &ldquo;Only 1 left&rdquo; badge on a subscription product with unlimited inventory. Users who notice the manipulation lose trust in all pricing claims. ClearUX flags this as a dark pattern — not just a technical error.
+            <div className="p-8 max-sm:p-6">
+              <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase mb-4" style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)' }}>Why it matters</h3>
+              <p className="font-sans text-[15px] font-semibold mb-2" style={{ color: isDark ? 'var(--ink)' : '#ffffff' }}>Trust-destroying. Costing you customers silently.</p>
+              <p className="font-sans text-[14px] leading-[1.65]" style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.6)' }}>
+                ClearUX flags this as a dark pattern — not just a technical error. Traditional tools miss it entirely because they only measure how happy Google is, not how respected your users feel.
               </p>
             </div>
           </div>

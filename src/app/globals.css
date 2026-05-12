@@ -1037,6 +1037,14 @@ body::before {
   50% { opacity: 0.4; }
 }
 
+/* Subtle alternating section backgrounds on marketing pages */
+main > section:nth-child(even) {
+  background: var(--paper-2);
+}
+.dark main > section:nth-child(even) {
+  background: var(--paper-2);
+}
+
 /* Dark accent section — inverts in dark mode for contrast */
 .accent-section {
   background: var(--ink);
