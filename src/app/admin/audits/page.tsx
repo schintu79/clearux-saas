@@ -81,7 +81,7 @@ export default function AdminAuditsPage() {
   }
 
   const scoreColor = (score: number | null) => {
-    if (score === null) return 'text-muted'
+    if (score === null) return 'text-[var(--m-muted)]'
     if (score >= 70) return 'text-[var(--ok)]'
     if (score >= 40) return 'text-[var(--warn)]'
     return 'text-[var(--severe)]'
@@ -98,13 +98,13 @@ export default function AdminAuditsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <form onSubmit={handleSearch} className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--m-muted)]" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by URL..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2"
+              className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-[var(--ink)] placeholder:text-[var(--m-muted)]/50 focus:outline-none focus:ring-2"
             style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
             />
           </div>
@@ -120,7 +120,7 @@ export default function AdminAuditsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-3 py-2 rounded-lg text-sm text-text focus:outline-none focus:ring-2"
+          className="px-3 py-2 rounded-lg text-sm text-[var(--ink)] focus:outline-none focus:ring-2"
           style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}
         >
           {STATUS_OPTIONS.map((opt) => (
@@ -134,14 +134,14 @@ export default function AdminAuditsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">URL</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">User</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Score</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Pages</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Created</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Link</th>
+              <tr className="border-b border-[var(--rule)]">
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">URL</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">User</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">Score</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">Pages</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">Created</th>
+                <th className="px-4 py-3 text-[11px] font-medium text-[var(--m-muted)] uppercase tracking-wider">Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -149,13 +149,13 @@ export default function AdminAuditsPage() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     {Array.from({ length: 7 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3"><div className="h-4 bg-surface-alt rounded w-20" /></td>
+                      <td key={j} className="px-4 py-3"><div className="h-4 bg-[var(--paper-2)] rounded w-20" /></td>
                     ))}
                   </tr>
                 ))
               ) : audits.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted">No audits found</td>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-[var(--m-muted)]">No audits found</td>
                 </tr>
               ) : (
                 audits.map((a) => {
@@ -164,9 +164,9 @@ export default function AdminAuditsPage() {
                   try { hostname = new URL(a.product_url).hostname } catch {}
 
                   return (
-                    <tr key={a.id} className="hover:bg-surface-alt/40 transition-colors">
+                    <tr key={a.id} className="hover:bg-black/[0.04]/40 transition-colors">
                       <td className="px-4 py-3">
-                        <p className="text-[13px] text-text font-medium truncate max-w-[180px]">{hostname}</p>
+                        <p className="text-[13px] text-[var(--ink)] font-medium truncate max-w-[180px]">{hostname}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {a.audit_type === 'brand_identity' ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded-full">
@@ -181,14 +181,14 @@ export default function AdminAuditsPage() {
                               <Globe size={9} /> Website
                             </span>
                           )}
-                          <span className="text-[11px] text-muted truncate max-w-[120px]">{a.product_type}</span>
+                          <span className="text-[11px] text-[var(--m-muted)] truncate max-w-[120px]">{a.product_type}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-[12px] text-text truncate max-w-[150px]">{a.user_display}</p>
+                        <p className="text-[12px] text-[var(--ink)] truncate max-w-[150px]">{a.user_display}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColors[a.status] || 'bg-surface-alt text-muted'}`}>
+                        <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColors[a.status] || 'bg-[var(--paper-2)] text-[var(--m-muted)]'}`}>
                           {a.status.replace(/_/g, ' ')}
                         </span>
                       </td>
@@ -198,15 +198,15 @@ export default function AdminAuditsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[13px] text-text tabular-nums">{a.pages_crawled}</span>
+                        <span className="text-[13px] text-[var(--ink)] tabular-nums">{a.pages_crawled}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-[12px] text-muted">{new Date(a.created_at).toLocaleDateString()}</span>
+                        <span className="text-[12px] text-[var(--m-muted)]">{new Date(a.created_at).toLocaleDateString()}</span>
                       </td>
                       <td className="px-4 py-3">
                         <a
                           href={`/admin/audits/${a.id}`}
-                          className="p-1.5 rounded-lg text-muted transition-colors inline-flex"
+                          className="p-1.5 rounded-lg text-[var(--m-muted)] transition-colors inline-flex"
                           style={{ '--hover-bg': 'var(--ink)' } as React.CSSProperties}
                           title="View audit"
                         >
@@ -223,20 +223,20 @@ export default function AdminAuditsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <span className="text-[12px] text-muted">Page {page} of {totalPages}</span>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--rule)]">
+            <span className="text-[12px] text-[var(--m-muted)]">Page {page} of {totalPages}</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-lg hover:bg-surface-alt text-muted disabled:opacity-30 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-black/[0.04] text-[var(--m-muted)] disabled:opacity-30 transition-colors"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 rounded-lg hover:bg-surface-alt text-muted disabled:opacity-30 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-black/[0.04] text-[var(--m-muted)] disabled:opacity-30 transition-colors"
               >
                 <ChevronRight size={16} />
               </button>

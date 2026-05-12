@@ -115,25 +115,25 @@ export default function AdminManagementPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Admin</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Role</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Member Since</th>
-                <th className="px-4 py-3 text-[11px] font-medium text-muted uppercase tracking-wider">Actions</th>
+              <tr style={{ borderBottom: '1px solid var(--rule)' }}>
+                <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Admin</th>
+                <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Role</th>
+                <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Member Since</th>
+                <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--m-muted)' }}>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/50">
+            <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     {Array.from({ length: 4 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3"><div className="h-4 bg-surface-alt rounded w-24" /></td>
+                      <td key={j} className="px-4 py-3"><div className="h-4 rounded w-24" style={{ background: 'var(--paper-2)' }} /></td>
                     ))}
                   </tr>
                 ))
               ) : admins.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted">No admins found</td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--m-muted)' }}>No admins found</td>
                 </tr>
               ) : (
                 admins.map((admin) => (
@@ -147,8 +147,8 @@ export default function AdminManagementPage() {
                           {(admin.full_name || admin.email)[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-[13px] text-text font-medium">{admin.full_name || '—'}</p>
-                          <p className="text-[11px] text-muted">{admin.email}</p>
+                          <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>{admin.full_name || '—'}</p>
+                          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{admin.email}</p>
                         </div>
                       </div>
                     </td>
@@ -163,7 +163,7 @@ export default function AdminManagementPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-[12px] text-muted">{new Date(admin.created_at).toLocaleDateString()}</span>
+                      <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>{new Date(admin.created_at).toLocaleDateString()}</span>
                     </td>
                     <td className="px-4 py-3">
                       <button
@@ -189,8 +189,8 @@ export default function AdminManagementPage() {
             <ShieldCheck size={18} className="text-[#6366F1]" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text mb-1">Role Permissions</h3>
-            <div className="text-[13px] text-text/65 space-y-1">
+            <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Role Permissions</h3>
+            <div className="text-[13px] space-y-1" style={{ color: 'var(--ink-2)' }}>
               <p><span className="font-medium text-amber-500">Admin</span> — Can view all users, audits, and manage credits. Cannot promote or demote other admins.</p>
               <p><span className="font-medium" style={{ color: 'var(--severe)' }}>Super Admin</span> — Full access including promoting and demoting admins. Cannot demote themselves.</p>
             </div>
@@ -204,29 +204,31 @@ export default function AdminManagementPage() {
           <div className="rounded-2xl shadow-2xl w-full max-w-md p-6" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-sans font-normal text-lg" style={{ color: 'var(--ink)' }}>Add Admin</h3>
-              <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-surface-alt transition-colors">
-                <X size={18} className="text-muted" />
+              <button onClick={() => setShowAddModal(false)} className="p-1 rounded-lg hover:bg-black/[0.04] transition-colors">
+                <X size={18} style={{ color: 'var(--m-muted)' }} />
               </button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-[12px] font-medium text-text block mb-1">User Email</label>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: 'var(--ink)' }}>User Email</label>
                 <input
                   type="email"
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                  style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                   autoFocus
                 />
               </div>
               <div>
-                <label className="text-[12px] font-medium text-text block mb-1">Role</label>
+                <label className="text-[12px] font-medium block mb-1" style={{ color: 'var(--ink)' }}>Role</label>
                 <select
                   value={addRole}
                   onChange={(e) => setAddRole(e.target.value as 'admin' | 'super_admin')}
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--signal)]/30"
+                  style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 >
                   <option value="admin">Admin</option>
                   <option value="super_admin">Super Admin</option>
@@ -241,7 +243,8 @@ export default function AdminManagementPage() {
             <div className="flex items-center gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 border border-border rounded-lg text-sm font-medium text-text hover:bg-surface-alt transition-colors"
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-black/[0.04]"
+                style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
               >
                 Cancel
               </button>

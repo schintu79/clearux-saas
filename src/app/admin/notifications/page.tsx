@@ -152,7 +152,7 @@ export default function AdminNotificationsPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-text mb-1.5">Title</label>
+              <label className="block text-xs font-medium text-[var(--ink)] mb-1.5">Title</label>
               <input
                 value={form.title}
                 onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))}
@@ -162,7 +162,7 @@ export default function AdminNotificationsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-text mb-1.5">Message</label>
+              <label className="block text-xs font-medium text-[var(--ink)] mb-1.5">Message</label>
               <textarea
                 value={form.message}
                 onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
@@ -174,7 +174,7 @@ export default function AdminNotificationsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-text mb-1.5">Icon Type</label>
+                <label className="block text-xs font-medium text-[var(--ink)] mb-1.5">Icon Type</label>
                 <select
                   value={form.icon}
                   onChange={(e) => setForm(f => ({ ...f, icon: e.target.value }))}
@@ -184,7 +184,7 @@ export default function AdminNotificationsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-text mb-1.5">Color</label>
+                <label className="block text-xs font-medium text-[var(--ink)] mb-1.5">Color</label>
                 <div className="flex gap-2">
                   {COLOR_OPTIONS.map(c => (
                     <button
@@ -203,22 +203,22 @@ export default function AdminNotificationsPage() {
                 type="checkbox"
                 checked={form.show_in_overview}
                 onChange={(e) => setForm(f => ({ ...f, show_in_overview: e.target.checked }))}
-                className="w-4 h-4 rounded border-border"
+                className="w-4 h-4 rounded border-[var(--rule)]"
               />
               <div>
-                <span className="text-xs font-medium text-text">Show in Dashboard Overview</span>
-                <p className="text-[10px] text-muted">Pins this notification to the main overview tab. Only 1 at a time.</p>
+                <span className="text-xs font-medium text-[var(--ink)]">Show in Dashboard Overview</span>
+                <p className="text-[10px] text-[var(--m-muted)]">Pins this notification to the main overview tab. Only 1 at a time.</p>
               </div>
             </label>
 
             {/* Preview */}
             <div>
-              <p className="text-[10px] font-medium text-muted uppercase tracking-wide mb-2">Preview</p>
+              <p className="text-[10px] font-medium text-[var(--m-muted)] uppercase tracking-wide mb-2">Preview</p>
               <div className={`p-3.5 rounded-xl border flex items-start gap-3 ${colorMap[form.color] || colorMap.blue}`}>
                 {(() => { const IconComp = getNotificationIcon(form.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${iconColorMap[form.color] || iconColorMap.blue}`} />; })()}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-text">{form.title || 'Notification title'}</p>
-                  <p className="text-[11px] text-muted mt-0.5">{form.message || 'Notification message...'}</p>
+                  <p className="text-xs font-medium text-[var(--ink)]">{form.title || 'Notification title'}</p>
+                  <p className="text-[11px] text-[var(--m-muted)] mt-0.5">{form.message || 'Notification message...'}</p>
                 </div>
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function AdminNotificationsPage() {
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="text-xs font-medium text-muted px-4 py-2.5 rounded-lg hover:bg-off transition-colors"
+                className="text-xs font-medium text-[var(--m-muted)] px-4 py-2.5 rounded-lg hover:bg-[var(--paper-2)] transition-colors"
               >
                 Cancel
               </button>
@@ -247,53 +247,53 @@ export default function AdminNotificationsPage() {
       {/* Notification list */}
       {loading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-off rounded-xl animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-[var(--paper-2)] rounded-xl animate-pulse" />)}
         </div>
       ) : notifications.length === 0 ? (
         <div className="text-center py-12">
-          <Bell size={24} className="text-muted mx-auto mb-3" />
-          <p className="text-sm font-medium text-text">No notifications yet</p>
-          <p className="text-xs text-muted mt-1">Create your first notification above.</p>
+          <Bell size={24} className="text-[var(--m-muted)] mx-auto mb-3" />
+          <p className="text-sm font-medium text-[var(--ink)]">No notifications yet</p>
+          <p className="text-xs text-[var(--m-muted)] mt-1">Create your first notification above.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {notifications.map((n) => (
-            <div key={n.id} className={`rounded-xl border p-4 ${n.is_active ? colorMap[n.color] || colorMap.blue : 'border-border/30 bg-off/30 opacity-50'}`}>
+            <div key={n.id} className={`rounded-xl border p-4 ${n.is_active ? colorMap[n.color] || colorMap.blue : 'border-[var(--rule)]/30 bg-[var(--paper-2)]/30 opacity-50'}`}>
               <div className="flex items-start gap-3">
-                {(() => { const IconComp = getNotificationIcon(n.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${n.is_active ? iconColorMap[n.color] || iconColorMap.blue : 'text-muted'}`} />; })()}
+                {(() => { const IconComp = getNotificationIcon(n.icon); return <IconComp size={15} className={`flex-shrink-0 mt-0.5 ${n.is_active ? iconColorMap[n.color] || iconColorMap.blue : 'text-[var(--m-muted)]'}`} />; })()}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-medium text-text">{n.title}</p>
+                    <p className="text-xs font-medium text-[var(--ink)]">{n.title}</p>
                     {n.show_in_overview && (
                       <span className="text-[9px] font-medium px-1.5 py-0.5 rounded" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}>PINNED</span>
                     )}
                     {!n.is_active && (
-                      <span className="text-[9px] font-medium text-muted bg-off px-1.5 py-0.5 rounded">INACTIVE</span>
+                      <span className="text-[9px] font-medium text-[var(--m-muted)] bg-[var(--paper-2)] px-1.5 py-0.5 rounded">INACTIVE</span>
                     )}
                   </div>
-                  <p className="text-[11px] text-muted">{n.message}</p>
-                  <p className="text-[10px] text-muted/50 mt-1">
+                  <p className="text-[11px] text-[var(--m-muted)]">{n.message}</p>
+                  <p className="text-[10px] text-[var(--m-muted)]/50 mt-1">
                     {new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => handleToggleOverview(n.id, n.show_in_overview)}
-                    className="p-1.5 rounded-md text-muted hover:bg-[var(--ink)]/5 transition-colors"
+                    className="p-1.5 rounded-md text-[var(--m-muted)] hover:bg-[var(--ink)]/5 transition-colors"
                     title={n.show_in_overview ? 'Unpin from overview' : 'Pin to overview'}
                   >
                     {n.show_in_overview ? <PinOff size={13} /> : <Pin size={13} />}
                   </button>
                   <button
                     onClick={() => handleToggleActive(n.id, n.is_active)}
-                    className="p-1.5 rounded-md text-muted hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                    className="p-1.5 rounded-md text-[var(--m-muted)] hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
                     title={n.is_active ? 'Deactivate' : 'Activate'}
                   >
                     {n.is_active ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="p-1.5 rounded-md text-muted hover:bg-[var(--severe)]/5 transition-colors"
+                    className="p-1.5 rounded-md text-[var(--m-muted)] hover:bg-[var(--severe)]/5 transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={13} />

@@ -132,7 +132,7 @@ const Navbar: React.FC = () => {
                 )}
               </div>
               </>
-            ) : (
+            ) : !loading ? (
               <>
                 <Link
                   href="/login"
@@ -148,7 +148,7 @@ const Navbar: React.FC = () => {
                   <ArrowUpRight size={14} />
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile menu button */}
@@ -198,7 +198,7 @@ const Navbar: React.FC = () => {
                       Sign out
                     </button>
                   </>
-                ) : (
+                ) : !loading ? (
                   <>
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-[17px] text-m-muted hover:text-ink transition-colors px-3 py-[1.2rem] min-h-[44px] flex items-center">
                       Login
@@ -207,7 +207,7 @@ const Navbar: React.FC = () => {
                       Start free audit
                     </Link>
                   </>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

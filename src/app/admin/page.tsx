@@ -28,17 +28,17 @@ export default function AdminOverviewPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-48 bg-surface rounded" />
+        <div className="h-8 w-48 rounded" style={{ background: 'var(--paper-2)' }} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 bg-card border border-border rounded-xl" />
+            <div key={i} className="h-28 rounded-xl" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }} />
           ))}
         </div>
       </div>
     )
   }
 
-  if (!stats) return <p className="text-muted">Failed to load stats.</p>
+  if (!stats) return <p style={{ color: 'var(--m-muted)' }}>Failed to load stats.</p>
 
   const statCards = [
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-[#6366F1]', bg: 'bg-[#6366F1]/10', href: '/admin/users' },
@@ -79,7 +79,7 @@ export default function AdminOverviewPage() {
                 <div className={`w-10 h-10 rounded-lg ${card.bg} flex items-center justify-center`}>
                   <Icon size={18} className={card.color} />
                 </div>
-                <ArrowRight size={14} className="text-muted/40 group-hover:text-muted transition-colors" />
+                <ArrowRight size={14} className="transition-colors" style={{ color: 'var(--m-muted)' }} />
               </div>
               <p className="font-sans text-[36px] font-normal tabular-nums" style={{ color: 'var(--ink)' }}>{card.value.toLocaleString()}</p>
               <p className="font-mono text-[10px] tracking-[0.1em] uppercase mt-0.5" style={{ color: 'var(--m-muted-2)' }}>{card.label}</p>
@@ -96,7 +96,8 @@ export default function AdminOverviewPage() {
             {Object.entries(stats.auditsByStatus).map(([status, count]) => (
               <span
                 key={status}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium ${statusColors[status] || 'bg-surface-alt text-muted'}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium ${statusColors[status] || ''}`}
+                style={!statusColors[status] ? { background: 'var(--paper-2)', color: 'var(--m-muted)' } : undefined}
               >
                 {status.replace(/_/g, ' ')}
                 <span className="font-medium">{count}</span>
@@ -117,8 +118,8 @@ export default function AdminOverviewPage() {
             {stats.recentUsers.map((u) => (
               <div key={u.id} className="flex items-center justify-between py-1.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] text-text font-medium truncate">{u.full_name || u.email}</p>
-                  <p className="text-[11px] text-muted truncate">{u.email}</p>
+                  <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{u.full_name || u.email}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>{u.email}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ok)' }}>{u.credits} cr</span>
@@ -141,12 +142,12 @@ export default function AdminOverviewPage() {
             {stats.recentAudits.map((a) => (
               <div key={a.id} className="flex items-center justify-between py-1.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] text-text font-medium truncate">
+                  <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>
                     {(() => { try { return new URL(a.product_url).hostname } catch { return a.product_url } })()}
                   </p>
-                  <p className="text-[11px] text-muted">{new Date(a.created_at).toLocaleDateString()}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{new Date(a.created_at).toLocaleDateString()}</p>
                 </div>
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColors[a.status] || 'bg-surface-alt text-muted'}`}>
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusColors[a.status] || ''}`} style={!statusColors[a.status] ? { background: 'var(--paper-2)', color: 'var(--m-muted)' } : undefined}>
                   {a.status.replace(/_/g, ' ')}
                 </span>
               </div>

@@ -69,23 +69,23 @@ export function Comparison() {
       {/* ── Interstitial banner ─────────────────────────────── */}
       <section
         className="py-[120px] max-sm:py-[80px]"
-        style={{ background: '#1A1A2E', color: '#ffffff' }}
+        style={{ background: 'var(--ink)', color: '#ffffff' }}
       >
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
           {/* Line 1 — smaller, subdued: the competitor reality */}
           <p
-            className="font-serif font-normal italic leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
-            style={{ fontSize: 'clamp(18px, 2.4vw, 26px)', color: 'rgba(255,255,255,0.5)', maxWidth: '700px' }}
+            className="font-sans font-normal leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
+            style={{ fontSize: '19px', color: 'rgba(255,255,255,0.4)', maxWidth: '700px' }}
           >
             Other tools measure how happy Google is with your site.
           </p>
           {/* Line 2 — large, bright white: the ClearUX promise */}
           <h2
             className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
-            style={{ fontSize: 'clamp(40px, 6vw, 80px)', color: '#ffffff', maxWidth: '860px' }}
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: '#ffffff', maxWidth: '960px' }}
           >
             ClearUX audits the{' '}
-            <em className="italic" style={{ color: '#A8C7FA' }}>human</em>{' '}
+            <em className="italic" style={{ color: '#A4B26A' }}>human</em>{' '}
             experience.
           </h2>
         </div>
