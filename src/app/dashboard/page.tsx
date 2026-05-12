@@ -12,7 +12,6 @@ import {
   Zap,
   FileSearch,
   Coins,
-  TrendingUp,
   RefreshCw,
   ChevronRight,
   X,
@@ -65,6 +64,7 @@ function DashboardInner() {
   const [error, setError] = useState<string | null>(null);
   const [creditsBanner, setCreditsBanner] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [totalCompleted, setTotalCompleted] = useState<number | null>(null);
   const [pinnedNotification, setPinnedNotification] = useState<{ id: string; title: string; message: string; color: string; icon: string } | null>(null);
 
   useEffect(() => {
@@ -92,7 +92,13 @@ function DashboardInner() {
         .from('reports')
         .select('audit_id, overall_score, executive_summary, key_recommendation')
         .eq('user_id', userId);
-      const [auditsRes, reportsRes] = await Promise.all([auditsPromise, reportsPromise]);
+      const countPromise = supabase
+        .from('audits')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'completed');
+      const [auditsRes, reportsRes, countRes] = await Promise.all([auditsPromise, reportsPromise, countPromise]);
+      if (countRes.count != null) setTotalCompleted(countRes.count);
       if (auditsRes.error) throw auditsRes.error;
       const reportsMap: Record<string, Report> = {};
       if (reportsRes.data) {
@@ -173,9 +179,6 @@ function DashboardInner() {
     .filter(a => a.report?.overall_score != null)
     .slice(0, 5)
     .reverse();
-  const avgScore = scoreTrendData.length > 0
-    ? Math.round(scoreTrendData.reduce((s, a) => s + (a.report?.overall_score ?? 0), 0) / scoreTrendData.length)
-    : null;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -260,26 +263,26 @@ function DashboardInner() {
       )}
 
       {/* Stats row */}
-      {completedCount > 0 && (
+      {(totalCompleted ?? completedCount) > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="rounded-lg px-4 py-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-            <p className="text-[12px] mb-1" style={{ color: 'var(--m-muted)' }}>Average score</p>
-            <p className="text-[28px] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: avgScore ? scoreColor(avgScore) : 'var(--ink)' }}>
-              {avgScore ?? '--'}
+          <Link href={latestCompleted ? `/dashboard/audits/${latestCompleted.id}` : '/dashboard/audits'} className="rounded-lg px-4 py-4 transition-colors hover:bg-black/[0.02]" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+            <p className="text-[12px] mb-1" style={{ color: 'var(--m-muted)' }}>Latest score</p>
+            <p className="text-[28px] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: latestCompleted?.report?.overall_score != null ? scoreColor(latestCompleted.report.overall_score) : 'var(--ink)' }}>
+              {latestCompleted?.report?.overall_score ?? '--'}
             </p>
-          </div>
-          <div className="rounded-lg px-4 py-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+          </Link>
+          <Link href="/dashboard/audits" className="rounded-lg px-4 py-4 transition-colors hover:bg-black/[0.02]" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <p className="text-[12px] mb-1" style={{ color: 'var(--m-muted)' }}>Audits completed</p>
             <p className="text-[28px] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>
-              {completedCount}
+              {totalCompleted ?? completedCount}
             </p>
-          </div>
-          <div className="rounded-lg px-4 py-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+          </Link>
+          <Link href="/dashboard/buy-credits" className="rounded-lg px-4 py-4 transition-colors hover:bg-black/[0.02]" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
             <p className="text-[12px] mb-1" style={{ color: 'var(--m-muted)' }}>Credits remaining</p>
             <p className="text-[28px] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>
               {credits ?? '--'}
             </p>
-          </div>
+          </Link>
         </div>
       )}
 
@@ -376,7 +379,7 @@ function DashboardInner() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: 'New audit', desc: 'Run a new UX audit', href: '/dashboard/new-audit', icon: Sparkles },
-              { label: 'All audits', desc: `${completedCount} completed`, href: '/dashboard/audits', icon: FileSearch },
+              { label: 'All audits', desc: `${totalCompleted ?? completedCount} completed`, href: '/dashboard/audits', icon: FileSearch },
               { label: 'Buy credits', desc: `${credits ?? '--'} remaining`, href: '/dashboard/buy-credits', icon: Coins },
             ].map((action) => {
               const Icon = action.icon;
