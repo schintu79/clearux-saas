@@ -322,9 +322,6 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
                       <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
                       <span className="text-border">·</span>
                       <span className="text-[11px] font-medium px-1.5 py-0.5 rounded" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}>{aLang}</span>
-                      {(audit as any).depth_mode === 'deep' && (
-                        <span className="text-[11px] font-medium text-brand bg-brand/10 px-1.5 py-0.5 rounded-full uppercase">Deep</span>
-                      )}
                       {done && report?.overall_score != null && (
                         <>
                           <span className="text-border">·</span>

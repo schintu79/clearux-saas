@@ -272,6 +272,13 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
             <RefreshCw size={13} />
             Re-audit
           </Link>
+          <Link
+            href={`/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep`}
+            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+          >
+            <Search size={13} />
+            Deep audit
+          </Link>
         </div>
       </div>
 
