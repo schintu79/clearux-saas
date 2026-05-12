@@ -1037,6 +1037,22 @@ body::before {
   50% { opacity: 0.4; }
 }
 
+/* Dark accent section — inverts in dark mode for contrast */
+.accent-section {
+  background: var(--ink);
+  color: var(--paper);
+}
+.dark .accent-section {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+.accent-section .accent-subdued {
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
+}
+.dark .accent-section .accent-subdued {
+  color: var(--m-muted);
+}
+
 /* Coda CTA — olive bg, hover to paper */
 .coda-cta {
   background: var(--signal);

@@ -1,4 +1,7 @@
+'use client'
+
 import { SectionMarker } from './SectionMarker'
+import { useTheme } from '@/context/ThemeContext'
 
 /* ── Card data — 3 severity tiers, each with competitor vs ClearUX ── */
 
@@ -64,28 +67,34 @@ const sevColors: Record<string, { dot: string; text: string }> = {
 /* ── Component ─────────────────────────────────────────────── */
 
 export function Comparison() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <>
       {/* ── Interstitial banner ─────────────────────────────── */}
       <section
         className="py-[120px] max-sm:py-[80px]"
-        style={{ background: 'var(--ink)', color: '#ffffff' }}
+        style={{
+          background: isDark ? 'var(--paper)' : 'var(--ink)',
+          color: isDark ? 'var(--ink)' : '#ffffff',
+        }}
       >
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
           {/* Line 1 — smaller, subdued: the competitor reality */}
           <p
             className="font-sans font-normal leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
-            style={{ fontSize: '19px', color: 'rgba(255,255,255,0.4)', maxWidth: '700px' }}
+            style={{ fontSize: '19px', color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)', maxWidth: '700px' }}
           >
             Other tools measure how happy Google is with your site.
           </p>
-          {/* Line 2 — large, bright white: the ClearUX promise */}
+          {/* Line 2 — large, high contrast: the ClearUX promise */}
           <h2
             className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: '#ffffff', maxWidth: '960px' }}
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff', maxWidth: '960px' }}
           >
             ClearUX audits the{' '}
-            <em className="italic" style={{ color: '#A4B26A' }}>human</em>{' '}
+            <em className="italic text-signal">human</em>{' '}
             experience.
           </h2>
         </div>

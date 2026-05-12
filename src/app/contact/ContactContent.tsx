@@ -183,13 +183,13 @@ export default function ContactContent() {
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden" style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '100px 0' }}>
+      <section className="accent-section relative overflow-hidden" style={{ padding: '100px 0' }}>
         <div className="absolute pointer-events-none" style={{ top: -100, right: -100, width: 400, height: 400, background: 'radial-gradient(circle, var(--signal) 0%, transparent 65%)', opacity: 0.18 }} />
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative text-center">
-          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)', color: 'var(--paper)' }}>
+          <h2 className="font-serif font-normal leading-[0.95] tracking-[-0.025em] mb-6" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}>
             Start your audit <em className="italic text-signal">today</em>
           </h2>
-          <p className="text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto" style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}>
+          <p className="accent-subdued text-[18px] leading-[1.55] mb-10 font-sans max-w-[480px] mx-auto">
             Your first audit is free. No credit card, no commitment.
           </p>
           <a
