@@ -1978,49 +1978,57 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                   )}
 
-                  {/* "Likely fixed findings detected" alert */}
-                  {rawJson.verificationSummary.likelyFixed > 0 && (
-                    <div className="mb-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
-                      <Eye size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-ink mb-0.5">
-                          {rawJson.verificationSummary.likelyFixed} finding{rawJson.verificationSummary.likelyFixed > 1 ? 's' : ''} may have been fixed
-                        </p>
-                        <p className="text-xs text-m-muted leading-relaxed">
-                          Our AI scanned the live site and detected changes that suggest {rawJson.verificationSummary.likelyFixed > 1 ? 'these issues have' : 'this issue has'} been addressed.
-                          Look for the &quot;Likely Fixed&quot; badge on findings below. Confirm the fix to update your score.
-                        </p>
+                  {/* "Likely fixed findings detected" alert — count from actual findings for accuracy */}
+                  {(() => {
+                    const likelyCount = findings.filter((f: any) => f.verification_status === 'likely_fixed').length;
+                    if (likelyCount === 0) return null;
+                    return (
+                      <div className="mb-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
+                        <Eye size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-ink mb-0.5">
+                            {likelyCount} finding{likelyCount > 1 ? 's' : ''} may have been fixed
+                          </p>
+                          <p className="text-xs text-m-muted leading-relaxed">
+                            Our AI scanned the live site and detected changes that suggest {likelyCount > 1 ? 'these issues have' : 'this issue has'} been addressed.
+                            Look for the &quot;Likely Fixed&quot; badge on findings below. Confirm the fix to update your score.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setVerificationAlertDismissed(true)}
+                          className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setVerificationAlertDismissed(true)}
-                        className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
 
-                  {/* "Poorly fixed findings detected" alert */}
-                  {rawJson.verificationSummary.poorlyFixed > 0 && (
-                    <div className="mb-4 p-4 rounded-xl bg-red-50/60 border border-red-200/40 flex items-start gap-3">
-                      <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-ink mb-0.5">
-                          {rawJson.verificationSummary.poorlyFixed} finding{rawJson.verificationSummary.poorlyFixed > 1 ? 's' : ''} poorly fixed
-                        </p>
-                        <p className="text-xs text-m-muted leading-relaxed">
-                          Our AI detected that {rawJson.verificationSummary.poorlyFixed > 1 ? 'these fixes' : 'this fix'} may have introduced new issues or made things worse.
-                          Look for the &quot;Poorly Fixed&quot; badge on findings below and review the AI notes for guidance.
-                        </p>
+                  {/* "Poorly fixed findings detected" alert — count from actual findings for accuracy */}
+                  {(() => {
+                    const poorlyCount = findings.filter((f: any) => f.verification_status === 'poorly_fixed').length;
+                    if (poorlyCount === 0) return null;
+                    return (
+                      <div className="mb-4 p-4 rounded-xl bg-red-50/60 border border-red-200/40 flex items-start gap-3">
+                        <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-ink mb-0.5">
+                            {poorlyCount} finding{poorlyCount > 1 ? 's' : ''} poorly fixed
+                          </p>
+                          <p className="text-xs text-m-muted leading-relaxed">
+                            Our AI detected that {poorlyCount > 1 ? 'these fixes' : 'this fix'} may have introduced new issues or made things worse.
+                            Look for the &quot;Poorly Fixed&quot; badge on findings below and review the AI notes for guidance.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setVerificationAlertDismissed(true)}
+                          className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setVerificationAlertDismissed(true)}
-                        className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </>
               )}
 
