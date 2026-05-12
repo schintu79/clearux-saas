@@ -97,7 +97,7 @@ export default function PricingContent() {
                 return (
                   <div
                     key={plan.id}
-                    className={`relative px-8 py-10 ${i < SUBSCRIPTION_PLANS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                    className={`relative px-8 py-10 flex flex-col ${i < SUBSCRIPTION_PLANS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
                       plan.popular ? 'bg-ink text-paper' : ''
                     }`}
                   >
@@ -126,7 +126,7 @@ export default function PricingContent() {
                     <p className="text-[15px] font-sans font-medium mb-7" style={{ color: plan.popular ? 'var(--paper)' : 'var(--ink)' }}>
                       {plan.auditsPerMonth} audits per month + unlimited re-audits
                     </p>
-                    <ul className="list-none space-y-3 mb-9">
+                    <ul className="list-none space-y-3 mb-9 flex-1">
                       {plan.features.slice(1).map((f) => (
                         <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: plan.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
                           <CheckIcon />
@@ -134,14 +134,24 @@ export default function PricingContent() {
                         </li>
                       ))}
                     </ul>
-                    <Button
-                      href="/register"
-                      variant={plan.popular ? 'primary' : 'ghost'}
-                      className="w-full justify-center"
-                    >
-                      Start free trial
-                      <ArrowRightIcon size={14} />
-                    </Button>
+                    {plan.popular ? (
+                      <Link
+                        href="/register"
+                        className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] no-underline cursor-pointer transition-all bg-signal text-white border-signal hover:opacity-90"
+                      >
+                        Start free trial
+                        <ArrowRightIcon size={14} />
+                      </Link>
+                    ) : (
+                      <Button
+                        href="/register"
+                        variant="primary"
+                        className="w-full justify-center"
+                      >
+                        Start free trial
+                        <ArrowRightIcon size={14} />
+                      </Button>
+                    )}
                   </div>
                 )
               })}
@@ -154,7 +164,7 @@ export default function PricingContent() {
               {CREDIT_PACKS.map((pack, i) => (
                 <div
                   key={pack.id}
-                  className={`relative px-8 py-10 ${i < CREDIT_PACKS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
+                  className={`relative px-8 py-10 flex flex-col ${i < CREDIT_PACKS.length - 1 ? 'lg:border-r max-lg:border-b' : ''} border-ink ${
                     pack.popular ? 'bg-ink text-paper' : ''
                   }`}
                 >
@@ -180,7 +190,7 @@ export default function PricingContent() {
                     </span>
                   )}
                   {!pack.savePercent && <div className="mb-5" />}
-                  <ul className="list-none space-y-3 mb-9">
+                  <ul className="list-none space-y-3 mb-9 flex-1">
                     {pack.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-[14px] font-sans" style={{ color: pack.popular ? 'color-mix(in srgb, var(--paper) 78%, transparent)' : 'var(--ink-2)' }}>
                         <CheckIcon />
@@ -188,14 +198,24 @@ export default function PricingContent() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    href="/register"
-                    variant={pack.popular ? 'primary' : 'ghost'}
-                    className="w-full justify-center"
-                  >
-                    Buy credits
-                    <ArrowRightIcon size={14} />
-                  </Button>
+                  {pack.popular ? (
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center justify-center gap-2 w-full font-sans font-medium text-[14px] border rounded-full px-[22px] py-[11px] no-underline cursor-pointer transition-all bg-signal text-white border-signal hover:opacity-90"
+                    >
+                      Buy credits
+                      <ArrowRightIcon size={14} />
+                    </Link>
+                  ) : (
+                    <Button
+                      href="/register"
+                      variant="primary"
+                      className="w-full justify-center"
+                    >
+                      Buy credits
+                      <ArrowRightIcon size={14} />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -230,8 +250,6 @@ export default function PricingContent() {
                   { feature: 'Re-audits', free: '-', credits: '1 credit each', sub: 'Unlimited' },
                   { feature: 'White-label reports', free: false, credits: 'Scale pack', sub: 'Pro + Agency' },
                   { feature: 'Priority processing', free: false, credits: false, sub: 'Pro + Agency' },
-                  { feature: 'Team seats', free: false, credits: false, sub: 'Agency (5)' },
-                  { feature: 'API access', free: false, credits: false, sub: 'Agency' },
                 ] as { feature: string; free: boolean | string; credits: boolean | string; sub: boolean | string }[]).map((row, ri) => (
                   <tr key={ri} className="border-b border-rule last:border-b-0 hover:bg-paper-2 transition-colors">
                     <td className="px-6 py-4 text-[14px] font-sans font-medium text-ink">{row.feature}</td>

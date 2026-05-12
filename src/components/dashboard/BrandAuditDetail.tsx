@@ -892,28 +892,28 @@ export default function BrandAuditDetail({
             </div>
 
             {/* Action strip */}
-            <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
-              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
-                <Download size={12} /> PDF
+            <div className="border-t border-rule px-6 sm:px-8 py-4 flex flex-wrap gap-2.5">
+              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+                <Download size={13} /> PDF
               </a>
-              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
-                <Download size={12} /> Word
+              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+                <Download size={13} /> Word
               </a>
-              <button
-                onClick={handleShare}
-                disabled={shareLoading}
-                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors disabled:opacity-50"
-              >
-                {shareCopied ? <><Check size={12} className="text-ok" /> Copied</> : <><Share2 size={12} /> Share</>}
-              </button>
               {audit.brand_identity_id && (
                 <Link
                   href={`/dashboard/new-audit?type=brand_identity&brand=${audit.brand_identity_id}`}
-                  className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
+                  className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
                 >
-                  <RefreshCw size={12} /> Re-audit
+                  <RefreshCw size={13} /> Re-audit
                 </Link>
               )}
+              <button
+                onClick={handleShare}
+                disabled={shareLoading}
+                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors disabled:opacity-50"
+              >
+                {shareCopied ? <><Check size={13} className="text-ok" /> Copied</> : <><Share2 size={13} /> Share</>}
+              </button>
             </div>
           </div>
 

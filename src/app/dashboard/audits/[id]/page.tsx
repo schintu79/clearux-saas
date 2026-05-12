@@ -95,6 +95,14 @@ const CATEGORY_ICONS: React.ElementType[] = [
   Eye, MessageSquare, Target, CheckCircle2,         // Brand Consistency (20-23)
 ];
 
+/* Category dot colors for hero card mini-scores */
+const CATEGORY_DOT_COLORS = [
+  '#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#1E3A5F', '#8B5CF6', '#14B8A6',
+  '#EF4444', '#6366F1', '#F97316', '#06B6D4', '#A855F7', '#84CC16', '#E11D48',
+  '#0EA5E9', '#D946EF', '#22C55E', '#FB923C', '#6D28D9', '#0D9488',
+  '#2563EB', '#DB2777', '#059669', '#CA8A04',
+];
+
 /* Pillar visual config — v2 token-based, uniform across all modules */
 const PILLAR_STYLE = [
   { range: [0, 4] as [number, number] },
@@ -1766,7 +1774,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     {findings.length} findings · {activeModuleCount} modules{isPartialAudit ? ` of ${totalModuleCount}` : ''}
                   </p>
 
-                  {/* Severity counts — matching demo-report */}
+                  {/* Category mini-scores with colored dots */}
+                  {categoryScores.length > 0 && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
+                      {categoryScores.map((cat, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length] }} />
+                          <span className="text-xs text-m-muted">{cat.name}</span>
+                          <span className={`text-xs font-medium ${scoreColor(cat.score)}`}>{cat.score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Severity counts */}
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
                     {severityCounts.critical > 0 && (
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
@@ -1784,39 +1805,31 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </span>
                     )}
                   </div>
-
-                  {/* Action buttons — matching demo-report action strip */}
                 </div>
               </div>
 
             </div>
-            {/* Action strip — matching demo-report */}
-            <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
-              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
-                <Download size={12} /> PDF
+            {/* Action strip */}
+            <div className="border-t border-rule px-6 sm:px-8 py-4 flex flex-wrap gap-2.5">
+              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+                <Download size={13} /> PDF
               </a>
-              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors">
-                <Download size={12} /> Word
+              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+                <Download size={13} /> Word
               </a>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
+              >
+                <RefreshCw size={13} /> Re-audit
+              </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors disabled:opacity-50"
               >
-                {shareCopied ? <><Check size={12} className="text-ok" /> Copied</> : <><Share2 size={12} /> Share</>}
+                {shareCopied ? <><Check size={13} className="text-ok" /> Copied</> : <><Share2 size={13} /> Share</>}
               </button>
-              <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
-              >
-                <RefreshCw size={12} /> Re-audit
-              </Link>
-              <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 hover:bg-paper-2 transition-colors"
-              >
-                <Search size={12} /> Dig deeper
-              </Link>
             </div>
           </div>
 
@@ -2138,18 +2151,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <RefreshCw size={14} /> Re-audit
               </Link>
-              <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
-              >
-                <Search size={14} /> Dig Deeper
-              </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
                 className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                {shareCopied ? <><Check size={14} className="text-emerald-500" /> Copied</> : <><Share2 size={14} /> Share</>}
+                {shareCopied ? <><Check size={14} className="text-ok" /> Copied</> : <><Share2 size={14} /> Share</>}
               </button>
             </div>
             <p className="text-center text-[11px] text-m-muted mt-2">1 credit per audit</p>

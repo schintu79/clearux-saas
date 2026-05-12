@@ -14,8 +14,6 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
-import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface AdminShellProps {
@@ -25,7 +23,6 @@ interface AdminShellProps {
 const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme } = useTheme();
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
@@ -105,8 +102,12 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
       >
         {/* Header with Admin badge */}
         <div className="px-5 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--rule)' }}>
-          <Link href="/admin" className="flex items-center">
-            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <svg width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
+              <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
+              <circle cx="16" cy="16" r="5.5" fill="currentColor" />
+            </svg>
+            <span className="font-sans font-bold text-[22px] leading-none tracking-[-0.025em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
           </Link>
           <span className="text-[10px] font-mono uppercase tracking-[0.1em] px-2.5 py-1 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
             Admin
@@ -224,8 +225,12 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               />
             </div>
           </button>
-          <span className="ml-3">
-            <Logo height={26} variant={theme === 'dark' ? 'light' : 'dark'} />
+          <span className="ml-3 flex items-center gap-2">
+            <svg width={24} height={24} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
+              <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
+              <circle cx="16" cy="16" r="5.5" fill="currentColor" />
+            </svg>
+            <span className="font-sans font-bold text-[20px] leading-none tracking-[-0.025em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
           </span>
           <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.1em] px-2.5 py-1 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
             Admin
