@@ -284,6 +284,7 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
           productUrl=""
           latestAuditId={latestCompleted.id}
           onStatCardClick={handleStatCardClick}
+          hideBenchmarks
         />
       )}
 

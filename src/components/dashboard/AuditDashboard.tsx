@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   ChevronRight,
+  ChevronDown,
   BarChart3,
   CheckCircle2,
   Loader2,
@@ -368,12 +369,13 @@ export function HeuristicRadarChart({ pillarScores }: {
 
 /* ── Benchmarks Section ──────────────────────────────────── */
 
-export function BenchmarksSection({ overallScore, pillarScores, competitors, detecting, onBenchmark }: {
+export function BenchmarksSection({ overallScore, pillarScores, competitors, detecting, onBenchmark, onCollapse }: {
   overallScore: number;
   pillarScores: Array<{ name: string; score: number }>;
   competitors?: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting?: boolean;
   onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
+  onCollapse?: () => void;
 }) {
   const [manualInputs, setManualInputs] = useState<string[]>(['', '', '']);
   const [editing, setEditing] = useState(false);
@@ -445,7 +447,12 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="rounded-xl border border-rule bg-card shadow-sm overflow-hidden mb-6">
         <div className="px-5 pt-5 pb-2 flex items-center gap-2">
           <BarChart3 size={14} className="text-brand" />
-          <h3 className="text-sm font-medium text-text">Benchmarks</h3>
+          <h3 className="text-sm font-medium text-text flex-1">Benchmarks</h3>
+          {onCollapse && (
+            <button onClick={onCollapse} className="p-1 rounded-md hover:bg-black/[0.04] transition-colors" title="Collapse">
+              <ChevronDown size={16} style={{ color: 'var(--m-muted)' }} />
+            </button>
+          )}
         </div>
 
         {detecting ? (
@@ -486,7 +493,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
       <div className="px-5 pt-5 pb-3 flex items-center gap-2">
         <BarChart3 size={14} className="text-brand" />
         <h3 className="text-sm font-medium text-text">Benchmarks</h3>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
           <span className="text-[10px] text-muted">vs. {maxCompetitors.length} competitor{maxCompetitors.length !== 1 ? 's' : ''}</span>
           {onBenchmark && (
             <button
@@ -499,6 +506,11 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
             >
               <RefreshCw size={12} className={detecting ? 'animate-spin' : ''} />
               Replace competitors
+            </button>
+          )}
+          {onCollapse && (
+            <button onClick={onCollapse} className="p-1 rounded-md hover:bg-black/[0.04] transition-colors" title="Collapse">
+              <ChevronDown size={16} style={{ color: 'var(--m-muted)' }} />
             </button>
           )}
         </div>
@@ -564,6 +576,7 @@ export function AuditDashboardOverview({
   detecting,
   onBenchmark,
   onStatCardClick,
+  hideBenchmarks,
 }: {
   overallScore: number;
   scoreTrend: Array<{ auditId: string; date: string; overallScore: number }>;
@@ -576,8 +589,12 @@ export function AuditDashboardOverview({
   detecting?: boolean;
   onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
   onStatCardClick?: (filter: string) => void;
+  /** Hide heuristic radar + benchmarks (e.g. for brand identity audits) */
+  hideBenchmarks?: boolean;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed && f.status !== 'fixed').length;
+  const [heuristicOpen, setHeuristicOpen] = useState(false);
+  const [benchmarksOpen, setBenchmarksOpen] = useState(false);
 
   return (
     <>
@@ -631,19 +648,52 @@ export function AuditDashboardOverview({
         onCardClick={onStatCardClick}
       />
 
-      {/* Row 3: Heuristic Breakdown — full width */}
-      <div className="rounded-xl border border-rule bg-card p-5 shadow-sm mb-6">
-        <HeuristicRadarChart pillarScores={pillarScores} />
-      </div>
+      {/* Row 3: Heuristic Breakdown — collapsible, closed by default (hidden for brand audits) */}
+      {!hideBenchmarks && (
+        <div className="rounded-xl border border-rule bg-card shadow-sm mb-6 overflow-hidden">
+          <button
+            onClick={() => setHeuristicOpen(!heuristicOpen)}
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-black/[0.02] transition-colors"
+          >
+            <h3 className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Heuristic breakdown</h3>
+            {heuristicOpen
+              ? <ChevronDown size={16} style={{ color: 'var(--m-muted)' }} />
+              : <ChevronRight size={16} style={{ color: 'var(--m-muted)' }} />
+            }
+          </button>
+          {heuristicOpen && (
+            <div className="px-5 pb-5">
+              <HeuristicRadarChart pillarScores={pillarScores} />
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Row 4: Benchmarks */}
-      <BenchmarksSection
-        overallScore={overallScore}
-        pillarScores={pillarScores}
-        competitors={competitors}
-        detecting={detecting}
-        onBenchmark={onBenchmark}
-      />
+      {/* Row 4: Benchmarks — collapsible, closed by default (hidden for brand audits) */}
+      {!hideBenchmarks && (
+        benchmarksOpen ? (
+          <BenchmarksSection
+            overallScore={overallScore}
+            pillarScores={pillarScores}
+            competitors={competitors}
+            detecting={detecting}
+            onBenchmark={onBenchmark}
+            onCollapse={() => setBenchmarksOpen(false)}
+          />
+        ) : (
+          <div className="rounded-xl border border-rule bg-card shadow-sm mb-6 overflow-hidden">
+            <button
+              onClick={() => setBenchmarksOpen(true)}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-black/[0.02] transition-colors"
+            >
+              <h3 className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                <BarChart3 size={16} /> Benchmarks
+              </h3>
+              <ChevronRight size={16} style={{ color: 'var(--m-muted)' }} />
+            </button>
+          </div>
+        )
+      )}
     </>
   );
 }
