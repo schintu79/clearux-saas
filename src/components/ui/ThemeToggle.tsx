@@ -45,14 +45,12 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'icon', className }
       onClick={toggleTheme}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className={clsx(
-        'p-2 rounded-lg transition-colors duration-200',
-        isDark
-          ? 'text-white hover:bg-white/10'
-          : 'text-gray-700 hover:bg-off',
+        'p-2 rounded-lg transition-colors duration-200 hover:bg-black/[0.04]',
         className
       )}
+      style={{ color: 'var(--m-muted)' }}
     >
-      {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   )
 }

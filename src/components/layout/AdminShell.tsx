@@ -107,8 +107,8 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         )}
         style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)' }}
       >
-        {/* Logo + collapse toggle */}
-        <div className={clsx('h-14 flex items-center justify-between', collapsed ? 'px-3' : 'px-5')} style={{ borderBottom: '1px solid var(--rule)' }}>
+        {/* Logo */}
+        <div className={clsx('h-14 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5 justify-between')} style={{ borderBottom: '1px solid var(--rule)' }}>
           <Link href="/admin" className="flex items-center gap-2.5">
             <svg width={28} height={28} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
               <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
@@ -119,31 +119,9 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             )}
           </Link>
           {!collapsed && (
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
-                Admin
-              </span>
-              <button
-                onClick={() => setCollapsed(true)}
-                className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-black/[0.04]"
-                style={{ color: 'var(--m-muted)' }}
-                title="Collapse sidebar"
-                aria-label="Collapse sidebar"
-              >
-                <ChevronLeft size={14} />
-              </button>
-            </div>
-          )}
-          {collapsed && (
-            <button
-              onClick={() => setCollapsed(false)}
-              className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-black/[0.04] absolute right-1.5 top-3.5"
-              style={{ color: 'var(--m-muted)' }}
-              title="Expand sidebar"
-              aria-label="Expand sidebar"
-            >
-              <ChevronRight size={14} />
-            </button>
+            <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
+              Admin
+            </span>
           )}
         </div>
 
@@ -245,9 +223,18 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             {!collapsed && 'Sign out'}
           </button>
 
-          {/* Theme toggle */}
-          <div className={clsx('flex items-center pt-1 mt-1', collapsed ? 'justify-center' : 'px-1')} style={{ borderTop: '1px solid var(--rule)' }}>
+          {/* Theme toggle + Collapse toggle */}
+          <div className={clsx('flex items-center pt-1 mt-1', collapsed ? 'flex-col gap-1' : 'justify-between px-1')} style={{ borderTop: '1px solid var(--rule)' }}>
             <ThemeToggle variant="icon" className="!p-1.5" />
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden md:flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-black/[0.04]"
+              style={{ color: 'var(--m-muted)' }}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
           </div>
         </div>
       </aside>
