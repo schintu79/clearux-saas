@@ -958,7 +958,7 @@ function PillarSection({
             ))}
           </div>
 
-          {/* Findings grouped by category */}
+          {/* Findings grouped by category (names already shown in score bars above) */}
           {Object.entries(findingsByCategory).map(([catName, catFindings]) => {
             if (catFindings.length === 0) return null;
             const sorted = [...catFindings].sort((a, b) => {
@@ -969,9 +969,9 @@ function PillarSection({
             return (
               <div key={catName} className="px-5 py-4" style={{ borderTop: `1px solid ${tint.border}` }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-ink">{catName}</span>
-                  <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
-                    {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: tint.dot }} />
+                  <span className="text-[11px] font-mono text-m-muted tracking-[0.06em]">
+                    {catName} — {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -1015,6 +1015,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const completedRef = useRef(false); // Once true, never revert to in-progress UI
+  const highestStatusRef = useRef(0); // Track forward-only status progression
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const [showStickyScore, setShowStickyScore] = useState(false);
 
@@ -1090,12 +1091,23 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           payment: null,
         } as AuditWithReport;
 
-        // Guard: once we've seen 'completed', never revert to an in-progress state
-        if (completedRef.current && auditData.status !== 'completed' && auditData.status !== 'failed') {
-          // Server briefly reported a non-completed status (e.g. during Inngest replay)
-          // — ignore it to prevent UI from looping back to the progress screen
-          return 'completed';
+        // Forward-only status guard — never let UI regress to an earlier stage
+        // (e.g. Inngest step replays can briefly report stale statuses)
+        const STATUS_ORDER: Record<string, number> = {
+          pending_payment: 0,
+          payment_received: 1,
+          crawling: 2,
+          analysing: 3,
+          generating_report: 4,
+          completed: 5,
+          failed: 5,
+        };
+        const newLevel = STATUS_ORDER[auditData.status] ?? 0;
+        if (newLevel < highestStatusRef.current) {
+          // DB reported a stale/regressed status — ignore it
+          return Object.entries(STATUS_ORDER).find(([, v]) => v === highestStatusRef.current)?.[0] || auditData.status;
         }
+        highestStatusRef.current = newLevel;
         if (auditData.status === 'completed') {
           completedRef.current = true;
         }
@@ -1200,23 +1212,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   }, [user, isPaymentReturn, fetchAuditDetail, auditId]);
 
   // ── Poll for in-progress audits
+  // Use a ref to track whether we should poll, avoiding re-runs on status changes
+  const shouldPollRef = useRef(false);
+  useEffect(() => {
+    if (!audit) return;
+    const inProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
+    shouldPollRef.current = inProgress && !completedRef.current;
+  }, [audit?.status]);
+
   useEffect(() => {
     if (isPaymentReturn) return;
     if (!audit) return;
-    if (completedRef.current) return; // Already completed — no more polling
+    if (completedRef.current) return;
     const inProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
     if (!inProgress) return;
 
+    // Only start polling once, don't restart on status changes
+    if (pollRef.current) return;
+
     pollRef.current = setInterval(async () => {
-      if (completedRef.current) { if (pollRef.current) clearInterval(pollRef.current); return; }
+      if (completedRef.current || !shouldPollRef.current) {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+        return;
+      }
       const s = await fetchAuditDetail(true);
       if (s === 'completed' || s === 'failed') {
-        if (pollRef.current) clearInterval(pollRef.current);
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       }
-    }, 5000);
+    }, 4000);
 
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [audit?.status, isPaymentReturn, fetchAuditDetail]);
+    return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
+  }, [audit?.id, isPaymentReturn, fetchAuditDetail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Sticky score bar: show when hero score card scrolls out of view
   useEffect(() => {
