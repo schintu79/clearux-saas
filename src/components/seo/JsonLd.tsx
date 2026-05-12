@@ -55,15 +55,23 @@ export function HomeJsonLd() {
         '@type': 'Organization',
         name: 'ClearUX',
         url: siteUrl,
-        logo: `${siteUrl}/logo.png`,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${siteUrl}/logo.png`,
+          width: 512,
+          height: 512,
+        },
         description: 'AI-powered UX audit platform that gives product teams 360° clarity on every layer of user experience. Senior UX rigor, in minutes.',
         contactPoint: {
           '@type': 'ContactPoint',
           email: 'support@clearux.ai',
           contactType: 'customer support',
+          areaServed: 'Worldwide',
           availableLanguage: ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese'],
         },
-        sameAs: [],
+        sameAs: [
+          'https://www.linkedin.com/company/clearux',
+        ],
       },
       {
         '@type': 'SoftwareApplication',

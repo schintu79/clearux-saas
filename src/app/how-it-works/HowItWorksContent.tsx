@@ -60,12 +60,36 @@ export default function HowItWorksContent() {
         </div>
       </section>
 
+      {/* Human experience callout */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <SectionMarker number="03" label="Beyond technical" />
+          <div className="grid lg:grid-cols-[1fr_1fr] gap-16 items-start max-lg:grid-cols-1 max-lg:gap-8">
+            <div>
+              <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+                We audit how it <em className="italic text-signal">feels.</em>
+              </h2>
+              <p className="text-[17px] text-ink-2 leading-[1.55] font-sans max-w-[480px]">
+                Cognitive load, dark patterns, and user wellbeing are first-class checks — not afterthoughts. This is what separates a UX audit from a tech scan.
+              </p>
+            </div>
+            <div className="border border-ink p-8 max-sm:p-6">
+              <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted mb-4">Example finding</h3>
+              <p className="font-sans text-[15px] font-medium text-ink mb-2">Checkout flow creates unnecessary anxiety</p>
+              <p className="font-sans text-[14px] text-ink-2 leading-[1.6]">
+                The payment form shows a countdown timer and &ldquo;Only 1 left&rdquo; badge on a subscription product with unlimited inventory. Users who notice the manipulation lose trust in all pricing claims. ClearUX flags this as a dark pattern — not just a technical error.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Six modules — matches homepage InstrumentGrid */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
             <div>
-              <SectionMarker number="03" label="The instrument" />
+              <SectionMarker number="04" label="The instrument" />
               <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
                 Six modules. <em className="italic text-signal">Ninety-six</em> checkpoints.
               </h2>
