@@ -5,7 +5,6 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { after } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 import { inngest } from '@/lib/inngest/client'
 
@@ -188,21 +187,11 @@ export async function POST(request: NextRequest) {
     const auditType = ar?.audit_type || (ar?.brand_identity_id && !ar?.product_url ? 'brand_identity' : 'website')
     const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
 
-    console.log(`[credits] Scheduling ${auditType} audit ${audit_id} via after()`)
-    after(async () => {
-      try {
-        if (auditType === 'website') {
-          const { processAudit } = await import('@/lib/audit-engine')
-          await processAudit(audit_id)
-        } else if (auditType === 'brand_identity') {
-          const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-          await processBrandAudit(audit_id)
-        }
-      } catch (err) {
-        console.error(`[credits] ${auditType} audit ${audit_id} failed:`, err)
-      }
+    // Dispatch to Inngest only — no direct execution to prevent race conditions
+    console.log(`[credits] Dispatching ${auditType} audit ${audit_id} to Inngest`)
+    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch((err) => {
+      console.error(`[credits] Failed to send Inngest event for audit ${audit_id}:`, err)
     })
-    inngest.send({ name: eventName, data: { auditId: audit_id } }).catch(() => {})
 
     return NextResponse.json({
       success: true,

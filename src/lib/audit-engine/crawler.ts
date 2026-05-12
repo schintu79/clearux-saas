@@ -775,7 +775,7 @@ async function fetchLinksOnly(url: string): Promise<URL[]> {
 
 export async function crawlPages(
   url: string,
-  maxPages: number = 1,
+  maxPages: number = 5,
 ): Promise<CrawledPage[]> {
   const pages: CrawledPage[] = []
   const visited = new Set<string>()
