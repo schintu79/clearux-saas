@@ -413,7 +413,7 @@ function CheckpointHealth({ categoryScores, findings }: {
 }
 
 /* ── Score Over Time — collapsible line chart, closed by default ── */
-function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; currentAuditId: string }) {
+function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUrl: string; currentAuditId: string; currentScore?: number }) {
   const router = useRouter();
   const [trend, setTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
   const [improvement, setImprovement] = useState(0);
@@ -429,8 +429,17 @@ function ScoreOverTime({ productUrl, currentAuditId }: { productUrl: string; cur
       .then(r => r.json())
       .then(d => {
         if (d.trend && d.trend.length > 1) {
-          setTrend(d.trend);
-          setImprovement(d.improvement || 0);
+          // Override current audit's score with the calculated score from category averages
+          // to avoid discrepancy between hero card and trend chart
+          const corrected = currentScore != null
+            ? d.trend.map((t: any) => t.auditId === currentAuditId ? { ...t, overallScore: currentScore } : t)
+            : d.trend;
+          setTrend(corrected);
+          // Recalculate improvement with corrected scores
+          const imp = corrected.length >= 2
+            ? corrected[corrected.length - 1].overallScore - corrected[corrected.length - 2].overallScore
+            : 0;
+          setImprovement(imp);
         }
       })
       .catch(() => {})
@@ -1862,6 +1871,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               >
                 <RefreshCw size={13} /> Re-audit
               </Link>
+              <Link
+                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                className="flex items-center gap-2 border border-signal/30 text-signal text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-signal/5 transition-colors"
+              >
+                <Search size={13} /> Dig deeper
+              </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
@@ -1873,7 +1888,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
-          <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} />
+          <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} currentScore={calculatedOverallScore} />
 
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-signal/5 border border-signal/20">
