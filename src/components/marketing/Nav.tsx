@@ -8,7 +8,7 @@ import { useTheme } from '@/context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 
 const NAV_LINKS = [
-  { label: 'How it works', href: '/how-it-works' },
+  { label: 'Product', href: '/how-it-works' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Demo report', href: '/demo-report' },
   { label: 'FAQ', href: '/faq' },

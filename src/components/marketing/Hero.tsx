@@ -11,10 +11,10 @@ export function Hero() {
           <div>
             <SectionMarker number="00" label="The thesis" />
             <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-9" style={{ fontSize: 'clamp(56px, 7.5vw, 108px)' }}>
-              The audit your team <em className="italic text-signal">actually</em> ships from.
+              The UX audit platform that finds what you{' '}<em className="italic text-signal">miss.</em>
             </h1>
             <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[520px] mb-10 font-sans">
-              Paste a URL. Get a <strong className="font-semibold text-ink">96-checkpoint audit</strong> your team can act on — severity-ranked, evidence-backed, delivered in minutes instead of weeks.
+              Audit your website, brand identity, and AI visibility in one place. <strong className="font-semibold text-ink">96 checkpoints, 6 modules</strong> — severity-ranked findings with evidence and fixes, delivered in minutes.
             </p>
             <div className="flex gap-3.5 mb-14 max-sm:flex-col max-sm:items-stretch">
               <Button href="/register">

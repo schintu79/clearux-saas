@@ -1,54 +1,331 @@
 'use client'
 
 import { SectionMarker } from '@/components/marketing/SectionMarker'
+import { Button } from '@/components/marketing/Button'
+import { ArrowRightIcon } from '@/components/marketing/icons'
 import { Coda } from '@/components/marketing/Coda'
-import { HumanExperience } from '@/components/marketing/HumanExperience'
+import { useTheme } from '@/context/ThemeContext'
 
-const MODULES = [
-  { num: '01', title: 'Foundation', desc: 'Visual design, messaging, navigation, content quality. The structural baseline a great experience is built on.', count: 16, range: 'F-01 → F-16' },
-  { num: '02', title: 'Human Experience', desc: 'Clarity, cognitive load, dark patterns, conversion friction. Whether your UX respects users in stressed or impaired states.', count: 22, range: 'HX-01 → HX-22' },
-  { num: '03', title: 'Inclusive Design', desc: 'WCAG compliance, cognitive accessibility, mobile context, equity across abilities. Every user, every context.', count: 18, range: 'ID-01 → ID-18' },
-  { num: '04', title: 'Future Readiness', desc: 'How LLMs and AI agents read your product. Performance, agent readiness, internationalisation. The discovery layer of the next decade.', count: 14, range: 'FR-01 → FR-14' },
-  { num: '05', title: 'Brand Consistency', desc: 'Voice, visual identity, tone alignment. Whether what users see matches what your brand promises — surface to surface.', count: 14, range: 'BC-01 → BC-14' },
-  { num: '06', title: 'SEO Structure', desc: 'Heading hierarchy, meta tags, structured data, crawlability. Whether your product is findable, legible, and ranked the way it deserves.', count: 12, range: 'SEO-01 → SEO-12' },
+/* ── Three audit types — equal weight ─────────────────────── */
+
+const AUDIT_TYPES = [
+  {
+    id: 'website',
+    marker: '01',
+    label: 'Website UX audit',
+    title: 'Audit your website.',
+    titleAccent: 'Fix what matters.',
+    subtitle: 'Paste any URL and get a complete UX audit in minutes. We crawl your pages, check 96 quality points, and surface the issues that actually affect your users — ranked by severity with evidence and specific fixes.',
+    features: [
+      { name: '96 checkpoints', desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness.' },
+      { name: 'Multi-page crawl', desc: 'We don\'t just check the homepage. ClearUX follows links and audits your key pages automatically.' },
+      { name: 'Severity ranking', desc: 'Critical, high, medium, low. Know exactly what to fix first and why it matters.' },
+      { name: 'Mobile responsiveness', desc: 'Every page tested at 4 viewport sizes. Layout breaks, touch targets, overflow — all checked.' },
+    ],
+    mockup: {
+      type: 'score' as const,
+      domain: 'yoursite.com',
+      score: 72,
+      modules: [
+        { name: 'Foundation', score: 81, dot: '#6366F1' },
+        { name: 'Human Experience', score: 68, dot: '#EC4899' },
+        { name: 'Inclusive Design', score: 74, dot: '#10B981' },
+        { name: 'Future Readiness', score: 65, dot: '#F59E0B' },
+        { name: 'Brand Consistency', score: 78, dot: '#3B82F6' },
+        { name: 'SEO Structure', score: 70, dot: '#06B6D4' },
+      ],
+    },
+  },
+  {
+    id: 'brand',
+    marker: '02',
+    label: 'Brand identity audit',
+    title: 'Audit your brand.',
+    titleAccent: 'Cross-check the live site.',
+    subtitle: 'Upload your brand guidelines (PDF, images, documents) and we\'ll audit them for consistency, clarity, and completeness. Then cross-reference against your live website to find every place your brand falls short.',
+    features: [
+      { name: 'Guidelines review', desc: 'We analyze your brand book — logo usage, typography, color systems, tone of voice, and more.' },
+      { name: 'Live site cross-check', desc: 'Compare your brand guidelines against what\'s actually deployed. Spot mismatches instantly.' },
+      { name: 'Voice and tone', desc: 'Is your website copy consistent with your brand personality? We check messaging across pages.' },
+      { name: 'Visual consistency', desc: 'Color usage, font implementation, spacing, and image style reviewed against your standards.' },
+    ],
+    mockup: {
+      type: 'brand' as const,
+      categories: [
+        { name: 'Logo usage', score: 88 },
+        { name: 'Color system', score: 72 },
+        { name: 'Typography', score: 91 },
+        { name: 'Voice and tone', score: 65 },
+        { name: 'Visual consistency', score: 78 },
+      ],
+    },
+  },
+  {
+    id: 'ai',
+    marker: '03',
+    label: 'AI visibility',
+    title: 'See how AI sees you.',
+    titleAccent: 'Control the narrative.',
+    subtitle: 'AI assistants are the new front page. We ask leading AI models about your business and grade their answers against your actual content. Find out what they get right, what they hallucinate, and how to fix it.',
+    features: [
+      { name: 'AI probe', desc: 'We query AI models about your company — identity, products, pricing, reputation — and grade each answer.' },
+      { name: 'Citation audit', desc: 'Which of your pages get cited by AI? Which get ignored? Know exactly where you stand.' },
+      { name: 'Multi-model benchmark', desc: 'Claude, GPT-4o, Gemini. Compare how different AI models represent your brand.' },
+      { name: 'Fix playbooks', desc: 'Ready-to-paste JSON-LD, meta tags, and llms.txt snippets that help AI understand you correctly.' },
+    ],
+    mockup: {
+      type: 'ai' as const,
+      probes: [
+        { question: 'What is yoursite.com?', accuracy: 'accurate' as const },
+        { question: 'What products do they offer?', accuracy: 'partial' as const },
+        { question: 'What is the pricing?', accuracy: 'hallucinated' as const },
+        { question: 'What makes them different?', accuracy: 'accurate' as const },
+      ],
+    },
+  },
 ]
+
+/* ── Platform features ────────────────────────────────────── */
+
+const PLATFORM_FEATURES = [
+  { title: 'Re-audit after every release', desc: 'Ship a fix, re-run the audit, see the score change. Track progress over time with historical scoring.', icon: 'refresh' },
+  { title: 'Export PDF and Word reports', desc: 'Download professional reports your team can share with stakeholders, clients, or leadership.', icon: 'download' },
+  { title: 'Share with a link', desc: 'Generate a shareable link to your audit results. No login required for viewers.', icon: 'share' },
+  { title: 'Competitor comparison', desc: 'Run the same audit on a competitor. See where you lead and where you trail, side by side.', icon: 'compare' },
+  { title: 'Score trends over time', desc: 'Every audit is saved. Watch your score improve as you ship fixes. Evidence your team is making progress.', icon: 'trend' },
+  { title: 'AI vs human interpretation', desc: 'Each finding shows how a human reads the issue alongside how an AI model interprets it.', icon: 'brain' },
+]
+
+/* ── How it works — 3 steps ───────────────────────────────── */
 
 const STEPS = [
-  { num: '01', title: 'Choose your audit', desc: 'Paste a website URL, upload brand identity files (PDF, DOCX, images), or submit a design. ClearUX handles all three.' },
-  { num: '02', title: 'We run 96 checkpoints', desc: 'Every input analysed across six modules and 24 categories. Every score is evidence-based — no subjective hand-waving.' },
-  { num: '03', title: 'You decide what to fix', desc: 'Every issue ranked and explained. Export as PDF or Word, share with a link. We identify. You decide.' },
+  { num: '01', title: 'Choose your audit', desc: 'Paste a website URL for a UX audit. Upload brand guidelines for a brand audit. Both get AI visibility analysis included.' },
+  { num: '02', title: 'We run the engine', desc: '96 checkpoints across 6 modules. Multi-page crawl. AI model probing. Everything runs in parallel — results in minutes, not weeks.' },
+  { num: '03', title: 'You act on findings', desc: 'Every issue ranked by severity with evidence screenshots, specific recommendations, and exportable reports. Fix the critical items first.' },
 ]
 
+/* ── Six modules ──────────────────────────────────────────── */
+
+const MODULES = [
+  { num: '01', title: 'Foundation', desc: 'Visual design, messaging, navigation, content quality. The structural baseline every great experience needs.', count: 16 },
+  { num: '02', title: 'Human Experience', desc: 'Clarity, cognitive load, dark patterns, conversion friction. Whether your UX respects real users.', count: 22 },
+  { num: '03', title: 'Inclusive Design', desc: 'WCAG compliance, cognitive accessibility, mobile context, equity across abilities.', count: 18 },
+  { num: '04', title: 'Future Readiness', desc: 'How AI models read your product. Performance, agent readiness, structured data.', count: 14 },
+  { num: '05', title: 'Brand Consistency', desc: 'Voice, visual identity, tone alignment. Whether what users see matches what your brand promises.', count: 14 },
+  { num: '06', title: 'SEO Structure', desc: 'Heading hierarchy, meta tags, structured data, crawlability. Be found and ranked properly.', count: 12 },
+]
+
+/* ── Mockup sub-components ────────────────────────────────── */
+
+function ScoreMockup({ data }: { data: typeof AUDIT_TYPES[0]['mockup'] }) {
+  if (data.type !== 'score') return null
+  const d = data as typeof AUDIT_TYPES[0]['mockup'] & { domain: string; score: number; modules: Array<{ name: string; score: number; dot: string }> }
+  const color = d.score >= 70 ? 'var(--ok)' : 'var(--warn)'
+  return (
+    <div className="border border-rule rounded-xl overflow-hidden bg-paper shadow-sm">
+      <div className="p-6 flex items-center gap-5">
+        <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
+          <svg width={80} height={80} className="-rotate-90">
+            <circle cx={40} cy={40} r={36} fill="none" stroke="var(--rule)" strokeWidth={6} />
+            <circle cx={40} cy={40} r={36} fill="none" stroke={color} strokeWidth={6} strokeLinecap="round"
+              strokeDasharray={226} strokeDashoffset={226 * (1 - d.score / 100)} />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-serif text-[22px] text-ink">{d.score}</span>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-sans text-[15px] text-ink font-medium mb-1">{d.domain}</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {d.modules.map(m => (
+              <div key={m.name} className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: m.dot }} />
+                <span className="text-[11px] text-m-muted">{m.name}</span>
+                <span className="text-[11px] font-medium" style={{ color: m.score >= 70 ? 'var(--ok)' : 'var(--warn)' }}>{m.score}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-rule px-6 py-3 flex gap-2">
+        {['32 findings', '6 modules', 'Re-audit'].map(a => (
+          <span key={a} className="text-[10px] font-mono tracking-[0.06em] uppercase text-m-muted px-2.5 py-1 rounded border border-rule">{a}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BrandMockup({ data }: { data: typeof AUDIT_TYPES[1]['mockup'] }) {
+  if (data.type !== 'brand') return null
+  const d = data as typeof AUDIT_TYPES[1]['mockup'] & { categories: Array<{ name: string; score: number }> }
+  return (
+    <div className="border border-rule rounded-xl overflow-hidden bg-paper shadow-sm">
+      <div className="px-6 py-4 border-b border-rule flex items-center justify-between">
+        <p className="font-sans text-[14px] font-medium text-ink">Brand identity audit</p>
+        <span className="text-[10px] font-mono tracking-[0.06em] uppercase text-m-muted">5 categories</span>
+      </div>
+      <div className="p-6 space-y-3.5">
+        {d.categories.map(cat => {
+          const color = cat.score >= 80 ? 'var(--ok)' : cat.score >= 65 ? 'var(--warn)' : 'var(--severe)'
+          return (
+            <div key={cat.name}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[13px] text-ink">{cat.name}</span>
+                <span className="text-[13px] font-medium" style={{ color }}>{cat.score}</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-paper-2">
+                <div className="h-full rounded-full transition-all" style={{ width: `${cat.score}%`, background: color }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AIMockup({ data }: { data: typeof AUDIT_TYPES[2]['mockup'] }) {
+  if (data.type !== 'ai') return null
+  const d = data as typeof AUDIT_TYPES[2]['mockup'] & { probes: Array<{ question: string; accuracy: 'accurate' | 'partial' | 'hallucinated' }> }
+  const accColors = { accurate: { text: 'var(--ok)', bg: 'color-mix(in srgb, var(--ok) 10%, transparent)', label: 'Correct' }, partial: { text: 'var(--warn)', bg: 'color-mix(in srgb, var(--warn) 10%, transparent)', label: 'Partial' }, hallucinated: { text: 'var(--severe)', bg: 'color-mix(in srgb, var(--severe) 10%, transparent)', label: 'Hallucinated' } }
+  return (
+    <div className="border border-rule rounded-xl overflow-hidden bg-paper shadow-sm">
+      <div className="px-6 py-4 border-b border-rule flex items-center justify-between">
+        <p className="font-sans text-[14px] font-medium text-ink">AI probe results</p>
+        <span className="text-[10px] font-mono tracking-[0.06em] uppercase text-m-muted">{d.probes.length} questions</span>
+      </div>
+      <div className="divide-y divide-rule">
+        {d.probes.map(p => {
+          const acc = accColors[p.accuracy]
+          return (
+            <div key={p.question} className="px-6 py-3.5 flex items-center justify-between gap-3">
+              <span className="text-[13px] text-ink">{p.question}</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ color: acc.text, background: acc.bg }}>{acc.label}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ── Feature icon (inline SVG) ────────────────────────────── */
+
+function FeatureIcon({ type }: { type: string }) {
+  const cls = "text-signal"
+  const props = { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, className: cls }
+  switch (type) {
+    case 'refresh': return <svg {...props}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 3v6h-6" /></svg>
+    case 'download': return <svg {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
+    case 'share': return <svg {...props}><circle cx={18} cy={5} r={3} /><circle cx={6} cy={12} r={3} /><circle cx={18} cy={19} r={3} /><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" /></svg>
+    case 'compare': return <svg {...props}><rect x={3} y={3} width={18} height={18} rx={2} /><path d="M12 3v18" /></svg>
+    case 'trend': return <svg {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+    case 'brain': return <svg {...props}><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 22h6" /><path d="M12 17v5" /></svg>
+    default: return null
+  }
+}
+
+/* ── Main component ───────────────────────────────────────── */
+
 export default function HowItWorksContent() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
   return (
     <main>
-      {/* Hero */}
+      {/* ── Product Hero ─────────────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="01" label="How it works" />
+          <SectionMarker number="00" label="Product" />
           <h1 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-8" style={{ fontSize: 'clamp(48px, 7vw, 96px)' }}>
-            Audit your product. Get <em className="italic text-signal">360° clarity.</em>
+            One platform.{' '}<em className="italic text-signal">Three audits.</em>
           </h1>
-          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans">
-            ClearUX audits your website, brand identity, and design across 96 checkpoints in 6 modules. Prioritised findings with evidence, severity rankings, and specific fixes. Professional-grade depth in minutes.
+          <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
+            ClearUX is the UX audit platform that checks your website, your brand identity, and how AI models represent you — all in one place. Paste a URL or upload your brand files. Get severity-ranked findings with evidence and specific fixes, in minutes.
           </p>
+          <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
+            <Button href="/register">
+              Start free audit
+              <ArrowRightIcon size={14} />
+            </Button>
+            <Button href="/demo-report" variant="ghost">See a real report</Button>
+          </div>
         </div>
       </section>
 
-      {/* Three-step process */}
+      {/* ── Three audit types — SimilarWeb-style feature sections ── */}
+      {AUDIT_TYPES.map((audit, idx) => (
+        <section key={audit.id} className="py-[100px] border-b border-rule max-sm:py-16">
+          <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+              {/* Text side */}
+              <div className={idx % 2 === 1 ? 'lg:order-2' : ''}>
+                <SectionMarker number={audit.marker} label={audit.label} />
+                <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.022em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+                  {audit.title}{' '}<em className="italic text-signal">{audit.titleAccent}</em>
+                </h2>
+                <p className="text-[17px] leading-[1.55] text-ink-2 font-sans mb-10">
+                  {audit.subtitle}
+                </p>
+
+                {/* Feature list */}
+                <div className="space-y-0">
+                  {audit.features.map((f) => (
+                    <div key={f.name} className="py-4 border-b border-rule last:border-b-0">
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-signal font-mono text-[12px]">+</span>
+                        <div>
+                          <p className="text-[15px] font-sans font-semibold text-ink leading-snug mb-1">{f.name}</p>
+                          <p className="text-[14px] font-sans text-ink-2 leading-[1.55]">{f.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mockup side */}
+              <div className={idx % 2 === 1 ? 'lg:order-1' : ''}>
+                <div className="sticky top-32">
+                  {audit.id === 'website' && <ScoreMockup data={audit.mockup} />}
+                  {audit.id === 'brand' && <BrandMockup data={audit.mockup} />}
+                  {audit.id === 'ai' && <AIMockup data={audit.mockup} />}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* ── Interstitial ─────────────────────────────────────── */}
+      <section
+        className="py-[100px] max-sm:py-[80px]"
+        style={{ background: isDark ? 'var(--paper)' : 'var(--ink)', color: isDark ? 'var(--ink)' : '#ffffff' }}
+      >
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
+          <p className="font-sans font-normal leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
+            style={{ fontSize: '19px', color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)', maxWidth: '700px' }}>
+            Other tools give you a score and a checklist.
+          </p>
+          <h2 className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
+            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff', maxWidth: '960px' }}>
+            ClearUX tells you{' '}<em className="italic text-signal">what to fix</em>{' '}and{' '}<em className="italic text-signal">why.</em>
+          </h2>
+        </div>
+      </section>
+
+      {/* ── How it works — 3 steps ────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="02" label="The process" />
+          <SectionMarker number="04" label="How it works" />
           <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-14" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            Three steps to <em className="italic text-signal">clarity.</em>
+            Three steps. <em className="italic text-signal">Minutes, not weeks.</em>
           </h2>
 
           <div className="grid md:grid-cols-3 gap-0 border border-ink">
             {STEPS.map((step, i) => (
-              <div
-                key={step.num}
-                className={`p-8 ${i < STEPS.length - 1 ? 'md:border-r border-ink max-md:border-b' : ''}`}
-              >
+              <div key={step.num} className={`p-8 ${i < STEPS.length - 1 ? 'md:border-r border-ink max-md:border-b' : ''}`}>
                 <span className="font-serif text-[56px] text-m-muted-2 font-normal leading-none block mb-5" style={{ color: 'color-mix(in srgb, var(--ink) 12%, transparent)' }}>
                   {step.num}
                 </span>
@@ -60,201 +337,88 @@ export default function HowItWorksContent() {
         </div>
       </section>
 
-      {/* Human experience — reuses exact homepage component */}
-      <HumanExperience />
-
-      {/* Product preview — CSS-rendered screenshots */}
+      {/* ── Platform features ─────────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <SectionMarker number="03" label="Inside the product" />
-          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-6" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            See what you <em className="italic text-signal">get.</em>
+          <SectionMarker number="05" label="Platform" />
+          <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            Everything you need to{' '}<em className="italic text-signal">ship better.</em>
           </h2>
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans mb-14">
-            Every audit lives in your dashboard. Scores, findings, exports, re-audits, and progress tracking — all in one place.
+            Beyond findings — ClearUX gives you the tools to track progress, share results, and prove your work.
           </p>
 
-          {/* Screenshot 1: Audit overview / score card */}
-          <div className="mb-10">
-            <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-4">Audit score overview</p>
-            <div className="border border-rule rounded-xl overflow-hidden bg-paper shadow-sm">
-              <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                {/* Fake ScoreRing */}
-                <div className="relative flex-shrink-0" style={{ width: 110, height: 110 }}>
-                  <svg width={110} height={110} className="-rotate-90">
-                    <circle cx={55} cy={55} r={50} fill="none" stroke="var(--rule)" strokeWidth={7} />
-                    <circle cx={55} cy={55} r={50} fill="none" stroke="var(--ok)" strokeWidth={7} strokeLinecap="round"
-                      strokeDasharray={314} strokeDashoffset={314 * (1 - 0.85)} />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-serif text-[28px] text-ink">85</span>
-                  </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-rule">
+            {PLATFORM_FEATURES.map((feat) => (
+              <div key={feat.title} className="border-r border-b border-rule p-7 hover:bg-paper-2/50 transition-colors">
+                <div className="mb-4">
+                  <FeatureIcon type={feat.icon} />
                 </div>
-                <div className="flex-1 min-w-0 text-center sm:text-left">
-                  <h3 className="font-sans text-[20px] text-ink font-medium tracking-[-0.01em] mb-0.5">clearux.ai</h3>
-                  <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-3">32 findings · 6 modules</p>
-                  <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-                    {[
-                      { name: 'Foundation', score: 88, dot: '#6366F1' },
-                      { name: 'Human Experience', score: 82, dot: '#EC4899' },
-                      { name: 'Inclusive Design', score: 79, dot: '#10B981' },
-                      { name: 'Future Readiness', score: 91, dot: '#F59E0B' },
-                      { name: 'Brand Consistency', score: 86, dot: '#3B82F6' },
-                      { name: 'SEO Structure', score: 84, dot: '#06B6D4' },
-                    ].map(m => (
-                      <div key={m.name} className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.dot }} />
-                        <span className="text-xs text-m-muted">{m.name}</span>
-                        <span className="text-xs font-medium text-ok">{m.score}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 mt-3">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
-                      <span className="w-2 h-2 rounded-full bg-severe" /> 2 critical
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-warn">
-                      <span className="w-2 h-2 rounded-full bg-warn" /> 5 high
-                    </span>
-                    <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">25 more</span>
-                  </div>
-                </div>
+                <h3 className="font-sans text-[15px] font-semibold text-ink mb-2">{feat.title}</h3>
+                <p className="font-sans text-[14px] text-ink-2 leading-[1.55]">{feat.desc}</p>
               </div>
-              <div className="border-t border-rule px-6 sm:px-8 py-3.5 flex flex-wrap gap-2">
-                {['PDF', 'Word', 'Re-audit', 'Share'].map(a => (
-                  <span key={a} className="flex items-center gap-1.5 border border-rule text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-3.5 py-1.5 rounded-lg cursor-default">{a}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Screenshot 2: Finding cards */}
-          <div className="mb-10">
-            <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-4">Finding cards with severity + recommendations</p>
-            <div className="space-y-3">
-              {[
-                { sev: 'critical', dot: 'bg-severe', text: 'text-severe', title: 'No structured data (Schema.org) detected', cat: 'Future Readiness', tint: '#F59E0B', rec: 'Add JSON-LD blocks for Organization, Product, and FAQPage schemas.' },
-                { sev: 'high', dot: 'bg-warn', text: 'text-warn', title: 'Primary CTA below the fold on mobile', cat: 'Human Experience', tint: '#EC4899', rec: 'Move the main call-to-action above the fold on viewports under 768px.' },
-                { sev: 'medium', dot: 'bg-signal', text: 'text-signal', title: 'Touch targets under 44px on mobile nav', cat: 'Inclusive Design', tint: '#10B981', rec: 'Increase tap target size to minimum 44x44px per WCAG 2.5.5.' },
-              ].map((f, i) => (
-                <div key={i} className="border border-rule/60 rounded-xl bg-paper shadow-sm overflow-hidden">
-                  <div className="flex items-start gap-3 p-4">
-                    <span className={`w-2 h-2 rounded-full ${f.dot} flex-shrink-0 mt-1.5`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[11px] font-medium uppercase tracking-wider ${f.text}`}>{f.sev}</span>
-                        <span className="text-[11px] text-m-muted">{f.cat}</span>
-                      </div>
-                      <p className="font-medium text-ink text-sm leading-snug">{f.title}</p>
-                    </div>
-                  </div>
-                  {i === 0 && (
-                    <div className="px-4 pb-4 pt-0 border-t border-rule/20 mx-4">
-                      <div className="p-3 mt-3 bg-paper-2/60 rounded-lg border border-rule/30">
-                        <div className="flex gap-2.5">
-                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={f.tint} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
-                            <line x1="9" y1="18" x2="15" y2="18" /><line x1="10" y1="22" x2="14" y2="22" />
-                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-                          </svg>
-                          <div>
-                            <p className="text-[11px] font-medium text-ink mb-1">Recommendation</p>
-                            <p className="text-sm text-m-muted leading-relaxed">{f.rec}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Screenshot 3: Dashboard audit list */}
-          <div>
-            <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-m-muted mb-4">Your audit dashboard</p>
-            <div className="border border-rule rounded-xl overflow-hidden bg-paper shadow-sm">
-              <div className="px-5 py-4 border-b border-rule flex items-center justify-between">
-                <div>
-                  <p className="text-[15px] font-medium text-ink">Audits</p>
-                  <p className="text-[11px] text-m-muted mt-0.5">5 audits total</p>
-                </div>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-lg" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>New audit</span>
-              </div>
-              <div className="divide-y divide-rule">
-                {[
-                  { domain: 'clearux.ai', audits: 3, date: 'May 12', score: 85, delta: '+3' },
-                  { domain: 'acme.com', audits: 1, date: 'May 10', score: 71, delta: null },
-                  { domain: 'shopwave.io', audits: 1, date: 'May 8', score: 63, delta: null },
-                ].map(row => (
-                  <div key={row.domain} className="flex items-center justify-between px-5 py-3.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-m-muted flex-shrink-0"><circle cx={12} cy={12} r={10} /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10" /></svg>
-                        <p className="font-medium text-sm text-ink truncate">{row.domain}</p>
-                        {row.audits > 1 && <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>{row.audits} audits</span>}
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-m-muted">
-                        <span>{row.audits > 1 ? `Latest: ${row.date}` : row.date}</span>
-                        <span className="text-rule">·</span>
-                        <span>Completed</span>
-                        {row.delta && <><span className="text-rule">·</span><span className="font-medium text-ok">{row.delta} pts</span></>}
-                      </div>
-                    </div>
-                    <div className="w-10 h-10 rounded-md border flex items-center justify-center flex-shrink-0 ml-3"
-                      style={{
-                        background: `color-mix(in srgb, ${row.score >= 70 ? 'var(--ok)' : 'var(--warn)'} 10%, transparent)`,
-                        borderColor: `color-mix(in srgb, ${row.score >= 70 ? 'var(--ok)' : 'var(--warn)'} 25%, transparent)`,
-                      }}>
-                      <span className="font-sans font-medium text-sm leading-none" style={{ color: row.score >= 70 ? 'var(--ok)' : 'var(--warn)' }}>{row.score}</span>
-                    </div>
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-m-muted flex-shrink-0 ml-2"><path d="M9 18l6-6-6-6" /></svg>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Six modules — matches homepage InstrumentGrid */}
+      {/* ── Six modules ──────────────────────────────────────── */}
       <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
             <div>
-              <SectionMarker number="05" label="The instrument" />
+              <SectionMarker number="06" label="The instrument" />
               <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
-                Six modules. <em className="italic text-signal">Ninety-six</em> checkpoints.
+                Six modules. <em className="italic text-signal">96</em> checkpoints.
               </h2>
             </div>
             <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans">
-              Each audit runs the full battery. No tiered plans, no &ldquo;upgrade to unlock accessibility.&rdquo; Foundation through SEO Structure — same depth, every time, every input.
+              Every audit runs the full battery. No tiered plans, no &ldquo;upgrade to unlock.&rdquo; Foundation through SEO Structure — same depth, every time.
             </p>
           </div>
 
           <div className="grid grid-cols-3 border-t border-l border-ink max-md:grid-cols-2 max-sm:grid-cols-1">
             {MODULES.map((mod) => (
-              <div
-                key={mod.num}
-                className="border-r border-b border-ink p-7 sm:p-8 bg-paper hover:bg-paper-2 transition-colors min-h-[280px] flex flex-col"
-              >
-                <div className="font-mono text-[11px] text-signal font-semibold tracking-[0.08em] mb-3.5">
+              <div key={mod.num} className="border-r border-b border-ink p-7 sm:p-8 bg-paper hover:bg-paper-2 transition-colors min-h-[240px] flex flex-col">
+                <div className="font-mono text-[11px] text-signal font-semibold tracking-[0.08em] mb-3">
                   {mod.num} / {mod.title}
                 </div>
-                <h3 className="font-serif font-normal text-[30px] tracking-[-0.015em] leading-[1.05] mb-3.5 text-ink">
+                <h3 className="font-serif font-normal text-[28px] tracking-[-0.015em] leading-[1.05] mb-3 text-ink">
                   {mod.title}
                 </h3>
-                <p className="text-[14px] leading-[1.55] text-ink-2 mb-auto pb-6 font-sans">
+                <p className="text-[14px] leading-[1.55] text-ink-2 mb-auto pb-5 font-sans">
                   {mod.desc}
                 </p>
-                <div className="flex justify-between items-baseline pt-[18px] border-t border-dashed border-rule-2 font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
-                  <span>
-                    <strong className="font-serif text-[28px] font-normal text-ink normal-case tracking-[-0.02em]">{mod.count}</strong>{' '}
-                    checkpoints
-                  </span>
-                  <span>{mod.range}</span>
+                <div className="flex items-baseline pt-4 border-t border-dashed border-rule-2 font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+                  <strong className="font-serif text-[24px] font-normal text-ink normal-case tracking-[-0.02em] mr-2">{mod.count}</strong>
+                  checkpoints
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Bottom stat strip ─────────────────────────────────── */}
+      <section className="py-[80px] border-b border-rule max-sm:py-14">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <div className="grid sm:grid-cols-4 gap-8 sm:gap-0 sm:divide-x sm:divide-rule">
+            <div className="text-center sm:px-6">
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">96</p>
+              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">Checkpoints per audit</p>
+            </div>
+            <div className="text-center sm:px-6">
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">6</p>
+              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">Modules</p>
+            </div>
+            <div className="text-center sm:px-6">
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">3</p>
+              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">Audit types</p>
+            </div>
+            <div className="text-center sm:px-6">
+              <p className="font-serif text-[48px] text-ink tracking-[-0.02em] leading-none mb-2">$0</p>
+              <p className="font-mono text-[11px] text-m-muted tracking-[0.08em] uppercase">First audit, no card needed</p>
+            </div>
           </div>
         </div>
       </section>

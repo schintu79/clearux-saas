@@ -15,9 +15,9 @@ import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'ClearUX — The audit your team actually ships from.',
+  title: 'ClearUX — The UX audit platform that finds what you miss.',
   description:
-    'AI-powered UX audits: 96 checkpoints, 6 modules. Severity-ranked, evidence-backed, shippable fixes. First audit free.',
+    'Audit your website UX, brand identity, and AI visibility in one place. 96 checkpoints, 6 modules. Severity-ranked findings with evidence and fixes. First audit free.',
 }
 
 export default function HomePage() {
