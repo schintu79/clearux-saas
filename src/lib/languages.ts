@@ -541,7 +541,7 @@ const UI_LABELS: Record<string, UILabels> = {
     descAwaitingPayment: 'Schliessen Sie die Zahlung ab, um das Audit zu starten.',
     descPaymentConfirmed: 'Zahlung erhalten. Ihr Audit wird in die Warteschlange eingereiht.',
     descCrawling: 'Unsere KI crawlt Ihre Website und sammelt Daten...',
-    descAnalysing: 'Tiefenanalyse uber 16 Kategorien lauft...',
+    descAnalysing: 'Tiefenanalyse uber 24 Kategorien lauft...',
     descGeneratingReport: 'Ihr professioneller Audit-Bericht wird erstellt...',
     descCompleted: 'Ihr Audit ist fertig.',
     descFailed: 'Etwas ist schiefgelaufen. Sie konnen das Audit erneut starten.',

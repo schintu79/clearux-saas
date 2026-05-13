@@ -14,7 +14,7 @@
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
 import { crawlPages } from '@/lib/audit-engine/crawler'
-import { analyzeCategory, runFullAnalysis, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
+import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
 import { captureAuditScreenshots } from '@/lib/audit-engine/screenshots'
@@ -28,6 +28,7 @@ import {
 } from '@/lib/audit-engine/pipeline'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
+import { checkResponsiveDesign } from '@/lib/audit-engine/responsive-checker'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -241,6 +242,86 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
+    // STEP 2b: Responsive design check (Puppeteer)
+    // Renders crawled pages at 375, 768, 1024, 1440 viewports
+    // and detects real layout issues (overflow, touch targets,
+    // text size, etc). Findings go into category 11
+    // (Mobile Experience & Responsive Design).
+    // ──────────────────────────────────────────────────────────
+    const responsiveCheck = await step.run('check-responsive-design', async () => {
+      try {
+        const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
+        const result = await checkResponsiveDesign(crawlResult.crawledUrls, maxUrls)
+
+        // Store responsive findings in audit_findings
+        if (result.findings.length > 0) {
+          const db = getDb()
+          // Get current max sort_order
+          const { data: existingFindings } = await db
+            .from('audit_findings')
+            .select('sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: false })
+            .limit(1)
+
+          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+
+          for (const finding of result.findings) {
+            await db.from('audit_findings').insert({
+              audit_id: auditId,
+              checklist_item_id: null,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              evidence: null,
+              page_url: finding.pageUrl || crawlResult.firstPageUrl,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              target_element: finding.targetElement || null,
+              screenshot_url: null,
+              sort_order: sortOrder++,
+            } as any)
+          }
+        }
+
+        // Update audit_pages with mobile-friendly data
+        if (result.results.length > 0) {
+          const db = getDb()
+          for (const r of result.results) {
+            const issueCount = r.viewportIssues.filter(i => i.viewport === 'Mobile').length
+            await db
+              .from('audit_pages')
+              .update({
+                is_mobile_friendly: issueCount === 0,
+                viewport_meta: r.hasMobileViewport ? 'width=device-width, initial-scale=1' : null,
+              } as any)
+              .eq('audit_id', auditId)
+              .eq('url', r.url)
+          }
+        }
+
+        await auditLog(auditId, 'responsive_check_completed', 'success',
+          `Responsive check: ${result.findings.length} findings across ${result.results.length} page(s)`, {
+            findings_count: result.findings.length,
+            pages_checked: result.results.length,
+            viewports: [375, 768, 1024, 1440],
+          })
+
+        return {
+          summary: result.summary,
+          findingsCount: result.findings.length,
+        }
+      } catch (err) {
+        // Non-fatal — if Puppeteer fails (e.g., no Chromium in env),
+        // the audit continues with text-based analysis only
+        console.error('[inngest] Responsive check failed (non-fatal):', err)
+        await auditLog(auditId, 'responsive_check_failed', 'warning',
+          `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+        return { summary: '', findingsCount: 0 }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
     // STEP 3: Build site context map + set status to analysing
     // Creates a summary of what exists across ALL pages so the
     // analyzer has cross-page awareness (e.g., "founder bio exists
@@ -397,7 +478,12 @@ RULES FOR RE-AUDIT:
         effectiveDepthMode = 'baseline'
       }
 
-      const fullContext = siteMap + userContext
+      // Append responsive check results so the AI analyzer has browser-verified data
+      const responsiveContext = responsiveCheck.summary
+        ? `\n\n${responsiveCheck.summary}`
+        : ''
+
+      const fullContext = siteMap + userContext + responsiveContext
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)

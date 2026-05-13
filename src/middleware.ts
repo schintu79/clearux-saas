@@ -105,12 +105,12 @@ export async function middleware(request: NextRequest) {
   const supabase = createProxyClient(request, response)
 
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
     // ── Auth guard for protected routes ──
     const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
 
-    if (isProtected && !session) {
+    if (isProtected && !user) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(loginUrl)

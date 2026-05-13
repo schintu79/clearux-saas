@@ -4,8 +4,8 @@
 // based on the canonical report-template.html.
 // ============================================================
 
-import { CHECKPOINT_LABELS, PILLAR_FOR_CATEGORY } from '@/lib/audit-checkpoints'
-import { getReportLabels, getLocale, getUILabels, getPillarNames, getScoreLabel, getSeverityLabel } from '@/lib/languages'
+import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints'
+import { getScoreLabel, getSeverityLabel } from '@/lib/languages'
 
 /* ── Pillar definitions ────────────────────────────────────── */
 const PILLAR_DEFS = [
@@ -28,13 +28,13 @@ const CATEGORY_KEYWORDS: Record<number, string[]> = {
   6: ['ethical', 'transparent', 'dark pattern', 'cookie', 'consent', 'gdpr', 'manipulat', 'deceptive', 'honest'],
   7: ['emotional', 'delight', 'micro-interaction', 'animation', 'personality', 'engagement', 'reward', 'feedback'],
   8: ['accessibility', 'a11y', 'wcag', 'screen reader', 'keyboard', 'aria', 'tab order', 'focus', 'disability'],
-  9: ['inclusive', 'language', 'gender', 'cultural', 'diverse', 'bias', 'representation', 'globali'],
-  10: ['responsive', 'mobile', 'tablet', 'breakpoint', 'viewport', 'touch', 'adaptive', 'device'],
-  11: ['loading', 'performance', 'speed', 'page load', 'core web vital', 'lcp', 'cls', 'fid', 'optimize', 'compress', 'lazy'],
-  12: ['innovation', 'modern', 'trend', 'cutting-edge', 'emerging', 'fresh', 'creative', 'unique'],
-  13: ['scalab', 'growth', 'modular', 'flexible', 'extensible', 'future-proof', 'maintain', 'technical debt'],
-  14: ['onboarding', 'first-time', 'getting started', 'tutorial', 'walkthrough', 'wizard', 'progressive disclosure'],
-  15: ['feedback', 'error', 'validation', 'loading state', 'empty state', 'notification', 'toast', 'progress', 'skeleton'],
+  9: ['cognitive', 'neurodiversity', 'plain language', 'simple', 'cognitive load', 'learning', 'attention', 'memory', 'dyslexia'],
+  10: ['wellbeing', 'well-being', 'responsible', 'addictive', 'dark pattern', 'notification overload', 'screen time', 'digital health', 'consent fatigue'],
+  11: ['responsive', 'mobile', 'tablet', 'breakpoint', 'viewport', 'touch', 'adaptive', 'device'],
+  12: ['performance', 'speed', 'page load', 'core web vital', 'lcp', 'cls', 'fid', 'optimize', 'compress', 'lazy', 'loading'],
+  13: ['ai', 'llm', 'discoverability', 'machine-readable', 'chatbot', 'generative', 'ai-ready', 'llm-friendly'],
+  14: ['ai agent', 'agent-ready', 'automation', 'tool use', 'api', 'programmatic', 'structured action'],
+  15: ['cultural', 'global', 'localization', 'i18n', 'internationalization', 'rtl', 'translation', 'regional', 'diverse'],
   16: ['seo', 'search engine', 'meta', 'title tag', 'description', 'heading structure', 'h1', 'h2', 'schema', 'structured data', 'canonical'],
   17: ['local seo', 'schema markup', 'rich snippet', 'open graph', 'social media', 'twitter card', 'og:'],
   18: ['keyword', 'search intent', 'content gap', 'long-tail', 'topic cluster', 'semantic'],

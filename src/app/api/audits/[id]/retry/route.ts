@@ -113,7 +113,7 @@ export async function POST(
         console.error(`[retry] ${auditType} audit ${auditId} failed:`, err)
       }
     })
-    inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
+    inngest.send({ name: eventName, data: { auditId } }).catch((err) => console.error(`[retry] Inngest dispatch failed for ${auditId}:`, err))
 
     return NextResponse.json({
       status: 'payment_received',

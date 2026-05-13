@@ -326,7 +326,7 @@ export function renderBrandReport(data: BrandReportData): string {
 
   // ═══ LAST PAGE: MATERIALS + FOOTER ═══
   const materialsList = materials && materials.length > 0 ? materials : []
-  if (materialsList.length > 0 || true) {
+  if (materialsList.length > 0) {
     html += `
   <div class="page">
     <div class="page-header">

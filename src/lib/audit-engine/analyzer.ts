@@ -199,9 +199,9 @@ export const UX_CATEGORIES = [
     name: 'Mobile Experience & Responsive Design',
     pillar: 'Inclusive Design',
     items: [
-      'VIEWPORT & RESPONSIVENESS: Does the site have a proper viewport meta tag and responsive layout? Check if content reflows for smaller screens or requires horizontal scrolling. Look for fixed-width elements, overflowing text, or images that break the layout on mobile viewport sizes.',
-      'TOUCH INTERACTION: Are all interactive elements (buttons, links, form fields) at least 44×44px with adequate spacing between them? On mobile, fat-finger errors from tiny or cramped targets are the #1 usability killer. Flag any button or link that would be hard to tap accurately.',
-      'MOBILE NAVIGATION: Does the site have a mobile-appropriate navigation pattern (hamburger menu, bottom nav, or simplified nav)? Is the full desktop nav crammed into mobile, or is it adapted? Check that the mobile menu is easy to open, navigate, and close.',
+      'VIEWPORT & RESPONSIVENESS: Does the site have a proper viewport meta tag and responsive layout? Check the "RESPONSIVE DESIGN CHECK" section in the context for browser-verified results at 375px, 768px, 1024px, and 1440px viewports. Reference any confirmed horizontal overflow, fixed-width elements, or image overflow findings. If no responsive check data is available, assess from text content only.',
+      'TOUCH INTERACTION: Are all interactive elements (buttons, links, form fields) at least 44×44px with adequate spacing between them? The responsive checker measures actual rendered touch target sizes — reference any confirmed findings about small targets. On mobile, fat-finger errors from tiny or cramped targets are the #1 usability killer.',
+      'MOBILE NAVIGATION: Does the site have a mobile-appropriate navigation pattern (hamburger menu, bottom nav, or simplified nav)? The responsive checker detects whether navigation is adapted for mobile — reference those findings if available. Check that the mobile menu is easy to open, navigate, and close.',
       'MOBILE CONTENT PRIORITY: Is the most important content (value prop, CTA, key info) accessible without excessive scrolling on mobile? Desktop pages often have content spread across wide layouts that become extremely long on mobile. Check if the mobile experience respects the user\'s vertical scroll budget.',
     ],
   },
@@ -624,7 +624,8 @@ The content provided is extracted text, NOT raw HTML source code. This means:
 - You CANNOT see structured data (JSON-LD, microdata, Schema.org). NEVER flag "missing structured data" — it may exist in the <head> which was stripped during text extraction.
 - You CANNOT see meta tags, OG tags, Twitter cards, canonical URLs. NEVER flag missing meta tags unless you can see ALL the <head> content (you can't).
 - You CANNOT verify JavaScript behavior (form validation, error messages, loading states, success states, interactive components). NEVER flag "form lacks error feedback" or "no success state after submission" — you can't see client-side behavior.
-- You CANNOT test mobile responsiveness, keyboard navigation, screen reader behavior, or touch interactions. NEVER flag these as issues.
+- You CANNOT test keyboard navigation, screen reader behavior, or touch interactions. NEVER flag these as issues.
+- For mobile responsiveness: If the context includes "RESPONSIVE DESIGN CHECK — Browser-verified results", those findings are CONFIRMED by real browser rendering at multiple viewports. Reference and build on those results — do NOT contradict them. If no responsive check data is provided, do NOT flag mobile/responsive issues as you cannot verify them from text alone.
 - "The provided content does not show X" is NOT evidence that X is missing. It means you can't see it. THESE ARE DIFFERENT THINGS. Never conflate them.
 If an issue depends on seeing CSS, HTML attributes, JavaScript behavior, or visual rendering that you cannot access from text content — DO NOT INCLUDE IT.
 

@@ -30,7 +30,7 @@ import {
   buildBrandReport,
   type BrandCategoryResult,
 } from '@/lib/audit-engine/brand-analyzer'
-import { BRAND_AUDIT_CATEGORIES, calculateBrandScore } from '@/lib/brand-audit-modules'
+import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules'
 import { sendAuditComplete } from '@/lib/audit-engine/email'
 import {
   identifyDuplicates,

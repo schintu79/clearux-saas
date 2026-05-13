@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       const paymentType = meta.type // 'credit_pack' | 'single_audit' | 'subscription'
 
       if (!userId) {
-        console.warn('Webhook missing user_id in metadata:', meta)
-        return NextResponse.json({ received: true }, { status: 200 })
+        console.error('Webhook CRITICAL: missing user_id in metadata — payment may be lost:', meta)
+        return NextResponse.json({ error: 'Missing user_id in metadata' }, { status: 400 })
       }
 
       // ── Subscription activated ──────────────────────────────
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
         const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
         processBrandAudit(auditId).catch((err) => console.error(`[webhook] processBrandAudit failed:`, err))
       }
-      inngest.send({ name: eventName, data: { auditId } }).catch(() => {})
+      inngest.send({ name: eventName, data: { auditId } }).catch((err) => console.error(`[webhook] Inngest dispatch failed for ${auditId}:`, err))
 
       console.log(`Payment processed for audit ${auditId}`)
       return NextResponse.json({ received: true }, { status: 200 })
