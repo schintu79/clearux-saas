@@ -10,6 +10,7 @@ import { CheckpointTicker } from '@/components/marketing/CheckpointTicker'
 import { BenchmarkTable } from '@/components/marketing/BenchmarkTable'
 import { FindingAnatomy } from '@/components/marketing/FindingAnatomy'
 import { Pricing } from '@/components/marketing/Pricing'
+import { HomeFaq } from '@/components/marketing/HomeFaq'
 import { Coda } from '@/components/marketing/Coda'
 import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
@@ -35,6 +36,7 @@ export default function HomePage() {
         <BenchmarkTable />
         <FindingAnatomy />
         <Pricing />
+        <HomeFaq />
         <Coda />
       </main>
       <Footer />

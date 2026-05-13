@@ -6,6 +6,7 @@ import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { Coda } from '@/components/marketing/Coda'
+import { FaqPreview } from '@/components/marketing/FaqPreview'
 import { SUBSCRIPTION_PLANS, CREDIT_PACKS, formatPrice } from '@/lib/pricing'
 import type { BillingInterval } from '@/lib/pricing'
 
@@ -277,21 +278,29 @@ export default function PricingContent() {
       </section>
 
       {/* Guarantee */}
-      <section className="py-[80px] border-b border-rule max-sm:py-12">
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-          <div className="border border-ink p-10 max-sm:p-6 flex flex-col sm:flex-row items-start gap-8">
-            <span className="font-mono text-[11px] tracking-[0.1em] uppercase text-signal shrink-0 mt-1">Guarantee</span>
-            <div>
-              <h3 className="font-serif text-[28px] text-ink font-normal tracking-[-0.01em] mb-3">
-                30-day money-back guarantee
-              </h3>
-              <p className="font-sans text-[15px] text-ink-2 leading-[1.6] max-w-[520px]">
-                Not satisfied with your audit? We&apos;ll refund your purchase within 30 days, no questions asked. Cancel subscriptions anytime with no penalty.
-              </p>
-            </div>
-          </div>
+          <SectionMarker number="04" label="Guarantee" />
+          <h2 className="font-serif font-normal text-ink leading-[0.94] tracking-[-0.025em] mb-5" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
+            30-day money-back <em className="italic text-signal">guarantee.</em>
+          </h2>
+          <p className="font-sans text-[17px] text-ink-2 leading-[1.6] max-w-[520px]">
+            Not satisfied with your audit? We&apos;ll refund your purchase within 30 days, no questions asked. Cancel subscriptions anytime with no penalty.
+          </p>
         </div>
       </section>
+
+      {/* FAQ */}
+      <FaqPreview
+        sectionNumber="05"
+        items={[
+          { q: 'How do credits work?', a: 'One credit = one full audit. Credits never expire. Every audit includes all six modules, 96 checkpoints, PDF & Word reports, finding status tracking, shareable team links, and prioritised recommendations. Buy in packs to lower the per-audit cost.' },
+          { q: 'Can I get a refund?', a: "If you’re unsatisfied with an audit, reach out via our contact form or email support@clearux.ai and we’ll resolve it or provide a credit for a new audit. We stand behind the quality of our reports." },
+          { q: 'What is the free preview audit?', a: 'Anyone can run a free preview audit from the homepage without signing up. The preview shows your overall score, module scores, and severity breakdown. Individual findings, recommendations, and downloadable reports are available when you unlock the full audit.' },
+          { q: 'What payment methods are accepted?', a: 'We accept Visa, Mastercard, American Express, Apple Pay, and Google Pay. All payments are processed securely via Stripe.' },
+          { q: 'Can I buy more credits later?', a: 'Yes. You can purchase additional credit packs at any time. Credits from different purchases stack together and never expire.' },
+        ]}
+      />
 
       {/* Cross-links */}
       <section className="py-12 border-b border-rule">

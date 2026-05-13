@@ -5,6 +5,7 @@ import { SectionMarker } from '@/components/marketing/SectionMarker'
 import { Button } from '@/components/marketing/Button'
 import { ArrowRightIcon } from '@/components/marketing/icons'
 import { Coda } from '@/components/marketing/Coda'
+import { FaqPreview } from '@/components/marketing/FaqPreview'
 import { useTheme } from '@/context/ThemeContext'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -855,6 +856,18 @@ export default function HowItWorksContent() {
           </div>
         </div>
       </section>
+
+      {/* FAQ */}
+      <FaqPreview
+        sectionNumber="08"
+        items={[
+          { q: 'What does the audit cover?', a: 'We evaluate 24 categories across six modules: Foundation (the structural and technical baseline), Human Experience (how your product feels to use), Inclusive Design (accessibility and equity), Future Readiness (AI discoverability), Brand Consistency (whether what users see matches the brand), and SEO Structure (findability and rankings).' },
+          { q: 'How does the AI analysis work?', a: 'Our engine crawls your site, then runs each page through specialised AI models trained on UX best practices, WCAG guidelines, dark pattern databases, and conversion research. Each page is evaluated across six modules and 96 checkpoints. Every finding includes severity scoring, evidence, and a specific recommendation.' },
+          { q: 'What AI powers the audits?', a: "ClearUX uses Anthropic's Claude as its core analysis engine — but the AI is only the final layer. Behind every audit is a proprietary evaluation framework built on years of UX research, accessibility consulting, and conversion optimisation." },
+          { q: 'What format is the report?', a: 'You get a professional PDF and a Word document (DOCX). Both include an overall score, executive summary, top 3 priority recommendations, module score breakdown, and detailed findings ranked by severity with specific recommendations and impact estimates.' },
+          { q: 'Can I re-audit the same website to measure improvement?', a: "Absolutely. Re-auditing the same URL is the best way to prove progress. Your dashboard shows re-audit badges and your stats track average scores over time. Audit the same site before and after implementing fixes to see your score improve." },
+        ]}
+      />
 
       {/* CTA */}
       <Coda />
