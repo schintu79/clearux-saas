@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClearUX Brand Identity Audit — Acme Inc.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   ClearUX Brand Report Template v3 — "The Instrument" editorial
+   A4, header only, DM Sans, signal-green accent for brand audits
+   ══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #18181B;
+  --ink-2:     #3F3F46;
+  --muted:     #71717A;
+  --muted-2:   #A1A1AA;
+  --rule:      #E4E4E7;
+  --rule-2:    #D4D4D8;
+  --paper:     #FAFAFA;
+  --paper-2:   #F4F4F5;
+  --paper-3:   #E4E4E7;
+  --card:      #FFFFFF;
+  --signal:    #5E6B2F;
+  --signal-soft: rgba(94,107,47,0.08);
+  --signal-border: rgba(94,107,47,0.25);
+
+  --sev-critical:    #DC2626;
+  --sev-critical-bg: #FEF2F2;
+  --sev-high:        #EA580C;
+  --sev-high-bg:     #FFF7ED;
+  --sev-medium:      #CA8A04;
+  --sev-medium-bg:   #FEFCE8;
+  --sev-low:         #2563EB;
+  --sev-low-bg:      #EFF6FF;
+
+  --score-good: #16A34A;
+  --score-mid:  #CA8A04;
+  --score-bad:  #DC2626;
+
+  --page-w: 210mm;
+  --page-h: 297mm;
+  --margin: 22mm;
+  --margin-top: 16mm;
+}
+
+@page { size: A4 portrait; margin: 22mm; margin-top: 16mm; }
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink-2);
+  background: #E4E4E7;
+  line-height: 1.6;
+  font-size: 9.5pt;
+  -webkit-font-smoothing: antialiased;
+}
+
+.report { width: var(--page-w); margin: 0 auto; }
+
+.page {
+  width: var(--page-w);
+  min-height: var(--page-h);
+  padding: var(--margin);
+  padding-top: var(--margin-top);
+  background: var(--card);
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+}
+.page:last-child { page-break-after: auto; }
+
+@media print {
+  body { background: white; }
+  .report { width: auto; }
+  .page { width: auto; min-height: auto; padding: 0; box-shadow: none; }
+}
+
+@media screen {
+  .page { margin-bottom: 8mm; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08); }
+}
+
+h1, h2, h3, h4 { color: var(--ink); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+h1 { font-size: 28pt; letter-spacing: -0.02em; }
+h2 { font-size: 15pt; }
+h3 { font-size: 11pt; }
+p { margin-bottom: 2mm; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 7pt;
+  color: var(--muted);
+  letter-spacing: 0.5pt;
+  padding-bottom: 3mm;
+  margin-bottom: 7mm;
+  border-bottom: 1px solid var(--rule);
+}
+.page-header-brand {
+  font-weight: 700;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 1.5pt;
+  font-size: 7pt;
+}
+
+/* ── Cover ──────────────────────────────────────────────────── */
+.cover { padding-top: 32mm; }
+.cover-type {
+  display: inline-block;
+  font-size: 7.5pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2pt;
+  color: var(--signal);
+  border: 1.5px solid var(--signal);
+  padding: 2mm 5mm;
+  margin-bottom: 12mm;
+}
+.cover h1 { font-size: 32pt; margin-bottom: 2mm; letter-spacing: -0.03em; }
+.cover-sub { font-size: 10pt; color: var(--muted); margin-bottom: 16mm; }
+
+.cover-score-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6mm;
+  margin-bottom: 5mm;
+}
+.cover-score-num { font-size: 64pt; font-weight: 700; line-height: 1; letter-spacing: -2pt; }
+.cover-score-details { padding-bottom: 4mm; }
+.cover-score-of { font-size: 11pt; color: var(--muted-2); }
+.cover-score-label { font-size: 10pt; font-weight: 600; text-transform: uppercase; letter-spacing: 1pt; margin-top: 1mm; }
+.cover-score-bar { width: 100%; height: 3px; background: var(--rule); margin-bottom: 14mm; overflow: hidden; }
+.cover-score-bar-fill { height: 100%; }
+
+.cover-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2mm 12mm;
+  font-size: 9pt;
+  color: var(--muted);
+  margin-bottom: 16mm;
+  line-height: 2;
+}
+.cover-info strong { color: var(--ink); font-weight: 600; }
+
+.cover-categories {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cover-cat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3mm 4mm;
+  border-bottom: 1px solid var(--rule);
+}
+.cover-cat-item:last-child { border-bottom: none; }
+.cover-cat-name { font-size: 9pt; color: var(--ink-2); }
+.cover-cat-right { display: flex; align-items: center; gap: 3mm; }
+.cover-cat-weight { font-size: 7pt; color: var(--muted-2); }
+.cover-cat-score { font-size: 13pt; font-weight: 700; }
+
+/* ── Sections ───────────────────────────────────────────────── */
+.section-marker { width: 14mm; height: 3px; background: var(--ink); margin-bottom: 4mm; }
+.section-title { margin-bottom: 1mm; }
+.section-sub { font-size: 8.5pt; color: var(--muted); margin-bottom: 6mm; }
+
+.exec-text { font-size: 9.5pt; line-height: 1.75; color: var(--ink-2); margin-bottom: 6mm; }
+.exec-text p { margin-bottom: 3mm; }
+
+.severity-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 7mm;
+}
+.severity-cell {
+  text-align: center;
+  padding: 4mm 3mm;
+  border-right: 1px solid var(--rule);
+}
+.severity-cell:last-child { border-right: none; }
+.severity-cell-count { font-size: 22pt; font-weight: 700; line-height: 1; margin-bottom: 1mm; }
+.severity-cell-label { font-size: 6.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8pt; }
+.sev-critical { background: var(--sev-critical-bg); }
+.sev-high { background: var(--sev-high-bg); }
+.sev-medium { background: var(--sev-medium-bg); }
+.sev-low { background: var(--sev-low-bg); }
+
+.rec-heading { font-size: 11pt; font-weight: 700; color: var(--ink); margin-bottom: 3mm; }
+.rec-item {
+  display: flex;
+  gap: 3.5mm;
+  padding: 3mm 4mm;
+  border-left: 2.5px solid var(--signal);
+  background: var(--signal-soft);
+  margin-bottom: 2mm;
+  border-radius: 0 4px 4px 0;
+}
+.rec-num { font-size: 12pt; font-weight: 700; color: var(--signal); min-width: 5mm; line-height: 1.4; }
+.rec-text { font-size: 9pt; color: var(--ink-2); line-height: 1.55; }
+
+.method-note {
+  margin-top: 6mm;
+  padding: 3mm 4mm;
+  border-left: 2px solid var(--rule-2);
+  font-size: 7.5pt;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── Score breakdown ────────────────────────────────────────── */
+.score-legend {
+  display: flex;
+  gap: 6mm;
+  padding: 2.5mm 4mm;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin-bottom: 6mm;
+  font-size: 7.5pt;
+  color: var(--muted);
+}
+.score-legend-item { display: flex; align-items: center; gap: 1.5mm; }
+.score-legend-dot { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+
+.cat-block { margin-bottom: 5mm; }
+.cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3.5mm 4mm;
+  background: var(--signal-soft);
+  border: 1px solid var(--signal-border);
+  border-radius: 5px 5px 0 0;
+}
+.cat-head-left { display: flex; flex-direction: column; gap: 0.5mm; }
+.cat-head-name { font-size: 11pt; font-weight: 700; color: var(--ink); }
+.cat-head-desc { font-size: 7.5pt; color: var(--muted); max-width: 120mm; line-height: 1.4; }
+.cat-head-right { text-align: right; }
+.cat-head-score { font-size: 22pt; font-weight: 700; line-height: 1; }
+.cat-head-weight { font-size: 6.5pt; color: var(--muted); margin-top: 1mm; }
+
+.cat-bar-row {
+  padding: 3mm 4mm;
+  border: 1px solid var(--rule);
+  border-top: none;
+}
+.cat-progress { width: 100%; height: 6px; background: var(--paper-3); border-radius: 3px; overflow: hidden; }
+.cat-progress-fill { height: 100%; border-radius: 3px; background: var(--signal); }
+
+.cat-summary {
+  padding: 3mm 4mm;
+  border: 1px solid var(--rule);
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  font-size: 8.5pt;
+  color: var(--muted);
+  line-height: 1.55;
+  background: var(--paper-2);
+}
+
+/* ── Findings ───────────────────────────────────────────────── */
+.findings-cat-heading {
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 5mm;
+  margin-bottom: 3mm;
+  padding-bottom: 1.5mm;
+  border-bottom: 2px solid var(--signal);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.findings-cat-heading:first-child { margin-top: 0; }
+.findings-cat-count { font-size: 7pt; font-weight: 400; color: var(--muted); }
+
+.finding {
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  margin-bottom: 3mm;
+  overflow: hidden;
+  display: flex;
+}
+.finding-bar { width: 4px; flex-shrink: 0; }
+.finding-bar.critical { background: var(--sev-critical); }
+.finding-bar.high     { background: var(--sev-high); }
+.finding-bar.medium   { background: var(--sev-medium); }
+.finding-bar.low      { background: var(--sev-low); }
+
+.finding-body { flex: 1; padding: 3.5mm 4mm; }
+.finding-meta { display: flex; align-items: center; gap: 2.5mm; margin-bottom: 1.5mm; }
+.sev-badge {
+  font-size: 6.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3pt;
+  padding: 1mm 2.5mm;
+  border-radius: 3px;
+  line-height: 1;
+}
+.sev-badge.critical { background: var(--sev-critical-bg); color: var(--sev-critical); }
+.sev-badge.high     { background: var(--sev-high-bg); color: var(--sev-high); }
+.sev-badge.medium   { background: var(--sev-medium-bg); color: var(--sev-medium); }
+.sev-badge.low      { background: var(--sev-low-bg); color: var(--sev-low); }
+
+.finding-cat { font-size: 7.5pt; color: var(--muted-2); }
+.finding-title { font-size: 10pt; font-weight: 600; color: var(--ink); line-height: 1.35; margin-bottom: 1.5mm; }
+.finding-desc { font-size: 8.5pt; color: var(--ink-2); line-height: 1.65; margin-bottom: 2.5mm; }
+
+.finding-box {
+  padding: 2.5mm 3.5mm;
+  margin-bottom: 2mm;
+  font-size: 8pt;
+  line-height: 1.55;
+  border-radius: 4px;
+}
+.finding-box:last-child { margin-bottom: 0; }
+.finding-box-label { font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 0.8mm; }
+.box-rec { background: var(--paper-2); border: 1px solid var(--rule); }
+.box-rec .finding-box-label { color: var(--muted); }
+.box-impact { background: #F0FDF4; border: 1px solid #BBF7D0; }
+.box-impact .finding-box-label { color: #16A34A; }
+
+/* ── Materials table ────────────────────────────────────────── */
+.materials-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+.materials-table th {
+  text-align: left;
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  color: var(--muted);
+  padding: 2.5mm 3mm;
+  border-bottom: 2px solid var(--rule-2);
+  background: var(--paper-2);
+}
+.materials-table td {
+  padding: 2.5mm 3mm;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+.materials-table tr:last-child td { border-bottom: none; }
+.materials-table .file-type { font-size: 7.5pt; color: var(--muted-2); text-transform: uppercase; }
+.materials-table .status-ok { color: var(--score-good); font-weight: 600; font-size: 7.5pt; }
+
+.closing { text-align: center; padding-top: 20mm; }
+.closing-brand { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 2pt; color: var(--ink); margin-bottom: 3mm; }
+.closing-text { font-size: 7.5pt; color: var(--muted); line-height: 1.8; }
+
+.sc-good { color: var(--score-good); }
+.sc-mid  { color: var(--score-mid); }
+.sc-bad  { color: var(--score-bad); }
+</style>
+</head>
+<body>
+<div class="report">
+
+  <!-- ═══ PAGE 1: COVER ═══ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">ClearUX</span>
+      <span>Confidential</span>
+      <span>Page 1</span>
+    </div>
+    <div class="cover">
+      <div class="cover-type">Brand Identity Audit</div>
+      <h1>Acme Inc.</h1>
+      <div class="cover-sub">Brand identity materials assessment</div>
+
+      <div class="cover-score-row">
+        <span class="cover-score-num sc-mid">64</span>
+        <div class="cover-score-details">
+          <div class="cover-score-of">out of 100</div>
+          <div class="cover-score-label sc-mid">Needs improvement</div>
+        </div>
+      </div>
+      <div class="cover-score-bar">
+        <div class="cover-score-bar-fill" style="width: 64%; background: var(--score-mid);"></div>
+      </div>
+
+      <div class="cover-info">
+        <div><strong>Date:</strong> 13 May 2026</div>
+        <div><strong>Issues found:</strong> 18</div>
+        <div><strong>Categories:</strong> 6</div>
+        <div><strong>Language:</strong> English</div>
+      </div>
+
+      <div class="cover-categories">
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Visual Consistency</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">20%</span>
+            <span class="cover-cat-score sc-mid">62</span>
+          </div>
+        </div>
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Tone of Voice & Messaging</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">18%</span>
+            <span class="cover-cat-score sc-mid">58</span>
+          </div>
+        </div>
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Professionalism & Polish</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">14%</span>
+            <span class="cover-cat-score sc-good">74</span>
+          </div>
+        </div>
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Value Proposition Strength</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">18%</span>
+            <span class="cover-cat-score sc-mid">60</span>
+          </div>
+        </div>
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Structure & Organization</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">14%</span>
+            <span class="cover-cat-score sc-good">72</span>
+          </div>
+        </div>
+        <div class="cover-cat-item">
+          <span class="cover-cat-name">Wording Quality</span>
+          <div class="cover-cat-right">
+            <span class="cover-cat-weight">16%</span>
+            <span class="cover-cat-score sc-mid">65</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE 2: EXECUTIVE SUMMARY ═══ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Inc.</span>
+      <span>Confidential</span>
+      <span>Page 2</span>
+    </div>
+    <div class="section-marker"></div>
+    <h2 class="section-title">Executive Summary</h2>
+    <p class="section-sub">High-level assessment and priority actions.</p>
+
+    <div class="exec-text">
+      <p>Acme's brand identity materials show a foundation of professional design, but lack the consistency and clarity needed to build strong brand recognition. The visual system is fragmented across materials, with different color palettes, typography choices, and layout patterns appearing in the pitch deck, website mockups, and marketing collateral.</p>
+      <p>The messaging relies heavily on industry jargon and feature descriptions rather than benefit-driven language. The value proposition is present but buried beneath technical details that don't resonate with the stated target audience of mid-market decision-makers.</p>
+      <p>The highest-impact improvements are: unifying the visual identity system with a single colour palette and type stack, rewriting the core value proposition to lead with outcomes, and establishing a tone-of-voice guide that ensures consistent messaging across all touchpoints.</p>
+    </div>
+
+    <div class="severity-row">
+      <div class="severity-cell sev-critical">
+        <div class="severity-cell-count" style="color: var(--sev-critical);">1</div>
+        <div class="severity-cell-label" style="color: var(--sev-critical);">Critical</div>
+      </div>
+      <div class="severity-cell sev-high">
+        <div class="severity-cell-count" style="color: var(--sev-high);">5</div>
+        <div class="severity-cell-label" style="color: var(--sev-high);">High</div>
+      </div>
+      <div class="severity-cell sev-medium">
+        <div class="severity-cell-count" style="color: var(--sev-medium);">8</div>
+        <div class="severity-cell-label" style="color: var(--sev-medium);">Medium</div>
+      </div>
+      <div class="severity-cell sev-low">
+        <div class="severity-cell-count" style="color: var(--sev-low);">4</div>
+        <div class="severity-cell-label" style="color: var(--sev-low);">Low</div>
+      </div>
+    </div>
+
+    <div class="rec-heading">Top Priority Recommendations</div>
+    <div>
+      <div class="rec-item">
+        <div class="rec-num">1</div>
+        <div class="rec-text">Create a unified colour palette with primary, secondary, and accent colours that is used consistently across all materials. The current deck, site, and brochure each use different blues.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">2</div>
+        <div class="rec-text">Rewrite the core value proposition to lead with the business outcome, not the technology. Replace "AI-powered workflow automation" with a specific, measurable result.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">3</div>
+        <div class="rec-text">Establish a type hierarchy: one sans-serif for headlines, the same family at lighter weight for body. Remove the three competing typefaces currently in use.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">4</div>
+        <div class="rec-text">Add social proof elements (customer logos, testimonials, case study metrics) to the pitch deck and homepage to reinforce credibility.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">5</div>
+        <div class="rec-text">Create a written tone-of-voice guide with examples of preferred vs. discouraged phrasing to ensure consistency as the team grows.</div>
+      </div>
+    </div>
+
+    <div class="method-note">
+      This report was generated by ClearUX's AI-powered brand audit engine. Each category is scored by analysing uploaded brand materials against professional brand standards.
+    </div>
+  </div>
+
+  <!-- ═══ PAGE 3: SCORE BREAKDOWN ═══ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Inc.</span>
+      <span>Confidential</span>
+      <span>Page 3</span>
+    </div>
+    <div class="section-marker"></div>
+    <h2 class="section-title">Score Breakdown</h2>
+    <p class="section-sub">Performance across 6 brand identity categories, weighted by importance.</p>
+
+    <div class="score-legend">
+      <div class="score-legend-item"><span class="score-legend-dot" style="background: var(--score-good);"></span> 70-100: Good</div>
+      <div class="score-legend-item"><span class="score-legend-dot" style="background: var(--score-mid);"></span> 40-69: Needs work</div>
+      <div class="score-legend-item"><span class="score-legend-dot" style="background: var(--score-bad);"></span> 0-39: Critical</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Visual Consistency</span>
+          <span class="cat-head-desc">Colour palette, typography, imagery style, and layout patterns</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-mid">62</span>
+          <div class="cat-head-weight">Weight: 20%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 62%;"></div></div></div>
+      <div class="cat-summary">The brand uses three different blue shades across materials. Typography is inconsistent between the pitch deck (Poppins) and website (Inter). Logo placement varies between left-aligned and centred.</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Tone of Voice & Messaging</span>
+          <span class="cat-head-desc">Consistency of voice, clarity of messaging, audience alignment</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-mid">58</span>
+          <div class="cat-head-weight">Weight: 18%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 58%;"></div></div></div>
+      <div class="cat-summary">Messaging oscillates between highly technical ("event-driven microservices") and casual ("super easy setup"). No clear tone-of-voice guidelines exist. The target audience is mentioned but messaging doesn't consistently address their pain points.</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Professionalism & Polish</span>
+          <span class="cat-head-desc">Production quality, attention to detail, error-free content</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-good">74</span>
+          <div class="cat-head-weight">Weight: 14%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 74%;"></div></div></div>
+      <div class="cat-summary">Materials are generally well-produced with high-quality imagery and clean layouts. Minor issues include two spelling errors in the brochure and inconsistent date formats.</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Value Proposition Strength</span>
+          <span class="cat-head-desc">Clarity and persuasiveness of core offering</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-mid">60</span>
+          <div class="cat-head-weight">Weight: 18%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 60%;"></div></div></div>
+      <div class="cat-summary">The value proposition exists but is feature-focused rather than outcome-focused. Competitors are not differentiated against. The "why us" argument is weak and relies on generic claims like "best-in-class".</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Structure & Organization</span>
+          <span class="cat-head-desc">Information hierarchy, flow, and logical ordering</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-good">72</span>
+          <div class="cat-head-weight">Weight: 14%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 72%;"></div></div></div>
+      <div class="cat-summary">Documents follow a logical flow with clear section breaks. The pitch deck tells a coherent story. The brochure could benefit from better visual hierarchy between primary and secondary content.</div>
+    </div>
+
+    <div class="cat-block">
+      <div class="cat-head">
+        <div class="cat-head-left">
+          <span class="cat-head-name">Wording Quality</span>
+          <span class="cat-head-desc">Grammar, spelling, readability, and linguistic precision</span>
+        </div>
+        <div class="cat-head-right">
+          <span class="cat-head-score sc-mid">65</span>
+          <div class="cat-head-weight">Weight: 16%</div>
+        </div>
+      </div>
+      <div class="cat-bar-row"><div class="cat-progress"><div class="cat-progress-fill" style="width: 65%;"></div></div></div>
+      <div class="cat-summary">Writing is generally competent but verbose. Sentences average 28 words, above the recommended 15-20 for business communication. Some passive voice constructions weaken key selling points.</div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE 4: DETAILED FINDINGS ═══ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Inc.</span>
+      <span>Confidential</span>
+      <span>Page 4</span>
+    </div>
+    <div class="section-marker"></div>
+    <h2 class="section-title">Detailed Findings</h2>
+    <p class="section-sub">All issues ranked by severity, with recommendations and expected impact.</p>
+
+    <div class="findings-cat-heading">
+      Visual Consistency
+      <span class="findings-cat-count">3 findings</span>
+    </div>
+
+    <div class="finding">
+      <div class="finding-bar critical"></div>
+      <div class="finding-body">
+        <div class="finding-meta">
+          <span class="sev-badge critical">Critical</span>
+          <span class="finding-cat">Visual Consistency</span>
+        </div>
+        <div class="finding-title">Three different primary blue colours used across materials</div>
+        <div class="finding-desc">The pitch deck uses #2563EB, the website mockup uses #3B82F6, and the brochure uses #1E40AF. This fragmentation prevents brand recognition and signals a lack of design governance. Users encountering different materials won't associate them with the same brand.</div>
+        <div class="finding-box box-rec">
+          <div class="finding-box-label">Recommendation</div>
+          <div>Define a single primary blue with exact hex, RGB, and CMYK values. Document it in a brand colour guide with usage rules for backgrounds, text, and accents.</div>
+        </div>
+        <div class="finding-box box-impact">
+          <div class="finding-box-label">Expected impact</div>
+          <div>Immediate visual cohesion across all materials. Stronger brand recognition and professional appearance.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-bar high"></div>
+      <div class="finding-body">
+        <div class="finding-meta">
+          <span class="sev-badge high">High</span>
+          <span class="finding-cat">Visual Consistency</span>
+        </div>
+        <div class="finding-title">Competing typefaces weaken visual identity</div>
+        <div class="finding-desc">Three typefaces are used across materials: Poppins in the pitch deck, Inter on the website, and Roboto in the brochure. This creates a disjointed reading experience and undermines the brand's visual system.</div>
+        <div class="finding-box box-rec">
+          <div class="finding-box-label">Recommendation</div>
+          <div>Select one typeface family (Inter or DM Sans work well at all sizes) and use weight variations for hierarchy. Document the type scale with specific sizes for H1-H4 and body text.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-bar medium"></div>
+      <div class="finding-body">
+        <div class="finding-meta">
+          <span class="sev-badge medium">Medium</span>
+          <span class="finding-cat">Visual Consistency</span>
+        </div>
+        <div class="finding-title">Logo placement varies between centred and left-aligned</div>
+        <div class="finding-desc">The logo appears centred on the pitch deck title slide but left-aligned on all website pages and in the brochure header. While minor, this inconsistency compounds with the colour and type issues to create a fragmented brand impression.</div>
+        <div class="finding-box box-rec">
+          <div class="finding-box-label">Recommendation</div>
+          <div>Establish clear logo placement rules: left-aligned for documents and web, centred for standalone/hero uses. Include minimum clear space and sizing guidelines.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings-cat-heading">
+      Tone of Voice & Messaging
+      <span class="findings-cat-count">2 findings</span>
+    </div>
+
+    <div class="finding">
+      <div class="finding-bar high"></div>
+      <div class="finding-body">
+        <div class="finding-meta">
+          <span class="sev-badge high">High</span>
+          <span class="finding-cat">Tone of Voice</span>
+        </div>
+        <div class="finding-title">Tone shifts between overly technical and casually informal</div>
+        <div class="finding-desc">The pitch deck uses enterprise language ("event-driven microservices architecture") while the homepage says "super easy to set up". These register shifts confuse the audience about who the product is for and undermine credibility with both technical and business audiences.</div>
+        <div class="finding-box box-rec">
+          <div class="finding-box-label">Recommendation</div>
+          <div>Create a tone-of-voice spectrum document: professional but approachable. Define "we say / we don't say" examples. Aim for language that a VP of Engineering and a Head of Operations both find credible.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <div class="finding-bar medium"></div>
+      <div class="finding-body">
+        <div class="finding-meta">
+          <span class="sev-badge medium">Medium</span>
+          <span class="finding-cat">Tone of Voice</span>
+        </div>
+        <div class="finding-title">No consistent messaging framework across touchpoints</div>
+        <div class="finding-desc">Each material has its own headline, tagline, and supporting copy that don't reference a shared messaging hierarchy. The pitch deck opens with "Transform your operations" while the website says "Built for modern teams" and the brochure leads with "Enterprise-grade reliability".</div>
+        <div class="finding-box box-rec">
+          <div class="finding-box-label">Recommendation</div>
+          <div>Build a messaging house: one master positioning statement, 3 supporting pillars, and specific proof points for each. All materials should draw from this framework.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE 5: MATERIALS + CLOSING ═══ -->
+  <div class="page">
+    <div class="page-header">
+      <span class="page-header-brand">Acme Inc.</span>
+      <span>Confidential</span>
+      <span>Page 5</span>
+    </div>
+    <div class="section-marker"></div>
+    <h2 class="section-title">Materials Analysed</h2>
+    <p class="section-sub">All documents evaluated during this brand audit.</p>
+
+    <table class="materials-table">
+      <thead>
+        <tr>
+          <th style="width: 45%;">Document</th>
+          <th style="width: 25%;">Type</th>
+          <th style="width: 30%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Acme Pitch Deck Q2 2026</td>
+          <td class="file-type">PDF</td>
+          <td><span class="status-ok">Analysed</span></td>
+        </tr>
+        <tr>
+          <td>Brand Guidelines v1.2</td>
+          <td class="file-type">PDF</td>
+          <td><span class="status-ok">Analysed</span></td>
+        </tr>
+        <tr>
+          <td>Product Brochure</td>
+          <td class="file-type">PDF</td>
+          <td><span class="status-ok">Analysed</span></td>
+        </tr>
+        <tr>
+          <td>Homepage Screenshot</td>
+          <td class="file-type">PNG</td>
+          <td><span class="status-ok">Analysed</span></td>
+        </tr>
+        <tr>
+          <td>Logo Assets</td>
+          <td class="file-type">SVG</td>
+          <td><span class="status-ok">Analysed</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="closing">
+      <div class="closing-brand">ClearUX</div>
+      <div class="closing-text">
+        This report is confidential and intended for the recipient only.<br>
+        Generated by ClearUX &mdash; clearux.ai<br>
+        &copy; 2026 ClearUX. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
