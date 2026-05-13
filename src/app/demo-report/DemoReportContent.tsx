@@ -275,35 +275,44 @@ function ReportPreview({
                   </p>
                 </div>
               </div>
-              {/* Expanded detail for first finding — shows real product anatomy */}
+              {/* Expanded detail — 3-panel layout: Issue / Fix / Impact */}
               {i === 0 && finding.observation && (
                 <div className="px-5 pb-5 pt-0 border-t border-rule/20 mx-4 space-y-3">
-                  <p className="text-m-muted text-sm leading-relaxed pt-3">{finding.observation}</p>
-                  {/* Recommendation card */}
-                  <div className="p-3 bg-paper-2/60 rounded-lg border border-rule/30">
-                    <div className="flex gap-2.5">
-                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={tints[i]?.dot || '#F59E0B'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
-                        <line x1="9" y1="18" x2="15" y2="18" /><line x1="10" y1="22" x2="14" y2="22" />
-                        <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
-                      </svg>
-                      <div>
-                        <p className="text-[11px] font-medium text-ink mb-1">Recommendation</p>
-                        <p className="text-sm text-m-muted leading-relaxed">{finding.fix}</p>
+                  {/* 3-Panel Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-rule/30 overflow-hidden mt-3">
+                    {/* Panel 1: Issue */}
+                    <div className="p-4 border-b md:border-b-0 md:border-r border-rule/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke={tints[i]?.dot || '#F59E0B'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                          <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Issue</p>
                       </div>
+                      <p className="text-m-muted text-[13px] leading-[1.65]">{finding.observation}</p>
+                    </div>
+                    {/* Panel 2: Fix */}
+                    <div className="p-4 border-b md:border-b-0 md:border-r border-rule/30 bg-paper-2/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="9" y1="18" x2="15" y2="18" /><line x1="10" y1="22" x2="14" y2="22" />
+                          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+                        </svg>
+                        <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How to fix</p>
+                      </div>
+                      <p className="text-[13px] text-m-muted leading-[1.65]">{finding.fix}</p>
+                    </div>
+                    {/* Panel 3: Impact */}
+                    <div className="p-4 bg-emerald-500/[0.02]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
+                        </svg>
+                        <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Impact</p>
+                      </div>
+                      <p className="text-[13px] text-emerald-700 leading-[1.65]">{finding.impact || 'Improved UX and reduced user friction.'}</p>
                     </div>
                   </div>
-                  {/* Impact card */}
-                  {finding.impact && (
-                    <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/15">
-                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
-                      </svg>
-                      <div>
-                        <p className="text-[11px] font-medium text-ink mb-0.5">Expected impact</p>
-                        <p className="text-sm text-emerald-700 leading-relaxed">{finding.impact}</p>
-                      </div>
-                    </div>
-                  )}
                   {/* Status controls */}
                   <div className="flex items-center gap-2 pt-1 border-t border-rule/20 mt-3">
                     <span className="text-[11px] text-m-muted mr-1">Status:</span>

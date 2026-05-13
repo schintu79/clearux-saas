@@ -196,6 +196,7 @@ export interface AuditFinding {
   id:                string
   audit_id:          string
   checklist_item_id: string | null
+  category_index:    number | null       // 0-23 explicit category assignment (kills keyword-matching inference)
   severity:          FindingSeverity
   title:             string
   description:       string

@@ -35,6 +35,7 @@ export interface AnalysisFinding {
   estimatedImpact?: string
   targetElement?: string | null
   pageUrl?: string | null
+  categoryIndex?: number              // 0-23 explicit category — set by runFullAnalysis
 }
 
 export interface CategoryScore {
@@ -850,12 +851,16 @@ export async function runFullAnalysis(
   }
 
   // Process categories ONE AT A TIME to avoid rate limits and memory issues
-  const categoriesToAnalyze = UX_CATEGORIES.filter((_, i) => shouldAnalyze(i))
+  // Build list with ORIGINAL index so each finding gets stamped with the correct category
+  const categoriesToAnalyze: Array<{ category: typeof UX_CATEGORIES[number]; originalIndex: number }> = []
+  for (let i = 0; i < UX_CATEGORIES.length; i++) {
+    if (shouldAnalyze(i)) categoriesToAnalyze.push({ category: UX_CATEGORIES[i], originalIndex: i })
+  }
   console.log(`[runFullAnalysis] Analyzing ${categoriesToAnalyze.length}/${UX_CATEGORIES.length} categories`)
 
   for (let ci = 0; ci < categoriesToAnalyze.length; ci++) {
-    const category = categoriesToAnalyze[ci]
-    console.log(`[runFullAnalysis] Category ${ci + 1}/${categoriesToAnalyze.length}: ${category.name}`)
+    const { category, originalIndex } = categoriesToAnalyze[ci]
+    console.log(`[runFullAnalysis] Category ${ci + 1}/${categoriesToAnalyze.length}: ${category.name} (index ${originalIndex})`)
 
     const findings = await analyzeCategory(
       pageContent,
@@ -869,6 +874,11 @@ export async function runFullAnalysis(
       language,
       depthMode,
     )
+
+    // Stamp each finding with its explicit category index — no more keyword-matching inference
+    for (const f of findings) {
+      f.categoryIndex = originalIndex
+    }
 
     allFindings.push(...findings)
 

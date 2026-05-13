@@ -35,6 +35,19 @@ function normalizeUrlForDedup(urlStr: string): string {
   }
 }
 
+/** Structured head tag data extracted from raw HTML */
+export interface HeadTagData {
+  lang: string | null
+  canonical: string | null
+  ogTags: Record<string, string>        // og:title, og:description, og:image, etc.
+  twitterTags: Record<string, string>   // twitter:card, twitter:title, etc.
+  hreflang: Array<{ lang: string; href: string }>
+  robotsMeta: string | null             // content of <meta name="robots">
+  jsonLd: Array<Record<string, unknown>>  // parsed JSON-LD blocks
+  viewport: string | null
+  charset: string | null
+}
+
 export interface CrawledPage {
   url: string
   title: string | null
@@ -42,6 +55,7 @@ export interface CrawledPage {
   metaDescription: string | null
   contentText: string | null
   rawHtml?: string | null
+  headTags?: HeadTagData | null
   /** Links discovered from the page (populated before content cleanup) */
   discoveredUrls?: string[]
   linksFound: number
@@ -95,6 +109,117 @@ function extractMetaDescription(html: string): string | null {
     /<meta\s+(?:name=["']description["']\s+content=["']([^"']*)["']|content=["']([^"']*)["']\s+name=["']description["'])/i,
   )
   return match ? (match[1] || match[2] || '').trim() : null
+}
+
+/** Extract structured head tag data from raw HTML */
+function extractHeadTags(html: string): HeadTagData {
+  // Isolate <head> section for efficiency
+  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i)
+  const headHtml = headMatch ? headMatch[1] : html.substring(0, 10000) // fallback to first 10k chars
+
+  // Lang attribute (on <html> tag, not in <head>)
+  const langMatch = html.match(/<html[^>]*\slang=["']([^"']+)["']/i)
+  const lang = langMatch ? langMatch[1].trim() : null
+
+  // Canonical URL
+  const canonicalMatch = headHtml.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i)
+    || headHtml.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["']/i)
+  const canonical = canonicalMatch ? canonicalMatch[1].trim() : null
+
+  // Open Graph tags
+  const ogTags: Record<string, string> = {}
+  const ogRegex = /<meta[^>]*(?:property|name)=["'](og:[^"']+)["'][^>]*content=["']([^"']*)["']/gi
+  const ogRegex2 = /<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["'](og:[^"']+)["']/gi
+  let m: RegExpExecArray | null
+  while ((m = ogRegex.exec(headHtml)) !== null) ogTags[m[1]] = m[2]
+  while ((m = ogRegex2.exec(headHtml)) !== null) ogTags[m[2]] = m[1]
+
+  // Twitter Card tags
+  const twitterTags: Record<string, string> = {}
+  const twRegex = /<meta[^>]*(?:property|name)=["'](twitter:[^"']+)["'][^>]*content=["']([^"']*)["']/gi
+  const twRegex2 = /<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["'](twitter:[^"']+)["']/gi
+  while ((m = twRegex.exec(headHtml)) !== null) twitterTags[m[1]] = m[2]
+  while ((m = twRegex2.exec(headHtml)) !== null) twitterTags[m[2]] = m[1]
+
+  // Hreflang links
+  const hreflang: Array<{ lang: string; href: string }> = []
+  const hlRegex = /<link[^>]*rel=["']alternate["'][^>]*hreflang=["']([^"']+)["'][^>]*href=["']([^"']+)["']/gi
+  const hlRegex2 = /<link[^>]*hreflang=["']([^"']+)["'][^>]*href=["']([^"']+)["'][^>]*rel=["']alternate["']/gi
+  while ((m = hlRegex.exec(headHtml)) !== null) hreflang.push({ lang: m[1], href: m[2] })
+  while ((m = hlRegex2.exec(headHtml)) !== null) hreflang.push({ lang: m[1], href: m[2] })
+
+  // Robots meta
+  const robotsMatch = headHtml.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i)
+    || headHtml.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i)
+  const robotsMeta = robotsMatch ? robotsMatch[1].trim() : null
+
+  // JSON-LD structured data
+  const jsonLd: Array<Record<string, unknown>> = []
+  const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+  while ((m = jsonLdRegex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(m[1])
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (item && typeof item === 'object') jsonLd.push(item as Record<string, unknown>)
+        }
+      } else if (parsed && typeof parsed === 'object') {
+        jsonLd.push(parsed as Record<string, unknown>)
+      }
+    } catch {
+      // Invalid JSON-LD — skip
+    }
+  }
+
+  // Viewport
+  const viewportMatch = headHtml.match(/<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["']/i)
+    || headHtml.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']viewport["']/i)
+  const viewport = viewportMatch ? viewportMatch[1].trim() : null
+
+  // Charset
+  const charsetMatch = headHtml.match(/<meta[^>]*charset=["']([^"']+)["']/i)
+    || headHtml.match(/<meta[^>]*http-equiv=["']Content-Type["'][^>]*content=["'][^"']*charset=([^"';\s]+)/i)
+  const charset = charsetMatch ? charsetMatch[1].trim() : null
+
+  return { lang, canonical, ogTags, twitterTags, hreflang, robotsMeta, jsonLd, viewport, charset }
+}
+
+/** Format head tag data as a compact text block for analyzer context */
+export function formatHeadTagsForAnalysis(ht: HeadTagData): string {
+  const lines: string[] = []
+  if (ht.lang) lines.push(`lang="${ht.lang}"`)
+  if (ht.canonical) lines.push(`canonical: ${ht.canonical}`)
+  if (ht.viewport) lines.push(`viewport: ${ht.viewport}`)
+  if (ht.robotsMeta) lines.push(`robots: ${ht.robotsMeta}`)
+  if (ht.charset) lines.push(`charset: ${ht.charset}`)
+
+  const ogKeys = Object.keys(ht.ogTags)
+  if (ogKeys.length > 0) {
+    lines.push(`OG tags: ${ogKeys.map(k => `${k}="${ht.ogTags[k]}"`).join(', ')}`)
+  }
+
+  const twKeys = Object.keys(ht.twitterTags)
+  if (twKeys.length > 0) {
+    lines.push(`Twitter tags: ${twKeys.map(k => `${k}="${ht.twitterTags[k]}"`).join(', ')}`)
+  }
+
+  if (ht.hreflang.length > 0) {
+    lines.push(`hreflang: ${ht.hreflang.map(h => `${h.lang}=${h.href}`).join(', ')}`)
+  }
+
+  if (ht.jsonLd.length > 0) {
+    const types = ht.jsonLd.map(j => (j['@type'] as string) || 'unknown').join(', ')
+    lines.push(`JSON-LD: ${ht.jsonLd.length} block(s) [${types}]`)
+    // Include compact JSON-LD for validator
+    for (const block of ht.jsonLd) {
+      try {
+        const compact = JSON.stringify(block).substring(0, 500)
+        lines.push(`  ${compact}`)
+      } catch { /* skip */ }
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n') : ''
 }
 
 function extractLinks(html: string, pageUrl: string): { links: URL[]; count: number } {
@@ -267,6 +392,8 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       return null // Try fallback
     }
 
+    const headTags = extractHeadTags(html)
+
     return {
       url: response.url || url, // Use resolved URL after redirects (e.g. keycense.com → www.keycense.com)
       title,
@@ -274,6 +401,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       metaDescription,
       contentText,
       rawHtml: html,
+      headTags,
       linksFound,
       statusCode: response.status,
       crawledAt: new Date().toISOString(),
@@ -388,6 +516,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
       metaDescription: description,
       contentText,
       rawHtml: null, // Jina returns text, not HTML
+      headTags: null, // No raw HTML available from Jina
       discoveredUrls,
       linksFound: discoveredUrls.length,
       statusCode: 200,
@@ -435,6 +564,7 @@ async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
       metaDescription: extractMetaDescription(html),
       contentText,
       rawHtml: html,
+      headTags: extractHeadTags(html),
       linksFound: 0,
       statusCode: 200,
       crawledAt: new Date().toISOString(),

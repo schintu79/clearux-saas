@@ -95,24 +95,31 @@ export function renderWebsiteReport(data: WebsiteReportData): string {
   }
 
   for (const finding of findings) {
-    const text = `${finding.title} ${finding.description}`.toLowerCase()
-    let bestMatch = -1
-    let bestScore = 0
-    for (let i = 0; i < flatCats.length; i++) {
-      const fc = flatCats[i]
-      let score = 0
-      const nameWords = fc.catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
-      for (const w of nameWords) { if (text.includes(w)) score += 2 }
-      const keywords = CATEGORY_KEYWORDS[fc.catIdx] || []
-      for (const kw of keywords) { if (text.includes(kw)) score += 1 }
-      if (score > bestScore) { bestScore = score; bestMatch = i }
-    }
-    if (bestMatch >= 0 && bestScore >= 1) {
-      const fc = flatCats[bestMatch]
+    // Use explicit category_index when available; fall back to keyword matching
+    const catIdx = (finding as any).category_index as number | null | undefined
+    if (catIdx != null && catIdx >= 0 && catIdx < flatCats.length) {
+      const fc = flatCats[catIdx]
       findingMap[fc.pillarKey][fc.catName].push(finding)
-    } else if (flatCats.length > 0) {
-      const fc = flatCats[0]
-      findingMap[fc.pillarKey][fc.catName].push(finding)
+    } else {
+      const text = `${finding.title} ${finding.description}`.toLowerCase()
+      let bestMatch = -1
+      let bestScore = 0
+      for (let i = 0; i < flatCats.length; i++) {
+        const fc = flatCats[i]
+        let score = 0
+        const nameWords = fc.catName.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+        for (const w of nameWords) { if (text.includes(w)) score += 2 }
+        const keywords = CATEGORY_KEYWORDS[fc.catIdx] || []
+        for (const kw of keywords) { if (text.includes(kw)) score += 1 }
+        if (score > bestScore) { bestScore = score; bestMatch = i }
+      }
+      if (bestMatch >= 0 && bestScore >= 1) {
+        const fc = flatCats[bestMatch]
+        findingMap[fc.pillarKey][fc.catName].push(finding)
+      } else if (flatCats.length > 0) {
+        const fc = flatCats[0]
+        findingMap[fc.pillarKey][fc.catName].push(finding)
+      }
     }
   }
 

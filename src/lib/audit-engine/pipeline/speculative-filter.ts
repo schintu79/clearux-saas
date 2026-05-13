@@ -32,6 +32,8 @@ export interface FindingForFilter {
   id: string
   title: string
   description: string
+  /** Page URL the finding refers to — used to check if head tags are available */
+  pageUrl?: string | null
 }
 
 // ── Speculative language patterns ────────────────────────────
@@ -57,6 +59,16 @@ export const SPECULATIVE_LANGUAGE: RegExp[] = [
   /(?:minor|low[\s-]severity)\s+(?:localization|internationalisation|internationalization)\s+(?:gap|issue)/i,
   /worth\s+noting\s+as\s+part\s+of/i,
   /not\s+fully\s+optimized?\s+for\s+international/i,
+  // Auth-page false positives — findings about login/dashboard pages being broken
+  /login\s+(?:page|screen|form)\s+(?:is\s+)?(?:shown|displayed|rendered)\s+instead/i,
+  /(?:dashboard|app|admin)\s+(?:page\s+)?(?:shows?|displays?|renders?)\s+(?:a\s+)?login/i,
+  /(?:requires?|needs?)\s+(?:authentication|login|sign[\s-]?in)\s+(?:to\s+)?(?:access|view)/i,
+  /(?:redirects?|forwards?)\s+to\s+(?:a\s+)?(?:login|sign[\s-]?in|auth)/i,
+  // Hedging language — AI admits uncertainty
+  /(?:it\s+is\s+)?(?:unclear|uncertain|unknown)\s+(?:whether|if|from)/i,
+  /(?:would\s+need|requires?)\s+(?:further|additional|deeper)\s+(?:analysis|review|testing|investigation)/i,
+  /(?:should|could)\s+be\s+(?:further\s+)?(?:investigated|reviewed|tested|examined)/i,
+  /based\s+on\s+(?:the\s+)?(?:limited|available)\s+(?:content|data|information)/i,
 ]
 
 // ── Unverifiable topic patterns ──────────────────────────────
@@ -113,22 +125,57 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   // /(?:missing|lacks?|no)\s+(?:form\s+)?(?:validation|error\s+(?:message|handling|feedback))/i,
   // /(?:missing|lacks?|no)\s+(?:success|confirmation)\s+(?:state|message|feedback)/i,
   // /(?:missing|lacks?|no)\s+(?:loading|spinner|skeleton)\s+(?:state|indicator)/i,
+
+  // Auth-gated page false positives — login page misinterpreted as site content
+  /(?:dashboard|admin|account|settings)\s+(?:page\s+)?(?:shows?|displays?|contains?)\s+(?:only\s+)?(?:a\s+)?(?:login|sign[\s-]?in)/i,
+  /login\s+(?:page|form|screen)\s+(?:instead\s+of|rather\s+than|not)\s+(?:expected|actual)/i,
 ]
 
 // ── Public API ───────────────────────────────────────────────
 
+// Topics that become verifiable when head tag data is available in the page content.
+// These are a subset of UNVERIFIABLE_TOPICS that get skipped when hasHeadTags is true.
+const HEAD_TAG_VERIFIABLE: RegExp[] = [
+  /missing\s+(?:og|open\s*graph|twitter\s*card|meta)\s+tags?/i,
+  /missing\s+canonical\s+(?:url|tag)/i,
+  /missing\s+lang\s+attribute/i,
+  /(?:html|root)\s+(?:element\s+)?lang/i,
+  /(?:does\s+not|doesn.t)\s+declare\s+(?:its\s+)?language/i,
+  /lang\s+attribute\s+(?:missing|absent|not\s+set|not\s+declared)/i,
+  /(?:missing|no|absent|lacks?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|declaration|tag)/i,
+  /(?:missing|lacks?)\s+hreflang/i,
+]
+
 /**
  * Identify findings that are speculative or about unverifiable topics.
  * Returns the IDs of findings that should be removed.
+ *
+ * @param hasHeadTags - When true, head tag data was extracted from the page,
+ *   so findings about OG tags, canonical URLs, lang attributes, etc. are now
+ *   verifiable and should NOT be filtered.
  */
-export function identifySpeculativeFindings(findings: FindingForFilter[]): string[] {
+export function identifySpeculativeFindings(
+  findings: FindingForFilter[],
+  hasHeadTags: boolean = false,
+): string[] {
   const speculativeIds: string[] = []
 
   for (const finding of findings) {
     const combined = `${finding.title} ${finding.description}`
 
     const hasSpeculativeLanguage = SPECULATIVE_LANGUAGE.some((p) => p.test(combined))
-    const hasUnverifiableTopic = UNVERIFIABLE_TOPICS.some((p) => p.test(finding.title))
+
+    // Check unverifiable topics, but skip head-tag-verifiable ones if head tags are available
+    let hasUnverifiableTopic = false
+    if (!hasHeadTags) {
+      hasUnverifiableTopic = UNVERIFIABLE_TOPICS.some((p) => p.test(finding.title))
+    } else {
+      // Only check patterns that are NOT made verifiable by head tags
+      hasUnverifiableTopic = UNVERIFIABLE_TOPICS.some((p) => {
+        if (HEAD_TAG_VERIFIABLE.some((hv) => hv.source === p.source)) return false
+        return p.test(finding.title)
+      })
+    }
 
     if (hasSpeculativeLanguage || hasUnverifiableTopic) {
       speculativeIds.push(finding.id)

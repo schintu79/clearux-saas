@@ -724,17 +724,13 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
         />
       </button>
 
-      {/* Expanded detail */}
+      {/* Expanded detail — 3-panel layout: Issue / Fix / Impact */}
       {open && (
         <div className="px-4 pb-4 pt-0 border-t border-rule mx-4 space-y-3">
-          {/* Description */}
-          <p className="text-ink-2 text-[13px] leading-[1.65] pt-3">
-            {finding.description}
-          </p>
 
           {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15">
+            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15 mt-3">
               <Eye size={14} className="text-ok flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">AI verification</p>
@@ -750,7 +746,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
 
           {/* AI Verification Note — Poorly Fixed */}
           {(finding as any).verification_status === 'poorly_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-severe/5 border border-severe/15">
+            <div className="flex items-start gap-2.5 p-3 bg-severe/5 border border-severe/15 mt-3">
               <AlertTriangle size={14} className="text-severe flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">Regression detected</p>
@@ -764,29 +760,46 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             </div>
           )}
 
-          {/* Recommendation */}
-          {finding.recommendation && (
-            <div className="p-3 bg-signal/5 border border-signal/15">
-              <div className="flex gap-2.5">
-                <Lightbulb size={14} className="flex-shrink-0 mt-0.5 text-signal" />
-                <div>
-                  <p className="text-[11px] font-mono font-medium text-ink mb-1 tracking-[0.06em] uppercase">Recommendation</p>
-                  <p className="text-[13px] text-ink-2 leading-[1.65]">{finding.recommendation}</p>
+          {/* 3-Panel Grid: Issue / Fix / Impact */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-rule overflow-hidden mt-3">
+            {/* Panel 1: Issue */}
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={13} className={sev.text} />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Issue</p>
+              </div>
+              <p className="text-ink-2 text-[13px] leading-[1.65]">
+                {finding.description}
+              </p>
+              {finding.target_element && (
+                <div className="mt-2.5 px-2.5 py-1.5 bg-paper-2 border border-rule font-mono text-[11px] text-m-muted overflow-x-auto">
+                  {finding.target_element}
                 </div>
-              </div>
+              )}
             </div>
-          )}
 
-          {/* Estimated Impact */}
-          {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15">
-              <TrendingUp size={14} className="text-ok flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">Expected impact</p>
-                <p className="text-[13px] text-ok leading-[1.65]">{finding.estimated_impact}</p>
+            {/* Panel 2: Fix */}
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-signal/[0.02]">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={13} className="text-signal" />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How to fix</p>
               </div>
+              <p className="text-ink-2 text-[13px] leading-[1.65]">
+                {finding.recommendation || 'No specific recommendation provided.'}
+              </p>
             </div>
-          )}
+
+            {/* Panel 3: Impact */}
+            <div className="p-4 bg-ok/[0.02]">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={13} className="text-ok" />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Impact</p>
+              </div>
+              <p className="text-ink-2 text-[13px] leading-[1.65]">
+                {finding.estimated_impact || 'Fixing this issue will improve overall UX quality and reduce user friction.'}
+              </p>
+            </div>
+          </div>
 
           {/* Screenshot with highlighted element */}
           {finding.screenshot_url && (
@@ -917,15 +930,21 @@ function PillarSection({
     : 0;
   const tint = MODULE_TINTS[pillarIndex] || MODULE_TINTS[0];
 
-  // Group findings by category using shared keyword matcher
+  // Group findings by category — use explicit category_index when available, fall back to keyword matching
   const findingsByCategory: Record<string, AuditFinding[]> = {};
 
   if (pillarCats.length > 0) {
-    // Build full category names list for the matcher
     const allCatNames = categoryScores.map(c => c.name);
     for (const f of findings) {
-      const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
-      const bestCatIdx = matchFindingToCategory(text, allCatNames);
+      let bestCatIdx: number;
+      if ((f as any).category_index != null) {
+        // Explicit category — no guessing
+        bestCatIdx = (f as any).category_index;
+      } else {
+        // Legacy fallback: keyword matching
+        const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
+        bestCatIdx = matchFindingToCategory(text, allCatNames);
+      }
       // Find which pillar category this maps to
       const matchedCat = pillarCats.find((_, relIdx) => {
         const absIdx = pillar.range[0] + relIdx;
@@ -1498,7 +1517,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     low: findings.filter((f) => f.severity === 'low').length,
   };
 
-  // Assign findings to modules using keyword matching against category names
+  // Assign findings to modules — use explicit category_index, fall back to keyword matching
   function assignFindingsToPillars() {
     const perPillar: Record<string, AuditFinding[]> = {};
     for (const p of PILLAR_CONFIG) perPillar[p.name] = [];
@@ -1506,8 +1525,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     const catNames = categoryScores.map(c => c.name);
 
     for (const f of findings) {
-      const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
-      const bestCatIdx = matchFindingToCategory(text, catNames);
+      let bestCatIdx: number;
+      if ((f as any).category_index != null) {
+        bestCatIdx = (f as any).category_index;
+      } else {
+        const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
+        bestCatIdx = matchFindingToCategory(text, catNames);
+      }
       const pillar = getPillarForCategory(bestCatIdx, PILLAR_CONFIG);
       perPillar[pillar.name].push(f);
     }

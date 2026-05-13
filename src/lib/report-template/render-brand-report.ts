@@ -88,19 +88,27 @@ export function renderBrandReport(data: BrandReportData): string {
   for (const cat of enrichedCats) findingsByCategory[cat.name] = []
 
   for (const finding of findings) {
-    const text = `${finding.title} ${finding.description}`.toLowerCase()
-    let bestCat = enrichedCats[0]?.name || ''
-    let bestScore = 0
-    for (const cat of enrichedCats) {
-      let score = 0
-      const words = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
-      for (const w of words) { if (text.includes(w)) score += 2 }
-      const descWords = (cat.description || '').toLowerCase().split(/[&,\s]+/).filter(w => w.length > 4)
-      for (const w of descWords) { if (text.includes(w)) score += 1 }
-      if (score > bestScore) { bestScore = score; bestCat = cat.name }
+    // Use explicit category_index when available; fall back to keyword matching
+    const catIdx = (finding as any).category_index as number | null | undefined
+    if (catIdx != null && catIdx >= 0 && catIdx < enrichedCats.length) {
+      const cat = enrichedCats[catIdx]
+      if (findingsByCategory[cat.name]) findingsByCategory[cat.name].push(finding)
+      else findingsByCategory[enrichedCats[0]?.name || '']?.push(finding)
+    } else {
+      const text = `${finding.title} ${finding.description}`.toLowerCase()
+      let bestCat = enrichedCats[0]?.name || ''
+      let bestScore = 0
+      for (const cat of enrichedCats) {
+        let score = 0
+        const words = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+        for (const w of words) { if (text.includes(w)) score += 2 }
+        const descWords = (cat.description || '').toLowerCase().split(/[&,\s]+/).filter(w => w.length > 4)
+        for (const w of descWords) { if (text.includes(w)) score += 1 }
+        if (score > bestScore) { bestScore = score; bestCat = cat.name }
+      }
+      if (findingsByCategory[bestCat]) findingsByCategory[bestCat].push(finding)
+      else if (enrichedCats.length > 0) findingsByCategory[enrichedCats[0].name].push(finding)
     }
-    if (findingsByCategory[bestCat]) findingsByCategory[bestCat].push(finding)
-    else if (enrichedCats.length > 0) findingsByCategory[enrichedCats[0].name].push(finding)
   }
 
   const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }

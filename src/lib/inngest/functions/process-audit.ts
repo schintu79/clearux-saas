@@ -13,7 +13,9 @@
 
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
-import { crawlPages } from '@/lib/audit-engine/crawler'
+import { crawlPages, formatHeadTagsForAnalysis } from '@/lib/audit-engine/crawler'
+import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
+import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
 import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
 import { generatePdfReport } from '@/lib/audit-engine/pdf'
 import { sendAuditComplete, sendFreeAuditReady } from '@/lib/audit-engine/email'
@@ -219,13 +221,37 @@ export const processAuditFn = inngest.createFunction(
         .eq('id', auditId)
 
       // Build the aggregated page content for analysis
-      const pageContent = crawledPages
+      // Filter out auth-gated pages that show login forms instead of real content
+      const AUTH_PAGE_SIGNALS = [
+        /(?:sign\s*in|log\s*in|login)\s+(?:to\s+)?(?:your\s+)?(?:account|dashboard|continue)/i,
+        /(?:forgot|reset)\s+(?:your\s+)?password/i,
+        /don.t\s+have\s+an?\s+account\?\s*(?:sign\s*up|register)/i,
+        /(?:enter|provide)\s+your\s+(?:email|credentials|password)/i,
+      ]
+      const AUTH_PATH_SEGMENTS = ['/dashboard', '/app', '/admin', '/account', '/settings', '/profile', '/billing']
+
+      const filteredPages = crawledPages.filter((p) => {
+        const url = p.url || ''
+        const isAuthPath = AUTH_PATH_SEGMENTS.some((seg) => url.includes(seg))
+        if (!isAuthPath) return true
+        // Page is behind a known auth path — check if content looks like a login form
+        const content = (p.contentText || '').toLowerCase()
+        const hitCount = AUTH_PAGE_SIGNALS.filter((pat) => pat.test(content)).length
+        return hitCount < 2 // Need 2+ signals to consider it an auth wall
+      })
+
+      const pageContent = filteredPages
         .map((p) => {
           let block = ''
           if (p.url) block += `URL: ${p.url}\n`
           if (p.title) block += `Title: ${p.title}\n`
           if (p.h1) block += `H1: ${p.h1}\n`
           if (p.metaDescription) block += `Meta Description: ${p.metaDescription}\n`
+          // Include structured head tag data so analyzer can assess SEO/meta/structured data
+          if (p.headTags) {
+            const headBlock = formatHeadTagsForAnalysis(p.headTags)
+            if (headBlock) block += `Head Tags:\n${headBlock}\n`
+          }
           if (p.contentText) block += `Content:\n${p.contentText}\n`
           return block
         })
@@ -233,11 +259,17 @@ export const processAuditFn = inngest.createFunction(
 
       await auditLog(auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
 
+      // Collect head tags for downstream structured data validation
+      const allHeadTags = filteredPages
+        .filter((p) => p.headTags)
+        .map((p) => ({ url: p.url, headTags: p.headTags! }))
+
       return {
         pageCount: crawledPages.length,
         pageContent, // Passed to analysis steps
         firstPageUrl: crawledPages[0]?.url || '',
         crawledUrls: crawledPages.map((p) => p.url).filter(Boolean) as string[],
+        headTags: allHeadTags,
       }
     })
 
@@ -270,6 +302,7 @@ export const processAuditFn = inngest.createFunction(
             await db.from('audit_findings').insert({
               audit_id: auditId,
               checklist_item_id: null,
+              category_index: finding.categoryIndex ?? null,
               severity: finding.severity,
               title: finding.title,
               description: finding.description,
@@ -318,6 +351,88 @@ export const processAuditFn = inngest.createFunction(
         await auditLog(auditId, 'responsive_check_failed', 'warning',
           `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
         return { summary: '', findingsCount: 0 }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2c: AI Discovery file probe
+    // Probes for /llms.txt, /.well-known/ai-plugin.json, and
+    // robots.txt AI bot directives. Non-fatal — if probes fail,
+    // the audit continues without AI discovery data.
+    // ──────────────────────────────────────────────────────────
+    const aiDiscovery = await step.run('probe-ai-discovery', async () => {
+      try {
+        const result = await probeAIDiscovery(auditDetails.productUrl)
+        const summary = formatAIDiscoveryForAnalysis(result)
+        await auditLog(auditId, 'ai_discovery_probed', 'info',
+          `AI discovery: ${result.summary.signalCount}/4 signals found` +
+          `${result.summary.hasLlmsTxt ? ', llms.txt present' : ''}` +
+          `${result.summary.hasAiPlugin ? ', ai-plugin.json present' : ''}` +
+          `${result.summary.aiBotsBlocked ? ', some AI bots blocked' : ''}`)
+        return { summary, result }
+      } catch (err) {
+        console.error('[inngest] AI discovery probe failed (non-fatal):', err)
+        await auditLog(auditId, 'ai_discovery_failed', 'warning',
+          `AI discovery probe failed: ${err instanceof Error ? err.message : String(err)}`)
+        return { summary: '', result: null }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2d: Structured data validation
+    // Validates JSON-LD blocks extracted from head tags.
+    // Generates findings for missing/invalid structured data
+    // and stores them directly as audit_findings.
+    // ──────────────────────────────────────────────────────────
+    const structuredDataResult = await step.run('validate-structured-data', async () => {
+      try {
+        const headTagPages = crawlResult.headTags || []
+        if (headTagPages.length === 0) {
+          return { summary: '', findingsCount: 0, typesFound: [] as string[] }
+        }
+
+        const result = validateStructuredData(headTagPages)
+        const summary = formatValidationForAnalysis(result)
+
+        // Store structured data findings
+        if (result.findings.length > 0) {
+          const db = getDb()
+          const { data: existingFindings } = await db
+            .from('audit_findings')
+            .select('sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: false })
+            .limit(1)
+
+          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+
+          for (const finding of result.findings) {
+            await db.from('audit_findings').insert({
+              audit_id: auditId,
+              checklist_item_id: null,
+              category_index: finding.categoryIndex ?? 17,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              evidence: null,
+              page_url: finding.pageUrl || crawlResult.firstPageUrl,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              target_element: null,
+              sort_order: sortOrder++,
+              status: 'open',
+              dismissed: false,
+            } as any)
+          }
+
+          await auditLog(auditId, 'structured_data_validated', 'info',
+            `Structured data: ${result.totalBlocks} blocks, ${result.typesFound.join(', ') || 'none'}, ${result.findings.length} issue(s)`)
+        }
+
+        return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
+      } catch (err) {
+        console.error('[inngest] Structured data validation failed (non-fatal):', err)
+        return { summary: '', findingsCount: 0, typesFound: [] as string[] }
       }
     })
 
@@ -401,7 +516,7 @@ The content below is from the ENTIRE site, not just one page. Before flagging so
           const [prevReportRes, prevFindingsRes] = await Promise.all([
             noteDb.from('reports').select('overall_score, executive_summary, raw_json').eq('audit_id', prevAuditId).single(),
             noteDb.from('audit_findings')
-              .select('title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason')
+              .select('title, severity, description, recommendation, estimated_impact, target_element, page_url, sort_order, status, dismissed, dismissal_reason, category_index')
               .eq('audit_id', prevAuditId)
               .order('sort_order', { ascending: true }).limit(60),
           ])
@@ -543,6 +658,7 @@ RULES FOR RE-AUDIT:
           await db.from('audit_findings').insert({
             audit_id: auditId,
             checklist_item_id: null,
+            category_index: (pf as any).category_index ?? null,
             severity: pf.severity,
             title: pf.title,
             description: pf.description,
@@ -704,7 +820,12 @@ RULES FOR RE-AUDIT:
         }
 
         const gapCategories = UX_CATEGORY_NAMES.filter((_, idx) => gapIndices.has(idx))
-        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}`
+        // Build a map from gapCategories position → original category index
+        const gapCategoryIndices: number[] = []
+        UX_CATEGORY_NAMES.forEach((_, idx) => { if (gapIndices.has(idx)) gapCategoryIndices.push(idx) })
+        const aiDiscoveryBlockBl = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
+        const structuredDataBlockBl = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
+        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}`
 
         // Handle brand context for brand_consistency gap fill
         let brandContentBl = contentWithContextBl
@@ -759,10 +880,12 @@ RULES FOR RE-AUDIT:
 
           for (let catIdx = 0; catIdx < gapResults.length; catIdx++) {
             const findings = gapResults[catIdx]
+            const originalCatIdx = gapCategoryIndices[catIdx] ?? null
             for (const finding of findings) {
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
+                category_index: originalCatIdx,
                 severity: finding.severity,
                 title: finding.title,
                 description: finding.description,
@@ -875,7 +998,9 @@ RULES FOR RE-AUDIT:
         batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
       }
 
-      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}`
+      const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
+      const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
+      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}`
       // Brand consistency categories get extra brand context prepended
       const brandContentWithContext = brandContext
         ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
@@ -935,6 +1060,7 @@ RULES FOR RE-AUDIT:
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
+                category_index: finding.categoryIndex ?? null,
                 severity: finding.severity,
                 title: finding.title,
                 description: finding.description,
@@ -1013,12 +1139,16 @@ RULES FOR RE-AUDIT:
 
       if (!allFindings || allFindings.length === 0) return
 
+      // Check if head tags were extracted — if so, findings about meta/OG/lang are verifiable
+      const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
+
       const speculativeIds = identifySpeculativeFindings(
         allFindings.map((f: any) => ({
           id: f.id,
           title: f.title || '',
           description: f.description || '',
-        }))
+        })),
+        hasHeadTags,
       )
 
       if (speculativeIds.length > 0) {

@@ -234,35 +234,36 @@ function BrandFindingCard({ finding, tintColor, onScoreUpdate }: { finding: Audi
         />
       </button>
 
-      {/* Expanded detail */}
+      {/* Expanded detail — 3-panel layout: Issue / Fix / Impact */}
       {open && (
         <div className="px-4 pb-4 pt-0 border-t border-rule/20 mx-4 space-y-3">
-          {/* Description */}
-          <p className="text-m-muted text-sm leading-relaxed pt-3">{finding.description}</p>
-
-          {/* Recommendation */}
-          {finding.recommendation && (
-            <div className="p-3 bg-paper-2/60 rounded-lg border border-rule/30">
-              <div className="flex gap-2.5">
-                <Lightbulb size={14} className="flex-shrink-0 mt-0.5" style={tintColor ? { color: tintColor } : undefined} />
-                <div>
-                  <p className="text-[11px] font-medium text-ink mb-1">Recommendation</p>
-                  <p className="text-sm text-m-muted leading-relaxed">{finding.recommendation}</p>
-                </div>
+          {/* 3-Panel Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-rule/30 overflow-hidden mt-3">
+            {/* Panel 1: Issue */}
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule/30">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={13} className={sev.text} />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Issue</p>
               </div>
+              <p className="text-m-muted text-[13px] leading-[1.65]">{finding.description}</p>
             </div>
-          )}
-
-          {/* Expected Impact */}
-          {finding.estimated_impact && (
-            <div className="flex items-start gap-2.5 p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/15">
-              <TrendingUp size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[11px] font-medium text-ink mb-0.5">Expected Impact</p>
-                <p className="text-sm text-emerald-700 leading-relaxed">{finding.estimated_impact}</p>
+            {/* Panel 2: Fix */}
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule/30 bg-paper-2/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={13} style={tintColor ? { color: tintColor } : undefined} className={tintColor ? '' : 'text-signal'} />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How to fix</p>
               </div>
+              <p className="text-[13px] text-m-muted leading-[1.65]">{finding.recommendation || 'No specific recommendation provided.'}</p>
             </div>
-          )}
+            {/* Panel 3: Impact */}
+            <div className="p-4 bg-emerald-500/[0.02]">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={13} className="text-emerald-500" />
+                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Impact</p>
+              </div>
+              <p className="text-[13px] text-emerald-700 leading-[1.65]">{finding.estimated_impact || 'Fixing this will improve brand consistency and professional perception.'}</p>
+            </div>
+          </div>
 
           {/* Status + Dismiss controls */}
           <div className="flex items-center gap-2 pt-1 border-t border-rule/20 mt-3">
