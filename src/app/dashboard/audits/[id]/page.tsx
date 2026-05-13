@@ -1203,7 +1203,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               .order('sort_order', { ascending: true }),
             supabase
               .from('audit_pages')
-              .select('url, title, status_code, load_time_ms, screenshot_url, is_mobile_friendly, ai_readability')
+              .select('*')
               .eq('audit_id', auditId)
               .order('crawled_at', { ascending: true }),
           ]);
