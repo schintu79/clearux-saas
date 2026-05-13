@@ -91,26 +91,72 @@ function generateWebSiteJsonLd(input: PlaybookInput): PlaybookSnippet | null {
 
 function generateBreadcrumbJsonLd(input: PlaybookInput): PlaybookSnippet | null {
   if (input.structuredDataTypes.includes('BreadcrumbList')) return null
-  if (input.pages.length < 3) return null
+  if (input.pages.length < 2) return null
 
-  const items = input.pages.slice(0, 4).map((p, i) => ({
-    '@type': 'ListItem',
-    position: i + 1,
-    name: p.title || p.url,
-    item: p.url,
-  }))
+  // Build a proper hierarchical breadcrumb example using one inner page.
+  // Breadcrumbs represent a navigation path (Home > Section > Page),
+  // NOT a flat list of all pages on the site.
+  const baseUrl = `https://${input.domain}`
+
+  // Pick the first inner page (not the homepage) to build a sample path
+  const innerPage = input.pages.find(p => {
+    const path = p.url.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '')
+    return path && path !== '' && path !== '/'
+  })
+
+  // Derive a section name from the URL path segments
+  let sectionName = 'Section'
+  let pageName = 'Page'
+  if (innerPage) {
+    const pathParts = innerPage.url
+      .replace(/^https?:\/\/[^/]+/, '')
+      .replace(/^\/|\/$/g, '')
+      .split('/')
+    if (pathParts.length >= 2) {
+      sectionName = pathParts[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      pageName = innerPage.title || pathParts[pathParts.length - 1].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    } else if (pathParts.length === 1) {
+      pageName = innerPage.title || pathParts[0].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    }
+  }
 
   const breadcrumb = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: items,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: baseUrl,
+      },
+      ...(innerPage && innerPage.url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/|\/$/g, '').split('/').length >= 2
+        ? [{
+            '@type': 'ListItem',
+            position: 2,
+            name: sectionName,
+            item: `${baseUrl}/${sectionName.toLowerCase().replace(/\s+/g, '-')}`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: pageName,
+            item: innerPage.url,
+          }]
+        : [{
+            '@type': 'ListItem',
+            position: 2,
+            name: pageName,
+            item: innerPage?.url || `${baseUrl}/page`,
+          }]),
+    ],
   }
 
   return {
     type: 'json_ld',
     title: 'BreadcrumbList JSON-LD',
-    description: 'Helps AI and search engines understand your site hierarchy. Add to each page.',
-    code: `<!-- Customize per page -->\n<script type="application/ld+json">\n${JSON.stringify(breadcrumb, null, 2)}\n</script>`,
+    description: 'Shows your page hierarchy (Home > Section > Page) to AI and search engines. Add a customized version to each page.',
+    code: `<!-- Customize the path for each page on your site -->\n<script type="application/ld+json">\n${JSON.stringify(breadcrumb, null, 2)}\n</script>`,
     language: 'html',
     priority: 3,
   }

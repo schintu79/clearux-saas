@@ -1100,6 +1100,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [xrayCopied, setXrayCopied] = useState(false);
+  const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const copySection = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSection(key);
+    setTimeout(() => setCopiedSection(null), 2000);
+  };
   const [menuOpen, setMenuOpen] = useState(false);
   const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
   const [aiCitations, setAiCitations] = useState<any[]>([]);
@@ -2469,60 +2475,42 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'ai_xray' && (
             <div className="space-y-6">
 
-              {/* Copy AI Report button — generates plain text summary for devs */}
-              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0) && (
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => {
-                      const lines: string[] = [`AI X-Ray Report — ${audit.product_url || 'Unknown'}\n`];
-                      if (llmProbeResults.length > 0) {
-                        lines.push('## What AI knows about your site\n');
-                        for (const p of llmProbeResults as any[]) {
-                          lines.push(`Q: ${p.question}`);
-                          lines.push(`A: ${p.answer}`);
-                          lines.push(`Grade: ${p.accuracy || 'pending'}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
-                        }
-                      }
-                      if (aiCitations.length > 0) {
-                        lines.push('## AI Citation Audit\n');
-                        for (const c of aiCitations as any[]) {
-                          lines.push(`[${c.citation_type}] ${c.ai_context}${c.page_url ? ` (${c.page_url})` : ''}`);
-                        }
-                        lines.push('');
-                      }
-                      if (fixPlaybooks.length > 0) {
-                        lines.push('## Fix Playbooks\n');
-                        for (const pb of fixPlaybooks as any[]) {
-                          lines.push(`### ${pb.title} (${pb.playbook_type})`);
-                          if (pb.description) lines.push(pb.description);
-                          lines.push('```');
-                          lines.push(pb.code_snippet);
-                          lines.push('```\n');
-                        }
-                      }
-                      navigator.clipboard.writeText(lines.join('\n'));
-                      setXrayCopied(true);
-                      setTimeout(() => setXrayCopied(false), 2000);
-                    }}
-                    className={clsx(
-                      'inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg border transition-colors',
-                      xrayCopied
-                        ? 'text-ok bg-ok/5 border-ok/20'
-                        : 'text-m-muted bg-paper border-rule hover:bg-paper-2 hover:text-ink',
-                    )}
-                  >
-                    {xrayCopied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy report</>}
-                  </button>
-                </div>
-              )}
-
               {/* LLM Probe Results — What AI knows about your site */}
               {llmProbeResults.length > 0 && (
                 <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Brain size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What AI knows about your site</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{llmProbeResults.length} questions</span>
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-m-muted font-medium">{llmProbeResults.length} questions</span>
+                      <button
+                        onClick={() => {
+                          const lines: string[] = [`What AI knows about your site — ${audit.product_url || 'Unknown'}\n`];
+                          const successful = (llmProbeResults as any[]).filter(p => !p.answer?.startsWith('[Probe failed'));
+                          const failed = (llmProbeResults as any[]).filter(p => p.answer?.startsWith('[Probe failed'));
+                          const accurateCount = successful.filter(p => p.accuracy === 'accurate').length;
+                          const partialCount = successful.filter(p => p.accuracy === 'partial').length;
+                          const inaccurateCount = successful.filter(p => p.accuracy === 'inaccurate' || p.accuracy === 'hallucinated').length;
+                          if (successful.length > 0) {
+                            lines.push(`Summary: ${accurateCount} correct, ${partialCount} partially correct, ${inaccurateCount} incorrect out of ${successful.length} questions\n`);
+                            for (const p of successful) {
+                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Hallucinated' : p.accuracy === 'inaccurate' ? 'Incorrect' : 'Pending';
+                              lines.push(`Q: ${p.question}`);
+                              lines.push(`A: ${p.answer}`);
+                              lines.push(`Grade: ${gradeLabel}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
+                            }
+                          }
+                          if (failed.length > 0) lines.push(`Note: ${failed.length} probe(s) failed. Re-run the audit to retry.\n`);
+                          copySection('probes', lines.join('\n'));
+                        }}
+                        className={clsx(
+                          'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border transition-colors',
+                          copiedSection === 'probes' ? 'text-ok bg-ok/5 border-ok/20' : 'text-m-muted bg-paper border-rule hover:bg-paper-2 hover:text-ink',
+                        )}
+                      >
+                        {copiedSection === 'probes' ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+                      </button>
+                    </span>
                   </div>
                   <div className="divide-y divide-rule/20">
                     {llmProbeResults.map((probe: any, i: number) => {
@@ -2556,8 +2544,29 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <FileSearch size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">AI citation audit</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">
-                      {aiCitations.filter((c: any) => c.citation_type !== 'ignored').length} cited / {aiCitations.filter((c: any) => c.citation_type === 'ignored').length} ignored
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-m-muted font-medium">
+                        {aiCitations.filter((c: any) => c.citation_type !== 'ignored').length} cited / {aiCitations.filter((c: any) => c.citation_type === 'ignored').length} ignored
+                      </span>
+                      <button
+                        onClick={() => {
+                          const lines: string[] = [`AI citation audit — ${audit.product_url || 'Unknown'}\n`];
+                          const direct = (aiCitations as any[]).filter(c => c.citation_type === 'direct_quote');
+                          const ignored = (aiCitations as any[]).filter(c => c.citation_type === 'ignored');
+                          lines.push(`Found ${direct.length} direct citations and ${ignored.length} ignored pages\n`);
+                          for (const c of aiCitations as any[]) {
+                            const typeLabel = c.citation_type === 'direct_quote' ? 'Cited' : c.citation_type === 'ignored' ? 'Ignored' : c.citation_type;
+                            lines.push(`[${typeLabel}] ${c.ai_context}${c.page_url ? ` (${c.page_url})` : ''}`);
+                          }
+                          copySection('citations', lines.join('\n'));
+                        }}
+                        className={clsx(
+                          'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border transition-colors',
+                          copiedSection === 'citations' ? 'text-ok bg-ok/5 border-ok/20' : 'text-m-muted bg-paper border-rule hover:bg-paper-2 hover:text-ink',
+                        )}
+                      >
+                        {copiedSection === 'citations' ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+                      </button>
                     </span>
                   </div>
                   <div className="divide-y divide-rule/20">
@@ -2599,7 +2608,29 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Zap size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">Fix playbooks</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{fixPlaybooks.length} snippets</span>
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-m-muted font-medium">{fixPlaybooks.length} snippets</span>
+                      <button
+                        onClick={() => {
+                          const lines: string[] = [`Fix playbooks — ${audit.product_url || 'Unknown'}\n`];
+                          lines.push('Copy and paste these code snippets into your site to improve AI visibility.\n');
+                          for (const pb of fixPlaybooks as any[]) {
+                            lines.push(`### ${pb.title}`);
+                            if (pb.description) lines.push(pb.description);
+                            lines.push(`\`\`\`${pb.playbook_type === 'json_ld' || pb.playbook_type === 'meta_tags' ? 'html' : pb.playbook_type === 'llms_txt' ? 'markdown' : ''}`);
+                            lines.push(pb.code_snippet);
+                            lines.push('```\n');
+                          }
+                          copySection('playbooks', lines.join('\n'));
+                        }}
+                        className={clsx(
+                          'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border transition-colors',
+                          copiedSection === 'playbooks' ? 'text-ok bg-ok/5 border-ok/20' : 'text-m-muted bg-paper border-rule hover:bg-paper-2 hover:text-ink',
+                        )}
+                      >
+                        {copiedSection === 'playbooks' ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy all</>}
+                      </button>
+                    </span>
                   </div>
                   <div className="divide-y divide-rule/20">
                     {fixPlaybooks.map((pb: any, i: number) => (
@@ -2648,16 +2679,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'intelligence' && (
             <div className="space-y-6">
 
-              {/* Intro explanation */}
-              <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                  <Sparkles size={16} className="text-signal" />
-                  <h3 className="text-sm font-heading font-semibold text-ink">How AI models represent your site</h3>
-                </div>
-                <div className="px-5 py-4">
-                  <p className="text-[13px] text-m-muted leading-relaxed">
-                    We asked leading AI models factual questions about your site and graded their answers against your actual content. This reveals how accurately AI understands your brand, products, and messaging — and where it gets things wrong.
-                  </p>
+              {/* Intro explanation — prominent hero card */}
+              <div className="rounded-xl border-2 border-ok/30 bg-ok/[0.04] overflow-hidden">
+                <div className="px-6 py-5 flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles size={18} className="text-ok" />
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-heading font-bold text-ink mb-1.5">How AI models represent your site</h3>
+                    <p className="text-[13px] text-ink-2 leading-relaxed">
+                      We asked leading AI models factual questions about your site and graded their answers against your actual content. This reveals how accurately AI understands your brand, products, and messaging — and where it gets things wrong.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -2671,10 +2704,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                   <div className="p-5">
                     {intelligenceData.modelProbes.length === 1 && (
-                      <div className="flex items-start gap-2.5 mb-4 p-3 rounded-lg bg-warn/5 border border-warn/15">
-                        <AlertTriangle size={14} className="text-warn flex-shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-2.5 mb-4 p-3 rounded-lg bg-signal/5 border border-signal/15">
+                        <Info size={14} className="text-signal flex-shrink-0 mt-0.5" />
                         <p className="text-[12px] text-m-muted leading-relaxed">
-                          Only one AI model was tested. To compare how different models represent your site, configure <span className="font-semibold text-ink">OPENAI_API_KEY</span> and <span className="font-semibold text-ink">GOOGLE_AI_API_KEY</span> in your environment. More models give a fuller picture of your AI visibility.
+                          Currently benchmarking with <span className="font-semibold text-ink">1 AI model</span>. Multi-model comparison (GPT-4o, Gemini) coming soon for a fuller picture of your AI visibility across platforms.
                         </p>
                       </div>
                     )}
@@ -2722,10 +2755,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         );
                       })}
                     </div>
-                    <div className="mt-4 p-3 rounded-lg bg-paper-2/50 border border-rule/20">
-                      <p className="text-[11px] text-m-muted leading-relaxed">
-                        <span className="font-semibold text-ink">Why this matters:</span> When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
-                      </p>
+                    <div className="mt-5 p-4 rounded-xl bg-ok/[0.06] border border-ok/20">
+                      <div className="flex items-start gap-2.5">
+                        <Info size={15} className="text-ok flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[13px] font-semibold text-ok mb-1">Why this matters</p>
+                          <p className="text-[13px] text-ink-2 leading-relaxed">
+                            When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
