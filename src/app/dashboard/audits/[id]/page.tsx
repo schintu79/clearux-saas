@@ -2494,7 +2494,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           if (successful.length > 0) {
                             lines.push(`Summary: ${accurateCount} correct, ${partialCount} partially correct, ${inaccurateCount} incorrect out of ${successful.length} questions\n`);
                             for (const p of successful) {
-                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Hallucinated' : p.accuracy === 'inaccurate' ? 'Incorrect' : 'Pending';
+                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Hallucinated' : p.accuracy === 'inaccurate' ? 'Incorrect' : p.accuracy === 'no_data' ? 'No data' : 'Pending';
                               lines.push(`Q: ${p.question}`);
                               lines.push(`A: ${p.answer}`);
                               lines.push(`Grade: ${gradeLabel}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
@@ -2518,13 +2518,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         : probe.accuracy === 'partial' ? 'text-warn bg-warn/10'
                         : probe.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
                         : probe.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
+                        : probe.accuracy === 'no_data' ? 'text-m-muted bg-paper-2'
                         : 'text-m-muted bg-paper-2';
+                      const accLabel = probe.accuracy === 'accurate' ? 'Correct'
+                        : probe.accuracy === 'partial' ? 'Partial'
+                        : probe.accuracy === 'hallucinated' ? 'Hallucinated'
+                        : probe.accuracy === 'inaccurate' ? 'Incorrect'
+                        : probe.accuracy === 'no_data' ? 'No data'
+                        : 'Pending';
                       return (
                         <div key={i} className="px-5 py-4">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <p className="text-[13px] font-medium text-ink">{probe.question}</p>
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${accColor}`}>
-                              {probe.accuracy || 'pending'}
+                              {accLabel}
                             </span>
                           </div>
                           <p className="text-[13px] text-ink-2 leading-[1.7]">{probe.answer}</p>
@@ -2744,8 +2751,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                         r.accuracy === 'accurate' ? 'text-ok bg-ok/10'
                                           : r.accuracy === 'partial' ? 'text-warn bg-warn/10'
                                             : r.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
+                                              : r.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
                                               : 'text-m-muted bg-paper-2'
-                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Hallucinated' : r.accuracy || 'Pending'}</span>
+                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Hallucinated' : r.accuracy === 'inaccurate' ? 'Incorrect' : r.accuracy === 'no_data' ? 'No data' : 'Pending'}</span>
                                     </div>
                                   ))}
                                 </div>
