@@ -48,7 +48,7 @@ function QuickCard({
         <Icon size={18} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
       </div>
       <div className="flex-1">
-        <p className="text-[11px] font-mono tracking-[0.08em] uppercase" style={{ color: 'var(--m-muted)' }}>
+        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
           {label}
         </p>
         <p className="text-[28px] font-sans font-semibold tabular-nums mt-1 leading-none" style={{ color: 'var(--ink)' }}>

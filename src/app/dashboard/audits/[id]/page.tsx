@@ -350,8 +350,8 @@ function CheckpointHealth({ categoryScores, findings }: {
     <div className="mb-6 border border-rule overflow-hidden bg-paper">
       <div className="px-5 py-3.5 border-b border-rule/60 bg-paper-2/40">
         <div className="flex items-center gap-2">
-          <h3 className="font-mono text-[11px] tracking-[0.1em] uppercase text-m-muted">{categoryScores.length * 4}-Checkpoint health</h3>
-          <span className="text-[11px] font-mono text-m-muted ml-auto tracking-[0.06em] uppercase">
+          <h3 className="text-[11px] font-semibold tracking-[0.04em] uppercase text-m-muted">{categoryScores.length * 4}-Checkpoint health</h3>
+          <span className="text-[11px] font-medium text-m-muted ml-auto tracking-[0.03em] uppercase">
             {findings.filter(f => !f.dismissed).length} issues · {categoryScores.length} categories
           </span>
         </div>
@@ -370,11 +370,11 @@ function CheckpointHealth({ categoryScores, findings }: {
                 onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
                 className="w-full px-5 py-2.5 flex items-center gap-3 hover:bg-paper-2 transition-colors text-left"
               >
-                <span className={`text-[11px] font-mono font-medium w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
+                <span className={`text-[11px] font-semibold w-6 text-right ${scoreColor(cat.score)}`}>{cat.score}</span>
                 <span className="text-[11px] font-medium text-ink flex-1 truncate">{cat.name}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {passCount > 0 && <span className="text-[11px] font-mono font-medium text-ok">{passCount} pass</span>}
-                  {failCount > 0 && <span className="text-[11px] font-mono font-medium text-severe">{failCount} fail</span>}
+                  {passCount > 0 && <span className="text-[11px] font-semibold text-ok">{passCount} pass</span>}
+                  {failCount > 0 && <span className="text-[11px] font-semibold text-severe">{failCount} fail</span>}
                 </div>
                 <ChevronDown size={12} className={`text-m-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </button>
@@ -398,7 +398,7 @@ function CheckpointHealth({ categoryScores, findings }: {
                             <p className="text-[11px] text-m-muted mt-0.5 line-clamp-1">{finding.title}</p>
                           )}
                         </div>
-                        <span className={`text-[11px] font-mono font-medium flex-shrink-0 ${hasFinding ? 'text-severe' : 'text-ok'}`}>
+                        <span className={`text-[11px] font-semibold flex-shrink-0 ${hasFinding ? 'text-severe' : 'text-ok'}`}>
                           {hasFinding ? 'Fail' : 'Pass'}
                         </span>
                       </div>
@@ -482,10 +482,10 @@ function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUr
         <TrendingUp size={14} className="text-signal flex-shrink-0" />
         <div className="flex-1 text-left">
           <span className="text-sm font-medium text-ink">Score over time</span>
-          <span className="text-[11px] font-mono text-m-muted ml-2 tracking-[0.06em] uppercase">{trend.length} audits · {domain}</span>
+          <span className="text-[11px] font-medium text-m-muted ml-2 tracking-[0.03em] uppercase">{trend.length} audits · {domain}</span>
         </div>
         {improvement !== 0 && (
-          <span className={`text-xs font-mono font-medium ${improvement > 0 ? 'text-ok' : 'text-severe'}`}>
+          <span className={`text-xs font-semibold ${improvement > 0 ? 'text-ok' : 'text-severe'}`}>
             {improvement > 0 ? '+' : ''}{improvement} pts
           </span>
         )}
@@ -639,7 +639,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-rule flex-shrink-0" />
           <span className="text-xs text-m-muted line-through flex-1">{finding.title}</span>
-          <span className="text-[11px] font-mono text-m-muted bg-paper-2 px-2 py-0.5 rounded-full tracking-[0.06em] uppercase">Dismissed</span>
+          <span className="text-[11px] font-medium text-m-muted bg-paper-2 px-2 py-0.5 rounded-full tracking-[0.03em] uppercase">Dismissed</span>
         </div>
         {finding.dismissal_reason && (
           <p className="text-[11px] text-m-muted mt-1 ml-4">{finding.dismissal_reason}</p>
@@ -659,17 +659,17 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
         <span className="mt-1.5"><span className={`block w-2 h-2 rounded-full ${sev.dot}`} /></span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[11px] font-mono font-medium uppercase tracking-[0.06em] ${sev.text}`}>
+            <span className={`text-[11px] font-semibold uppercase tracking-[0.03em] ${sev.text}`}>
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-ok bg-ok/10 px-2 py-0.5 tracking-[0.06em] uppercase">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-2 py-0.5 tracking-[0.06em] uppercase">
                 <Eye size={10} />
                 Likely fixed
               </span>
             )}
             {(finding as any).verification_status === 'poorly_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-severe bg-severe/10 px-2 py-0.5 tracking-[0.06em] uppercase">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-severe bg-severe/10 px-2 py-0.5 tracking-[0.06em] uppercase">
                 <AlertTriangle size={10} />
                 Poorly fixed
               </span>
@@ -680,7 +680,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-[11px] font-mono text-m-muted hover:text-signal transition-colors max-w-[260px] truncate"
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-m-muted hover:text-signal transition-colors max-w-[260px] truncate"
                 title={finding.page_url}
               >
                 <ExternalLink size={10} className="flex-shrink-0" />
@@ -695,27 +695,16 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             )}
           </div>
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
-          {/* Metadata line — module · category · page */}
-          <div className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase mt-1.5 flex items-center gap-0 flex-wrap">
+          {/* Metadata line — module · category */}
+          <div className="text-[10px] font-medium text-m-muted tracking-[0.04em] uppercase mt-1.5 flex items-center gap-0 flex-wrap">
             {pillarName && (
               <>
-                <span>Module: {pillarName}</span>
-                {categoryName && <span className="mx-1.5 opacity-40">·</span>}
+                <span>{pillarName}</span>
+                {categoryName && <span className="mx-1.5 opacity-30">·</span>}
               </>
             )}
             {categoryName && (
-              <>
-                <span>Category: {categoryName}</span>
-                {finding.page_url && <span className="mx-1.5 opacity-40">·</span>}
-              </>
-            )}
-            {finding.page_url && (
-              <span>Page: {(() => {
-                try {
-                  const u = new URL(finding.page_url);
-                  return u.pathname + (u.search || '');
-                } catch { return finding.page_url; }
-              })()}</span>
+              <span>{categoryName}</span>
             )}
           </div>
         </div>
@@ -734,7 +723,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15 mt-3">
               <Eye size={14} className="text-ok flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">AI verification</p>
+                <p className="text-[11px] font-semibold text-ink mb-0.5 tracking-[0.03em] uppercase">AI verification</p>
                 <p className="text-[13px] text-ok leading-[1.65]">
                   {(finding as any).verification_note}
                 </p>
@@ -750,7 +739,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="flex items-start gap-2.5 p-3 bg-severe/5 border border-severe/15 mt-3">
               <AlertTriangle size={14} className="text-severe flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-mono font-medium text-ink mb-0.5 tracking-[0.06em] uppercase">Regression detected</p>
+                <p className="text-[11px] font-semibold text-ink mb-0.5 tracking-[0.03em] uppercase">Regression detected</p>
                 <p className="text-[13px] text-severe leading-[1.65]">
                   {(finding as any).verification_note}
                 </p>
@@ -765,20 +754,20 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
           {(finding as any).ai_interpretation && (finding as any).human_interpretation && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-rule overflow-hidden mt-3">
               {/* AI Interpretation */}
-              <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-[var(--color-signal)]/[0.03]">
+              <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <Brain size={13} className="text-signal" />
-                  <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How AI reads this</p>
+                  <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How AI reads this</p>
                 </div>
                 <p className="text-ink-2 text-[13px] leading-[1.65]">
                   {(finding as any).ai_interpretation}
                 </p>
               </div>
               {/* Human Interpretation */}
-              <div className="p-4 bg-[var(--color-ok)]/[0.03]">
+              <div className="p-4 bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={13} className="text-ok" />
-                  <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How a human sees this</p>
+                  <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How a human sees this</p>
                 </div>
                 <p className="text-ink-2 text-[13px] leading-[1.65]">
                   {(finding as any).human_interpretation}
@@ -793,7 +782,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="p-4 border-b md:border-b-0 md:border-r border-rule">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={13} className={sev.text} />
-                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Issue</p>
+                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Issue</p>
               </div>
               <p className="text-ink-2 text-[13px] leading-[1.65]">
                 {finding.description}
@@ -809,7 +798,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-signal/[0.02]">
               <div className="flex items-center gap-2 mb-2">
                 <Lightbulb size={13} className="text-signal" />
-                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How to fix</p>
+                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How to fix</p>
               </div>
               <p className="text-ink-2 text-[13px] leading-[1.65]">
                 {finding.recommendation || 'No specific recommendation provided.'}
@@ -820,7 +809,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="p-4 bg-ok/[0.02]">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={13} className="text-ok" />
-                <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Impact</p>
+                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Impact</p>
               </div>
               <p className="text-ink-2 text-[13px] leading-[1.65]">
                 {finding.estimated_impact || 'Fixing this issue will improve overall UX quality and reduce user friction.'}
@@ -833,9 +822,9 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             <div className="overflow-hidden border border-rule">
               <div className="px-3 py-2 bg-paper-2 border-b border-rule flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
-                <span className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">Visual evidence</span>
+                <span className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Visual evidence</span>
                 {finding.page_url && (
-                  <span className="text-[11px] text-m-muted ml-auto font-mono truncate max-w-[200px]">
+                  <span className="text-[11px] text-m-muted ml-auto truncate max-w-[200px]">
                     {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
                   </span>
                 )}
@@ -853,7 +842,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
           {/* Status toggle + Dismiss */}
           <div className="mt-1 p-3 bg-paper-2 border border-rule">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-mono font-medium text-ink uppercase tracking-[0.06em]">Status</span>
+              <span className="text-[11px] font-semibold text-ink uppercase tracking-[0.03em]">Status</span>
               <div className="flex flex-wrap gap-1.5">
                 {FINDING_STATUSES.map((s) => {
                   const active = status === s.key;
@@ -862,7 +851,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
                       key={s.key}
                       onClick={() => handleStatusChange(s.key)}
                       disabled={statusUpdating}
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-mono font-medium px-3 py-1.5 transition-all tracking-[0.04em] ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 transition-all tracking-[0.02em] ${
                         active ? `${s.bg} ${s.color} border border-current/20` : 'text-m-muted hover:bg-paper-2'
                       } disabled:opacity-50`}
                     >
@@ -875,7 +864,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
               <div className="ml-auto">
                 <button
                   onClick={() => setShowDismissForm(!showDismissForm)}
-                  className="text-[11px] font-mono font-medium text-m-muted hover:text-severe px-2 py-1 hover:bg-severe/5 transition-colors tracking-[0.06em] uppercase"
+                  className="text-[11px] font-semibold text-m-muted hover:text-severe px-2 py-1 hover:bg-severe/5 transition-colors tracking-[0.03em] uppercase"
                 >
                   Dismiss
                 </button>
@@ -898,13 +887,13 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
                 <button
                   onClick={handleDismiss}
                   disabled={statusUpdating || !dismissReason.trim()}
-                  className="text-[11px] font-mono font-medium text-paper px-3 py-1.5 bg-severe hover:opacity-90 transition-colors disabled:opacity-50 tracking-[0.06em] uppercase"
+                  className="text-[11px] font-semibold text-paper px-3 py-1.5 bg-severe hover:opacity-90 transition-colors disabled:opacity-50 tracking-[0.03em] uppercase"
                 >
                   Dismiss and skip on re-audit
                 </button>
                 <button
                   onClick={() => setShowDismissForm(false)}
-                  className="text-[11px] font-mono font-medium text-m-muted px-3 py-1.5 hover:bg-paper-2 transition-colors tracking-[0.06em] uppercase"
+                  className="text-[11px] font-semibold text-m-muted px-3 py-1.5 hover:bg-paper-2 transition-colors tracking-[0.03em] uppercase"
                 >
                   Cancel
                 </button>
@@ -1000,13 +989,13 @@ function PillarSection({
         {React.createElement(PILLAR_ICONS[pillarIndex] || Scale, { size: 18, className: 'flex-shrink-0', style: { color: tint.dot } })}
         <div className="flex-1 min-w-0">
           <h2 className="font-sans font-medium text-[15px] text-ink truncate">{pillar.name}</h2>
-          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+          <p className="text-[10px] font-medium text-m-muted tracking-[0.03em] uppercase">
             {pillarCats.length} categories{totalFindings > 0 ? ` · ${totalFindings} finding${totalFindings !== 1 ? 's' : ''}` : ''}
           </p>
         </div>
         <div className="text-right flex-shrink-0 mr-2">
-          <p className={`font-mono text-[22px] font-medium ${scoreColor(avgScore)}`}>{avgScore}</p>
-          <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">/100</p>
+          <p className={`text-[22px] font-bold ${scoreColor(avgScore)}`}>{avgScore}</p>
+          <p className="text-[10px] font-medium text-m-muted tracking-[0.03em] uppercase">/100</p>
         </div>
         <ChevronDown size={16} className={`text-m-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
@@ -1028,7 +1017,7 @@ function PillarSection({
                     <div className="h-full rounded-full" style={{ width: `${cat.score}%`, background: tint.dot, opacity: 0.6 }} />
                   </div>
                 </div>
-                <span className={`font-mono text-[15px] font-medium flex-shrink-0 ${scoreColor(cat.score)}`}>
+                <span className={`text-[15px] font-bold flex-shrink-0 ${scoreColor(cat.score)}`}>
                   {cat.score}
                 </span>
               </div>
@@ -1050,7 +1039,7 @@ function PillarSection({
                   <h3 className="font-sans font-medium text-[13px] text-ink">
                     {catName}
                   </h3>
-                  <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+                  <span className="text-[10px] font-medium text-m-muted tracking-[0.03em] uppercase">
                     {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -1901,7 +1890,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 flex-wrap">
                     <h2 className="font-sans text-[22px] text-ink font-medium tracking-[-0.01em]">{formatUrl(audit.product_url || '')}</h2>
                   </div>
-                  <p className="font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase mb-1">
+                  <p className="text-[11px] font-medium text-m-muted tracking-[0.03em] uppercase mb-1">
                     {findings.length} findings · {activeModuleCount} modules{isPartialAudit ? ` of ${totalModuleCount}` : ''}
                   </p>
 
@@ -1926,17 +1915,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {/* Severity counts */}
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
                     {severityCounts.critical > 0 && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-severe">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.03em] uppercase text-severe">
                         <span className="w-2 h-2 rounded-full bg-severe" /> {severityCounts.critical} critical
                       </span>
                     )}
                     {severityCounts.high > 0 && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.06em] uppercase text-warn">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.03em] uppercase text-warn">
                         <span className="w-2 h-2 rounded-full bg-warn" /> {severityCounts.high} high
                       </span>
                     )}
                     {(severityCounts.medium + severityCounts.low) > 0 && (
-                      <span className="text-[11px] font-mono text-m-muted tracking-[0.06em] uppercase">
+                      <span className="text-[11px] font-medium text-m-muted tracking-[0.03em] uppercase">
                         {severityCounts.medium + severityCounts.low} more
                       </span>
                     )}
@@ -1947,28 +1936,28 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
             {/* Action strip */}
             <div className="border-t border-rule px-6 sm:px-8 py-4 flex flex-wrap gap-2.5">
-              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+              <a href={`/api/reports/${auditId}/pdf`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
                 <Download size={13} /> PDF
               </a>
-              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
+              <a href={`/api/reports/${auditId}/docx`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors">
                 <Download size={13} /> Word
               </a>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
+                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors"
               >
                 <RefreshCw size={13} /> Re-audit
               </Link>
               <Link
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                className="flex items-center gap-2 border border-signal/30 text-signal text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-signal/5 transition-colors"
+                className="flex items-center gap-2 border border-signal/30 text-signal text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-signal/5 transition-colors"
               >
                 <Search size={13} /> Dig deeper
               </Link>
               <button
                 onClick={handleShare}
                 disabled={shareLoading}
-                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-mono tracking-[0.06em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 border border-ink/20 text-ink text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-paper-2 transition-colors disabled:opacity-50"
               >
                 {shareCopied ? <><Check size={13} className="text-ok" /> Copied</> : <><Share2 size={13} /> Share</>}
               </button>
@@ -2233,7 +2222,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <div key={i}>
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs text-m-muted">{bar.label}</span>
-                                <span className="text-xs font-mono font-medium text-ink">{bar.value}</span>
+                                <span className="text-xs font-semibold text-ink">{bar.value}</span>
                               </div>
                               <div className="h-1.5 bg-rule/20 rounded-full overflow-hidden">
                                 <div
@@ -2316,7 +2305,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   return (
                   <div key={idx}>
                     <div className="flex items-center gap-3 px-4 py-3 hover:bg-paper-2/50 transition-colors">
-                      <span className="text-xs text-m-muted w-6 text-right flex-shrink-0 font-mono">{idx + 1}</span>
+                      <span className="text-xs text-m-muted w-6 text-right flex-shrink-0 font-medium">{idx + 1}</span>
                       <Globe size={14} className="text-m-muted flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         {pg.title && (
@@ -2334,7 +2323,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {/* AI readability indicator */}
                       {aiStatus && (
                         <span className={clsx(
-                          'inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded tracking-[0.04em]',
+                          'inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded tracking-[0.02em]',
                           aiStatus === 'green' && 'text-ok bg-ok/10',
                           aiStatus === 'amber' && 'text-warn bg-warn/10',
                           aiStatus === 'red' && 'text-crit bg-crit/10',
@@ -2343,17 +2332,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         </span>
                       )}
                       {pg.is_mobile_friendly === true && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.02em]">
                           <Smartphone size={10} /> Mobile OK
                         </span>
                       )}
                       {pg.is_mobile_friendly === false && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.02em]">
                           <Smartphone size={10} /> Mobile issues
                         </span>
                       )}
                       {pg.status_code && pg.status_code !== 200 && (
-                        <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
                           {pg.status_code}
                         </span>
                       )}
@@ -2412,7 +2401,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Brain size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What AI knows about your site</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">{llmProbeResults.length} questions</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{llmProbeResults.length} questions</span>
                   </div>
                   <div className="divide-y divide-rule/20">
                     {llmProbeResults.map((probe: any, i: number) => {
@@ -2425,7 +2414,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <div key={i} className="px-5 py-4">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <p className="text-sm font-medium text-ink">{probe.question}</p>
-                            <span className={`text-[11px] font-mono px-2 py-0.5 rounded flex-shrink-0 ${accColor}`}>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded flex-shrink-0 ${accColor}`}>
                               {probe.accuracy || 'pending'}
                             </span>
                           </div>
@@ -2446,7 +2435,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <FileSearch size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">AI citation audit</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">
+                    <span className="ml-auto text-xs text-m-muted font-medium">
                       {aiCitations.filter((c: any) => c.citation_type !== 'ignored').length} cited / {aiCitations.filter((c: any) => c.citation_type === 'ignored').length} ignored
                     </span>
                   </div>
@@ -2469,7 +2458,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             </a>
                           )}
                         </div>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${
                           cit.citation_type === 'direct_quote' ? 'text-ok bg-ok/10' :
                           cit.citation_type === 'paraphrase' ? 'text-signal bg-signal/10' :
                           cit.citation_type === 'ignored' ? 'text-warn bg-warn/10' :
@@ -2489,13 +2478,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Zap size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">Fix playbooks</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">{fixPlaybooks.length} snippets</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{fixPlaybooks.length} snippets</span>
                   </div>
                   <div className="divide-y divide-rule/20">
                     {fixPlaybooks.map((pb: any, i: number) => (
                       <div key={i} className="px-5 py-4">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-mono text-signal bg-signal/10 px-1.5 py-0.5 rounded">{pb.playbook_type}</span>
+                          <span className="text-[11px] font-semibold text-signal bg-signal/10 px-1.5 py-0.5 rounded">{pb.playbook_type}</span>
                           <h4 className="text-sm font-medium text-ink">{pb.title}</h4>
                         </div>
                         {pb.description && (
@@ -2540,7 +2529,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center gap-2 mb-4">
                     <BarChart3 size={16} className="text-m-accent" />
                     <h3 className="text-sm font-heading font-semibold text-text">Multi-model AI benchmark</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.modelProbes.length} models</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models</span>
                   </div>
                   {intelligenceData.modelBenchmarks?.insight && (
                     <p className="text-xs text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
@@ -2552,9 +2541,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <div key={probe.id} className="rounded-lg border border-rule bg-paper p-4">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-heading font-semibold text-text">{probe.model_label}</span>
-                            <span className={`text-lg font-mono font-bold ${scoreColor}`}>{probe.accuracy_score}%</span>
+                            <span className={`text-lg font-bold ${scoreColor}`}>{probe.accuracy_score}%</span>
                           </div>
-                          <div className="flex gap-2 text-[10px] font-mono text-m-muted">
+                          <div className="flex gap-2 text-[10px] font-medium text-m-muted">
                             <span className="text-emerald-500">{probe.accurate_count} accurate</span>
                             <span className="text-amber-500">{probe.partial_count} partial</span>
                             <span className="text-red-400">{probe.inaccurate_count} wrong</span>
@@ -2567,7 +2556,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                   <div key={j} className="text-xs">
                                     <p className="text-m-muted font-medium">{r.question}</p>
                                     <p className="text-text/70 mt-0.5 line-clamp-3">{r.answer}</p>
-                                    <span className={`inline-block mt-0.5 text-[10px] font-mono ${
+                                    <span className={`inline-block mt-0.5 text-[10px] font-medium ${
                                       r.accuracy === 'accurate' ? 'text-emerald-500'
                                         : r.accuracy === 'partial' ? 'text-amber-500'
                                           : r.accuracy === 'hallucinated' ? 'text-red-400'
@@ -2591,19 +2580,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp size={16} className="text-m-accent" />
                     <h3 className="text-sm font-heading font-semibold text-text">Industry AI visibility index</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.industry}</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.industry}</span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3 mb-4">
                     <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className="text-2xl font-mono font-bold text-text">{intelligenceData.benchmarkPosition.userScore}</div>
+                      <div className="text-2xl font-bold text-text">{intelligenceData.benchmarkPosition.userScore}</div>
                       <div className="text-[10px] text-m-muted mt-1">Your score</div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className="text-2xl font-mono font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
+                      <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
                       <div className="text-[10px] text-m-muted mt-1">Industry average</div>
                     </div>
                     <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className={`text-2xl font-mono font-bold ${
+                      <div className={`text-2xl font-bold ${
                         intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-emerald-500'
                           : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-amber-500'
                             : 'text-red-400'
@@ -2624,7 +2613,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="flex items-center gap-2 mb-4">
                     <Lightbulb size={16} className="text-m-accent" />
                     <h3 className="text-sm font-heading font-semibold text-text">Predictive recommendations</h3>
-                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.recommendations.length} actions</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
                   </div>
                   <div className="space-y-3">
                     {intelligenceData.recommendations.map((rec: any, i: number) => {
@@ -2633,12 +2622,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <div key={rec.id || i} className="rounded-lg border border-rule bg-paper p-4">
                           <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-m-accent/10">
-                              <span className="text-sm font-mono font-bold text-m-accent">+{rec.predicted_impact}</span>
+                              <span className="text-sm font-bold text-m-accent">+{rec.predicted_impact}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-text">{rec.action}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${confColor}`}>{rec.confidence}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${confColor}`}>{rec.confidence}</span>
                                 <span className="text-[10px] text-m-muted">{rec.category}</span>
                               </div>
                               {rec.evidence && (
