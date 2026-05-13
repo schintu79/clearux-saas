@@ -28,7 +28,7 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const scroll = (dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -380 : 380, behavior: 'smooth' })
+    scrollRef.current?.scrollBy({ left: dir === 'left' ? -440 : 440, behavior: 'smooth' })
   }
 
   return (
@@ -58,13 +58,13 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
         {/* Left spacer to align with max-w-mkt */}
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {cards.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[340px] max-sm:w-[300px] snap-start border border-rule rounded-xl overflow-hidden bg-paper hover:border-signal/30 transition-colors group">
+          <div key={i} className="flex-shrink-0 w-[400px] max-sm:w-[320px] snap-start border border-rule rounded-xl overflow-hidden bg-paper hover:border-signal/30 transition-colors group">
             {/* Visual area */}
-            <div className="h-[220px] border-b border-rule bg-paper-2/50 p-5 flex items-center justify-center overflow-hidden">
+            <div className="h-[280px] border-b border-rule bg-white p-6 flex items-center justify-center overflow-hidden">
               {card.visual}
             </div>
             {/* Text */}
-            <div className="p-5">
+            <div className="p-6">
               <span className="text-[10px] font-mono tracking-[0.08em] uppercase text-signal font-semibold block mb-2">{card.label}</span>
               <h3 className="font-sans text-[16px] font-semibold text-ink mb-2 leading-snug">{card.title}</h3>
               <p className="font-sans text-[13px] text-ink-2 leading-[1.55]">{card.desc}</p>
@@ -435,37 +435,37 @@ const AI_CARDS: HighlightCard[] = [
   {
     label: 'AI probe',
     title: 'What AI knows about you',
-    desc: 'We query leading AI models about your brand, products, and pricing — then grade each answer against your real content.',
+    desc: 'We ask AI about your brand, products, and pricing — then check if the answers match what is actually on your site.',
     visual: <MockProbeCard />,
   },
   {
     label: 'AI vs human',
     title: 'Two perspectives on every finding',
-    desc: 'Each issue shows how AI reads it alongside how a real user experiences it. Fix for both audiences at once.',
+    desc: 'Every issue shows the AI view and the human view side by side. Fix both at once.',
     visual: <MockAIvsHuman />,
   },
   {
     label: 'AI readability',
     title: 'Can AI actually read your pages?',
-    desc: 'Page-by-page analysis of what AI can extract vs. what it misses. Know exactly which content is invisible to AI.',
+    desc: 'Page by page, we show you what AI can read and what it completely misses.',
     visual: <MockReadabilityMap />,
   },
   {
     label: 'Citation audit',
     title: 'Which pages get cited by AI',
-    desc: 'See which of your pages AI models reference and which they ignore completely. Fix your discoverability gaps.',
+    desc: 'See which pages AI mentions to users and which it skips entirely.',
     visual: <MockCitationAudit />,
   },
   {
     label: 'Multi-model benchmark',
     title: 'Compare Claude, GPT-4o, Gemini',
-    desc: 'Same questions, three models. See where each AI gets you right and where it hallucinates.',
+    desc: 'Same questions asked to three AI models. See which ones get you right and which ones make things up.',
     visual: <MockModelBenchmark />,
   },
   {
     label: 'Fix playbooks',
     title: 'Copy-paste fixes for AI visibility',
-    desc: 'Ready-to-use JSON-LD schemas, meta tags, and llms.txt snippets. Paste them into your site and re-audit.',
+    desc: 'Ready-to-use code snippets. Paste them into your site, re-audit, and watch your AI visibility improve.',
     visual: <MockFixPlaybook />,
   },
 ]
@@ -474,25 +474,25 @@ const UX_CARDS: HighlightCard[] = [
   {
     label: 'Score overview',
     title: '6 modules, 96 checkpoints',
-    desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness — in one view.',
+    desc: 'Your whole site scored in one view — usability, accessibility, content quality, SEO, and AI readiness.',
     visual: <MockCategoryScores />,
   },
   {
     label: '3-panel findings',
     title: 'Issue, fix, and impact — at a glance',
-    desc: 'Every finding shows the problem, how to fix it, and the business impact. No guesswork, no extra clicks.',
+    desc: 'Every issue shows the problem, the fix, and why it matters. Everything you need in one place.',
     visual: <MockFindingCard />,
   },
   {
     label: 'AI vs human',
     title: 'How AI and humans read each issue',
-    desc: 'Dual-perspective analysis on every finding. Understand the gap between machine interpretation and real-user experience.',
+    desc: 'See both the AI view and the human view on every issue. Understand the full picture before you fix anything.',
     visual: <MockAIvsHuman />,
   },
   {
     label: 'Digital wellbeing',
     title: 'Dark patterns and ethical design',
-    desc: 'We check for confirmshaming, forced continuity, hidden costs, and other manipulative patterns. Build trust, not tricks.',
+    desc: 'We catch guilt-trip buttons, hidden fees, fake urgency, and other tricks that make users distrust your site.',
     visual: <MockWellbeingCard />,
   },
   {
@@ -504,7 +504,7 @@ const UX_CARDS: HighlightCard[] = [
   {
     label: 'Brand audit',
     title: 'Cross-check your brand vs. live site',
-    desc: 'Upload guidelines, we compare them against what is actually deployed. Spot every mismatch in logo, colors, tone, and typography.',
+    desc: 'Upload your brand guidelines. We compare them against your live site and show every mismatch — colors, fonts, tone, logo usage.',
     visual: <MockBrandAudit />,
   },
 ]
@@ -527,7 +527,7 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
   return (
     <section className="py-[100px] border-b border-rule max-sm:py-16">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Text side */}
           <div className={reverse ? 'lg:order-2' : ''}>
             <SectionMarker number={marker} label={label} />
@@ -549,9 +549,9 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
               ))}
             </div>
           </div>
-          {/* Visual side */}
+          {/* Visual side — larger with white background */}
           <div className={reverse ? 'lg:order-1' : ''}>
-            <div className="space-y-4">
+            <div className="space-y-4 bg-white rounded-xl border border-rule p-6">
               {visual}
             </div>
           </div>
@@ -567,9 +567,9 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
    ═══════════════════════════════════════════════════════════════ */
 
 const STEPS = [
-  { num: '01', title: 'Choose your audit', desc: 'Paste a website URL for a UX audit. Upload brand guidelines for a brand audit. Both include AI visibility analysis.' },
-  { num: '02', title: 'We run the engine', desc: '96 checkpoints across 6 modules. Multi-page crawl. AI model probing. Everything in parallel — results in minutes.' },
-  { num: '03', title: 'You act on findings', desc: 'Every issue ranked by severity with evidence, recommendations, and exportable reports. Fix the critical items first.' },
+  { num: '01', title: 'Paste your URL', desc: 'Enter your website address. That is it. We also support brand audits — just upload your brand guidelines.' },
+  { num: '02', title: 'We scan everything', desc: 'We check 96 things across design, content, accessibility, and AI. Multiple pages, real browsers, AI models — all at once. Done in minutes.' },
+  { num: '03', title: 'Fix what matters', desc: 'You get a list of issues ranked by importance. Each one tells you what is wrong, why it matters, and exactly how to fix it.' },
 ]
 
 
@@ -578,12 +578,12 @@ const STEPS = [
    ═══════════════════════════════════════════════════════════════ */
 
 const MODULES = [
-  { num: '01', title: 'Foundation', desc: 'Visual design, messaging, navigation, content quality. The structural baseline every great experience needs.', count: 16 },
-  { num: '02', title: 'Human Experience', desc: 'Clarity, cognitive load, dark patterns, conversion friction. Whether your UX respects real users.', count: 22 },
-  { num: '03', title: 'Inclusive Design', desc: 'WCAG compliance, cognitive accessibility, mobile context, equity across abilities.', count: 18 },
-  { num: '04', title: 'Future Readiness', desc: 'How AI models read your product. Performance, agent readiness, structured data.', count: 14 },
-  { num: '05', title: 'Brand Consistency', desc: 'Voice, visual identity, tone alignment. Whether what users see matches what your brand promises.', count: 14 },
-  { num: '06', title: 'SEO Structure', desc: 'Heading hierarchy, meta tags, structured data, crawlability. Be found and ranked properly.', count: 12 },
+  { num: '01', title: 'Foundation', desc: 'Is your site well-built? We check visual design, navigation, messaging, and content quality — the basics that everything else depends on.', count: 16 },
+  { num: '02', title: 'Human Experience', desc: 'Does your site respect users? We look for confusing layouts, dark patterns, pressure tactics, and anything that makes people leave.', count: 22 },
+  { num: '03', title: 'Inclusive Design', desc: 'Can everyone use your site? Accessibility, mobile support, screen readers, touch targets, and cognitive accessibility — all checked.', count: 18 },
+  { num: '04', title: 'Future Readiness', desc: 'Can AI understand your site? We test how AI models read your content, plus performance, structured data, and agent compatibility.', count: 14 },
+  { num: '05', title: 'Brand Consistency', desc: 'Does your site match your brand? We compare what you say your brand is against what is actually live — colors, tone, logo usage, and more.', count: 14 },
+  { num: '06', title: 'SEO Structure', desc: 'Can search engines find and rank you? Headings, meta tags, structured data, and crawlability — the technical foundation of being discoverable.', count: 12 },
 ]
 
 
@@ -605,12 +605,12 @@ function FeatureIcon({ type }: { type: string }) {
 }
 
 const PLATFORM_FEATURES = [
-  { title: 'Re-audit after every release', desc: 'Ship a fix, re-run the audit, track progress with historical scoring.', icon: 'refresh' },
-  { title: 'Export PDF and Word reports', desc: 'Professional reports to share with stakeholders, clients, or leadership.', icon: 'download' },
-  { title: 'Share with a link', desc: 'Shareable audit results. No login required for viewers.', icon: 'share' },
-  { title: 'Competitor comparison', desc: 'Audit a competitor. See where you lead and trail, side by side.', icon: 'compare' },
-  { title: 'Score trends over time', desc: 'Watch your score improve as you ship fixes. Evidence your progress.', icon: 'trend' },
-  { title: 'Exportable findings', desc: 'Copy individual sections or full reports. Paste into Jira, Notion, or Slack.', icon: 'export' },
+  { title: 'Re-audit anytime', desc: 'Fixed something? Run the audit again and see your score go up. Track your progress over time.', icon: 'refresh' },
+  { title: 'Download PDF or Word reports', desc: 'Get professional reports you can share with your team, clients, or leadership.', icon: 'download' },
+  { title: 'Share with a link', desc: 'Send a link to anyone. They can see the results without creating an account.', icon: 'share' },
+  { title: 'Compare with competitors', desc: 'Audit a competitor site. See exactly where you are ahead and where you are behind.', icon: 'compare' },
+  { title: 'Track your progress', desc: 'See your score improve over time as you ship fixes. Prove your work with data.', icon: 'trend' },
+  { title: 'Copy findings anywhere', desc: 'Copy individual issues or full reports. Paste into Jira, Notion, Slack, or anywhere else.', icon: 'export' },
 ]
 
 
@@ -632,7 +632,7 @@ export default function HowItWorksContent() {
             The complete<br className="max-sm:hidden" /> <em className="italic text-signal">UX audit platform.</em>
           </h1>
           <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[640px] font-sans mb-10">
-            Audit your website UX, brand identity, and AI visibility — all in one place. 96 checkpoints, 6 modules, three audit types. Severity-ranked findings with evidence and fixes, delivered in minutes.
+            Find out what is wrong with your website — and exactly how to fix it. We check 96 things across design, usability, accessibility, and AI visibility. You get a ranked list of issues with clear fixes, ready in minutes.
           </p>
           <div className="flex gap-3.5 max-sm:flex-col max-sm:items-stretch">
             <Button href="/register">
@@ -650,12 +650,12 @@ export default function HowItWorksContent() {
         label="AI visibility"
         title="See how AI sees you."
         titleAccent="Control the narrative."
-        desc="AI assistants are the new front page. We ask leading AI models about your business and grade their answers against your actual content. Find out what they get right, what they hallucinate, and how to fix it."
+        desc="People ask AI about your business every day. We ask ChatGPT, Claude, and Gemini about you — then check if their answers are correct. You see exactly where AI gets you wrong, and how to fix it."
         features={[
-          { name: 'AI probe engine', desc: 'We query Claude, GPT-4o, and Gemini about your brand. Each answer is graded against your real content.' },
-          { name: 'Page-level readability', desc: 'Every page scored for AI readability. See exactly what AI can extract and what it misses.' },
-          { name: 'Citation audit', desc: 'Which pages do AI models cite? Which do they ignore? Fix your discoverability gaps.' },
-          { name: 'Fix playbooks', desc: 'Copy-paste JSON-LD, meta tags, and llms.txt that help AI understand you correctly.' },
+          { name: 'AI probe engine', desc: 'We ask three leading AI models questions about your brand. Then we grade their answers against what is actually on your site.' },
+          { name: 'Page-level readability', desc: 'See which of your pages AI can read and which it struggles with. Page by page, with a clear score.' },
+          { name: 'Citation audit', desc: 'Find out which of your pages AI mentions to users — and which pages it completely ignores.' },
+          { name: 'Fix playbooks', desc: 'Get ready-to-use code snippets you can paste into your site to help AI understand you better.' },
         ]}
         visual={
           <>
@@ -674,11 +674,11 @@ export default function HowItWorksContent() {
         label="Dual perspective"
         title="AI vs human."
         titleAccent="Two lenses on every issue."
-        desc="Every finding in ClearUX shows two perspectives: how an AI model interprets the issue, and how a real user experiences it. This dual analysis helps you fix for both audiences at once — because your site needs to work for humans and machines."
+        desc="Every issue we find comes with two views: what AI thinks is wrong, and what a real user actually experiences. This helps you fix problems that affect both humans and AI at the same time."
         features={[
-          { name: 'Machine interpretation', desc: 'How AI models read your content, parse your markup, and understand your intent — including where they get confused.' },
-          { name: 'Human experience', desc: 'The real-world impact: what users actually feel, how friction affects conversion, where trust breaks down.' },
-          { name: 'Prioritize with context', desc: 'A finding that hurts both AI and human experience is more urgent. Dual perspective helps you triage smarter.' },
+          { name: 'The AI view', desc: 'See how AI reads your content and where it gets confused — vague labels, missing structure, unclear intent.' },
+          { name: 'The human view', desc: 'See the real-world effect: what users feel, where they get stuck, and why they leave.' },
+          { name: 'Fix what matters first', desc: 'Problems that hurt both AI and humans are the most urgent. This view helps you decide what to fix first.' },
         ]}
         visual={
           <>
@@ -696,7 +696,7 @@ export default function HowItWorksContent() {
         markerLabel="AI X-Ray"
         heading="Your AI visibility,"
         headingAccent="fully mapped."
-        subtitle="Six dedicated tools to understand and improve how AI models represent your brand. Scroll to explore what ClearUX shows you."
+        subtitle="Six tools that show you exactly how AI sees your brand — and what to change. Scroll to see each one."
       />
 
       {/* ── UX + Human section — large visuals ─────────────────── */}
@@ -705,12 +705,12 @@ export default function HowItWorksContent() {
         label="Human experience"
         title="How real users"
         titleAccent="experience your site."
-        desc="We don't just tell you what search engines or AI models see. ClearUX tells you how actual humans experience your product — cognitive load, dark patterns, wellbeing, accessibility, and conversion friction."
+        desc="Beyond what AI and search engines see — we check how real people experience your site. Confusing layouts, manipulative design, accessibility gaps, and anything that makes users leave."
         features={[
-          { name: 'Dark pattern detection', desc: 'Confirmshaming, forced continuity, hidden costs, urgency tricks — all flagged with severity and evidence.' },
-          { name: 'Digital wellbeing', desc: 'Is your site designed to respect users? We check for manipulative design and addictive patterns.' },
-          { name: 'Cognitive load analysis', desc: 'Too many choices, unclear hierarchy, competing CTAs — we measure what makes users hesitate.' },
-          { name: 'Mobile responsiveness', desc: 'Every page tested at 4 viewport sizes. Layout breaks, touch targets, overflow — all caught.' },
+          { name: 'Dark pattern detection', desc: 'We flag tricks like fake urgency, guilt-trip buttons, and hidden fees — the stuff that makes users distrust your site.' },
+          { name: 'Digital wellbeing', desc: 'Does your site pressure people? We check for manipulative design that creates stress or anxiety.' },
+          { name: 'Cognitive load', desc: 'Too many buttons, confusing menus, unclear labels — we measure what makes people give up and leave.' },
+          { name: 'Mobile responsiveness', desc: 'Your site tested on desktop, laptop, tablet, and phone. Broken layouts and tiny buttons are caught automatically.' },
         ]}
         visual={
           <>
@@ -731,7 +731,7 @@ export default function HowItWorksContent() {
         markerLabel="What you get"
         heading="Everything we show you."
         headingAccent="Nothing hidden."
-        subtitle="From score breakdowns to copy-paste fixes, scroll to see the full range of what ClearUX delivers in every audit."
+        subtitle="Scores, findings, fixes, and reports — scroll to see everything you get in a ClearUX audit."
       />
 
       {/* ── Interstitial ─────────────────────────────────────── */}
@@ -783,7 +783,7 @@ export default function HowItWorksContent() {
               </h2>
             </div>
             <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans">
-              Every audit runs the full battery. No tiered plans, no &ldquo;upgrade to unlock.&rdquo; Foundation through SEO Structure — same depth, every time.
+              Every audit checks all six modules. No features locked behind paid plans. You always get the full picture.
             </p>
           </div>
           <div className="grid grid-cols-3 border-t border-l border-ink max-md:grid-cols-2 max-sm:grid-cols-1">
@@ -816,7 +816,7 @@ export default function HowItWorksContent() {
             Everything you need to <em className="italic text-signal">ship better.</em>
           </h2>
           <p className="text-[17px] text-ink-2 leading-[1.55] max-w-[540px] font-sans mb-14">
-            Beyond findings — ClearUX gives you the tools to track progress, share results, and prove your work.
+            Beyond finding issues — ClearUX helps you track progress, share results, and show your team what changed.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-rule">
             {PLATFORM_FEATURES.map((feat) => (

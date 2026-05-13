@@ -1,3 +1,6 @@
+'use client'
+
+import { useRef } from 'react'
 import { SectionMarker } from './SectionMarker'
 
 const callouts = [
@@ -6,11 +9,183 @@ const callouts = [
   { num: '03', title: 'The fix, shippable.', desc: 'Copy-paste ready. No "consider refactoring." Concrete and specific.' },
 ]
 
+/* ── Cards for the scrolling strip ── */
+const FINDING_CARDS = [
+  {
+    label: '3-panel findings',
+    title: 'Issue, fix, and impact — at a glance',
+    desc: 'Every finding shows the problem, how to fix it, and the business impact. No guesswork, no extra clicks.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+        <div className="px-3 py-2 flex items-center gap-2 border-b border-rule">
+          <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full text-red-600 bg-red-50">Critical</span>
+          <span className="text-[10px] font-semibold text-gray-900 flex-1">CTA button uses vague label</span>
+        </div>
+        <div className="grid grid-cols-3 text-left">
+          {['Issue', 'How to fix', 'Impact'].map((h, i) => (
+            <div key={h} className={`p-2.5 ${i < 2 ? 'border-r border-rule' : ''}`}>
+              <span className="text-[7px] font-semibold text-gray-400 tracking-[0.04em] uppercase block mb-1">{h}</span>
+              <p className="text-[8px] text-gray-600 leading-[1.4]">
+                {i === 0 && 'Button says "Click here" without context.'}
+                {i === 1 && 'Change to "Start free trial" — specific, action-oriented.'}
+                {i === 2 && 'Conversion rate increase of 22%.'}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'AI vs human',
+    title: 'Two perspectives on every issue',
+    desc: 'Each finding shows how AI reads it alongside how a real user experiences it. Fix for both audiences at once.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+        <div className="grid grid-cols-2">
+          <div className="p-3 border-r border-rule">
+            <div className="flex items-center gap-1 mb-1.5">
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={1.5}><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /></svg>
+              <span className="text-[8px] font-semibold text-gray-400 tracking-[0.04em] uppercase">How AI reads this</span>
+            </div>
+            <p className="text-[9px] text-gray-600 leading-[1.5]">The CTA uses vague text. AI models can&apos;t determine the action.</p>
+          </div>
+          <div className="p-3">
+            <div className="flex items-center gap-1 mb-1.5">
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={1.5}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx={9} cy={7} r={4} /></svg>
+              <span className="text-[8px] font-semibold text-gray-400 tracking-[0.04em] uppercase">How a human sees this</span>
+            </div>
+            <p className="text-[9px] text-gray-600 leading-[1.5]">Users hesitate because the label doesn&apos;t tell them what happens next.</p>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Score overview',
+    title: '6 modules, 96 checkpoints',
+    desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness — in one view.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden p-3" style={{ fontSize: 0 }}>
+        <div className="flex items-center gap-3">
+          <div className="relative" style={{ width: 48, height: 48 }}>
+            <svg width={48} height={48} className="-rotate-90">
+              <circle cx={24} cy={24} r={20} fill="none" stroke="#eee" strokeWidth={3} />
+              <circle cx={24} cy={24} r={20} fill="none" stroke="#f59e0b" strokeWidth={3} strokeLinecap="round"
+                strokeDasharray={125.6} strokeDashoffset={125.6 * (1 - 0.68)} />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[12px] font-semibold text-gray-900">68</span>
+            </div>
+          </div>
+          <div className="flex-1 space-y-1">
+            {[
+              { name: 'Foundation', s: 81, c: '#6366F1' },
+              { name: 'Human Experience', s: 62, c: '#EC4899' },
+              { name: 'Inclusive Design', s: 74, c: '#10B981' },
+              { name: 'Future Readiness', s: 55, c: '#F59E0B' },
+            ].map(m => (
+              <div key={m.name} className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: m.c }} />
+                <span className="text-[8px] text-gray-500 flex-1">{m.name}</span>
+                <span className="text-[8px] font-medium" style={{ color: m.s >= 70 ? '#22c55e' : '#f59e0b' }}>{m.s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Fix playbooks',
+    title: 'Copy-paste fixes you can ship today',
+    desc: 'Ready-to-use JSON-LD, meta tags, and code snippets. Paste them in, re-audit, and watch your score climb.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+        <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
+          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={1.5}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+          <span className="text-[10px] font-semibold text-gray-900">Fix playbooks</span>
+          <span className="ml-auto text-[8px] text-gray-400">3 snippets</span>
+        </div>
+        <div className="p-3">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[7px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">json_ld</span>
+            <span className="text-[9px] font-medium text-gray-800">Organization schema</span>
+          </div>
+          <pre className="bg-gray-50 border border-gray-200 rounded p-2 text-[7px] font-mono text-gray-600 leading-relaxed overflow-hidden" style={{ maxHeight: 60 }}>
+{`{
+  "@type": "Organization",
+  "name": "Acme Corp",
+  "url": "https://acme.com"
+}`}
+          </pre>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: 'Brand audit',
+    title: 'Cross-check your brand vs. live site',
+    desc: 'Upload guidelines, we compare them against what is deployed. Spot every mismatch in logo, colors, tone, and typography.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden p-3 space-y-2" style={{ fontSize: 0 }}>
+        {[
+          { name: 'Logo usage', s: 88 },
+          { name: 'Color system', s: 72 },
+          { name: 'Typography', s: 91 },
+          { name: 'Voice and tone', s: 65 },
+        ].map(c => {
+          const color = c.s >= 80 ? '#22c55e' : c.s >= 65 ? '#f59e0b' : '#ef4444'
+          return (
+            <div key={c.name}>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[9px] text-gray-700">{c.name}</span>
+                <span className="text-[9px] font-medium" style={{ color }}>{c.s}</span>
+              </div>
+              <div className="w-full h-1 rounded-full bg-gray-100">
+                <div className="h-full rounded-full" style={{ width: `${c.s}%`, background: color }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    ),
+  },
+  {
+    label: 'Export',
+    title: 'Professional reports, ready to share',
+    desc: 'Download PDF or Word reports. Share a link with no login required. Copy findings into Jira, Notion, or Slack.',
+    visual: (
+      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+        {[
+          { name: 'PDF report', icon: 'pdf', status: 'Ready' },
+          { name: 'Word document', icon: 'doc', status: 'Ready' },
+          { name: 'Shareable link', icon: 'link', status: 'Active' },
+          { name: 'Jira / Notion', icon: 'copy', status: 'Copy' },
+        ].map((f, i) => (
+          <div key={i} className="px-3 py-2 flex items-center gap-2" style={{ borderTop: i > 0 ? '1px solid var(--rule)' : 'none' }}>
+            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={1.5}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
+            </svg>
+            <span className="text-[10px] text-gray-800 flex-1">{f.name}</span>
+            <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full text-indigo-600 bg-indigo-50">{f.status}</span>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+]
+
 export function FindingAnatomy() {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scroll = (dir: 'left' | 'right') => {
+    scrollRef.current?.scrollBy({ left: dir === 'left' ? -440 : 440, behavior: 'smooth' })
+  }
+
   return (
-    <section className="py-[100px] border-b border-rule" id="anatomy">
+    <section className="py-[100px] border-b border-rule overflow-hidden" id="anatomy">
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        <div className="grid lg:grid-cols-[1fr_1.3fr] gap-16 items-start max-lg:grid-cols-1">
+        <div className="grid lg:grid-cols-[1fr_1.3fr] gap-16 items-start max-lg:grid-cols-1 mb-20 max-sm:mb-12">
           {/* Left */}
           <div>
             <SectionMarker number="06" label="Anatomy of a finding" />
@@ -91,6 +266,44 @@ export function FindingAnatomy() {
             </div>
           </div>
         </div>
+
+        {/* Scrolling highlight cards */}
+        <div className="flex items-end justify-between gap-6 mb-10 max-sm:mb-6 max-sm:flex-col max-sm:items-start">
+          <div>
+            <h3 className="font-serif font-normal text-ink leading-[1.05] tracking-[-0.02em] mb-3" style={{ fontSize: 'clamp(28px, 4vw, 44px)' }}>
+              Everything in <em className="italic text-signal">your report.</em>
+            </h3>
+            <p className="text-[15px] leading-[1.55] font-sans max-w-[500px] text-ink-2">
+              From severity-ranked findings to copy-paste fixes and shareable reports — scroll to see what ClearUX delivers.
+            </p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll left">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll right">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Card strip */}
+      <div ref={scrollRef} className="flex gap-5 overflow-x-auto px-8 max-sm:px-5 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
+        {FINDING_CARDS.map((card, i) => (
+          <div key={i} className="flex-shrink-0 w-[400px] max-sm:w-[320px] snap-start border border-rule rounded-xl overflow-hidden bg-paper hover:border-signal/30 transition-colors">
+            <div className="h-[200px] border-b border-rule bg-white p-5 flex items-center justify-center overflow-hidden">
+              {card.visual}
+            </div>
+            <div className="p-5">
+              <span className="text-[10px] font-mono tracking-[0.08em] uppercase text-signal font-semibold block mb-2">{card.label}</span>
+              <h4 className="font-sans text-[15px] font-semibold text-ink mb-2 leading-snug">{card.title}</h4>
+              <p className="font-sans text-[13px] text-ink-2 leading-[1.55]">{card.desc}</p>
+            </div>
+          </div>
+        ))}
+        <div className="flex-shrink-0 w-8" />
       </div>
     </section>
   )

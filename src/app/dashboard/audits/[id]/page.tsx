@@ -1095,7 +1095,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray' | 'intelligence'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence'>('overview');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -2043,19 +2043,26 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="mb-8 border-b border-rule/40">
             <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
-              {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
+              {(['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
+                  : tab === 'responsive' ? 'Responsive'
                   : tab === 'ai_xray' ? 'AI X-Ray'
                   : 'Intelligence';
+                const responsiveFindings = findings.filter((f: any) => {
+                  const t = (f.title || '').toLowerCase();
+                  return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
+                });
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
+                  : tab === 'responsive' ? responsiveFindings.length
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
                   : tab === 'pages' ? Globe
+                  : tab === 'responsive' ? Smartphone
                   : tab === 'ai_xray' ? Brain
                   : Sparkles;
                 return (
@@ -2470,6 +2477,190 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             </div>
           )}
+
+          {/* ── TAB: Responsive ───────────────────────────── */}
+          {activeTab === 'responsive' && (() => {
+            const VIEWPORT_DEFS = [
+              { name: 'Desktop', width: 1440, icon: <Globe size={16} />, desc: '1440px wide' },
+              { name: 'Small Desktop', width: 1024, icon: <Globe size={14} />, desc: '1024px wide' },
+              { name: 'Tablet', width: 768, icon: <Smartphone size={14} className="rotate-90" />, desc: '768px wide' },
+              { name: 'Mobile', width: 375, icon: <Smartphone size={14} />, desc: '375px wide' },
+            ];
+            // Filter responsive findings from all findings
+            const responsiveFindings = findings.filter((f: any) => {
+              const t = (f.title || '').toLowerCase();
+              const d = (f.description || '').toLowerCase();
+              return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted') || d.includes('viewport') || d.includes('responsive design');
+            });
+            // Group by viewport
+            const byViewport: Record<string, typeof responsiveFindings> = {};
+            for (const vp of VIEWPORT_DEFS) {
+              byViewport[vp.name] = responsiveFindings.filter((f: any) => {
+                const text = `${f.title} ${f.description}`.toLowerCase();
+                return text.includes(vp.name.toLowerCase()) || text.includes(`${vp.width}px`) || text.includes(`${vp.width} `);
+              });
+            }
+            // Findings not tied to a specific viewport
+            const assigned = new Set(Object.values(byViewport).flat().map((f: any) => f.id));
+            const general = responsiveFindings.filter((f: any) => !assigned.has(f.id));
+
+            return (
+              <div className="space-y-6">
+                {/* Hero card */}
+                <div className="rounded-xl border-2 border-signal/30 bg-signal/[0.04] overflow-hidden">
+                  <div className="px-6 py-5 flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-signal/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Smartphone size={18} className="text-signal" />
+                    </div>
+                    <div>
+                      <h3 className="text-[15px] font-heading font-bold text-ink mb-1.5">Responsive design check</h3>
+                      <p className="text-[13px] text-ink-2 leading-relaxed">
+                        Every page is tested at 4 viewport sizes using a real browser. We check for layout breaks, touch target sizes, text readability, image overflow, and navigation adaptation. Issues are grouped by viewport below.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Viewport status overview */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {VIEWPORT_DEFS.map(vp => {
+                    const vpFindings = byViewport[vp.name] || [];
+                    const hasCritical = vpFindings.some((f: any) => f.severity === 'critical' || f.severity === 'high');
+                    const hasWarnings = vpFindings.some((f: any) => f.severity === 'medium');
+                    const status = vpFindings.length === 0 ? 'pass' : hasCritical ? 'fail' : hasWarnings ? 'warn' : 'warn';
+                    const statusColor = status === 'pass' ? 'text-ok' : status === 'warn' ? 'text-warn' : 'text-severe';
+                    const statusBg = status === 'pass' ? 'bg-ok/5 border-ok/20' : status === 'warn' ? 'bg-warn/5 border-warn/20' : 'bg-severe/5 border-severe/20';
+                    const statusLabel = status === 'pass' ? 'No issues' : `${vpFindings.length} issue${vpFindings.length !== 1 ? 's' : ''}`;
+                    // Mobile-friendly from page data
+                    const mobilePages = auditPages.filter(p => p.is_mobile_friendly !== null);
+                    const mobileFriendlyCount = mobilePages.filter(p => p.is_mobile_friendly).length;
+                    return (
+                      <div key={vp.name} className={`rounded-xl border p-4 ${statusBg}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={statusColor}>{vp.icon}</span>
+                          <span className="text-[13px] font-semibold text-ink">{vp.name}</span>
+                        </div>
+                        <p className="text-[11px] text-m-muted mb-1">{vp.desc}</p>
+                        <span className={`text-[12px] font-semibold ${statusColor}`}>{statusLabel}</span>
+                        {vp.name === 'Mobile' && mobilePages.length > 0 && (
+                          <p className="text-[10px] text-m-muted mt-1">{mobileFriendlyCount}/{mobilePages.length} pages mobile-friendly</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Findings by viewport */}
+                {VIEWPORT_DEFS.map(vp => {
+                  const vpFindings = byViewport[vp.name] || [];
+                  if (vpFindings.length === 0) return null;
+                  return (
+                    <div key={vp.name} className="rounded-xl border border-rule bg-card overflow-hidden">
+                      <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                        <span className="text-signal">{vp.icon}</span>
+                        <h3 className="text-sm font-heading font-semibold text-ink">{vp.name} ({vp.desc})</h3>
+                        <span className="ml-auto text-xs text-m-muted font-medium">{vpFindings.length} issue{vpFindings.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="divide-y divide-rule/30">
+                        {vpFindings.map((f: any) => {
+                          const sevColor = f.severity === 'critical' ? 'text-severe bg-severe/10' : f.severity === 'high' ? 'text-severe bg-severe/10' : f.severity === 'medium' ? 'text-warn bg-warn/10' : 'text-m-muted bg-paper-2';
+                          return (
+                            <div key={f.id} className="px-5 py-4">
+                              <div className="flex items-start gap-3">
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sevColor} flex-shrink-0 mt-0.5`}>
+                                  {f.severity}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-medium text-ink mb-1">{f.title}</p>
+                                  <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>
+                                  {f.recommendation && (
+                                    <p className="text-[12px] text-ok mt-2 leading-relaxed">
+                                      <span className="font-semibold">Fix: </span>{f.recommendation}
+                                    </p>
+                                  )}
+                                  {f.page_url && (
+                                    <p className="text-[10px] text-m-muted/60 mt-1">Page: {f.page_url}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* General responsive findings */}
+                {general.length > 0 && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                      <Smartphone size={16} className="text-signal" />
+                      <h3 className="text-sm font-heading font-semibold text-ink">General responsive issues</h3>
+                      <span className="ml-auto text-xs text-m-muted font-medium">{general.length} issue{general.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="divide-y divide-rule/30">
+                      {general.map((f: any) => {
+                        const sevColor = f.severity === 'critical' ? 'text-severe bg-severe/10' : f.severity === 'high' ? 'text-severe bg-severe/10' : f.severity === 'medium' ? 'text-warn bg-warn/10' : 'text-m-muted bg-paper-2';
+                        return (
+                          <div key={f.id} className="px-5 py-4">
+                            <div className="flex items-start gap-3">
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sevColor} flex-shrink-0 mt-0.5`}>
+                                {f.severity}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-ink mb-1">{f.title}</p>
+                                <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>
+                                {f.recommendation && (
+                                  <p className="text-[12px] text-ok mt-2 leading-relaxed">
+                                    <span className="font-semibold">Fix: </span>{f.recommendation}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Page-level mobile friendliness */}
+                {auditPages.some(p => p.is_mobile_friendly !== null) && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-signal" />
+                      <h3 className="text-sm font-heading font-semibold text-ink">Page-level mobile status</h3>
+                    </div>
+                    <div className="divide-y divide-rule/30">
+                      {auditPages.filter(p => p.is_mobile_friendly !== null).map((page, i) => (
+                        <div key={i} className="px-5 py-3 flex items-center gap-3">
+                          {page.is_mobile_friendly ? (
+                            <CheckCircle2 size={14} className="text-ok flex-shrink-0" />
+                          ) : (
+                            <AlertTriangle size={14} className="text-warn flex-shrink-0" />
+                          )}
+                          <span className="text-[13px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${page.is_mobile_friendly ? 'text-ok bg-ok/10' : 'text-warn bg-warn/10'}`}>
+                            {page.is_mobile_friendly ? 'Mobile-friendly' : 'Issues found'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {responsiveFindings.length === 0 && !auditPages.some(p => p.is_mobile_friendly !== null) && (
+                  <div className="text-center py-12">
+                    <Smartphone size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
+                    <p className="text-sm text-m-muted">No responsive check data available for this audit.</p>
+                    <p className="text-xs text-m-muted/60 mt-1">Responsive checks run automatically on website audits. Re-audit to generate responsive data.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── TAB: AI X-Ray ──────────────────────────────── */}
           {activeTab === 'ai_xray' && (
