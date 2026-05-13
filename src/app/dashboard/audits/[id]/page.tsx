@@ -648,79 +648,90 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
     );
   }
 
+  const activeStatus = FINDING_STATUSES.find(s => s.key === status);
+
   return (
-    <div className={`rounded-xl border ${sev.border} bg-paper overflow-hidden transition-all shadow-sm`}>
+    <div className="rounded-xl border border-rule bg-card overflow-hidden transition-all">
       {/* Header — always visible */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-black/[0.02] transition-colors"
-        aria-expanded={open}
-      >
-        <span className="mt-1.5"><span className={`block w-2 h-2 rounded-full ${sev.dot}`} /></span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[11px] font-semibold uppercase tracking-[0.03em] ${sev.text}`}>
+      <div className="flex items-start gap-3 p-4">
+        {/* Severity indicator */}
+        <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
+          <span className={`block w-2.5 h-2.5 rounded-full ${sev.dot}`} />
+        </div>
+
+        {/* Main content — clickable to expand */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex-1 min-w-0 text-left"
+          aria-expanded={open}
+        >
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <span className={`text-[10px] font-semibold uppercase tracking-[0.04em] ${sev.text}`}>
               {sev.label}
             </span>
             {(finding as any).verification_status === 'likely_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-2 py-0.5 tracking-[0.06em] uppercase">
-                <Eye size={10} />
-                Likely fixed
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <Eye size={9} /> Likely fixed
               </span>
             )}
             {(finding as any).verification_status === 'poorly_fixed' && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-severe bg-severe/10 px-2 py-0.5 tracking-[0.06em] uppercase">
-                <AlertTriangle size={10} />
-                Poorly fixed
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-severe bg-severe/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
+                <AlertTriangle size={9} /> Poorly fixed
               </span>
             )}
-            {finding.page_url && (
-              <a
-                href={finding.page_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-m-muted hover:text-signal transition-colors max-w-[260px] truncate"
-                title={finding.page_url}
-              >
-                <ExternalLink size={10} className="flex-shrink-0" />
-                {(() => {
-                  try {
-                    const u = new URL(finding.page_url);
-                    const path = u.pathname + u.search;
-                    return u.hostname + (path === '/' ? '' : path);
-                  } catch { return finding.page_url; }
-                })()}
-              </a>
+            {/* Module · Category metadata */}
+            {(pillarName || categoryName) && (
+              <span className="text-[10px] font-medium text-m-muted/60 tracking-[0.03em] uppercase">
+                {pillarName}{pillarName && categoryName ? ' · ' : ''}{categoryName}
+              </span>
             )}
           </div>
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
-          {/* Metadata line — module · category */}
-          <div className="text-[10px] font-medium text-m-muted tracking-[0.04em] uppercase mt-1.5 flex items-center gap-0 flex-wrap">
-            {pillarName && (
-              <>
-                <span>{pillarName}</span>
-                {categoryName && <span className="mx-1.5 opacity-30">·</span>}
-              </>
-            )}
-            {categoryName && (
-              <span>{categoryName}</span>
-            )}
-          </div>
-        </div>
-        <ChevronDown
-          size={14}
-          className={`text-m-muted flex-shrink-0 mt-1 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
+          {finding.page_url && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-[300px] truncate">
+              <ExternalLink size={9} className="flex-shrink-0" />
+              {(() => {
+                try {
+                  const u = new URL(finding.page_url);
+                  const path = u.pathname + u.search;
+                  return u.hostname + (path === '/' ? '' : path);
+                } catch { return finding.page_url; }
+              })()}
+            </span>
+          )}
+        </button>
 
-      {/* Expanded detail — 3-panel layout: Issue / Fix / Impact */}
+        {/* Right side: status + chevron */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Status badge — always visible */}
+          <div className="relative group">
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+              className={clsx(
+                'inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all',
+                activeStatus ? `${activeStatus.bg} ${activeStatus.color}` : 'bg-paper-2 text-m-muted',
+              )}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${activeStatus?.dot || 'bg-m-muted'}`} />
+              {activeStatus?.label || 'Open'}
+            </button>
+          </div>
+          <button onClick={() => setOpen(!open)} className="p-1 -mr-1">
+            <ChevronDown
+              size={14}
+              className={`text-m-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
       {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-rule mx-4 space-y-3">
+        <div className="border-t border-rule/40">
 
           {/* AI Verification Note — Likely Fixed */}
           {(finding as any).verification_status === 'likely_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-ok/5 border border-ok/15 mt-3">
+            <div className="flex items-start gap-2.5 px-5 py-3.5 bg-ok/5 border-b border-ok/15">
               <Eye size={14} className="text-ok flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-semibold text-ink mb-0.5 tracking-[0.03em] uppercase">AI verification</p>
@@ -736,7 +747,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
 
           {/* AI Verification Note — Poorly Fixed */}
           {(finding as any).verification_status === 'poorly_fixed' && (finding as any).verification_note && (
-            <div className="flex items-start gap-2.5 p-3 bg-severe/5 border border-severe/15 mt-3">
+            <div className="flex items-start gap-2.5 px-5 py-3.5 bg-severe/5 border-b border-severe/15">
               <AlertTriangle size={14} className="text-severe flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-semibold text-ink mb-0.5 tracking-[0.03em] uppercase">Regression detected</p>
@@ -750,81 +761,79 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             </div>
           )}
 
-          {/* AI vs Human Interpretation — Phase 2: AI X-Ray */}
+          {/* AI vs Human Interpretation */}
           {(finding as any).ai_interpretation && (finding as any).human_interpretation && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-rule overflow-hidden mt-3">
-              {/* AI Interpretation */}
-              <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-card">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-rule/40">
+              <div className="p-4 border-b md:border-b-0 md:border-r border-rule/40">
                 <div className="flex items-center gap-2 mb-2">
-                  <Brain size={13} className="text-signal" />
-                  <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How AI reads this</p>
+                  <Brain size={12} className="text-signal" />
+                  <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">How AI reads this</p>
                 </div>
-                <p className="text-ink-2 text-[13px] leading-[1.65]">
+                <p className="text-ink-2 text-[13px] leading-[1.7]">
                   {(finding as any).ai_interpretation}
                 </p>
               </div>
-              {/* Human Interpretation */}
-              <div className="p-4 bg-card">
+              <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Users size={13} className="text-ok" />
-                  <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How a human sees this</p>
+                  <Users size={12} className="text-ok" />
+                  <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">How a human sees this</p>
                 </div>
-                <p className="text-ink-2 text-[13px] leading-[1.65]">
+                <p className="text-ink-2 text-[13px] leading-[1.7]">
                   {(finding as any).human_interpretation}
                 </p>
               </div>
             </div>
           )}
 
-          {/* 3-Panel Grid: Issue / Fix / Impact */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-rule overflow-hidden mt-3">
+          {/* 3-Panel: Issue / Fix / Impact — stacked on mobile, grid on desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-3">
             {/* Panel 1: Issue */}
-            <div className="p-4 border-b md:border-b-0 md:border-r border-rule">
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule/40">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle size={13} className={sev.text} />
-                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Issue</p>
+                <AlertTriangle size={12} className={sev.text} />
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Issue</p>
               </div>
-              <p className="text-ink-2 text-[13px] leading-[1.65]">
+              <p className="text-ink-2 text-[13px] leading-[1.7]">
                 {finding.description}
               </p>
               {finding.target_element && (
-                <div className="mt-2.5 px-2.5 py-1.5 bg-paper-2 border border-rule font-mono text-[11px] text-m-muted overflow-x-auto">
+                <div className="mt-2.5 px-2.5 py-1.5 bg-paper-2 rounded border border-rule/40 font-mono text-[11px] text-m-muted overflow-x-auto">
                   {finding.target_element}
                 </div>
               )}
             </div>
 
             {/* Panel 2: Fix */}
-            <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-signal/[0.02]">
+            <div className="p-4 border-b md:border-b-0 md:border-r border-rule/40">
               <div className="flex items-center gap-2 mb-2">
-                <Lightbulb size={13} className="text-signal" />
-                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">How to fix</p>
+                <Lightbulb size={12} className="text-signal" />
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">How to fix</p>
               </div>
-              <p className="text-ink-2 text-[13px] leading-[1.65]">
+              <p className="text-ink-2 text-[13px] leading-[1.7]">
                 {finding.recommendation || 'No specific recommendation provided.'}
               </p>
             </div>
 
             {/* Panel 3: Impact */}
-            <div className="p-4 bg-ok/[0.02]">
+            <div className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp size={13} className="text-ok" />
-                <p className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Impact</p>
+                <TrendingUp size={12} className="text-ok" />
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Impact</p>
               </div>
-              <p className="text-ink-2 text-[13px] leading-[1.65]">
+              <p className="text-ink-2 text-[13px] leading-[1.7]">
                 {finding.estimated_impact || 'Fixing this issue will improve overall UX quality and reduce user friction.'}
               </p>
             </div>
           </div>
 
-          {/* Screenshot with highlighted element */}
+          {/* Screenshot */}
           {finding.screenshot_url && (
-            <div className="overflow-hidden border border-rule">
-              <div className="px-3 py-2 bg-paper-2 border-b border-rule flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${sev.dot}`} />
-                <span className="text-[11px] font-semibold text-ink tracking-[0.03em] uppercase">Visual evidence</span>
+            <div className="border-t border-rule/40">
+              <div className="px-4 py-2 flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
+                <span className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Visual evidence</span>
                 {finding.page_url && (
-                  <span className="text-[11px] text-m-muted ml-auto truncate max-w-[200px]">
+                  <span className="text-[10px] text-m-muted/60 ml-auto truncate max-w-[200px]">
                     {(() => { try { const u = new URL(finding.page_url); return u.pathname + u.search; } catch { return finding.page_url; } })()}
                   </span>
                 )}
@@ -839,11 +848,11 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             </div>
           )}
 
-          {/* Status toggle + Dismiss */}
-          <div className="mt-1 p-3 bg-paper-2 border border-rule">
+          {/* Status toolbar — prominent, always visible when expanded */}
+          <div className="border-t border-rule/40 px-4 py-3 bg-paper-2/50">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-ink uppercase tracking-[0.03em]">Status</span>
-              <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] font-semibold text-m-muted uppercase tracking-[0.04em] mr-1">Status</span>
+              <div className="flex flex-wrap gap-1">
                 {FINDING_STATUSES.map((s) => {
                   const active = status === s.key;
                   return (
@@ -851,11 +860,15 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
                       key={s.key}
                       onClick={() => handleStatusChange(s.key)}
                       disabled={statusUpdating}
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 transition-all tracking-[0.02em] ${
-                        active ? `${s.bg} ${s.color} border border-current/20` : 'text-m-muted hover:bg-paper-2'
-                      } disabled:opacity-50`}
+                      className={clsx(
+                        'inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 rounded-full transition-all',
+                        active
+                          ? `${s.bg} ${s.color} ring-1 ring-current/20`
+                          : 'text-m-muted hover:bg-paper-2 hover:text-ink',
+                        'disabled:opacity-50',
+                      )}
                     >
-                      <span className={`w-2 h-2 rounded-full ${active ? s.dot : 'bg-border'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${active ? s.dot : 'bg-border'}`} />
                       {s.label}
                     </button>
                   );
@@ -864,7 +877,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
               <div className="ml-auto">
                 <button
                   onClick={() => setShowDismissForm(!showDismissForm)}
-                  className="text-[11px] font-semibold text-m-muted hover:text-severe px-2 py-1 hover:bg-severe/5 transition-colors tracking-[0.03em] uppercase"
+                  className="text-[11px] font-medium text-m-muted hover:text-severe px-2.5 py-1.5 rounded-full hover:bg-severe/5 transition-colors"
                 >
                   Dismiss
                 </button>
@@ -874,26 +887,26 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
 
           {/* Dismiss form */}
           {showDismissForm && (
-            <div className="mt-2 p-3 bg-severe/5 border border-severe/15">
+            <div className="border-t border-severe/15 px-4 py-3 bg-severe/5">
               <p className="text-[11px] font-medium text-ink mb-2">Why are you dismissing this? (The AI will skip it on re-audits)</p>
               <textarea
                 value={dismissReason}
                 onChange={(e) => setDismissReason(e.target.value)}
                 placeholder="e.g. This is addressed on our About page, or: This is intentional for our target audience..."
-                className="w-full px-3 py-2 text-xs border border-rule bg-paper text-ink placeholder:text-m-muted focus:outline-none focus:border-signal resize-none"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-rule bg-paper text-ink placeholder:text-m-muted focus:outline-none focus:ring-1 focus:ring-signal resize-none"
                 rows={2}
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={handleDismiss}
                   disabled={statusUpdating || !dismissReason.trim()}
-                  className="text-[11px] font-semibold text-paper px-3 py-1.5 bg-severe hover:opacity-90 transition-colors disabled:opacity-50 tracking-[0.03em] uppercase"
+                  className="text-[11px] font-semibold text-paper px-3 py-1.5 rounded-full bg-severe hover:opacity-90 transition-colors disabled:opacity-50"
                 >
                   Dismiss and skip on re-audit
                 </button>
                 <button
                   onClick={() => setShowDismissForm(false)}
-                  className="text-[11px] font-semibold text-m-muted px-3 py-1.5 hover:bg-paper-2 transition-colors tracking-[0.03em] uppercase"
+                  className="text-[11px] font-medium text-m-muted px-3 py-1.5 rounded-full hover:bg-paper-2 transition-colors"
                 >
                   Cancel
                 </button>
@@ -930,6 +943,7 @@ function PillarSection({
   findings,
   lang,
   onScoreUpdate,
+  defaultExpanded = true,
 }: {
   pillar: ReturnType<typeof buildPillarConfig>[number];
   pillarIndex: number;
@@ -937,8 +951,9 @@ function PillarSection({
   findings: AuditFinding[];
   lang: string;
   onScoreUpdate?: () => void;
+  defaultExpanded?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const L = getUILabels(lang);
   const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
   const avgScore = pillarCats.length > 0
@@ -1992,43 +2007,55 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           )}
 
           {/* ── Tab Navigation ─────────────────────────────── */}
-          <div className="flex items-center gap-1 p-1 rounded-xl mb-6" style={{ background: 'var(--paper-2)' }}>
-            {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              const label = tab === 'overview' ? L.tabOverview
-                : tab === 'findings' ? L.tabFindings
-                : tab === 'pages' ? L.tabPages
-                : tab === 'ai_xray' ? 'AI X-Ray'
-                : 'Intelligence';
-              const count = tab === 'findings' ? findings.length
-                : tab === 'pages' ? auditPages.length
-                : null;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className="flex-1 flex items-center justify-center gap-2 text-[13px] font-medium py-2.5 rounded-lg transition-all"
-                  style={{
-                    color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-                    background: isActive ? 'var(--card)' : 'transparent',
-                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                  }}
-                >
-                  <span>{label}</span>
-                  {count !== null && count > 0 && (
-                    <span
-                      className="text-[11px] font-medium px-1.5 py-0.5 rounded-full leading-none"
-                      style={{
-                        background: isActive ? 'var(--paper-2)' : 'var(--paper-3)',
-                        color: 'var(--m-muted)',
-                      }}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="mb-8 border-b border-rule/40">
+            <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
+              {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                const label = tab === 'overview' ? L.tabOverview
+                  : tab === 'findings' ? L.tabFindings
+                  : tab === 'pages' ? L.tabPages
+                  : tab === 'ai_xray' ? 'AI X-Ray'
+                  : 'Intelligence';
+                const count = tab === 'findings' ? findings.length
+                  : tab === 'pages' ? auditPages.length
+                  : null;
+                const TabIcon = tab === 'overview' ? BarChart3
+                  : tab === 'findings' ? AlertTriangle
+                  : tab === 'pages' ? Globe
+                  : tab === 'ai_xray' ? Brain
+                  : Sparkles;
+                return (
+                  <button
+                    key={tab}
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveTab(tab)}
+                    className={clsx(
+                      'relative flex items-center gap-2 px-4 py-3 text-[13px] font-medium transition-colors whitespace-nowrap',
+                      isActive
+                        ? 'text-ink'
+                        : 'text-m-muted hover:text-ink/70',
+                    )}
+                  >
+                    <TabIcon size={14} className={isActive ? 'text-signal' : ''} />
+                    <span>{label}</span>
+                    {count !== null && count > 0 && (
+                      <span
+                        className={clsx(
+                          'text-[11px] font-semibold px-1.5 py-0.5 rounded-full leading-none',
+                          isActive ? 'bg-signal/10 text-signal' : 'bg-paper-2 text-m-muted',
+                        )}
+                      >
+                        {count}
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-signal" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
           {/* ── TAB: Overview ──────────────────────────────── */}
@@ -2113,20 +2140,23 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
-                <div className="mb-6 p-5 rounded-xl border border-rule bg-card">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-signal">
-                      <Zap size={14} className="text-paper" />
+                <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/40">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-signal">
+                      <Zap size={13} className="text-paper" />
                     </div>
-                    <p className="text-sm font-medium text-ink">{getReportLabels(auditLang).topPriorityRecommendations}</p>
+                    <div>
+                      <p className="text-sm font-medium text-ink">{getReportLabels(auditLang).topPriorityRecommendations}</p>
+                      <p className="text-[11px] text-m-muted">Address these first for maximum impact</p>
+                    </div>
                   </div>
-                  <div className="space-y-3">
+                  <div className="divide-y divide-rule/30">
                     {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
-                      <div key={i} className="flex gap-3 items-start">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium bg-signal text-paper mt-0.5">
+                      <div key={i} className="flex gap-3 items-start px-5 py-3.5">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold bg-signal text-paper mt-0.5">
                           {i + 1}
                         </span>
-                        <p className="text-sm text-ink leading-relaxed">{rec}</p>
+                        <p className="text-[13px] text-ink leading-relaxed">{rec}</p>
                       </div>
                     ))}
                   </div>
@@ -2135,40 +2165,46 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Executive Summary */}
               {report.executive_summary && (
-                <div className="rounded-xl border border-rule bg-card p-6 mb-6">
-                  <h2 className="font-sans font-medium text-lg text-ink mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
-                  <div className="text-m-muted text-sm leading-relaxed whitespace-pre-line">
-                    {report.executive_summary}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden mb-6">
+                  <div className="px-5 py-4 border-b border-rule/40">
+                    <h2 className="font-sans font-medium text-[15px] text-ink">{getReportLabels(auditLang).executiveSummary}</h2>
                   </div>
-
-                  {/* Research note */}
-                  <div className="mt-4 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-paper-2/60 border border-rule/30">
-                    <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-m-muted leading-relaxed">
-                      {L.qualitativeNote}
-                    </p>
+                  <div className="px-5 py-4">
+                    <div className="text-m-muted text-[13px] leading-[1.7] whitespace-pre-line">
+                      {report.executive_summary}
+                    </div>
+                    <div className="mt-4 flex items-start gap-3 px-4 py-3 rounded-lg bg-paper-2/60 border border-rule/30">
+                      <Lightbulb size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-m-muted leading-relaxed">
+                        {L.qualitativeNote}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Module Sections with scores and findings */}
-              {categoryScores.length > 0 && PILLAR_CONFIG.map((pillar, pillarIdx) => {
-                // Skip modules that have no category scores (e.g. old audits with only 24 categories)
-                const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
-                const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
-                if (!hasCats && !hasFindings) return null;
-                return (
-                  <PillarSection
-                    key={pillar.name}
-                    pillar={pillar}
-                    pillarIndex={pillarIdx}
-                    categoryScores={categoryScores}
-                    findings={findingsByPillar[pillar.name] || []}
-                    lang={auditLang}
-                    onScoreUpdate={() => fetchAuditDetail(true)}
-                  />
-                );
-              })}
+              {categoryScores.length > 0 && (() => {
+                let visibleIdx = 0;
+                return PILLAR_CONFIG.map((pillar, pillarIdx) => {
+                  const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                  const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
+                  if (!hasCats && !hasFindings) return null;
+                  const currentVisibleIdx = visibleIdx++;
+                  return (
+                    <PillarSection
+                      key={pillar.name}
+                      pillar={pillar}
+                      pillarIndex={pillarIdx}
+                      categoryScores={categoryScores}
+                      findings={findingsByPillar[pillar.name] || []}
+                      lang={auditLang}
+                      onScoreUpdate={() => fetchAuditDetail(true)}
+                      defaultExpanded={currentVisibleIdx < 3}
+                    />
+                  );
+                });
+              })()}
 
               {/* Checkpoint Health — category-level pass/fail summary */}
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
@@ -2294,10 +2330,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: Pages ─────────────────────────────────── */}
           {activeTab === 'pages' && (
             <div>
-              <p className="text-sm text-m-muted mb-4">
-                {auditPages.length} {L.pagesCrawled}
-              </p>
-              <div className="bg-paper border border-rule/30 rounded-lg overflow-hidden divide-y divide-rule/30">
+              <div className="rounded-xl border border-rule bg-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                <Globe size={16} className="text-signal" />
+                <h3 className="text-sm font-heading font-semibold text-ink">Pages crawled</h3>
+                <span className="ml-auto text-xs text-m-muted font-medium">{auditPages.length} {L.pagesCrawled}</span>
+              </div>
+              <div className="divide-y divide-rule/30">
                 {auditPages.map((pg, idx) => {
                   const readability = (pg as any).ai_readability as any;
                   const aiStatus = readability?.status as string | undefined;
@@ -2320,24 +2359,30 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {pg.url}
                         </a>
                       </div>
-                      {/* AI readability indicator */}
-                      {aiStatus && (
-                        <span className={clsx(
-                          'inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded tracking-[0.02em]',
-                          aiStatus === 'green' && 'text-ok bg-ok/10',
-                          aiStatus === 'amber' && 'text-warn bg-warn/10',
-                          aiStatus === 'red' && 'text-crit bg-crit/10',
-                        )}>
-                          <Brain size={10} /> AI {aiScore ?? 0}%
-                        </span>
-                      )}
+                      {/* AI readability indicator — colored by score severity */}
+                      {(aiStatus || aiScore != null) && (() => {
+                        const score = aiScore ?? 0;
+                        const colorClass = aiStatus === 'green' || (!aiStatus && score >= 70)
+                          ? 'text-ok bg-ok/10'
+                          : aiStatus === 'amber' || (!aiStatus && score >= 40)
+                          ? 'text-warn bg-warn/10'
+                          : 'text-severe bg-severe/10';
+                        return (
+                          <span className={clsx(
+                            'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full tracking-[0.02em]',
+                            colorClass,
+                          )}>
+                            <Brain size={10} /> AI {score}%
+                          </span>
+                        );
+                      })()}
                       {pg.is_mobile_friendly === true && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.02em]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ok bg-ok/10 px-2 py-0.5 rounded-full tracking-[0.02em]">
                           <Smartphone size={10} /> Mobile OK
                         </span>
                       )}
                       {pg.is_mobile_friendly === false && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.02em]">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warn bg-warn/10 px-2 py-0.5 rounded-full tracking-[0.02em]">
                           <Smartphone size={10} /> Mobile issues
                         </span>
                       )}
@@ -2388,6 +2433,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   );
                 })}
               </div>
+              </div>
             </div>
           )}
 
@@ -2407,20 +2453,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     {llmProbeResults.map((probe: any, i: number) => {
                       const accColor = probe.accuracy === 'accurate' ? 'text-ok bg-ok/10'
                         : probe.accuracy === 'partial' ? 'text-warn bg-warn/10'
-                        : probe.accuracy === 'hallucinated' ? 'text-crit bg-crit/10'
-                        : probe.accuracy === 'inaccurate' ? 'text-crit bg-crit/10'
-                        : 'text-m-muted bg-off';
+                        : probe.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
+                        : probe.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
+                        : 'text-m-muted bg-paper-2';
                       return (
                         <div key={i} className="px-5 py-4">
                           <div className="flex items-start justify-between gap-3 mb-2">
-                            <p className="text-sm font-medium text-ink">{probe.question}</p>
-                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded flex-shrink-0 ${accColor}`}>
+                            <p className="text-[13px] font-medium text-ink">{probe.question}</p>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${accColor}`}>
                               {probe.accuracy || 'pending'}
                             </span>
                           </div>
-                          <p className="text-[13px] text-ink-2 leading-relaxed">{probe.answer}</p>
+                          <p className="text-[13px] text-ink-2 leading-[1.7]">{probe.answer}</p>
                           {probe.accuracy_note && (
-                            <p className="text-xs text-m-muted mt-1.5">{probe.accuracy_note}</p>
+                            <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
                         </div>
                       );
@@ -2458,11 +2504,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             </a>
                           )}
                         </div>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
                           cit.citation_type === 'direct_quote' ? 'text-ok bg-ok/10' :
                           cit.citation_type === 'paraphrase' ? 'text-signal bg-signal/10' :
                           cit.citation_type === 'ignored' ? 'text-warn bg-warn/10' :
-                          'text-m-muted bg-off'
+                          'text-m-muted bg-paper-2'
                         }`}>
                           {cit.citation_type}
                         </span>
@@ -2484,7 +2530,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     {fixPlaybooks.map((pb: any, i: number) => (
                       <div key={i} className="px-5 py-4">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[11px] font-semibold text-signal bg-signal/10 px-1.5 py-0.5 rounded">{pb.playbook_type}</span>
+                          <span className="text-[10px] font-semibold text-signal bg-signal/10 px-2 py-0.5 rounded-full">{pb.playbook_type}</span>
                           <h4 className="text-sm font-medium text-ink">{pb.title}</h4>
                         </div>
                         {pb.description && (
@@ -2525,113 +2571,117 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-6">
               {/* Model comparison */}
               {intelligenceData?.modelProbes?.length > 0 && (
-                <div className="rounded-xl border border-rule bg-card p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <BarChart3 size={16} className="text-m-accent" />
-                    <h3 className="text-sm font-heading font-semibold text-text">Multi-model AI benchmark</h3>
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                    <BarChart3 size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">Multi-model AI benchmark</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models</span>
                   </div>
-                  {intelligenceData.modelBenchmarks?.insight && (
-                    <p className="text-xs text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
-                  )}
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {intelligenceData.modelProbes.map((probe: any) => {
-                      const scoreColor = probe.accuracy_score >= 70 ? 'text-emerald-500' : probe.accuracy_score >= 40 ? 'text-amber-500' : 'text-red-400';
-                      return (
-                        <div key={probe.id} className="rounded-lg border border-rule bg-paper p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-heading font-semibold text-text">{probe.model_label}</span>
-                            <span className={`text-lg font-bold ${scoreColor}`}>{probe.accuracy_score}%</span>
+                  <div className="p-5">
+                    {intelligenceData.modelBenchmarks?.insight && (
+                      <p className="text-[13px] text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
+                    )}
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {intelligenceData.modelProbes.map((probe: any) => {
+                        const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
+                        return (
+                          <div key={probe.id} className="rounded-xl border border-rule bg-paper p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
+                              <span className={`text-lg font-bold ${sc}`}>{probe.accuracy_score}%</span>
+                            </div>
+                            <div className="flex gap-2 text-[10px] font-medium">
+                              <span className="text-ok">{probe.accurate_count} accurate</span>
+                              <span className="text-warn">{probe.partial_count} partial</span>
+                              <span className="text-severe">{probe.inaccurate_count} wrong</span>
+                            </div>
+                            {probe.results_json?.length > 0 && (
+                              <details className="mt-3">
+                                <summary className="text-[10px] text-m-muted cursor-pointer hover:text-ink">Show answers</summary>
+                                <div className="mt-2 space-y-2">
+                                  {probe.results_json.map((r: any, j: number) => (
+                                    <div key={j} className="text-xs">
+                                      <p className="text-m-muted font-medium">{r.question}</p>
+                                      <p className="text-ink/70 mt-0.5 line-clamp-3">{r.answer}</p>
+                                      <span className={`inline-block mt-0.5 text-[10px] font-semibold ${
+                                        r.accuracy === 'accurate' ? 'text-ok'
+                                          : r.accuracy === 'partial' ? 'text-warn'
+                                            : r.accuracy === 'hallucinated' ? 'text-severe'
+                                              : 'text-m-muted'
+                                      }`}>{r.accuracy}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
                           </div>
-                          <div className="flex gap-2 text-[10px] font-medium text-m-muted">
-                            <span className="text-emerald-500">{probe.accurate_count} accurate</span>
-                            <span className="text-amber-500">{probe.partial_count} partial</span>
-                            <span className="text-red-400">{probe.inaccurate_count} wrong</span>
-                          </div>
-                          {probe.results_json?.length > 0 && (
-                            <details className="mt-3">
-                              <summary className="text-[10px] text-m-muted cursor-pointer hover:text-text">Show answers</summary>
-                              <div className="mt-2 space-y-2">
-                                {probe.results_json.map((r: any, j: number) => (
-                                  <div key={j} className="text-xs">
-                                    <p className="text-m-muted font-medium">{r.question}</p>
-                                    <p className="text-text/70 mt-0.5 line-clamp-3">{r.answer}</p>
-                                    <span className={`inline-block mt-0.5 text-[10px] font-medium ${
-                                      r.accuracy === 'accurate' ? 'text-emerald-500'
-                                        : r.accuracy === 'partial' ? 'text-amber-500'
-                                          : r.accuracy === 'hallucinated' ? 'text-red-400'
-                                            : 'text-m-muted'
-                                    }`}>{r.accuracy}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Industry benchmark */}
               {intelligenceData?.benchmarkPosition && (
-                <div className="rounded-xl border border-rule bg-card p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp size={16} className="text-m-accent" />
-                    <h3 className="text-sm font-heading font-semibold text-text">Industry AI visibility index</h3>
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                    <TrendingUp size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">Industry AI visibility index</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.industry}</span>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-3 mb-4">
-                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className="text-2xl font-bold text-text">{intelligenceData.benchmarkPosition.userScore}</div>
-                      <div className="text-[10px] text-m-muted mt-1">Your score</div>
+                  <div className="p-5">
+                    <div className="grid gap-3 sm:grid-cols-3 mb-4">
+                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                        <div className="text-2xl font-bold text-ink">{intelligenceData.benchmarkPosition.userScore}</div>
+                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Your score</div>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                        <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
+                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Industry average</div>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                        <div className={`text-2xl font-bold ${
+                          intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-ok'
+                            : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-warn'
+                              : 'text-severe'
+                        }`}>{intelligenceData.benchmarkPosition.rankLabel}</div>
+                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Your ranking</div>
+                      </div>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
-                      <div className="text-[10px] text-m-muted mt-1">Industry average</div>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
-                      <div className={`text-2xl font-bold ${
-                        intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-emerald-500'
-                          : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-amber-500'
-                            : 'text-red-400'
-                      }`}>{intelligenceData.benchmarkPosition.rankLabel}</div>
-                      <div className="text-[10px] text-m-muted mt-1">Your ranking</div>
-                    </div>
+                    <p className="text-[13px] text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
+                    {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (
+                      <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites</p>
+                    )}
                   </div>
-                  <p className="text-xs text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
-                  {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (
-                    <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites</p>
-                  )}
                 </div>
               )}
 
               {/* Predictive recommendations */}
               {intelligenceData?.recommendations?.length > 0 && (
-                <div className="rounded-xl border border-rule bg-card p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb size={16} className="text-m-accent" />
-                    <h3 className="text-sm font-heading font-semibold text-text">Predictive recommendations</h3>
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                    <Lightbulb size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">Predictive recommendations</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
                   </div>
-                  <div className="space-y-3">
+                  <div className="divide-y divide-rule/30">
                     {intelligenceData.recommendations.map((rec: any, i: number) => {
-                      const confColor = rec.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-600' : rec.confidence === 'medium' ? 'bg-amber-500/10 text-amber-600' : 'bg-zinc-500/10 text-zinc-500';
+                      const confColor = rec.confidence === 'high' ? 'bg-ok/10 text-ok' : rec.confidence === 'medium' ? 'bg-warn/10 text-warn' : 'bg-paper-2 text-m-muted';
                       return (
-                        <div key={rec.id || i} className="rounded-lg border border-rule bg-paper p-4">
+                        <div key={rec.id || i} className="px-5 py-4">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-m-accent/10">
-                              <span className="text-sm font-bold text-m-accent">+{rec.predicted_impact}</span>
+                            <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-signal/10">
+                              <span className="text-sm font-bold text-signal">+{rec.predicted_impact}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-text">{rec.action}</p>
+                              <p className="text-[13px] font-medium text-ink">{rec.action}</p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${confColor}`}>{rec.confidence}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${confColor}`}>{rec.confidence}</span>
                                 <span className="text-[10px] text-m-muted">{rec.category}</span>
                               </div>
                               {rec.evidence && (
-                                <p className="text-xs text-m-muted/70 mt-1.5 leading-relaxed">{rec.evidence}</p>
+                                <p className="text-[11px] text-m-muted/70 mt-1.5 leading-relaxed">{rec.evidence}</p>
                               )}
                             </div>
                           </div>
@@ -2659,14 +2709,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="rounded-xl border border-rule bg-card p-5 max-w-3xl mx-auto">
-              <div className="flex flex-wrap justify-center gap-2.5">
+            <div className="rounded-xl border border-rule bg-card overflow-hidden max-w-3xl mx-auto">
+              <div className="flex flex-wrap justify-center gap-2.5 p-5">
                 <a
                   href={`/api/reports/${auditId}/pdf`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
-                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
                 >
                   <Download size={14} strokeWidth={2} /> PDF Report
                 </a>
@@ -2674,30 +2723,26 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   href={`/api/reports/${auditId}/docx`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
-                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
                 >
                   <Download size={14} strokeWidth={2} /> Word Report
                 </a>
                 <Link
                   href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
-                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
                 >
                   <RefreshCw size={14} strokeWidth={2} /> Re-audit
                 </Link>
                 <Link
                   href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                  className="flex items-center justify-center gap-2 border border-signal/30 rounded-lg px-4 py-2.5 hover:bg-signal/5 transition-colors whitespace-nowrap"
-                  style={{ color: 'var(--signal)', fontSize: '13px', fontWeight: 600 }}
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-signal border border-signal/30 rounded-lg px-4 py-2.5 hover:bg-signal/5 transition-colors whitespace-nowrap"
                 >
                   <Search size={14} strokeWidth={2} /> Dig deeper
                 </Link>
                 <button
                   onClick={handleShare}
                   disabled={shareLoading}
-                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
-                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
                   {shareCopied ? <><Check size={14} strokeWidth={2} className="text-ok" /> Copied</> : <><Share2 size={14} strokeWidth={2} /> Share</>}
                 </button>
