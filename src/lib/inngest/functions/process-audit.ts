@@ -13,7 +13,7 @@
 
 import { inngest } from '../client'
 import { createServiceSupabase } from '@/lib/supabase-server'
-import { crawlPages, formatHeadTagsForAnalysis } from '@/lib/audit-engine/crawler'
+import { crawlPages, formatHeadTagsForAnalysis, type HeadTagData } from '@/lib/audit-engine/crawler'
 import { probeAIDiscovery, formatAIDiscoveryForAnalysis } from '@/lib/audit-engine/ai-discovery-probe'
 import { validateStructuredData, formatValidationForAnalysis } from '@/lib/audit-engine/structured-data-validator'
 import { analyzeCategory, generateReport, verifyFindings, UX_CATEGORIES } from '@/lib/audit-engine/analyzer'
@@ -31,6 +31,10 @@ import {
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import { checkResponsiveDesign } from '@/lib/audit-engine/responsive-checker'
+import { runLlmProbe, formatLlmProbeForAnalysis } from '@/lib/audit-engine/llm-probe'
+import type { SiteGroundTruth } from '@/lib/audit-engine/llm-probe'
+import { calculateAIVisibilityScore } from '@/lib/audit-engine/ai-visibility-score'
+import { calculatePageReadability } from '@/lib/audit-engine/page-ai-readability'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -437,6 +441,125 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
+    // STEP 2e: Per-page AI readability scoring
+    // Calculates what AI can extract from each page and stores
+    // the readability data as jsonb on audit_pages for the UI.
+    // ──────────────────────────────────────────────────────────
+    await step.run('calculate-page-readability', async () => {
+      try {
+        const db = getDb()
+        const headTagMap = new Map<string, HeadTagData>(
+          (crawlResult.headTags || []).map((ht: { url: string; headTags: HeadTagData }) => [ht.url, ht.headTags]),
+        )
+
+        // Parse crawled pages from the page content
+        const pageBlocks = crawlResult.pageContent.split('\n---\n')
+        for (const block of pageBlocks) {
+          const urlMatch = block.match(/^URL: (.+)$/m)
+          const titleMatch = block.match(/^Title: (.+)$/m)
+          const h1Match = block.match(/^H1: (.+)$/m)
+          const metaMatch = block.match(/^Meta Description: (.+)$/m)
+          const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
+          if (!urlMatch) continue
+
+          const url = urlMatch[1]
+          const readability = calculatePageReadability({
+            url,
+            title: titleMatch?.[1] || null,
+            h1: h1Match?.[1] || null,
+            metaDescription: metaMatch?.[1] || null,
+            contentText: contentMatch?.[1] || null,
+            headTags: headTagMap.get(url) || null,
+          })
+
+          await db
+            .from('audit_pages')
+            .update({ ai_readability: readability } as any)
+            .eq('audit_id', auditId)
+            .eq('url', url)
+        }
+
+        await auditLog(auditId, 'page_readability_calculated', 'info',
+          `AI readability calculated for ${pageBlocks.length} page(s)`)
+      } catch (err) {
+        console.error('[inngest] Page readability calculation failed (non-fatal):', err)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2f: LLM Probe — Ask AI what it "knows" about this domain
+    // Queries Claude with standardized questions, then grades the
+    // answers against crawled ground truth. This is the core
+    // differentiator: "What does AI actually think about your site?"
+    // ──────────────────────────────────────────────────────────
+    const llmProbeResult = await step.run('llm-probe', async () => {
+      try {
+        // Build ground truth from crawled content
+        const firstPage = crawlResult.pageContent.split('\n---\n')[0] || ''
+        const titleMatch = firstPage.match(/^Title: (.+)$/m)
+        const metaMatch = firstPage.match(/^Meta Description: (.+)$/m)
+
+        // Look for pricing content across all pages
+        const allContent = crawlResult.pageContent.toLowerCase()
+        const hasPricing = allContent.includes('pricing') || allContent.includes('price') || allContent.includes('/mo') || allContent.includes('per month')
+        let pricingText: string | null = null
+        if (hasPricing) {
+          // Extract pricing section (rough heuristic)
+          const pricingIdx = crawlResult.pageContent.toLowerCase().indexOf('pricing')
+          if (pricingIdx >= 0) {
+            pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
+          }
+        }
+
+        const groundTruth: SiteGroundTruth = {
+          siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
+          siteDescription: metaMatch?.[1] || null,
+          pricingText,
+          offeringText: firstPage.substring(0, 2000),
+          fullContent: crawlResult.pageContent,
+          pages: crawlResult.crawledUrls.map((url: string) => {
+            const pageBlock = crawlResult.pageContent.split('\n---\n').find((b: string) => b.includes(`URL: ${url}`))
+            const pageTitleMatch = pageBlock?.match(/^Title: (.+)$/m)
+            return { url, title: pageTitleMatch?.[1] || null }
+          }),
+        }
+
+        let domain = ''
+        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+
+        const session = await runLlmProbe(domain, groundTruth)
+        const summary = formatLlmProbeForAnalysis(session)
+
+        // Store probe results in DB
+        const db = getDb()
+        for (const r of session.results) {
+          await db.from('llm_probe_results').insert({
+            audit_id: auditId,
+            question: r.question,
+            answer: r.answer,
+            accuracy: r.accuracy,
+            accuracy_note: r.accuracyNote,
+            cited_url: r.citedUrl,
+            model_used: r.modelUsed,
+          } as any)
+        }
+
+        await auditLog(auditId, 'llm_probe_completed', 'success',
+          `LLM probe: ${session.accuracySummary.scorePercent}% accuracy (${session.accuracySummary.accurate} accurate, ${session.accuracySummary.partial} partial, ${session.accuracySummary.inaccurate} inaccurate, ${session.accuracySummary.hallucinated} hallucinated)`, {
+            accuracy_score: session.accuracySummary.scorePercent,
+            ...session.accuracySummary,
+          })
+
+        return { summary, accuracyScore: session.accuracySummary.scorePercent, session }
+      } catch (err) {
+        console.error('[inngest] LLM probe failed (non-fatal):', err)
+        await auditLog(auditId, 'llm_probe_failed', 'warning',
+          `LLM probe failed: ${err instanceof Error ? err.message : String(err)}`)
+        return { summary: '', accuracyScore: 0, session: null }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
     // STEP 3: Build site context map + set status to analysing
     // Creates a summary of what exists across ALL pages so the
     // analyzer has cross-page awareness (e.g., "founder bio exists
@@ -598,7 +721,12 @@ RULES FOR RE-AUDIT:
         ? `\n\n${responsiveCheck.summary}`
         : ''
 
-      const fullContext = siteMap + userContext + responsiveContext
+      // Append LLM probe context so analyzer can reference AI perception gaps
+      const llmProbeContext = llmProbeResult.summary
+        ? `\n\n${llmProbeResult.summary}`
+        : ''
+
+      const fullContext = siteMap + userContext + responsiveContext + llmProbeContext
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)
@@ -825,7 +953,8 @@ RULES FOR RE-AUDIT:
         UX_CATEGORY_NAMES.forEach((_, idx) => { if (gapIndices.has(idx)) gapCategoryIndices.push(idx) })
         const aiDiscoveryBlockBl = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
         const structuredDataBlockBl = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
-        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}`
+        const llmProbeBlockBl = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
+        const contentWithContextBl = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlockBl}${structuredDataBlockBl}${llmProbeBlockBl}`
 
         // Handle brand context for brand_consistency gap fill
         let brandContentBl = contentWithContextBl
@@ -1000,7 +1129,8 @@ RULES FOR RE-AUDIT:
 
       const aiDiscoveryBlock = aiDiscovery.summary ? `\n\n${aiDiscovery.summary}` : ''
       const structuredDataBlock = structuredDataResult.summary ? `\n\n${structuredDataResult.summary}` : ''
-      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}`
+      const llmProbeBlock = llmProbeResult.summary ? `\n\n${llmProbeResult.summary}` : ''
+      const contentWithContext = `${siteContext.context}\n\n${crawlResult.pageContent}${aiDiscoveryBlock}${structuredDataBlock}${llmProbeBlock}`
       // Brand consistency categories get extra brand context prepended
       const brandContentWithContext = brandContext
         ? `=== BRAND IDENTITY GUIDELINES ===\n${brandContext}\n\n=== WEBSITE CONTENT ===\n${contentWithContext}`
@@ -1071,6 +1201,8 @@ RULES FOR RE-AUDIT:
                 target_element: finding.targetElement || null,
                 screenshot_url: null,
                 sort_order: sortOrder++,
+                ai_interpretation: finding.aiInterpretation || null,
+                human_interpretation: finding.humanInterpretation || null,
               } as any)
             }
 
@@ -1410,6 +1542,19 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
       }
 
+      // Calculate AI Visibility Score from all Phase 1 + 2 data
+      const aiVisibility = calculateAIVisibilityScore({
+        structuredData: structuredDataResult.typesFound?.length > 0
+          ? { typesFound: structuredDataResult.typesFound, findings: [], totalBlocks: structuredDataResult.typesFound.length, validBlocks: structuredDataResult.typesFound.length, invalidBlocks: 0 }
+          : null,
+        llmProbe: llmProbeResult.session || null,
+        aiDiscovery: aiDiscovery.result || null,
+        headTags: crawlResult.headTags || [],
+      })
+
+      // Override the AI discoverability score with the real AI Visibility Score
+      reportData.aiDiscoverabilityScore = aiVisibility.overall
+
       // Preserve original category scores as baseline for future recalculations
       // (when user marks findings as fixed/dismissed, scores recalculate from this baseline)
       const reportJsonWithBaseline = {
@@ -1417,6 +1562,7 @@ RULES FOR RE-AUDIT:
         _baselineCategoryScores: reportData.categoryScores,
         selectedPillars: auditDetails.selectedPillars, // legacy compat
         selectedModules: auditDetails.selectedModules, // new slug-based system
+        aiVisibilityBreakdown: aiVisibility,
       }
 
       // Insert report
@@ -1433,11 +1579,12 @@ RULES FOR RE-AUDIT:
         ux_score: reportData.uxScore,
         conversion_score: reportData.conversionScore,
         mobile_score: reportData.mobileScore,
-        ai_discoverability_score: reportData.aiDiscoverabilityScore,
+        ai_discoverability_score: aiVisibility.overall,
         content_score: reportData.contentScore,
         raw_json: reportJsonWithBaseline,
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
+        ai_visibility_breakdown: aiVisibility,
       } as any)
 
       await auditLog(auditId, 'report_generated', 'success', 'Report generated', {

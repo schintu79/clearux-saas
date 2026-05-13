@@ -760,6 +760,32 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
             </div>
           )}
 
+          {/* AI vs Human Interpretation — Phase 2: AI X-Ray */}
+          {(finding as any).ai_interpretation && (finding as any).human_interpretation && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-rule overflow-hidden mt-3">
+              {/* AI Interpretation */}
+              <div className="p-4 border-b md:border-b-0 md:border-r border-rule bg-[var(--color-signal)]/[0.03]">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain size={13} className="text-signal" />
+                  <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How AI reads this</p>
+                </div>
+                <p className="text-ink-2 text-[13px] leading-[1.65]">
+                  {(finding as any).ai_interpretation}
+                </p>
+              </div>
+              {/* Human Interpretation */}
+              <div className="p-4 bg-[var(--color-ok)]/[0.03]">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users size={13} className="text-ok" />
+                  <p className="text-[11px] font-mono font-medium text-ink tracking-[0.06em] uppercase">How a human sees this</p>
+                </div>
+                <p className="text-ink-2 text-[13px] leading-[1.65]">
+                  {(finding as any).human_interpretation}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 3-Panel Grid: Issue / Fix / Impact */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-rule overflow-hidden mt-3">
             {/* Panel 1: Issue */}
@@ -1177,7 +1203,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               .order('sort_order', { ascending: true }),
             supabase
               .from('audit_pages')
-              .select('url, title, status_code, load_time_ms, screenshot_url, is_mobile_friendly')
+              .select('url, title, status_code, load_time_ms, screenshot_url, is_mobile_friendly, ai_readability')
               .eq('audit_id', auditId)
               .order('crawled_at', { ascending: true }),
           ]);
@@ -2161,6 +2187,47 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     )}
                   </div>
 
+                  {/* AI Visibility Score breakdown */}
+                  {(() => {
+                    const aiVis = (report.raw_json as any)?.aiVisibilityBreakdown;
+                    if (!aiVis) return null;
+                    const bars = [
+                      { label: 'LLM knowledge accuracy', value: aiVis.llmAccuracy, desc: 'How accurately AI describes your site' },
+                      { label: 'Structured data coverage', value: aiVis.structuredData, desc: 'JSON-LD completeness for rich results' },
+                      { label: 'Content extractability', value: aiVis.contentExtractability, desc: 'How well AI can read your pages' },
+                      { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json' },
+                    ];
+                    return (
+                      <div className="bg-paper border border-rule/30 rounded-xl p-5 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Brain size={16} className="text-signal" />
+                          <h3 className="text-sm font-heading font-semibold text-ink">AI visibility breakdown</h3>
+                          <span className="ml-auto text-lg font-heading font-bold text-ink">{aiVis.overall}<span className="text-sm text-m-muted font-normal">/100</span></span>
+                        </div>
+                        <div className="space-y-3">
+                          {bars.map((bar, i) => (
+                            <div key={i}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-m-muted">{bar.label}</span>
+                                <span className="text-xs font-mono font-medium text-ink">{bar.value}</span>
+                              </div>
+                              <div className="h-1.5 bg-rule/20 rounded-full overflow-hidden">
+                                <div
+                                  className={clsx(
+                                    'h-full rounded-full transition-all duration-500',
+                                    bar.value >= 70 ? 'bg-ok' : bar.value >= 40 ? 'bg-warn' : 'bg-crit',
+                                  )}
+                                  style={{ width: `${bar.value}%` }}
+                                />
+                              </div>
+                              <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Simple severity-grouped findings */}
                   {findings.length > 0 && (
                     <div className="space-y-3">
@@ -2218,40 +2285,95 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {auditPages.length} {L.pagesCrawled}
               </p>
               <div className="bg-paper border border-rule/30 rounded-lg overflow-hidden divide-y divide-rule/30">
-                {auditPages.map((pg, idx) => (
-                  <div key={idx} className="flex items-center gap-3 px-4 py-3 hover:bg-paper-2/50 transition-colors">
-                    <span className="text-xs text-m-muted w-6 text-right flex-shrink-0 font-mono">{idx + 1}</span>
-                    <Globe size={14} className="text-m-muted flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      {pg.title && (
-                        <p className="text-sm font-medium text-ink truncate">{pg.title}</p>
+                {auditPages.map((pg, idx) => {
+                  const readability = (pg as any).ai_readability as any;
+                  const aiStatus = readability?.status as string | undefined;
+                  const aiScore = readability?.overallScore as number | undefined;
+                  return (
+                  <div key={idx}>
+                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-paper-2/50 transition-colors">
+                      <span className="text-xs text-m-muted w-6 text-right flex-shrink-0 font-mono">{idx + 1}</span>
+                      <Globe size={14} className="text-m-muted flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        {pg.title && (
+                          <p className="text-sm font-medium text-ink truncate">{pg.title}</p>
+                        )}
+                        <a
+                          href={pg.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-signal hover:text-signal/80 hover:underline truncate block"
+                        >
+                          {pg.url}
+                        </a>
+                      </div>
+                      {/* AI readability indicator */}
+                      {aiStatus && (
+                        <span className={clsx(
+                          'inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded tracking-[0.04em]',
+                          aiStatus === 'green' && 'text-ok bg-ok/10',
+                          aiStatus === 'amber' && 'text-warn bg-warn/10',
+                          aiStatus === 'red' && 'text-crit bg-crit/10',
+                        )}>
+                          <Brain size={10} /> AI {aiScore ?? 0}%
+                        </span>
                       )}
-                      <a
-                        href={pg.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-signal hover:text-signal/80 hover:underline truncate block"
-                      >
-                        {pg.url}
-                      </a>
+                      {pg.is_mobile_friendly === true && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                          <Smartphone size={10} /> Mobile OK
+                        </span>
+                      )}
+                      {pg.is_mobile_friendly === false && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                          <Smartphone size={10} /> Mobile issues
+                        </span>
+                      )}
+                      {pg.status_code && pg.status_code !== 200 && (
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
+                          {pg.status_code}
+                        </span>
+                      )}
                     </div>
-                    {pg.is_mobile_friendly === true && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
-                        <Smartphone size={10} /> Mobile OK
-                      </span>
-                    )}
-                    {pg.is_mobile_friendly === false && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
-                        <Smartphone size={10} /> Mobile issues
-                      </span>
-                    )}
-                    {pg.status_code && pg.status_code !== 200 && (
-                      <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
-                        {pg.status_code}
-                      </span>
+                    {/* AI readability detail — what AI can/cannot extract */}
+                    {readability && (
+                      <div className="px-4 pb-3 pt-0 ml-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {readability.extractable?.length > 0 && (
+                            <div className="text-xs">
+                              <p className="text-ok font-medium mb-1 flex items-center gap-1">
+                                <CheckCircle2 size={11} /> AI can extract
+                              </p>
+                              <ul className="text-m-muted space-y-0.5 ml-4">
+                                {(readability.extractable as string[]).slice(0, 6).map((item: string, i: number) => (
+                                  <li key={i} className="list-disc">{item}</li>
+                                ))}
+                                {readability.extractable.length > 6 && (
+                                  <li className="text-m-muted/60">+{readability.extractable.length - 6} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                          {readability.missing?.length > 0 && (
+                            <div className="text-xs">
+                              <p className="text-warn font-medium mb-1 flex items-center gap-1">
+                                <AlertTriangle size={11} /> AI misses
+                              </p>
+                              <ul className="text-m-muted space-y-0.5 ml-4">
+                                {(readability.missing as string[]).slice(0, 6).map((item: string, i: number) => (
+                                  <li key={i} className="list-disc">{item}</li>
+                                ))}
+                                {readability.missing.length > 6 && (
+                                  <li className="text-m-muted/60">+{readability.missing.length - 6} more</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

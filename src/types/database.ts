@@ -172,7 +172,26 @@ export interface AuditPage {
   is_mobile_friendly:  boolean | null
   viewport_meta:       string | null
   screenshot_url:      string | null
+  ai_readability:      AIPageReadability | null
   crawled_at:          string
+}
+
+/** Per-page AI readability breakdown — stored as jsonb on audit_pages */
+export interface AIPageReadability {
+  /** What AI can extract from this page */
+  extractable: string[]
+  /** What AI misses or can't access */
+  missing: string[]
+  /** Structured data types present on this page */
+  structuredDataTypes: string[]
+  /** Head tag completeness: 0-100 */
+  headTagScore: number
+  /** Content extractability: 0-100 */
+  contentScore: number
+  /** Overall AI readability: 0-100 */
+  overallScore: number
+  /** Traffic light status */
+  status: 'green' | 'amber' | 'red'
 }
 
 export type FindingStatus = 'open' | 'in_progress' | 'fixed' | 'backlog'
@@ -215,6 +234,10 @@ export interface AuditFinding {
   dismissed_at:      string | null
   verification_status: 'confirmed_open' | 'likely_fixed' | 'poorly_fixed' | null
   verification_note:   string | null
+  /** AI X-Ray: how AI interprets this element */
+  ai_interpretation:   string | null
+  /** AI X-Ray: how a human interprets the same element */
+  human_interpretation: string | null
   created_at:        string
 }
 
@@ -237,8 +260,37 @@ export interface Report {
   raw_json:                 Record<string, unknown> | null
   pdf_url:                  string | null
   pdf_generated_at:         string | null
+  ai_visibility_breakdown:  AIVisibilityBreakdown | null
   created_at:               string
   updated_at:               string
+}
+
+/** AI Visibility Score breakdown — stored as jsonb on reports */
+export interface AIVisibilityBreakdown {
+  /** Structured data coverage: 0-100 */
+  structuredData: number
+  /** LLM probe accuracy: 0-100 */
+  llmAccuracy: number
+  /** Crawl infrastructure readiness: 0-100 (robots.txt, llms.txt, ai-plugin) */
+  crawlInfrastructure: number
+  /** Content extractability: 0-100 (head tags, meta, OG) */
+  contentExtractability: number
+  /** Overall AI Visibility Score: 0-100 */
+  overall: number
+}
+
+export type LlmProbeAccuracy = 'accurate' | 'partial' | 'inaccurate' | 'hallucinated' | 'no_data'
+
+export interface LlmProbeResult {
+  id:            string
+  audit_id:      string
+  question:      string
+  answer:        string
+  accuracy:      LlmProbeAccuracy | null
+  accuracy_note: string | null
+  cited_url:     string | null
+  model_used:    string
+  created_at:    string
 }
 
 export interface AuditLog {
@@ -401,6 +453,11 @@ export interface Database {
         Row: BrandAuditFileSnapshot
         Insert: Partial<BrandAuditFileSnapshot> & Pick<BrandAuditFileSnapshot, 'audit_id' | 'brand_file_id' | 'file_name' | 'file_url'>
         Update: Partial<BrandAuditFileSnapshot>
+      }
+      llm_probe_results: {
+        Row: LlmProbeResult
+        Insert: Partial<LlmProbeResult> & Pick<LlmProbeResult, 'audit_id' | 'question' | 'answer' | 'model_used'>
+        Update: Partial<LlmProbeResult>
       }
     }
     Views: {

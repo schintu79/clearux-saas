@@ -36,6 +36,10 @@ export interface AnalysisFinding {
   targetElement?: string | null
   pageUrl?: string | null
   categoryIndex?: number              // 0-23 explicit category — set by runFullAnalysis
+  /** AI X-Ray: how AI interprets this element vs how a human sees it */
+  aiInterpretation?: string | null
+  /** AI X-Ray: how a human interprets this element */
+  humanInterpretation?: string | null
 }
 
 export interface CategoryScore {
@@ -710,7 +714,9 @@ Return a JSON array. Each issue:
   "recommendation": "Concrete, implementable fix with specific details. Include the 'why' — what improvement the client should expect. Reference best practices or data where relevant.",
   "estimatedImpact": "Specific expected improvement (e.g., '15-25% increase in CTA clicks', 'Reduces bounce rate for mobile users', 'Eliminates trust barrier for first-time visitors')",
   "targetElement": "A valid CSS selector to locate the element on the page. Use simple, reliable selectors: tag names ('nav', 'header', 'footer', 'main'), class selectors ('.hero', '.cta-button', '.pricing'), ID selectors ('#checkout', '#signup'), or combined ('section.features', 'form.contact', 'nav > ul'). Must be a real CSS selector, NOT a description. Set to null if the issue is page-wide.",
-  "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain."
+  "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain.",
+  "aiInterpretation": "FOR CRITICAL/HIGH SEVERITY ONLY — One sentence: how an AI system (LLM, search engine, voice assistant) would interpret or misinterpret this element. Example: 'AI reads the hero image alt text as empty, so it describes your homepage as having no visual identity.' Set to null for medium/low severity.",
+  "humanInterpretation": "FOR CRITICAL/HIGH SEVERITY ONLY — One sentence: how a human visitor perceives the same element differently. Example: 'A human sees a compelling hero image with your brand message, but AI only sees an empty alt attribute.' Set to null for medium/low severity."
 }
 
 CRITICAL — NO DUPLICATE FINDINGS (STRICTLY ENFORCED):
