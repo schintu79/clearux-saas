@@ -1095,7 +1095,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray' | 'intelligence'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray'>('overview');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -2037,21 +2037,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="mb-8 border-b border-rule/40">
             <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
-              {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
+              {(['overview', 'findings', 'pages', 'ai_xray'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
-                  : tab === 'ai_xray' ? 'AI X-Ray'
-                  : 'Intelligence';
+                  : 'AI X-Ray';
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
                   : tab === 'pages' ? Globe
-                  : tab === 'ai_xray' ? Brain
-                  : Sparkles;
+                  : Brain;
                 return (
                   <button
                     key={tab}
@@ -2470,7 +2468,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-6">
 
               {/* Copy AI Report button — generates plain text summary for devs */}
-              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0) && (
+              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0 || intelligenceData?.modelProbes?.length > 0 || intelligenceData?.recommendations?.length > 0) && (
                 <div className="flex justify-end">
                   <button
                     onClick={() => {
@@ -2499,6 +2497,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           lines.push(pb.code_snippet);
                           lines.push('```\n');
                         }
+                      }
+                      if (intelligenceData?.modelProbes?.length > 0) {
+                        lines.push('## Multi-model AI benchmark\n');
+                        for (const p of intelligenceData.modelProbes as any[]) {
+                          lines.push(`${p.model_label}: ${p.accuracy_score}% (${p.accurate_count} accurate, ${p.partial_count} partial, ${p.inaccurate_count} wrong)`);
+                        }
+                        lines.push('');
+                      }
+                      if (intelligenceData?.recommendations?.length > 0) {
+                        lines.push('## Predictive recommendations\n');
+                        for (const rec of intelligenceData.recommendations as any[]) {
+                          lines.push(`[+${rec.predicted_impact}] ${rec.action} (${rec.confidence} confidence)`);
+                          if (rec.evidence) lines.push(`  ${rec.evidence}`);
+                        }
+                        lines.push('');
                       }
                       navigator.clipboard.writeText(lines.join('\n'));
                       setXrayCopied(true);
@@ -2631,26 +2644,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Empty state */}
-              {llmProbeResults.length === 0 && aiCitations.length === 0 && fixPlaybooks.length === 0 && (
-                <div className="text-center py-12">
-                  <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
-                  <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
-                  <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, and fix playbooks.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'intelligence' && (
-            <div className="space-y-6">
-              {/* Model comparison */}
+              {/* ── Intelligence: Model benchmark ── */}
               {intelligenceData?.modelProbes?.length > 0 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <BarChart3 size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">Multi-model AI benchmark</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} {intelligenceData.modelProbes.length === 1 ? 'model' : 'models'}</span>
                   </div>
                   <div className="p-5">
                     {intelligenceData.modelBenchmarks?.insight && (
@@ -2697,7 +2697,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Industry benchmark */}
+              {/* ── Intelligence: Industry benchmark ── */}
               {intelligenceData?.benchmarkPosition && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
@@ -2732,7 +2732,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Predictive recommendations */}
+              {/* ── Intelligence: Predictive recommendations ── */}
               {intelligenceData?.recommendations?.length > 0 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
@@ -2768,15 +2768,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               )}
 
               {/* Empty state */}
-              {(!intelligenceData || (
-                (!intelligenceData.modelProbes || intelligenceData.modelProbes.length === 0) &&
-                (!intelligenceData.recommendations || intelligenceData.recommendations.length === 0) &&
-                !intelligenceData.benchmarkPosition
-              )) && (
+              {llmProbeResults.length === 0 && aiCitations.length === 0 && fixPlaybooks.length === 0 &&
+                (!intelligenceData?.modelProbes?.length) && (!intelligenceData?.recommendations?.length) && !intelligenceData?.benchmarkPosition && (
                 <div className="text-center py-12">
                   <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
-                  <p className="text-sm text-m-muted">Intelligence data will appear here after your next audit.</p>
-                  <p className="text-xs text-m-muted/60 mt-1">Includes multi-model benchmarks, industry rankings, and predictive recommendations.</p>
+                  <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
+                  <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, fix playbooks, and AI benchmarks.</p>
                 </div>
               )}
             </div>
