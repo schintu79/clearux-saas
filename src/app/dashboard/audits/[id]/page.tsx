@@ -579,7 +579,7 @@ const FINDING_STATUSES = [
   { key: 'backlog', label: 'Backlog', color: 'text-signal', bg: 'bg-signal/5', dot: 'bg-signal' },
 ] as const;
 
-function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; pillarName?: string; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
+function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarIndex, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; pillarName?: string; pillarIndex?: number; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(finding.status || 'open');
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -650,8 +650,13 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
 
   const activeStatus = FINDING_STATUSES.find(s => s.key === status);
 
+  const tint = pillarIndex != null ? MODULE_TINTS[pillarIndex] : null;
+
   return (
-    <div className="rounded-xl border border-rule bg-card overflow-hidden transition-all">
+    <div
+      className="rounded-xl overflow-hidden transition-all"
+      style={tint ? { background: tint.bg, border: `1px solid ${tint.border}` } : { background: 'var(--card)', border: '1px solid var(--rule)' }}
+    >
       {/* Header — always visible */}
       <div className="flex items-start gap-3 p-4">
         {/* Severity indicator */}
@@ -679,16 +684,16 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig
                 <AlertTriangle size={9} /> Poorly fixed
               </span>
             )}
-            {/* Module · Category metadata */}
-            {(pillarName || categoryName) && (
-              <span className="text-[10px] font-medium text-m-muted/60 tracking-[0.03em] uppercase">
-                {pillarName}{pillarName && categoryName ? ' · ' : ''}{categoryName}
-              </span>
-            )}
           </div>
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
+          {/* Module · Category metadata — below title, before link */}
+          {(pillarName || categoryName) && (
+            <p className="text-[10px] font-medium text-m-muted/50 tracking-[0.03em] mt-1">
+              {pillarName}{pillarName && categoryName ? ' · ' : ''}{categoryName}
+            </p>
+          )}
           {finding.page_url && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-[300px] truncate">
+            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-0.5 max-w-[300px] truncate">
               <ExternalLink size={9} className="flex-shrink-0" />
               {(() => {
                 try {
@@ -1060,7 +1065,7 @@ function PillarSection({
                 </div>
                 <div className="space-y-2">
                   {sorted.map((finding) => (
-                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} pillarName={pillar.name} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
+                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} pillarName={pillar.name} pillarIndex={pillarIndex} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
                   ))}
                 </div>
               </div>
@@ -1094,6 +1099,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [xrayCopied, setXrayCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
   const [aiCitations, setAiCitations] = useState<any[]>([]);
@@ -1351,23 +1357,45 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // ── Sticky score bar: show when hero score card scrolls out of view
   useEffect(() => {
-    const el = scoreCardRef.current;
-    if (!el) return;
-    // The dashboard content scrolls inside <main id="main-content">, not the window
-    const scrollRoot = document.getElementById('main-content') || null;
-    if (!scrollRoot) return;
-    // Use scroll event listener as a reliable fallback — IntersectionObserver
-    // with a non-viewport root inside nested overflow containers can be unreliable
-    const checkVisibility = () => {
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      // Show sticky when the score card's bottom is above the scroll container's top
-      setShowStickyScore(elRect.bottom < rootRect.top + 10);
+    // Retry briefly — the ref may not be attached on the first render cycle
+    // when report data arrives slightly after status changes to completed
+    let retryTimer: NodeJS.Timeout | null = null;
+    let cleanupScroll: (() => void) | null = null;
+
+    const attach = () => {
+      const el = scoreCardRef.current;
+      if (!el) return false;
+      const scrollRoot = document.getElementById('main-content');
+      if (!scrollRoot) return false;
+
+      const checkVisibility = () => {
+        const rootRect = scrollRoot.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        setShowStickyScore(elRect.bottom < rootRect.top + 10);
+      };
+      scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
+      checkVisibility();
+      cleanupScroll = () => scrollRoot.removeEventListener('scroll', checkVisibility);
+      return true;
     };
-    scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
-    checkVisibility(); // Initial check
-    return () => scrollRoot.removeEventListener('scroll', checkVisibility);
-  }, [audit?.status]);
+
+    if (!attach()) {
+      // Ref not ready yet — retry a few times
+      let attempts = 0;
+      retryTimer = setInterval(() => {
+        attempts++;
+        if (attach() || attempts >= 10) {
+          if (retryTimer) clearInterval(retryTimer);
+          retryTimer = null;
+        }
+      }, 100);
+    }
+
+    return () => {
+      if (retryTimer) clearInterval(retryTimer);
+      if (cleanupScroll) cleanupScroll();
+    };
+  }, [audit?.status, audit?.report]);
 
   // ── Handlers
   const isPaidAudit = audit?.status === 'failed' || audit?.status === 'completed' ||
@@ -2190,7 +2218,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
                   const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
                   if (!hasCats && !hasFindings) return null;
-                  const currentVisibleIdx = visibleIdx++;
+                  visibleIdx++;
                   return (
                     <PillarSection
                       key={pillar.name}
@@ -2200,7 +2228,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       findings={findingsByPillar[pillar.name] || []}
                       lang={auditLang}
                       onScoreUpdate={() => fetchAuditDetail(true)}
-                      defaultExpanded={currentVisibleIdx < 3}
+                      defaultExpanded={false}
                     />
                   );
                 });
@@ -2440,6 +2468,53 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: AI X-Ray ──────────────────────────────── */}
           {activeTab === 'ai_xray' && (
             <div className="space-y-6">
+
+              {/* Copy AI Report button — generates plain text summary for devs */}
+              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0) && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      const lines: string[] = [`AI X-Ray Report — ${audit.product_url || 'Unknown'}\n`];
+                      if (llmProbeResults.length > 0) {
+                        lines.push('## What AI knows about your site\n');
+                        for (const p of llmProbeResults as any[]) {
+                          lines.push(`Q: ${p.question}`);
+                          lines.push(`A: ${p.answer}`);
+                          lines.push(`Grade: ${p.accuracy || 'pending'}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
+                        }
+                      }
+                      if (aiCitations.length > 0) {
+                        lines.push('## AI Citation Audit\n');
+                        for (const c of aiCitations as any[]) {
+                          lines.push(`[${c.citation_type}] ${c.ai_context}${c.page_url ? ` (${c.page_url})` : ''}`);
+                        }
+                        lines.push('');
+                      }
+                      if (fixPlaybooks.length > 0) {
+                        lines.push('## Fix Playbooks\n');
+                        for (const pb of fixPlaybooks as any[]) {
+                          lines.push(`### ${pb.title} (${pb.playbook_type})`);
+                          if (pb.description) lines.push(pb.description);
+                          lines.push('```');
+                          lines.push(pb.code_snippet);
+                          lines.push('```\n');
+                        }
+                      }
+                      navigator.clipboard.writeText(lines.join('\n'));
+                      setXrayCopied(true);
+                      setTimeout(() => setXrayCopied(false), 2000);
+                    }}
+                    className={clsx(
+                      'inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg border transition-colors',
+                      xrayCopied
+                        ? 'text-ok bg-ok/5 border-ok/20'
+                        : 'text-m-muted bg-paper border-rule hover:bg-paper-2 hover:text-ink',
+                    )}
+                  >
+                    {xrayCopied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy report</>}
+                  </button>
+                </div>
+              )}
 
               {/* LLM Probe Results — What AI knows about your site */}
               {llmProbeResults.length > 0 && (
@@ -2709,8 +2784,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="rounded-xl border border-rule bg-card overflow-hidden max-w-3xl mx-auto">
-              <div className="flex flex-wrap justify-center gap-2.5 p-5">
+            <div className="rounded-xl border border-rule bg-card overflow-hidden">
+              <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                <Download size={14} className="text-signal" />
+                <h3 className="text-sm font-heading font-semibold text-ink">Actions</h3>
+              </div>
+              <div className="flex flex-wrap gap-2.5 px-5 py-4">
                 <a
                   href={`/api/reports/${auditId}/pdf`}
                   target="_blank"
@@ -2735,7 +2814,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </Link>
                 <Link
                   href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
-                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-signal border border-signal/30 rounded-lg px-4 py-2.5 hover:bg-signal/5 transition-colors whitespace-nowrap"
+                  className="flex items-center justify-center gap-2 text-[13px] font-semibold text-signal bg-signal/5 border border-signal/20 rounded-lg px-4 py-2.5 hover:bg-signal/10 transition-colors whitespace-nowrap"
                 >
                   <Search size={14} strokeWidth={2} /> Dig deeper
                 </Link>
@@ -2747,12 +2826,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   {shareCopied ? <><Check size={14} strokeWidth={2} className="text-ok" /> Copied</> : <><Share2 size={14} strokeWidth={2} /> Share</>}
                 </button>
               </div>
-              <p className="text-center text-[11px] text-m-muted mt-3">1 credit per audit</p>
-              {shareUrl && (
-                <p className="text-center text-[11px] text-m-muted mt-1">
-                  Share link: <span className="font-mono text-signal">{shareUrl}</span>
-                </p>
-              )}
+              <div className="px-5 py-3 border-t border-rule/30 bg-paper-2/30">
+                <p className="text-[11px] text-m-muted">1 credit per audit</p>
+                {shareUrl && (
+                  <p className="text-[11px] text-m-muted mt-0.5">
+                    Share link: <span className="font-mono text-signal">{shareUrl}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </>
