@@ -1065,7 +1065,7 @@ function PillarSection({
                 </div>
                 <div className="space-y-2">
                   {sorted.map((finding) => (
-                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} pillarName={pillar.name} pillarIndex={pillarIndex} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
+                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} pillarName={pillar.name} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
                   ))}
                 </div>
               </div>
