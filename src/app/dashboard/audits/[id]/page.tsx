@@ -2050,7 +2050,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
-                <div className="mb-6 p-5 rounded-xl border border-signal/20 bg-signal/5">
+                <div className="mb-6 p-5 rounded-xl border border-rule bg-card">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-signal">
                       <Zap size={14} className="text-paper" />
@@ -2072,7 +2072,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Executive Summary */}
               {report.executive_summary && (
-                <div className="rounded-lg border border-rule/30 bg-paper p-6 mb-6">
+                <div className="rounded-xl border border-rule bg-card p-6 mb-6">
                   <h2 className="font-sans font-medium text-lg text-ink mb-3">{getReportLabels(auditLang).executiveSummary}</h2>
                   <div className="text-m-muted text-sm leading-relaxed whitespace-pre-line">
                     {report.executive_summary}
@@ -2234,43 +2234,56 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto">
-              <a
-                href={`/api/reports/${auditId}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
-              >
-                <Download size={14} /> PDF Report
-              </a>
-              <a
-                href={`/api/reports/${auditId}/docx`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
-              >
-                <Download size={14} /> Word Report
-              </a>
-              <Link
-                href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors whitespace-nowrap"
-              >
-                <RefreshCw size={14} /> Re-audit
-              </Link>
-              <button
-                onClick={handleShare}
-                disabled={shareLoading}
-                className="flex items-center justify-center gap-2 bg-paper border border-rule text-ink text-sm font-medium px-5 py-3 rounded-xl hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
-              >
-                {shareCopied ? <><Check size={14} className="text-ok" /> Copied</> : <><Share2 size={14} /> Share</>}
-              </button>
+            <div className="rounded-xl border border-rule bg-card p-5 max-w-3xl mx-auto">
+              <div className="flex flex-wrap justify-center gap-2.5">
+                <a
+                  href={`/api/reports/${auditId}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                >
+                  <Download size={14} strokeWidth={2} /> PDF Report
+                </a>
+                <a
+                  href={`/api/reports/${auditId}/docx`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                >
+                  <Download size={14} strokeWidth={2} /> Word Report
+                </a>
+                <Link
+                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                >
+                  <RefreshCw size={14} strokeWidth={2} /> Re-audit
+                </Link>
+                <Link
+                  href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
+                  className="flex items-center justify-center gap-2 border border-signal/30 rounded-lg px-4 py-2.5 hover:bg-signal/5 transition-colors whitespace-nowrap"
+                  style={{ color: 'var(--signal)', fontSize: '13px', fontWeight: 600 }}
+                >
+                  <Search size={14} strokeWidth={2} /> Dig deeper
+                </Link>
+                <button
+                  onClick={handleShare}
+                  disabled={shareLoading}
+                  className="flex items-center justify-center gap-2 bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
+                  style={{ color: 'var(--ink)', fontSize: '13px', fontWeight: 600 }}
+                >
+                  {shareCopied ? <><Check size={14} strokeWidth={2} className="text-ok" /> Copied</> : <><Share2 size={14} strokeWidth={2} /> Share</>}
+                </button>
+              </div>
+              <p className="text-center text-[11px] text-m-muted mt-3">1 credit per audit</p>
+              {shareUrl && (
+                <p className="text-center text-[11px] text-m-muted mt-1">
+                  Share link: <span className="font-mono text-signal">{shareUrl}</span>
+                </p>
+              )}
             </div>
-            <p className="text-center text-[11px] text-m-muted mt-2">1 credit per audit</p>
-            {shareUrl && (
-              <p className="text-center text-[11px] text-m-muted">
-                Share link: <span className="font-mono text-signal">{shareUrl}</span>
-              </p>
-            )}
           </div>
         </>
       )}
