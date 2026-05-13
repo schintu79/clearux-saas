@@ -59,9 +59,9 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
         {/* Left spacer to align with max-w-mkt */}
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {cards.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[400px] max-sm:w-[320px] snap-start border border-rule rounded-xl overflow-hidden bg-paper hover:border-signal/30 transition-colors group">
+          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors group">
             {/* Visual area */}
-            <div className="h-[280px] border-b border-rule bg-white p-6 flex items-center justify-center overflow-hidden">
+            <div className="h-[300px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
               {card.visual}
             </div>
             {/* Text */}
@@ -110,7 +110,7 @@ function MockProbeCard() {
     { q: 'Who founded the company?', grade: 'Correct', color: 'var(--ok)' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper text-left overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg text-left overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 22h6" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">What AI knows about your site</span>
@@ -128,7 +128,7 @@ function MockProbeCard() {
 /* ── AI vs Human panel mockup ── */
 function MockAIvsHuman() {
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="grid grid-cols-2">
         <div className="p-3 border-r border-rule">
           <div className="flex items-center gap-1 mb-1.5">
@@ -158,7 +158,7 @@ function MockReadabilityMap() {
     { path: '/docs', score: 31, color: 'var(--severe)' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><circle cx={12} cy={12} r={10} /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">AI readability by page</span>
@@ -185,7 +185,7 @@ function MockCitationAudit() {
     { page: 'Blog post #3', type: 'Ignored', icon: 'warn', color: 'var(--warn)' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M16 13H8M16 17H8M10 9H8" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">AI citation audit</span>
@@ -214,7 +214,7 @@ function MockModelBenchmark() {
     { name: 'Gemini', score: 74, accurate: 6, partial: 2, wrong: 2 },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><line x1={18} y1={20} x2={18} y2={10} /><line x1={12} y1={20} x2={12} y2={4} /><line x1={6} y1={20} x2={6} y2={14} /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">AI accuracy by model</span>
@@ -247,7 +247,7 @@ function MockModelBenchmark() {
 /* ── Fix Playbook mockup ── */
 function MockFixPlaybook() {
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">Fix playbooks</span>
@@ -276,7 +276,7 @@ function MockFixPlaybook() {
 /* ── Finding Card mockup (3-panel) ── */
 function MockFindingCard() {
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       {/* Header */}
       <div className="px-3 py-2 flex items-center gap-2 border-b border-rule">
         <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full text-severe bg-severe/10">Critical</span>
@@ -312,7 +312,7 @@ function MockCategoryScores() {
     { name: 'SEO Structure', score: 70, dot: '#06B6D4' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="p-4 flex items-center gap-4">
         <MockScoreRing score={68} size={56} color="var(--warn)" />
         <div className="flex-1">
@@ -341,7 +341,7 @@ function MockWellbeingCard() {
     { name: 'Honest pricing display', status: 'pass', severity: '' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#EC4899" strokeWidth={1.5}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">Digital wellbeing</span>
@@ -372,7 +372,7 @@ function MockResponsivenessCard() {
     { name: 'Mobile 375', icon: '.', status: 'fail' },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><rect x={5} y={2} width={14} height={20} rx={2} ry={2} /><line x1={12} y1={18} x2={12.01} y2={18} /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">Responsive check</span>
@@ -402,7 +402,7 @@ function MockBrandAudit() {
     { name: 'Visual consistency', score: 78 },
   ]
   return (
-    <div className="w-full border border-rule rounded-lg bg-paper overflow-hidden" style={{ fontSize: 0 }}>
+    <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
         <span className="text-[10px] font-sans font-semibold text-ink">Brand identity audit</span>
@@ -552,7 +552,7 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
           </div>
           {/* Visual side — larger with white background */}
           <div className={reverse ? 'lg:order-1' : ''}>
-            <div className="space-y-4 bg-white rounded-xl border border-rule p-6">
+            <div className="space-y-4 bg-white/80 rounded-xl border border-rule p-8">
               {visual}
             </div>
           </div>

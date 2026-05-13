@@ -16,7 +16,7 @@ const FINDING_CARDS = [
     title: 'Issue, fix, and impact — at a glance',
     desc: 'Every finding shows the problem, how to fix it, and the business impact. No guesswork, no extra clicks.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
         <div className="px-3 py-2 flex items-center gap-2 border-b border-rule">
           <span className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full text-red-600 bg-red-50">Critical</span>
           <span className="text-[10px] font-semibold text-gray-900 flex-1">CTA button uses vague label</span>
@@ -41,7 +41,7 @@ const FINDING_CARDS = [
     title: 'Two perspectives on every issue',
     desc: 'Each finding shows how AI reads it alongside how a real user experiences it. Fix for both audiences at once.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
         <div className="grid grid-cols-2">
           <div className="p-3 border-r border-rule">
             <div className="flex items-center gap-1 mb-1.5">
@@ -66,7 +66,7 @@ const FINDING_CARDS = [
     title: '6 modules, 96 checkpoints',
     desc: 'Every page scored across usability, accessibility, performance, content, SEO, and AI readiness — in one view.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden p-3" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden p-3" style={{ fontSize: 0 }}>
         <div className="flex items-center gap-3">
           <div className="relative" style={{ width: 48, height: 48 }}>
             <svg width={48} height={48} className="-rotate-90">
@@ -101,7 +101,7 @@ const FINDING_CARDS = [
     title: 'Copy-paste fixes you can ship today',
     desc: 'Ready-to-use JSON-LD, meta tags, and code snippets. Paste them in, re-audit, and watch your score climb.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
         <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
           <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth={1.5}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           <span className="text-[10px] font-semibold text-gray-900">Fix playbooks</span>
@@ -128,7 +128,7 @@ const FINDING_CARDS = [
     title: 'Cross-check your brand vs. live site',
     desc: 'Upload guidelines, we compare them against what is deployed. Spot every mismatch in logo, colors, tone, and typography.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden p-3 space-y-2" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden p-3 space-y-2" style={{ fontSize: 0 }}>
         {[
           { name: 'Logo usage', s: 88 },
           { name: 'Color system', s: 72 },
@@ -156,7 +156,7 @@ const FINDING_CARDS = [
     title: 'Professional reports, ready to share',
     desc: 'Download PDF or Word reports. Share a link with no login required. Copy findings into Jira, Notion, or Slack.',
     visual: (
-      <div className="w-full border border-rule rounded-lg bg-white overflow-hidden" style={{ fontSize: 0 }}>
+      <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
         {[
           { name: 'PDF report', icon: 'pdf', status: 'Ready' },
           { name: 'Word document', icon: 'doc', status: 'Ready' },
@@ -267,24 +267,14 @@ export function FindingAnatomy() {
           </div>
         </div>
 
-        {/* Scrolling highlight cards */}
-        <div className="flex items-end justify-between gap-6 mb-10 max-sm:mb-6 max-sm:flex-col max-sm:items-start">
-          <div>
-            <h3 className="font-serif font-normal text-ink leading-[1.05] tracking-[-0.02em] mb-3" style={{ fontSize: 'clamp(28px, 4vw, 44px)' }}>
-              Everything in <em className="italic text-signal">your report.</em>
-            </h3>
-            <p className="text-[15px] leading-[1.55] font-sans max-w-[500px] text-ink-2">
-              From severity-ranked findings to copy-paste fixes and shareable reports — scroll to see what ClearUX delivers.
-            </p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll left">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll right">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-          </div>
+        {/* Scroll arrows */}
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll left">
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll right">
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 18l6-6-6-6" /></svg>
+          </button>
         </div>
       </div>
 
@@ -292,8 +282,8 @@ export function FindingAnatomy() {
       <div ref={scrollRef} className="flex gap-5 overflow-x-auto px-8 max-sm:px-5 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {FINDING_CARDS.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[400px] max-sm:w-[320px] snap-start border border-rule rounded-xl overflow-hidden bg-paper hover:border-signal/30 transition-colors">
-            <div className="h-[200px] border-b border-rule bg-white p-5 flex items-center justify-center overflow-hidden">
+          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors">
+            <div className="h-[260px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
               {card.visual}
             </div>
             <div className="p-5">

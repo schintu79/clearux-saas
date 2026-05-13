@@ -243,24 +243,14 @@ export function HumanExperience() {
           ))}
         </div>
 
-        {/* Scrolling highlight cards */}
-        <div className="flex items-end justify-between gap-6 mb-10 max-sm:mb-6 max-sm:flex-col max-sm:items-start">
-          <div>
-            <h3 className="font-serif font-normal leading-[1.05] tracking-[-0.02em] mb-3" style={{ fontSize: 'clamp(28px, 4vw, 44px)', color: isDark ? 'var(--ink)' : '#ffffff' }}>
-              What we check for <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>every user.</em>
-            </h3>
-            <p className="text-[15px] leading-[1.55] font-sans max-w-[500px]" style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.5)' }}>
-              Scroll to see the human experience checks built into every ClearUX audit.
-            </p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: `1px solid ${borderColor}`, color: isDark ? 'var(--ink)' : '#fff' }} aria-label="Scroll left">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: `1px solid ${borderColor}`, color: isDark ? 'var(--ink)' : '#fff' }} aria-label="Scroll right">
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-          </div>
+        {/* Scroll arrows */}
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: `1px solid ${borderColor}`, color: isDark ? 'var(--ink)' : '#fff' }} aria-label="Scroll left">
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: `1px solid ${borderColor}`, color: isDark ? 'var(--ink)' : '#fff' }} aria-label="Scroll right">
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 18l6-6-6-6" /></svg>
+          </button>
         </div>
       </div>
 
@@ -268,8 +258,8 @@ export function HumanExperience() {
       <div ref={scrollRef} className="flex gap-5 overflow-x-auto px-8 max-sm:px-5 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
         <div className="flex-shrink-0" style={{ width: 'max(0px, calc((100vw - 1200px) / 2 - 32px))' }} />
         {HX_CARDS.map((card, i) => (
-          <div key={i} className="flex-shrink-0 w-[400px] max-sm:w-[320px] snap-start rounded-xl overflow-hidden transition-colors" style={{ border: `1px solid ${borderColor}`, background: isDark ? 'var(--paper-2)' : 'rgba(255,255,255,0.05)' }}>
-            <div className="h-[200px] p-5 flex items-center justify-center overflow-hidden" style={{ borderBottom: `1px solid ${borderColor}`, background: isDark ? 'var(--paper)' : 'rgba(255,255,255,0.03)' }}>
+          <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start rounded-xl overflow-hidden transition-colors" style={{ border: `1px solid ${borderColor}`, background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)' }}>
+            <div className="h-[260px] p-6 flex items-center justify-center overflow-hidden" style={{ borderBottom: `1px solid ${borderColor}` }}>
               {card.visual}
             </div>
             <div className="p-5">
