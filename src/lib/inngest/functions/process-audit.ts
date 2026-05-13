@@ -656,9 +656,9 @@ export const processAuditFn = inngest.createFunction(
         let domain = ''
         try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
 
-        // Check AI discovery files from crawl
-        const hasLlmsTxt = crawlResult.pageContent.includes('llms.txt')
-        const hasAiPlugin = crawlResult.pageContent.includes('ai-plugin')
+        // Check AI discovery files from probe results (not string matching)
+        const hasLlmsTxt = aiDiscovery.result?.summary?.hasLlmsTxt ?? false
+        const hasAiPlugin = aiDiscovery.result?.summary?.hasAiPlugin ?? false
 
         const snippets = generateFixPlaybooks({
           domain,
@@ -669,7 +669,7 @@ export const processAuditFn = inngest.createFunction(
           hasStructuredData: sdTypes.length > 0,
           structuredDataTypes: sdTypes,
           hasLlmsTxt,
-          hasRobotsTxt: true, // assume exists — we can check more precisely
+          hasRobotsTxt: aiDiscovery.result?.robotsAI?.hasRobotsTxt ?? false,
           hasAiPlugin,
         })
 

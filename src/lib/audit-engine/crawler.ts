@@ -156,15 +156,26 @@ function extractHeadTags(html: string): HeadTagData {
   // JSON-LD structured data
   const jsonLd: Array<Record<string, unknown>> = []
   const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+
+  const addItem = (item: Record<string, unknown>) => {
+    jsonLd.push(item)
+    // Flatten @graph arrays so individual types (Organization, WebSite, etc.) are discoverable
+    if (Array.isArray(item['@graph'])) {
+      for (const graphItem of item['@graph']) {
+        if (graphItem && typeof graphItem === 'object') jsonLd.push(graphItem as Record<string, unknown>)
+      }
+    }
+  }
+
   while ((m = jsonLdRegex.exec(html)) !== null) {
     try {
       const parsed = JSON.parse(m[1])
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
-          if (item && typeof item === 'object') jsonLd.push(item as Record<string, unknown>)
+          if (item && typeof item === 'object') addItem(item as Record<string, unknown>)
         }
       } else if (parsed && typeof parsed === 'object') {
-        jsonLd.push(parsed as Record<string, unknown>)
+        addItem(parsed as Record<string, unknown>)
       }
     } catch {
       // Invalid JSON-LD — skip
