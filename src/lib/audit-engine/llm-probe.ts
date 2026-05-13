@@ -111,7 +111,7 @@ export async function runLlmProbe(
   timeoutMs: number = 60_000,
 ): Promise<LlmProbeSession> {
   const client = getClient()
-  const modelUsed = 'claude-haiku-4-5-20241022'
+  const modelUsed = 'claude-haiku-4-5-20251001'
 
   // Phase 1: Ask all questions concurrently (no site context — testing what AI "knows")
   const askPromises = PROBE_QUESTIONS.map(async (q) => {
