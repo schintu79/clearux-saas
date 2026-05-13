@@ -473,7 +473,7 @@ function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUr
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
   return (
-    <div className="mb-6 border border-rule overflow-hidden bg-paper">
+    <div className="mb-6 border border-rule overflow-hidden bg-white">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -655,7 +655,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={tint ? { background: tint.bg, border: `1px solid ${tint.border}` } : { background: 'var(--card)', border: '1px solid var(--rule)' }}
+      style={tint ? { background: tint.bg, border: `1px solid ${tint.border}` } : { background: '#ffffff', border: '1px solid var(--rule)' }}
     >
       {/* Header — always visible */}
       <div className="flex items-start gap-3 p-4">
@@ -1095,7 +1095,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray' | 'intelligence'>('overview');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1919,7 +1919,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isCompleted && report && (
         <>
           {/* ── Hero Score Card ─────────────────────────────── */}
-          <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-paper">
+          <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-white">
             <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -2037,19 +2037,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="mb-8 border-b border-rule/40">
             <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
-              {(['overview', 'findings', 'pages', 'ai_xray'] as const).map((tab) => {
+              {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
-                  : 'AI X-Ray';
+                  : tab === 'ai_xray' ? 'AI X-Ray'
+                  : 'Intelligence';
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
                   : tab === 'pages' ? Globe
-                  : Brain;
+                  : tab === 'ai_xray' ? Brain
+                  : Sparkles;
                 return (
                   <button
                     key={tab}
@@ -2468,7 +2470,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-6">
 
               {/* Copy AI Report button — generates plain text summary for devs */}
-              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0 || intelligenceData?.modelProbes?.length > 0 || intelligenceData?.recommendations?.length > 0) && (
+              {(llmProbeResults.length > 0 || aiCitations.length > 0 || fixPlaybooks.length > 0) && (
                 <div className="flex justify-end">
                   <button
                     onClick={() => {
@@ -2497,21 +2499,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           lines.push(pb.code_snippet);
                           lines.push('```\n');
                         }
-                      }
-                      if (intelligenceData?.modelProbes?.length > 0) {
-                        lines.push('## Multi-model AI benchmark\n');
-                        for (const p of intelligenceData.modelProbes as any[]) {
-                          lines.push(`${p.model_label}: ${p.accuracy_score}% (${p.accurate_count} accurate, ${p.partial_count} partial, ${p.inaccurate_count} wrong)`);
-                        }
-                        lines.push('');
-                      }
-                      if (intelligenceData?.recommendations?.length > 0) {
-                        lines.push('## Predictive recommendations\n');
-                        for (const rec of intelligenceData.recommendations as any[]) {
-                          lines.push(`[+${rec.predicted_impact}] ${rec.action} (${rec.confidence} confidence)`);
-                          if (rec.evidence) lines.push(`  ${rec.evidence}`);
-                        }
-                        lines.push('');
                       }
                       navigator.clipboard.writeText(lines.join('\n'));
                       setXrayCopied(true);
@@ -2644,46 +2631,88 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* ── Intelligence: Model benchmark ── */}
+              {/* Empty state */}
+              {llmProbeResults.length === 0 && aiCitations.length === 0 && fixPlaybooks.length === 0 && (
+                <div className="text-center py-12">
+                  <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
+                  <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
+                  <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, and fix playbooks.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════
+              INTELLIGENCE TAB
+              ═══════════════════════════════════════════════════════ */}
+          {activeTab === 'intelligence' && (
+            <div className="space-y-6">
+
+              {/* Intro explanation */}
+              <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                  <Sparkles size={16} className="text-signal" />
+                  <h3 className="text-sm font-heading font-semibold text-ink">How AI models represent your site</h3>
+                </div>
+                <div className="px-5 py-4">
+                  <p className="text-[13px] text-m-muted leading-relaxed">
+                    We asked leading AI models factual questions about your site and graded their answers against your actual content. This reveals how accurately AI understands your brand, products, and messaging — and where it gets things wrong.
+                  </p>
+                </div>
+              </div>
+
+              {/* Model benchmark comparison */}
               {intelligenceData?.modelProbes?.length > 0 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <BarChart3 size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Multi-model AI benchmark</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} {intelligenceData.modelProbes.length === 1 ? 'model' : 'models'}</span>
+                    <h3 className="text-sm font-heading font-semibold text-ink">AI accuracy by model</h3>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} {intelligenceData.modelProbes.length === 1 ? 'model tested' : 'models tested'}</span>
                   </div>
                   <div className="p-5">
+                    {intelligenceData.modelProbes.length === 1 && (
+                      <div className="flex items-start gap-2.5 mb-4 p-3 rounded-lg bg-warn/5 border border-warn/15">
+                        <AlertTriangle size={14} className="text-warn flex-shrink-0 mt-0.5" />
+                        <p className="text-[12px] text-m-muted leading-relaxed">
+                          Only one AI model was tested. To compare how different models represent your site, configure <span className="font-semibold text-ink">OPENAI_API_KEY</span> and <span className="font-semibold text-ink">GOOGLE_AI_API_KEY</span> in your environment. More models give a fuller picture of your AI visibility.
+                        </p>
+                      </div>
+                    )}
                     {intelligenceData.modelBenchmarks?.insight && (
                       <p className="text-[13px] text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
                     )}
                     <div className="grid gap-3 sm:grid-cols-3">
                       {intelligenceData.modelProbes.map((probe: any) => {
                         const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
+                        const scBg = probe.accuracy_score >= 70 ? 'bg-ok/5' : probe.accuracy_score >= 40 ? 'bg-warn/5' : 'bg-severe/5';
                         return (
                           <div key={probe.id} className="rounded-xl border border-rule bg-paper p-4">
-                            <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center justify-between mb-3">
                               <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
-                              <span className={`text-lg font-bold ${sc}`}>{probe.accuracy_score}%</span>
+                              <span className={`text-lg font-bold px-2 py-0.5 rounded-lg ${sc} ${scBg}`}>{probe.accuracy_score}%</span>
                             </div>
-                            <div className="flex gap-2 text-[10px] font-medium">
-                              <span className="text-ok">{probe.accurate_count} accurate</span>
+                            <div className="w-full h-1.5 rounded-full bg-paper-2 mb-3">
+                              <div className={`h-full rounded-full transition-all ${probe.accuracy_score >= 70 ? '[background:var(--ok)]' : probe.accuracy_score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${probe.accuracy_score}%` }} />
+                            </div>
+                            <div className="flex gap-3 text-[11px] font-medium">
+                              <span className="text-ok">{probe.accurate_count} correct</span>
                               <span className="text-warn">{probe.partial_count} partial</span>
                               <span className="text-severe">{probe.inaccurate_count} wrong</span>
                             </div>
                             {probe.results_json?.length > 0 && (
                               <details className="mt-3">
-                                <summary className="text-[10px] text-m-muted cursor-pointer hover:text-ink">Show answers</summary>
-                                <div className="mt-2 space-y-2">
+                                <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
+                                <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
                                   {probe.results_json.map((r: any, j: number) => (
                                     <div key={j} className="text-xs">
-                                      <p className="text-m-muted font-medium">{r.question}</p>
-                                      <p className="text-ink/70 mt-0.5 line-clamp-3">{r.answer}</p>
-                                      <span className={`inline-block mt-0.5 text-[10px] font-semibold ${
-                                        r.accuracy === 'accurate' ? 'text-ok'
-                                          : r.accuracy === 'partial' ? 'text-warn'
-                                            : r.accuracy === 'hallucinated' ? 'text-severe'
-                                              : 'text-m-muted'
-                                      }`}>{r.accuracy}</span>
+                                      <p className="font-medium text-ink">{r.question}</p>
+                                      <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
+                                      <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                        r.accuracy === 'accurate' ? 'text-ok bg-ok/10'
+                                          : r.accuracy === 'partial' ? 'text-warn bg-warn/10'
+                                            : r.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
+                                              : 'text-m-muted bg-paper-2'
+                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Hallucinated' : r.accuracy || 'Pending'}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -2693,27 +2722,32 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         );
                       })}
                     </div>
+                    <div className="mt-4 p-3 rounded-lg bg-paper-2/50 border border-rule/20">
+                      <p className="text-[11px] text-m-muted leading-relaxed">
+                        <span className="font-semibold text-ink">Why this matters:</span> When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* ── Intelligence: Industry benchmark ── */}
+              {/* Industry benchmark */}
               {intelligenceData?.benchmarkPosition && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <TrendingUp size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Industry AI visibility index</h3>
+                    <h3 className="text-sm font-heading font-semibold text-ink">How you compare to your industry</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.industry}</span>
                   </div>
                   <div className="p-5">
                     <div className="grid gap-3 sm:grid-cols-3 mb-4">
                       <div className="text-center p-4 rounded-xl bg-paper border border-rule">
-                        <div className="text-2xl font-bold text-ink">{intelligenceData.benchmarkPosition.userScore}</div>
-                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Your score</div>
+                        <div className={`text-2xl font-bold ${scoreColor(intelligenceData.benchmarkPosition.userScore)}`}>{intelligenceData.benchmarkPosition.userScore}</div>
+                        <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-paper border border-rule">
                         <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
-                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Industry average</div>
+                        <div className="text-[11px] font-medium text-m-muted mt-1">Industry average</div>
                       </div>
                       <div className="text-center p-4 rounded-xl bg-paper border border-rule">
                         <div className={`text-2xl font-bold ${
@@ -2721,42 +2755,49 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-warn'
                               : 'text-severe'
                         }`}>{intelligenceData.benchmarkPosition.rankLabel}</div>
-                        <div className="text-[10px] font-medium text-m-muted mt-1 uppercase tracking-[0.04em]">Your ranking</div>
+                        <div className="text-[11px] font-medium text-m-muted mt-1">Your ranking</div>
                       </div>
                     </div>
                     <p className="text-[13px] text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
                     {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (
-                      <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites</p>
+                      <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites in {intelligenceData.industry}</p>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* ── Intelligence: Predictive recommendations ── */}
+              {/* Actionable recommendations */}
               {intelligenceData?.recommendations?.length > 0 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <Lightbulb size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Predictive recommendations</h3>
+                    <h3 className="text-sm font-heading font-semibold text-ink">What to improve next</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
+                  </div>
+                  <div className="px-5 py-3 border-b border-rule/20 bg-paper-2/30">
+                    <p className="text-[11px] text-m-muted leading-relaxed">
+                      Based on patterns from other audits, these actions are most likely to improve your score. Higher impact actions are listed first.
+                    </p>
                   </div>
                   <div className="divide-y divide-rule/30">
                     {intelligenceData.recommendations.map((rec: any, i: number) => {
-                      const confColor = rec.confidence === 'high' ? 'bg-ok/10 text-ok' : rec.confidence === 'medium' ? 'bg-warn/10 text-warn' : 'bg-paper-2 text-m-muted';
+                      const confColor = rec.confidence === 'high' ? 'bg-ok/10 text-ok border-ok/20' : rec.confidence === 'medium' ? 'bg-warn/10 text-warn border-warn/20' : 'bg-paper-2 text-m-muted border-rule';
                       return (
                         <div key={rec.id || i} className="px-5 py-4">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-signal/10">
-                              <span className="text-sm font-bold text-signal">+{rec.predicted_impact}</span>
+                            <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-ok/10 border border-ok/20">
+                              <span className="text-sm font-bold text-ok">+{rec.predicted_impact}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-medium text-ink">{rec.action}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${confColor}`}>{rec.confidence}</span>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${confColor}`}>
+                                  {rec.confidence === 'high' ? 'High confidence' : rec.confidence === 'medium' ? 'Medium confidence' : 'Low confidence'}
+                                </span>
                                 <span className="text-[10px] text-m-muted">{rec.category}</span>
                               </div>
                               {rec.evidence && (
-                                <p className="text-[11px] text-m-muted/70 mt-1.5 leading-relaxed">{rec.evidence}</p>
+                                <p className="text-[12px] text-m-muted mt-2 leading-relaxed">{rec.evidence}</p>
                               )}
                             </div>
                           </div>
@@ -2768,12 +2809,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               )}
 
               {/* Empty state */}
-              {llmProbeResults.length === 0 && aiCitations.length === 0 && fixPlaybooks.length === 0 &&
-                (!intelligenceData?.modelProbes?.length) && (!intelligenceData?.recommendations?.length) && !intelligenceData?.benchmarkPosition && (
+              {(!intelligenceData || (
+                (!intelligenceData.modelProbes || intelligenceData.modelProbes.length === 0) &&
+                (!intelligenceData.recommendations || intelligenceData.recommendations.length === 0) &&
+                !intelligenceData.benchmarkPosition
+              )) && (
                 <div className="text-center py-12">
-                  <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
-                  <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
-                  <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, fix playbooks, and AI benchmarks.</p>
+                  <Sparkles size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
+                  <p className="text-sm text-m-muted">Intelligence data will appear here after your next audit.</p>
+                  <p className="text-xs text-m-muted/60 mt-1">Compares how AI models represent your site, benchmarks you against your industry, and suggests what to fix first.</p>
                 </div>
               )}
             </div>
@@ -2781,7 +2825,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="rounded-xl border border-rule bg-card overflow-hidden">
+            <div className="rounded-xl border border-rule bg-white overflow-hidden">
               <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                 <Download size={14} className="text-signal" />
                 <h3 className="text-sm font-heading font-semibold text-ink">Actions</h3>
