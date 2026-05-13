@@ -32,13 +32,25 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const { user, profile, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
+  const [creditData, setCreditData] = useState<{
+    credits: number;
+    subscription_plan: string | null;
+    subscription_status: string | null;
+    audits_remaining: number;
+    audits_per_month: number;
+  } | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     const load = () => {
-      fetch('/api/credits').then((r) => r.json()).then((d) => setCredits(d.credits ?? 0)).catch(() => {});
+      fetch('/api/credits').then((r) => r.json()).then((d) => setCreditData({
+        credits: d.credits ?? 0,
+        subscription_plan: d.subscription_plan ?? null,
+        subscription_status: d.subscription_status ?? null,
+        audits_remaining: d.audits_remaining ?? 0,
+        audits_per_month: d.audits_per_month ?? 0,
+      })).catch(() => {});
       fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
     };
     load();
@@ -46,6 +58,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [user]);
+
+  // Derived plan info
+  const credits = creditData?.credits ?? 0;
+  const planName = creditData?.subscription_plan
+    ? creditData.subscription_plan.charAt(0).toUpperCase() + creditData.subscription_plan.slice(1)
+    : 'Free';
+  const isSubscribed = creditData?.subscription_status === 'active' && creditData?.subscription_plan;
+  const auditsRemaining = creditData?.audits_remaining ?? 0;
+  const auditsPerMonth = creditData?.audits_per_month ?? 0;
+  const totalAvailable = isSubscribed ? auditsRemaining + credits : credits;
+  const usagePercent = isSubscribed && auditsPerMonth > 0
+    ? Math.round((auditsRemaining / auditsPerMonth) * 100)
+    : 0;
 
   const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -160,33 +185,84 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </ul>
         </nav>
 
-        {/* Credit balance */}
-        {credits !== null && !collapsed && (
+        {/* Plan & credits card */}
+        {creditData && !collapsed && (
           <div className="mx-3 mb-2">
-            <div className="rounded-lg px-3 py-2.5" style={{ background: 'var(--paper-2)' }}>
-              <div className="flex items-center justify-between">
-                <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Credits</span>
-                <span className="text-[13px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>{credits}</span>
+            <div className="rounded-lg px-3 py-3" style={{ background: 'var(--paper-2)' }}>
+              {/* Plan badge */}
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-[0.06em] px-1.5 py-[2px] rounded"
+                  style={{
+                    background: isSubscribed ? 'var(--ink)' : 'var(--rule)',
+                    color: isSubscribed ? 'var(--paper)' : 'var(--m-muted)',
+                  }}
+                >
+                  {planName}
+                </span>
+                {isSubscribed && (
+                  <span className="text-[10px]" style={{ color: 'var(--ok)' }}>Active</span>
+                )}
               </div>
+
+              {/* Usage bar */}
+              {isSubscribed && auditsPerMonth > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                      Monthly audits
+                    </span>
+                    <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
+                      {auditsRemaining}/{auditsPerMonth}
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--rule)' }}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${usagePercent}%`,
+                        background: usagePercent > 20 ? 'var(--ink)' : 'var(--warn)',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Credits balance */}
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                  {isSubscribed ? 'Extra credits' : 'Credits'}
+                </span>
+                <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
+                  {credits}
+                </span>
+              </div>
+
+              {/* CTA */}
               <Link
-                href="/dashboard/buy-credits"
-                className="block text-center text-[11px] font-medium rounded-md py-1.5 mt-2 transition-all"
-                style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+                href="/pricing"
+                className="block text-center text-[11px] font-medium rounded-md py-1.5 transition-all"
+                style={
+                  isSubscribed
+                    ? { color: 'var(--m-muted)', border: '1px solid var(--rule)' }
+                    : { background: 'var(--ink)', color: 'var(--paper)' }
+                }
               >
-                {credits === 0 ? 'Buy credits' : 'Buy more'}
+                {isSubscribed ? 'Go to plans' : 'Upgrade plan'}
               </Link>
             </div>
           </div>
         )}
-        {credits !== null && collapsed && (
+        {creditData && collapsed && (
           <div className="mx-1.5 mb-2">
             <Link
-              href="/dashboard/buy-credits"
-              title={`${credits} credits`}
-              className="flex items-center justify-center w-full py-2 rounded-lg text-[11px] font-medium tabular-nums"
+              href="/pricing"
+              title={`${planName} plan · ${totalAvailable} available`}
+              className="flex flex-col items-center justify-center w-full py-2 gap-0.5 rounded-lg text-[11px] font-medium tabular-nums"
               style={{ background: 'var(--paper-2)', color: 'var(--ink)' }}
             >
-              {credits}
+              <Coins size={14} strokeWidth={1.5} style={{ color: 'var(--m-muted)' }} />
+              <span>{totalAvailable}</span>
             </Link>
           </div>
         )}
