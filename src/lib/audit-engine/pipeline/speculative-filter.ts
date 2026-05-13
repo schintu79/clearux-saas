@@ -68,10 +68,12 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   // CSS-dependent
   /missing\s+(?:focus|:focus)\s+(?:indicator|state|style|ring)/i,
   /(?:focus|keyboard)\s+(?:indicator|navigation|state).*(?:missing|absent|lack)/i,
-  /touch\s+target\s+size/i,
+  // REMOVED: touch target size IS a valid Inclusive Design concern (modules 8-11)
+  // /touch\s+target\s+size/i,
   /color\s+contrast\s+(?:ratio|issue|fail)/i,
   /(?:font|text)\s+size\s+(?:too\s+)?(?:small|large)/i,
-  /responsive\s+design.*(?:unverified|cannot|missing)/i,
+  // REMOVED: responsive design IS a valid Future Readiness concern (modules 12-15)
+  // /responsive\s+design.*(?:unverified|cannot|missing)/i,
   /(?:line[\s-]?height|letter[\s-]?spacing)\s+(?:issue|missing|incorrect)/i,
   /(?:css|typography)\s+audit/i,
   /(?:font[\s-]?size|line[\s-]?height|line[\s-]?length|text[\s-]?size)\s+(?:below|above|not|does\s+not)/i,
@@ -84,13 +86,15 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /lang\s+attribute\s+(?:missing|absent|not\s+set|not\s+declared)/i,
   /(?:missing|no|absent|lacks?)\s+(?:html\s+)?lang(?:uage)?\s+(?:attribute|declaration|tag)/i,
   /(?:missing|lacks?)\s+(?:aria|autocomplete|htmlfor|for=)/i,
-  /(?:missing|lacks?)\s+(?:form\s+)?(?:label|labeling|labelling)\s+(?:attribute|association)/i,
+  // REMOVED: form label/labeling IS a valid Inclusive Design concern (modules 8-11)
+  // /(?:missing|lacks?)\s+(?:form\s+)?(?:label|labeling|labelling)\s+(?:attribute|association)/i,
   /(?:missing|lacks?)\s+(?:input|form)\s+(?:attribute|type)/i,
   /(?:missing|lacks?)\s+hreflang/i,
 
   // Meta/head-dependent
   /missing\s+(?:og|open\s*graph|twitter\s*card|meta)\s+tags?/i,
-  /missing\s+(?:json-?ld|schema\.?org|structured\s+data|breadcrumb\s*list\s*schema)/i,
+  // REMOVED: structured data/JSON-LD IS a valid SEO/Future Readiness concern (modules 12-15)
+  // /missing\s+(?:json-?ld|schema\.?org|structured\s+data|breadcrumb\s*list\s*schema)/i,
   /missing\s+canonical\s+(?:url|tag)/i,
   /missing\s+(?:favicon|manifest)/i,
 
@@ -104,9 +108,11 @@ export const UNVERIFIABLE_TOPICS: RegExp[] = [
   /no\s+(?:robots\.?txt|sitemap\.?xml)\s+(?:found|detected|present|configured)/i,
 
   // JavaScript-dependent
-  /(?:missing|lacks?|no)\s+(?:form\s+)?(?:validation|error\s+(?:message|handling|feedback))/i,
-  /(?:missing|lacks?|no)\s+(?:success|confirmation)\s+(?:state|message|feedback)/i,
-  /(?:missing|lacks?|no)\s+(?:loading|spinner|skeleton)\s+(?:state|indicator)/i,
+  // REMOVED: form validation, success/confirmation, and loading states ARE valid findings
+  // for Inclusive Design and Future Readiness modules (8-15)
+  // /(?:missing|lacks?|no)\s+(?:form\s+)?(?:validation|error\s+(?:message|handling|feedback))/i,
+  // /(?:missing|lacks?|no)\s+(?:success|confirmation)\s+(?:state|message|feedback)/i,
+  // /(?:missing|lacks?|no)\s+(?:loading|spinner|skeleton)\s+(?:state|indicator)/i,
 ]
 
 // ── Public API ───────────────────────────────────────────────

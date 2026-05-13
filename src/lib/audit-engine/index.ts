@@ -9,6 +9,7 @@ import { generatePdfReport } from './pdf'
 import { sendAuditComplete } from './email'
 import { captureAuditScreenshots } from './screenshots'
 import { extractAllBrandFiles } from './brand-file-extractor'
+import { checkResponsiveDesign } from './responsive-checker'
 import type { AuditFinding } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -139,6 +140,51 @@ async function _processAuditInner(auditId: string): Promise<void> {
       .eq('id', auditId)
 
     await log(db, auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
+
+    // 2b. RESPONSIVE CHECK — update audit_pages with mobile-friendly data
+    try {
+      const crawledUrls = crawledPages.map((p) => p.url).filter(Boolean)
+      const maxResponsiveUrls = plan === 'free_preview' ? 1 : 3
+      const responsiveResult = await checkResponsiveDesign(crawledUrls, maxResponsiveUrls)
+
+      // Update audit_pages with mobile-friendly status
+      for (const r of responsiveResult.results) {
+        const mobileIssues = r.viewportIssues.filter((i: any) => i.viewport === 'Mobile').length
+        await db
+          .from('audit_pages')
+          .update({
+            is_mobile_friendly: mobileIssues === 0,
+            viewport_meta: r.hasMobileViewport ? 'width=device-width, initial-scale=1' : null,
+          } as any)
+          .eq('audit_id', auditId)
+          .eq('url', r.url)
+      }
+
+      // Store responsive findings as audit findings
+      let sortOrderResp = 0
+      for (const finding of responsiveResult.findings) {
+        await db.from('audit_findings').insert({
+          audit_id: auditId,
+          checklist_item_id: null,
+          severity: finding.severity,
+          title: finding.title,
+          description: finding.description,
+          evidence: null,
+          page_url: finding.pageUrl || crawledPages[0]?.url || null,
+          recommendation: finding.recommendation,
+          estimated_impact: finding.estimatedImpact || null,
+          target_element: finding.targetElement || null,
+          screenshot_url: null,
+          sort_order: sortOrderResp++,
+        } as any)
+      }
+
+      await log(db, auditId, 'responsive_check_completed', 'success',
+        `Responsive check: ${responsiveResult.findings.length} findings across ${responsiveResult.results.length} page(s)`)
+    } catch (err) {
+      console.error('[audit-engine] Responsive check error (non-fatal):', err)
+      await log(db, auditId, 'responsive_check_error', 'warning', 'Responsive check failed — continuing without mobile data')
+    }
 
     // 3. ANALYSING
     await setStatus(db, auditId, 'analysing')

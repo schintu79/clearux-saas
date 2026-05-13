@@ -38,6 +38,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     subscription_status: string | null;
     audits_remaining: number;
     audits_per_month: number;
+    first_audit_free: boolean;
   } | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
@@ -50,6 +51,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         subscription_status: d.subscription_status ?? null,
         audits_remaining: d.audits_remaining ?? 0,
         audits_per_month: d.audits_per_month ?? 0,
+        first_audit_free: d.first_audit_free ?? false,
       })).catch(() => {});
       fetch('/api/notifications').then((r) => r.json()).then((d) => setUnreadNotifications(d.unreadCount ?? 0)).catch(() => {});
     };
@@ -61,10 +63,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
   // Derived plan info
   const credits = creditData?.credits ?? 0;
-  const planName = creditData?.subscription_plan
-    ? creditData.subscription_plan.charAt(0).toUpperCase() + creditData.subscription_plan.slice(1)
-    : 'Free';
-  const isSubscribed = creditData?.subscription_status === 'active' && creditData?.subscription_plan;
+  const isSubscribed = creditData?.subscription_status === 'active' && !!creditData?.subscription_plan;
+  const isFreeUser = !isSubscribed && credits === 0 && (creditData?.first_audit_free ?? false);
+  const planName = isSubscribed
+    ? creditData!.subscription_plan!.charAt(0).toUpperCase() + creditData!.subscription_plan!.slice(1)
+    : isFreeUser
+      ? 'Free'
+      : 'Credit-based';
   const auditsRemaining = creditData?.audits_remaining ?? 0;
   const auditsPerMonth = creditData?.audits_per_month ?? 0;
   const totalAvailable = isSubscribed ? auditsRemaining + credits : credits;
@@ -188,76 +193,78 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Plan & credits card */}
         {creditData && !collapsed && (
           <div className="mx-3 mb-2">
-            <div className="rounded-lg px-3 py-3" style={{ background: 'var(--paper-2)' }}>
-              {/* Plan badge */}
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-[0.06em] px-1.5 py-[2px] rounded"
-                  style={{
-                    background: isSubscribed ? 'var(--ink)' : 'var(--rule)',
-                    color: isSubscribed ? 'var(--paper)' : 'var(--m-muted)',
-                  }}
-                >
-                  {planName}
-                </span>
-                {isSubscribed && (
-                  <span className="text-[10px]" style={{ color: 'var(--ok)' }}>Active</span>
-                )}
-              </div>
-
-              {/* Usage bar */}
-              {isSubscribed && auditsPerMonth > 0 && (
-                <div className="mb-2">
-                  <div className="flex items-baseline justify-between mb-1">
-                    <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                      Monthly audits
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
+              {/* Plan header */}
+              <div className="px-3 py-2.5" style={{ background: isSubscribed ? 'var(--ink)' : 'var(--paper-2)' }}>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[11px] font-semibold tracking-[-0.01em]"
+                    style={{ color: isSubscribed ? 'var(--paper)' : 'var(--ink)' }}
+                  >
+                    {planName} plan
+                  </span>
+                  {isSubscribed && (
+                    <span className="text-[10px] font-medium px-1.5 py-[1px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)', color: 'var(--paper)' }}>
+                      Active
                     </span>
-                    <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
-                      {auditsRemaining}/{auditsPerMonth}
-                    </span>
-                  </div>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--rule)' }}>
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${usagePercent}%`,
-                        background: usagePercent > 20 ? 'var(--ink)' : 'var(--warn)',
-                      }}
-                    />
-                  </div>
+                  )}
                 </div>
-              )}
-
-              {/* Credits balance */}
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                  {isSubscribed ? 'Extra credits' : 'Credits'}
-                </span>
-                <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
-                  {credits}
-                </span>
               </div>
 
-              {/* CTA */}
-              <Link
-                href="/pricing"
-                className="block text-center text-[11px] font-medium rounded-md py-1.5 transition-all"
-                style={
-                  isSubscribed
-                    ? { color: 'var(--m-muted)', border: '1px solid var(--rule)' }
-                    : { background: 'var(--ink)', color: 'var(--paper)' }
-                }
-              >
-                {isSubscribed ? 'Go to plans' : 'Upgrade plan'}
-              </Link>
+              {/* Card body */}
+              <div className="px-3 py-2.5" style={{ background: 'var(--card)' }}>
+                {/* Subscription usage */}
+                {isSubscribed && auditsPerMonth > 0 && (
+                  <div className="mb-2.5">
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Monthly audits</span>
+                      <span className="text-[12px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
+                        {auditsRemaining}<span style={{ color: 'var(--m-muted)' }}>/{auditsPerMonth}</span>
+                      </span>
+                    </div>
+                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--rule)' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${usagePercent}%`,
+                          background: usagePercent > 20 ? 'var(--ink)' : 'var(--warn)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Credits row */}
+                <div className="flex items-center justify-between" style={isSubscribed && auditsPerMonth > 0 ? { paddingTop: '2px', borderTop: '1px solid var(--rule)' } : undefined}>
+                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                    {isSubscribed ? 'Extra credits' : 'Available credits'}
+                  </span>
+                  <span className="text-[13px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
+                    {credits}
+                  </span>
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href="/dashboard/buy-credits"
+                  className="block text-center text-[11px] font-medium rounded-md py-1.5 mt-2.5 transition-all hover:opacity-90"
+                  style={
+                    isFreeUser
+                      ? { background: 'var(--ink)', color: 'var(--paper)' }
+                      : { color: 'var(--m-muted)', border: '1px solid var(--rule)' }
+                  }
+                >
+                  {isFreeUser ? 'Get started' : isSubscribed ? 'Manage plan' : 'Buy credits'}
+                </Link>
+              </div>
             </div>
           </div>
         )}
         {creditData && collapsed && (
           <div className="mx-1.5 mb-2">
             <Link
-              href="/pricing"
-              title={`${planName} plan · ${totalAvailable} available`}
+              href="/dashboard/buy-credits"
+              title={`${planName} · ${totalAvailable} credits`}
               className="flex flex-col items-center justify-center w-full py-2 gap-0.5 rounded-lg text-[11px] font-medium tabular-nums"
               style={{ background: 'var(--paper-2)', color: 'var(--ink)' }}
             >

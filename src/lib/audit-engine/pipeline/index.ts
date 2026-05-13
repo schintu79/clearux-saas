@@ -113,6 +113,13 @@ export {
 } from './pattern-learner'
 export type { LearnedRule, LearningReport } from './pattern-learner'
 
+// ── Step 8: Minimum Findings Check ──────────────────────────
+export {
+  identifyStarvedCategories,
+  getModuleForCategory,
+} from './minimum-findings'
+export type { CategoryFindingCount } from './minimum-findings'
+
 // ── Step 7: Global Quality Stats ────────────────────────────
 export {
   recordAuditStats,

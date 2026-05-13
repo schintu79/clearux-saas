@@ -358,11 +358,6 @@ function isSpeculativeFinding(f: AnalysisFinding): boolean {
     'unclear whether',
     'unclear if',
     'it is unclear',
-    'may not have',
-    'may not be',
-    'may lack',
-    'might not',
-    'might lack',
     'potentially missing',
     'potentially lacks',
     'possible lack of',
@@ -742,7 +737,9 @@ FINAL SELF-CHECK — Before returning your findings, review each one against the
 
 QUANTITY GUIDELINES (HARD LIMITS):
 - Include 1-3 UNIQUE findings per category. MAXIMUM 3. NEVER more than 3.
-- It's OK to report only 1 finding or even 0 findings if the site excels in this category.
+- If the category score would be below 80, you MUST include at least 2 findings explaining what drags the score down.
+- If the category score would be below 60, you MUST include exactly 3 findings — these are the worst areas.
+- If the site truly excels in a category (score 85+), you may report 0-1 findings.
 - Every finding must be genuinely worth the client's attention and effort to fix.
 - If you can't find real issues, return an EMPTY array []. This is far better than inventing problems.
 - NEVER repeat the same finding with slight rewording. Each finding must address a DISTINCT issue.
