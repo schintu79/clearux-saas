@@ -50,21 +50,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update credits' }, { status: 500 })
     }
 
-    // Log the action in audit_logs with a special admin event
-    await db.from('audit_logs').insert({
-      audit_id: '00000000-0000-0000-0000-000000000000', // system placeholder
-      event: 'admin_credit_adjustment',
-      status: 'info',
-      message: `Admin ${adminUser.email} ${amount > 0 ? 'added' : 'removed'} ${Math.abs(amount)} credits ${amount > 0 ? 'to' : 'from'} ${(profile as any).email}. Reason: ${reason || 'No reason provided'}`,
-      metadata: {
+    // Log the action (non-critical — don't block the response if logging fails)
+    try {
+      await db.from('admin_logs').insert({
         admin_id: adminUser.id,
+        event: 'credit_adjustment',
         target_user_id: user_id,
-        amount,
-        credits_before: currentCredits,
-        credits_after: newCredits,
-        reason: reason || null,
-      },
-    } as any)
+        message: `${amount > 0 ? 'Added' : 'Removed'} ${Math.abs(amount)} credits ${amount > 0 ? 'to' : 'from'} ${(profile as any).email}. Reason: ${reason || 'No reason provided'}`,
+        metadata: {
+          amount,
+          credits_before: currentCredits,
+          credits_after: newCredits,
+          reason: reason || null,
+        },
+      } as any)
+    } catch (logErr) {
+      // admin_logs table may not exist yet — silently continue
+      console.warn('Non-critical: admin log insert failed:', logErr)
+    }
 
     return NextResponse.json({
       success: true,

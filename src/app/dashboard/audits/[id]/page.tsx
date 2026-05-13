@@ -61,6 +61,7 @@ import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScor
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import clsx from 'clsx';
+import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -577,7 +578,7 @@ const FINDING_STATUSES = [
   { key: 'backlog', label: 'Backlog', color: 'text-signal', bg: 'bg-signal/5', dot: 'bg-signal' },
 ] as const;
 
-function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
+function FindingCard({ finding, pillarColor, categoryName, pillarName, sevConfig, onScoreUpdate }: { finding: AuditFinding; pillarColor: string; categoryName?: string; pillarName?: string; sevConfig: ReturnType<typeof buildSeverityConfig>; onScoreUpdate?: () => void }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(finding.status || 'open');
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -693,6 +694,29 @@ function FindingCard({ finding, pillarColor, categoryName, sevConfig, onScoreUpd
             )}
           </div>
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
+          {/* Metadata line — module · category · page */}
+          <div className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase mt-1.5 flex items-center gap-0 flex-wrap">
+            {pillarName && (
+              <>
+                <span>Module: {pillarName}</span>
+                {categoryName && <span className="mx-1.5 opacity-40">·</span>}
+              </>
+            )}
+            {categoryName && (
+              <>
+                <span>Category: {categoryName}</span>
+                {finding.page_url && <span className="mx-1.5 opacity-40">·</span>}
+              </>
+            )}
+            {finding.page_url && (
+              <span>Page: {(() => {
+                try {
+                  const u = new URL(finding.page_url);
+                  return u.pathname + (u.search || '');
+                } catch { return finding.page_url; }
+              })()}</span>
+            )}
+          </div>
         </div>
         <ChevronDown
           size={14}
@@ -893,31 +917,29 @@ function PillarSection({
     : 0;
   const tint = MODULE_TINTS[pillarIndex] || MODULE_TINTS[0];
 
-  // Group findings by approximate category match
+  // Group findings by category using shared keyword matcher
   const findingsByCategory: Record<string, AuditFinding[]> = {};
-  const ungrouped: AuditFinding[] = [];
 
-  for (const f of findings) {
-    let matched = false;
-    for (const cat of pillarCats) {
-      const catWords = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3);
-      const findingText = `${f.title} ${f.description}`.toLowerCase();
-      if (catWords.some(w => findingText.includes(w))) {
-        if (!findingsByCategory[cat.name]) findingsByCategory[cat.name] = [];
-        findingsByCategory[cat.name].push(f);
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) ungrouped.push(f);
-  }
-
-  if (ungrouped.length > 0 && pillarCats.length > 0) {
-    ungrouped.forEach((f, i) => {
-      const catName = pillarCats[i % pillarCats.length].name;
+  if (pillarCats.length > 0) {
+    // Build full category names list for the matcher
+    const allCatNames = categoryScores.map(c => c.name);
+    for (const f of findings) {
+      const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
+      const bestCatIdx = matchFindingToCategory(text, allCatNames);
+      // Find which pillar category this maps to
+      const matchedCat = pillarCats.find((_, relIdx) => {
+        const absIdx = pillar.range[0] + relIdx;
+        return absIdx === bestCatIdx;
+      });
+      const catName = matchedCat?.name || pillarCats[0].name;
       if (!findingsByCategory[catName]) findingsByCategory[catName] = [];
       findingsByCategory[catName].push(f);
-    });
+    }
+  } else {
+    // No category scores for this pillar — group all under a generic key
+    if (findings.length > 0) {
+      findingsByCategory[pillar.name] = [...findings];
+    }
   }
 
   const totalFindings = findings.length;
@@ -977,15 +999,18 @@ function PillarSection({
 
             return (
               <div key={catName} className="px-5 py-4" style={{ borderTop: `1px solid ${tint.border}` }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: tint.dot }} />
-                  <span className="text-[11px] font-mono text-m-muted tracking-[0.06em]">
-                    {catName} — {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
+                <div className="flex items-center gap-2.5 mb-3">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: tint.dot }} />
+                  <h3 className="font-sans font-medium text-[13px] text-ink">
+                    {catName}
+                  </h3>
+                  <span className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase">
+                    {catFindings.length} finding{catFindings.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="space-y-2">
                   {sorted.map((finding) => (
-                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
+                    <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" categoryName={catName} pillarName={pillar.name} sevConfig={buildSeverityConfig(getUILabels(lang))} onScoreUpdate={onScoreUpdate} />
                   ))}
                 </div>
               </div>
@@ -1007,7 +1032,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
-  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null }>>([]);
+  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null }>>([]);
   const [siblingCount, setSiblingCount] = useState(0); // other audits for same domain
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1133,7 +1158,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               .order('sort_order', { ascending: true }),
             supabase
               .from('audit_pages')
-              .select('url, title, status_code, load_time_ms, screenshot_url')
+              .select('url, title, status_code, load_time_ms, screenshot_url, is_mobile_friendly')
               .eq('audit_id', auditId)
               .order('crawled_at', { ascending: true }),
           ]);
@@ -1473,26 +1498,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     low: findings.filter((f) => f.severity === 'low').length,
   };
 
-  // Assign findings to modules based on sort_order (findings come out in category order from the engine)
+  // Assign findings to modules using keyword matching against category names
   function assignFindingsToPillars() {
     const perPillar: Record<string, AuditFinding[]> = {};
     for (const p of PILLAR_CONFIG) perPillar[p.name] = [];
 
-    // Determine how many categories were actually analyzed
-    // Use selectedModules from raw_json if available, fall back to pillar count
-    const selectedModules: string[] | null = rawJson?.selectedModules ?? null;
-    const totalCategories = selectedModules
-      ? selectedModules.length * 4
-      : (auditSelectedPillars ? auditSelectedPillars.length * 4 : categoryScores.length || 16);
-    const totalFindings = findings.length;
-    const findingsPerCategory = totalFindings / Math.max(1, totalCategories);
+    const catNames = categoryScores.map(c => c.name);
 
     for (const f of findings) {
-      const estimatedCatIdx = Math.min(
-        Math.floor(f.sort_order / Math.max(1, findingsPerCategory)),
-        totalCategories - 1,
-      );
-      const pillar = getPillarForCategory(estimatedCatIdx, PILLAR_CONFIG);
+      const text = `${f.title} ${f.description} ${f.recommendation || ''}`;
+      const bestCatIdx = matchFindingToCategory(text, catNames);
+      const pillar = getPillarForCategory(bestCatIdx, PILLAR_CONFIG);
       perPillar[pillar.name].push(f);
     }
 
@@ -1502,10 +1518,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const findingsByPillar = assignFindingsToPillars();
 
   return (
-    <div className="max-w-4xl mx-auto py-4 px-4">
-      {/* ── Sticky Score Bar — fixed to top of main content area ── */}
-      {isCompleted && showStickyScore && (
-        <div className="fixed top-0 right-0 left-0 md:left-[220px] z-40">
+    <div className="max-w-4xl mx-auto py-4 px-4 relative">
+      {/* ── Sticky Score Bar — sticks to top of main scroll area ── */}
+      {isCompleted && (
+        <div className={`sticky top-0 z-40 -mx-4 mb-0 transition-all duration-200 ${showStickyScore ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none h-0 overflow-hidden'}`}>
           <div className="border-b border-rule/30 bg-paper/95 backdrop-blur-md">
             <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
@@ -2195,6 +2211,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         {pg.url}
                       </a>
                     </div>
+                    {pg.is_mobile_friendly === true && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-ok bg-ok/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                        <Smartphone size={10} /> Mobile OK
+                      </span>
+                    )}
+                    {pg.is_mobile_friendly === false && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-warn bg-warn/10 px-1.5 py-0.5 rounded tracking-[0.04em]">
+                        <Smartphone size={10} /> Mobile issues
+                      </span>
+                    )}
                     {pg.status_code && pg.status_code !== 200 && (
                       <span className="text-xs font-mono px-1.5 py-0.5 rounded text-orange-600 bg-orange-50">
                         {pg.status_code}

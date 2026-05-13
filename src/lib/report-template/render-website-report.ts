@@ -6,6 +6,7 @@
 
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints'
 import { getScoreLabel, getSeverityLabel } from '@/lib/languages'
+import { CATEGORY_KEYWORDS } from '@/lib/audit-engine/pipeline/category-keywords'
 
 /* ── Pillar definitions ────────────────────────────────────── */
 const PILLAR_DEFS = [
@@ -16,34 +17,6 @@ const PILLAR_DEFS = [
   { key: 'SEO Structure & Rules', color: '#4338CA', bg: '#EEF2FF', border: '#C7D2FE', textClass: 'text-indigo' },
   { key: 'Brand Consistency',     color: '#475569', bg: '#F8FAFC', border: '#CBD5E1', textClass: 'text-slate' },
 ]
-
-/* ── Category-to-finding keyword matching (same as PDF/DOCX) ─ */
-const CATEGORY_KEYWORDS: Record<number, string[]> = {
-  0: ['visual', 'design', 'first impression', 'hero', 'above the fold', 'layout', 'aesthetic', 'color', 'palette', 'whitespace', 'spacing', 'typography'],
-  1: ['value proposition', 'messaging', 'headline', 'subheadline', 'differentiation', 'clarity', 'benefit', 'audience', 'copy'],
-  2: ['navigation', 'information architecture', 'menu', 'navbar', 'footer', 'breadcrumb', 'sitemap', 'internal link', 'page structure'],
-  3: ['content quality', 'readability', 'scannability', 'writing', 'grammar', 'tone', 'voice', 'paragraph', 'media quality', 'alt text'],
-  4: ['call-to-action', 'cta', 'conversion', 'button', 'sign up', 'free trial', 'conversion path', 'conversion flow'],
-  5: ['trust', 'credibility', 'testimonial', 'social proof', 'security', 'privacy', 'badge', 'certificate', 'review'],
-  6: ['ethical', 'transparent', 'dark pattern', 'cookie', 'consent', 'gdpr', 'manipulat', 'deceptive', 'honest'],
-  7: ['emotional', 'delight', 'micro-interaction', 'animation', 'personality', 'engagement', 'reward', 'feedback'],
-  8: ['accessibility', 'a11y', 'wcag', 'screen reader', 'keyboard', 'aria', 'tab order', 'focus', 'disability'],
-  9: ['cognitive', 'neurodiversity', 'plain language', 'simple', 'cognitive load', 'learning', 'attention', 'memory', 'dyslexia'],
-  10: ['wellbeing', 'well-being', 'responsible', 'addictive', 'dark pattern', 'notification overload', 'screen time', 'digital health', 'consent fatigue'],
-  11: ['responsive', 'mobile', 'tablet', 'breakpoint', 'viewport', 'touch', 'adaptive', 'device'],
-  12: ['performance', 'speed', 'page load', 'core web vital', 'lcp', 'cls', 'fid', 'optimize', 'compress', 'lazy', 'loading'],
-  13: ['ai', 'llm', 'discoverability', 'machine-readable', 'chatbot', 'generative', 'ai-ready', 'llm-friendly'],
-  14: ['ai agent', 'agent-ready', 'automation', 'tool use', 'api', 'programmatic', 'structured action'],
-  15: ['cultural', 'global', 'localization', 'i18n', 'internationalization', 'rtl', 'translation', 'regional', 'diverse'],
-  16: ['seo', 'search engine', 'meta', 'title tag', 'description', 'heading structure', 'h1', 'h2', 'schema', 'structured data', 'canonical'],
-  17: ['local seo', 'schema markup', 'rich snippet', 'open graph', 'social media', 'twitter card', 'og:'],
-  18: ['keyword', 'search intent', 'content gap', 'long-tail', 'topic cluster', 'semantic'],
-  19: ['link', 'backlink', 'internal link', 'anchor text', 'broken link', '404', 'redirect', 'crawl'],
-  20: ['brand consistency', 'brand identity', 'logo', 'brand color', 'brand voice', 'brand guideline'],
-  21: ['brand experience', 'brand story', 'mission', 'about page', 'company value'],
-  22: ['brand visual', 'icon style', 'illustration', 'imagery', 'photo style', 'brand asset'],
-  23: ['brand communication', 'brand tone', 'brand language', 'brand message', 'tagline'],
-}
 
 /* ── Helpers ──────────────────────────────────────────────── */
 function esc(s: string): string {

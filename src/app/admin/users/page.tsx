@@ -47,6 +47,7 @@ export default function AdminUsersPage() {
   const [creditModal, setCreditModal] = useState<CreditModal | null>(null)
   const [planModal, setPlanModal] = useState<PlanModal | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const fetchUsers = useCallback(() => {
     setLoading(true)
@@ -78,6 +79,7 @@ export default function AdminUsersPage() {
     if (isNaN(amount) || amount <= 0) return
 
     setSubmitting(true)
+    setErrorMsg(null)
     try {
       const res = await fetch('/api/admin/credits', {
         method: 'POST',
@@ -91,9 +93,13 @@ export default function AdminUsersPage() {
       if (res.ok) {
         setCreditModal(null)
         fetchUsers()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error || 'Failed to update credits')
       }
     } catch (err) {
       console.error(err)
+      setErrorMsg('Network error — please try again')
     } finally {
       setSubmitting(false)
     }
@@ -102,6 +108,7 @@ export default function AdminUsersPage() {
   const handlePlanSubmit = async () => {
     if (!planModal) return
     setSubmitting(true)
+    setErrorMsg(null)
     try {
       const body: Record<string, any> = { user_id: planModal.user.id }
       if (planModal.plan) body.subscription_plan = planModal.plan === 'none' ? null : planModal.plan
@@ -118,9 +125,13 @@ export default function AdminUsersPage() {
       if (res.ok) {
         setPlanModal(null)
         fetchUsers()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error || 'Failed to update plan')
       }
     } catch (err) {
       console.error(err)
+      setErrorMsg('Network error — please try again')
     } finally {
       setSubmitting(false)
     }
@@ -334,9 +345,12 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 mt-6">
+            {errorMsg && (
+              <p className="text-[13px] mt-3 p-2.5 rounded-lg" style={{ color: 'var(--severe)', background: 'var(--severe-bg, rgba(239,68,68,0.08))', border: '1px solid var(--severe)' }}>{errorMsg}</p>
+            )}
+            <div className="flex items-center gap-3 mt-4">
               <button
-                onClick={() => setCreditModal(null)}
+                onClick={() => { setCreditModal(null); setErrorMsg(null) }}
                 className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-black/[0.04]"
                 style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
               >
@@ -437,9 +451,12 @@ export default function AdminUsersPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-3 mt-6">
+            {errorMsg && (
+              <p className="text-[13px] mt-3 p-2.5 rounded-lg" style={{ color: 'var(--severe)', background: 'var(--severe-bg, rgba(239,68,68,0.08))', border: '1px solid var(--severe)' }}>{errorMsg}</p>
+            )}
+            <div className="flex items-center gap-3 mt-4">
               <button
-                onClick={() => setPlanModal(null)}
+                onClick={() => { setPlanModal(null); setErrorMsg(null) }}
                 className="flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-black/[0.04]"
                 style={{ border: '1px solid var(--rule)', color: 'var(--ink)' }}
               >

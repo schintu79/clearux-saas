@@ -268,9 +268,11 @@ function ReportPreview({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <SeverityText severity={finding.severity} />
-                    <span className="text-[11px] text-m-muted">{finding.category}</span>
                   </div>
                   <p className="font-medium text-ink text-sm leading-snug">{finding.title}</p>
+                  <p className="font-mono text-[10px] text-m-muted tracking-[0.06em] uppercase mt-1">
+                    Category: {finding.category}
+                  </p>
                 </div>
               </div>
               {/* Expanded detail for first finding — shows real product anatomy */}

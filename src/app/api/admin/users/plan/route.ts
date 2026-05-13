@@ -68,18 +68,18 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (free_membership !== undefined) {
-      updates.free_membership = free_membership
+      // free_membership is a virtual concept — grant pro plan with no Stripe sub
       if (free_membership) {
-        // Free members get active status and generous limits
         updates.subscription_status = 'active'
         if (!updates.subscription_plan && !p.subscription_plan) {
-          updates.subscription_plan = 'pro' // default free tier
+          updates.subscription_plan = 'pro'
+        }
+        // Set generous audits for free members
+        if (!updates.audits_per_month) {
+          updates.audits_per_month = 10
+          updates.audits_remaining = 10
         }
       }
-    }
-
-    if (expiry_date !== undefined) {
-      updates.free_membership_expiry = expiry_date || null
     }
 
     const { error: updateErr } = await db
@@ -92,24 +92,24 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update user plan' }, { status: 500 })
     }
 
-    // Audit log
-    await db.from('audit_logs').insert({
-      audit_id: '00000000-0000-0000-0000-000000000000',
-      event: 'admin_plan_override',
-      status: 'info',
-      message: `Admin ${adminUser.email} updated plan for ${p.email}`,
-      metadata: {
+    // Log the action (non-critical — don't block the response if logging fails)
+    try {
+      await db.from('admin_logs').insert({
         admin_id: adminUser.id,
+        event: 'plan_override',
         target_user_id: user_id,
-        changes: updates,
-        previous: {
-          subscription_plan: p.subscription_plan,
-          credits: p.credits,
-          free_membership: p.free_membership,
-          free_membership_expiry: p.free_membership_expiry,
+        message: `Updated plan for ${p.email}`,
+        metadata: {
+          changes: updates,
+          previous: {
+            subscription_plan: p.subscription_plan,
+            credits: p.credits,
+          },
         },
-      },
-    } as any)
+      } as any)
+    } catch (logErr) {
+      console.warn('Non-critical: admin log insert failed:', logErr)
+    }
 
     return NextResponse.json({ success: true, updates })
   } catch (err) {
