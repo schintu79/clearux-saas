@@ -37,6 +37,9 @@ import { calculateAIVisibilityScore } from '@/lib/audit-engine/ai-visibility-sco
 import { calculatePageReadability } from '@/lib/audit-engine/page-ai-readability'
 import { runCitationAudit } from '@/lib/audit-engine/ai-citation-audit'
 import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
+import { runMultiModelBenchmark } from '@/lib/audit-engine/multi-model-probe'
+import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
+import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -693,6 +696,78 @@ export const processAuditFn = inngest.createFunction(
         await auditLog(auditId, 'fix_playbooks_failed', 'warning',
           `Fix playbooks failed: ${err instanceof Error ? err.message : String(err)}`)
         return []
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2i: Multi-Model AI Benchmarking (non-fatal)
+    // Probes Claude, GPT-4o, and Gemini about the audited domain
+    // and compares their knowledge/accuracy side by side.
+    // ──────────────────────────────────────────────────────────
+    const multiModelResult = await step.run('multi-model-benchmark', async () => {
+      try {
+        const db = getDb()
+        let domain = ''
+        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+
+        // Build ground truth from crawl data
+        const pageBlocks = crawlResult.pageContent.split('\n---\n')
+        const firstBlock = pageBlocks[0] || ''
+        const titleMatch = firstBlock.match(/^Title: (.+)$/m)
+        const metaMatch = firstBlock.match(/^Meta Description: (.+)$/m)
+        const contentMatch = firstBlock.match(/Content:\n([\s\S]+)$/m)
+
+        const groundTruth: SiteGroundTruth = {
+          siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
+          siteDescription: metaMatch?.[1] || null,
+          pricingText: null,
+          offeringText: null,
+          fullContent: crawlResult.pageContent.substring(0, 6000),
+          pages: pageBlocks.map((block: string) => {
+            const urlM = block.match(/^URL: (.+)$/m)
+            const titleM = block.match(/^Title: (.+)$/m)
+            return { url: urlM?.[1] || '', title: titleM?.[1] || null }
+          }).filter((p: { url: string }) => p.url),
+        }
+
+        const comparison = await runMultiModelBenchmark(domain, groundTruth)
+
+        // Store individual model benchmarks
+        for (const b of comparison.benchmarks) {
+          await db.from('multi_model_probes').insert({
+            audit_id: auditId,
+            model_id: b.modelId,
+            model_label: b.modelLabel,
+            accuracy_score: b.accuracyScore,
+            accurate_count: b.accurateCount,
+            partial_count: b.partialCount,
+            inaccurate_count: b.inaccurateCount,
+            hallucinated_count: b.hallucinatedCount,
+            no_data_count: b.noDataCount,
+            total_questions: b.totalQuestions,
+            results_json: b.results as any,
+          } as any)
+        }
+
+        // Detect and store industry
+        const industry = detectIndustry(
+          auditDetails.productType,
+          crawlResult.pageContent.substring(0, 3000),
+        )
+        await db.from('audits')
+          .update({ detected_industry: industry } as any)
+          .eq('id', auditId)
+
+        await auditLog(auditId, 'multi_model_benchmark_completed', 'info',
+          `Multi-model benchmark: avg ${comparison.averageAccuracy}% accuracy across ${comparison.benchmarks.length} models. Best: ${comparison.bestModel}`,
+          { averageAccuracy: comparison.averageAccuracy, bestModel: comparison.bestModel })
+
+        return { comparison, industry }
+      } catch (err) {
+        console.error('[inngest] Multi-model benchmark failed (non-fatal):', err)
+        await auditLog(auditId, 'multi_model_benchmark_failed', 'warning',
+          `Multi-model benchmark failed: ${err instanceof Error ? err.message : String(err)}`)
+        return { comparison: null, industry: null }
       }
     })
 
@@ -1722,6 +1797,16 @@ RULES FOR RE-AUDIT:
         pdf_url: pdfUrl,
         pdf_generated_at: pdfUrl ? new Date().toISOString() : null,
         ai_visibility_breakdown: aiVisibility,
+        model_benchmarks: multiModelResult.comparison ? {
+          models: multiModelResult.comparison.benchmarks.map((b: any) => ({
+            modelId: b.modelId,
+            modelLabel: b.modelLabel,
+            accuracyScore: b.accuracyScore,
+          })),
+          bestModel: multiModelResult.comparison.bestModel,
+          averageAccuracy: multiModelResult.comparison.averageAccuracy,
+          insight: multiModelResult.comparison.insight,
+        } : null,
       } as any)
 
       await auditLog(auditId, 'report_generated', 'success', 'Report generated', {
@@ -1775,7 +1860,53 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 10: Complete audit and send email
+    // STEP 10: Predictive recommendations (non-fatal)
+    // Generates data-driven predictions based on fix patterns.
+    // ──────────────────────────────────────────────────────────
+    await step.run('predictive-recommendations', async () => {
+      try {
+        const db = getDb()
+
+        // Get the report's overall score
+        const { data: report } = await db
+          .from('reports')
+          .select('overall_score, ai_visibility_breakdown')
+          .eq('audit_id', auditId)
+          .single()
+
+        if (!report) return
+
+        const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
+        const currentScore = aiVis?.overall || (report as any).overall_score || 50
+
+        const predictiveReport = await generatePredictiveRecommendations(db, auditId, currentScore)
+
+        // Store recommendations
+        if (predictiveReport.recommendations.length > 0) {
+          const inserts = predictiveReport.recommendations.map(r => ({
+            audit_id: auditId,
+            action: r.action,
+            predicted_impact: r.predictedImpact,
+            confidence: r.confidence,
+            data_points: r.dataPoints,
+            avg_improvement: r.avgImprovement,
+            category: r.category,
+            evidence: r.evidence,
+          }))
+          await db.from('predictive_recommendations').insert(inserts as any)
+        }
+
+        await auditLog(auditId, 'predictive_recommendations_generated', 'info',
+          `Generated ${predictiveReport.recommendations.length} predictive recommendation(s)`)
+      } catch (err) {
+        console.error('[inngest] Predictive recommendations failed (non-fatal):', err)
+        await auditLog(auditId, 'predictive_recommendations_failed', 'warning',
+          `Predictive recommendations failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 11: Complete audit and send email
     // ──────────────────────────────────────────────────────────
     await step.run('complete', async () => {
       const db = getDb()

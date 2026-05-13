@@ -104,6 +104,8 @@ export interface Audit {
   selected_modules:   string[] | null
   // Re-audit linkage
   previous_audit_id:  string | null
+  // Industry classification (Phase 4)
+  detected_industry:  string | null
 }
 
 export interface ScheduledAudit {
@@ -263,6 +265,7 @@ export interface Report {
   pdf_url:                  string | null
   pdf_generated_at:         string | null
   ai_visibility_breakdown:  AIVisibilityBreakdown | null
+  model_benchmarks:         ModelBenchmarksSummary | null
   created_at:               string
   updated_at:               string
 }
@@ -279,6 +282,66 @@ export interface AIVisibilityBreakdown {
   contentExtractability: number
   /** Overall AI Visibility Score: 0-100 */
   overall: number
+}
+
+/** Model benchmarks summary — stored as jsonb on reports */
+export interface ModelBenchmarksSummary {
+  /** Per-model accuracy scores */
+  models: Array<{
+    modelId: string
+    modelLabel: string
+    accuracyScore: number
+  }>
+  /** Best performing model */
+  bestModel: string
+  /** Average accuracy across all models */
+  averageAccuracy: number
+  /** Insight text */
+  insight: string
+}
+
+export type AIModelId = 'claude' | 'gpt4o' | 'gemini'
+
+export interface MultiModelProbe {
+  id:                string
+  audit_id:          string
+  model_id:          string
+  model_label:       string
+  accuracy_score:    number
+  accurate_count:    number
+  partial_count:     number
+  inaccurate_count:  number
+  hallucinated_count: number
+  no_data_count:     number
+  total_questions:   number
+  results_json:      Record<string, unknown>[]
+  created_at:        string
+}
+
+export interface IndustryBenchmarkRow {
+  id:           string
+  industry:     string
+  sample_size:  number
+  avg_score:    number
+  median_score: number
+  p90_score:    number
+  p10_score:    number
+  distribution: Record<string, number>
+  computed_at:  string
+  created_at:   string
+}
+
+export interface PredictiveRecommendationRow {
+  id:               string
+  audit_id:         string
+  action:           string
+  predicted_impact: number
+  confidence:       string
+  data_points:      number
+  avg_improvement:  number
+  category:         string
+  evidence:         string | null
+  created_at:       string
 }
 
 export type LlmProbeAccuracy = 'accurate' | 'partial' | 'inaccurate' | 'hallucinated' | 'no_data'
@@ -497,6 +560,21 @@ export interface Database {
         Row: FixPlaybook
         Insert: Partial<FixPlaybook> & Pick<FixPlaybook, 'audit_id' | 'playbook_type' | 'title' | 'code_snippet'>
         Update: Partial<FixPlaybook>
+      }
+      multi_model_probes: {
+        Row: MultiModelProbe
+        Insert: Partial<MultiModelProbe> & Pick<MultiModelProbe, 'audit_id' | 'model_id' | 'model_label'>
+        Update: Partial<MultiModelProbe>
+      }
+      industry_benchmarks: {
+        Row: IndustryBenchmarkRow
+        Insert: Partial<IndustryBenchmarkRow> & Pick<IndustryBenchmarkRow, 'industry'>
+        Update: Partial<IndustryBenchmarkRow>
+      }
+      predictive_recommendations: {
+        Row: PredictiveRecommendationRow
+        Insert: Partial<PredictiveRecommendationRow> & Pick<PredictiveRecommendationRow, 'audit_id' | 'action' | 'category'>
+        Update: Partial<PredictiveRecommendationRow>
       }
     }
     Views: {

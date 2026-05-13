@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
+  BarChart3,
   Download,
   Zap,
   Trash2,
@@ -1085,7 +1086,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray' | 'intelligence'>('overview');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1094,6 +1095,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [aiCitations, setAiCitations] = useState<any[]>([]);
   const [fixPlaybooks, setFixPlaybooks] = useState<any[]>([]);
   const [llmProbeResults, setLlmProbeResults] = useState<any[]>([]);
+  const [intelligenceData, setIntelligenceData] = useState<any>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const completedRef = useRef(false); // Once true, never revert to in-progress UI
@@ -1238,6 +1240,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             if (pbRes.data) setFixPlaybooks(pbRes.data);
             if (probeRes.data) setLlmProbeResults(probeRes.data);
           }).catch(() => {});
+
+          // Fetch Intelligence Layer data — non-blocking
+          fetch(`/api/audits/intelligence?audit_id=${auditId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) setIntelligenceData(data); })
+            .catch(() => {});
         }
 
         if (!silent) setLoading(false);
@@ -1996,12 +2004,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="flex items-center gap-1 p-1 rounded-xl mb-6" style={{ background: 'var(--paper-2)' }}>
-            {(['overview', 'findings', 'pages', 'ai_xray'] as const).map((tab) => {
+            {(['overview', 'findings', 'pages', 'ai_xray', 'intelligence'] as const).map((tab) => {
               const isActive = activeTab === tab;
               const label = tab === 'overview' ? L.tabOverview
                 : tab === 'findings' ? L.tabFindings
                 : tab === 'pages' ? L.tabPages
-                : 'AI X-Ray';
+                : tab === 'ai_xray' ? 'AI X-Ray'
+                : 'Intelligence';
               const count = tab === 'findings' ? findings.length
                 : tab === 'pages' ? auditPages.length
                 : null;
@@ -2518,6 +2527,142 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
                   <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
                   <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, and fix playbooks.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'intelligence' && (
+            <div className="space-y-6">
+              {/* Model comparison */}
+              {intelligenceData?.modelProbes?.length > 0 && (
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart3 size={16} className="text-m-accent" />
+                    <h3 className="text-sm font-heading font-semibold text-text">Multi-model AI benchmark</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.modelProbes.length} models</span>
+                  </div>
+                  {intelligenceData.modelBenchmarks?.insight && (
+                    <p className="text-xs text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {intelligenceData.modelProbes.map((probe: any) => {
+                      const scoreColor = probe.accuracy_score >= 70 ? 'text-emerald-500' : probe.accuracy_score >= 40 ? 'text-amber-500' : 'text-red-400';
+                      return (
+                        <div key={probe.id} className="rounded-lg border border-rule bg-paper p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-heading font-semibold text-text">{probe.model_label}</span>
+                            <span className={`text-lg font-mono font-bold ${scoreColor}`}>{probe.accuracy_score}%</span>
+                          </div>
+                          <div className="flex gap-2 text-[10px] font-mono text-m-muted">
+                            <span className="text-emerald-500">{probe.accurate_count} accurate</span>
+                            <span className="text-amber-500">{probe.partial_count} partial</span>
+                            <span className="text-red-400">{probe.inaccurate_count} wrong</span>
+                          </div>
+                          {probe.results_json?.length > 0 && (
+                            <details className="mt-3">
+                              <summary className="text-[10px] text-m-muted cursor-pointer hover:text-text">Show answers</summary>
+                              <div className="mt-2 space-y-2">
+                                {probe.results_json.map((r: any, j: number) => (
+                                  <div key={j} className="text-xs">
+                                    <p className="text-m-muted font-medium">{r.question}</p>
+                                    <p className="text-text/70 mt-0.5 line-clamp-3">{r.answer}</p>
+                                    <span className={`inline-block mt-0.5 text-[10px] font-mono ${
+                                      r.accuracy === 'accurate' ? 'text-emerald-500'
+                                        : r.accuracy === 'partial' ? 'text-amber-500'
+                                          : r.accuracy === 'hallucinated' ? 'text-red-400'
+                                            : 'text-m-muted'
+                                    }`}>{r.accuracy}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Industry benchmark */}
+              {intelligenceData?.benchmarkPosition && (
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp size={16} className="text-m-accent" />
+                    <h3 className="text-sm font-heading font-semibold text-text">Industry AI visibility index</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.industry}</span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3 mb-4">
+                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
+                      <div className="text-2xl font-mono font-bold text-text">{intelligenceData.benchmarkPosition.userScore}</div>
+                      <div className="text-[10px] text-m-muted mt-1">Your score</div>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
+                      <div className="text-2xl font-mono font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
+                      <div className="text-[10px] text-m-muted mt-1">Industry average</div>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-paper border border-rule">
+                      <div className={`text-2xl font-mono font-bold ${
+                        intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-emerald-500'
+                          : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-amber-500'
+                            : 'text-red-400'
+                      }`}>{intelligenceData.benchmarkPosition.rankLabel}</div>
+                      <div className="text-[10px] text-m-muted mt-1">Your ranking</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
+                  {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (
+                    <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites</p>
+                  )}
+                </div>
+              )}
+
+              {/* Predictive recommendations */}
+              {intelligenceData?.recommendations?.length > 0 && (
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lightbulb size={16} className="text-m-accent" />
+                    <h3 className="text-sm font-heading font-semibold text-text">Predictive recommendations</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">{intelligenceData.recommendations.length} actions</span>
+                  </div>
+                  <div className="space-y-3">
+                    {intelligenceData.recommendations.map((rec: any, i: number) => {
+                      const confColor = rec.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-600' : rec.confidence === 'medium' ? 'bg-amber-500/10 text-amber-600' : 'bg-zinc-500/10 text-zinc-500';
+                      return (
+                        <div key={rec.id || i} className="rounded-lg border border-rule bg-paper p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-m-accent/10">
+                              <span className="text-sm font-mono font-bold text-m-accent">+{rec.predicted_impact}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-text">{rec.action}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${confColor}`}>{rec.confidence}</span>
+                                <span className="text-[10px] text-m-muted">{rec.category}</span>
+                              </div>
+                              {rec.evidence && (
+                                <p className="text-xs text-m-muted/70 mt-1.5 leading-relaxed">{rec.evidence}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {(!intelligenceData || (
+                (!intelligenceData.modelProbes || intelligenceData.modelProbes.length === 0) &&
+                (!intelligenceData.recommendations || intelligenceData.recommendations.length === 0) &&
+                !intelligenceData.benchmarkPosition
+              )) && (
+                <div className="text-center py-12">
+                  <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
+                  <p className="text-sm text-m-muted">Intelligence data will appear here after your next audit.</p>
+                  <p className="text-xs text-m-muted/60 mt-1">Includes multi-model benchmarks, industry rankings, and predictive recommendations.</p>
                 </div>
               )}
             </div>
