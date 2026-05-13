@@ -1085,12 +1085,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'ai_xray'>('overview');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
+  const [aiCitations, setAiCitations] = useState<any[]>([]);
+  const [fixPlaybooks, setFixPlaybooks] = useState<any[]>([]);
+  const [llmProbeResults, setLlmProbeResults] = useState<any[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const completedRef = useRef(false); // Once true, never revert to in-progress UI
@@ -1224,6 +1227,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           }
           setFindings(enrichedFindings);
           setAuditPages(pagesRes.data || []);
+
+          // Fetch AI X-Ray data (citations, playbooks, LLM probes) — non-blocking
+          Promise.all([
+            supabase.from('ai_citations').select('*').eq('audit_id', auditId).order('created_at'),
+            supabase.from('fix_playbooks').select('*').eq('audit_id', auditId).order('priority'),
+            supabase.from('llm_probe_results').select('*').eq('audit_id', auditId).order('created_at'),
+          ]).then(([citRes, pbRes, probeRes]) => {
+            if (citRes.data) setAiCitations(citRes.data);
+            if (pbRes.data) setFixPlaybooks(pbRes.data);
+            if (probeRes.data) setLlmProbeResults(probeRes.data);
+          }).catch(() => {});
         }
 
         if (!silent) setLoading(false);
@@ -1982,11 +1996,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Tab Navigation ─────────────────────────────── */}
           <div className="flex items-center gap-1 p-1 rounded-xl mb-6" style={{ background: 'var(--paper-2)' }}>
-            {(['overview', 'findings', 'pages'] as const).map((tab) => {
+            {(['overview', 'findings', 'pages', 'ai_xray'] as const).map((tab) => {
               const isActive = activeTab === tab;
               const label = tab === 'overview' ? L.tabOverview
                 : tab === 'findings' ? L.tabFindings
-                : L.tabPages;
+                : tab === 'pages' ? L.tabPages
+                : 'AI X-Ray';
               const count = tab === 'findings' ? findings.length
                 : tab === 'pages' ? auditPages.length
                 : null;
@@ -2375,6 +2390,136 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* ── TAB: AI X-Ray ──────────────────────────────── */}
+          {activeTab === 'ai_xray' && (
+            <div className="space-y-6">
+
+              {/* LLM Probe Results — What AI knows about your site */}
+              {llmProbeResults.length > 0 && (
+                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                    <Brain size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">What AI knows about your site</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">{llmProbeResults.length} questions</span>
+                  </div>
+                  <div className="divide-y divide-rule/20">
+                    {llmProbeResults.map((probe: any, i: number) => {
+                      const accColor = probe.accuracy === 'accurate' ? 'text-ok bg-ok/10'
+                        : probe.accuracy === 'partial' ? 'text-warn bg-warn/10'
+                        : probe.accuracy === 'hallucinated' ? 'text-crit bg-crit/10'
+                        : probe.accuracy === 'inaccurate' ? 'text-crit bg-crit/10'
+                        : 'text-m-muted bg-off';
+                      return (
+                        <div key={i} className="px-5 py-4">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <p className="text-sm font-medium text-ink">{probe.question}</p>
+                            <span className={`text-[11px] font-mono px-2 py-0.5 rounded flex-shrink-0 ${accColor}`}>
+                              {probe.accuracy || 'pending'}
+                            </span>
+                          </div>
+                          <p className="text-[13px] text-ink-2 leading-relaxed">{probe.answer}</p>
+                          {probe.accuracy_note && (
+                            <p className="text-xs text-m-muted mt-1.5">{probe.accuracy_note}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Citation Audit — What gets cited vs. ignored */}
+              {aiCitations.length > 0 && (
+                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                    <FileSearch size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">AI citation audit</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">
+                      {aiCitations.filter((c: any) => c.citation_type !== 'ignored').length} cited / {aiCitations.filter((c: any) => c.citation_type === 'ignored').length} ignored
+                    </span>
+                  </div>
+                  <div className="divide-y divide-rule/20">
+                    {aiCitations.map((cit: any, i: number) => (
+                      <div key={i} className="px-5 py-3 flex items-start gap-3">
+                        {cit.citation_type === 'ignored' ? (
+                          <AlertTriangle size={13} className="text-warn mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <CheckCircle2 size={13} className="text-ok mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] text-ink">{cit.ai_context}</p>
+                          {cit.cited_text && (
+                            <p className="text-xs text-m-muted mt-0.5 truncate">{cit.cited_text}</p>
+                          )}
+                          {cit.page_url && (
+                            <a href={cit.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-signal hover:underline mt-0.5 inline-flex items-center gap-1">
+                              <ExternalLink size={10} /> {cit.page_url}
+                            </a>
+                          )}
+                        </div>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
+                          cit.citation_type === 'direct_quote' ? 'text-ok bg-ok/10' :
+                          cit.citation_type === 'paraphrase' ? 'text-signal bg-signal/10' :
+                          cit.citation_type === 'ignored' ? 'text-warn bg-warn/10' :
+                          'text-m-muted bg-off'
+                        }`}>
+                          {cit.citation_type}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Fix Playbooks — Copy-paste code snippets */}
+              {fixPlaybooks.length > 0 && (
+                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                    <Zap size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">Fix playbooks</h3>
+                    <span className="ml-auto text-xs text-m-muted font-mono">{fixPlaybooks.length} snippets</span>
+                  </div>
+                  <div className="divide-y divide-rule/20">
+                    {fixPlaybooks.map((pb: any, i: number) => (
+                      <div key={i} className="px-5 py-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[11px] font-mono text-signal bg-signal/10 px-1.5 py-0.5 rounded">{pb.playbook_type}</span>
+                          <h4 className="text-sm font-medium text-ink">{pb.title}</h4>
+                        </div>
+                        {pb.description && (
+                          <p className="text-xs text-m-muted mb-3">{pb.description}</p>
+                        )}
+                        <div className="relative">
+                          <pre className="bg-paper-2 border border-rule/30 rounded-lg p-4 text-xs font-mono text-ink-2 overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                            {pb.code_snippet}
+                          </pre>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(pb.code_snippet);
+                            }}
+                            className="absolute top-2 right-2 p-1.5 rounded bg-card border border-rule/30 text-m-muted hover:text-ink transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {llmProbeResults.length === 0 && aiCitations.length === 0 && fixPlaybooks.length === 0 && (
+                <div className="text-center py-12">
+                  <Brain size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
+                  <p className="text-sm text-m-muted">AI X-Ray data will appear here after your next audit.</p>
+                  <p className="text-xs text-m-muted/60 mt-1">Includes LLM probe results, citation audit, and fix playbooks.</p>
+                </div>
+              )}
             </div>
           )}
 

@@ -35,6 +35,8 @@ import { runLlmProbe, formatLlmProbeForAnalysis } from '@/lib/audit-engine/llm-p
 import type { SiteGroundTruth } from '@/lib/audit-engine/llm-probe'
 import { calculateAIVisibilityScore } from '@/lib/audit-engine/ai-visibility-score'
 import { calculatePageReadability } from '@/lib/audit-engine/page-ai-readability'
+import { runCitationAudit } from '@/lib/audit-engine/ai-citation-audit'
+import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -556,6 +558,141 @@ export const processAuditFn = inngest.createFunction(
         await auditLog(auditId, 'llm_probe_failed', 'warning',
           `LLM probe failed: ${err instanceof Error ? err.message : String(err)}`)
         return { summary: '', accuracyScore: 0, session: null }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2g: AI Citation Audit (non-fatal)
+    // Asks AI to describe the site and cite sources — shows
+    // which content gets cited vs. ignored.
+    // ──────────────────────────────────────────────────────────
+    const citationResult = await step.run('ai-citation-audit', async () => {
+      try {
+        const db = getDb()
+        let domain = ''
+        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+
+        // Build page list from crawled content
+        const pageBlocks = crawlResult.pageContent.split('\n---\n')
+        const pages = pageBlocks.map((block: string) => {
+          const urlMatch = block.match(/^URL: (.+)$/m)
+          const titleMatch = block.match(/^Title: (.+)$/m)
+          const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
+          return {
+            url: urlMatch?.[1] || '',
+            title: titleMatch?.[1] || null,
+            contentSnippet: contentMatch?.[1]?.substring(0, 600) || '',
+          }
+        }).filter((p: { url: string }) => p.url)
+
+        const result = await runCitationAudit(domain, pages)
+
+        // Store citations in DB
+        if (result.citations.length > 0) {
+          const inserts = result.citations.map(c => ({
+            audit_id: auditId,
+            page_url: c.citedUrl || '',
+            cited_text: c.citedText || c.claim,
+            ai_context: c.claim,
+            citation_type: c.citationType,
+            model_used: 'claude-haiku',
+          }))
+          await db.from('ai_citations').insert(inserts as any)
+        }
+
+        await auditLog(auditId, 'citation_audit_completed', 'info',
+          `Citation audit: ${result.citedPages.length} pages cited, ${result.ignoredPages.length} ignored. Citability: ${result.citabilityScore}%`)
+
+        return result
+      } catch (err) {
+        console.error('[inngest] Citation audit failed (non-fatal):', err)
+        await auditLog(auditId, 'citation_audit_failed', 'warning',
+          `Citation audit failed: ${err instanceof Error ? err.message : String(err)}`)
+        return null
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2h: Generate Fix Playbooks (non-fatal)
+    // Creates copy-paste code snippets for JSON-LD, meta tags,
+    // llms.txt etc. based on what's missing.
+    // ──────────────────────────────────────────────────────────
+    const playbooks = await step.run('generate-fix-playbooks', async () => {
+      try {
+        const db = getDb()
+
+        // Build playbook input from crawl data
+        const pageBlocks = crawlResult.pageContent.split('\n---\n')
+        const pages = pageBlocks.map((block: string) => {
+          const urlMatch = block.match(/^URL: (.+)$/m)
+          const titleMatch = block.match(/^Title: (.+)$/m)
+          const metaMatch = block.match(/^Meta Description: (.+)$/m)
+          return {
+            url: urlMatch?.[1] || '',
+            title: titleMatch?.[1] || null,
+            metaDescription: metaMatch?.[1] || null,
+          }
+        }).filter((p: { url: string }) => p.url)
+
+        const firstPage = pageBlocks[0] || ''
+        const titleMatch = firstPage.match(/^Title: (.+)$/m)
+        const metaMatch = firstPage.match(/^Meta Description: (.+)$/m)
+
+        // Get head tags from first page
+        const headTagEntries = crawlResult.headTags || []
+        const firstHeadTags = headTagEntries.length > 0 ? headTagEntries[0].headTags : null
+
+        // Check structured data types from validation
+        const sdTypes: string[] = []
+        if (firstHeadTags?.jsonLd) {
+          for (const item of firstHeadTags.jsonLd) {
+            if (item['@type']) sdTypes.push(String(item['@type']))
+          }
+        }
+
+        let domain = ''
+        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+
+        // Check AI discovery files from crawl
+        const hasLlmsTxt = crawlResult.pageContent.includes('llms.txt')
+        const hasAiPlugin = crawlResult.pageContent.includes('ai-plugin')
+
+        const snippets = generateFixPlaybooks({
+          domain,
+          siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
+          siteDescription: metaMatch?.[1] || null,
+          pages,
+          headTags: firstHeadTags as any || null,
+          hasStructuredData: sdTypes.length > 0,
+          structuredDataTypes: sdTypes,
+          hasLlmsTxt,
+          hasRobotsTxt: true, // assume exists — we can check more precisely
+          hasAiPlugin,
+        })
+
+        // Store playbooks
+        if (snippets.length > 0) {
+          const inserts = snippets.map(s => ({
+            audit_id: auditId,
+            playbook_type: s.type,
+            title: s.title,
+            description: s.description,
+            code_snippet: s.code,
+            language: s.language,
+            priority: s.priority,
+          }))
+          await db.from('fix_playbooks').insert(inserts as any)
+        }
+
+        await auditLog(auditId, 'fix_playbooks_generated', 'info',
+          `Generated ${snippets.length} fix playbook(s)`)
+
+        return snippets
+      } catch (err) {
+        console.error('[inngest] Fix playbooks failed (non-fatal):', err)
+        await auditLog(auditId, 'fix_playbooks_failed', 'warning',
+          `Fix playbooks failed: ${err instanceof Error ? err.message : String(err)}`)
+        return []
       }
     })
 

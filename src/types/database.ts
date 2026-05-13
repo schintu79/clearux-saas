@@ -102,6 +102,8 @@ export interface Audit {
   brand_identity_id:  string | null
   // Module selection (slug-based): null = complete audit
   selected_modules:   string[] | null
+  // Re-audit linkage
+  previous_audit_id:  string | null
 }
 
 export interface ScheduledAudit {
@@ -293,6 +295,33 @@ export interface LlmProbeResult {
   created_at:    string
 }
 
+export type CitationType = 'direct_quote' | 'paraphrase' | 'reference' | 'ignored'
+
+export interface AiCitation {
+  id:            string
+  audit_id:      string
+  page_url:      string
+  cited_text:    string
+  ai_context:    string
+  citation_type: CitationType
+  model_used:    string
+  created_at:    string
+}
+
+export type PlaybookType = 'json_ld' | 'meta_tags' | 'llms_txt' | 'robots_txt' | 'structured_data'
+
+export interface FixPlaybook {
+  id:            string
+  audit_id:      string
+  playbook_type: PlaybookType
+  title:         string
+  description:   string | null
+  code_snippet:  string
+  language:      string
+  priority:      number
+  created_at:    string
+}
+
 export interface AuditLog {
   id:         string
   audit_id:   string
@@ -458,6 +487,16 @@ export interface Database {
         Row: LlmProbeResult
         Insert: Partial<LlmProbeResult> & Pick<LlmProbeResult, 'audit_id' | 'question' | 'answer' | 'model_used'>
         Update: Partial<LlmProbeResult>
+      }
+      ai_citations: {
+        Row: AiCitation
+        Insert: Partial<AiCitation> & Pick<AiCitation, 'audit_id' | 'page_url' | 'cited_text' | 'ai_context'>
+        Update: Partial<AiCitation>
+      }
+      fix_playbooks: {
+        Row: FixPlaybook
+        Insert: Partial<FixPlaybook> & Pick<FixPlaybook, 'audit_id' | 'playbook_type' | 'title' | 'code_snippet'>
+        Update: Partial<FixPlaybook>
       }
     }
     Views: {

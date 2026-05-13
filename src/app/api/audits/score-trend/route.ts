@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const auditIds = domainAudits.map((a: any) => a.id)
     const { data: reports } = await db
       .from('reports')
-      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count')
+      .select('audit_id, overall_score, ux_score, conversion_score, mobile_score, ai_discoverability_score, content_score, total_issues, critical_count, high_count, ai_visibility_breakdown')
       .in('audit_id', auditIds)
 
     const reportsMap: Record<string, any> = {}
@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
 
     const trend = domainAudits.map((a: any) => {
       const r = reportsMap[a.id]
+      const aiVis = r?.ai_visibility_breakdown as any
       return {
         auditId: a.id,
         date: a.completed_at || a.created_at,
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
         mobileScore: r?.mobile_score ?? null,
         aiScore: r?.ai_discoverability_score ?? null,
         contentScore: r?.content_score ?? null,
+        aiVisibilityScore: aiVis?.overall ?? null,
         totalIssues: r?.total_issues ?? 0,
         criticalCount: r?.critical_count ?? 0,
         highCount: r?.high_count ?? 0,
@@ -77,14 +79,22 @@ export async function GET(request: NextRequest) {
       ? trend[trend.length - 1].overallScore - trend[0].overallScore
       : 0
 
+    // AI visibility improvement
+    const aiVisTrend = trend.filter((t: any) => t.aiVisibilityScore !== null)
+    const aiVisImprovement = aiVisTrend.length >= 2
+      ? aiVisTrend[aiVisTrend.length - 1].aiVisibilityScore - aiVisTrend[aiVisTrend.length - 2].aiVisibilityScore
+      : 0
+
     return NextResponse.json({
       domain,
       totalAudits: trend.length,
       trend,
       improvement,
       totalChange,
+      aiVisImprovement,
       latestScore: trend.length > 0 ? trend[trend.length - 1].overallScore : null,
       baselineScore: trend.length > 0 ? trend[0].overallScore : null,
+      latestAiVisScore: aiVisTrend.length > 0 ? aiVisTrend[aiVisTrend.length - 1].aiVisibilityScore : null,
     })
   } catch (err) {
     console.error('GET /api/audits/score-trend error:', err)
