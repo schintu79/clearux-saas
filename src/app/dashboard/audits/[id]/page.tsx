@@ -1575,6 +1575,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const categoryScores: Array<{ name: string; score: number; summary: string }> =
     rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [];
 
+  // Parse audit limitations (transparency alerts)
+  const auditLimitations: Array<{ id: string; title: string; description: string; tab?: string }> =
+    rawJson?.auditLimitations && Array.isArray(rawJson.auditLimitations) ? rawJson.auditLimitations : [];
+
   // Selected pillars from report (null = all 4)
   const auditSelectedPillars: number[] | null = rawJson?.selectedPillars ?? (audit as any)?.selected_pillars ?? null;
   const auditSelectedModules: string[] | null = rawJson?.selectedModules ?? (audit as any)?.selected_modules ?? null;
@@ -2180,6 +2184,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </>
               )}
 
+              {/* Transparency alerts — inform user about engine limitations */}
+              {auditLimitations.filter(l => !l.tab).length > 0 && (
+                <div className="mb-4 space-y-2">
+                  {auditLimitations.filter(l => !l.tab).map((limitation) => (
+                    <div key={limitation.id} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
+                      <Info size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink mb-0.5">{limitation.title}</p>
+                        <p className="text-xs text-m-muted leading-relaxed">{limitation.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
                 <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
@@ -2568,11 +2587,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
             return (
               <div className="space-y-6">
+                {/* Transparency alerts for responsive tab */}
+                {auditLimitations.filter(l => l.tab === 'responsive').map((limitation) => (
+                  <div key={limitation.id} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
+                    <Info size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-ink mb-0.5">{limitation.title}</p>
+                      <p className="text-xs text-m-muted leading-relaxed">{limitation.description}</p>
+                    </div>
+                  </div>
+                ))}
+
                 {/* Hero card */}
-                <div className="rounded-xl border-2 border-ok/30 bg-ok/10 overflow-hidden">
+                <div className="rounded-xl border-2 border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
                   <div className="px-6 py-5 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Smartphone size={18} className="text-ok" />
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Smartphone size={18} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
                       <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">Responsive design check</h3>
@@ -2714,8 +2744,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                 {/* All clear message when no issues found */}
                 {responsiveFindings.length === 0 && (
-                  <div className="rounded-xl border border-ok/20 bg-ok/10 px-5 py-4 flex items-start gap-3">
-                    <CheckCircle2 size={16} className="text-ok flex-shrink-0 mt-0.5" />
+                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4 flex items-start gap-3">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[13px] font-medium text-ink">No responsive issues found</p>
                       <p className="text-[12px] text-m-muted mt-0.5">All pages passed viewport checks across desktop, tablet, and mobile breakpoints.</p>
@@ -2802,9 +2832,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             )}
                             {/* Fix recommendations for missing items */}
                             {missing.length > 0 && (
-                              <div className="rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5 mb-3">
+                              <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5 mb-3">
                                 <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
-                                  <Lightbulb size={11} className="text-ok" />
+                                  <Lightbulb size={11} className="text-emerald-600 dark:text-emerald-400" />
                                   Fix {missing.length} missing {missing.length === 1 ? 'signal' : 'signals'} on this page
                                 </p>
                                 <ul className="space-y-1">
@@ -2914,9 +2944,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </div>
                           <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
                           {bar.fixes.length > 0 && (
-                            <div className="mt-2 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5">
+                            <div className="mt-2 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5">
                               <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-ok" />
+                                <Lightbulb size={11} className="text-emerald-600 dark:text-emerald-400" />
                                 How to improve
                               </p>
                               <ul className="space-y-1">
@@ -3031,8 +3061,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2 mt-3">Recommended (not found)</p>
                             <div className="space-y-2">
                               {missingRec.map(t => (
-                                <div key={t} className="flex items-start gap-2.5 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5">
-                                  <Lightbulb size={12} className="text-ok flex-shrink-0 mt-[1px]" />
+                                <div key={t} className="flex items-start gap-2.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5">
+                                  <Lightbulb size={12} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-[1px]" />
                                   <div className="min-w-0">
                                     <span className="text-[11px] font-semibold text-ink">{t}</span>
                                     <p className="text-[10px] text-ink-2 leading-relaxed mt-0.5">{typeFixMap[t] || 'Add this structured data type to improve AI understanding of your content.'}</p>
@@ -3118,9 +3148,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
                           {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
-                            <div className="mt-2.5 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2">
+                            <div className="mt-2.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2">
                               <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-ok" />
+                                <Lightbulb size={11} className="text-emerald-600 dark:text-emerald-400" />
                                 Recommended fix
                               </p>
                               <p className="text-[11px] text-ink-2 leading-relaxed">
@@ -3201,9 +3231,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </span>
                         </div>
                         {cit.citation_type === 'ignored' && (
-                          <div className="mt-2 ml-[25px] rounded-lg border border-ok/20 bg-ok/10 px-3 py-2">
+                          <div className="mt-2 ml-[25px] rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2">
                             <p className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
-                              <Lightbulb size={10} className="text-ok flex-shrink-0 mt-[2px]" />
+                              <Lightbulb size={10} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-[2px]" />
                               This page is not being cited by AI. Improve its visibility by adding a clear meta description, structured data (JSON-LD), and ensuring the content is in semantic HTML — not hidden in JavaScript or iframes.
                             </p>
                           </div>
@@ -3319,10 +3349,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-6">
 
               {/* Intro explanation — prominent hero card */}
-              <div className="rounded-xl border-2 border-ok/30 bg-ok/10 overflow-hidden">
+              <div className="rounded-xl border-2 border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
                 <div className="px-6 py-5 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles size={18} className="text-ok" />
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles size={18} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">How AI models represent your site</h3>
@@ -3387,11 +3417,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         );
                       })}
                     </div>
-                    <div className="mt-5 p-4 rounded-xl bg-ok/10 border border-ok/20">
+                    <div className="mt-5 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
                       <div className="flex items-start gap-2.5">
-                        <Info size={15} className="text-ok flex-shrink-0 mt-0.5" />
+                        <Info size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-[13px] font-semibold text-ok mb-1">Why this matters</p>
+                          <p className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1">Why this matters</p>
                           <p className="text-[13px] text-ink-2 leading-relaxed">
                             When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
                           </p>
@@ -3439,13 +3469,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Actionable recommendations */}
               {intelligenceData?.recommendations?.length > 0 && (
-                <div className="rounded-xl border border-ok/20 bg-ok/10 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-ok/20 flex items-center gap-2">
-                    <Lightbulb size={16} className="text-ok" />
+                <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-emerald-500/15 flex items-center gap-2">
+                    <Lightbulb size={16} className="text-emerald-600 dark:text-emerald-400" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What to improve next</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
                   </div>
-                  <div className="px-5 py-3 border-b border-ok/15">
+                  <div className="px-5 py-3 border-b border-emerald-500/10">
                     <p className="text-[11px] text-m-muted leading-relaxed">
                       Based on patterns from other audits, these actions are most likely to improve your score. Higher impact actions are listed first.
                     </p>

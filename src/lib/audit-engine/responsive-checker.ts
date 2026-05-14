@@ -59,6 +59,9 @@ type ResponsiveIssueType =
   | 'nav_not_adapted'
   | 'content_hidden'
   | 'overlapping_elements'
+  | 'line_length_too_long'
+  | 'content_too_dense'
+  | 'poor_readability'
 
 /* ── Browser management ──────────────────────────────────── */
 
@@ -419,6 +422,177 @@ async function runChecks({ page, viewport, url }: PageCheckInput): Promise<Viewp
           `The navigation shows ${navData.visibleNavLinks} links on the ${viewport.width}px mobile viewport without a hamburger menu or mobile-adapted navigation pattern. This typically causes overflow, truncation, or tiny tap targets.`,
         recommendation:
           'Implement a responsive navigation pattern: hamburger menu, bottom nav bar, or collapsible accordion. Use a media query at max-width: 768px to switch from horizontal to mobile navigation.',
+      })
+    }
+  }
+
+  // ── 8. Check line length (readability) ──
+  if (viewport.isMobile) {
+    const lineLengthData = await page.evaluate((vw: number) => {
+      const textElements = document.querySelectorAll('p, li, td, th, blockquote')
+      const tooLong: Array<{ tag: string; chars: number; text: string }> = []
+
+      for (const el of textElements) {
+        const rect = (el as HTMLElement).getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
+
+        const text = (el as HTMLElement).innerText?.trim()
+        if (!text || text.length < 20) continue
+
+        // Estimate characters per line: measure element width vs avg char width
+        const style = window.getComputedStyle(el)
+        const fontSize = parseFloat(style.fontSize)
+        // Average char width ≈ 0.5 × font-size for most fonts
+        const avgCharWidth = fontSize * 0.5
+        const charsPerLine = Math.round(rect.width / avgCharWidth)
+
+        // > 75 chars per line on mobile is a readability problem
+        if (charsPerLine > 75) {
+          tooLong.push({
+            tag: el.tagName.toLowerCase(),
+            chars: charsPerLine,
+            text: text.slice(0, 50),
+          })
+          if (tooLong.length >= 5) break
+        }
+      }
+
+      return { tooLong }
+    }, viewport.width)
+
+    if (lineLengthData.tooLong.length >= 2) {
+      const examples = lineLengthData.tooLong
+        .slice(0, 3)
+        .map((t) => `<${t.tag}> ~${t.chars} chars/line`)
+        .join('; ')
+
+      issues.push({
+        viewport: viewport.name,
+        width: viewport.width,
+        type: 'line_length_too_long',
+        severity: 'medium',
+        title: `Text lines exceed 75 characters on ${viewport.name.toLowerCase()} — reduced readability`,
+        description:
+          `${lineLengthData.tooLong.length} text blocks have lines exceeding 75 characters at the ${viewport.width}px viewport. Optimal mobile line length is 45-75 characters for comfortable reading. Elements: ${examples}.`,
+        recommendation:
+          'Add horizontal padding to text containers on mobile (at least 16px on each side). Use max-width on paragraph elements or adjust font size so lines stay within 45-75 characters.',
+        evidence: examples,
+      })
+    }
+  }
+
+  // ── 9. Check content density / spacing ──
+  if (viewport.isMobile) {
+    const densityData = await page.evaluate(() => {
+      const contentBlocks = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, table, form, section > div')
+      let cramped = 0
+      let checked = 0
+      const crampedExamples: Array<{ tag: string; marginBottom: string }> = []
+
+      for (const el of contentBlocks) {
+        const rect = (el as HTMLElement).getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
+
+        const text = (el as HTMLElement).innerText?.trim()
+        if (!text || text.length < 10) continue
+
+        checked++
+        const style = window.getComputedStyle(el)
+        const marginBottom = parseFloat(style.marginBottom)
+        const paddingBottom = parseFloat(style.paddingBottom)
+        const totalSpacing = marginBottom + paddingBottom
+
+        // Less than 8px spacing between content blocks is cramped on mobile
+        if (totalSpacing < 8) {
+          cramped++
+          if (crampedExamples.length < 5) {
+            crampedExamples.push({
+              tag: el.tagName.toLowerCase(),
+              marginBottom: `${Math.round(totalSpacing)}px`,
+            })
+          }
+        }
+      }
+
+      return { cramped, checked, crampedExamples }
+    })
+
+    const crampedRatio = densityData.checked > 0 ? densityData.cramped / densityData.checked : 0
+    if (crampedRatio > 0.4 && densityData.cramped >= 4) {
+      const examples = densityData.crampedExamples
+        .slice(0, 3)
+        .map((e) => `<${e.tag}> (spacing: ${e.marginBottom})`)
+        .join('; ')
+
+      issues.push({
+        viewport: viewport.name,
+        width: viewport.width,
+        type: 'content_too_dense',
+        severity: 'medium',
+        title: `Content blocks are tightly packed on ${viewport.name.toLowerCase()} — poor visual breathing room`,
+        description:
+          `${densityData.cramped} of ${densityData.checked} content blocks (${Math.round(crampedRatio * 100)}%) have less than 8px spacing between them at the ${viewport.width}px viewport. Dense layouts are harder to scan and read on small screens. Examples: ${examples}.`,
+        recommendation:
+          'Increase vertical spacing between content blocks on mobile. Use at least 16px margin-bottom on paragraphs and 24px between sections. Consider using CSS gap in flex/grid layouts.',
+        evidence: examples,
+      })
+    }
+  }
+
+  // ── 10. Check body text readability (14px+ recommended on mobile) ──
+  if (viewport.isMobile) {
+    const readabilityData = await page.evaluate(() => {
+      const MIN_COMFORTABLE = 14 // px — comfortable reading on mobile
+      const bodyElements = document.querySelectorAll('p, li, td, th, blockquote, label')
+      const tooSmall: Array<{ tag: string; fontSize: string; text: string }> = []
+      const checked = new Set<Element>()
+
+      for (const el of bodyElements) {
+        if (checked.has(el)) continue
+        const rect = (el as HTMLElement).getBoundingClientRect()
+        if (rect.width === 0 || rect.height === 0 || rect.top > 3000) continue
+
+        const text = (el as HTMLElement).innerText?.trim()
+        if (!text || text.length < 10) continue
+
+        // Skip children if parent already flagged
+        if (el.children.length > 0) continue
+        checked.add(el)
+
+        const style = window.getComputedStyle(el)
+        const fontSize = parseFloat(style.fontSize)
+
+        // Between 12-14px: technically readable but not comfortable
+        if (fontSize >= 12 && fontSize < MIN_COMFORTABLE) {
+          tooSmall.push({
+            tag: el.tagName.toLowerCase(),
+            fontSize: style.fontSize,
+            text: text.slice(0, 40),
+          })
+          if (tooSmall.length >= 8) break
+        }
+      }
+
+      return { tooSmall }
+    })
+
+    if (readabilityData.tooSmall.length >= 4) {
+      const examples = readabilityData.tooSmall
+        .slice(0, 3)
+        .map((t) => `<${t.tag}> "${t.text}" at ${t.fontSize}`)
+        .join('; ')
+
+      issues.push({
+        viewport: viewport.name,
+        width: viewport.width,
+        type: 'poor_readability',
+        severity: 'low',
+        title: `Body text below 14px on ${viewport.name.toLowerCase()} — uncomfortable reading size`,
+        description:
+          `${readabilityData.tooSmall.length} body text elements render between 12-14px at the ${viewport.width}px viewport. While technically above the 12px minimum, body text below 14px causes eye strain on mobile devices. Examples: ${examples}.`,
+        recommendation:
+          'Set mobile body text to at least 16px (the browser default) for comfortable reading. Use responsive font sizes: font-size: clamp(16px, 4vw, 18px) adapts cleanly across mobile viewports.',
+        evidence: examples,
       })
     }
   }

@@ -28,6 +28,7 @@ import {
   recordAuditStats,
   postAuditLearn,
 } from '@/lib/audit-engine/pipeline'
+import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
 import { extractAllBrandFiles } from '@/lib/audit-engine/brand-file-extractor'
 import { checkResponsiveDesign } from '@/lib/audit-engine/responsive-checker'
@@ -138,6 +139,16 @@ export const processAuditFn = inngest.createFunction(
     const auditId = event.data.auditId
 
     try {
+    // ── Transparency: track audit limitations for user-facing alerts ──
+    // Each flag becomes a green info alert on the audit detail page,
+    // explaining what limitation the engine faced and how it adapted.
+    const auditLimitations: Array<{
+      id: string
+      title: string
+      description: string
+      tab?: string  // which tab to show this on (null = overview)
+    }> = []
+
     // ──────────────────────────────────────────────────────────
     // STEP 1: Fetch audit details
     // ──────────────────────────────────────────────────────────
@@ -282,6 +293,21 @@ export const processAuditFn = inngest.createFunction(
       }
     })
 
+    // ── Transparency: limited pages crawled ──
+    if (crawlResult.pageCount === 1) {
+      auditLimitations.push({
+        id: 'single_page_crawled',
+        title: 'Single page analysed',
+        description: 'We could only access one page on this website. This may happen if the site uses JavaScript rendering, has bot protection, or has few public pages. Scores and findings are based solely on the homepage.',
+      })
+    } else if (crawlResult.pageCount <= 3) {
+      auditLimitations.push({
+        id: 'few_pages_crawled',
+        title: 'Limited pages analysed',
+        description: `We analysed ${crawlResult.pageCount} pages on this website. Some sites limit crawling or have few public pages. The audit covers what was accessible, but deeper pages may contain additional issues.`,
+      })
+    }
+
     // ──────────────────────────────────────────────────────────
     // STEP 2b: Responsive design check (Puppeteer)
     // Renders crawled pages at 375, 768, 1024, 1440 viewports
@@ -349,6 +375,16 @@ export const processAuditFn = inngest.createFunction(
             viewports: [375, 768, 1024, 1440],
           })
 
+        // Transparency: if no responsive issues found, note the checker's scope
+        if (result.findings.length === 0) {
+          auditLimitations.push({
+            id: 'responsive_no_issues',
+            title: 'No technical responsive issues detected',
+            description: 'Our browser-based responsive check found no technical layout issues (overflow, undersized touch targets, missing viewport meta). This check focuses on measurable technical problems. Subjective visual quality aspects like content density, whitespace balance, and layout aesthetics are not covered by automated testing.',
+            tab: 'responsive',
+          })
+        }
+
         return {
           summary: result.summary,
           findingsCount: result.findings.length,
@@ -359,6 +395,12 @@ export const processAuditFn = inngest.createFunction(
         console.error('[inngest] Responsive check failed (non-fatal):', err)
         await auditLog(auditId, 'responsive_check_failed', 'warning',
           `Responsive check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+        auditLimitations.push({
+          id: 'responsive_check_unavailable',
+          title: 'Visual responsive check unavailable',
+          description: 'We could not render this website in a browser to check responsive layout issues. The responsive analysis is based on code inspection only, so some visual layout problems (spacing, readability, content density) may not be detected.',
+          tab: 'responsive',
+        })
         return { summary: '', findingsCount: 0 }
       }
     })
@@ -1520,6 +1562,17 @@ RULES FOR RE-AUDIT:
         await auditLog(auditId, 'speculative_filtered', 'info',
           `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
         console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
+
+        // Transparency: if we removed a significant number of findings
+        const totalBefore = (allFindings?.length ?? 0)
+        const removedRatio = totalBefore > 0 ? speculativeIds.length / totalBefore : 0
+        if (speculativeIds.length >= 3 || removedRatio > 0.3) {
+          auditLimitations.push({
+            id: 'heavy_speculation_filtering',
+            title: 'Quality filter applied',
+            description: `Our quality filter removed ${speculativeIds.length} finding${speculativeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
+          })
+        }
       }
     })
 
@@ -1793,6 +1846,7 @@ RULES FOR RE-AUDIT:
         selectedPillars: auditDetails.selectedPillars, // legacy compat
         selectedModules: auditDetails.selectedModules, // new slug-based system
         aiVisibilityBreakdown: aiVisibility,
+        auditLimitations: auditLimitations.length > 0 ? auditLimitations : undefined,
       }
 
       // Insert report
@@ -1832,6 +1886,149 @@ RULES FOR RE-AUDIT:
         ...severityCount,
         has_pdf: !!pdfUrl,
       })
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 9b: Minimum findings enforcement
+    // After report generation, check for categories with low scores
+    // but 0 findings. Generate targeted findings so users understand
+    // WHY a category scored poorly.
+    // ──────────────────────────────────────────────────────────
+    await step.run('enforce-minimum-findings', async () => {
+      try {
+        const db = getDb()
+
+        // 1. Fetch the report to get category scores + summaries
+        const { data: report } = await db
+          .from('reports')
+          .select('raw_json')
+          .eq('audit_id', auditId)
+          .single()
+
+        if (!report?.raw_json?.categoryScores) return
+
+        const categoryScores = (report.raw_json as any).categoryScores as Array<{
+          name: string; score: number; summary?: string
+        }>
+
+        // 2. Count findings per category index
+        const { data: allFindings } = await db
+          .from('audit_findings')
+          .select('category_index')
+          .eq('audit_id', auditId)
+
+        const findingsPerCategory: Record<string, number> = {}
+        for (const f of (allFindings || []) as any[]) {
+          const catIdx = f.category_index
+          if (catIdx != null && catIdx < categoryScores.length) {
+            const catName = categoryScores[catIdx]?.name
+            if (catName) {
+              findingsPerCategory[catName] = (findingsPerCategory[catName] ?? 0) + 1
+            }
+          }
+        }
+
+        // 3. Identify starved categories (score < 70, 0 findings)
+        const starved = identifyStarvedCategories(categoryScores, findingsPerCategory)
+
+        if (starved.length === 0) {
+          await auditLog(auditId, 'minimum_findings_ok', 'info',
+            'All low-scoring categories have findings — no gap to fill')
+          return
+        }
+
+        console.log(`[inngest] Minimum findings: ${starved.length} starved categories:`,
+          starved.map(s => `${s.categoryName} (score ${s.score}, 0 findings)`).join(', '))
+
+        // 4. Generate findings for starved categories
+        const generated = await generateFindingsForStarvedCategories(
+          starved,
+          auditDetails.productUrl,
+          auditDetails.language,
+        )
+
+        // 5. Insert generated findings into DB
+        const { data: existingFindings } = await db
+          .from('audit_findings')
+          .select('sort_order')
+          .eq('audit_id', auditId)
+          .order('sort_order', { ascending: false })
+          .limit(1)
+
+        let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+        let totalInserted = 0
+
+        for (const [categoryIndex, findings] of generated) {
+          for (const finding of findings) {
+            await db.from('audit_findings').insert({
+              audit_id: auditId,
+              checklist_item_id: null,
+              category_index: categoryIndex,
+              severity: finding.severity,
+              title: finding.title,
+              description: finding.description,
+              evidence: null,
+              page_url: finding.pageUrl || auditDetails.productUrl,
+              recommendation: finding.recommendation,
+              estimated_impact: finding.estimatedImpact || null,
+              target_element: finding.targetElement || null,
+              screenshot_url: null,
+              sort_order: sortOrder++,
+            } as any)
+            totalInserted++
+          }
+        }
+
+        // 6. Update report total_issues count
+        if (totalInserted > 0) {
+          const { data: currentReport } = await db
+            .from('reports')
+            .select('total_issues')
+            .eq('audit_id', auditId)
+            .single()
+
+          const currentTotal = (currentReport as any)?.total_issues ?? 0
+          await db
+            .from('reports')
+            .update({ total_issues: currentTotal + totalInserted } as any)
+            .eq('audit_id', auditId)
+        }
+
+        // Transparency: let user know we generated findings from summary context
+        if (totalInserted > 0) {
+          auditLimitations.push({
+            id: 'minimum_findings_generated',
+            title: 'Additional findings generated',
+            description: `${starved.length} categor${starved.length > 1 ? 'ies' : 'y'} scored below 70 but had no specific findings after quality filtering. We generated ${totalInserted} finding${totalInserted > 1 ? 's' : ''} from the category analysis to help you understand what needs improvement.`,
+          })
+        }
+
+        await auditLog(auditId, 'minimum_findings_enforced', 'success',
+          `Generated ${totalInserted} findings for ${starved.length} starved categories: ${starved.map(s => `${s.categoryName} (${s.score})`).join(', ')}`)
+
+        // Update report raw_json with latest limitations (including this step's)
+        if (auditLimitations.length > 0) {
+          const { data: currentReport } = await db
+            .from('reports')
+            .select('raw_json')
+            .eq('audit_id', auditId)
+            .single()
+
+          if (currentReport?.raw_json) {
+            await db
+              .from('reports')
+              .update({
+                raw_json: { ...(currentReport.raw_json as any), auditLimitations },
+              } as any)
+              .eq('audit_id', auditId)
+          }
+        }
+      } catch (err) {
+        // Non-fatal — audit can complete without minimum findings enforcement
+        console.error('[inngest] Minimum findings enforcement error (non-fatal):', err)
+        await auditLog(auditId, 'minimum_findings_error', 'warning',
+          `Minimum findings enforcement failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
     })
 
     // ──────────────────────────────────────────────────────────
