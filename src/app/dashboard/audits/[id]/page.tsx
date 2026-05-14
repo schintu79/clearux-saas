@@ -41,6 +41,7 @@ import {
   Check,
   ArrowUp,
   ArrowDown,
+  ArrowRight,
   MessageSquare,
   MoreVertical,
   X,
@@ -2224,28 +2225,72 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Module Sections with scores and findings */}
-              {categoryScores.length > 0 && (() => {
-                let visibleIdx = 0;
-                return PILLAR_CONFIG.map((pillar, pillarIdx) => {
-                  const hasCats = categoryScores.some((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
-                  const hasFindings = (findingsByPillar[pillar.name] || []).length > 0;
-                  if (!hasCats && !hasFindings) return null;
-                  visibleIdx++;
-                  return (
-                    <PillarSection
-                      key={pillar.name}
-                      pillar={pillar}
-                      pillarIndex={pillarIdx}
-                      categoryScores={categoryScores}
-                      findings={findingsByPillar[pillar.name] || []}
-                      lang={auditLang}
-                      onScoreUpdate={() => fetchAuditDetail(true)}
-                      defaultExpanded={false}
-                    />
-                  );
-                });
-              })()}
+              {/* Module Grid — 2×3 overview cards */}
+              {categoryScores.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  {PILLAR_CONFIG.map((pillar, pillarIdx) => {
+                    const pillarCats = categoryScores.filter((_, idx) => idx >= pillar.range[0] && idx < pillar.range[1]);
+                    if (pillarCats.length === 0) return null;
+                    const avgScore = Math.round(pillarCats.reduce((sum, c) => sum + c.score, 0) / pillarCats.length);
+                    const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
+                    const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
+                    const pillarFindings = findingsByPillar[pillar.name] || [];
+                    const findingCount = pillarFindings.length;
+
+                    return (
+                      <button
+                        key={pillar.name}
+                        onClick={() => setActiveTab('findings')}
+                        className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group"
+                        style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+                      >
+                        {/* Module header */}
+                        <div className="flex items-center gap-3 px-5 py-4">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${tint.dot}15` }}>
+                            <PIcon size={16} style={{ color: tint.dot }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-sans font-medium text-[14px] text-ink truncate">{pillar.name}</h3>
+                            {findingCount > 0 && (
+                              <span className="text-[11px] text-m-muted">
+                                {findingCount} finding{findingCount !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className={`text-[24px] font-bold leading-none ${scoreColor(avgScore)}`}>{avgScore}</p>
+                            <p className="text-[10px] text-m-muted mt-0.5">/100</p>
+                          </div>
+                        </div>
+
+                        {/* Category scores */}
+                        <div className="px-5 pb-4 space-y-2" style={{ borderTop: `1px solid ${tint.border}` }}>
+                          <div className="pt-3" />
+                          {pillarCats.map((cat, relIdx) => {
+                            const CatIcon = CATEGORY_ICONS[pillar.range[0] + relIdx] || Sparkles;
+                            return (
+                              <div key={relIdx} className="flex items-center gap-2.5">
+                                <CatIcon size={13} className="flex-shrink-0 text-m-muted" />
+                                <span className="flex-1 text-[13px] text-ink truncate">{cat.name}</span>
+                                <div className="w-16 h-[3px] rounded-full flex-shrink-0" style={{ background: `${tint.dot}15` }}>
+                                  <div className="h-full rounded-full" style={{ width: `${cat.score}%`, background: tint.dot, opacity: 0.55 }} />
+                                </div>
+                                <span className={`text-[13px] font-semibold w-7 text-right flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-5 py-2.5 flex items-center justify-end gap-1 text-[11px] font-medium group-hover:gap-2 transition-all" style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}>
+                          View findings
+                          <ArrowRight size={12} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Checkpoint Health — category-level pass/fail summary */}
               <CheckpointHealth categoryScores={categoryScores} findings={findings} />
