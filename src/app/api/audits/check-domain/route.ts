@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('status', 'completed')
       .eq('audit_type', 'website')
-      .ilike('url', `%${domain}%`)
+      .ilike('product_url', `%${domain}%`)
 
     return NextResponse.json({ hasExisting: (count ?? 0) > 0 })
   } catch {
