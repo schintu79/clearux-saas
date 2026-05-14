@@ -38,10 +38,18 @@ export interface PlaybookInput {
   hasAiPlugin: boolean
 }
 
+/* ── Helpers ───────────────────────────────────────────────── */
+
+/** Case-insensitive check for a structured data @type */
+function hasType(types: string[], target: string): boolean {
+  const lower = target.toLowerCase()
+  return types.some(t => t.toLowerCase() === lower)
+}
+
 /* ── Generators ────────────────────────────────────────────── */
 
 function generateOrganizationJsonLd(input: PlaybookInput): PlaybookSnippet | null {
-  if (input.structuredDataTypes.includes('Organization')) return null
+  if (hasType(input.structuredDataTypes, 'Organization') || hasType(input.structuredDataTypes, 'LocalBusiness')) return null
 
   const org = {
     '@context': 'https://schema.org',
@@ -64,7 +72,7 @@ function generateOrganizationJsonLd(input: PlaybookInput): PlaybookSnippet | nul
 }
 
 function generateWebSiteJsonLd(input: PlaybookInput): PlaybookSnippet | null {
-  if (input.structuredDataTypes.includes('WebSite')) return null
+  if (hasType(input.structuredDataTypes, 'WebSite')) return null
 
   const site = {
     '@context': 'https://schema.org',
@@ -90,7 +98,7 @@ function generateWebSiteJsonLd(input: PlaybookInput): PlaybookSnippet | null {
 }
 
 function generateBreadcrumbJsonLd(input: PlaybookInput): PlaybookSnippet | null {
-  if (input.structuredDataTypes.includes('BreadcrumbList')) return null
+  if (hasType(input.structuredDataTypes, 'BreadcrumbList')) return null
   if (input.pages.length < 2) return null
 
   // Build a proper hierarchical breadcrumb example using one inner page.

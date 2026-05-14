@@ -1088,7 +1088,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
-  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null }>>([]);
+  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; content_text: string | null; ai_readability: any | null }>>([]);
   const [siblingCount, setSiblingCount] = useState(0); // other audits for same domain
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -2711,6 +2711,218 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'ai_xray' && (
             <div className="space-y-6">
 
+              {/* What AI bots see — raw text + interpretation */}
+              {auditPages.length > 0 && auditPages.some(p => p.content_text) && (
+                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                    <Eye size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">What AI bots see</h3>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{auditPages.filter(p => p.content_text).length} pages crawled</span>
+                  </div>
+                  <div className="px-5 py-3 border-b border-rule/20 bg-paper-2/30">
+                    <p className="text-[11px] text-m-muted leading-relaxed">
+                      This is the raw text AI crawlers extract from your pages — stripped of HTML, scripts, and styling. If important content is missing here, AI models can&apos;t see it either.
+                    </p>
+                  </div>
+                  <div className="divide-y divide-rule/20">
+                    {auditPages.filter(p => p.content_text).map((page, i) => {
+                      const readability = page.ai_readability as any;
+                      const score = readability?.overallScore as number | undefined;
+                      const status = readability?.status as string | undefined;
+                      const extractable = (readability?.extractable as string[]) || [];
+                      const missing = (readability?.missing as string[]) || [];
+                      const textPreview = (page.content_text || '').slice(0, 800);
+                      const wordCount = (page.content_text || '').split(/\s+/).filter(Boolean).length;
+                      return (
+                        <details key={i} className="group">
+                          <summary className="px-5 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-paper-2/50 transition-colors list-none [&::-webkit-details-marker]:hidden">
+                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                              status === 'green' ? '[background:var(--ok)]' : status === 'amber' ? 'bg-amber-400' : 'bg-red-400'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-medium text-ink truncate">{page.title || page.url}</p>
+                              <p className="text-[11px] text-m-muted truncate">{page.url}</p>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <span className="text-[11px] text-m-muted">{wordCount.toLocaleString()} words</span>
+                              {score !== undefined && (
+                                <span className={`text-sm font-bold ${score >= 70 ? 'text-ok' : score >= 40 ? 'text-warn' : 'text-severe'}`}>{score}</span>
+                              )}
+                              <ChevronDown size={14} className="text-m-muted group-open:rotate-180 transition-transform" />
+                            </div>
+                          </summary>
+                          <div className="px-5 pb-4">
+                            {/* Extractability checklist */}
+                            {(extractable.length > 0 || missing.length > 0) && (
+                              <div className="flex flex-wrap gap-1.5 mb-3">
+                                {extractable.map(item => (
+                                  <span key={item} className="inline-flex items-center gap-1 text-[10px] font-medium text-ok bg-ok/10 px-2 py-0.5 rounded-full">
+                                    <CheckCircle2 size={9} /> {item}
+                                  </span>
+                                ))}
+                                {missing.map(item => (
+                                  <span key={item} className="inline-flex items-center gap-1 text-[10px] font-medium text-severe bg-severe/10 px-2 py-0.5 rounded-full">
+                                    <AlertTriangle size={9} /> {item}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {/* Raw extracted text */}
+                            <div className="rounded-lg border border-rule/30 bg-paper-2/50 p-4 max-h-[300px] overflow-y-auto">
+                              <p className="text-[10px] font-semibold text-m-muted uppercase tracking-wide mb-2">Raw text (what bots read)</p>
+                              <p className="text-xs text-ink-2 leading-relaxed whitespace-pre-line font-mono">
+                                {textPreview}{(page.content_text || '').length > 800 && '...'}
+                              </p>
+                            </div>
+                            {/* Structured data types found */}
+                            {readability?.structuredDataTypes?.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5">
+                                <span className="text-[10px] text-m-muted font-medium mr-1">Structured data:</span>
+                                {readability.structuredDataTypes.map((t: string) => (
+                                  <span key={t} className="text-[10px] font-medium text-signal bg-signal/10 px-2 py-0.5 rounded-full">{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Visibility Breakdown — Composite score card */}
+              {(() => {
+                const aiVis = (report.raw_json as any)?.aiVisibilityBreakdown;
+                if (!aiVis) return null;
+                const bars = [
+                  { label: 'LLM knowledge accuracy', value: aiVis.llmAccuracy, desc: 'How accurately AI describes your site' },
+                  { label: 'Structured data coverage', value: aiVis.structuredData, desc: 'JSON-LD completeness for rich results' },
+                  { label: 'Content extractability', value: aiVis.contentExtractability, desc: 'How well AI can read your pages' },
+                  { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json' },
+                ];
+                return (
+                  <div className="bg-paper border border-rule/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Brain size={16} className="text-signal" />
+                      <h3 className="text-sm font-heading font-semibold text-ink">AI visibility score</h3>
+                      <span className="ml-auto text-lg font-heading font-bold text-ink">{aiVis.overall}<span className="text-sm text-m-muted font-normal">/100</span></span>
+                    </div>
+                    <div className="space-y-3">
+                      {bars.map((bar, bi) => (
+                        <div key={bi}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-m-muted">{bar.label}</span>
+                            <span className="text-xs font-semibold text-ink">{bar.value}</span>
+                          </div>
+                          <div className="h-1.5 bg-rule/20 rounded-full overflow-hidden">
+                            <div
+                              className={clsx(
+                                'h-full rounded-full transition-all duration-500',
+                                bar.value >= 70 ? 'bg-ok' : bar.value >= 40 ? 'bg-warn' : 'bg-crit',
+                              )}
+                              style={{ width: `${bar.value}%` }}
+                            />
+                          </div>
+                          <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Structured Data Health — detected vs missing */}
+              {(() => {
+                // Collect all structured data types from all pages
+                const allSdTypes: string[] = [];
+                for (const page of auditPages) {
+                  const r = page.ai_readability as any;
+                  if (r?.structuredDataTypes) {
+                    for (const t of r.structuredDataTypes) {
+                      if (!allSdTypes.includes(t)) allSdTypes.push(t);
+                    }
+                  }
+                }
+                // Also check from raw_json head tags
+                const rawHeadTags = (report.raw_json as any)?.headTags;
+                if (rawHeadTags) {
+                  const entries = Array.isArray(rawHeadTags) ? rawHeadTags : [rawHeadTags];
+                  for (const entry of entries) {
+                    const jsonLd = entry?.jsonLd || entry?.headTags?.jsonLd;
+                    if (jsonLd && Array.isArray(jsonLd)) {
+                      for (const item of jsonLd) {
+                        if (item['@graph'] && Array.isArray(item['@graph'])) {
+                          for (const g of item['@graph']) {
+                            const types = Array.isArray(g['@type']) ? g['@type'] : [g['@type']];
+                            for (const t of types) if (t && !allSdTypes.includes(String(t))) allSdTypes.push(String(t));
+                          }
+                        }
+                        if (item['@type']) {
+                          const types = Array.isArray(item['@type']) ? item['@type'] : [item['@type']];
+                          for (const t of types) if (t && !allSdTypes.includes(String(t))) allSdTypes.push(String(t));
+                        }
+                      }
+                    }
+                  }
+                }
+                const recommended = ['Organization', 'WebSite', 'BreadcrumbList', 'FAQPage', 'Product', 'LocalBusiness', 'Article'];
+                const hasLlmsTxt = (report.raw_json as any)?.aiDiscovery?.summary?.hasLlmsTxt || false;
+                const hasRobotsTxt = (report.raw_json as any)?.aiDiscovery?.summary?.hasRobotsTxt || false;
+                const hasAiPlugin = (report.raw_json as any)?.aiDiscovery?.summary?.hasAiPlugin || false;
+                if (allSdTypes.length === 0 && !hasLlmsTxt && !hasRobotsTxt) return null;
+                return (
+                  <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                    <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                      <FileSearch size={16} className="text-signal" />
+                      <h3 className="text-sm font-heading font-semibold text-ink">AI infrastructure health</h3>
+                      <span className="ml-auto text-xs text-m-muted font-medium">{allSdTypes.length} types detected</span>
+                    </div>
+                    <div className="p-5">
+                      {/* Discovery files */}
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        {[
+                          { label: 'robots.txt', found: hasRobotsTxt },
+                          { label: 'llms.txt', found: hasLlmsTxt },
+                          { label: 'ai-plugin.json', found: hasAiPlugin },
+                        ].map(f => (
+                          <div key={f.label} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${f.found ? 'border-ok/20 bg-ok/5' : 'border-rule/30 bg-paper-2/50'}`}>
+                            {f.found ? <CheckCircle2 size={13} className="text-ok flex-shrink-0" /> : <AlertTriangle size={13} className="text-m-muted flex-shrink-0" />}
+                            <span className={`text-[12px] font-medium ${f.found ? 'text-ok' : 'text-m-muted'}`}>{f.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Structured data types */}
+                      <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2">Structured data (JSON-LD)</p>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {allSdTypes.map(t => (
+                          <span key={t} className="inline-flex items-center gap-1 text-[11px] font-medium text-ok bg-ok/10 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 size={9} /> {t}
+                          </span>
+                        ))}
+                      </div>
+                      {/* Recommended but missing */}
+                      {(() => {
+                        const missingRec = recommended.filter(r => !allSdTypes.some(t => t.toLowerCase() === r.toLowerCase()));
+                        if (missingRec.length === 0) return null;
+                        return (
+                          <>
+                            <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2 mt-3">Recommended (not found)</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {missingRec.map(t => (
+                                <span key={t} className="inline-flex items-center gap-1 text-[11px] font-medium text-m-muted bg-paper-2 px-2 py-0.5 rounded-full border border-rule/30">
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* LLM Probe Results — What AI knows about your site */}
               {llmProbeResults.length > 0 && (
                 <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
@@ -2876,31 +3088,58 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </span>
                   </div>
                   <div className="divide-y divide-rule/20">
-                    {fixPlaybooks.map((pb: any, i: number) => (
-                      <div key={i} className="px-5 py-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-semibold text-signal bg-signal/10 px-2 py-0.5 rounded-full">{pb.playbook_type}</span>
-                          <h4 className="text-sm font-medium text-ink">{pb.title}</h4>
+                    {fixPlaybooks.map((pb: any, i: number) => {
+                      const downloadName = pb.playbook_type === 'json_ld' ? `${pb.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}.jsonld`
+                        : pb.playbook_type === 'llms_txt' ? 'llms.txt'
+                        : pb.playbook_type === 'robots_txt' ? 'robots.txt'
+                        : pb.playbook_type === 'meta_tags' ? 'meta-tags.html'
+                        : `${pb.playbook_type}.txt`;
+                      const downloadContent = pb.playbook_type === 'json_ld'
+                        ? pb.code_snippet.replace(/^<!--.*?-->\n?/gm, '').replace(/<\/?script[^>]*>\n?/g, '').trim()
+                        : pb.code_snippet;
+                      return (
+                        <div key={i} className="px-5 py-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-semibold text-signal bg-signal/10 px-2 py-0.5 rounded-full">{pb.playbook_type}</span>
+                            <h4 className="text-sm font-medium text-ink">{pb.title}</h4>
+                          </div>
+                          {pb.description && (
+                            <p className="text-xs text-m-muted mb-3">{pb.description}</p>
+                          )}
+                          <div className="relative">
+                            <pre className="bg-paper-2 border border-rule/30 rounded-lg p-4 pr-20 text-xs font-mono text-ink-2 overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                              {pb.code_snippet}
+                            </pre>
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              <button
+                                onClick={() => {
+                                  const blob = new Blob([downloadContent], { type: 'text/plain' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = downloadName;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                }}
+                                className="p-1.5 rounded bg-card border border-rule/30 text-m-muted hover:text-ink transition-colors"
+                                title={`Download as ${downloadName}`}
+                              >
+                                <Download size={12} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(pb.code_snippet);
+                                }}
+                                className="p-1.5 rounded bg-card border border-rule/30 text-m-muted hover:text-ink transition-colors"
+                                title="Copy to clipboard"
+                              >
+                                <Copy size={12} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        {pb.description && (
-                          <p className="text-xs text-m-muted mb-3">{pb.description}</p>
-                        )}
-                        <div className="relative">
-                          <pre className="bg-paper-2 border border-rule/30 rounded-lg p-4 text-xs font-mono text-ink-2 overflow-x-auto leading-relaxed whitespace-pre-wrap">
-                            {pb.code_snippet}
-                          </pre>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(pb.code_snippet);
-                            }}
-                            className="absolute top-2 right-2 p-1.5 rounded bg-card border border-rule/30 text-m-muted hover:text-ink transition-colors"
-                            title="Copy to clipboard"
-                          >
-                            <Copy size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -2936,6 +3175,43 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Page-level AI readability summary */}
+              {auditPages.some(p => p.ai_readability) && (
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                    <Globe size={16} className="text-signal" />
+                    <h3 className="text-sm font-heading font-semibold text-ink">Page-level AI readability</h3>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{auditPages.filter(p => p.ai_readability).length} pages</span>
+                  </div>
+                  <div className="divide-y divide-rule/20">
+                    {auditPages.filter(p => p.ai_readability).map((page, pi) => {
+                      const r = page.ai_readability as any;
+                      const score = r?.overallScore ?? 0;
+                      const wordCount = (page.content_text || '').split(/\s+/).filter(Boolean).length;
+                      return (
+                        <div key={pi} className="px-5 py-3 flex items-center gap-3">
+                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                            r?.status === 'green' ? '[background:var(--ok)]' : r?.status === 'amber' ? 'bg-amber-400' : 'bg-red-400'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] text-ink truncate">{page.title || page.url}</p>
+                            <div className="flex gap-2 mt-0.5">
+                              <span className="text-[10px] text-m-muted">{wordCount.toLocaleString()} words</span>
+                              {r?.extractable?.length > 0 && <span className="text-[10px] text-ok">{r.extractable.length} signals found</span>}
+                              {r?.missing?.length > 0 && <span className="text-[10px] text-severe">{r.missing.length} missing</span>}
+                            </div>
+                          </div>
+                          <span className={`text-sm font-bold flex-shrink-0 ${score >= 70 ? 'text-ok' : score >= 40 ? 'text-warn' : 'text-severe'}`}>{score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="px-5 py-3 bg-paper-2/30 border-t border-rule/20">
+                    <p className="text-[11px] text-m-muted">Higher scores mean AI crawlers can extract more meaningful content from your pages. Aim for 70+ on every page.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Model benchmark comparison */}
               {intelligenceData?.modelProbes?.length > 0 && (

@@ -645,11 +645,29 @@ export const processAuditFn = inngest.createFunction(
         const headTagEntries = crawlResult.headTags || []
         const firstHeadTags = headTagEntries.length > 0 ? headTagEntries[0].headTags : null
 
-        // Check structured data types from validation
+        // Check structured data types from ALL pages (not just first)
         const sdTypes: string[] = []
-        if (firstHeadTags?.jsonLd) {
-          for (const item of firstHeadTags.jsonLd) {
-            if (item['@type']) sdTypes.push(String(item['@type']))
+        function extractSdTypes(jsonLdItems: any[]) {
+          for (const item of jsonLdItems) {
+            // Handle @graph containers (e.g., Yoast SEO, WordPress plugins)
+            if (item['@graph'] && Array.isArray(item['@graph'])) {
+              extractSdTypes(item['@graph'])
+            }
+            if (item['@type']) {
+              // Handle array @type (e.g., ["Organization", "LocalBusiness"])
+              const types = Array.isArray(item['@type']) ? item['@type'] : [item['@type']]
+              for (const t of types) {
+                const normalized = String(t).trim()
+                if (normalized && !sdTypes.includes(normalized)) {
+                  sdTypes.push(normalized)
+                }
+              }
+            }
+          }
+        }
+        for (const entry of headTagEntries) {
+          if (entry.headTags?.jsonLd) {
+            extractSdTypes(entry.headTags.jsonLd)
           }
         }
 
