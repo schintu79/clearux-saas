@@ -49,7 +49,8 @@ const NewAuditInner: React.FC = () => {
   // Website audit state
   const [url, setUrl] = useState(searchParams.get('url') || '');
   const depthParam = searchParams.get('depth');
-  const isReAudit = depthParam === 'deep';
+  const [hasExistingAudit, setHasExistingAudit] = useState(depthParam === 'deep');
+  const isReAudit = hasExistingAudit;
   const [depthMode, setDepthMode] = useState<'standard' | 'deep'>(depthParam === 'deep' ? 'deep' : 'standard');
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [urlError, setUrlError] = useState('');
@@ -108,6 +109,41 @@ const NewAuditInner: React.FC = () => {
       })
       .catch(() => {});
   }, [user]);
+
+  // Check if the domain has been audited before — show depth switcher if so
+  useEffect(() => {
+    if (!user || auditType !== 'website') return;
+    // Already detected via URL param
+    if (depthParam === 'deep') return;
+
+    let cancelled = false;
+    const checkDomain = async () => {
+      try {
+        let parsed: URL;
+        try {
+          parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+        } catch {
+          if (!cancelled) setHasExistingAudit(false);
+          return;
+        }
+        const domain = parsed.hostname.replace(/^www\./, '');
+        if (!domain || domain.length < 3) {
+          if (!cancelled) setHasExistingAudit(false);
+          return;
+        }
+        const resp = await fetch(`/api/audits/check-domain?domain=${encodeURIComponent(domain)}`);
+        if (!resp.ok) { if (!cancelled) setHasExistingAudit(false); return; }
+        const data = await resp.json();
+        if (!cancelled) setHasExistingAudit(data.hasExisting === true);
+      } catch {
+        if (!cancelled) setHasExistingAudit(false);
+      }
+    };
+
+    // Debounce — only check after user stops typing for 600ms
+    const timer = setTimeout(checkDomain, 600);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [url, user, auditType, depthParam]);
 
   // Auto-add brand_consistency when a brand is selected; remove when deselected
   useEffect(() => {
