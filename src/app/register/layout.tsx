@@ -1,8 +1,22 @@
 import type { Metadata } from 'next'
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
+
 export const metadata: Metadata = {
   title: 'Create Your Free Account',
   description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
+  openGraph: {
+    title: 'Create Your Free Account | ClearUX',
+    description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
+    url: `${siteUrl}/register`,
+  },
+  twitter: {
+    title: 'Create Your Free Account | ClearUX',
+    description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
+  },
+  alternates: {
+    canonical: `${siteUrl}/register`,
+  },
 }
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {
