@@ -348,7 +348,7 @@ function CheckpointHealth({ categoryScores, findings }: {
   }
 
   return (
-    <div className="mb-6 border border-rule overflow-hidden bg-paper">
+    <div className="mb-6 border border-rule overflow-hidden bg-card">
       <div className="px-5 py-3.5 border-b border-rule/60 bg-paper-2/40">
         <div className="flex items-center gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.04em] uppercase text-m-muted">{categoryScores.length * 4}-Checkpoint health</h3>
@@ -474,7 +474,7 @@ function ScoreOverTime({ productUrl, currentAuditId, currentScore }: { productUr
   const gridScores = Array.from({ length: gridLines + 1 }, (_, i) => Math.round(minScore + (range * i) / gridLines));
 
   return (
-    <div className="mb-6 border border-rule overflow-hidden bg-white">
+    <div className="mb-6 border border-rule overflow-hidden bg-card">
       {/* Collapsed header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -1930,7 +1930,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       {isCompleted && report && (
         <>
           {/* ── Hero Score Card ─────────────────────────────── */}
-          <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-white">
+          <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-card">
             <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -2333,7 +2333,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       { score: report.content_score, label: 'Content' },
                     ].map((item, idx) =>
                       item.score != null && (
-                        <div key={idx} className="bg-paper border border-rule/30 rounded-xl flex flex-col items-center py-4 px-3">
+                        <div key={idx} className="bg-card border border-rule/30 rounded-xl flex flex-col items-center py-4 px-3">
                           <ScoreRing score={item.score} size={72} strokeWidth={5} />
                           <p className="text-xs text-m-muted font-medium mt-2">{item.label}</p>
                         </div>
@@ -2352,7 +2352,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json' },
                     ];
                     return (
-                      <div className="bg-paper border border-rule/30 rounded-xl p-5 mb-6">
+                      <div className="bg-card border border-rule/30 rounded-xl p-5 mb-6">
                         <div className="flex items-center gap-2 mb-4">
                           <Brain size={16} className="text-signal" />
                           <h3 className="text-sm font-heading font-semibold text-ink">AI visibility breakdown</h3>
@@ -2762,7 +2762,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* What AI bots see — raw text + interpretation */}
               {auditPages.length > 0 && auditPages.some(p => p.content_text) && (
-                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                <div className="bg-card border border-rule/30 rounded-xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Eye size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What AI bots see</h3>
@@ -2920,7 +2920,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     ] : [] },
                 ];
                 return (
-                  <div className="bg-paper border border-rule/30 rounded-xl p-5">
+                  <div className="bg-card border border-rule/30 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Brain size={16} className="text-signal" />
                       <h3 className="text-sm font-heading font-semibold text-ink">AI visibility score</h3>
@@ -3006,7 +3006,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 const hasAiPlugin = (report.raw_json as any)?.aiDiscovery?.summary?.hasAiPlugin || false;
                 if (allSdTypes.length === 0 && !hasLlmsTxt && !hasRobotsTxt) return null;
                 return (
-                  <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                  <div className="bg-card border border-rule/30 rounded-xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                       <FileSearch size={16} className="text-signal" />
                       <h3 className="text-sm font-heading font-semibold text-ink">AI infrastructure health</h3>
@@ -3086,7 +3086,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* LLM Probe Results — What AI knows about your site */}
               {llmProbeResults.length > 0 && (
-                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                <div className="bg-card border border-rule/30 rounded-xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <Brain size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What AI knows about your site</h3>
@@ -3172,7 +3172,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* AI Citation Audit — What gets cited vs. ignored */}
               {aiCitations.length > 0 && (
-                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
+                <div className="bg-card border border-rule/30 rounded-xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
                     <FileSearch size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">AI citation audit</h3>
@@ -3246,7 +3246,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Fix Playbooks — Copy-paste code snippets */}
               {fixPlaybooks.length > 0 && (
-                <div className="bg-paper border-2 border-signal/30 rounded-xl overflow-hidden">
+                <div className="bg-card border-2 border-signal/30 rounded-xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-signal/20 bg-signal/[0.03] flex items-center gap-2">
                     <Zap size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">Fix playbooks</h3>
@@ -3380,7 +3380,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
                         const scBg = probe.accuracy_score >= 70 ? 'bg-ok/5' : probe.accuracy_score >= 40 ? 'bg-warn/5' : 'bg-severe/5';
                         return (
-                          <div key={probe.id} className="rounded-xl border border-rule bg-paper p-4">
+                          <div key={probe.id} className="rounded-xl border border-rule bg-card p-4">
                             <div className="flex items-center justify-between mb-3">
                               <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
                               <span className={`text-lg font-bold px-2 py-0.5 rounded-lg ${sc} ${scBg}`}>{probe.accuracy_score}%</span>
@@ -3442,15 +3442,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                   <div className="p-5">
                     <div className="grid gap-3 sm:grid-cols-3 mb-4">
-                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
                         <div className={`text-2xl font-bold ${scoreColor(intelligenceData.benchmarkPosition.userScore)}`}>{intelligenceData.benchmarkPosition.userScore}</div>
                         <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
                       </div>
-                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
                         <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
                         <div className="text-[11px] font-medium text-m-muted mt-1">Industry average</div>
                       </div>
-                      <div className="text-center p-4 rounded-xl bg-paper border border-rule">
+                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
                         <div className={`text-2xl font-bold ${
                           intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-ok'
                             : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-warn'
@@ -3526,7 +3526,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
-            <div className="rounded-xl border border-rule bg-white overflow-hidden">
+            <div className="rounded-xl border border-rule bg-card overflow-hidden">
               <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                 <Download size={14} className="text-signal" />
                 <h3 className="text-sm font-heading font-semibold text-ink">Actions</h3>
