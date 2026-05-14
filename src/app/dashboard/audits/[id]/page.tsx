@@ -3353,23 +3353,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               )}
 
-              {/* Model benchmark comparison */}
-              {intelligenceData?.modelProbes?.length > 0 && (
+              {/* Model benchmark comparison — only show when 2+ models available */}
+              {intelligenceData?.modelProbes?.length > 1 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <BarChart3 size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">AI accuracy by model</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} {intelligenceData.modelProbes.length === 1 ? 'model tested' : 'models tested'}</span>
+                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models tested</span>
                   </div>
                   <div className="p-5">
-                    {intelligenceData.modelProbes.length === 1 && (
-                      <div className="flex items-start gap-2.5 mb-4 p-3 rounded-lg bg-signal/5 border border-signal/15">
-                        <Info size={14} className="text-signal flex-shrink-0 mt-0.5" />
-                        <p className="text-[12px] text-m-muted leading-relaxed">
-                          Currently benchmarking with <span className="font-semibold text-ink">1 AI model</span>. Multi-model comparison (GPT-4o, Gemini) coming soon for a fuller picture of your AI visibility across platforms.
-                        </p>
-                      </div>
-                    )}
                     {intelligenceData.modelBenchmarks?.insight && (
                       <p className="text-[13px] text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
                     )}

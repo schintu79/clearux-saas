@@ -393,7 +393,7 @@ export async function runMultiModelBenchmark(
   // Generate insight
   let insight: string
   if (activeBenchmarks.length <= 1) {
-    insight = `Only one AI model was benchmarked. Configure additional API keys (OPENAI_API_KEY, GOOGLE_AI_API_KEY) to compare how different models represent your site.`
+    insight = `AI knowledge benchmarked with ${sorted[0]?.modelLabel || 'one model'}. Multi-model comparison available when additional AI providers are configured.`
   } else {
     const spread = sorted[0].accuracyScore - sorted[sorted.length - 1].accuracyScore
     if (spread > 20) {
