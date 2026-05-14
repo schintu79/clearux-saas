@@ -2552,7 +2552,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             return (
               <div className="space-y-6">
                 {/* Hero card */}
-                <div className="rounded-xl border-2 border-ok/30 bg-ok/[0.04] overflow-hidden">
+                <div className="rounded-xl border-2 border-ok/30 bg-ok/10 overflow-hidden">
                   <div className="px-6 py-5 flex items-start gap-3">
                     <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Smartphone size={18} className="text-ok" />
@@ -2697,7 +2697,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
                 {/* All clear message when no issues found */}
                 {responsiveFindings.length === 0 && (
-                  <div className="rounded-xl border border-ok/20 bg-ok/[0.04] px-5 py-4 flex items-start gap-3">
+                  <div className="rounded-xl border border-ok/20 bg-ok/10 px-5 py-4 flex items-start gap-3">
                     <CheckCircle2 size={16} className="text-ok flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[13px] font-medium text-ink">No responsive issues found</p>
@@ -2785,7 +2785,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             )}
                             {/* Fix recommendations for missing items */}
                             {missing.length > 0 && (
-                              <div className="rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5 mb-3">
+                              <div className="rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5 mb-3">
                                 <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
                                   <Lightbulb size={11} className="text-ok" />
                                   Fix {missing.length} missing {missing.length === 1 ? 'signal' : 'signals'} on this page
@@ -2897,7 +2897,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </div>
                           <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
                           {bar.fixes.length > 0 && (
-                            <div className="mt-2 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5">
+                            <div className="mt-2 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5">
                               <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
                                 <Lightbulb size={11} className="text-ok" />
                                 How to improve
@@ -3014,7 +3014,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2 mt-3">Recommended (not found)</p>
                             <div className="space-y-2">
                               {missingRec.map(t => (
-                                <div key={t} className="flex items-start gap-2.5 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5">
+                                <div key={t} className="flex items-start gap-2.5 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2.5">
                                   <Lightbulb size={12} className="text-ok flex-shrink-0 mt-[1px]" />
                                   <div className="min-w-0">
                                     <span className="text-[11px] font-semibold text-ink">{t}</span>
@@ -3101,7 +3101,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
                           {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
-                            <div className="mt-2.5 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2">
+                            <div className="mt-2.5 rounded-lg border border-ok/20 bg-ok/10 px-3 py-2">
                               <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
                                 <Lightbulb size={11} className="text-ok" />
                                 Recommended fix
@@ -3184,7 +3184,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </span>
                         </div>
                         {cit.citation_type === 'ignored' && (
-                          <div className="mt-2 ml-[25px] rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2">
+                          <div className="mt-2 ml-[25px] rounded-lg border border-ok/20 bg-ok/10 px-3 py-2">
                             <p className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
                               <Lightbulb size={10} className="text-ok flex-shrink-0 mt-[2px]" />
                               This page is not being cited by AI. Improve its visibility by adding a clear meta description, structured data (JSON-LD), and ensuring the content is in semantic HTML — not hidden in JavaScript or iframes.
@@ -3302,7 +3302,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="space-y-6">
 
               {/* Intro explanation — prominent hero card */}
-              <div className="rounded-xl border-2 border-ok/30 bg-ok/[0.04] overflow-hidden">
+              <div className="rounded-xl border-2 border-ok/30 bg-ok/10 overflow-hidden">
                 <div className="px-6 py-5 flex items-start gap-3">
                   <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Sparkles size={18} className="text-ok" />
