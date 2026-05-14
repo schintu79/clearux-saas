@@ -3437,27 +3437,44 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <TrendingUp size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">How you compare to your industry</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.industry}</span>
+                    <h3 className="text-sm font-heading font-semibold text-ink">How you compare</h3>
+                    <span className="ml-auto text-xs font-semibold text-signal tracking-[0.03em] uppercase bg-signal/10 px-2 py-0.5 rounded-full">{intelligenceData.industry}</span>
                   </div>
                   <div className="p-5">
                     <div className="grid gap-3 sm:grid-cols-3 mb-4">
+                      {/* Your score */}
                       <div className="text-center p-4 rounded-xl bg-card border border-rule">
                         <div className={`text-2xl font-bold ${scoreColor(intelligenceData.benchmarkPosition.userScore)}`}>{intelligenceData.benchmarkPosition.userScore}</div>
                         <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
                       </div>
+                      {/* Industry average */}
                       <div className="text-center p-4 rounded-xl bg-card border border-rule">
                         <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
-                        <div className="text-[11px] font-medium text-m-muted mt-1">Industry average</div>
+                        <div className="text-[11px] font-medium text-m-muted mt-1">{intelligenceData.industry} average</div>
                       </div>
+                      {/* Difference */}
                       <div className="text-center p-4 rounded-xl bg-card border border-rule">
-                        <div className={`text-2xl font-bold ${
-                          intelligenceData.benchmarkPosition.percentile >= 75 ? 'text-ok'
-                            : intelligenceData.benchmarkPosition.percentile >= 50 ? 'text-warn'
-                              : 'text-severe'
-                        }`}>{intelligenceData.benchmarkPosition.rankLabel}</div>
-                        <div className="text-[11px] font-medium text-m-muted mt-1">Your ranking</div>
+                        {(() => {
+                          const delta = intelligenceData.benchmarkPosition.deltaFromAvg;
+                          const color = delta > 0 ? 'text-ok' : delta < 0 ? 'text-severe' : 'text-m-muted';
+                          const sign = delta > 0 ? '+' : '';
+                          return (
+                            <>
+                              <div className={`text-2xl font-bold ${color}`}>{sign}{delta}</div>
+                              <div className="text-[11px] font-medium text-m-muted mt-1">vs. average</div>
+                            </>
+                          );
+                        })()}
                       </div>
+                    </div>
+                    {/* Rank label */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        intelligenceData.benchmarkPosition.percentile >= 75 ? 'bg-ok/10 text-ok'
+                          : intelligenceData.benchmarkPosition.percentile >= 50 ? 'bg-warn/10 text-warn'
+                            : 'bg-severe/10 text-severe'
+                      }`}>{intelligenceData.benchmarkPosition.rankLabel}</span>
+                      <span className="text-[11px] text-m-muted">among {intelligenceData.benchmarkPosition.comparedAgainst || `${intelligenceData.industry} sites`}</span>
                     </div>
                     <p className="text-[13px] text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
                     {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (

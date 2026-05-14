@@ -45,7 +45,7 @@ export interface UserBenchmarkPosition {
   userScore: number
   /** User's percentile rank (0-100, higher = better) */
   percentile: number
-  /** Label: "Top X%" */
+  /** Label: "Top X%", "Above average", "Below average", "Needs work" */
   rankLabel: string
   /** How far above/below the average */
   deltaFromAvg: number
@@ -53,6 +53,8 @@ export interface UserBenchmarkPosition {
   benchmark: IndustryBenchmark
   /** Actionable insight */
   insight: string
+  /** What cohort the comparison is against */
+  comparedAgainst: string
 }
 
 /* ── Industry detection ────────────────────────────────────── */
@@ -175,6 +177,7 @@ export async function getUserBenchmarkPosition(
       deltaFromAvg: 0,
       benchmark,
       insight: 'Not enough audits yet to compute industry benchmarks. Your score will be compared against other sites as the dataset grows.',
+      comparedAgainst: industry !== 'General' ? `${industry} sites` : 'all audited sites',
     }
   }
 
@@ -200,26 +203,37 @@ export async function getUserBenchmarkPosition(
     : 50
 
   const deltaFromAvg = userScore - benchmark.avgScore
+  const absDelta = Math.abs(deltaFromAvg)
+
+  // Rank label: use ordinal percentile so users understand their position clearly
+  // e.g. "Top 10%", "Top 25%", "Top 50%", "Below average"
   const rankLabel = percentile >= 90
     ? 'Top 10%'
     : percentile >= 75
       ? 'Top 25%'
       : percentile >= 50
-        ? 'Top 50%'
-        : `Bottom ${100 - percentile}%`
+        ? 'Above average'
+        : percentile >= 25
+          ? 'Below average'
+          : 'Needs work'
 
-  // Generate insight
+  // Generate insight — use actual deltaFromAvg for correct above/below comparison
+  const aboveOrBelow = deltaFromAvg > 0 ? 'above' : deltaFromAvg < 0 ? 'below' : 'at'
+  const deltaPhrase = deltaFromAvg === 0
+    ? `right at the ${industry} average of ${benchmark.avgScore}`
+    : `${absDelta} point${absDelta !== 1 ? 's' : ''} ${aboveOrBelow} the ${industry} average of ${benchmark.avgScore}`
+
   let insight: string
   if (percentile >= 90) {
-    insight = `Your AI visibility score of ${userScore} puts you in the top 10% of all audited sites. You're significantly ahead of the average (${benchmark.avgScore}).`
+    insight = `Your score of ${userScore} is ${deltaPhrase}. You're in the top 10% of audited ${industry} sites.`
   } else if (percentile >= 75) {
-    insight = `You're in the top 25% with a score of ${userScore} (avg: ${benchmark.avgScore}). A few targeted improvements could push you into the top 10%.`
+    insight = `Your score of ${userScore} is ${deltaPhrase}. A few targeted improvements could push you into the top 10%.`
   } else if (percentile >= 50) {
-    insight = `Your score of ${userScore} is above average (${benchmark.avgScore}), but there's room to improve. Focus on structured data and content clarity.`
+    insight = `Your score of ${userScore} is ${deltaPhrase}. Focus on structured data and content clarity to move higher.`
   } else if (percentile >= 25) {
-    insight = `Your score of ${userScore} is below the average of ${benchmark.avgScore}. The fix playbooks in your audit report show exactly what to improve.`
+    insight = `Your score of ${userScore} is ${deltaPhrase}. The fix playbooks in your audit report show exactly what to improve.`
   } else {
-    insight = `Your score of ${userScore} is in the bottom quartile (avg: ${benchmark.avgScore}). Implementing the basic fix playbooks — especially JSON-LD and meta tags — could significantly improve your visibility.`
+    insight = `Your score of ${userScore} is ${deltaPhrase}. Implementing the basic fix playbooks — especially JSON-LD and meta tags — could significantly improve your visibility.`
   }
 
   return {
@@ -229,6 +243,7 @@ export async function getUserBenchmarkPosition(
     deltaFromAvg,
     benchmark,
     insight,
+    comparedAgainst: industry !== 'General' ? `${industry} sites` : 'all audited sites',
   }
 }
 
