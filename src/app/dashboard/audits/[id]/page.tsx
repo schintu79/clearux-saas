@@ -2762,11 +2762,56 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                     <CheckCircle2 size={9} /> {item}
                                   </span>
                                 ))}
-                                {missing.map(item => (
-                                  <span key={item} className="inline-flex items-center gap-1 text-[10px] font-medium text-severe bg-severe/10 px-2 py-0.5 rounded-full">
-                                    <AlertTriangle size={9} /> {item}
-                                  </span>
-                                ))}
+                                {missing.map((item: string) => {
+                                  const missingFixMap: Record<string, string> = {
+                                    'meta description': 'Add a <meta name="description"> tag with a concise summary of the page content',
+                                    'og:title': 'Add <meta property="og:title"> for social sharing and AI previews',
+                                    'og:description': 'Add <meta property="og:description"> for social sharing and AI previews',
+                                    'og:image': 'Add <meta property="og:image"> with a representative image URL',
+                                    'canonical': 'Add <link rel="canonical"> to prevent duplicate content issues',
+                                    'h1': 'Add a single <h1> heading that describes the main topic of the page',
+                                    'structured data': 'Add JSON-LD structured data to help AI understand your content type',
+                                    'alt text': 'Add descriptive alt attributes to all <img> elements',
+                                    'lang': 'Add a lang attribute to your <html> tag (e.g., lang="en")',
+                                  };
+                                  const fixTip = Object.entries(missingFixMap).find(([k]) => item.toLowerCase().includes(k))?.[1];
+                                  return (
+                                    <span key={item} className="inline-flex items-center gap-1 text-[10px] font-medium text-severe bg-severe/10 px-2 py-0.5 rounded-full" title={fixTip || `Add ${item} to this page`}>
+                                      <AlertTriangle size={9} /> {item}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {/* Fix recommendations for missing items */}
+                            {missing.length > 0 && (
+                              <div className="rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2.5 mb-3">
+                                <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
+                                  <Lightbulb size={11} className="text-warn" />
+                                  Fix {missing.length} missing {missing.length === 1 ? 'signal' : 'signals'} on this page
+                                </p>
+                                <ul className="space-y-1">
+                                  {missing.map((item: string) => {
+                                    const missingFixMap2: Record<string, string> = {
+                                      'meta description': 'Add a <meta name="description" content="..."> tag with a concise page summary',
+                                      'og:title': 'Add <meta property="og:title" content="..."> for social/AI previews',
+                                      'og:description': 'Add <meta property="og:description" content="..."> for social/AI previews',
+                                      'og:image': 'Add <meta property="og:image" content="https://..."> with a representative image',
+                                      'canonical': 'Add <link rel="canonical" href="..."> to prevent duplicate content issues',
+                                      'h1': 'Add a single <h1> heading that describes the main topic of this page',
+                                      'structured data': 'Add JSON-LD structured data — see Fix playbooks below for templates',
+                                      'alt text': 'Add descriptive alt attributes to all <img> elements on this page',
+                                      'lang': 'Add lang="en" (or your language) to the <html> tag',
+                                    };
+                                    const fixTip2 = Object.entries(missingFixMap2).find(([k]) => item.toLowerCase().includes(k))?.[1] || `Add ${item} to this page`;
+                                    return (
+                                      <li key={item} className="text-[10px] text-ink-2 leading-relaxed flex items-start gap-1.5">
+                                        <ArrowRight size={8} className="text-warn flex-shrink-0 mt-[3px]" />
+                                        <span><span className="font-medium text-ink">{item}:</span> {fixTip2}</span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
                               </div>
                             )}
                             {/* Raw extracted text */}
@@ -2798,10 +2843,34 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 const aiVis = (report.raw_json as any)?.aiVisibilityBreakdown;
                 if (!aiVis) return null;
                 const bars = [
-                  { label: 'LLM knowledge accuracy', value: aiVis.llmAccuracy, desc: 'How accurately AI describes your site' },
-                  { label: 'Structured data coverage', value: aiVis.structuredData, desc: 'JSON-LD completeness for rich results' },
-                  { label: 'Content extractability', value: aiVis.contentExtractability, desc: 'How well AI can read your pages' },
-                  { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json' },
+                  { label: 'LLM knowledge accuracy', value: aiVis.llmAccuracy, desc: 'How accurately AI describes your site',
+                    fixes: aiVis.llmAccuracy < 70 ? [
+                      'Add Organization and WebSite JSON-LD to your homepage so AI models know your brand name, description, and URL',
+                      'Ensure every page has a unique, descriptive <title> and <meta description> that matches your actual content',
+                      'Add an llms.txt file to your domain root — this gives AI crawlers a structured summary of your site',
+                      'Avoid JavaScript-only rendering for key content; AI crawlers often can\'t execute JS',
+                    ] : [] },
+                  { label: 'Structured data coverage', value: aiVis.structuredData, desc: 'JSON-LD completeness for rich results',
+                    fixes: aiVis.structuredData < 70 ? [
+                      'Add Organization JSON-LD to your homepage with name, logo, URL, and social profiles',
+                      'Add WebSite JSON-LD with a SearchAction so AI can understand your site structure',
+                      'Add BreadcrumbList JSON-LD to inner pages to show page hierarchy',
+                      'Check the Fix playbooks section below for ready-to-use code snippets',
+                    ] : [] },
+                  { label: 'Content extractability', value: aiVis.contentExtractability, desc: 'How well AI can read your pages',
+                    fixes: aiVis.contentExtractability < 70 ? [
+                      'Use semantic HTML elements (<article>, <main>, <nav>, <header>) instead of generic <div> containers',
+                      'Add alt text to all images — AI crawlers rely on this to understand visual content',
+                      'Ensure headings follow a logical hierarchy (h1 > h2 > h3) on every page',
+                      'Move critical content out of iframes, canvas elements, and dynamically-loaded modals',
+                    ] : [] },
+                  { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json',
+                    fixes: aiVis.crawlInfrastructure < 70 ? [
+                      'Create a robots.txt that explicitly allows AI crawlers (GPTBot, ClaudeBot, Google-Extended, PerplexityBot)',
+                      'Add an llms.txt file at your domain root with a summary of your site and key pages',
+                      'Ensure your sitemap.xml is referenced in robots.txt and lists all important pages',
+                      'Check the Fix playbooks section below for ready-to-use templates',
+                    ] : [] },
                 ];
                 return (
                   <div className="bg-paper border border-rule/30 rounded-xl p-5">
@@ -2827,6 +2896,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             />
                           </div>
                           <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
+                          {bar.fixes.length > 0 && (
+                            <div className="mt-2 rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2.5">
+                              <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
+                                <Lightbulb size={11} className="text-warn" />
+                                How to improve
+                              </p>
+                              <ul className="space-y-1">
+                                {bar.fixes.map((fix, fi) => (
+                                  <li key={fi} className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
+                                    <ArrowRight size={9} className="text-warn flex-shrink-0 mt-[3px]" />
+                                    {fix}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -2884,13 +2969,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {/* Discovery files */}
                       <div className="grid grid-cols-3 gap-2 mb-4">
                         {[
-                          { label: 'robots.txt', found: hasRobotsTxt },
-                          { label: 'llms.txt', found: hasLlmsTxt },
-                          { label: 'ai-plugin.json', found: hasAiPlugin },
+                          { label: 'robots.txt', found: hasRobotsTxt,
+                            fix: 'Create a robots.txt file at your domain root that allows AI crawlers. See the Fix playbooks section below for a ready-to-use template.' },
+                          { label: 'llms.txt', found: hasLlmsTxt,
+                            fix: 'Create an llms.txt file at your domain root (/llms.txt) with a markdown summary of your site, key pages, and contact info. See Fix playbooks below for a pre-filled template.' },
+                          { label: 'ai-plugin.json', found: hasAiPlugin,
+                            fix: 'Create a /.well-known/ai-plugin.json file to help AI assistants discover your site\'s API and capabilities. This follows the OpenAI plugin manifest standard.' },
                         ].map(f => (
-                          <div key={f.label} className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${f.found ? 'border-ok/20 bg-ok/5' : 'border-rule/30 bg-paper-2/50'}`}>
-                            {f.found ? <CheckCircle2 size={13} className="text-ok flex-shrink-0" /> : <AlertTriangle size={13} className="text-m-muted flex-shrink-0" />}
-                            <span className={`text-[12px] font-medium ${f.found ? 'text-ok' : 'text-m-muted'}`}>{f.label}</span>
+                          <div key={f.label} className="flex flex-col">
+                            <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${f.found ? 'border-ok/20 bg-ok/5' : 'border-warn/20 bg-warn/[0.04]'}`}>
+                              {f.found ? <CheckCircle2 size={13} className="text-ok flex-shrink-0" /> : <AlertTriangle size={13} className="text-warn flex-shrink-0" />}
+                              <span className={`text-[12px] font-medium ${f.found ? 'text-ok' : 'text-warn'}`}>{f.label}</span>
+                            </div>
+                            {!f.found && (
+                              <p className="text-[10px] text-ink-2 leading-relaxed mt-1.5 px-1">{f.fix}</p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -2907,14 +3000,33 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {(() => {
                         const missingRec = recommended.filter(r => !allSdTypes.some(t => t.toLowerCase() === r.toLowerCase()));
                         if (missingRec.length === 0) return null;
+                        const typeFixMap: Record<string, string> = {
+                          'Organization': 'Add to your homepage <head>. Tells AI your brand name, logo, URL, and social profiles.',
+                          'WebSite': 'Add to your homepage <head>. Enables sitelinks search box and helps AI understand your site structure.',
+                          'BreadcrumbList': 'Add to inner pages. Shows the navigation path (Home > Section > Page) to AI and search engines.',
+                          'FAQPage': 'Add to any page with Q&A content. Helps AI surface your answers directly in search results.',
+                          'Product': 'Add to product pages. Includes name, price, availability, and reviews for rich results.',
+                          'LocalBusiness': 'Add to your homepage if you have a physical location. Includes address, hours, and contact info.',
+                          'Article': 'Add to blog posts and articles. Includes author, date, headline for news and article rich results.',
+                        };
                         return (
                           <>
                             <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2 mt-3">Recommended (not found)</p>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="space-y-2">
                               {missingRec.map(t => (
-                                <span key={t} className="inline-flex items-center gap-1 text-[11px] font-medium text-m-muted bg-paper-2 px-2 py-0.5 rounded-full border border-rule/30">
-                                  {t}
-                                </span>
+                                <div key={t} className="flex items-start gap-2 rounded-lg border border-warn/15 bg-warn/[0.03] px-3 py-2">
+                                  <AlertTriangle size={11} className="text-warn flex-shrink-0 mt-[2px]" />
+                                  <div className="min-w-0">
+                                    <span className="text-[11px] font-semibold text-ink">{t}</span>
+                                    <p className="text-[10px] text-ink-2 leading-relaxed mt-0.5">{typeFixMap[t] || 'Add this structured data type to improve AI understanding of your content.'}</p>
+                                    {fixPlaybooks.some((pb: any) => pb.title?.toLowerCase().includes(t.toLowerCase())) && (
+                                      <p className="text-[10px] text-signal font-medium mt-1 flex items-center gap-1">
+                                        <ArrowDown size={9} />
+                                        Ready-to-use code available in Fix playbooks below
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           </>
@@ -2988,6 +3100,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {probe.accuracy_note && (
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
+                          {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
+                            <div className="mt-2.5 rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2">
+                              <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
+                                <Lightbulb size={11} className="text-warn" />
+                                Recommended fix
+                              </p>
+                              <p className="text-[11px] text-ink-2 leading-relaxed">
+                                {probe.accuracy === 'hallucinated'
+                                  ? 'AI is fabricating information about your site. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) to provide authoritative facts that AI models will reference instead of guessing.'
+                                  : probe.accuracy === 'inaccurate'
+                                  ? 'AI has outdated or wrong information. Update your meta description and page content to clearly state the correct answer. Adding structured data (JSON-LD) gives AI models a machine-readable source of truth that takes priority over inferred content.'
+                                  : 'AI has partial knowledge. Expand your content to fully answer this question — add it to your homepage, about page, or FAQ. Structured data and an llms.txt file help AI models find complete, accurate information about your site.'
+                                }
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -3028,31 +3156,41 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                   <div className="divide-y divide-rule/20">
                     {aiCitations.map((cit: any, i: number) => (
-                      <div key={i} className="px-5 py-3 flex items-start gap-3">
-                        {cit.citation_type === 'ignored' ? (
-                          <AlertTriangle size={13} className="text-warn mt-0.5 flex-shrink-0" />
-                        ) : (
-                          <CheckCircle2 size={13} className="text-ok mt-0.5 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-ink">{cit.ai_context}</p>
-                          {cit.cited_text && (
-                            <p className="text-xs text-m-muted mt-0.5 truncate">{cit.cited_text}</p>
+                      <div key={i} className="px-5 py-3">
+                        <div className="flex items-start gap-3">
+                          {cit.citation_type === 'ignored' ? (
+                            <AlertTriangle size={13} className="text-warn mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <CheckCircle2 size={13} className="text-ok mt-0.5 flex-shrink-0" />
                           )}
-                          {cit.page_url && (
-                            <a href={cit.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-signal hover:underline mt-0.5 inline-flex items-center gap-1">
-                              <ExternalLink size={10} /> {cit.page_url}
-                            </a>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] text-ink">{cit.ai_context}</p>
+                            {cit.cited_text && (
+                              <p className="text-xs text-m-muted mt-0.5 truncate">{cit.cited_text}</p>
+                            )}
+                            {cit.page_url && (
+                              <a href={cit.page_url} target="_blank" rel="noopener noreferrer" className="text-xs text-signal hover:underline mt-0.5 inline-flex items-center gap-1">
+                                <ExternalLink size={10} /> {cit.page_url}
+                              </a>
+                            )}
+                          </div>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            cit.citation_type === 'direct_quote' ? 'text-ok bg-ok/10' :
+                            cit.citation_type === 'paraphrase' ? 'text-signal bg-signal/10' :
+                            cit.citation_type === 'ignored' ? 'text-warn bg-warn/10' :
+                            'text-m-muted bg-paper-2'
+                          }`}>
+                            {cit.citation_type}
+                          </span>
                         </div>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                          cit.citation_type === 'direct_quote' ? 'text-ok bg-ok/10' :
-                          cit.citation_type === 'paraphrase' ? 'text-signal bg-signal/10' :
-                          cit.citation_type === 'ignored' ? 'text-warn bg-warn/10' :
-                          'text-m-muted bg-paper-2'
-                        }`}>
-                          {cit.citation_type}
-                        </span>
+                        {cit.citation_type === 'ignored' && (
+                          <div className="mt-2 ml-[25px] rounded-lg border border-warn/15 bg-warn/[0.03] px-3 py-2">
+                            <p className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
+                              <Lightbulb size={10} className="text-warn flex-shrink-0 mt-[2px]" />
+                              This page is not being cited by AI. Improve its visibility by adding a clear meta description, structured data (JSON-LD), and ensuring the content is in semantic HTML — not hidden in JavaScript or iframes.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -3061,8 +3199,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Fix Playbooks — Copy-paste code snippets */}
               {fixPlaybooks.length > 0 && (
-                <div className="bg-paper border border-rule/30 rounded-xl overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/30 flex items-center gap-2">
+                <div className="bg-paper border-2 border-signal/30 rounded-xl overflow-hidden">
+                  <div className="px-5 py-4 border-b border-signal/20 bg-signal/[0.03] flex items-center gap-2">
                     <Zap size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">Fix playbooks</h3>
                     <span className="ml-auto flex items-center gap-2">
