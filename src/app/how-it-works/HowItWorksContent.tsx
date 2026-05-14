@@ -219,7 +219,7 @@ function MockModelBenchmark() {
     <div className="w-full border border-rule rounded-lg overflow-hidden" style={{ fontSize: 0 }}>
       <div className="px-3 py-2 border-b border-rule flex items-center gap-1.5">
         <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><line x1={18} y1={20} x2={18} y2={10} /><line x1={12} y1={20} x2={12} y2={4} /><line x1={6} y1={20} x2={6} y2={14} /></svg>
-        <span className="text-[10px] font-sans font-semibold text-ink">AI accuracy by model</span>
+        <span className="text-[10px] font-sans font-semibold text-ink">What AI models say about your site</span>
       </div>
       <div className="p-3 space-y-2.5">
         {models.map((m, i) => {

@@ -3368,7 +3368,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                     <BarChart3 size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">AI accuracy by model</h3>
+                    <h3 className="text-sm font-heading font-semibold text-ink">What AI models say about your site</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models tested</span>
                   </div>
                   <div className="p-5">
