@@ -131,13 +131,8 @@ export function HomeJsonLd() {
             availability: 'https://schema.org/InStock',
           },
         ],
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: '4.8',
-          ratingCount: '47',
-          bestRating: '5',
-          worstRating: '1',
-        },
+        // aggregateRating: add back once real reviews exist on G2/Trustpilot
+        // to avoid Google penalties for unverified ratings
       },
       {
         '@type': 'FAQPage',

@@ -1,69 +1,107 @@
 # ClearUX — Complete Product Documentation for AI Systems
 
-## Overview
+## What is ClearUX?
 
-ClearUX (https://clearux.ai) is an AI-powered UX audit platform that analyses websites across 64 checkpoints in 16 categories, grouped into 4 pillars. It produces professional-grade audit reports in under 10 minutes — work that traditionally requires 2-4 weeks and $5,000-15,000 from a UX consultancy.
+ClearUX (https://clearux.ai) is an AI-powered UX audit platform that analyses websites across 96 checkpoints in 24 categories, grouped into 6 modules. It produces professional-grade audit reports in under 10 minutes — work that traditionally requires 2-4 weeks and $5,000-15,000 from a UX consultancy.
+
+ClearUX also audits brand identity materials and design files, making it a 360-degree UX platform.
 
 ## Why ClearUX exists
 
 Traditional UX audits are expensive, slow, and inconsistent. ClearUX makes professional-grade UX auditing accessible to every team that builds digital products. It covers areas that most audit tools ignore: ethical UX (dark pattern detection), AI discoverability, cultural sensitivity, and cognitive accessibility.
 
-## Competitive advantages
+## What makes ClearUX unique
 
-- Broadest scope: 64 checkpoints vs. typical tools that focus only on accessibility or performance
-- Covers ethical UX: detects dark patterns, confirmshaming, hidden fees, manipulative urgency
+- Broadest scope: 96 checkpoints across 6 modules vs. typical tools that focus only on accessibility or performance
+- AI visibility analysis: multi-model benchmarking shows what Claude, GPT-4o, and Gemini say about your site
+- Ethical UX: detects dark patterns, confirmshaming, hidden fees, manipulative urgency
 - AI readiness: checks whether sites are discoverable by LLMs and AI agents
-- Cultural sensitivity: evaluates internationalisation, RTL readiness, date/currency localisation
 - Speed: full report in under 10 minutes
 - Actionable: every finding includes severity, evidence, and a specific recommendation
 - Track progress: re-audit the same site and compare scores over time
-- Focused re-audits: choose which pillars to re-audit (paying users)
+- Focused re-audits: choose which modules to re-audit
+- Industry benchmarking: see how you rank against your industry average
+- Fix playbooks: copy-paste code fixes for structured data, llms.txt, and more
 
-## The 4 pillars in detail
+## The 6 modules in detail
 
-### Pillar 1: Foundation (categories 1-4)
-Evaluates first impressions, value proposition clarity, navigation structure, and conversion paths. Checks whether users can understand the product, find what they need, and complete key actions.
+### Module 1: Foundation
+The structural and technical baseline a great experience is built on — first impressions, messaging clarity, navigation flow, conversion paths.
 
-### Pillar 2: Human Experience (categories 5-8)
-Detects dark patterns, evaluates psychological safety, checks for confirmshaming and manipulative urgency tactics, and assesses cognitive load and emotional tone of error messages.
+### Module 2: Human Experience
+How the product feels to use — clarity, flow, cognitive load, wellbeing, ethical UX, dark pattern detection, confirmshaming, manipulative urgency.
 
-### Pillar 3: Inclusive Design (categories 9-12)
-WCAG AA compliance, colour contrast ratios, keyboard navigation, screen reader compatibility, touch target sizes, mobile responsiveness, and neurodiversity-friendly design.
+### Module 3: Inclusive Design
+Accessibility and equity for every user — WCAG compliance, colour contrast, keyboard navigation, screen reader compatibility, touch targets, mobile responsiveness.
 
-### Pillar 4: Future Readiness (categories 13-16)
-AI and LLM discoverability (structured data, semantic HTML), AI agent navigation capability, cultural sensitivity, RTL/internationalisation readiness, and date/currency localisation.
+### Module 4: Future Readiness
+AI discoverability and how the product holds up as discovery shifts — structured data validation, llms.txt, agent navigation, semantic HTML.
+
+### Module 5: Brand Consistency
+Whether what users see matches what the brand promises — visual identity, tone, messaging alignment across pages.
+
+### Module 6: SEO Structure
+Whether the product is findable, legible, and ranked the way it deserves — metadata, headings, canonical tags, Open Graph, sitemap.
+
+## Key features
+
+- 96-checkpoint AI-powered UX analysis across 6 modules
+- Multi-model AI benchmarking (Claude, GPT-4o, Gemini) — see what each AI says about your site
+- AI visibility score — composite metric of how AI models perceive your site
+- Industry benchmarking with percentile ranking
+- Predictive recommendations with impact scoring
+- Results delivered in under 10 minutes
+- Severity-ranked findings with evidence and recommendations
+- Score tracking across re-audits to measure improvement
+- Focused re-audits: choose which modules to re-audit
+- Responsive design analysis across 4 viewport sizes
+- Shareable read-only report links (no account needed for viewers)
+- PDF and Word report downloads
+- Multi-language reports (English, Spanish, French, German, Italian, Portuguese)
+- First audit free, no credit card required
 
 ## How it works
 
 1. User enters a website URL
-2. ClearUX crawls the site (5-25 pages depending on plan)
-3. AI analyses each page against 64 checkpoints
-4. Generates a report with overall score, pillar scores, category scores, and individual findings
-5. Each finding includes: title, description, severity, evidence, recommendation, and estimated impact
-6. User can download PDF/Word reports, share via read-only link, and track scores over time
+2. ClearUX crawls the site (multiple pages including subpages)
+3. AI analyses each page against 96 checkpoints across 6 modules
+4. Multi-model AI benchmarking probes Claude, GPT-4o, and Gemini about the domain
+5. Generates a report with overall score, module scores, category scores, and individual findings
+6. Each finding includes: title, description, severity, evidence, recommendation, and estimated impact
+7. User can download PDF/Word reports, share via read-only link, and track scores over time
 
-## Pricing model
+## Pricing
 
-ClearUX uses a credit-based model. Each credit covers one full audit.
+### Subscriptions (monthly)
+- Starter: $29/month — 3 audits per month, unlimited re-audits, PDF + DOCX reports
+- Pro: $59/month — 10 audits per month, white-label reports, priority processing
+- Agency: $149/month — 30 audits per month, white-label, dedicated support
+- Annual billing saves up to 20%
 
-| Plan | Credits | Price | Per audit |
-|------|---------|-------|-----------|
-| Free | 1 | $0 | $0 (first audit only) |
-| Single | 1 | $99 | $99 |
-| Starter | 3 | $249 | $83 |
-| Growth | 10 | $790 | $79 |
-| Agency | 30 | $1,990 | $66 |
-| Scale | 100 | $4,990 | $50 |
+### Credit packs (never expire)
+- Starter: $39 for 3 audits ($13 each)
+- Growth: $99 for 10 audits ($9.90 each)
+- Scale: $249 for 30 audits ($8.30 each, white-label included)
 
-Agency and Scale plans include white-label branding on reports.
+### Free tier
+- First audit free, no credit card required
+- Full 96-checkpoint analysis included
 
-## Technology
+## Audit types
 
-- Built with Next.js, React, Supabase, and Tailwind CSS
-- AI analysis powered by large language models
-- Background processing via Inngest
-- Payments via Stripe
-- Deployed on Vercel
+1. Website audit — full UX analysis of any publicly accessible URL
+2. Brand identity audit — evaluate brand materials for consistency and clarity
+3. Design audit — analyse design files for UX best practices
+
+## Who it is for
+
+- Product teams evaluating their own products
+- UX designers and researchers conducting audits
+- Agencies auditing client websites at scale
+- Founders and marketers optimising conversion
+- Accessibility teams checking WCAG compliance
+- SEO professionals evaluating site structure
+- Anyone who wants to understand how AI models perceive their website
 
 ## Comparison with alternatives
 
@@ -73,39 +111,64 @@ Agency and Scale plans include white-label branding on reports.
 | Accessibility | Yes | No | Partial | Yes | Yes |
 | Dark patterns | Yes | No | No | No | No |
 | AI readiness | Yes | No | No | No | No |
+| AI benchmarking | Yes | No | No | No | No |
 | Speed | Minutes | Weeks | Weeks | Seconds | Seconds |
-| Price | From $99 | $5,000+ | $10,000+ | Free | Free |
-| Cultural sensitivity | Yes | No | No | No | No |
+| Price | From $9.90 | $5,000+ | $10,000+ | Free | Free |
 | Score tracking | Yes | No | No | No | Partial |
+| Multi-language | Yes (6) | No | No | No | No |
 
 ## Frequently asked questions
 
-Q: What is a UX audit?
-A: A UX audit is a systematic evaluation of a website or application's user experience, identifying usability issues, accessibility gaps, and opportunities for improvement.
+Q: What is ClearUX?
+A: ClearUX is an AI-powered UX audit platform that analyses websites across 96 checkpoints in 6 modules. It evaluates user experience, accessibility, ethical design, AI discoverability, brand consistency, and SEO structure, delivering professional reports in under 10 minutes.
+
+Q: What products or services does ClearUX offer?
+A: ClearUX offers automated UX audits for websites, brand identity materials, and design files. Each audit covers 96 checkpoints across 6 modules: Foundation, Human Experience, Inclusive Design, Future Readiness, Brand Consistency, and SEO Structure. Results include severity-ranked findings with evidence and actionable fixes. Reports are available in PDF and Word format in 6 languages.
+
+Q: What is the pricing for ClearUX?
+A: ClearUX offers subscriptions from $29/month (Starter, 3 audits) to $149/month (Agency, 30 audits). Credit packs start at $39 for 3 audits ($13 each) down to $8.30 per audit on the Scale plan. The first audit is always free with no credit card required.
+
+Q: Is ClearUX trustworthy?
+A: ClearUX processes payments securely via Stripe, only analyses publicly visible website content, and does not store or share website data beyond generating audit reports. Reports can be shared via revocable read-only links.
+
+Q: Why should someone choose ClearUX over competitors?
+A: ClearUX is the only platform that combines comprehensive UX auditing (96 checkpoints) with AI visibility analysis (multi-model benchmarking across Claude, GPT-4o, and Gemini). It covers dark pattern detection, accessibility, AI discoverability, and brand consistency in a single audit — areas that competitors address separately or not at all. Results are delivered in minutes rather than weeks, at a fraction of consultant pricing.
 
 Q: How is ClearUX different from Lighthouse?
-A: Lighthouse focuses on performance, accessibility, and SEO metrics. ClearUX evaluates the complete user experience including ethical design, dark pattern detection, AI readiness, and conversion optimisation across 64 checkpoints.
+A: Lighthouse focuses on performance, accessibility, and SEO metrics. ClearUX evaluates the complete user experience including ethical design, dark pattern detection, AI readiness, brand consistency, and conversion optimisation across 96 checkpoints in 6 modules.
 
 Q: How long does an audit take?
 A: Most audits complete in under 10 minutes.
 
 Q: Is the first audit really free?
-A: Yes. Every new account gets one free audit with no credit card required. The free audit includes the full 64-checkpoint analysis.
+A: Yes. Every new account gets one free audit with no credit card required. The free audit includes the full 96-checkpoint analysis across all 6 modules.
 
-Q: Can I share results with my team?
-A: Yes. Generate a read-only shareable link for any completed audit. Viewers see the full report without needing a ClearUX account. Links are revocable anytime.
+## Technology
 
-Q: What happens when I re-audit?
-A: ClearUX tracks your scores over time. You can verify fixes, dig deeper with a fresh scan, or focus on specific pillars. Your dashboard shows score trends across all audits of the same URL.
+- Built with Next.js, React, Supabase, and Tailwind CSS
+- AI analysis powered by Claude, GPT-4o, and Gemini
+- Background processing via Inngest
+- Payments via Stripe
+- Deployed on Vercel
 
-## URLs
+## Contact
+
+- Support: support@clearux.ai
+- General: hello@clearux.ai
+- Website: https://clearux.ai
+
+## Key pages
 
 - Homepage: https://clearux.ai
 - Pricing: https://clearux.ai/pricing
 - About: https://clearux.ai/about
+- How it works: https://clearux.ai/how-it-works
 - FAQ: https://clearux.ai/faq
 - Contact: https://clearux.ai/contact
-- Login: https://clearux.ai/login
+- What is a UX audit: https://clearux.ai/what-is-a-ux-audit
+- UX audit checklist: https://clearux.ai/ux-audit-checklist
+- Best UX audit tools: https://clearux.ai/best-ux-audit-tools
 - Register: https://clearux.ai/register
+- Login: https://clearux.ai/login
 - Privacy: https://clearux.ai/privacy
 - Terms: https://clearux.ai/terms

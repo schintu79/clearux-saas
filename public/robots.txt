@@ -5,6 +5,52 @@ Disallow: /api/
 Disallow: /dashboard/
 Disallow: /admin/
 
+# Explicitly welcome AI crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+
 Sitemap: https://clearux.ai/sitemap.xml
 
 # AI / LLM discoverability
