@@ -47,22 +47,33 @@ export async function GET(req: NextRequest) {
       .eq('audit_id', auditId)
       .order('predicted_impact', { ascending: false }),
     db.from('reports')
-      .select('ai_visibility_breakdown, model_benchmarks, overall_score')
+      .select('ai_visibility_breakdown, model_benchmarks, overall_score, raw_json')
       .eq('audit_id', auditId)
       .single(),
   ])
 
-  // Get industry benchmark position
+  // Get industry benchmark position — prefer frozen snapshot from report
+  // so scores stay stable across audits. Fall back to live computation
+  // for older audits that don't have a snapshot yet.
   let benchmarkPosition = null
   if (report.data) {
-    const aiVis = (report.data as any).ai_visibility_breakdown as { overall?: number } | null
-    const score = aiVis?.overall || (report.data as any).overall_score || 0
-    const industry = (audit as any).detected_industry || 'General'
+    const rawJson = (report.data as any).raw_json as Record<string, any> | null
+    const snapshot = rawJson?._industryBenchmarkSnapshot
 
-    try {
-      benchmarkPosition = await getUserBenchmarkPosition(db, score, industry)
-    } catch (err) {
-      console.error('[intelligence-api] Benchmark position error:', err)
+    if (snapshot && snapshot.benchmark && typeof snapshot.userScore === 'number') {
+      // Use frozen snapshot — same numbers every time
+      benchmarkPosition = snapshot
+    } else {
+      // Fallback: live computation for legacy audits
+      const aiVis = (report.data as any).ai_visibility_breakdown as { overall?: number } | null
+      const score = aiVis?.overall || (report.data as any).overall_score || 0
+      const industry = (audit as any).detected_industry || 'General'
+
+      try {
+        benchmarkPosition = await getUserBenchmarkPosition(db, score, industry)
+      } catch (err) {
+        console.error('[intelligence-api] Benchmark position error:', err)
+      }
     }
   }
 

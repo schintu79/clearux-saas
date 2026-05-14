@@ -1889,6 +1889,53 @@ RULES FOR RE-AUDIT:
     })
 
     // ──────────────────────────────────────────────────────────
+    // STEP 9a: Snapshot industry benchmark into report
+    // Freezes the benchmark at audit-completion time so the
+    // "How you compare" section shows stable numbers that never
+    // shift when new audits are added to the pool.
+    // ──────────────────────────────────────────────────────────
+    await step.run('snapshot-industry-benchmark', async () => {
+      try {
+        const db = getDb()
+
+        // Fetch the report + audit industry
+        const [{ data: report }, { data: audit }] = await Promise.all([
+          db.from('reports')
+            .select('ai_visibility_breakdown, overall_score, raw_json')
+            .eq('audit_id', auditId)
+            .single(),
+          db.from('audits')
+            .select('detected_industry')
+            .eq('id', auditId)
+            .single(),
+        ])
+
+        if (!report) return
+
+        const aiVis = (report as any).ai_visibility_breakdown as { overall?: number } | null
+        const score = aiVis?.overall || (report as any).overall_score || 0
+        const industry = (audit as any)?.detected_industry || 'General'
+
+        const benchmarkSnapshot = await getUserBenchmarkPosition(db, score, industry)
+
+        // Store snapshot in report's raw_json so it's frozen forever
+        const rawJson = (report as any).raw_json || {}
+        rawJson._industryBenchmarkSnapshot = benchmarkSnapshot
+
+        await db.from('reports')
+          .update({ raw_json: rawJson } as any)
+          .eq('audit_id', auditId)
+
+        await auditLog(auditId, 'benchmark_snapshot', 'info',
+          `Industry benchmark snapshot: ${industry} avg ${benchmarkSnapshot.benchmark.avgScore}, user score ${score} (${benchmarkSnapshot.rankLabel})`)
+      } catch (err) {
+        console.error('[inngest] Benchmark snapshot failed (non-fatal):', err)
+        await auditLog(auditId, 'benchmark_snapshot_failed', 'warning',
+          `Benchmark snapshot failed: ${err instanceof Error ? err.message : 'unknown'}`)
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
     // STEP 9b: Minimum findings enforcement
     // After report generation, check for categories with low scores
     // but 0 findings. Generate targeted findings so users understand

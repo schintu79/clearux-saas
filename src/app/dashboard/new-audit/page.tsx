@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Globe, Sparkles, Coins, Zap, Languages, Building2, Check, Fingerprint, ChevronDown, FileText, Palette, Lock, AlertCircle, Upload, X, Plus, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
@@ -49,6 +49,8 @@ const NewAuditInner: React.FC = () => {
   // Website audit state
   const [url, setUrl] = useState(searchParams.get('url') || '');
   const depthParam = searchParams.get('depth');
+  const isReAudit = depthParam === 'deep';
+  const [depthMode, setDepthMode] = useState<'standard' | 'deep'>(depthParam === 'deep' ? 'deep' : 'standard');
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [urlError, setUrlError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -347,7 +349,7 @@ const NewAuditInner: React.FC = () => {
       if (auditType === 'website') {
         const productUrl = url.startsWith('http') ? url : `https://${url}`;
         insertPayload.product_url = productUrl;
-        insertPayload.depth_mode = depthParam === 'deep' ? 'deep' : 'standard';
+        insertPayload.depth_mode = depthMode;
         insertPayload.selected_modules = selectedModules;
         if (selectedBrandId) insertPayload.brand_identity_id = selectedBrandId;
       } else if (auditType === 'brand_identity') {
@@ -541,6 +543,48 @@ const NewAuditInner: React.FC = () => {
               <p id="url-error" className="text-sm mt-2" style={{ color: 'var(--severe)' }} role="alert">{urlError}</p>
             )}
           </div>
+
+          {/* Deep mode switcher — only shown for re-audits */}
+          {isReAudit && (
+            <div className="mb-6">
+              <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+                <Sparkles size={15} style={{ color: 'var(--ink)' }} />
+                Analysis depth
+              </label>
+              <div className="flex rounded-lg overflow-hidden" style={{ border: '2px solid var(--rule)' }}>
+                <button
+                  type="button"
+                  onClick={() => setDepthMode('standard')}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all"
+                  style={{
+                    background: depthMode === 'standard' ? 'color-mix(in srgb, var(--ink) 6%, transparent)' : 'transparent',
+                    color: depthMode === 'standard' ? 'var(--ink)' : 'var(--m-muted)',
+                    borderRight: '1px solid var(--rule)',
+                  }}
+                >
+                  <RefreshCw size={14} />
+                  Standard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDepthMode('deep')}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all"
+                  style={{
+                    background: depthMode === 'deep' ? 'color-mix(in srgb, var(--ink) 6%, transparent)' : 'transparent',
+                    color: depthMode === 'deep' ? 'var(--ink)' : 'var(--m-muted)',
+                  }}
+                >
+                  <Sparkles size={14} />
+                  Deep
+                </button>
+              </div>
+              <p className="text-xs text-muted mt-1.5">
+                {depthMode === 'deep'
+                  ? 'Full AI re-analysis. Finds new issues that may have appeared since the last audit.'
+                  : 'Checks progress on previous findings. Fast and consistent scoring.'}
+              </p>
+            </div>
+          )}
 
           {/* Audit Scope (Module Selection) */}
           <div className="mb-6">
