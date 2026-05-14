@@ -309,7 +309,7 @@ export default function PricingContent() {
             <span>Learn more:</span>
             <Link href="/how-it-works" className="underline hover:text-signal transition-colors">How it works</Link>
             <span className="opacity-30">|</span>
-            <Link href="/demo-report" className="underline hover:text-signal transition-colors">See a sample report</Link>
+            <Link href="/how-it-works" className="underline hover:text-signal transition-colors">How it works</Link>
             <span className="opacity-30">|</span>
             <Link href="/faq" className="underline hover:text-signal transition-colors">FAQ</Link>
           </div>

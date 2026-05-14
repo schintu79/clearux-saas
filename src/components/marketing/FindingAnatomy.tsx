@@ -188,7 +188,7 @@ export function FindingAnatomy() {
         <div className="grid lg:grid-cols-[1fr_1.3fr] gap-16 items-start max-lg:grid-cols-1 mb-20 max-sm:mb-12">
           {/* Left */}
           <div>
-            <SectionMarker number="06" label="Anatomy of a finding" />
+            <SectionMarker number="08" label="Anatomy of a finding" />
             <h2 className="font-serif font-normal text-ink leading-[1.02] tracking-[-0.022em] mb-6" style={{ fontSize: 'clamp(40px, 4.5vw, 64px)' }}>
               What a <em className="italic text-signal">real</em> finding looks like.
             </h2>
@@ -268,7 +268,7 @@ export function FindingAnatomy() {
         </div>
 
         {/* Scroll arrows */}
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end mb-4">
           <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll left">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
           </button>
@@ -284,7 +284,9 @@ export function FindingAnatomy() {
         {FINDING_CARDS.map((card, i) => (
           <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors">
             <div className="h-[260px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
-              {card.visual}
+              <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
+                {card.visual}
+              </div>
             </div>
             <div className="p-5">
               <span className="text-[10px] font-mono tracking-[0.08em] uppercase text-signal font-semibold block mb-2">{card.label}</span>

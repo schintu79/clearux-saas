@@ -18,7 +18,7 @@ export function InstrumentGrid() {
         {/* Section head */}
         <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
           <div>
-            <SectionMarker number="03" label="The instrument" />
+            <SectionMarker number="05" label="The instrument" />
             <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
               Six modules. <em className="italic text-signal">Ninety-six</em> checkpoints.
             </h2>
@@ -55,13 +55,13 @@ export function InstrumentGrid() {
           ))}
         </div>
 
-        {/* Demo report link */}
+        {/* Product page link */}
         <div className="mt-10 flex items-center justify-between border border-dashed border-rule p-6 sm:p-8">
           <p className="text-[15px] text-ink-2 font-sans max-w-[480px]">
-            See how these modules translate into a real report — scores, findings, and actionable recommendations.
+            See how these modules translate into scores, findings, and actionable recommendations.
           </p>
-          <Button href="/demo-report" variant="ghost" className="shrink-0 ml-6">
-            See sample reports
+          <Button href="/how-it-works" variant="ghost" className="shrink-0 ml-6">
+            How it works
             <ArrowRightIcon size={13} />
           </Button>
         </div>

@@ -23,7 +23,7 @@ export function Coda() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5 relative">
         <div className="grid lg:grid-cols-2 gap-20 items-end max-lg:grid-cols-1 max-lg:gap-12">
           <div>
-            <SectionMarker number="08" label="Coda" dark={!isDark} />
+            <SectionMarker number="10" label="Coda" dark={!isDark} />
             <h2
               className="font-serif font-normal leading-[0.95] tracking-[-0.025em]"
               style={{ fontSize: 'clamp(50px, 6.5vw, 96px)', color: isDark ? 'var(--ink)' : 'var(--paper)' }}

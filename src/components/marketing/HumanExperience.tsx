@@ -200,9 +200,9 @@ export function HumanExperience() {
       }}
     >
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
-        {/* Big statement heading */}
+        {/* Section heading */}
         <div className="mb-20 max-sm:mb-12">
-          <SectionMarker number="03" label="Human experience" dark={!isDark} />
+          <SectionMarker number="04" label="Human experience" dark={!isDark} />
           <h2
             className="font-serif font-normal leading-[0.96] tracking-[-0.025em] mb-6"
             style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff' }}
@@ -219,32 +219,8 @@ export function HumanExperience() {
           </p>
         </div>
 
-        {/* Three pillar cards */}
-        <div className="grid md:grid-cols-3 gap-0 mb-20 max-sm:mb-12" style={{ border: `1px solid ${borderColor}` }}>
-          {PILLARS.map((pillar, i) => (
-            <div
-              key={pillar.title}
-              className={`p-8 max-sm:p-6 ${i < PILLARS.length - 1 ? 'md:border-r max-md:border-b' : ''}`}
-              style={{ borderColor }}
-            >
-              <h3
-                className="font-sans text-[17px] font-semibold mb-3"
-                style={{ color: isDark ? 'var(--ink)' : '#ffffff' }}
-              >
-                {pillar.title}
-              </h3>
-              <p
-                className="font-sans text-[14px] leading-[1.65]"
-                style={{ color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.6)' }}
-              >
-                {pillar.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-
         {/* Scroll arrows */}
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end mb-4">
           <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ border: `1px solid ${borderColor}`, color: isDark ? 'var(--ink)' : '#fff' }} aria-label="Scroll left">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
           </button>
@@ -260,7 +236,9 @@ export function HumanExperience() {
         {HX_CARDS.map((card, i) => (
           <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start rounded-xl overflow-hidden transition-colors" style={{ border: `1px solid ${borderColor}`, background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)' }}>
             <div className="h-[260px] p-6 flex items-center justify-center overflow-hidden" style={{ borderBottom: `1px solid ${borderColor}` }}>
-              {card.visual}
+              <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
+                {card.visual}
+              </div>
             </div>
             <div className="p-5">
               <span className="text-[10px] font-mono tracking-[0.08em] uppercase font-semibold block mb-2" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>{card.label}</span>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { MarketingBody } from '@/components/marketing/MarketingBody'
 import { Nav } from '@/components/marketing/Nav'
 import { Hero } from '@/components/marketing/Hero'
+import { DualPerspective } from '@/components/marketing/DualPerspective'
 import { Problem } from '@/components/marketing/Problem'
 import { Comparison } from '@/components/marketing/Comparison'
 import { HumanExperience } from '@/components/marketing/HumanExperience'
@@ -28,6 +29,7 @@ export default function HomePage() {
       <Nav />
       <main>
         <Hero />
+        <DualPerspective />
         <Problem />
         <Comparison />
         <HumanExperience />

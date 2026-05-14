@@ -4,7 +4,6 @@ import Link from 'next/link'
 const productLinks = [
   { label: 'How it works', href: '/how-it-works' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Demo report', href: '/demo-report' },
   { label: 'FAQ', href: '/faq' },
 ]
 

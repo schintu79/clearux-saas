@@ -21,7 +21,7 @@ export function Hero() {
                 Start free audit
                 <ArrowRightIcon size={14} />
               </Button>
-              <Button href="/demo-report" variant="ghost">See a real finding</Button>
+              <Button href="/how-it-works" variant="ghost">The product</Button>
             </div>
             <div className="grid grid-cols-3 gap-4 sm:gap-9 pt-7 border-t border-rule font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase">
               <div>

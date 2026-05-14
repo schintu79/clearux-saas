@@ -20,7 +20,7 @@ export function Problem() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="grid lg:grid-cols-[1fr_1.5fr] gap-24 items-start max-lg:grid-cols-1 max-lg:gap-12">
           <div>
-            <SectionMarker number="01" label="The problem" />
+            <SectionMarker number="02" label="The problem" />
             <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.022em]" style={{ fontSize: 'clamp(48px, 6.8vw, 96px)' }}>
               UX audits were built for a slower{' '}
               <em className="italic text-signal block">internet.</em>

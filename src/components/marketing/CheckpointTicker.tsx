@@ -33,7 +33,7 @@ export function CheckpointTicker() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="mb-16 grid lg:grid-cols-[1fr_1.2fr] gap-20 items-end max-lg:grid-cols-1 max-lg:gap-6">
           <div>
-            <SectionMarker number="04" label="The math" />
+            <SectionMarker number="06" label="The math" />
             <h2 className="font-serif font-normal text-ink leading-[0.98] tracking-[-0.022em]" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
               What ninety-six checkpoints <em className="italic text-signal">actually</em> measure.
             </h2>

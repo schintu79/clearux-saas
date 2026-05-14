@@ -43,7 +43,7 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
             </h2>
             <p className="text-[17px] leading-[1.55] text-ink-2 font-sans">{subtitle}</p>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0 mb-4">
             <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-rule flex items-center justify-center text-ink hover:bg-paper-2 transition-colors" aria-label="Scroll left">
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M15 18l-6-6 6-6" /></svg>
             </button>
@@ -62,7 +62,9 @@ function ScrollStrip({ cards, marker, markerLabel, heading, headingAccent, subti
           <div key={i} className="flex-shrink-0 w-[440px] max-sm:w-[340px] snap-start border border-rule rounded-xl overflow-hidden bg-white/80 hover:border-signal/30 transition-colors group">
             {/* Visual area */}
             <div className="h-[300px] border-b border-rule p-6 flex items-center justify-center overflow-hidden">
-              {card.visual}
+              <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center', width: '85%' }}>
+                {card.visual}
+              </div>
             </div>
             {/* Text */}
             <div className="p-6">
@@ -332,6 +334,83 @@ function MockCategoryScores() {
   )
 }
 
+/* ── Radar / Spider Chart mockup ── */
+function MockRadarChart() {
+  const modules = [
+    { name: 'Foundation', score: 73, color: '#6366F1' },
+    { name: 'Human Experience', score: 75, color: '#EC4899' },
+    { name: 'Inclusive Design', score: 75, color: '#F59E0B' },
+    { name: 'Future Readiness', score: 75, color: '#2D6A4F' },
+    { name: 'SEO Structure', score: 76, color: '#06B6D4' },
+    { name: 'Brand Consistency', score: 75, color: '#10B981' },
+  ]
+  const n = modules.length
+  const cx = 170, cy = 150, R = 70
+  const angleStep = (2 * Math.PI) / n
+  const startAngle = -Math.PI / 2 // top
+
+  const point = (i: number, r: number) => {
+    const a = startAngle + i * angleStep
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)]
+  }
+
+  // Grid rings
+  const rings = [0.25, 0.5, 0.75, 1]
+  const gridPaths = rings.map(f => {
+    const pts = Array.from({ length: n }, (_, i) => point(i, R * f))
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ') + ' Z'
+  })
+
+  // Data polygon
+  const dataPts = modules.map((m, i) => point(i, R * (m.score / 100)))
+  const dataPath = dataPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ') + ' Z'
+
+  // Label positions (pushed outward)
+  const labelR = R + 30
+  const labels = modules.map((m, i) => {
+    const [lx, ly] = point(i, labelR)
+    let anchor: 'start' | 'middle' | 'end' = 'middle'
+    if (lx < cx - 10) anchor = 'end'
+    else if (lx > cx + 10) anchor = 'start'
+    return { ...m, lx, ly, anchor }
+  })
+
+  return (
+    <div className="w-full flex items-center justify-center">
+      <svg viewBox="0 0 340 300" width="100%" style={{ maxWidth: 340 }}>
+        {/* Grid rings */}
+        {gridPaths.map((d, i) => (
+          <path key={i} d={d} fill="none" stroke="var(--rule)" strokeWidth={0.5} opacity={i === gridPaths.length - 1 ? 0.6 : 0.3} />
+        ))}
+        {/* Grid spokes */}
+        {Array.from({ length: n }, (_, i) => {
+          const [px, py] = point(i, R)
+          return <line key={i} x1={cx} y1={cy} x2={px} y2={py} stroke="var(--rule)" strokeWidth={0.5} opacity={0.2} />
+        })}
+        {/* Data fill */}
+        <path d={dataPath} fill="rgba(99,102,241,0.15)" stroke="#6366F1" strokeWidth={1.5} />
+        {/* Data points */}
+        {dataPts.map(([px, py], i) => (
+          <g key={i}>
+            <circle cx={px} cy={py} r={4} fill="white" stroke={modules[i].color} strokeWidth={1.5} />
+          </g>
+        ))}
+        {/* Labels */}
+        {labels.map((l, i) => (
+          <g key={i}>
+            <text x={l.lx} y={l.ly - 4} textAnchor={l.anchor} className="fill-ink" style={{ fontSize: 9, fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+              {l.name}
+            </text>
+            <text x={l.lx} y={l.ly + 8} textAnchor={l.anchor} style={{ fontSize: 9, fontFamily: 'var(--font-sans)', fontWeight: 600, fill: l.color }}>
+              {l.score}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
 /* ── Wellbeing / Dark Patterns mockup ── */
 function MockWellbeingCard() {
   const checks = [
@@ -479,6 +558,12 @@ const UX_CARDS: HighlightCard[] = [
     visual: <MockCategoryScores />,
   },
   {
+    label: 'Heuristic radar',
+    title: 'Your site across 6 dimensions',
+    desc: 'See how your site scores on every audit pillar — spot weak areas and imbalances before users do.',
+    visual: <MockRadarChart />,
+  },
+  {
     label: '3-panel findings',
     title: 'Issue, fix, and impact — at a glance',
     desc: 'Every issue shows the problem, the fix, and why it matters. Everything you need in one place.',
@@ -552,8 +637,12 @@ function FeatureSection({ marker, label, title, titleAccent, desc, features, vis
           </div>
           {/* Visual side — larger with white background */}
           <div className={reverse ? 'lg:order-1' : ''}>
-            <div className="space-y-4 bg-white/80 rounded-xl border border-rule p-8">
-              {visual}
+            <div className="bg-white/80 rounded-xl border border-rule p-8 overflow-hidden">
+              <div style={{ transform: 'scale(1.15)', transformOrigin: 'top center' }}>
+                <div className="space-y-4">
+                  {visual}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -640,55 +729,143 @@ export default function HowItWorksContent() {
               Start free audit
               <ArrowRightIcon size={14} />
             </Button>
-            <Button href="/demo-report" variant="ghost">See a real report</Button>
+            <Button href="#instrument" variant="ghost">See all modules</Button>
           </div>
         </div>
       </section>
 
-      {/* ── AI Visibility — Feature section with large visuals ── */}
-      <FeatureSection
-        marker="01"
-        label="AI visibility"
-        title="See how AI sees you."
-        titleAccent="Control the narrative."
-        desc="People ask AI about your business every day. We ask ChatGPT, Claude, and Gemini about you — then check if their answers are correct. You see exactly where AI gets you wrong, and how to fix it."
-        features={[
-          { name: 'AI probe engine', desc: 'We ask three leading AI models questions about your brand. Then we grade their answers against what is actually on your site.' },
-          { name: 'Page-level readability', desc: 'See which of your pages AI can read and which it struggles with. Page by page, with a clear score.' },
-          { name: 'Citation audit', desc: 'Find out which of your pages AI mentions to users — and which pages it completely ignores.' },
-          { name: 'Fix playbooks', desc: 'Get ready-to-use code snippets you can paste into your site to help AI understand you better.' },
-        ]}
-        visual={
-          <>
-            <MockProbeCard />
-            <div className="grid grid-cols-2 gap-4">
-              <MockReadabilityMap />
-              <MockModelBenchmark />
-            </div>
-          </>
-        }
-      />
+      {/* ── AI Visibility — centered heading + clean visual ── */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          {/* Centered heading */}
+          <div className="text-center mb-16 max-sm:mb-10">
+            <SectionMarker number="01" label="AI visibility" centered />
+            <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.022em] mb-6 mx-auto" style={{ fontSize: 'clamp(52px, 7vw, 96px)', maxWidth: 900 }}>
+              See how AI sees you. <em className="italic text-signal">Control the narrative.</em>
+            </h2>
+            <p className="text-[19px] leading-[1.55] text-ink-2 font-sans mx-auto" style={{ maxWidth: 640 }}>
+              People ask AI about your business every day. We ask ChatGPT, Claude, and Gemini about you — then check if their answers are correct. You see exactly where AI gets you wrong, and how to fix it.
+            </p>
+          </div>
 
-      {/* ── AI vs Human — dedicated section ──────────────────── */}
-      <FeatureSection
-        marker="02"
-        label="Dual perspective"
-        title="AI vs human."
-        titleAccent="Two lenses on every issue."
-        desc="Every issue we find comes with two views: what AI thinks is wrong, and what a real user actually experiences. This helps you fix problems that affect both humans and AI at the same time."
-        features={[
-          { name: 'The AI view', desc: 'See how AI reads your content and where it gets confused — vague labels, missing structure, unclear intent.' },
-          { name: 'The human view', desc: 'See the real-world effect: what users feel, where they get stuck, and why they leave.' },
-          { name: 'Fix what matters first', desc: 'Problems that hurt both AI and humans are the most urgent. This view helps you decide what to fix first.' },
-        ]}
-        visual={
-          <>
-            <MockAIvsHuman />
-            <MockFindingCard />
-          </>
-        }
-        reverse
-      />
+          {/* Clean visual — probe card + readability side by side */}
+          <div className="grid md:grid-cols-2 gap-5 mx-auto" style={{ maxWidth: 880 }}>
+            {/* What AI knows */}
+            <div className="bg-white rounded-xl border border-rule overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-rule flex items-center gap-2">
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" /><path d="M9 22h6" /></svg>
+                <span className="text-[14px] font-sans font-semibold text-ink">What AI knows about your site</span>
+              </div>
+              {[
+                { q: 'What is acme.com?', grade: 'Correct', color: 'var(--ok)' },
+                { q: 'What products do they offer?', grade: 'Partial', color: 'var(--warn)' },
+                { q: 'What is the pricing?', grade: 'Hallucinated', color: 'var(--severe)' },
+                { q: 'Who founded the company?', grade: 'Correct', color: 'var(--ok)' },
+              ].map((p, i) => (
+                <div key={i} className="px-5 py-3 flex items-center justify-between gap-3" style={{ borderTop: '1px solid var(--rule)' }}>
+                  <span className="text-[13px] font-sans text-ink">{p.q}</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ color: p.color, background: `color-mix(in srgb, ${p.color} 12%, transparent)` }}>{p.grade}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* AI readability by page */}
+            <div className="bg-white rounded-xl border border-rule overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-rule flex items-center gap-2">
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><circle cx={12} cy={12} r={10} /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                <span className="text-[14px] font-sans font-semibold text-ink">AI readability by page</span>
+              </div>
+              {[
+                { path: '/', score: 92, color: 'var(--ok)' },
+                { path: '/pricing', score: 78, color: 'var(--ok)' },
+                { path: '/about', score: 45, color: 'var(--warn)' },
+                { path: '/docs', score: 31, color: 'var(--severe)' },
+              ].map((pg, i) => (
+                <div key={i} className="px-5 py-3 flex items-center gap-3" style={{ borderTop: '1px solid var(--rule)' }}>
+                  <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="var(--m-muted)" strokeWidth={1.5}><circle cx={12} cy={12} r={10} /><path d="M2 12h20" /></svg>
+                  <span className="text-[13px] font-sans text-ink flex-1">{pg.path}</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0" style={{ color: pg.color, background: `color-mix(in srgb, ${pg.color} 12%, transparent)` }}>
+                    AI {pg.score}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI vs Human — dark interstitial ──────────────────── */}
+      <section
+        className="py-[120px] max-sm:py-[80px]"
+        style={{ background: isDark ? 'var(--paper)' : 'var(--ink)', color: isDark ? 'var(--ink)' : '#ffffff' }}
+      >
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          {/* Centered heading */}
+          <div className="text-center mb-16 max-sm:mb-10">
+            <SectionMarker number="02" label="Dual perspective" centered dark={!isDark} />
+            <h2 className="font-serif font-normal leading-[0.96] tracking-[-0.022em] mb-6 mx-auto" style={{ fontSize: 'clamp(52px, 7vw, 96px)', maxWidth: 900, color: isDark ? 'var(--ink)' : '#ffffff' }}>
+              AI vs human. <em className="italic" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>Two lenses on every issue.</em>
+            </h2>
+            <p className="text-[19px] leading-[1.55] font-sans mx-auto" style={{ maxWidth: 640, color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.55)' }}>
+              Every issue we find comes with two views: what AI thinks is wrong, and what a real user actually experiences. This helps you fix problems that affect both humans and AI at the same time.
+            </p>
+          </div>
+
+          {/* AI vs Human visual card */}
+          {(() => {
+            const borderClr = isDark ? 'var(--rule)' : 'rgba(255,255,255,0.12)'
+            const cardBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)'
+            const labelClr = isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.45)'
+            const textClr = isDark ? 'var(--ink)' : '#ffffff'
+            const subClr = isDark ? 'var(--ink-2)' : 'rgba(255,255,255,0.7)'
+            return (
+              <div className="rounded-xl overflow-hidden mx-auto" style={{ maxWidth: 880, border: `1px solid ${borderClr}`, background: cardBg }}>
+                {/* Two perspectives */}
+                <div className="grid md:grid-cols-2" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                  <div className="px-8 py-7 max-sm:px-5" style={{ borderRight: `1px solid ${borderClr}` }}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={labelClr} strokeWidth={1.5}><circle cx={12} cy={12} r={10} /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                      <span className="font-mono text-[11px] tracking-[0.08em] uppercase font-semibold" style={{ color: labelClr }}>How AI reads this</span>
+                    </div>
+                    <p className="font-sans text-[14px] leading-[1.6]" style={{ color: subClr }}>
+                      The CTA button uses vague text. AI models can&apos;t determine the action behind &quot;Click here.&quot;
+                    </p>
+                  </div>
+                  <div className="px-8 py-7 max-sm:px-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={labelClr} strokeWidth={1.5}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx={12} cy={7} r={4} /></svg>
+                      <span className="font-mono text-[11px] tracking-[0.08em] uppercase font-semibold" style={{ color: labelClr }}>How a human sees this</span>
+                    </div>
+                    <p className="font-sans text-[14px] leading-[1.6]" style={{ color: subClr }}>
+                      Users hesitate because the button label doesn&apos;t tell them what happens next. Conversion drops 22%.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Finding row */}
+                <div className="px-8 py-5 max-sm:px-5 flex items-center gap-3" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.15)' }}>Critical</span>
+                  <span className="font-sans text-[15px] font-semibold" style={{ color: textClr }}>CTA button uses vague label</span>
+                </div>
+
+                {/* Issue / Fix / Impact row */}
+                <div className="grid md:grid-cols-3">
+                  {[
+                    { label: 'Issue', text: 'Button says "Click here" without context. Users and AI cannot determine the action.' },
+                    { label: 'How to fix', text: 'Change to "Start free trial" or "View pricing" — specific, action-oriented labels.' },
+                    { label: 'Impact', text: 'Conversion rate increase of 22%. Screen readers can announce meaningful link purpose.' },
+                  ].map((col, i) => (
+                    <div key={col.label} className="px-8 py-5 max-sm:px-5" style={{ borderRight: i < 2 ? `1px solid ${borderClr}` : 'none' }}>
+                      <span className="font-mono text-[10px] tracking-[0.08em] uppercase font-semibold block mb-2" style={{ color: labelClr }}>{col.label}</span>
+                      <p className="font-sans text-[13px] leading-[1.6]" style={{ color: subClr }}>{col.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      </section>
 
       {/* ── AI Scrolling Cards ─────────────────────────────────── */}
       <ScrollStrip
@@ -700,30 +877,99 @@ export default function HowItWorksContent() {
         subtitle="Six tools that show you exactly how AI sees your brand — and what to change. Scroll to see each one."
       />
 
-      {/* ── UX + Human section — large visuals ─────────────────── */}
-      <FeatureSection
-        marker="04"
-        label="Human experience"
-        title="How real users"
-        titleAccent="experience your site."
-        desc="Beyond what AI and search engines see — we check how real people experience your site. Confusing layouts, manipulative design, accessibility gaps, and anything that makes users leave."
-        features={[
-          { name: 'Dark pattern detection', desc: 'We flag tricks like fake urgency, guilt-trip buttons, and hidden fees — the stuff that makes users distrust your site.' },
-          { name: 'Digital wellbeing', desc: 'Does your site pressure people? We check for manipulative design that creates stress or anxiety.' },
-          { name: 'Cognitive load', desc: 'Too many buttons, confusing menus, unclear labels — we measure what makes people give up and leave.' },
-          { name: 'Mobile responsiveness', desc: 'Your site tested on desktop, laptop, tablet, and phone. Broken layouts and tiny buttons are caught automatically.' },
-        ]}
-        visual={
-          <>
-            <MockWellbeingCard />
-            <div className="grid grid-cols-2 gap-4">
-              <MockResponsivenessCard />
-              <MockCategoryScores />
+      {/* ── UX + Human section — centered heading + heuristic scorecard ── */}
+      <section className="py-[100px] border-b border-rule max-sm:py-16">
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          {/* Centered heading */}
+          <div className="text-center mb-16 max-sm:mb-10">
+            <SectionMarker number="04" label="Human experience" centered />
+            <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.022em] mb-6 mx-auto" style={{ fontSize: 'clamp(52px, 7vw, 96px)', maxWidth: 900 }}>
+              How real users <em className="italic text-signal">experience your site.</em>
+            </h2>
+            <p className="text-[19px] leading-[1.55] text-ink-2 font-sans mx-auto" style={{ maxWidth: 640 }}>
+              Beyond what AI and search engines see — we check how real people experience your site. Confusing layouts, manipulative design, accessibility gaps, and anything that makes users leave.
+            </p>
+          </div>
+
+          {/* UX heuristic evaluation scorecard */}
+          <div className="rounded-xl overflow-hidden bg-white border border-rule">
+            {/* Header */}
+            <div className="px-8 py-5 flex items-center gap-3 max-sm:px-5 border-b border-rule">
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth={1.5}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+              <span className="font-sans text-[15px] font-semibold text-ink">UX heuristic evaluation</span>
+              <span className="ml-auto font-mono text-[11px] tracking-[0.06em] uppercase text-m-muted">acme.com · 14 heuristics</span>
             </div>
-          </>
-        }
-        reverse
-      />
+
+            {/* Scorecard grid */}
+            <div className="grid md:grid-cols-2">
+              {[
+                { name: 'Visibility of system status', status: 'pass', detail: 'Loading states and progress indicators present' },
+                { name: 'Match between system and real world', status: 'pass', detail: 'Language matches user mental models' },
+                { name: 'User control and freedom', status: 'warn', detail: 'No undo on destructive actions in checkout' },
+                { name: 'Consistency and standards', status: 'pass', detail: 'UI patterns follow platform conventions' },
+                { name: 'Error prevention', status: 'fail', detail: 'Form submits without validation on 3 pages' },
+                { name: 'Recognition rather than recall', status: 'pass', detail: 'Navigation labels are descriptive' },
+                { name: 'Flexibility and efficiency of use', status: 'warn', detail: 'No keyboard shortcuts for power users' },
+                { name: 'Aesthetic and minimalist design', status: 'pass', detail: 'Content-to-chrome ratio is healthy' },
+                { name: 'Help users recover from errors', status: 'fail', detail: 'Error messages are generic, no guidance' },
+                { name: 'Help and documentation', status: 'warn', detail: 'FAQ exists but no contextual help' },
+                { name: 'Dark pattern detection', status: 'fail', detail: 'Pre-checked consent box on signup form' },
+                { name: 'Cognitive load assessment', status: 'warn', detail: 'Pricing page has 8 competing CTAs' },
+              ].map((h, i) => {
+                const statusColor = h.status === 'pass' ? '#22c55e' : h.status === 'warn' ? '#f59e0b' : '#ef4444'
+                const statusLabel = h.status === 'pass' ? 'Pass' : h.status === 'warn' ? 'Review' : 'Fail'
+                const isRight = i % 2 === 1
+                const isNotLastRow = i < 10
+                return (
+                  <div
+                    key={h.name}
+                    className="px-6 py-4 flex items-start gap-3 max-sm:px-5"
+                    style={{
+                      borderBottom: isNotLastRow ? '1px solid var(--rule)' : 'none',
+                      borderRight: !isRight ? '1px solid var(--rule)' : 'none',
+                    }}
+                  >
+                    {h.status === 'pass' ? (
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth={2} className="flex-shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" /></svg>
+                    ) : h.status === 'warn' ? (
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth={2} className="flex-shrink-0 mt-0.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1={12} y1={9} x2={12} y2={13} /><line x1={12} y1={17} x2={12.01} y2={17} /></svg>
+                    ) : (
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth={2} className="flex-shrink-0 mt-0.5"><circle cx={12} cy={12} r={10} /><line x1={15} y1={9} x2={9} y2={15} /><line x1={9} y1={9} x2={15} y2={15} /></svg>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-sans text-[13px] font-medium leading-snug text-ink">{h.name}</p>
+                      <p className="font-sans text-[11px] leading-[1.5] mt-0.5 text-m-muted">{h.detail}</p>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5" style={{
+                      color: statusColor,
+                      background: `${statusColor}20`,
+                    }}>{statusLabel}</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Footer summary */}
+            <div className="px-8 py-4 flex items-center gap-6 max-sm:px-5 max-sm:flex-wrap max-sm:gap-3 border-t border-rule">
+              {[
+                { label: 'Passed', count: 5, color: '#22c55e' },
+                { label: 'Needs review', count: 4, color: '#f59e0b' },
+                { label: 'Failed', count: 3, color: '#ef4444' },
+              ].map(s => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                  <span className="font-sans text-[12px] text-m-muted">
+                    <strong className="text-ink">{s.count}</strong> {s.label}
+                  </span>
+                </div>
+              ))}
+              <span className="ml-auto font-mono text-[11px] tracking-[0.06em] uppercase text-signal">
+                Score: 62 / 100
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── UX Scrolling Cards ─────────────────────────────────── */}
       <ScrollStrip
@@ -740,15 +986,86 @@ export default function HowItWorksContent() {
         className="py-[100px] max-sm:py-[80px]"
         style={{ background: isDark ? 'var(--paper)' : 'var(--ink)', color: isDark ? 'var(--ink)' : '#ffffff' }}
       >
-        <div className="max-w-mkt mx-auto px-8 max-sm:px-5 text-center">
-          <p className="font-sans font-normal leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
-            style={{ fontSize: '19px', color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)', maxWidth: '700px' }}>
-            Other tools give you a score and a checklist.
-          </p>
-          <h2 className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
-            style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff', maxWidth: '960px' }}>
-            ClearUX tells you <em className="italic text-signal">what to fix</em> and <em className="italic text-signal">why.</em>
-          </h2>
+        <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
+          <div className="text-center mb-16 max-sm:mb-10">
+            <p className="font-sans font-normal leading-[1.3] tracking-[-0.01em] mx-auto mb-6 max-sm:mb-4"
+              style={{ fontSize: '19px', color: isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)', maxWidth: '700px' }}>
+              Other tools give you a score and a checklist.
+            </p>
+            <h2 className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
+              style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff', maxWidth: '960px' }}>
+              ClearUX tells you <em className="italic text-signal">what to fix</em> and <em className="italic text-signal">why.</em>
+            </h2>
+          </div>
+
+          {/* Side-by-side: Other tools vs ClearUX */}
+          {(() => {
+            const borderClr = isDark ? 'var(--rule)' : 'rgba(255,255,255,0.12)'
+            const mutedText = isDark ? 'var(--m-muted)' : 'rgba(255,255,255,0.4)'
+            const bodyText = isDark ? 'var(--ink)' : 'rgba(255,255,255,0.85)'
+            const headText = isDark ? 'var(--ink)' : '#fff'
+            return (
+              <div className="grid md:grid-cols-2 gap-5 mx-auto" style={{ maxWidth: 920 }}>
+                {/* Other tools */}
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderClr}`, background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.04)' }}>
+                  <div className="px-6 py-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                    <span className="font-mono text-[10px] tracking-[0.08em] uppercase font-medium px-2 py-0.5 rounded" style={{ background: isDark ? 'var(--paper-3)' : 'rgba(255,255,255,0.08)', color: mutedText }}>Other tools</span>
+                  </div>
+                  <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                    <p className="font-sans text-[14px] font-medium mb-1" style={{ color: bodyText, opacity: 0.7 }}>Missing meta description</p>
+                    <p className="font-sans text-[12px] leading-[1.5]" style={{ color: mutedText }}>Page /pricing has no meta description tag.</p>
+                  </div>
+                  {[
+                    { check: 'Add meta description', done: false },
+                    { check: 'Add alt text to images', done: true },
+                    { check: 'Fix heading hierarchy', done: false },
+                    { check: 'Reduce page load time', done: true },
+                  ].map((item, i) => (
+                    <div key={i} className="px-6 py-3 flex items-center gap-3" style={{ borderBottom: i < 3 ? `1px solid ${borderClr}` : 'none' }}>
+                      <div className="w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center" style={{ borderColor: borderClr }}>
+                        {item.done && <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke={mutedText} strokeWidth={2.5}><path d="M20 6L9 17l-5-5" /></svg>}
+                      </div>
+                      <span className="font-sans text-[13px]" style={{ color: mutedText, textDecoration: item.done ? 'line-through' : 'none' }}>{item.check}</span>
+                    </div>
+                  ))}
+                  <div className="px-6 py-3" style={{ borderTop: `1px solid ${borderClr}` }}>
+                    <p className="font-mono text-[11px] italic" style={{ color: mutedText }}>A checklist. No context. No priority.</p>
+                  </div>
+                </div>
+
+                {/* ClearUX */}
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderClr}`, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)' }}>
+                  <div className="px-6 py-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                    <span className="font-mono text-[10px] tracking-[0.08em] uppercase font-semibold px-2.5 py-1 rounded" style={{ background: isDark ? 'var(--ink)' : '#fff', color: isDark ? 'var(--paper)' : 'var(--ink)' }}>ClearUX</span>
+                  </div>
+                  <div className="px-6 py-5" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.15)' }}>Critical</span>
+                      <span className="font-mono text-[10px] uppercase" style={{ color: mutedText }}>Dark Patterns</span>
+                    </div>
+                    <p className="font-sans text-[15px] font-semibold leading-snug mb-1.5" style={{ color: headText }}>Forced urgency creates false scarcity</p>
+                    <p className="font-sans text-[13px] leading-[1.55]" style={{ color: bodyText }}>&ldquo;Only 2 left!&rdquo; counter resets on every visit. Users who notice lose trust in all pricing claims.</p>
+                  </div>
+                  <div className="grid grid-cols-3" style={{ borderBottom: `1px solid ${borderClr}` }}>
+                    {[
+                      { label: 'Impact', value: 'Trust erosion' },
+                      { label: 'Fix time', value: '15 min' },
+                      { label: 'Confidence', value: '94%' },
+                    ].map((m, i) => (
+                      <div key={m.label} className="px-4 py-3 text-center" style={{ borderRight: i < 2 ? `1px solid ${borderClr}` : 'none' }}>
+                        <span className="font-mono text-[9px] tracking-[0.08em] uppercase block mb-1" style={{ color: mutedText }}>{m.label}</span>
+                        <span className="font-sans text-[13px] font-semibold" style={{ color: headText }}>{m.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-6 py-4">
+                    <span className="font-mono text-[9px] tracking-[0.08em] uppercase block mb-2" style={{ color: isDark ? 'var(--signal)' : '#A4B26A' }}>The fix</span>
+                    <p className="font-sans text-[13px] leading-[1.55]" style={{ color: bodyText }}>Remove the fake counter. Replace with real inventory data or remove scarcity messaging entirely.</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </section>
 
