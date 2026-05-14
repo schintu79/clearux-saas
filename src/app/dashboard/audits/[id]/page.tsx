@@ -2785,9 +2785,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             )}
                             {/* Fix recommendations for missing items */}
                             {missing.length > 0 && (
-                              <div className="rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2.5 mb-3">
+                              <div className="rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5 mb-3">
                                 <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
-                                  <Lightbulb size={11} className="text-warn" />
+                                  <Lightbulb size={11} className="text-ok" />
                                   Fix {missing.length} missing {missing.length === 1 ? 'signal' : 'signals'} on this page
                                 </p>
                                 <ul className="space-y-1">
@@ -2806,7 +2806,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                     const fixTip2 = Object.entries(missingFixMap2).find(([k]) => item.toLowerCase().includes(k))?.[1] || `Add ${item} to this page`;
                                     return (
                                       <li key={item} className="text-[10px] text-ink-2 leading-relaxed flex items-start gap-1.5">
-                                        <ArrowRight size={8} className="text-warn flex-shrink-0 mt-[3px]" />
+                                        <ArrowRight size={8} className="text-ok flex-shrink-0 mt-[3px]" />
                                         <span><span className="font-medium text-ink">{item}:</span> {fixTip2}</span>
                                       </li>
                                     );
@@ -2815,7 +2815,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               </div>
                             )}
                             {/* Raw extracted text */}
-                            <div className="rounded-lg border border-rule/30 bg-paper-2/50 p-4 max-h-[300px] overflow-y-auto">
+                            <div className="rounded-lg border border-rule/30 bg-paper p-4 max-h-[300px] overflow-y-auto">
                               <p className="text-[10px] font-semibold text-m-muted uppercase tracking-wide mb-2">Raw text (what bots read)</p>
                               <p className="text-xs text-ink-2 leading-relaxed whitespace-pre-line font-mono">
                                 {textPreview}{(page.content_text || '').length > 800 && '...'}
@@ -2897,15 +2897,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </div>
                           <p className="text-[11px] text-m-muted/60 mt-0.5">{bar.desc}</p>
                           {bar.fixes.length > 0 && (
-                            <div className="mt-2 rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2.5">
+                            <div className="mt-2 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5">
                               <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-warn" />
+                                <Lightbulb size={11} className="text-ok" />
                                 How to improve
                               </p>
                               <ul className="space-y-1">
                                 {bar.fixes.map((fix, fi) => (
                                   <li key={fi} className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
-                                    <ArrowRight size={9} className="text-warn flex-shrink-0 mt-[3px]" />
+                                    <ArrowRight size={9} className="text-ok flex-shrink-0 mt-[3px]" />
                                     {fix}
                                   </li>
                                 ))}
@@ -2977,9 +2977,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             fix: 'Create a /.well-known/ai-plugin.json file to help AI assistants discover your site\'s API and capabilities. This follows the OpenAI plugin manifest standard.' },
                         ].map(f => (
                           <div key={f.label} className="flex flex-col">
-                            <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${f.found ? 'border-ok/20 bg-ok/5' : 'border-warn/20 bg-warn/[0.04]'}`}>
-                              {f.found ? <CheckCircle2 size={13} className="text-ok flex-shrink-0" /> : <AlertTriangle size={13} className="text-warn flex-shrink-0" />}
-                              <span className={`text-[12px] font-medium ${f.found ? 'text-ok' : 'text-warn'}`}>{f.label}</span>
+                            <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${f.found ? 'border-ok/20 bg-ok/5' : 'border-rule/30 bg-paper'}`}>
+                              {f.found ? <CheckCircle2 size={13} className="text-ok flex-shrink-0" /> : <AlertTriangle size={13} className="text-m-muted flex-shrink-0" />}
+                              <span className={`text-[12px] font-medium ${f.found ? 'text-ok' : 'text-m-muted'}`}>{f.label}</span>
                             </div>
                             {!f.found && (
                               <p className="text-[10px] text-ink-2 leading-relaxed mt-1.5 px-1">{f.fix}</p>
@@ -3014,8 +3014,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] font-semibold text-m-muted uppercase tracking-wide mb-2 mt-3">Recommended (not found)</p>
                             <div className="space-y-2">
                               {missingRec.map(t => (
-                                <div key={t} className="flex items-start gap-2 rounded-lg border border-warn/15 bg-warn/[0.03] px-3 py-2">
-                                  <AlertTriangle size={11} className="text-warn flex-shrink-0 mt-[2px]" />
+                                <div key={t} className="flex items-start gap-2.5 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2.5">
+                                  <Lightbulb size={12} className="text-ok flex-shrink-0 mt-[1px]" />
                                   <div className="min-w-0">
                                     <span className="text-[11px] font-semibold text-ink">{t}</span>
                                     <p className="text-[10px] text-ink-2 leading-relaxed mt-0.5">{typeFixMap[t] || 'Add this structured data type to improve AI understanding of your content.'}</p>
@@ -3101,9 +3101,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
                           {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
-                            <div className="mt-2.5 rounded-lg border border-warn/20 bg-warn/[0.04] px-3 py-2">
+                            <div className="mt-2.5 rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2">
                               <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-warn" />
+                                <Lightbulb size={11} className="text-ok" />
                                 Recommended fix
                               </p>
                               <p className="text-[11px] text-ink-2 leading-relaxed">
@@ -3184,9 +3184,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </span>
                         </div>
                         {cit.citation_type === 'ignored' && (
-                          <div className="mt-2 ml-[25px] rounded-lg border border-warn/15 bg-warn/[0.03] px-3 py-2">
+                          <div className="mt-2 ml-[25px] rounded-lg border border-ok/20 bg-ok/[0.04] px-3 py-2">
                             <p className="text-[11px] text-ink-2 leading-relaxed flex items-start gap-1.5">
-                              <Lightbulb size={10} className="text-warn flex-shrink-0 mt-[2px]" />
+                              <Lightbulb size={10} className="text-ok flex-shrink-0 mt-[2px]" />
                               This page is not being cited by AI. Improve its visibility by adding a clear meta description, structured data (JSON-LD), and ensuring the content is in semantic HTML — not hidden in JavaScript or iframes.
                             </p>
                           </div>
