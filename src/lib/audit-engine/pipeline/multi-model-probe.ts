@@ -390,18 +390,29 @@ export async function runMultiModelBenchmark(
     ? Math.round(activeBenchmarks.reduce((s, b) => s + b.accuracyScore, 0) / activeBenchmarks.length)
     : 0
 
-  // Generate insight
+  // Generate insight — handle low-accuracy and new/unknown sites
   let insight: string
   if (activeBenchmarks.length <= 1) {
     insight = `AI knowledge benchmarked with ${sorted[0]?.modelLabel || 'one model'}. Multi-model comparison available when additional AI providers are configured.`
+  } else if (avgAccuracy <= 15) {
+    // All models know very little — site is new/niche or lacks structured data
+    const hallucinatedTotal = activeBenchmarks.reduce((s, b) => s + b.hallucinatedCount, 0)
+    const inaccurateTotal = activeBenchmarks.reduce((s, b) => s + b.inaccurateCount, 0)
+    if (hallucinatedTotal > inaccurateTotal) {
+      insight = `AI models are fabricating information about your site — none have accurate knowledge. This means users asking AI about you get wrong answers. Adding structured data (JSON-LD), a clear meta description, and an llms.txt file will give AI models correct facts to reference.`
+    } else {
+      insight = `AI models don't have reliable information about your site yet. This is common for newer or niche products. To get AI models to represent you accurately, add structured data (JSON-LD Organization + WebSite), clear homepage content, and an llms.txt file.`
+    }
   } else {
     const spread = sorted[0].accuracyScore - sorted[sorted.length - 1].accuracyScore
     if (spread > 20) {
       insight = `AI models have very different views of your site. ${sorted[0].modelLabel} knows you best (${sorted[0].accuracyScore}%), while ${sorted[sorted.length - 1].modelLabel} scores only ${sorted[sorted.length - 1].accuracyScore}%. Improving structured data will help all models.`
     } else if (spread > 10) {
       insight = `Moderate variation across models. ${sorted[0].modelLabel} leads at ${sorted[0].accuracyScore}%. Focus on content clarity and structured data to close the gap.`
+    } else if (avgAccuracy >= 70) {
+      insight = `All models have consistent, accurate knowledge of your site (avg ${avgAccuracy}%). Your content is well-structured and model-agnostic.`
     } else {
-      insight = `All models have a similar understanding of your site (avg ${avgAccuracy}%). This consistency is a good sign — your content is model-agnostic.`
+      insight = `AI models have similar but incomplete knowledge of your site (avg ${avgAccuracy}%). Strengthening your structured data and content clarity will improve accuracy across all models.`
     }
   }
 

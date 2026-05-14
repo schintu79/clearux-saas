@@ -3103,7 +3103,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           if (successful.length > 0) {
                             lines.push(`Summary: ${accurateCount} correct, ${partialCount} partially correct, ${inaccurateCount} incorrect out of ${successful.length} questions\n`);
                             for (const p of successful) {
-                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Hallucinated' : p.accuracy === 'inaccurate' ? 'Incorrect' : p.accuracy === 'no_data' ? 'No data' : 'Pending';
+                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Fabricated' : p.accuracy === 'inaccurate' ? 'Incorrect' : p.accuracy === 'no_data' ? 'No data' : 'Pending';
                               lines.push(`Q: ${p.question}`);
                               lines.push(`A: ${p.answer}`);
                               lines.push(`Grade: ${gradeLabel}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
@@ -3131,7 +3131,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         : 'text-m-muted bg-paper-2';
                       const accLabel = probe.accuracy === 'accurate' ? 'Correct'
                         : probe.accuracy === 'partial' ? 'Partial'
-                        : probe.accuracy === 'hallucinated' ? 'Hallucinated'
+                        : probe.accuracy === 'hallucinated' ? 'Fabricated'
                         : probe.accuracy === 'inaccurate' ? 'Incorrect'
                         : probe.accuracy === 'no_data' ? 'No data'
                         : 'Pending';
@@ -3148,14 +3148,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
                           {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
-                            <div className="mt-2.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2">
+                            <div className="mt-2.5 rounded-lg border border-rule bg-card px-3 py-2">
                               <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-emerald-600 dark:text-emerald-400" />
-                                Recommended fix
+                                <Lightbulb size={11} className="text-signal" />
+                                How to fix this
                               </p>
                               <p className="text-[11px] text-ink-2 leading-relaxed">
                                 {probe.accuracy === 'hallucinated'
-                                  ? 'AI is fabricating information about your site. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) to provide authoritative facts that AI models will reference instead of guessing.'
+                                  ? 'AI is making up information about your site. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) to provide authoritative facts that AI models will reference instead of guessing.'
                                   : probe.accuracy === 'inaccurate'
                                   ? 'AI has outdated or wrong information. Update your meta description and page content to clearly state the correct answer. Adding structured data (JSON-LD) gives AI models a machine-readable source of truth that takes priority over inferred content.'
                                   : 'AI has partial knowledge. Expand your content to fully answer this question — add it to your homepage, about page, or FAQ. Structured data and an llms.txt file help AI models find complete, accurate information about your site.'
@@ -3391,7 +3391,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             <div className="flex gap-3 text-[11px] font-medium">
                               <span className="text-ok">{probe.accurate_count} correct</span>
                               <span className="text-warn">{probe.partial_count} partial</span>
-                              <span className="text-severe">{probe.inaccurate_count} wrong</span>
+                              <span className="text-severe">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)} wrong</span>
                             </div>
                             {probe.results_json?.length > 0 && (
                               <details className="mt-3">
@@ -3407,7 +3407,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                             : r.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
                                               : r.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
                                               : 'text-m-muted bg-paper-2'
-                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Hallucinated' : r.accuracy === 'inaccurate' ? 'Incorrect' : r.accuracy === 'no_data' ? 'No data' : 'Pending'}</span>
+                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Incorrect' : r.accuracy === 'no_data' ? 'No data' : 'Pending'}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -3417,17 +3417,49 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         );
                       })}
                     </div>
-                    <div className="mt-5 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
-                      <div className="flex items-start gap-2.5">
-                        <Info size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1">Why this matters</p>
-                          <p className="text-[13px] text-ink-2 leading-relaxed">
-                            When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
-                          </p>
+
+                    {/* Contextual note — differs based on overall accuracy */}
+                    {(() => {
+                      const avgScore = intelligenceData.modelBenchmarks?.averageAccuracy ?? 0;
+                      const totalHallucinated = (intelligenceData.modelProbes || []).reduce((s: number, p: any) => s + (p.hallucinated_count || 0), 0);
+                      if (avgScore <= 15) {
+                        return (
+                          <div className="mt-5 p-4 rounded-xl border border-rule bg-paper-2">
+                            <div className="flex items-start gap-2.5">
+                              <AlertTriangle size={15} className="text-severe flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-[13px] font-semibold text-ink mb-1">AI doesn't know your site yet</p>
+                                <p className="text-[13px] text-ink-2 leading-relaxed mb-2">
+                                  {totalHallucinated > 0
+                                    ? 'AI models are making up information about your site — users asking AI about you will get wrong answers. This is common for newer or niche products that aren\'t well represented in AI training data.'
+                                    : 'None of the AI models tested have reliable information about your site. This is expected for newer products or smaller brands that haven\'t built enough online presence yet.'}
+                                </p>
+                                <p className="text-[12px] font-semibold text-ink mb-1">What to do about it:</p>
+                                <div className="space-y-1">
+                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">1.</span> Add JSON-LD structured data (Organization + WebSite schema) to your homepage</p>
+                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">2.</span> Create an llms.txt file at your domain root with a clear description of your product</p>
+                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">3.</span> Make sure your homepage explicitly answers: what you are, what you offer, and what makes you different</p>
+                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">4.</span> Build external presence through directories, reviews, and press mentions that AI models can reference</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="mt-5 p-4 rounded-xl border border-rule bg-card">
+                          <div className="flex items-start gap-2.5">
+                            <Info size={15} className="text-signal flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[13px] font-semibold text-ink mb-1">Why this matters</p>
+                              <p className="text-[13px] text-ink-2 leading-relaxed">
+                                When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

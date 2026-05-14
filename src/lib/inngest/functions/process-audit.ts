@@ -770,18 +770,28 @@ export const processAuditFn = inngest.createFunction(
         let domain = ''
         try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
 
-        // Build ground truth from crawl data
+        // Build ground truth from crawl data — full context including
+        // offerings and pricing so the grader has everything it needs
         const pageBlocks = crawlResult.pageContent.split('\n---\n')
         const firstBlock = pageBlocks[0] || ''
         const titleMatch = firstBlock.match(/^Title: (.+)$/m)
         const metaMatch = firstBlock.match(/^Meta Description: (.+)$/m)
         const contentMatch = firstBlock.match(/Content:\n([\s\S]+)$/m)
+        const firstPageContent = contentMatch?.[1] || firstBlock
+
+        // Extract pricing text if present
+        const allContentLower = crawlResult.pageContent.toLowerCase()
+        let pricingText: string | null = null
+        const pricingIdx = allContentLower.indexOf('pricing')
+        if (pricingIdx >= 0) {
+          pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
+        }
 
         const groundTruth: SiteGroundTruth = {
           siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
           siteDescription: metaMatch?.[1] || null,
-          pricingText: null,
-          offeringText: null,
+          pricingText,
+          offeringText: firstPageContent.substring(0, 2000),
           fullContent: crawlResult.pageContent.substring(0, 6000),
           pages: pageBlocks.map((block: string) => {
             const urlM = block.match(/^URL: (.+)$/m)
