@@ -2513,6 +2513,23 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                             </div>
                           )}
                         </div>
+                        {/* Copy button — copies page + issues for fixing */}
+                        {readability.missing?.length > 0 && (
+                          <button
+                            onClick={() => {
+                              const missingList = (readability.missing as string[]).map((m: string) => `- ${m}`).join('\n');
+                              const text = `Page: ${pg.url}\n\nAI cannot read the following on this page:\n${missingList}\n\nThese items need to be added or fixed so AI models can extract them.`;
+                              copySection(`page-${idx}`, text);
+                            }}
+                            className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-m-muted hover:text-ink bg-paper-2/60 hover:bg-paper-2 border border-rule/30 rounded-lg px-2.5 py-1.5 transition-colors"
+                          >
+                            {copiedSection === `page-${idx}` ? (
+                              <><Check size={11} className="text-ok" /> Copied</>
+                            ) : (
+                              <><Copy size={11} /> Copy issues</>
+                            )}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -3316,43 +3333,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               </div>
 
-              {/* Page-level AI readability summary */}
-              {auditPages.some(p => p.ai_readability) && (
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <Globe size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Page-level AI readability</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{auditPages.filter(p => p.ai_readability).length} pages</span>
-                  </div>
-                  <div className="divide-y divide-rule/20">
-                    {auditPages.filter(p => p.ai_readability).map((page, pi) => {
-                      const r = page.ai_readability as any;
-                      const score = r?.overallScore ?? 0;
-                      const wordCount = (page.content_text || '').split(/\s+/).filter(Boolean).length;
-                      return (
-                        <div key={pi} className="px-5 py-3 flex items-center gap-3">
-                          <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                            r?.status === 'green' ? '[background:var(--ok)]' : r?.status === 'amber' ? 'bg-amber-400' : 'bg-red-400'
-                          }`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] text-ink truncate">{page.title || page.url}</p>
-                            <div className="flex gap-2 mt-0.5">
-                              <span className="text-[10px] text-m-muted">{wordCount.toLocaleString()} words</span>
-                              {r?.extractable?.length > 0 && <span className="text-[10px] text-ok">{r.extractable.length} signals found</span>}
-                              {r?.missing?.length > 0 && <span className="text-[10px] text-severe">{r.missing.length} missing</span>}
-                            </div>
-                          </div>
-                          <span className={`text-sm font-bold flex-shrink-0 ${score >= 70 ? 'text-ok' : score >= 40 ? 'text-warn' : 'text-severe'}`}>{score}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="px-5 py-3 bg-paper-2/30 border-t border-rule/20">
-                    <p className="text-[11px] text-m-muted">Higher scores mean AI crawlers can extract more meaningful content from your pages. Aim for 70+ on every page.</p>
-                  </div>
-                </div>
-              )}
-
               {/* Model benchmark comparison — only show when 2+ models available */}
               {intelligenceData?.modelProbes?.length > 1 && (
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
@@ -3407,7 +3387,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         );
                       })}
                     </div>
-                    <div className="mt-5 p-4 rounded-xl bg-ok/[0.06] border border-ok/20">
+                    <div className="mt-5 p-4 rounded-xl bg-ok/10 border border-ok/20">
                       <div className="flex items-start gap-2.5">
                         <Info size={15} className="text-ok flex-shrink-0 mt-0.5" />
                         <div>
@@ -3459,13 +3439,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Actionable recommendations */}
               {intelligenceData?.recommendations?.length > 0 && (
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <Lightbulb size={16} className="text-signal" />
+                <div className="rounded-xl border border-ok/20 bg-ok/10 overflow-hidden">
+                  <div className="px-5 py-4 border-b border-ok/20 flex items-center gap-2">
+                    <Lightbulb size={16} className="text-ok" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What to improve next</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
                   </div>
-                  <div className="px-5 py-3 border-b border-rule/20 bg-paper-2/30">
+                  <div className="px-5 py-3 border-b border-ok/15">
                     <p className="text-[11px] text-m-muted leading-relaxed">
                       Based on patterns from other audits, these actions are most likely to improve your score. Higher impact actions are listed first.
                     </p>
