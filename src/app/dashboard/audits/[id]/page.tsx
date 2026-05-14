@@ -2045,8 +2045,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           )}
 
-          {/* ── Tab Navigation ─────────────────────────────── */}
-          <div className="mb-8 border-b border-rule/40">
+          {/* ── Tab Navigation — sticky below score bar ───── */}
+          <div className={`mb-8 border-b border-rule/40 sticky z-30 -mx-4 px-4 bg-paper/95 backdrop-blur-md transition-all duration-200 ${showStickyScore ? 'top-[57px] shadow-sm' : 'top-0'}`}>
             <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
               {(['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
@@ -3486,13 +3486,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
               {/* Actionable recommendations */}
               {intelligenceData?.recommendations?.length > 0 && (
-                <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-emerald-500/15 flex items-center gap-2">
-                    <Lightbulb size={16} className="text-emerald-600 dark:text-emerald-400" />
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
+                    <Lightbulb size={16} className="text-signal" />
                     <h3 className="text-sm font-heading font-semibold text-ink">What to improve next</h3>
                     <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
                   </div>
-                  <div className="px-5 py-3 border-b border-emerald-500/10">
+                  <div className="px-5 py-3 border-b border-rule/20">
                     <p className="text-[11px] text-m-muted leading-relaxed">
                       Based on patterns from other audits, these actions are most likely to improve your score. Higher impact actions are listed first.
                     </p>
