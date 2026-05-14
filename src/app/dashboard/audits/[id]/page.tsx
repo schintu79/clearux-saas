@@ -3379,8 +3379,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {intelligenceData.modelProbes.map((probe: any) => {
                         const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
                         const scBg = probe.accuracy_score >= 70 ? 'bg-ok/5' : probe.accuracy_score >= 40 ? 'bg-warn/5' : 'bg-severe/5';
+                        // Brand-tinted backgrounds per model
+                        const modelTint = probe.model_label === 'Claude' ? 'rgba(217, 119, 87, 0.06)'
+                          : probe.model_label === 'GPT-4o' ? 'rgba(16, 163, 127, 0.06)'
+                          : 'rgba(66, 133, 244, 0.06)';
                         return (
-                          <div key={probe.id} className="rounded-xl border border-rule bg-card p-4">
+                          <div key={probe.id} className="rounded-xl border border-rule p-4" style={{ background: modelTint }}>
                             <div className="flex items-center justify-between mb-3">
                               <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
                               <span className={`text-lg font-bold px-2 py-0.5 rounded-lg ${sc} ${scBg}`}>{probe.accuracy_score}%</span>
@@ -3475,17 +3479,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   <div className="p-5">
                     <div className="grid gap-3 sm:grid-cols-3 mb-4">
                       {/* Your score */}
-                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
+                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: 'color-mix(in srgb, var(--signal) 6%, var(--card))' }}>
                         <div className={`text-2xl font-bold ${scoreColor(intelligenceData.benchmarkPosition.userScore)}`}>{intelligenceData.benchmarkPosition.userScore}</div>
                         <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
                       </div>
                       {/* Industry average */}
-                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
+                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: 'color-mix(in srgb, var(--ink) 3%, var(--card))' }}>
                         <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
                         <div className="text-[11px] font-medium text-m-muted mt-1">{intelligenceData.industry} average</div>
                       </div>
                       {/* Difference */}
-                      <div className="text-center p-4 rounded-xl bg-card border border-rule">
+                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: (() => { const d = intelligenceData.benchmarkPosition.deltaFromAvg; return d > 0 ? 'color-mix(in srgb, var(--ok) 6%, var(--card))' : d < 0 ? 'color-mix(in srgb, var(--severe) 5%, var(--card))' : 'var(--card)'; })() }}>
                         {(() => {
                           const delta = intelligenceData.benchmarkPosition.deltaFromAvg;
                           const color = delta > 0 ? 'text-ok' : delta < 0 ? 'text-severe' : 'text-m-muted';
