@@ -2552,13 +2552,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             return (
               <div className="space-y-6">
                 {/* Hero card */}
-                <div className="rounded-xl border-2 border-signal/30 bg-signal/[0.04] overflow-hidden">
+                <div className="rounded-xl border-2 border-ok/30 bg-ok/[0.04] overflow-hidden">
                   <div className="px-6 py-5 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-signal/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Smartphone size={18} className="text-signal" />
+                    <div className="w-9 h-9 rounded-lg bg-ok/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Smartphone size={18} className="text-ok" />
                     </div>
                     <div>
-                      <h3 className="text-[15px] font-heading font-bold text-ink mb-1.5">Responsive design check</h3>
+                      <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">Responsive design check</h3>
                       <p className="text-[13px] text-ink-2 leading-relaxed">
                         Every page is tested at 4 viewport sizes using a real browser. We check for layout breaks, touch target sizes, text readability, image overflow, and navigation adaptation. Issues are grouped by viewport below.
                       </p>
@@ -2695,12 +2695,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                 )}
 
-                {/* Empty state */}
-                {responsiveFindings.length === 0 && !auditPages.some(p => p.is_mobile_friendly !== null) && (
-                  <div className="text-center py-12">
-                    <Smartphone size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
-                    <p className="text-sm text-m-muted">No responsive check data available for this audit.</p>
-                    <p className="text-xs text-m-muted/60 mt-1">Responsive checks run automatically on website audits. Re-audit to generate responsive data.</p>
+                {/* All clear message when no issues found */}
+                {responsiveFindings.length === 0 && (
+                  <div className="rounded-xl border border-ok/20 bg-ok/[0.04] px-5 py-4 flex items-start gap-3">
+                    <CheckCircle2 size={16} className="text-ok flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[13px] font-medium text-ink">No responsive issues found</p>
+                      <p className="text-[12px] text-m-muted mt-0.5">All pages passed viewport checks across desktop, tablet, and mobile breakpoints.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -3168,7 +3170,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     <Sparkles size={18} className="text-ok" />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-heading font-bold text-ink mb-1.5">How AI models represent your site</h3>
+                    <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">How AI models represent your site</h3>
                     <p className="text-[13px] text-ink-2 leading-relaxed">
                       We asked leading AI models factual questions about your site and graded their answers against your actual content. This reveals how accurately AI understands your brand, products, and messaging — and where it gets things wrong.
                     </p>
