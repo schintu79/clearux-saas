@@ -63,6 +63,9 @@ import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScor
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import AuditCockpit, { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
+import PracticalInsights from '@/components/dashboard/PracticalInsights';
+import CategoryChips from '@/components/dashboard/CategoryChips';
+import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import FixQueue, { type RankedFinding } from '@/components/dashboard/FixQueue';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
@@ -1757,6 +1760,23 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     return true;
   });
 
+  // Open-finding counts per module — feeds the category chips.
+  const findingCountByModule: Record<number, number> = {};
+  for (const f of findings) {
+    if (f.dismissed) continue;
+    const idx = findingModuleIndex(f);
+    findingCountByModule[idx] = (findingCountByModule[idx] || 0) + 1;
+  }
+
+  // Consolidate near-duplicate findings for display only. The grouping never
+  // mutates DB records or hides individual findings from the engine: each
+  // group still tracks every member finding and exposes a "primary" record
+  // for status / dismiss actions.
+  const groupedFilteredFindings: GroupedFinding[] = groupFindingsForDisplay(
+    filteredFindings,
+    findingModuleIndex,
+  );
+
   // Cockpit click handlers. Always switch to the Findings tab so the filter is
   // immediately visible — toggling the same filter clears it.
   const handleCockpitSeverity = (sev: CockpitSeverity) => {
@@ -2173,19 +2193,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
           <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} currentScore={calculatedOverallScore} />
 
-          {/* ── Visual Audit Cockpit — clickable score + severity + module overview ── */}
+          {/* ── Practical insights — three lanes that answer the questions
+                a user opens the audit to answer: what's working, what's
+                hurting, what to fix first. Replaces the duplicated overall
+                score that used to sit in the cockpit header. ── */}
+          <PracticalInsights
+            modules={cockpitModules}
+            categoryScores={categoryScores}
+            fixQueue={fixQueueItems}
+            onModuleClick={handleCockpitModule}
+            onFixSelect={handleFixQueueSelect}
+          />
+
+          {/* ── Clickable category chips — quick filter into the Findings
+                tab by module / category. Mirrors the cockpit interaction
+                but lives at the top of the page where users look first. ── */}
+          <CategoryChips
+            modules={cockpitModules}
+            findingCountByModule={findingCountByModule}
+            activeModuleIndex={filterModuleIndex}
+            onModuleClick={handleCockpitModule}
+            onClear={() => setFilterModuleIndex(null)}
+          />
+
+          {/* ── Severity filter strip (formerly Audit Cockpit) ── */}
           <AuditCockpit
-            overallScore={calculatedOverallScore}
-            scoreLabel={getScoreLabel(calculatedOverallScore, auditLang)}
             totalFindings={findings.length}
             activeModuleCount={activeModuleCount}
             totalModuleCount={totalModuleCount}
             severityCounts={severityCounts}
-            modules={cockpitModules}
             activeSeverity={filterSeverity}
-            activeModuleIndex={filterModuleIndex}
             onSeverityClick={handleCockpitSeverity}
-            onModuleClick={handleCockpitModule}
           />
 
           {/* ── Prioritized Fix Queue — top issues to ship first ── */}
@@ -2689,9 +2727,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               ) : (
                 (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
-                  const items = filteredFindings.filter((f) => f.severity === severity);
+                  const items = groupedFilteredFindings.filter((g) => g.primary.severity === severity);
                   if (items.length === 0) return null;
                   const config = severityConfig[severity];
+                  const totalMembers = items.reduce((s, g) => s + g.members.length, 0);
                   return (
                     <div key={severity} className="mb-5">
                       <div className="flex items-center gap-2 mb-2.5 px-1">
@@ -2707,14 +2746,59 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         </span>
                         <span className="text-[11px] text-m-muted font-medium tracking-[0.03em] uppercase">
                           {items.length} issue{items.length !== 1 ? 's' : ''}
+                          {totalMembers > items.length ? ` · ${totalMembers} records` : ''}
                         </span>
                       </div>
                       <div className="space-y-2">
-                        {items.map((finding) => (
-                          <div key={finding.id} id={`finding-${finding.id}`} className="rounded-xl transition-shadow">
-                            <FindingCard finding={finding} pillarColor="text-signal" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
-                          </div>
-                        ))}
+                        {items.map((group) => {
+                          const finding = group.primary;
+                          return (
+                            <div key={finding.id} id={`finding-${finding.id}`} className="rounded-xl transition-shadow">
+                              {group.isConsolidated && (
+                                <div
+                                  className="rounded-t-xl px-4 py-2.5 flex items-center gap-2 flex-wrap text-[11px]"
+                                  style={{
+                                    background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
+                                    border: '1px solid color-mix(in srgb, var(--signal) 18%, transparent)',
+                                    borderBottom: 'none',
+                                  }}
+                                  data-testid="consolidated-finding-banner"
+                                >
+                                  <span className="font-semibold tracking-[0.04em] uppercase text-signal">
+                                    Affects {group.affectedModuleIndices.length} module
+                                    {group.affectedModuleIndices.length === 1 ? '' : 's'}
+                                  </span>
+                                  {group.affectedModuleIndices.map((idx) => {
+                                    const mod = cockpitModules[idx];
+                                    if (!mod) return null;
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-card border border-rule/40 text-m-muted font-medium"
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: mod.dot }} />
+                                        {mod.name}
+                                      </span>
+                                    );
+                                  })}
+                                  <span className="ml-auto text-m-muted font-medium tracking-[0.03em] uppercase">
+                                    {group.members.length} similar finding
+                                    {group.members.length === 1 ? '' : 's'} grouped
+                                    {group.affectedPages.length > 1
+                                      ? ` · ${group.affectedPages.length} pages`
+                                      : ''}
+                                  </span>
+                                </div>
+                              )}
+                              <FindingCard
+                                finding={finding}
+                                pillarColor="text-signal"
+                                sevConfig={severityConfig}
+                                onScoreUpdate={() => fetchAuditDetail(true)}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
