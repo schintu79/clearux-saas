@@ -19,11 +19,167 @@ import {
   Brain,
   Heart,
   TrendingUp,
+  TrendingDown,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 
 /* ── Helpers ────────────────────────────────────────────────── */
+
+function scoreColorVar(s: number | null | undefined): string {
+  if (s == null) return 'var(--m-muted)';
+  if (s >= 70) return 'var(--ok)';
+  if (s >= 40) return 'var(--warn)';
+  return 'var(--severe)';
+}
+
+/**
+ * Compact health card — shows latest score as a gauge, the delta vs prior
+ * audit of the same domain, open findings count, and share status. The
+ * gauge is a small inline SVG so we don't pull in a chart library.
+ */
+function HealthCard({
+  score,
+  delta,
+  domain,
+  openFindings,
+  hasShareLink,
+  auditId,
+}: {
+  score: number | null;
+  delta: number | null;
+  domain: string | null;
+  openFindings: number | null;
+  hasShareLink: boolean;
+  auditId: string | null;
+}) {
+  const size = 86;
+  const stroke = 7;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const val = score ?? 0;
+  const offset = c - (Math.max(0, Math.min(100, val)) / 100) * c;
+  const col = scoreColorVar(score);
+
+  return (
+    <Link
+      href={auditId ? `/dashboard/audits/${auditId}` : '/dashboard/audits'}
+      className="rounded-xl p-5 flex items-center gap-5 transition-all hover:shadow-sm"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+    >
+      <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--rule)" strokeWidth={stroke} />
+          {score != null && (
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={col}
+              strokeWidth={stroke}
+              strokeDasharray={c}
+              strokeDashoffset={offset}
+              strokeLinecap="round"
+              className="transition-all duration-500"
+            />
+          )}
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="font-sans font-medium tabular-nums leading-none" style={{ fontSize: 24, color: col }}>
+            {score ?? '--'}
+          </span>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+          Latest audit · health
+        </p>
+        <p className="text-[14px] font-medium text-ink mt-0.5 truncate">{domain || 'Run an audit to begin'}</p>
+        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+          {delta != null && delta !== 0 && (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-semibold tracking-[0.03em] uppercase"
+              style={{ color: delta > 0 ? 'var(--ok)' : 'var(--severe)' }}
+            >
+              {delta > 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+              {delta > 0 ? '+' : ''}{delta} pts
+            </span>
+          )}
+          {openFindings != null && openFindings > 0 && (
+            <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>
+              {openFindings} open finding{openFindings === 1 ? '' : 's'}
+            </span>
+          )}
+          {hasShareLink && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--signal)' }}>
+              <Share2 size={10} />
+              Share link live
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * Portfolio rail — compact recent-audit cards with score, domain, and date.
+ */
+function PortfolioRail({ audits }: { audits: Array<{ id: string; product_url: string | null; overall_score: number | null; completed_at: string | null }> }) {
+  if (audits.length === 0) return null;
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+          Recent audits
+        </p>
+        <Link href="/dashboard/audits" className="text-[11px] font-medium" style={{ color: 'var(--signal)' }}>
+          View all
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {audits.map((a) => {
+          let domain = a.product_url || '';
+          try { domain = new URL(a.product_url || '').hostname.replace(/^www\./, ''); } catch {}
+          const col = scoreColorVar(a.overall_score);
+          let date = '';
+          if (a.completed_at) {
+            const d = new Date(a.completed_at);
+            date = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
+          }
+          return (
+            <Link
+              key={a.id}
+              href={`/dashboard/audits/${a.id}`}
+              className="rounded-xl p-3 flex flex-col gap-2 transition-all hover:shadow-sm"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="text-[18px] font-medium tabular-nums leading-none"
+                  style={{ color: col }}
+                >
+                  {a.overall_score ?? '--'}
+                </span>
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: col }}
+                />
+              </div>
+              <p className="text-[12px] font-medium text-ink truncate leading-tight" title={domain}>
+                {domain}
+              </p>
+              {date && (
+                <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{date}</p>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function QuickCard({
   href,
@@ -134,6 +290,12 @@ function DashboardInner() {
   const [latestAuditId, setLatestAuditId] = useState<string | null>(null);
   const [openFindings, setOpenFindings] = useState<number | null>(null);
   const [hasShareLink, setHasShareLink] = useState<boolean>(false);
+  // Health card + portfolio rail data — pulled in the same Promise.all batch.
+  const [latestScore, setLatestScore] = useState<number | null>(null);
+  const [priorScore, setPriorScore] = useState<number | null>(null);
+  const [latestDomain, setLatestDomain] = useState<string | null>(null);
+  type RecentAudit = { id: string; product_url: string | null; overall_score: number | null; status: string | null; completed_at: string | null };
+  const [recentAudits, setRecentAudits] = useState<RecentAudit[]>([]);
   const [loading, setLoading] = useState(true);
   const [creditsBanner, setCreditsBanner] = useState(false);
 
@@ -175,27 +337,66 @@ function DashboardInner() {
       fetch('/api/credits').then(r => r.json()),
       // Notifications
       fetch('/api/notifications').then(r => r.json()),
-      // Most recent completed audit (for "next best action")
+      // Recent completed audits — used for the health card (latest + prior
+      // score for delta) and the portfolio rail. Pull 6 so we have enough for
+      // the rail while still getting the prior score from the same query.
       supabase
         .from('audits')
-        .select('id, share_enabled')
+        .select('id, product_url, share_enabled, status, completed_at')
         .eq('user_id', user.id)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .limit(6),
     ])
-      .then(async ([websiteRes, brandRes, creditsData, notifData, latestRes]) => {
+      .then(async ([websiteRes, brandRes, creditsData, notifData, recentRes]) => {
         setWebsiteCount(websiteRes.count ?? 0);
         setBrandCount(brandRes.count ?? 0);
         setCredits(creditsData.credits ?? 0);
         setPlan(creditsData.subscription_plan ?? null);
         setUnread(notifData.unreadCount ?? 0);
 
-        const latest = latestRes.data as any;
+        const recent = (recentRes.data || []) as any[];
+        const latest = recent[0];
         if (latest?.id) {
           setLatestAuditId(latest.id);
           setHasShareLink(!!latest.share_enabled);
+          try {
+            const u = new URL(latest.product_url);
+            setLatestDomain(u.hostname.replace(/^www\./, ''));
+          } catch { setLatestDomain(latest.product_url || null); }
+
+          // Pull scores for the recent audits in a single query so we can
+          // render the health card delta and the portfolio rail without
+          // adding a new endpoint.
+          const ids = recent.map(r => r.id);
+          const { data: reports } = await supabase
+            .from('reports')
+            .select('audit_id, overall_score')
+            .in('audit_id', ids);
+          const scoreById = new Map<string, number | null>();
+          for (const r of (reports || []) as any[]) {
+            scoreById.set(r.audit_id, r.overall_score ?? null);
+          }
+          const enriched: RecentAudit[] = recent.map((r) => ({
+            id: r.id,
+            product_url: r.product_url,
+            overall_score: scoreById.get(r.id) ?? null,
+            status: r.status,
+            completed_at: r.completed_at,
+          }));
+          setRecentAudits(enriched);
+          setLatestScore(enriched[0]?.overall_score ?? null);
+
+          // Prior score for delta = first recent audit on the SAME domain.
+          let priorDomain: string | null = null;
+          try { priorDomain = new URL(latest.product_url).hostname.replace(/^www\./, ''); } catch {}
+          if (priorDomain) {
+            const prior = enriched.slice(1).find(a => {
+              try { return new URL(a.product_url || '').hostname.replace(/^www\./, '') === priorDomain; }
+              catch { return false; }
+            });
+            setPriorScore(prior?.overall_score ?? null);
+          }
 
           // Open findings on latest audit — drives "Track fixes" card.
           const { count: openCount } = await supabase
@@ -257,6 +458,48 @@ function DashboardInner() {
             : 'Your evidence-based Human + AI + Brand + Conversion cockpit.'}
         </p>
       </div>
+
+      {/* ── Health card + portfolio rail (returning users) ── */}
+      {!isFirstRun && latestAuditId && (
+        <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-4">
+            <HealthCard
+              score={latestScore}
+              delta={latestScore != null && priorScore != null ? latestScore - priorScore : null}
+              domain={latestDomain}
+              openFindings={openFindings}
+              hasShareLink={hasShareLink}
+              auditId={latestAuditId}
+            />
+            <div
+              className="rounded-xl p-5 flex flex-col gap-2 justify-between"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+                  Audits completed
+                </p>
+                <p className="text-[28px] font-sans font-semibold tabular-nums mt-1 leading-none" style={{ color: 'var(--ink)' }}>
+                  {totalCompleted}
+                </p>
+                <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                  Across {websiteCount ?? 0} website {websiteCount === 1 ? 'audit' : 'audits'}
+                  {brandCount && brandCount > 0 ? ` and ${brandCount} brand ${brandCount === 1 ? 'audit' : 'audits'}` : ''}.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/new-audit"
+                className="inline-flex items-center gap-1.5 text-[12px] font-medium mt-2"
+                style={{ color: 'var(--signal)' }}
+              >
+                Run another audit
+                <ArrowRight size={11} />
+              </Link>
+            </div>
+          </div>
+          <PortfolioRail audits={recentAudits} />
+        </div>
+      )}
 
       {/* ── First-run primary CTA (only when no completed audits) ── */}
       {isFirstRun && (
