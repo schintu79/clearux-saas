@@ -10,9 +10,9 @@
  *   • Fix first
  *
  * The component never invents data. Strengths/risks come from explicit
- * category scores + their summary text; "Fix first" is the parent's
- * already-ranked queue (severity × evidence). We label conservatively so we
- * don't over-claim.
+ * category scores + severity counts of real findings; "Fix first" is the
+ * parent's already-grouped queue (severity × evidence, deduped across
+ * modules). We label conservatively so we don't over-claim.
  */
 
 import React from 'react';
@@ -24,12 +24,32 @@ import {
 } from 'lucide-react';
 import { strengthLabel, weaknessLabel } from '@/lib/audit-findings-presentation';
 import type { ModuleScore } from './AuditCockpit';
-import type { RankedFinding } from './FixQueue';
+import type { AuditFinding } from '@/types/database';
+
+export interface ModuleSeverityCounts {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  total: number;
+}
+
+export interface GroupedFix {
+  /** Primary finding id — used as scroll target on the Findings tab. */
+  primaryId: string;
+  title: string;
+  severity: AuditFinding['severity'];
+  /** Module indices this grouped issue spans (deduped). */
+  affectedModuleIndices: number[];
+}
 
 export interface PracticalInsightsProps {
   modules: ModuleScore[];
   categoryScores: Array<{ name: string; score: number; summary?: string | null }>;
-  fixQueue: RankedFinding[];
+  /** Open + non-fixed findings, grouped/deduped, ranked by severity & evidence. */
+  groupedFixes: GroupedFix[];
+  /** Severity counts of OPEN findings per module index. */
+  moduleSeverityCounts: ModuleSeverityCounts[];
   onModuleClick?: (moduleIndex: number) => void;
   onFixSelect?: (findingId: string) => void;
 }
@@ -51,10 +71,66 @@ function scoreColor(s: number) {
   return 'var(--severe)';
 }
 
+interface RiskRow {
+  module: ModuleScore;
+  /** Reason this module is in the risk lane. */
+  reason: 'critical' | 'high' | 'score';
+  critical: number;
+  high: number;
+}
+
+function buildRiskRows(
+  modules: ModuleScore[],
+  counts: ModuleSeverityCounts[],
+): RiskRow[] {
+  const audited = modules.filter((m) => m.audited);
+  const rows: RiskRow[] = audited.map((m) => {
+    const c = counts[m.index] || { critical: 0, high: 0, medium: 0, low: 0, total: 0 };
+    let reason: RiskRow['reason'] | null = null;
+    if (c.critical > 0) reason = 'critical';
+    else if (c.high > 0) reason = 'high';
+    else if (weaknessLabel(m.score)) reason = 'score';
+    return reason ? { module: m, reason, critical: c.critical, high: c.high } : null;
+  }).filter((r): r is RiskRow => r !== null);
+
+  // Rank: critical desc → high desc → lower score → total findings desc.
+  rows.sort((a, b) => {
+    if (a.critical !== b.critical) return b.critical - a.critical;
+    if (a.high !== b.high) return b.high - a.high;
+    if (a.module.score !== b.module.score) return a.module.score - b.module.score;
+    const ta = counts[a.module.index]?.total ?? 0;
+    const tb = counts[b.module.index]?.total ?? 0;
+    return tb - ta;
+  });
+
+  return rows.slice(0, 3);
+}
+
+function riskRowLabel(row: RiskRow): { text: string; color: string } {
+  if (row.reason === 'critical') {
+    return {
+      text: `${row.critical} critical`,
+      color: 'var(--severe)',
+    };
+  }
+  if (row.reason === 'high') {
+    return {
+      text: `${row.high} high`,
+      color: 'var(--warn)',
+    };
+  }
+  const wl = weaknessLabel(row.module.score) || 'Attention';
+  return {
+    text: wl,
+    color: row.module.score < 40 ? 'var(--severe)' : 'var(--warn)',
+  };
+}
+
 const PracticalInsights: React.FC<PracticalInsightsProps> = ({
   modules,
-  categoryScores,
-  fixQueue,
+  categoryScores: _categoryScores,
+  groupedFixes,
+  moduleSeverityCounts,
   onModuleClick,
   onFixSelect,
 }) => {
@@ -63,11 +139,8 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
     .filter((m) => strengthLabel(m.score))
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
-  const risks = [...auditedModules]
-    .filter((m) => weaknessLabel(m.score))
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 3);
-  const fixes = fixQueue.slice(0, 3);
+  const risks = buildRiskRows(modules, moduleSeverityCounts);
+  const fixes = groupedFixes.slice(0, 3);
 
   // Conservative fallback: if no category clears the "strong/solid" bar but at
   // least one was audited, surface the highest-scoring module without a
@@ -96,6 +169,7 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
             <LaneRow
               key={m.index}
               onClick={onModuleClick ? () => onModuleClick(m.index) : undefined}
+              ariaLabel={`Filter findings by ${m.name} (score ${m.score}, ${label.toLowerCase()})`}
               left={
                 <>
                   <span
@@ -127,6 +201,7 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
         {fallbackStrength && (
           <LaneRow
             onClick={onModuleClick ? () => onModuleClick(fallbackStrength.index) : undefined}
+            ariaLabel={`Filter findings by ${fallbackStrength.name} (highest scoring module, ${fallbackStrength.score})`}
             left={
               <>
                 <span
@@ -160,15 +235,19 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
         title="What's hurting performance"
         accent="var(--warn)"
         Icon={AlertTriangle}
-        emptyMessage="No category is currently flagged for attention."
+        emptyMessage="No critical or high-severity issues, and no weak category scores."
         isEmpty={risks.length === 0}
       >
-        {risks.map((m) => {
-          const label = weaknessLabel(m.score) || 'Attention';
+        {risks.map((row, idx) => {
+          const { text, color } = riskRowLabel(row);
+          const m = row.module;
+          // Mark the top-ranked module as "Highest risk" when it has critical/high.
+          const isTop = idx === 0 && (row.critical > 0 || row.high > 0);
           return (
             <LaneRow
               key={m.index}
               onClick={onModuleClick ? () => onModuleClick(m.index) : undefined}
+              ariaLabel={`Filter findings by ${m.name} (${text}${isTop ? ', highest risk' : ''})`}
               left={
                 <>
                   <span
@@ -176,15 +255,26 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
                     style={{ background: m.dot }}
                   />
                   <span className="text-[12px] font-medium text-ink truncate">{m.name}</span>
+                  {isTop && (
+                    <span
+                      className="text-[9px] font-semibold tracking-[0.05em] uppercase px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      style={{
+                        color: 'var(--severe)',
+                        background: 'color-mix(in srgb, var(--severe) 10%, transparent)',
+                      }}
+                    >
+                      Highest risk
+                    </span>
+                  )}
                 </>
               }
               right={
                 <>
                   <span
                     className="text-[10px] font-semibold tracking-[0.04em] uppercase"
-                    style={{ color: m.score < 40 ? 'var(--severe)' : 'var(--warn)' }}
+                    style={{ color }}
                   >
-                    {label}
+                    {text}
                   </span>
                   <span
                     className="text-[12px] font-semibold tabular-nums"
@@ -204,41 +294,60 @@ const PracticalInsights: React.FC<PracticalInsightsProps> = ({
         title="Fix first"
         accent="var(--signal)"
         Icon={Zap}
-        emptyMessage="No critical or high-severity findings are open."
+        emptyMessage="No open critical or high-severity findings."
         isEmpty={fixes.length === 0}
       >
-        {fixes.map(({ finding, moduleName, moduleDot }) => (
-          <LaneRow
-            key={finding.id}
-            onClick={onFixSelect ? () => onFixSelect(finding.id) : undefined}
-            left={
-              <>
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: severityColor(finding.severity) }}
-                  title={finding.severity}
-                />
-                <span className="text-[12px] font-medium text-ink truncate">
-                  {finding.title}
-                </span>
-              </>
-            }
-            right={
-              moduleName ? (
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.03em]"
-                  style={{ color: 'var(--m-muted)' }}
-                >
+        {fixes.map((fix) => {
+          const affectedCount = fix.affectedModuleIndices.length;
+          const firstModule =
+            affectedCount > 0 ? modules[fix.affectedModuleIndices[0]] : undefined;
+          return (
+            <LaneRow
+              key={fix.primaryId}
+              onClick={onFixSelect ? () => onFixSelect(fix.primaryId) : undefined}
+              ariaLabel={`Open finding "${fix.title}" (${fix.severity}${
+                affectedCount > 1 ? `, affects ${affectedCount} modules` : ''
+              })`}
+              left={
+                <>
                   <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: moduleDot || 'var(--m-muted)' }}
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: severityColor(fix.severity) }}
+                    title={fix.severity}
                   />
-                  <span className="truncate max-w-[7rem]">{moduleName}</span>
-                </span>
-              ) : null
-            }
-          />
-        ))}
+                  <span className="text-[12px] font-medium text-ink truncate">
+                    {fix.title}
+                  </span>
+                </>
+              }
+              right={
+                affectedCount > 1 ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.03em]"
+                    style={{ color: 'var(--m-muted)' }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: firstModule?.dot || 'var(--m-muted)' }}
+                    />
+                    Affects {affectedCount} modules
+                  </span>
+                ) : firstModule ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.03em]"
+                    style={{ color: 'var(--m-muted)' }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: firstModule.dot || 'var(--m-muted)' }}
+                    />
+                    <span className="truncate max-w-[7rem]">{firstModule.name}</span>
+                  </span>
+                ) : null
+              }
+            />
+          );
+        })}
       </Lane>
     </div>
   );
@@ -296,27 +405,37 @@ function LaneRow({
   left,
   right,
   onClick,
+  ariaLabel,
 }: {
   left: React.ReactNode;
   right?: React.ReactNode;
   onClick?: () => void;
+  ariaLabel?: string;
 }) {
-  const interactive = Boolean(onClick);
-  const Wrapper: any = interactive ? 'button' : 'div';
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left cursor-pointer hover:bg-paper-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-signal/50 transition-colors group"
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">{left}</div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {right}
+          <ChevronRight
+            size={12}
+            className="text-m-muted group-hover:text-ink transition-colors"
+          />
+        </div>
+      </button>
+    );
+  }
   return (
-    <Wrapper
-      type={interactive ? 'button' : undefined}
-      onClick={onClick}
-      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left ${
-        interactive ? 'hover:bg-paper-2 transition-colors' : ''
-      }`}
-    >
+    <div className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left">
       <div className="flex items-center gap-2 min-w-0 flex-1">{left}</div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {right}
-        {interactive && <ChevronRight size={12} className="text-m-muted" />}
-      </div>
-    </Wrapper>
+      <div className="flex items-center gap-2 flex-shrink-0">{right}</div>
+    </div>
   );
 }
 

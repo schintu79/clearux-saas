@@ -63,7 +63,7 @@ import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScor
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
-import PracticalInsights from '@/components/dashboard/PracticalInsights';
+import PracticalInsights, { type GroupedFix, type ModuleSeverityCounts } from '@/components/dashboard/PracticalInsights';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import { type RankedFinding } from '@/components/dashboard/FixQueue';
 import clsx from 'clsx';
@@ -1751,6 +1751,41 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     return { finding: f, moduleName: module?.name, moduleDot: module?.dot, priorityLabel };
   });
 
+  // Per-module severity counts (OPEN findings only — excludes dismissed/fixed)
+  // so the "What's hurting" lane reflects real outstanding risk, not just the
+  // category score thresholds. A module with 4 critical & 25 high findings
+  // should surface even if its rolled-up score is in the 60s.
+  const openFindings = findings.filter((f) => !f.dismissed && f.status !== 'fixed');
+  const moduleSeverityCounts: ModuleSeverityCounts[] = cockpitModules.map(() => ({
+    critical: 0, high: 0, medium: 0, low: 0, total: 0,
+  }));
+  for (const f of openFindings) {
+    const modIdx = findingModuleIndex(f);
+    const bucket = moduleSeverityCounts[modIdx];
+    if (!bucket) continue;
+    if (f.severity === 'critical') bucket.critical += 1;
+    else if (f.severity === 'high') bucket.high += 1;
+    else if (f.severity === 'medium') bucket.medium += 1;
+    else if (f.severity === 'low') bucket.low += 1;
+    bucket.total += 1;
+  }
+
+  // Fix-first dedupe: group findings across modules so the same logical issue
+  // (e.g. a canonical mismatch flagged in three pillars) shows ONCE with the
+  // affected modules surfaced as a chip. We rank groups by their primary's
+  // priority score (severity × evidence × verification) so the order matches
+  // the flat queue but without the duplicates.
+  const groupedFixesAll = groupFindingsForDisplay(rankedAll, findingModuleIndex);
+  const rankedGroupedFixes: GroupedFix[] = [...groupedFixesAll]
+    .sort((a, b) => findingPriorityScore(b.primary) - findingPriorityScore(a.primary))
+    .slice(0, 5)
+    .map((g) => ({
+      primaryId: g.primary.id,
+      title: g.primary.title,
+      severity: g.primary.severity,
+      affectedModuleIndices: g.affectedModuleIndices,
+    }));
+
   // Filters applied to the Findings tab. The Overview tab still shows the full
   // breakdown — filters are most useful on the flat list.
   const filteredFindings = findings.filter((f) => {
@@ -2186,7 +2221,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <PracticalInsights
             modules={cockpitModules}
             categoryScores={categoryScores}
-            fixQueue={fixQueueItems}
+            groupedFixes={rankedGroupedFixes}
+            moduleSeverityCounts={moduleSeverityCounts}
             onModuleClick={handleCockpitModule}
             onFixSelect={handleFixQueueSelect}
           />
