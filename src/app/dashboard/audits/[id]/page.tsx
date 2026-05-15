@@ -63,9 +63,7 @@ import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScor
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
-import PracticalInsights from '@/components/dashboard/PracticalInsights';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
-import { type RankedFinding } from '@/components/dashboard/FixQueue';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 
@@ -1721,36 +1719,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     };
   });
 
-  // Severity weight for the fix queue. Boosts findings with strong evidence
-  // (page_url, screenshot, target_element) and AI-verified "poorly_fixed".
-  const SEV_WEIGHT: Record<string, number> = { critical: 100, high: 60, medium: 30, low: 10 };
-  function findingPriorityScore(f: AuditFinding): number {
-    let s = SEV_WEIGHT[f.severity] ?? 0;
-    if (f.page_url) s += 5;
-    if (f.screenshot_url) s += 4;
-    if (f.target_element) s += 3;
-    if ((f as any).verification_status === 'poorly_fixed') s += 25;
-    if ((f as any).verification_status === 'likely_fixed') s -= 50;
-    if (f.dismissed) s -= 1000;
-    if (f.status === 'fixed') s -= 200;
-    if (f.status === 'in_progress') s -= 20;
-    return s;
-  }
-
-  const rankedAll = [...findings]
-    .filter(f => !f.dismissed && f.status !== 'fixed')
-    .sort((a, b) => findingPriorityScore(b) - findingPriorityScore(a));
-
-  const fixQueueItems: RankedFinding[] = rankedAll.slice(0, 5).map((f) => {
-    const modIdx = findingModuleIndex(f);
-    const module = cockpitModules[modIdx];
-    const priorityLabel: RankedFinding['priorityLabel'] =
-      f.severity === 'critical' ? 'Now'
-      : f.severity === 'high' ? 'Next'
-      : 'Later';
-    return { finding: f, moduleName: module?.name, moduleDot: module?.dot, priorityLabel };
-  });
-
   // Filters applied to the Findings tab. The Overview tab still shows the full
   // breakdown — filters are most useful on the flat list.
   const filteredFindings = findings.filter((f) => {
@@ -1767,29 +1735,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     filteredFindings,
     findingModuleIndex,
   );
-
-  // Module click on PracticalInsights cards → filter Findings tab by module.
-  // Toggling the same module clears the filter.
-  const handleCockpitModule = (idx: number) => {
-    setFilterModuleIndex((cur) => (cur === idx ? null : idx));
-    setActiveTab('findings');
-  };
-
-  // FixQueue → jump to a specific finding card on the Findings tab.
-  const handleFixQueueSelect = (findingId: string) => {
-    setFilterSeverity(null);
-    setFilterModuleIndex(null);
-    setActiveTab('findings');
-    // Defer to next frame so the Findings tab DOM has rendered.
-    setTimeout(() => {
-      const el = document.getElementById(`finding-${findingId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        el.classList.add('ring-2', 'ring-signal/40');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-signal/40'), 1800);
-      }
-    }, 60);
-  };
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4 relative">
@@ -2179,17 +2124,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
           <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} currentScore={calculatedOverallScore} />
-
-          {/* ── Practical insights — three lanes that answer the questions
-                a user opens the audit to answer: what's working, what's
-                hurting, what to fix first. ── */}
-          <PracticalInsights
-            modules={cockpitModules}
-            categoryScores={categoryScores}
-            fixQueue={fixQueueItems}
-            onModuleClick={handleCockpitModule}
-            onFixSelect={handleFixQueueSelect}
-          />
 
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-signal/5 border border-signal/20">
