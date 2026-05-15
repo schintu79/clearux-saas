@@ -62,6 +62,8 @@ import type {
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
+import AuditCockpit, { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
+import FixQueue, { type RankedFinding } from '@/components/dashboard/FixQueue';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 
@@ -1097,6 +1099,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence'>('overview');
+  // Cockpit-driven filters: click a severity chip or module bar to narrow the
+  // Findings tab. Always toggle (click again = clear). Filters persist across
+  // tab switches so the user can drill from cockpit → findings naturally.
+  const [filterSeverity, setFilterSeverity] = useState<CockpitSeverity | null>(null);
+  const [filterModuleIndex, setFilterModuleIndex] = useState<number | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1632,6 +1639,107 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const findingsByPillar = assignFindingsToPillars();
 
+  /* ── Cockpit-friendly derived data ─────────────────────────
+   * - findingModuleIndex: per-finding module (0..5) for filtering + queue.
+   * - cockpitModules: module-level score bars (with audited flag).
+   * - rankedFindings: top fix queue, severity-weighted, with priority bucket.
+   * - filteredFindings: applied to the Findings tab.
+   */
+  const catNamesForModule = categoryScores.map(c => c.name);
+  function findingModuleIndex(f: AuditFinding): number {
+    let catIdx: number;
+    if ((f as any).category_index != null) {
+      catIdx = (f as any).category_index;
+    } else {
+      catIdx = matchFindingToCategory(`${f.title} ${f.description} ${f.recommendation || ''}`, catNamesForModule);
+    }
+    for (let i = 0; i < PILLAR_STYLE.length; i++) {
+      const p = PILLAR_STYLE[i];
+      if (catIdx >= p.range[0] && catIdx < p.range[1]) return i;
+    }
+    return 0;
+  }
+
+  const cockpitModules: ModuleScore[] = PILLAR_CONFIG.map((pillar, idx) => {
+    const cats = categoryScores.filter((_, i) => i >= pillar.range[0] && i < pillar.range[1]);
+    const audited = cats.length > 0 && (!isPartialAudit || (auditSelectedModules ? auditSelectedModules.includes(MODULE_SLUG_ORDER[idx]) : (auditSelectedPillars?.includes(idx) ?? true)));
+    const avg = cats.length > 0
+      ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length)
+      : 0;
+    return {
+      index: idx,
+      name: pillar.name,
+      score: avg,
+      dot: MODULE_TINTS[idx]?.dot || 'var(--m-muted)',
+      audited,
+    };
+  });
+
+  // Severity weight for the fix queue. Boosts findings with strong evidence
+  // (page_url, screenshot, target_element) and AI-verified "poorly_fixed".
+  const SEV_WEIGHT: Record<string, number> = { critical: 100, high: 60, medium: 30, low: 10 };
+  function findingPriorityScore(f: AuditFinding): number {
+    let s = SEV_WEIGHT[f.severity] ?? 0;
+    if (f.page_url) s += 5;
+    if (f.screenshot_url) s += 4;
+    if (f.target_element) s += 3;
+    if ((f as any).verification_status === 'poorly_fixed') s += 25;
+    if ((f as any).verification_status === 'likely_fixed') s -= 50;
+    if (f.dismissed) s -= 1000;
+    if (f.status === 'fixed') s -= 200;
+    if (f.status === 'in_progress') s -= 20;
+    return s;
+  }
+
+  const rankedAll = [...findings]
+    .filter(f => !f.dismissed && f.status !== 'fixed')
+    .sort((a, b) => findingPriorityScore(b) - findingPriorityScore(a));
+
+  const fixQueueItems: RankedFinding[] = rankedAll.slice(0, 5).map((f) => {
+    const modIdx = findingModuleIndex(f);
+    const module = cockpitModules[modIdx];
+    const priorityLabel: RankedFinding['priorityLabel'] =
+      f.severity === 'critical' ? 'Now'
+      : f.severity === 'high' ? 'Next'
+      : 'Later';
+    return { finding: f, moduleName: module?.name, moduleDot: module?.dot, priorityLabel };
+  });
+
+  // Filters applied to the Findings tab. The Overview tab still shows the full
+  // breakdown — filters are most useful on the flat list.
+  const filteredFindings = findings.filter((f) => {
+    if (filterSeverity && f.severity !== filterSeverity) return false;
+    if (filterModuleIndex != null && findingModuleIndex(f) !== filterModuleIndex) return false;
+    return true;
+  });
+
+  // Cockpit click handlers. Always switch to the Findings tab so the filter is
+  // immediately visible — toggling the same filter clears it.
+  const handleCockpitSeverity = (sev: CockpitSeverity) => {
+    setFilterSeverity((cur) => (cur === sev ? null : sev));
+    setActiveTab('findings');
+  };
+  const handleCockpitModule = (idx: number) => {
+    setFilterModuleIndex((cur) => (cur === idx ? null : idx));
+    setActiveTab('findings');
+  };
+
+  // FixQueue → jump to a specific finding card on the Findings tab.
+  const handleFixQueueSelect = (findingId: string) => {
+    setFilterSeverity(null);
+    setFilterModuleIndex(null);
+    setActiveTab('findings');
+    // Defer to next frame so the Findings tab DOM has rendered.
+    setTimeout(() => {
+      const el = document.getElementById(`finding-${findingId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('ring-2', 'ring-signal/40');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-signal/40'), 1800);
+      }
+    }, 60);
+  };
+
   return (
     <div className="max-w-4xl mx-auto py-4 px-4 relative">
       {/* ── Sticky Score Bar — sticks to top of main scroll area ── */}
@@ -2021,6 +2129,31 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
           <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} currentScore={calculatedOverallScore} />
 
+          {/* ── Visual Audit Cockpit — clickable score + severity + module overview ── */}
+          <AuditCockpit
+            overallScore={calculatedOverallScore}
+            scoreLabel={getScoreLabel(calculatedOverallScore, auditLang)}
+            totalFindings={findings.length}
+            activeModuleCount={activeModuleCount}
+            totalModuleCount={totalModuleCount}
+            severityCounts={severityCounts}
+            modules={cockpitModules}
+            activeSeverity={filterSeverity}
+            activeModuleIndex={filterModuleIndex}
+            onSeverityClick={handleCockpitSeverity}
+            onModuleClick={handleCockpitModule}
+          />
+
+          {/* ── Prioritized Fix Queue — top issues to ship first ── */}
+          {fixQueueItems.length > 0 && (
+            <FixQueue
+              items={fixQueueItems}
+              total={findings.filter(f => !f.dismissed && f.status !== 'fixed').length}
+              onSelect={handleFixQueueSelect}
+              emptyMessage="All open findings have been triaged. Re-audit to track regressions."
+            />
+          )}
+
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-signal/5 border border-signal/20">
             <RefreshCw size={15} className="text-signal flex-shrink-0" />
@@ -2398,15 +2531,54 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: All Findings (flat list, sortable) ────── */}
           {activeTab === 'findings' && (
             <div className="space-y-2">
+              {/* Active filter banner — driven by cockpit clicks */}
+              {(filterSeverity || filterModuleIndex != null) && (
+                <div
+                  className="mb-3 px-4 py-2.5 rounded-lg flex items-center gap-2 flex-wrap"
+                  style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 18%, transparent)' }}
+                  data-testid="findings-filter-banner"
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-signal">
+                    Filtered
+                  </span>
+                  {filterSeverity && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-card border border-rule/40">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: filterSeverity === 'critical' ? 'var(--severe)' : filterSeverity === 'high' ? 'var(--warn)' : filterSeverity === 'medium' ? 'var(--signal)' : 'var(--ok)' }} />
+                      {filterSeverity.charAt(0).toUpperCase() + filterSeverity.slice(1)} severity
+                    </span>
+                  )}
+                  {filterModuleIndex != null && cockpitModules[filterModuleIndex] && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-card border border-rule/40">
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: cockpitModules[filterModuleIndex].dot }} />
+                      {cockpitModules[filterModuleIndex].name}
+                    </span>
+                  )}
+                  <span className="text-[11px] text-m-muted">
+                    {filteredFindings.length} of {findings.length} findings
+                  </span>
+                  <button
+                    onClick={() => { setFilterSeverity(null); setFilterModuleIndex(null); }}
+                    className="ml-auto text-[11px] font-medium text-signal hover:underline"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+
               {findings.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle2 size={32} className="[color:var(--ok)] mx-auto mb-3" />
                   <p className="text-ink font-medium">{L.noIssuesFound}</p>
                   <p className="text-sm text-m-muted mt-1">{L.noIssuesDescription}</p>
                 </div>
+              ) : filteredFindings.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-ink font-medium">No findings match this filter.</p>
+                  <p className="text-sm text-m-muted mt-1">Try clearing the filter to see all findings.</p>
+                </div>
               ) : (
                 (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
-                  const items = findings.filter((f) => f.severity === severity);
+                  const items = filteredFindings.filter((f) => f.severity === severity);
                   if (items.length === 0) return null;
                   const config = severityConfig[severity];
                   return (
@@ -2422,7 +2594,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                       <div className="space-y-2">
                         {items.map((finding) => (
-                          <FindingCard key={finding.id} finding={finding} pillarColor="text-signal" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
+                          <div key={finding.id} id={`finding-${finding.id}`} className="rounded-xl transition-shadow">
+                            <FindingCard finding={finding} pillarColor="text-signal" sevConfig={severityConfig} onScoreUpdate={() => fetchAuditDetail(true)} />
+                          </div>
                         ))}
                       </div>
                     </div>
