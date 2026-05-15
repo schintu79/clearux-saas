@@ -655,28 +655,53 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
 
   const tint = pillarIndex != null ? MODULE_TINTS[pillarIndex] : null;
 
+  const accentColor = tint?.dot || 'var(--rule)';
+  const hasEvidence = Boolean(finding.target_element && finding.target_element.trim());
+  const hasRecommendation = Boolean(finding.recommendation && finding.recommendation.trim());
+  const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
+
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={tint ? { background: tint.bg, border: `1px solid ${tint.border}` } : { background: '#ffffff', border: '1px solid var(--rule)' }}
+      style={tint
+        ? { background: tint.bg, border: `1px solid ${tint.border}`, borderLeft: `3px solid ${accentColor}` }
+        : { background: '#ffffff', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}
     >
       {/* Header — always visible */}
       <div className="flex items-start gap-3 p-4">
-        {/* Severity indicator */}
-        <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
-          <span className={`block w-2.5 h-2.5 rounded-full ${sev.dot}`} />
-        </div>
-
         {/* Main content — clickable to expand */}
         <button
           onClick={() => setOpen(!open)}
           className="flex-1 min-w-0 text-left"
           aria-expanded={open}
         >
-          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <span className={`text-[10px] font-semibold uppercase tracking-[0.04em] ${sev.text}`}>
+          {/* Pill row: severity · module · category · verification */}
+          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+            <span
+              className={clsx(
+                'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
+                sev.text,
+              )}
+              style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
               {sev.label}
             </span>
+            {pillarName && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full"
+                style={{ background: tint ? `${tint.dot}15` : 'var(--paper-2)', color: tint?.dot || 'var(--m-muted)' }}
+                title={pillarName}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor }} />
+                {pillarName}
+              </span>
+            )}
+            {categoryName && (
+              <span className="inline-flex items-center text-[10px] font-medium text-m-muted px-1.5 py-0.5 rounded-full bg-paper-2 tracking-[0.03em]">
+                {categoryName}
+              </span>
+            )}
             {(finding as any).verification_status === 'likely_fixed' && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ok bg-ok/10 px-1.5 py-0.5 rounded-full tracking-[0.03em] uppercase">
                 <Eye size={9} /> Likely fixed
@@ -689,14 +714,8 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
             )}
           </div>
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
-          {/* Module · Category metadata — below title, before link */}
-          {(pillarName || categoryName) && (
-            <p className="text-[10px] font-medium text-m-muted/50 tracking-[0.03em] mt-1">
-              {pillarName}{pillarName && categoryName ? ' · ' : ''}{categoryName}
-            </p>
-          )}
           {finding.page_url && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-0.5 max-w-[300px] truncate">
+            <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate">
               <ExternalLink size={9} className="flex-shrink-0" />
               {(() => {
                 try {
@@ -724,7 +743,7 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
               {activeStatus?.label || 'Open'}
             </button>
           </div>
-          <button onClick={() => setOpen(!open)} className="p-1 -mr-1">
+          <button onClick={() => setOpen(!open)} className="p-1 -mr-1" aria-label={open ? 'Collapse' : 'Expand'}>
             <ChevronDown
               size={14}
               className={`text-m-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -793,46 +812,71 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
             </div>
           )}
 
-          {/* 3-Panel: Issue / Fix / Impact — stacked on mobile, grid on desktop */}
+          {/* Why it matters / Evidence / Recommended fix / Business impact */}
           <div className="grid grid-cols-1 md:grid-cols-3">
-            {/* Panel 1: Issue */}
+            {/* Panel 1: Why it matters */}
             <div className="p-4 border-b md:border-b-0 md:border-r border-rule/40">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={12} className={sev.text} />
-                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Issue</p>
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Why it matters</p>
               </div>
               <p className="text-ink-2 text-[13px] leading-[1.7]">
                 {finding.description}
               </p>
-              {finding.target_element && (
-                <div className="mt-2.5 px-2.5 py-1.5 bg-paper-2 rounded border border-rule/40 font-mono text-[11px] text-m-muted overflow-x-auto">
-                  {finding.target_element}
-                </div>
+            </div>
+
+            {/* Panel 2: Recommended fix */}
+            <div
+              className="p-4 border-b md:border-b-0 md:border-r border-rule/40"
+              style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={12} className="text-signal" />
+                <p className="text-[10px] font-semibold text-signal tracking-[0.04em] uppercase">Recommended fix</p>
+              </div>
+              {hasRecommendation ? (
+                <p className="text-ink text-[13px] leading-[1.7] font-medium">
+                  {finding.recommendation}
+                </p>
+              ) : (
+                <p className="text-m-muted text-[12px] leading-[1.7] italic">
+                  No specific fix captured — review against the category guidance and apply best practice.
+                </p>
               )}
             </div>
 
-            {/* Panel 2: Fix */}
-            <div className="p-4 border-b md:border-b-0 md:border-r border-rule/40">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb size={12} className="text-signal" />
-                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">How to fix</p>
-              </div>
-              <p className="text-ink-2 text-[13px] leading-[1.7]">
-                {finding.recommendation || 'No specific recommendation provided.'}
-              </p>
-            </div>
-
-            {/* Panel 3: Impact */}
+            {/* Panel 3: Business impact */}
             <div className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp size={12} className="text-ok" />
-                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Impact</p>
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">
+                  {hasImpact ? 'Business impact' : 'Impact'}
+                </p>
               </div>
-              <p className="text-ink-2 text-[13px] leading-[1.7]">
-                {finding.estimated_impact || 'Fixing this issue will improve overall UX quality and reduce user friction.'}
-              </p>
+              {hasImpact ? (
+                <p className="text-ink-2 text-[13px] leading-[1.7]">
+                  {finding.estimated_impact}
+                </p>
+              ) : (
+                <p className="text-m-muted text-[12px] leading-[1.7] italic">
+                  Business impact not captured for this finding.
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Evidence row — full width, only when target_element exists */}
+          {hasEvidence && (
+            <div className="border-t border-rule/40 px-4 py-3 bg-paper-2/40">
+              <div className="flex items-center gap-2 mb-1.5">
+                <FileSearch size={12} className="text-m-muted" />
+                <p className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Evidence</p>
+              </div>
+              <div className="px-2.5 py-1.5 bg-card rounded border border-rule/40 font-mono text-[11px] text-ink-2 overflow-x-auto">
+                {finding.target_element}
+              </div>
+            </div>
+          )}
 
           {/* Screenshot */}
           {finding.screenshot_url && (
@@ -2335,22 +2379,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               {/* Top Priority Recommendations — shown first for immediate actionability */}
               {(rawJson?.topRecommendations?.length > 0 || rawJson?.keyRecommendation) && (
                 <div className="mb-6 rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="flex items-center gap-3 px-5 py-4 border-b border-rule/40">
+                  <div
+                    className="flex items-center gap-3 px-5 py-4 border-b border-rule/40"
+                    style={{ background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}
+                  >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-signal">
                       <Zap size={13} className="text-paper" />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink">{getReportLabels(auditLang).topPriorityRecommendations}</p>
                       <p className="text-[11px] text-m-muted">Ship these first — ranked by business impact, fix effort, and evidence strength.</p>
                     </div>
+                    <span className="text-[10px] font-semibold text-signal bg-signal/10 px-2 py-0.5 rounded-full tracking-[0.04em] uppercase">
+                      {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).length} actions
+                    </span>
                   </div>
                   <div className="divide-y divide-rule/30">
                     {(rawJson.topRecommendations || [rawJson.keyRecommendation]).filter(Boolean).map((rec: string, i: number) => (
-                      <div key={i} className="flex gap-3 items-start px-5 py-3.5">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold bg-signal text-paper mt-0.5">
-                          {i + 1}
-                        </span>
-                        <p className="text-[13px] text-ink leading-relaxed">{rec}</p>
+                      <div key={i} className="flex gap-4 items-start px-5 py-4 hover:bg-paper-2/50 transition-colors group">
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
+                          <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold bg-signal text-paper">
+                            {i + 1}
+                          </span>
+                          <span className="text-[9px] font-semibold text-m-muted tracking-[0.04em] uppercase">Priority</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Lightbulb size={11} className="text-signal" />
+                            <span className="text-[10px] font-semibold text-signal tracking-[0.04em] uppercase">Recommended fix</span>
+                          </div>
+                          <p className="text-[13px] text-ink leading-[1.7] font-medium">{rec}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2531,6 +2590,47 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── TAB: All Findings (flat list, sortable) ────── */}
           {activeTab === 'findings' && (
             <div className="space-y-2">
+              {/* Compact severity summary — quick at-a-glance counts + filter shortcuts */}
+              {findings.length > 0 && (
+                <div className="mb-3 rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-4 py-3 border-b border-rule/40 flex items-center gap-2 flex-wrap">
+                    <FileSearch size={14} className="text-signal" />
+                    <h3 className="text-sm font-medium text-ink">All findings</h3>
+                    <span className="text-[11px] font-medium text-m-muted tracking-[0.03em] uppercase">
+                      {findings.filter(f => !f.dismissed).length} active{findings.length !== findings.filter(f => !f.dismissed).length ? ` · ${findings.length - findings.filter(f => !f.dismissed).length} dismissed` : ''}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule/30">
+                    {(['critical', 'high', 'medium', 'low'] as const).map((sev) => {
+                      const count = findings.filter((f) => f.severity === sev && !f.dismissed).length;
+                      const cfg = severityConfig[sev];
+                      const active = filterSeverity === sev;
+                      return (
+                        <button
+                          key={sev}
+                          onClick={() => setFilterSeverity(active ? null : sev)}
+                          className={clsx(
+                            'px-4 py-3 text-left transition-colors hover:bg-paper-2',
+                            active && 'bg-paper-2',
+                          )}
+                          aria-pressed={active}
+                        >
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            <span className={`text-[10px] font-semibold uppercase tracking-[0.04em] ${cfg.text}`}>
+                              {cfg.label}
+                            </span>
+                          </div>
+                          <p className={`text-[20px] font-bold leading-none ${count === 0 ? 'text-m-muted' : cfg.text}`}>
+                            {count}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Active filter banner — driven by cockpit clicks */}
               {(filterSeverity || filterModuleIndex != null) && (
                 <div
@@ -2566,15 +2666,26 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               )}
 
               {findings.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle2 size={32} className="[color:var(--ok)] mx-auto mb-3" />
-                  <p className="text-ink font-medium">{L.noIssuesFound}</p>
-                  <p className="text-sm text-m-muted mt-1">{L.noIssuesDescription}</p>
+                <div className="rounded-xl border border-rule bg-card text-center py-14 px-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-ok/10 mb-3">
+                    <CheckCircle2 size={22} className="[color:var(--ok)]" />
+                  </div>
+                  <p className="text-ink font-medium text-[15px]">{L.noIssuesFound}</p>
+                  <p className="text-sm text-m-muted mt-1 max-w-md mx-auto">{L.noIssuesDescription}</p>
                 </div>
               ) : filteredFindings.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-ink font-medium">No findings match this filter.</p>
-                  <p className="text-sm text-m-muted mt-1">Try clearing the filter to see all findings.</p>
+                <div className="rounded-xl border border-rule bg-card text-center py-12 px-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-paper-2 mb-3">
+                    <Search size={20} className="text-m-muted" />
+                  </div>
+                  <p className="text-ink font-medium">No findings match this filter</p>
+                  <p className="text-sm text-m-muted mt-1">Clear the filter to see all findings, or try a different combination.</p>
+                  <button
+                    onClick={() => { setFilterSeverity(null); setFilterModuleIndex(null); }}
+                    className="mt-4 text-[12px] font-medium text-signal hover:underline"
+                  >
+                    Clear filters
+                  </button>
                 </div>
               ) : (
                 (['critical', 'high', 'medium', 'low'] as const).map((severity) => {
@@ -2582,13 +2693,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   if (items.length === 0) return null;
                   const config = severityConfig[severity];
                   return (
-                    <div key={severity} className="mb-4">
-                      <div className="flex items-center gap-2 mb-2 px-1">
-                        <span className={`w-2.5 h-2.5 rounded-full ${config.dot}`} />
-                        <span className={`text-sm font-medium ${config.text}`}>
+                    <div key={severity} className="mb-5">
+                      <div className="flex items-center gap-2 mb-2.5 px-1">
+                        <span
+                          className={clsx(
+                            'inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full',
+                            config.text,
+                          )}
+                          style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
                           {config.label}
                         </span>
-                        <span className="text-xs text-m-muted">
+                        <span className="text-[11px] text-m-muted font-medium tracking-[0.03em] uppercase">
                           {items.length} issue{items.length !== 1 ? 's' : ''}
                         </span>
                       </div>
