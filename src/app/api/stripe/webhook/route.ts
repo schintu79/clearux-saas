@@ -219,17 +219,30 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Trigger audit processing
+      // Trigger audit processing via Inngest only.
+      // We intentionally do NOT call processAudit() inline here:
+      //   1. Inngest workers already listen for these events (see
+      //      src/lib/inngest/functions/process-audit.ts), so an inline
+      //      call would race the Inngest worker and produce duplicate
+      //      crawls, duplicate findings, and double Anthropic spend.
+      //   2. Vercel serverless functions are bounded by maxDuration; the
+      //      audit pipeline routinely exceeds that, so inline execution
+      //      would be killed mid-flight and leave the audit in a
+      //      half-processed state.
+      // All DB writes above (payment row, audit status flip, audit_logs)
+      // have already committed, so the Inngest worker will see consistent
+      // state when it picks up the event.
       const eventName = auditType === 'brand_identity' ? 'brand-audit/process' : 'audit/process'
-      console.log(`[webhook] Starting ${auditType} audit ${auditId}`)
-      if (auditType === 'website') {
-        const { processAudit } = await import('@/lib/audit-engine')
-        processAudit(auditId).catch((err) => console.error(`[webhook] processAudit failed:`, err))
-      } else if (auditType === 'brand_identity') {
-        const { processBrandAudit } = await import('@/lib/audit-engine/brand-processor')
-        processBrandAudit(auditId).catch((err) => console.error(`[webhook] processBrandAudit failed:`, err))
+      console.log(`[webhook] Dispatching ${eventName} for audit ${auditId}`)
+      try {
+        await inngest.send({ name: eventName, data: { auditId } })
+      } catch (dispatchErr) {
+        console.error(`[webhook] CRITICAL: Inngest dispatch failed for ${auditId}:`, dispatchErr)
+        // We don't fail the webhook because the payment + audit row are
+        // already committed; the user can retry via /api/audits/[id]/retry
+        // or admin can re-dispatch. Failing here would cause Stripe to
+        // retry the webhook and could double-bill side-effects.
       }
-      inngest.send({ name: eventName, data: { auditId } }).catch((err) => console.error(`[webhook] Inngest dispatch failed for ${auditId}:`, err))
 
       console.log(`Payment processed for audit ${auditId}`)
       return NextResponse.json({ received: true }, { status: 200 })

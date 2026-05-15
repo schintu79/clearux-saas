@@ -12,6 +12,13 @@ import {
   CheckCircle2,
   X,
   ArrowRight,
+  FileText,
+  ClipboardCheck,
+  Share2,
+  Eye,
+  Brain,
+  Heart,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -68,6 +75,51 @@ function QuickCard({
   );
 }
 
+function ActionCard({
+  href,
+  icon: Icon,
+  title,
+  body,
+  cta,
+  disabled,
+}: {
+  href: string;
+  icon: React.ElementType;
+  title: string;
+  body: string;
+  cta: string;
+  disabled?: boolean;
+}) {
+  const inner = (
+    <div
+      className="group rounded-xl p-5 h-full flex flex-col gap-3 transition-all"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--rule)',
+        opacity: disabled ? 0.55 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+    >
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+      >
+        <Icon size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} />
+      </div>
+      <div className="flex-1">
+        <p className="text-[14px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{title}</p>
+        <p className="text-[12px] leading-relaxed mt-1.5" style={{ color: 'var(--m-muted)' }}>{body}</p>
+      </div>
+      <span className="inline-flex items-center gap-1 text-[12px] font-medium transition-all group-hover:gap-1.5" style={{ color: disabled ? 'var(--m-muted)' : 'var(--signal)' }}>
+        {cta}
+        <ArrowRight size={11} />
+      </span>
+    </div>
+  );
+  if (disabled) return <div>{inner}</div>;
+  return <Link href={href}>{inner}</Link>;
+}
+
 /* ── Main ───────────────────────────────────────────────────── */
 
 function DashboardInner() {
@@ -79,6 +131,9 @@ function DashboardInner() {
   const [credits, setCredits] = useState<number | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
   const [unread, setUnread] = useState<number>(0);
+  const [latestAuditId, setLatestAuditId] = useState<string | null>(null);
+  const [openFindings, setOpenFindings] = useState<number | null>(null);
+  const [hasShareLink, setHasShareLink] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [creditsBanner, setCreditsBanner] = useState(false);
 
@@ -120,13 +175,36 @@ function DashboardInner() {
       fetch('/api/credits').then(r => r.json()),
       // Notifications
       fetch('/api/notifications').then(r => r.json()),
+      // Most recent completed audit (for "next best action")
+      supabase
+        .from('audits')
+        .select('id, share_enabled')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ])
-      .then(([websiteRes, brandRes, creditsData, notifData]) => {
+      .then(async ([websiteRes, brandRes, creditsData, notifData, latestRes]) => {
         setWebsiteCount(websiteRes.count ?? 0);
         setBrandCount(brandRes.count ?? 0);
         setCredits(creditsData.credits ?? 0);
         setPlan(creditsData.subscription_plan ?? null);
         setUnread(notifData.unreadCount ?? 0);
+
+        const latest = latestRes.data as any;
+        if (latest?.id) {
+          setLatestAuditId(latest.id);
+          setHasShareLink(!!latest.share_enabled);
+
+          // Open findings on latest audit — drives "Track fixes" card.
+          const { count: openCount } = await supabase
+            .from('audit_findings')
+            .select('id', { count: 'exact', head: true })
+            .eq('audit_id', latest.id)
+            .in('status', ['open', 'in_progress']);
+          setOpenFindings(openCount ?? null);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -152,6 +230,9 @@ function DashboardInner() {
     ? plan.charAt(0).toUpperCase() + plan.slice(1)
     : 'Credit-based';
 
+  const totalCompleted = (websiteCount ?? 0) + (brandCount ?? 0);
+  const isFirstRun = totalCompleted === 0;
+
   return (
     <div>
       {/* Credits purchased banner */}
@@ -171,61 +252,165 @@ function DashboardInner() {
           Welcome back, {name}
         </h1>
         <p className="text-[14px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Your ClearUX dashboard
+          {isFirstRun
+            ? 'Run your first ClearUX audit — measure human experience, AI readability, brand consistency, and conversion evidence in one pass.'
+            : 'Your evidence-based Human + AI + Brand + Conversion cockpit.'}
         </p>
       </div>
 
-      {/* Quick link cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* New audit — primary CTA, full signal accent */}
-        <Link
-          href="/dashboard/new-audit"
-          className="group rounded-xl p-5 flex flex-col gap-4 transition-all hover:opacity-90"
+      {/* ── First-run primary CTA (only when no completed audits) ── */}
+      {isFirstRun && (
+        <div
+          className="mb-6 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5"
           style={{ background: 'var(--ink)', border: '1px solid var(--ink)' }}
         >
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'rgba(255,255,255,0.12)' }}
           >
-            <Sparkles size={18} strokeWidth={1.5} style={{ color: 'var(--paper)' }} />
+            <Sparkles size={22} strokeWidth={1.5} style={{ color: 'var(--paper)' }} />
           </div>
           <div className="flex-1">
             <p className="text-[16px] font-sans font-semibold" style={{ color: 'var(--paper)' }}>
-              New audit
+              Run your first audit — it&apos;s on us
             </p>
-            <p className="text-[12px] mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
-              Run a website or brand identity audit
+            <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              96 checkpoints across 6 pillars: Foundation, Human Experience, Inclusive Design, Future Readiness, SEO Structure, Brand Consistency. Results in minutes — client-ready PDF + shareable link.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1 text-[12px] font-medium transition-all group-hover:gap-1.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            Start now
-            <ArrowRight size={11} />
-          </span>
-        </Link>
+          <Link
+            href="/dashboard/new-audit"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-medium transition-all hover:opacity-90 flex-shrink-0"
+            style={{ background: 'var(--paper)', color: 'var(--ink)' }}
+          >
+            Start audit
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
 
-        {/* Website audits */}
+      {/* ── Next-best-action workflow (4 cards) ── */}
+      <div className="mb-8">
+        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
+          {isFirstRun ? 'How ClearUX works' : 'Your workflow'}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ActionCard
+            href="/dashboard/new-audit"
+            icon={Sparkles}
+            title="Run an audit"
+            body="Audit a live URL or a brand identity pack. Pick a depth mode and the pillars you care about."
+            cta={isFirstRun ? 'Start your first audit' : 'New audit'}
+          />
+          <ActionCard
+            href={latestAuditId ? `/dashboard/audits/${latestAuditId}` : '/dashboard/audits'}
+            icon={FileText}
+            title="Review reports"
+            body={
+              latestAuditId
+                ? 'See findings ranked by severity, impact, and effort. Executive summary on top, evidence underneath.'
+                : 'Once an audit completes, every finding is graded by severity, impact, and fix effort.'
+            }
+            cta={latestAuditId ? 'Open latest report' : 'See example'}
+            disabled={!latestAuditId}
+          />
+          <ActionCard
+            href={latestAuditId ? `/dashboard/audits/${latestAuditId}#findings` : '/dashboard/audits'}
+            icon={ClipboardCheck}
+            title="Track fixes"
+            body={
+              openFindings !== null
+                ? `${openFindings} open finding${openFindings === 1 ? '' : 's'} on your latest audit. Mark them as in-progress, fixed, or backlog as your team ships.`
+                : 'Mark findings as in-progress, fixed, or backlog. Re-audit to verify the fix landed.'
+            }
+            cta={openFindings ? 'Triage findings' : 'See workflow'}
+            disabled={!latestAuditId}
+          />
+          <ActionCard
+            href={latestAuditId ? `/dashboard/audits/${latestAuditId}#share` : '/dashboard/audits'}
+            icon={Share2}
+            title="Share client report"
+            body={
+              hasShareLink
+                ? 'A shareable, client-ready link is already live for your latest audit. Send it to stakeholders — no login required.'
+                : 'Generate a public, branded link your client can read without an account. Revoke anytime.'
+            }
+            cta={hasShareLink ? 'Copy share link' : 'Create share link'}
+            disabled={!latestAuditId}
+          />
+        </div>
+      </div>
+
+      {/* ── Value pillars (first-run helper) ── */}
+      {isFirstRun && (
+        <div className="mb-8 rounded-xl p-5" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-4" style={{ color: 'var(--m-muted)' }}>
+            What ClearUX measures
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex items-start gap-3">
+              <Heart size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Human experience</p>
+                <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  Dark-pattern detection, cognitive load, accessibility, psychological safety.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Brain size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>AI readability</p>
+                <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  How LLMs and agents read your site — discoverability, structure, citations.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Fingerprint size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Brand consistency</p>
+                <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  Voice, visual identity, and messaging measured against your reference brand pack.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <TrendingUp size={16} strokeWidth={1.5} style={{ color: 'var(--ink)' }} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Conversion evidence</p>
+                <p className="text-[12px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  Friction points and conversion blockers, ranked by business impact and fix effort.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Account snapshot (always shown) ── */}
+      <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
+        Account
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickCard
           href="/dashboard/audits"
           icon={Globe}
           tint="color-mix(in srgb, var(--signal) 10%, transparent)"
           label="Website audits"
           value={websiteCount}
-          sub="Completed audits"
+          sub={websiteCount === 0 ? 'No audits yet' : 'Completed audits'}
           cta="View all"
         />
-
-        {/* Brand audits */}
         <QuickCard
           href="/dashboard/brand-identity"
           icon={Fingerprint}
           tint="color-mix(in srgb, #8B5CF6 10%, transparent)"
           label="Brand audits"
           value={brandCount}
-          sub="Completed audits"
+          sub={brandCount === 0 ? 'No brand audits yet' : 'Completed audits'}
           cta="View all"
         />
-
-        {/* Active plan + credits */}
         <QuickCard
           href="/dashboard/buy-credits"
           icon={CreditCard}
@@ -235,8 +420,6 @@ function DashboardInner() {
           sub={credits === 0 ? 'No credits remaining' : `Credit${credits !== 1 ? 's' : ''} remaining`}
           cta={credits === 0 ? 'Buy credits' : 'Manage plan'}
         />
-
-        {/* Notifications */}
         <QuickCard
           href="/dashboard/notifications"
           icon={Bell}
@@ -250,6 +433,24 @@ function DashboardInner() {
           cta="View all"
         />
       </div>
+
+      {/* ── Returning-user hint (only when not first-run, audit completed) ── */}
+      {!isFirstRun && latestAuditId && (
+        <div className="mt-8 rounded-xl p-4 flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}>
+          <Eye size={15} strokeWidth={1.5} style={{ color: 'var(--signal)' }} className="flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+              Re-audit your latest URL to verify fixes
+            </p>
+            <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+              ClearUX scores the delta — see which findings moved from open to fixed, and which regressed.
+            </p>
+          </div>
+          <Link href="/dashboard/new-audit" className="text-[12px] font-medium whitespace-nowrap" style={{ color: 'var(--signal)' }}>
+            Re-audit →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

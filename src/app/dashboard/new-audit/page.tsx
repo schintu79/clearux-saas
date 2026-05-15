@@ -325,16 +325,21 @@ const NewAuditInner: React.FC = () => {
             brand_identity_id: newId,
             depth_mode: 'deep',
           };
-          let { data: audit, error: auditError } = await supabase
+          const { data: audit, error: auditError } = await supabase
             .from('audits').insert(insertPayload).select('id').single();
+          // If the DB rejects because the schema is missing columns
+          // (migration 021/022 not applied), fail hard with a clear
+          // message instead of silently downgrading the audit — a
+          // brand audit cannot run without brand_identity_id, and
+          // we don't want to charge users for an audit that can't
+          // produce its intended output.
           if (auditError?.message?.includes('selected_modules') ||
               auditError?.message?.includes('audit_type') ||
               auditError?.message?.includes('brand_identity_id')) {
-            delete insertPayload.selected_modules;
-            delete insertPayload.audit_type;
-            delete insertPayload.brand_identity_id;
-            const retry = await supabase.from('audits').insert(insertPayload).select('id').single();
-            audit = retry.data; auditError = retry.error;
+            throw new Error(
+              'This ClearUX instance is missing required database migrations. ' +
+              'Please ask an admin to run supabase/migrations/021 and 022 before trying again.'
+            );
           }
           if (auditError) throw new Error(auditError.message || 'Failed to create audit');
           if (!audit) throw new Error('Failed to create audit');
@@ -393,29 +398,25 @@ const NewAuditInner: React.FC = () => {
         insertPayload.depth_mode = 'deep'; // Brand audits always run full analysis
       }
 
-      let { data: audit, error: auditError } = await supabase
+      const { data: audit, error: auditError } = await supabase
         .from('audits')
         .insert(insertPayload)
         .select('id')
         .single();
 
-      // Fallback: if new columns don't exist yet, retry without them
-      // Note: this strips audit_type + selected_modules + brand_identity_id which
-      // means brand identity audits will NOT work without the DB migration.
+      // If the DB rejects because schema is out of date, fail
+      // hard with a clear actionable message rather than silently
+      // downgrading the audit. Quietly stripping selected_modules
+      // / audit_type / brand_identity_id would charge the user
+      // for an audit that can't produce the intended output.
       if (auditError?.message?.includes('selected_modules') ||
           auditError?.message?.includes('audit_type') ||
           auditError?.message?.includes('brand_identity_id')) {
-        console.warn('[new-audit] Fallback: retrying without new columns. Brand audits require DB migration.');
-        delete insertPayload.selected_modules;
-        delete insertPayload.audit_type;
-        delete insertPayload.brand_identity_id;
-        const retry = await supabase
-          .from('audits')
-          .insert(insertPayload)
-          .select('id')
-          .single();
-        audit = retry.data;
-        auditError = retry.error;
+        console.error('[new-audit] Required migration columns missing:', auditError);
+        throw new Error(
+          'This ClearUX instance is missing required database migrations. ' +
+          'Please ask an admin to run supabase/migrations/021 and 022 before trying again.'
+        );
       }
 
       if (auditError) {
