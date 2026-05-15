@@ -2208,7 +2208,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-ink">{getReportLabels(auditLang).topPriorityRecommendations}</p>
-                      <p className="text-[11px] text-m-muted">Address these first for maximum impact</p>
+                      <p className="text-[11px] text-m-muted">Ship these first — ranked by business impact, fix effort, and evidence strength.</p>
                     </div>
                   </div>
                   <div className="divide-y divide-rule/30">

@@ -88,8 +88,9 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
     return (
       <>
         <Navbar />
-        <main className="min-h-[60vh] flex items-center justify-center bg-surface">
+        <main className="min-h-[60vh] flex flex-col items-center justify-center bg-surface gap-3">
           <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted text-sm">Loading shared report…</p>
         </main>
         <Footer />
       </>
@@ -104,9 +105,10 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           <div className="text-center max-w-md">
             <Lock size={40} className="text-muted mx-auto mb-4" />
             <h1 className="font-heading font-medium text-2xl text-text mb-2">Link unavailable</h1>
-            <p className="text-muted text-sm mb-6">{error || 'This shared audit link is invalid or has been revoked.'}</p>
+            <p className="text-muted text-sm mb-2">{error || 'This shared audit link is invalid or has been revoked.'}</p>
+            <p className="text-muted text-xs mb-6">The owner may have turned sharing off, or the link expired. Ask them for a fresh one.</p>
             <Link href="/" className="inline-flex items-center gap-2 bg-brand text-surface text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110">
-              Go to ClearUX
+              Run your own audit
             </Link>
           </div>
         </main>
@@ -156,10 +158,19 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <span className="font-medium text-text">{domain}</span>
           </div>
 
-          {audit.status !== 'completed' ? (
+          {audit.status === 'failed' ? (
+            <div className="text-center py-16 max-w-md mx-auto">
+              <Lock size={32} className="text-muted mx-auto mb-3" />
+              <h2 className="font-heading font-medium text-lg text-text mb-2">Audit didn&apos;t complete</h2>
+              <p className="text-muted text-sm">
+                This audit was unable to finish. The owner can re-run it from their ClearUX dashboard.
+              </p>
+            </div>
+          ) : audit.status !== 'completed' ? (
             <div className="text-center py-16">
               <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-muted">This audit is still in progress. Check back soon.</p>
+              <p className="text-muted text-sm">This audit is still being analysed.</p>
+              <p className="text-muted text-xs mt-1">ClearUX runs 96 checkpoints across 6 pillars — most audits finish in a few minutes.</p>
             </div>
           ) : report ? (
             <>
@@ -298,11 +309,12 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
 
               {/* ── CTA ──────────────────────────────────── */}
               <div className="text-center mt-10 mb-6 px-4">
-                <p className="text-muted text-sm mb-2">Want a detailed audit like this for your website?</p>
-                <p className="text-muted text-xs mb-5">96 checkpoints. 24 categories. Results in minutes. First audit free.</p>
+                <p className="text-text text-sm font-medium mb-1">Audit your own site with the same engine</p>
+                <p className="text-muted text-xs mb-1">Human experience + AI readability + brand consistency + conversion evidence — in one pass.</p>
+                <p className="text-muted text-xs mb-5">96 checkpoints, 6 pillars, client-ready PDF. First audit is free.</p>
                 <Link href="/register" className="inline-flex items-center gap-2 bg-brand text-surface text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5">
                   <Sparkles size={16} />
-                  Get Your Free Audit
+                  Get your free audit
                 </Link>
               </div>
             </>
