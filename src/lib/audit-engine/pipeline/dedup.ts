@@ -98,6 +98,7 @@ export const TOPIC_PATTERNS: { topic: string; keywords: string[] }[] = [
   { topic: 'meta_tags', keywords: ['meta', 'open graph', 'twitter', 'card', 'og:'] },
   { topic: 'focus_a11y', keywords: ['focus', 'indicator', 'keyboard', 'wcag', 'screen reader'] },
   { topic: 'heading_seo', keywords: ['h1', 'heading', 'headline', 'semantic', 'structure', 'hierarchy'] },
+  { topic: 'canonical_url', keywords: ['canonical', 'mismatch', 'duplicate', 'domain', 'redirect', 'self-referenc'] },
   { topic: 'robots_sitemap', keywords: ['robots', 'sitemap', 'crawl', 'index', 'discoverability', 'xml'] },
   { topic: 'dark_patterns', keywords: ['dark', 'pattern', 'manipul', 'confirmshaming', 'deceptive', 'urgency'] },
   { topic: 'cta_clarity', keywords: ['cta', 'call', 'action', 'button', 'conversion', 'click'] },
@@ -170,9 +171,26 @@ function sharedTopic(findingA: FindingForDedup, findingB: FindingForDedup): bool
 }
 
 function combinedSimilarity(a: FindingForDedup, b: FindingForDedup): number {
+  // Fast path: if normalized titles are identical or nearly identical, always merge
+  const normA = normalizeTitle(a.title)
+  const normB = normalizeTitle(b.title)
+  if (normA === normB) return 1.0
+  // Near-identical: one title contains the other (e.g. same issue, one adds "on three pages")
+  if (normA.length > 10 && normB.length > 10) {
+    const shorter = normA.length <= normB.length ? normA : normB
+    const longer = normA.length > normB.length ? normA : normB
+    if (longer.includes(shorter)) return 0.95
+  }
+
   const titleSim = textSimilarity(a.title, b.title)
   const descSim = textSimilarity(a.description, b.description)
   let score = titleSim * 0.7 + descSim * 0.3
+
+  // High title similarity alone should be enough to merge (same issue, different pages)
+  if (titleSim >= 0.75) {
+    score = Math.max(score, titleSim)
+  }
+
   if (sharedTopic(a, b)) {
     score = Math.max(score, THRESHOLDS.TOPIC_FLOOR)
     score += THRESHOLDS.TOPIC_BOOST

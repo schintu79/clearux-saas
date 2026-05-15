@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Sparkles, CheckCircle, ArrowRight } from 'lucide-react'
 
-const BASE_URL = 'https://clearux.com'
+const BASE_URL = 'https://clearux.ai'
 
 export const metadata: Metadata = {
   title: 'What Is a UX Audit? Definition, Process & Why It Matters | ClearUX',
