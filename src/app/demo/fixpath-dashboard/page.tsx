@@ -294,11 +294,12 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
               e.preventDefault();
               onChange(t);
             }}
-            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer hover:text-ink"
+            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
             style={{
               background: isActive ? 'var(--paper-3)' : 'transparent',
-              color: isActive ? 'var(--ink)' : 'var(--ink-2)',
-              boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.18)' : 'none',
+              color: isActive ? 'var(--ink)' : 'var(--ink)',
+              opacity: isActive ? 1 : 0.7,
+              boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.25), 0 0 0 1px var(--rule-2)' : 'none',
             }}
           >
             {t}
@@ -992,22 +993,22 @@ function PortfolioTab() {
 // Scoped contrast overrides for the demo only. The global dark palette
 // uses #8A857A for --m-muted which sits around ~4.9:1 on the dark warm
 // paper — borderline for AA at the small (10–11px) sizes used in this
-// preview. We bump muted tones and card surfaces inside the demo root
-// so readability comfortably passes WCAG AA without affecting the rest
-// of the app.
+// preview. We push muted tones up to ~9:1 inside the demo root so
+// module labels, inactive tabs, and 10–11px metadata read clearly in
+// screenshots without affecting the rest of the app.
 const DEMO_SCOPED_STYLES = `
 [data-testid="fixpath-demo-root"] {
-  --m-muted: #B8B2A4;
-  --m-muted-2: #9A9387;
-  --rule: rgba(242, 237, 227, 0.18);
-  --rule-2: rgba(242, 237, 227, 0.28);
-  --card: rgba(255, 255, 255, 0.045);
-  --card-hover: rgba(255, 255, 255, 0.075);
+  --m-muted: #CFC8B8;
+  --m-muted-2: #ADA593;
+  --rule: rgba(242, 237, 227, 0.20);
+  --rule-2: rgba(242, 237, 227, 0.32);
+  --card: rgba(255, 255, 255, 0.05);
+  --card-hover: rgba(255, 255, 255, 0.085);
 }
 .theme-light [data-testid="fixpath-demo-root"],
 :root:not(.dark) [data-testid="fixpath-demo-root"] {
-  --m-muted: #5A5648;
-  --m-muted-2: #76705F;
+  --m-muted: #4F4B3E;
+  --m-muted-2: #6A6557;
 }
 `;
 
@@ -1018,9 +1019,7 @@ export default function FixpathDashboardPreviewPage() {
     <div style={{ background: 'var(--paper)', minHeight: '100vh' }} data-testid="fixpath-demo-root" data-active-tab={tab}>
       <style dangerouslySetInnerHTML={{ __html: DEMO_SCOPED_STYLES }} />
       <DemoBanner activeTab={tab} />
-      {/* pb-40 leaves room for the global cookie consent banner so it
-          does not overlap demo content in screenshots. */}
-      <main className="max-w-[1100px] mx-auto px-5 py-8 pb-40">
+      <main className="max-w-[1100px] mx-auto px-5 py-8">
         <BrandHeader />
         <TabBar active={tab} onChange={setTab} />
         <div
@@ -1042,6 +1041,13 @@ export default function FixpathDashboardPreviewPage() {
           Fixpath.ai — Find. Fix. Track. · Design preview with mock data · Not connected to any user account.
         </footer>
       </main>
+      {/* Tall spacer below the demo content. The global cookie consent
+          banner is position: fixed and roughly 96-120px tall on desktop.
+          A 280px spacer at the bottom of the page guarantees the last
+          card and footer clear the banner at 1440x1100 even when the
+          user has not scrolled. Kept outside <main> so it does not
+          inherit max-width constraints. */}
+      <div aria-hidden="true" data-testid="demo-bottom-spacer" style={{ height: 280 }} />
     </div>
   );
 }
