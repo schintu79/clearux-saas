@@ -46,6 +46,7 @@ import {
   MoreVertical,
   X,
   Info,
+  Fingerprint,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -62,6 +63,7 @@ import type {
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
+import AuditSidebar, { type AuditTab as SidebarAuditTab } from '@/components/dashboard/AuditSidebar';
 import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import clsx from 'clsx';
@@ -1130,7 +1132,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id: auditId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useAuth();
+  const { user, profile, loading: userLoading } = useAuth();
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
@@ -1142,8 +1144,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  type AuditTab = 'overview' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence';
-  const VALID_TABS: AuditTab[] = ['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'];
+  type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
+  const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
   const initialTabFromHash = ((): AuditTab => {
     if (typeof window === 'undefined') return 'overview';
     const h = (window.location.hash || '').replace(/^#/, '');
@@ -1167,7 +1169,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     if (typeof window === 'undefined') return;
     const current = (window.location.hash || '').replace(/^#/, '');
     if (current !== activeTab) {
-      const target = activeTab === 'overview' ? '' : `#${activeTab}`;
+      const target = (activeTab === 'overview' || activeTab === 'summary') ? '' : `#${activeTab}`;
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${target}`);
     }
   }, [activeTab]);
@@ -1451,7 +1453,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     const attach = () => {
       const el = scoreCardRef.current;
       if (!el) return false;
-      const scrollRoot = document.getElementById('main-content');
+      const scrollRoot = document.getElementById('audit-content') || document.getElementById('main-content');
       if (!scrollRoot) return false;
 
       const checkVisibility = () => {
@@ -1674,6 +1676,20 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     : (auditSelectedPillars ? Math.min(auditSelectedPillars.length, pillarsWithData) : pillarsWithData);
   const isPartialAudit = activeModuleCount < totalModuleCount;
 
+  // Sidebar: domain and handleTabChange
+  const sidebarDomain = formatUrl(audit.product_url || '');
+  const responsiveFindingsCount = findings.filter((f: any) => {
+    const t = (f.title || '').toLowerCase();
+    return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
+  }).length;
+  const handleTabChange = (tab: AuditTab) => {
+    if (tab === 'overview') {
+      router.push('/dashboard/audits');
+      return;
+    }
+    setActiveTab(tab);
+  };
+
   // ALWAYS calculate overall score from category data (don't trust stored value)
   const calculatedOverallScore = categoryScores.length > 0
     ? Math.round(categoryScores.reduce((s, c) => s + c.score, 0) / categoryScores.length)
@@ -1765,6 +1781,22 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   );
 
   return (
+    <div className="flex h-full">
+      {/* ── Contextual Audit Sidebar (desktop only) ── */}
+      {isCompleted && report && (
+        <AuditSidebar
+          domain={sidebarDomain}
+          productUrl={audit.product_url || ''}
+          activeTab={activeTab as SidebarAuditTab}
+          onTabChange={(tab) => handleTabChange(tab as AuditTab)}
+          findingsCount={findings.length}
+          pagesCount={auditPages.length}
+          responsiveCount={responsiveFindingsCount}
+          userName={profile?.full_name || user?.user_metadata?.full_name}
+          userEmail={user?.email}
+        />
+      )}
+      <div className="flex-1 min-w-0 overflow-y-auto" id="audit-content">
     <div className="max-w-4xl mx-auto py-4 px-4 relative">
       {/* ── Sticky Score Bar — sticks to top of main scroll area ── */}
       {isCompleted && (
@@ -2227,8 +2259,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </nav>
           </div>
 
-          {/* ── TAB: Overview ──────────────────────────────── */}
-          {activeTab === 'overview' && (
+          {/* ── TAB: Overview / Summary ──────────────────────────────── */}
+          {(activeTab === 'overview' || activeTab === 'summary') && (
             <>
               {/* Verification alerts — baseline re-audit feedback */}
               {!verificationAlertDismissed && rawJson?.verificationSummary && (
@@ -4005,6 +4037,32 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
         </>
       )}
+
+          {/* ── Brand Identity tab ── */}
+          {activeTab === 'brand_identity' && (
+            <div className="space-y-4">
+              <h2 className="font-sans text-lg font-medium text-ink">Brand identity</h2>
+              <p className="text-sm text-m-muted">Manage your brand assets and identity files here. Upload logos, color palettes, typography guides, and brand guidelines to keep your brand consistent across audits.</p>
+              <div className="p-6 rounded-xl border border-rule bg-card text-center">
+                <Fingerprint size={32} className="mx-auto text-m-muted mb-3" />
+                <p className="text-sm text-m-muted">Brand identity management coming soon.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Brand Audit tab ── */}
+          {activeTab === 'brand_audit' && (
+            <div className="space-y-4">
+              <h2 className="font-sans text-lg font-medium text-ink">Brand audit</h2>
+              <p className="text-sm text-m-muted">Brand consistency scores and analysis across your digital touchpoints.</p>
+              <div className="p-6 rounded-xl border border-rule bg-card text-center">
+                <FileSearch size={32} className="mx-auto text-m-muted mb-3" />
+                <p className="text-sm text-m-muted">Brand audit analysis coming soon.</p>
+              </div>
+            </div>
+          )}
+    </div>
+      </div>
     </div>
   );
 };
