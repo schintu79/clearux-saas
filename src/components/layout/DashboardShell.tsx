@@ -32,7 +32,7 @@ import {
   Wrench,
   LineChart,
   FileText,
-  Briefcase,
+  ArrowLeft,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -281,6 +281,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return '/dashboard/new-audit?type=brand_identity';
   })();
 
+  // Brand workspace IA: when a brand/site is selected, the sidebar shows ONLY
+  // that brand's nav. Portfolio is reachable as a parent context via the
+  // dedicated "Back to all brands" link near the brand switcher — it is NOT a
+  // peer tab inside the brand workspace. This keeps the working context clean
+  // and prevents portfolio/agency widgets from competing with brand work.
   const navGroups: NavGroup[] = [
     {
       label: 'Workspace',
@@ -291,12 +296,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
         { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
         { label: 'Reports', href: '/dashboard/reports', icon: FileText, matchPaths: ['/dashboard/audits'] },
-      ],
-    },
-    {
-      label: 'Agency',
-      items: [
-        { label: 'Portfolio', href: '/dashboard/portfolio', icon: Briefcase },
       ],
     },
     {
@@ -380,8 +379,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           collapsed ? 'w-[64px]' : 'w-[240px]',
         )}
-        style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)' }}
+        style={{ background: '#f3f2ee', borderRight: '1px solid #e6e2d6' }}
         aria-label="Primary navigation"
+        data-sidebar-bg="#f3f2ee"
       >
         {SidebarLogo}
 
@@ -416,7 +416,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
             style={{
               color: pathname === '/dashboard' ? 'var(--ink)' : 'var(--ink-2)',
-              background: pathname === '/dashboard' ? 'var(--paper-2)' : undefined,
+              background: pathname === '/dashboard' ? '#ffffff' : undefined,
             }}
           >
             <LayoutDashboard
@@ -435,7 +435,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <button
                 onClick={() => setBrandMenuOpen((v) => !v)}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors hover:bg-black/[0.04]"
-                style={{ border: '1.5px solid var(--rule)', background: 'var(--paper-2)' }}
+                style={{ border: '1px solid #e6e2d6', background: '#ffffff' }}
                 aria-haspopup="listbox"
                 aria-expanded={brandMenuOpen}
                 aria-label="Switch site or brand"
@@ -545,7 +545,32 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           </div>
         )}
 
-        {/* Navigation — Audit + Brand groups */}
+        {/* Back-to-portfolio link. Portfolio is a parent context, not a peer
+            tab inside the brand workspace — surfacing it here keeps the
+            switcher discoverable without competing with brand work in the
+            primary nav. */}
+        <div className={clsx('pb-2', collapsed ? 'px-1.5' : 'px-2')}>
+          <Link
+            href="/dashboard/portfolio"
+            onClick={() => setSidebarOpen(false)}
+            title={collapsed ? 'All brands' : undefined}
+            aria-current={pathname?.startsWith('/dashboard/portfolio') ? 'page' : undefined}
+            className={clsx(
+              'flex items-center rounded-lg transition-colors text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
+              collapsed ? 'justify-center px-0 py-2' : 'gap-2 px-2.5 py-[7px]',
+              pathname?.startsWith('/dashboard/portfolio') ? 'font-semibold' : 'hover:bg-black/[0.04]',
+            )}
+            style={{
+              color: pathname?.startsWith('/dashboard/portfolio') ? 'var(--ink)' : 'var(--m-muted)',
+              background: pathname?.startsWith('/dashboard/portfolio') ? 'var(--card)' : undefined,
+            }}
+          >
+            <ArrowLeft size={collapsed ? 16 : 13} strokeWidth={1.75} />
+            {!collapsed && <span className="truncate">All brands</span>}
+          </Link>
+        </div>
+
+        {/* Navigation — Brand workspace nav (brand-only IA) */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>
           {navGroups.map((group, gi) => (
             <div key={`g-${gi}`} className={clsx(gi > 0 && 'mt-3')}>
@@ -573,7 +598,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   );
                   const linkStyle = {
                     color: active ? 'var(--ink)' : 'var(--ink-2)',
-                    background: active ? 'var(--paper-2)' : undefined,
+                    background: active ? '#ffffff' : undefined,
+                    boxShadow: active ? '0 1px 2px rgba(20,19,15,0.04)' : undefined,
                   } as React.CSSProperties;
                   const inner = (
                     <>
@@ -659,7 +685,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
             style={{
               color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--ink-2)',
-              background: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--paper-2)' : undefined,
+              background: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? '#ffffff' : undefined,
             }}
           >
             <Settings size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--m-muted)' }} />
@@ -679,7 +705,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             )}
             style={{
               color: pathname === '/dashboard/buy-credits' ? 'var(--ink)' : 'var(--ink-2)',
-              background: pathname === '/dashboard/buy-credits' ? 'var(--paper-2)' : undefined,
+              background: pathname === '/dashboard/buy-credits' ? '#ffffff' : undefined,
             }}
           >
             <Coins size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: pathname === '/dashboard/buy-credits' ? 'var(--ink)' : 'var(--m-muted)' }} />
