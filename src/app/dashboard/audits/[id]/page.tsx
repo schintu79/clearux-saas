@@ -1188,6 +1188,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   };
   const [menuOpen, setMenuOpen] = useState(false);
   const [verificationAlertDismissed, setVerificationAlertDismissed] = useState(false);
+  // Persist verification alert dismissal in the report's raw_json so it
+  // stays hidden across page reloads and sessions.
+  const dismissVerificationAlerts = useCallback(async () => {
+    setVerificationAlertDismissed(true);
+    try {
+      const supabase = createBrowserSupabase();
+      const { data: report } = await supabase.from('reports').select('id, raw_json').eq('audit_id', auditId).single();
+      if (report) {
+        const updated = { ...(report.raw_json as any || {}), verificationAlertsDismissed: true };
+        await supabase.from('reports').update({ raw_json: updated }).eq('id', report.id);
+      }
+    } catch {}
+  }, [auditId]);
   const [aiCitations, setAiCitations] = useState<any[]>([]);
   const [fixPlaybooks, setFixPlaybooks] = useState<any[]>([]);
   const [llmProbeResults, setLlmProbeResults] = useState<any[]>([]);
@@ -1651,6 +1664,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
+
+  // Restore persisted verification alert dismissal
+  useEffect(() => {
+    if (rawJson?.verificationAlertsDismissed) setVerificationAlertDismissed(true);
+  }, [rawJson?.verificationAlertsDismissed]);
+
   const categoryScores: Array<{ name: string; score: number; summary: string }> =
     rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [];
 
@@ -2227,6 +2246,30 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </nav>
           </div>
 
+          {/* ── Tab page header ──────────────────────────────── */}
+          {(() => {
+            const tabMeta: Record<string, { icon: React.ElementType; title: string }> = {
+              overview: { icon: BarChart3, title: 'Summary' },
+              summary: { icon: BarChart3, title: 'Summary' },
+              findings: { icon: AlertTriangle, title: 'Findings' },
+              pages: { icon: Globe, title: 'Pages' },
+              responsive: { icon: Smartphone, title: 'Responsive' },
+              ai_xray: { icon: Brain, title: 'AI X-Ray' },
+              intelligence: { icon: Sparkles, title: 'Intelligence' },
+            };
+            const meta = tabMeta[activeTab];
+            if (!meta) return null;
+            const TabIcon = meta.icon;
+            return (
+              <div className="flex items-center gap-3 mb-6">
+                <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                  <TabIcon size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
+                </span>
+                <h2 className="font-sans text-xl font-semibold" style={{ color: 'var(--ink)' }}>{meta.title}</h2>
+              </div>
+            );
+          })()}
+
           {/* ── TAB: Overview / Summary ──────────────────────────────── */}
           {(activeTab === 'overview' || activeTab === 'summary') && (
             <>
@@ -2245,7 +2288,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         </p>
                       </div>
                       <button
-                        onClick={() => setVerificationAlertDismissed(true)}
+                        onClick={dismissVerificationAlerts}
                         className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                       >
                         <X size={14} />
@@ -2270,7 +2313,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </p>
                         </div>
                         <button
-                          onClick={() => setVerificationAlertDismissed(true)}
+                          onClick={dismissVerificationAlerts}
                           className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                         >
                           <X size={14} />
@@ -2296,7 +2339,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           </p>
                         </div>
                         <button
-                          onClick={() => setVerificationAlertDismissed(true)}
+                          onClick={dismissVerificationAlerts}
                           className="text-m-muted hover:text-ink transition-colors flex-shrink-0"
                         >
                           <X size={14} />

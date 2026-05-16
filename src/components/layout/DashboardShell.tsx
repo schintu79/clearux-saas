@@ -275,10 +275,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     if (item.matchHash === 'overview') {
       return pathname?.startsWith('/dashboard/audits/site/') || false;
     }
-    // Hash-aware audit feature nav: only highlight when on the matching detail
-    // page AND the current hash matches (or it's summary with no hash).
+    // Hash-aware audit feature nav: only highlight when on an actual audit
+    // detail page (/dashboard/audits/<uuid>) AND the hash matches.
+    // Exclude /dashboard/audits/site/* and /dashboard/audits/brand/* paths.
     if (item.matchHash) {
-      if (!onAuditDetail) return false;
+      const isRealAuditDetail = onAuditDetail && !pathname?.startsWith('/dashboard/audits/site/') && !pathname?.startsWith('/dashboard/audits/brand/');
+      if (!isRealAuditDetail) return false;
       if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
     }
