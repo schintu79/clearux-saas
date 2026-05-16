@@ -1,21 +1,34 @@
 // ============================================================
-// ClearUX — Latest audit fetcher for Find/Fix/Track dashboard
+// Fixpath — Latest audit fetcher for Find/Fix/Track dashboard
 // Client-side helper. Pulls the user's most recent completed
-// website audit, its report, and findings. Used by Overview,
-// Find, Fix, and Track pages so they share one source of truth.
+// audit for the currently-selected brand or site, plus its
+// report and findings. Used by Overview, Find, Fix, and Track
+// so they share one source of truth.
+//
+// Selection-aware: a brand/site selection ALWAYS scopes the
+// returned bundle. When a selection is supplied but no audit
+// exists for it, every dashboard surface gets a clean empty
+// bundle — never a stale audit from a different brand.
 // ============================================================
 
 import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import type { Audit, AuditFinding, Report } from '@/types/database'
+import type { BrandSelection } from '@/lib/dashboard/brand-selection'
 
 export interface LatestAuditBundle {
   audit: Audit | null
   report: Report | null
   findings: AuditFinding[]
-  /** Previous completed audit for the same domain, if any. */
+  /** Previous completed audit for the same brand/site, if any. */
   prior: { audit: Audit; report: Report | null } | null
-  /** All completed audits for the user (newest first), used for trend/portfolio. */
+  /** Completed audits matching the selection (newest first), used for trend. */
   history: Array<{ audit: Audit; report: Report | null }>
+  /**
+   * Echoed selection used for the query. When `selection` is set but
+   * `audit` is null, the caller should render an empty state for that
+   * specific brand/site (do NOT fall back to another brand's data).
+   */
+  selection: BrandSelection
 }
 
 function hostnameOf(url: string | null | undefined): string | null {
@@ -23,10 +36,13 @@ function hostnameOf(url: string | null | undefined): string | null {
   try { return new URL(url).hostname.replace(/^www\./, '') } catch { return null }
 }
 
-export async function loadLatestAuditBundle(userId: string): Promise<LatestAuditBundle> {
+export async function loadLatestAuditBundle(
+  userId: string,
+  selection: BrandSelection = null,
+): Promise<LatestAuditBundle> {
   const supabase = createBrowserSupabase()
 
-  const { data: audits } = await supabase
+  let query = supabase
     .from('audits')
     .select('*')
     .eq('user_id', userId)
@@ -35,9 +51,21 @@ export async function loadLatestAuditBundle(userId: string): Promise<LatestAudit
     .order('completed_at', { ascending: false })
     .limit(25)
 
-  const auditRows = (audits || []) as Audit[]
+  // Brand selection scopes server-side; site selection filters client-side
+  // because hostname is derived from product_url (no indexed column).
+  if (selection?.kind === 'brand') {
+    query = query.eq('brand_identity_id', selection.brandId)
+  }
+
+  const { data: audits } = await query
+  let auditRows = (audits || []) as Audit[]
+
+  if (selection?.kind === 'site') {
+    auditRows = auditRows.filter((a) => hostnameOf(a.product_url) === selection.host)
+  }
+
   if (auditRows.length === 0) {
-    return { audit: null, report: null, findings: [], prior: null, history: [] }
+    return { audit: null, report: null, findings: [], prior: null, history: [], selection }
   }
 
   const auditIds = auditRows.map((a) => a.id)
@@ -51,10 +79,14 @@ export async function loadLatestAuditBundle(userId: string): Promise<LatestAudit
 
   const history = auditRows.map((a) => ({ audit: a, report: reportById.get(a.id) || null }))
   const latest = history[0]
-  const latestHost = hostnameOf(latest.audit.product_url)
-  const prior = history.slice(1).find((h) => hostnameOf(h.audit.product_url) === latestHost) || null
+  // Prior must match the same scope. For a brand selection, history is
+  // already brand-scoped server-side, so the next row is "prior". For a
+  // site selection or no selection, match by hostname for backwards-
+  // compatible "previous audit for this site" semantics.
+  const prior = selection?.kind === 'brand'
+    ? (history[1] || null)
+    : (history.slice(1).find((h) => hostnameOf(h.audit.product_url) === hostnameOf(latest.audit.product_url)) || null)
 
-  // Findings for the latest audit only — keeps payload small.
   const { data: findings } = await supabase
     .from('audit_findings')
     .select('*')
@@ -67,6 +99,7 @@ export async function loadLatestAuditBundle(userId: string): Promise<LatestAudit
     findings: ((findings || []) as AuditFinding[]).filter((f) => !f.dismissed),
     prior,
     history,
+    selection,
   }
 }
 
@@ -108,14 +141,12 @@ export function extractSnippet(recommendation: string | null | undefined): strin
   if (!recommendation) return null
   const m = recommendation.match(/```[a-zA-Z]*\n?([\s\S]+?)```/)
   if (m && m[1].trim().length > 0) return m[1].trim()
-  // Inline-code fallback: a single-line HTML/snippet wrapped in backticks.
   const inline = recommendation.match(/`([^`]{15,})`/)
   if (inline) return inline[1].trim()
   return null
 }
 
 export function moduleNameForFinding(f: AuditFinding): string {
-  // Module is derived from category_index (0..23) → six modules of 4 each.
   const idx = f.category_index
   if (idx == null) return 'General'
   const moduleIdx = Math.floor(idx / 4)
@@ -132,14 +163,6 @@ export const PHASE1_MODULES = [
   'Brand Consistency',
 ] as const
 
-/**
- * Severity weight used when deriving per-module scores from findings.
- *
- * Mirrors the penalty schedule in /api/findings/[id] (severityPenalty) so the
- * presentation-layer module strip stays consistent with how the audit
- * engine actually moves the overall score when a finding flips status.
- * If the engine schedule ever changes, update both here and there.
- */
 const SEVERITY_PENALTY: Record<string, number> = {
   critical: 8,
   high: 5,
@@ -147,29 +170,12 @@ const SEVERITY_PENALTY: Record<string, number> = {
   low: 1.5,
 }
 
-/**
- * Per-module Phase 1 score strip.
- *
- * Strategy: prefer the report's per-module sub-scores when they map cleanly
- * (rare today — see follow-up note); otherwise derive each module's score
- * from the OPEN finding load attributable to that module via
- * `category_index` (0..23, four categories per module). The result is a
- * presentation-layer estimate that respects the audit engine output and
- * never writes back to it. Closed (fixed) findings are excluded — they
- * count as resolved deficit.
- *
- * `findings` is optional so the report-only callers (single audit row,
- * no findings loaded) keep working with the legacy mapping.
- */
 export function moduleScoresFromReport(
   report: Report | null,
   findings?: AuditFinding[],
 ): Array<{ name: string; score: number | null }> {
   if (!report) return PHASE1_MODULES.map((n) => ({ name: n, score: null }))
 
-  // Legacy heuristic fallback if findings aren't supplied. Maps the
-  // narrowly-typed sub-scores on `reports` to the six display modules,
-  // overall score for Brand Consistency where we have no proxy field.
   const legacy = (): Array<{ name: string; score: number | null }> => [
     { name: 'Foundation', score: report.content_score ?? null },
     { name: 'Human Experience', score: report.ux_score ?? null },
@@ -181,7 +187,6 @@ export function moduleScoresFromReport(
 
   if (!findings || findings.length === 0) return legacy()
 
-  // Aggregate severity-weighted open-finding load per module (0..5).
   const loadByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
   const countByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
   let anyCategorized = false
@@ -196,20 +201,13 @@ export function moduleScoresFromReport(
     countByModule[moduleIdx] += 1
   }
 
-  // If no findings carry category_index yet (older audits before migration
-  // 025), fall back to the legacy mapping rather than guess.
   if (!anyCategorized) return legacy()
 
   const baseline = typeof report.overall_score === 'number' ? report.overall_score : 100
-  // Scale: each module's score = clamp(100 - load, 0, 100), then blend with
-  // the report's overall baseline so a clean module never reads higher than
-  // the audit-engine's own ceiling. Keeps this estimator conservative.
   return PHASE1_MODULES.map((name, i) => {
     const load = loadByModule[i]
     const raw = 100 - load
     const clamped = Math.max(0, Math.min(100, raw))
-    // Blend 70% finding-derived / 30% overall baseline so a single critical
-    // doesn't flatten an otherwise-healthy module into the floor.
     const blended = Math.round(clamped * 0.7 + baseline * 0.3)
     return { name, score: Math.max(0, Math.min(100, blended)) }
   })

@@ -38,6 +38,11 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import {
+  readSelection,
+  writeSelection,
+  selectionFromSidebarId,
+} from '@/lib/dashboard/brand-selection';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -83,7 +88,20 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // brand_identities. Each site entry remembers its latest audit id so the
   // feature nav can deep-link into the audit detail tabs.
   const [sites, setSites] = useState<SiteEntry[]>([]);
+  // Selection persists via brand-selection store so that Overview/Find/Fix/
+  // Track all scope queries to the SAME brand the sidebar shows. Initial
+  // value is hydrated from localStorage on mount in the effect below.
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+
+  // Hydrate selection from localStorage on first render so the dashboard
+  // pages mount with the correct scope rather than the user's globally
+  // most-recent audit.
+  useEffect(() => {
+    const sel = readSelection();
+    if (!sel) return;
+    if (sel.kind === 'site') setSelectedSiteId(`site:${sel.host}`);
+    else if (sel.kind === 'brand') setSelectedSiteId(`brand:${sel.brandId}`);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -177,6 +195,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (match) setSelectedSiteId(match.id);
     }
   }, [pathname, sites]);
+
+  // Mirror every selection change into the persistent brand-selection store
+  // so Overview / Find / Fix / Track scope their queries to the same brand.
+  useEffect(() => {
+    writeSelection(selectionFromSidebarId(selectedSiteId));
+  }, [selectedSiteId]);
 
   // Click-outside / Escape to close brand menu.
   useEffect(() => {

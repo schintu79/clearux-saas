@@ -1,11 +1,8 @@
 'use client';
 
 /**
- * Track — answers "Am I getting better?"
- *
- * Score-over-time, fixed vs. open counts, module deltas, audit timeline,
- * regression hint, and a re-audit CTA. Single-audit users see an explicit
- * "trend data appears after your next audit" empty state.
+ * Track — selected brand only. Score trend, fixed vs. open counts,
+ * recent audits. No portfolio/global data.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,14 +15,12 @@ import {
   TrendingDown,
   Minus,
   Clock,
-  CheckCircle2,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
-  moduleScoresFromReport,
-  PHASE1_MODULES,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
+import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 
 function hostnameOf(url: string | null): string | null {
@@ -71,30 +66,37 @@ function ScoreLine({ points }: { points: Array<{ score: number; date: string }> 
 
 export default function TrackPage() {
   const { user, loading: authLoading } = useAuth();
+  const { selection, ready } = useBrandSelection();
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !user) {
+    if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
       return;
     }
-    loadLatestAuditBundle(user.id)
+    setLoading(true);
+    loadLatestAuditBundle(user.id, selection)
       .then(setBundle)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [authLoading, user]);
+  }, [authLoading, user, ready, selection]);
 
-  const sameDomain = useMemo(() => {
+  // History returned by loadLatestAuditBundle is already scoped to the
+  // selected brand/site (server-side for brand, client-side filter for
+  // site). For backwards-compat when no selection is set, fall back to
+  // same-domain matching.
+  const scopedHistory = useMemo(() => {
     if (!bundle?.audit) return [];
+    if (selection) return [...bundle.history].reverse();
     const host = hostnameOf(bundle.audit.product_url);
     if (!host) return [];
     return bundle.history
       .filter((h) => hostnameOf(h.audit.product_url) === host)
       .reverse();
-  }, [bundle]);
+  }, [bundle, selection]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !ready) {
     return (
       <div>
         <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
@@ -112,7 +114,7 @@ export default function TrackPage() {
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            Are you getting better? Run your first audit to start tracking.
+            {selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking.'}
           </p>
         </div>
         <EmptyAudit
@@ -123,7 +125,7 @@ export default function TrackPage() {
     );
   }
 
-  const { audit, report, findings, prior } = bundle;
+  const { report, findings, prior } = bundle;
   const score = report?.overall_score ?? null;
   const priorScore = prior?.report?.overall_score ?? null;
   const delta = score != null && priorScore != null ? score - priorScore : null;
@@ -131,19 +133,7 @@ export default function TrackPage() {
   const fixed = findings.filter((f) => f.status === 'fixed').length;
   const backlog = findings.filter((f) => f.status === 'backlog').length;
 
-  // For the latest audit we have findings in the bundle, so the module
-  // strip uses the finding-derived estimator. The prior audit's findings
-  // aren't in the bundle (would require a second query); the legacy
-  // sub-score mapping is good enough for a delta comparison.
-  const latestModules = moduleScoresFromReport(report, findings);
-  const priorModules = moduleScoresFromReport(prior?.report || null);
-  const moduleDeltas = latestModules.map((m, i) => ({
-    name: m.name,
-    score: m.score,
-    delta: m.score != null && priorModules[i].score != null ? m.score - (priorModules[i].score as number) : null,
-  }));
-
-  const trendPoints = sameDomain
+  const trendPoints = scopedHistory
     .filter((h) => h.report?.overall_score != null)
     .map((h) => ({
       score: h.report!.overall_score as number,
@@ -157,7 +147,7 @@ export default function TrackPage() {
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Are you getting better? Compare scores, fixed vs. open issues, and module shifts.
+          Score and issue trend for this brand.
         </p>
       </div>
 
@@ -180,10 +170,10 @@ export default function TrackPage() {
           {singleAudit ? (
             <div className="py-8 text-center">
               <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-                Trend data appears after your next audit
+                Trend appears after your next audit
               </p>
               <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-                One audit so far. Run another to track movement on your score and module breakdown.
+                One audit so far. Run another to track movement.
               </p>
               <Link
                 href="/dashboard/new-audit"
@@ -198,7 +188,7 @@ export default function TrackPage() {
             <>
               <ScoreLine points={trendPoints} />
               <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>
-                {trendPoints.length} audits · oldest {new Date(trendPoints[0].date).toLocaleDateString()} · latest {new Date(trendPoints[trendPoints.length - 1].date).toLocaleDateString()}
+                {trendPoints.length} audits · {new Date(trendPoints[0].date).toLocaleDateString()} → {new Date(trendPoints[trendPoints.length - 1].date).toLocaleDateString()}
               </p>
             </>
           )}
@@ -214,7 +204,7 @@ export default function TrackPage() {
           <div className="space-y-2 flex-1">
             <div className="flex items-center justify-between">
               <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>Open</span>
-              <span className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--severe)' }}>{open}</span>
+              <span className="text-[15px] font-semibold tabular-nums" style={{ color: open > 0 ? 'var(--severe)' : 'var(--ok)' }}>{open}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>Fixed</span>
@@ -236,36 +226,7 @@ export default function TrackPage() {
         </div>
       </div>
 
-      {/* Module deltas */}
-      <div
-        className="rounded-xl p-5 mb-6"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      >
-        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
-          Module deltas
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {moduleDeltas.map((m) => (
-            <div
-              key={m.name}
-              className="rounded-lg px-3 py-3"
-              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-            >
-              <p className="text-[10px] font-semibold tracking-[0.04em] uppercase leading-tight" style={{ color: 'var(--m-muted)' }}>
-                {m.name}
-              </p>
-              <p className="text-[18px] font-sans font-semibold tabular-nums mt-1" style={{ color: scoreColor(m.score) }}>
-                {m.score ?? '—'}
-              </p>
-              <p className="text-[11px] mt-0.5 font-semibold" style={{ color: deltaTone(m.delta) }}>
-                {m.delta == null ? '—' : `${m.delta > 0 ? '+' : ''}${m.delta} pts`}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent audits timeline */}
+      {/* Recent audits */}
       <div
         className="rounded-xl p-5"
         style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
@@ -283,11 +244,11 @@ export default function TrackPage() {
             <RefreshCw size={11} />
           </Link>
         </div>
-        {sameDomain.length === 0 ? (
-          <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>No audit history for this domain.</p>
+        {scopedHistory.length === 0 ? (
+          <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>No audit history yet.</p>
         ) : (
           <ul className="space-y-2">
-            {[...sameDomain].reverse().map((h, idx, arr) => {
+            {[...scopedHistory].reverse().map((h, idx, arr) => {
               const sc = h.report?.overall_score ?? null;
               const prev = arr[idx + 1]?.report?.overall_score ?? null;
               const d = sc != null && prev != null ? sc - prev : null;
@@ -322,19 +283,6 @@ export default function TrackPage() {
           </ul>
         )}
       </div>
-
-      {fixed > 0 && (
-        <div
-          className="mt-6 rounded-xl p-4 flex items-start gap-3"
-          style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 14%, transparent)' }}
-        >
-          <CheckCircle2 size={15} style={{ color: 'var(--ok)' }} className="flex-shrink-0 mt-0.5" />
-          <p className="text-[12px]" style={{ color: 'var(--ink-2)' }}>
-            <span className="font-semibold" style={{ color: 'var(--ink)' }}>{fixed} finding{fixed === 1 ? '' : 's'} marked fixed.</span>{' '}
-            Run a re-audit to verify in code and pick up any new regressions.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

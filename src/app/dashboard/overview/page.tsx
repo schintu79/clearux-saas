@@ -1,11 +1,17 @@
 'use client';
 
 /**
- * Overview — answers "What should I do next?"
+ * Overview — selected brand workspace, Find/Fix/Track entry point.
  *
- * Shows the user's Brand Health Score exactly ONCE, the top 3 issues, one
- * primary next action, module score strip, and last-audit metadata.
- * Empty state offers a URL input and "Run Audit" CTA.
+ * Shows for the SELECTED brand only:
+ *   - Brand Health Score + 3 supporting metrics (4 KPIs total)
+ *   - Next Best Fix (one card, one CTA)
+ *   - Top issues hurting score (top 3)
+ *   - Module health (six-module strip)
+ *
+ * No portfolio data, no marketing copy, no extra panels. If the
+ * selected brand has no audit, render a clean empty state pointing
+ * to "Run audit" — never another brand's audit.
  */
 
 import React, { Suspense, useEffect, useState } from 'react';
@@ -14,8 +20,6 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   ArrowRight,
-  AlertTriangle,
-  RefreshCw,
   Clock,
   TrendingUp,
   TrendingDown,
@@ -32,6 +36,7 @@ import {
   moduleScoresFromReport,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
+import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 
 function scoreTone(s: number | null | undefined): string {
@@ -116,10 +121,10 @@ function ScoreCard({
               {delta} pts vs. previous
             </span>
           )}
-          {!delta && completedAt && (
+          {completedAt && (
             <span className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--m-muted)' }}>
               <Clock size={11} />
-              First audit · {relativeDate(completedAt)}
+              {relativeDate(completedAt)}
             </span>
           )}
         </div>
@@ -128,38 +133,25 @@ function ScoreCard({
   );
 }
 
-function ModuleStrip({ scores }: { scores: Array<{ name: string; score: number | null }> }) {
+function MetricTile({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
   return (
     <div
-      className="rounded-xl p-5"
+      className="rounded-xl px-4 py-4"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      data-testid="overview-module-strip"
     >
-      <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
-        Module scores
+      <p className="text-[10px] font-semibold tracking-[0.06em] uppercase" style={{ color: 'var(--m-muted)' }}>
+        {label}
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {scores.map((s) => (
-          <div
-            key={s.name}
-            className="rounded-lg px-3 py-3"
-            style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-          >
-            <p className="text-[10px] font-semibold tracking-[0.04em] uppercase leading-tight" style={{ color: 'var(--m-muted)' }}>
-              {s.name}
-            </p>
-            <p className="text-[20px] font-sans font-semibold tabular-nums mt-1" style={{ color: scoreTone(s.score) }}>
-              {s.score ?? '—'}
-            </p>
-          </div>
-        ))}
-      </div>
+      <p className="text-[22px] font-sans font-semibold tabular-nums mt-1" style={{ color: tone || 'var(--ink)' }}>
+        {value}
+      </p>
     </div>
   );
 }
 
 function OverviewInner() {
   const { user, loading: authLoading } = useAuth();
+  const { selection, ready } = useBrandSelection();
   const searchParams = useSearchParams();
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,17 +167,18 @@ function OverviewInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (authLoading || !user) {
+    if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
       return;
     }
-    loadLatestAuditBundle(user.id)
+    setLoading(true);
+    loadLatestAuditBundle(user.id, selection)
       .then(setBundle)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [authLoading, user]);
+  }, [authLoading, user, ready, selection]);
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !ready) {
     return (
       <div>
         <div className="h-8 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
@@ -206,11 +199,11 @@ function OverviewInner() {
             Overview
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            What should you do next? Run your first audit to find out.
+            {selection ? 'No audit for this brand yet. Run one to populate Find, Fix, and Track.' : 'Run your first audit to see what to fix next.'}
           </p>
         </div>
         <EmptyAudit
-          title="Run your first audit"
+          title={selection ? 'No audit for this brand yet' : 'Run your first audit'}
           body="Enter a website URL and we will show you your Brand Health Score, the top issues hurting it, and a clear next action."
         />
       </div>
@@ -225,10 +218,10 @@ function OverviewInner() {
   const delta = score != null && priorScore != null ? score - priorScore : null;
 
   const openFindings = findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
+  const fixedCount = findings.filter((f) => f.status === 'fixed').length;
+  const criticalOpen = openFindings.filter((f) => f.severity === 'critical' || f.severity === 'high').length;
   const top3 = rankFindings(openFindings).slice(0, 3);
   const modules = moduleScoresFromReport(report, findings);
-
-  // Next-best-action: the single highest-priority finding, or re-audit when all open are fixed.
   const next = top3[0] || null;
 
   return (
@@ -247,65 +240,66 @@ function OverviewInner() {
           Overview
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          What you should do next, in order of impact.
+          What to fix next, in order of impact.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
-        <ScoreCard
-          score={score}
-          delta={delta}
-          domain={domain}
-          completedAt={audit.completed_at}
-        />
-        <div
-          className="rounded-xl p-5 flex flex-col justify-between gap-3"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          data-testid="overview-next-action"
-        >
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-              Next action
-            </p>
-            {next ? (
-              <>
-                <p className="text-[14px] font-sans font-semibold mt-1.5 leading-snug" style={{ color: 'var(--ink)' }}>
-                  Fix this: {next.title}
-                </p>
-                <p className="text-[12px] mt-1.5 leading-relaxed line-clamp-3" style={{ color: 'var(--m-muted)' }}>
-                  {next.description}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-[14px] font-sans font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
-                  Re-audit to verify your fixes
-                </p>
-                <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                  All findings are closed. Run a re-audit to confirm and track delta.
-                </p>
-              </>
-            )}
-          </div>
-          <Link
-            href={next ? '/dashboard/fix' : '/dashboard/new-audit'}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 self-start"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            {next ? 'Fix this' : 'Run re-audit'}
-            <ArrowRight size={13} />
-          </Link>
-        </div>
+      {/* 4 KPI cards: Brand Health Score (hero) + 3 supporting metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-3 mb-5">
+        <ScoreCard score={score} delta={delta} domain={domain} completedAt={audit.completed_at} />
+        <MetricTile label="Open issues" value={openFindings.length} tone={openFindings.length === 0 ? 'var(--ok)' : 'var(--ink)'} />
+        <MetricTile label="Critical / high" value={criticalOpen} tone={criticalOpen > 0 ? 'var(--severe)' : 'var(--ok)'} />
+        <MetricTile label="Fixed" value={fixedCount} tone={fixedCount > 0 ? 'var(--ok)' : 'var(--m-muted)'} />
       </div>
 
-      {/* Top 3 issues */}
+      {/* Next Best Fix */}
+      <div
+        className="rounded-xl p-5 mb-6 flex items-start gap-4"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        data-testid="overview-next-action"
+      >
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
+            Next Best Fix
+          </p>
+          {next ? (
+            <>
+              <p className="text-[16px] font-sans font-semibold mt-1.5 leading-snug" style={{ color: 'var(--ink)' }}>
+                {next.title}
+              </p>
+              <p className="text-[12px] mt-1.5 leading-relaxed line-clamp-2" style={{ color: 'var(--m-muted)' }}>
+                {severityLabel(next.severity)} · {moduleNameForFinding(next)}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[16px] font-sans font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
+                All findings closed — re-audit to verify
+              </p>
+              <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                Run a re-audit to confirm your fixes landed.
+              </p>
+            </>
+          )}
+        </div>
+        <Link
+          href={next ? '/dashboard/fix' : '/dashboard/new-audit'}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
+          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+        >
+          {next ? 'Fix this' : 'Run re-audit'}
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+
+      {/* Top 3 issues hurting score */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-            Top 3 issues hurting your score
+            Top issues hurting your score
           </p>
           <Link href="/dashboard/find" className="text-[12px] font-medium" style={{ color: 'var(--signal)' }}>
-            See all findings →
+            See all →
           </Link>
         </div>
         {top3.length === 0 ? (
@@ -314,7 +308,7 @@ function OverviewInner() {
             style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
             data-testid="overview-top3-empty"
           >
-            No open findings — every issue is fixed or dismissed. Run a re-audit to confirm.
+            Every open issue is fixed or dismissed. Run a re-audit to confirm.
           </div>
         ) : (
           <ul className="space-y-2" data-testid="overview-top3">
@@ -336,7 +330,6 @@ function OverviewInner() {
                     </span>
                     <span className="block text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
                       {severityLabel(f.severity)} · {moduleNameForFinding(f)}
-                      {f.page_url ? ` · ${f.page_url}` : ''}
                     </span>
                   </span>
                   <span
@@ -353,29 +346,32 @@ function OverviewInner() {
         )}
       </div>
 
-      <ModuleStrip scores={modules} />
-
-      <div className="mt-6 rounded-xl p-4 flex items-start gap-3" style={{ background: 'color-mix(in srgb, var(--signal) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--signal) 12%, transparent)' }}>
-        <RefreshCw size={15} style={{ color: 'var(--signal)' }} className="flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
-            Re-audit to track your progress
-          </p>
-          <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-            Fixpath scores the delta between audits and surfaces regressions.
-          </p>
+      {/* Module health */}
+      <div
+        className="rounded-xl p-5"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        data-testid="overview-module-strip"
+      >
+        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
+          Module health
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {modules.map((s) => (
+            <div
+              key={s.name}
+              className="rounded-lg px-3 py-3"
+              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+            >
+              <p className="text-[10px] font-semibold tracking-[0.04em] uppercase leading-tight" style={{ color: 'var(--m-muted)' }}>
+                {s.name}
+              </p>
+              <p className="text-[20px] font-sans font-semibold tabular-nums mt-1" style={{ color: scoreTone(s.score) }}>
+                {s.score ?? '—'}
+              </p>
+            </div>
+          ))}
         </div>
-        <Link href="/dashboard/new-audit" className="text-[12px] font-medium whitespace-nowrap" style={{ color: 'var(--signal)' }}>
-          Run re-audit →
-        </Link>
       </div>
-
-      <p className="text-[11px] mt-4" style={{ color: 'var(--m-muted)' }}>
-        <span className="inline-flex items-center gap-1">
-          <AlertTriangle size={10} />
-          Last audit completed {relativeDate(audit.completed_at)}.
-        </span>
-      </p>
     </div>
   );
 }
