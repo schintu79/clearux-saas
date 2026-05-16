@@ -1,12 +1,13 @@
 // ============================================================
 // ClearUX API — /api/brand-identities/[id]
 // GET    → fetch single brand identity with files
-// PUT    → update name/description
+// PUT    → update name/description and Phase 1 Brand DNA fields
 // DELETE → delete identity and all associated files
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { normalizeColorArray, normalizeStringArray, normalizeUrl } from '@/lib/brand-dna'
 
 /* ── GET — single brand identity ─────────────────────────── */
 export async function GET(
@@ -50,7 +51,8 @@ export async function PUT(
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { name, description } = await request.json()
+    const body = await request.json()
+    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url } = body || {}
     if (!name?.trim())
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -66,13 +68,26 @@ export async function PUT(
     if (!existing || (existing as any).user_id !== user.id)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+    // Only set Brand DNA fields when the caller actually sent them — keeps
+    // PUT idempotent for legacy clients that still only send name/description.
+    const update: Record<string, unknown> = {
+      name: name.trim(),
+      description: typeof description === 'string' ? description.trim() || null : null,
+      updated_at: new Date().toISOString(),
+    }
+    if ('website_url' in (body || {})) update.website_url = normalizeUrl(website_url)
+    if ('brand_voice' in (body || {})) {
+      update.brand_voice = typeof brand_voice === 'string'
+        ? brand_voice.trim().slice(0, 4000) || null
+        : null
+    }
+    if ('tone_keywords' in (body || {})) update.tone_keywords = normalizeStringArray(tone_keywords)
+    if ('primary_colors' in (body || {})) update.primary_colors = normalizeColorArray(primary_colors)
+    if ('logo_url' in (body || {})) update.logo_url = normalizeUrl(logo_url)
+
     const { data, error } = await db
       .from('brand_identities')
-      .update({
-        name: name.trim(),
-        description: description?.trim() || null,
-        updated_at: new Date().toISOString(),
-      } as any)
+      .update(update as any)
       .eq('id', id)
       .select()
       .single()

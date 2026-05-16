@@ -5,7 +5,19 @@
 
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy Resend client. The SDK constructor throws synchronously when the API
+// key is missing, which broke `next build` page-data collection in
+// environments without RESEND_API_KEY (e.g. CI smoke builds). Defer client
+// creation until a send is actually attempted so module-import-time stays
+// safe, and short-circuit cleanly when the key is absent.
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (_resend) return _resend
+  const key = process.env.RESEND_API_KEY
+  if (!key) return null
+  _resend = new Resend(key)
+  return _resend
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://clearux.ai'
 
@@ -73,7 +85,12 @@ async function send(
   html: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await resend.emails.send({ from, to, subject, html })
+    const client = getResend()
+    if (!client) {
+      console.warn(`[email] RESEND_API_KEY not set — skipping send: ${subject} → ${to}`)
+      return { success: false, error: 'RESEND_API_KEY not configured' }
+    }
+    const { error } = await client.emails.send({ from, to, subject, html })
     if (error) {
       console.error('Resend email error:', error)
       return { success: false, error: error.message }

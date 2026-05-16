@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
+import { normalizeColorArray, normalizeStringArray, normalizeUrl } from '@/lib/brand-dna'
 
 /* ── GET — list brand identities ─────────────────────────── */
 export async function GET(request: NextRequest) {
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { name, description } = await request.json()
+    const body = await request.json()
+    const { name, description, website_url, brand_voice, tone_keywords, primary_colors, logo_url } = body || {}
     if (!name?.trim())
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -49,7 +51,12 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         name: name.trim(),
-        description: description?.trim() || null,
+        description: typeof description === 'string' ? description.trim() || null : null,
+        website_url: normalizeUrl(website_url),
+        brand_voice: typeof brand_voice === 'string' ? brand_voice.trim().slice(0, 4000) || null : null,
+        tone_keywords: normalizeStringArray(tone_keywords),
+        primary_colors: normalizeColorArray(primary_colors),
+        logo_url: normalizeUrl(logo_url),
       } as any)
       .select()
       .single()
@@ -62,3 +69,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create brand identity' }, { status: 500 })
   }
 }
+
