@@ -216,11 +216,11 @@ const WhiteLabelPage: React.FC = () => {
     <div className="max-w-2xl mx-auto">
       {/* Back button */}
       <Link
-        href="/dashboard"
+        href="/dashboard/settings"
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        Dashboard
+        Settings
       </Link>
 
       {/* Header */}

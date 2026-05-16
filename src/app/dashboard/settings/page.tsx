@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Paintbrush, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
@@ -43,11 +43,12 @@ interface Messages {
   billingError?: string;
 }
 
-type TabId = 'profile' | 'company' | 'security';
+type TabId = 'profile' | 'company' | 'branding' | 'security';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'company', label: 'Company & Billing', icon: Building2 },
+  { id: 'branding', label: 'White Label', icon: Paintbrush },
   { id: 'security', label: 'Security', icon: Lock },
 ];
 
@@ -448,6 +449,45 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {/* ═══ BRANDING (WHITE LABEL) TAB ═══ */}
+      {activeTab === 'branding' && (
+        <Card>
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Paintbrush size={18} style={{ color: 'var(--ink)' }} />
+                <h2 className="text-lg font-normal font-sans text-text">White Label</h2>
+              </div>
+              <p className="text-sm text-muted">
+                Brand the audit reports your clients see — logo, colors, contact details, and footer text.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/white-label"
+              className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all hover:bg-black/[0.04]"
+              style={{ border: '1px solid var(--rule)', background: 'var(--paper-2)' }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                >
+                  <Paintbrush size={16} style={{ color: 'var(--ink)' }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Open White Label settings</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Configure logo, primary color, contact email, and footer.
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={16} style={{ color: 'var(--m-muted)' }} />
+            </Link>
           </div>
         </Card>
       )}

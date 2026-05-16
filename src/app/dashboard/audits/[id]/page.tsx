@@ -1142,7 +1142,35 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence'>('overview');
+  type AuditTab = 'overview' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence';
+  const VALID_TABS: AuditTab[] = ['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'];
+  const initialTabFromHash = ((): AuditTab => {
+    if (typeof window === 'undefined') return 'overview';
+    const h = (window.location.hash || '').replace(/^#/, '');
+    return (VALID_TABS as string[]).includes(h) ? (h as AuditTab) : 'overview';
+  })();
+  const [activeTab, setActiveTab] = useState<AuditTab>(initialTabFromHash);
+
+  // Keep activeTab in sync with URL hash so the sidebar deep-links work
+  // (e.g. /dashboard/audits/<id>#findings) and back/forward navigation works.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onHash = () => {
+      const h = (window.location.hash || '').replace(/^#/, '');
+      if ((VALID_TABS as string[]).includes(h)) setActiveTab(h as AuditTab);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const current = (window.location.hash || '').replace(/^#/, '');
+    if (current !== activeTab) {
+      const target = activeTab === 'overview' ? '' : `#${activeTab}`;
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${target}`);
+    }
+  }, [activeTab]);
   // Cockpit-driven filters: click a severity chip or module bar to narrow the
   // Findings tab. Always toggle (click again = clear). Filters persist across
   // tab switches so the user can drill from cockpit → findings naturally.
