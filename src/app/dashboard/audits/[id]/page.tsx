@@ -2161,8 +2161,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </p>
           </div>
 
-          {/* ── Tab Navigation — sticky segmented control ───── */}
-          <div className={`mb-8 sticky z-30 -mx-4 px-4 py-2 bg-paper/95 backdrop-blur-md transition-all duration-200 ${showStickyScore ? 'top-[57px] shadow-sm border-b border-rule/40' : 'top-0 border-b border-rule/30'}`}>
+          {/* ── Tab Navigation — mobile-only fallback. The desktop sidebar
+              owns feature navigation; on small screens (where the sidebar
+              collapses to a drawer) we still need an inline switcher so the
+              user can move between Overview/Findings/Pages without opening
+              the menu. ─────────────────────────────────────────────── */}
+          <div className={`md:hidden mb-6 sticky z-30 -mx-4 px-4 py-2 bg-paper/95 backdrop-blur-md transition-all duration-200 ${showStickyScore ? 'top-[57px] shadow-sm border-b border-rule/40' : 'top-0 border-b border-rule/30'}`}>
             <nav
               className="flex gap-1 p-1 rounded-xl border border-rule bg-card overflow-x-auto"
               role="tablist"
@@ -2712,12 +2716,85 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           )}
 
           {/* ── TAB: Pages ─────────────────────────────────── */}
-          {activeTab === 'pages' && (
-            <div>
+          {activeTab === 'pages' && (() => {
+            // Honest empty state — page-level evidence missing
+            if (auditPages.length === 0) {
+              return (
+                <div className="rounded-xl border border-rule bg-card p-6">
+                  <div className="flex items-start gap-3">
+                    <Info size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-semibold text-ink mb-1">Page-level evidence was not captured for this audit</p>
+                      <p className="text-[12px] text-m-muted leading-relaxed mb-3">
+                        This audit didn't store per-page data, so we can't show URLs, mobile-friendliness, or AI-readability here. Findings on other tabs are still valid.
+                      </p>
+                      <p className="text-[12px] text-ink-2 leading-relaxed">
+                        To see page-level evidence, re-run this audit from the audit menu (Re-audit) — newer audits capture and persist per-page detail.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Summary metrics — derived only from data we actually have.
+            const mobileChecked = auditPages.filter(p => p.is_mobile_friendly !== null);
+            const mobileFriendlyCount = mobileChecked.filter(p => p.is_mobile_friendly === true).length;
+            const mobileIssueCount = mobileChecked.filter(p => p.is_mobile_friendly === false).length;
+            const aiPages = auditPages.filter(p => (p as any).ai_readability?.overallScore != null);
+            const avgAi = aiPages.length > 0
+              ? Math.round(aiPages.reduce((s, p) => s + ((p as any).ai_readability.overallScore || 0), 0) / aiPages.length)
+              : null;
+            const brokenCount = auditPages.filter(p => p.status_code && p.status_code >= 400).length;
+            type Card = { label: string; value: React.ReactNode; sub?: string; tone?: 'warn' | 'severe' | 'ok' };
+            const cards: Card[] = [
+              { label: 'Pages checked', value: auditPages.length },
+            ];
+            if (mobileChecked.length > 0) {
+              cards.push({
+                label: 'Mobile-friendly',
+                value: <>{mobileFriendlyCount}<span className="text-[12px] font-medium text-m-muted">/{mobileChecked.length}</span></>,
+                sub: mobileIssueCount > 0 ? `${mobileIssueCount} with issues` : 'All clear',
+                tone: mobileIssueCount > 0 ? 'warn' : 'ok',
+              });
+            }
+            if (avgAi != null) {
+              cards.push({
+                label: 'Avg AI readability',
+                value: <>{avgAi}<span className="text-[12px] font-medium text-m-muted">%</span></>,
+                sub: `${aiPages.length} of ${auditPages.length} scored`,
+                tone: avgAi >= 70 ? 'ok' : avgAi >= 40 ? 'warn' : 'severe',
+              });
+            }
+            if (brokenCount > 0) {
+              cards.push({
+                label: 'Broken / errors',
+                value: brokenCount,
+                sub: 'HTTP 4xx / 5xx',
+                tone: 'severe',
+              });
+            }
+
+            return (
+            <div className="space-y-5">
+              {/* Summary cards — only metrics derived from real data */}
+              <div className={clsx('grid gap-3', cards.length === 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')}>
+                {cards.map((c) => (
+                  <div key={c.label} className="rounded-xl border border-rule bg-card p-4">
+                    <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">{c.label}</p>
+                    <p className={clsx(
+                      'text-[22px] font-bold mt-1 leading-none',
+                      c.tone === 'severe' ? 'text-severe' : c.tone === 'warn' ? 'text-warn' : 'text-ink',
+                    )}>{c.value}</p>
+                    {c.sub && <p className="text-[11px] text-m-muted mt-1.5">{c.sub}</p>}
+                  </div>
+                ))}
+              </div>
+
               <div className="rounded-xl border border-rule bg-card overflow-hidden">
               <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
-                <Globe size={16} className="text-signal" />
-                <h3 className="text-sm font-heading font-semibold text-ink">Pages crawled</h3>
+                <Globe size={16} className="text-m-muted" />
+                <h3 className="text-sm font-heading font-semibold text-ink">Pages</h3>
                 <span className="ml-auto text-xs text-m-muted font-medium">{auditPages.length} {L.pagesCrawled}</span>
               </div>
               <div className="divide-y divide-rule/30">
@@ -2836,7 +2913,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* ── TAB: Responsive ───────────────────────────── */}
           {activeTab === 'responsive' && (() => {
