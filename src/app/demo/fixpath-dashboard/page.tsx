@@ -1041,13 +1041,15 @@ export default function FixpathDashboardPreviewPage() {
           Fixpath.ai — Find. Fix. Track. · Design preview with mock data · Not connected to any user account.
         </footer>
       </main>
-      {/* Tall spacer below the demo content. The global cookie consent
-          banner is position: fixed and roughly 96-120px tall on desktop.
-          A 280px spacer at the bottom of the page guarantees the last
-          card and footer clear the banner at 1440x1100 even when the
-          user has not scrolled. Kept outside <main> so it does not
-          inherit max-width constraints. */}
-      <div aria-hidden="true" data-testid="demo-bottom-spacer" style={{ height: 280 }} />
+      {/* Small spacer below the demo content. The global cookie consent
+          card is now a compact bottom-right popover (~360px wide,
+          ~140px tall, anchored at right: 24px / bottom: 24px). At
+          1440x1100 the dashboard is centered in a 1100px column with
+          ~170px of margin on either side, so the corner card overlaps
+          only the right gutter — it does not cover the main content.
+          This 180px spacer keeps the last card / footer well above the
+          corner card on narrower viewports where the gutter shrinks. */}
+      <div aria-hidden="true" data-testid="demo-bottom-spacer" style={{ height: 180 }} />
     </div>
   );
 }
