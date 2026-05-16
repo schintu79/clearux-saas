@@ -62,11 +62,8 @@ import type {
 import { getUILabels, getReportLabels, getCategoryNames, getPillarNames, getScoreLabel, getSeverityLabel, getLocale, type UILabels } from '@/lib/languages';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import BrandAuditDetail from '@/components/dashboard/BrandAuditDetail';
-import AuditCockpit, { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
-import PracticalInsights from '@/components/dashboard/PracticalInsights';
-import CategoryChips from '@/components/dashboard/CategoryChips';
+import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/AuditCockpit';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
-import FixQueue, { type RankedFinding } from '@/components/dashboard/FixQueue';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 
@@ -1137,7 +1134,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
-  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; content_text: string | null; ai_readability: any | null }>>([]);
+  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; viewport_meta: string | null; content_text: string | null; ai_readability: any | null }>>([]);
   const [siblingCount, setSiblingCount] = useState(0); // other audits for same domain
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1722,36 +1719,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     };
   });
 
-  // Severity weight for the fix queue. Boosts findings with strong evidence
-  // (page_url, screenshot, target_element) and AI-verified "poorly_fixed".
-  const SEV_WEIGHT: Record<string, number> = { critical: 100, high: 60, medium: 30, low: 10 };
-  function findingPriorityScore(f: AuditFinding): number {
-    let s = SEV_WEIGHT[f.severity] ?? 0;
-    if (f.page_url) s += 5;
-    if (f.screenshot_url) s += 4;
-    if (f.target_element) s += 3;
-    if ((f as any).verification_status === 'poorly_fixed') s += 25;
-    if ((f as any).verification_status === 'likely_fixed') s -= 50;
-    if (f.dismissed) s -= 1000;
-    if (f.status === 'fixed') s -= 200;
-    if (f.status === 'in_progress') s -= 20;
-    return s;
-  }
-
-  const rankedAll = [...findings]
-    .filter(f => !f.dismissed && f.status !== 'fixed')
-    .sort((a, b) => findingPriorityScore(b) - findingPriorityScore(a));
-
-  const fixQueueItems: RankedFinding[] = rankedAll.slice(0, 5).map((f) => {
-    const modIdx = findingModuleIndex(f);
-    const module = cockpitModules[modIdx];
-    const priorityLabel: RankedFinding['priorityLabel'] =
-      f.severity === 'critical' ? 'Now'
-      : f.severity === 'high' ? 'Next'
-      : 'Later';
-    return { finding: f, moduleName: module?.name, moduleDot: module?.dot, priorityLabel };
-  });
-
   // Filters applied to the Findings tab. The Overview tab still shows the full
   // breakdown — filters are most useful on the flat list.
   const filteredFindings = findings.filter((f) => {
@@ -1759,14 +1726,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     if (filterModuleIndex != null && findingModuleIndex(f) !== filterModuleIndex) return false;
     return true;
   });
-
-  // Open-finding counts per module — feeds the category chips.
-  const findingCountByModule: Record<number, number> = {};
-  for (const f of findings) {
-    if (f.dismissed) continue;
-    const idx = findingModuleIndex(f);
-    findingCountByModule[idx] = (findingCountByModule[idx] || 0) + 1;
-  }
 
   // Consolidate near-duplicate findings for display only. The grouping never
   // mutates DB records or hides individual findings from the engine: each
@@ -1776,33 +1735,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     filteredFindings,
     findingModuleIndex,
   );
-
-  // Cockpit click handlers. Always switch to the Findings tab so the filter is
-  // immediately visible — toggling the same filter clears it.
-  const handleCockpitSeverity = (sev: CockpitSeverity) => {
-    setFilterSeverity((cur) => (cur === sev ? null : sev));
-    setActiveTab('findings');
-  };
-  const handleCockpitModule = (idx: number) => {
-    setFilterModuleIndex((cur) => (cur === idx ? null : idx));
-    setActiveTab('findings');
-  };
-
-  // FixQueue → jump to a specific finding card on the Findings tab.
-  const handleFixQueueSelect = (findingId: string) => {
-    setFilterSeverity(null);
-    setFilterModuleIndex(null);
-    setActiveTab('findings');
-    // Defer to next frame so the Findings tab DOM has rendered.
-    setTimeout(() => {
-      const el = document.getElementById(`finding-${findingId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        el.classList.add('ring-2', 'ring-signal/40');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-signal/40'), 1800);
-      }
-    }, 60);
-  };
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4 relative">
@@ -2193,49 +2125,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ── Score Over Time (line chart — shows when there are multiple audits of the same URL) ── */}
           <ScoreOverTime productUrl={audit.product_url || ''} currentAuditId={auditId} currentScore={calculatedOverallScore} />
 
-          {/* ── Practical insights — three lanes that answer the questions
-                a user opens the audit to answer: what's working, what's
-                hurting, what to fix first. Replaces the duplicated overall
-                score that used to sit in the cockpit header. ── */}
-          <PracticalInsights
-            modules={cockpitModules}
-            categoryScores={categoryScores}
-            fixQueue={fixQueueItems}
-            onModuleClick={handleCockpitModule}
-            onFixSelect={handleFixQueueSelect}
-          />
-
-          {/* ── Clickable category chips — quick filter into the Findings
-                tab by module / category. Mirrors the cockpit interaction
-                but lives at the top of the page where users look first. ── */}
-          <CategoryChips
-            modules={cockpitModules}
-            findingCountByModule={findingCountByModule}
-            activeModuleIndex={filterModuleIndex}
-            onModuleClick={handleCockpitModule}
-            onClear={() => setFilterModuleIndex(null)}
-          />
-
-          {/* ── Severity filter strip (formerly Audit Cockpit) ── */}
-          <AuditCockpit
-            totalFindings={findings.length}
-            activeModuleCount={activeModuleCount}
-            totalModuleCount={totalModuleCount}
-            severityCounts={severityCounts}
-            activeSeverity={filterSeverity}
-            onSeverityClick={handleCockpitSeverity}
-          />
-
-          {/* ── Prioritized Fix Queue — top issues to ship first ── */}
-          {fixQueueItems.length > 0 && (
-            <FixQueue
-              items={fixQueueItems}
-              total={findings.filter(f => !f.dismissed && f.status !== 'fixed').length}
-              onSelect={handleFixQueueSelect}
-              emptyMessage="All open findings have been triaged. Re-audit to track regressions."
-            />
-          )}
-
           {/* ── Improvement tip ─────────────────────────────── */}
           <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-signal/5 border border-signal/20">
             <RefreshCw size={15} className="text-signal flex-shrink-0" />
@@ -2244,25 +2133,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             </p>
           </div>
 
-          {/* ── Page Screenshot ────────────────────────────── */}
-          {auditPages[0]?.screenshot_url && (
-            <div className="mb-6 rounded-lg overflow-hidden border border-rule/30">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={auditPages[0].screenshot_url}
-                alt="Website overview"
-                className="w-full h-auto max-h-96 object-cover object-top"
-                loading="lazy"
-              />
-              <div className="px-4 py-2 bg-paper border-t border-rule/20">
-                <p className="text-xs text-m-muted">{L.homepageCaptured}</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Tab Navigation — sticky below score bar ───── */}
-          <div className={`mb-8 border-b border-rule/40 sticky z-30 -mx-4 px-4 bg-paper/95 backdrop-blur-md transition-all duration-200 ${showStickyScore ? 'top-[57px] shadow-sm' : 'top-0'}`}>
-            <nav className="flex gap-0 -mb-px overflow-x-auto" role="tablist">
+          {/* ── Tab Navigation — sticky segmented control ───── */}
+          <div className={`mb-8 sticky z-30 -mx-4 px-4 py-2 bg-paper/95 backdrop-blur-md transition-all duration-200 ${showStickyScore ? 'top-[57px] shadow-sm border-b border-rule/40' : 'top-0 border-b border-rule/30'}`}>
+            <nav
+              className="flex gap-1 p-1 rounded-xl border border-rule bg-card overflow-x-auto"
+              role="tablist"
+              aria-label="Audit sections"
+            >
               {(['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
@@ -2290,28 +2167,27 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     key={tab}
                     role="tab"
                     aria-selected={isActive}
+                    aria-controls={`tabpanel-${tab}`}
+                    id={`tab-${tab}`}
                     onClick={() => setActiveTab(tab)}
                     className={clsx(
-                      'relative flex items-center gap-2 px-4 py-3 text-[13px] font-medium transition-colors whitespace-nowrap',
+                      'flex-1 min-w-fit flex items-center justify-center gap-1.5 px-3 py-2.5 text-[13px] font-semibold rounded-lg transition-all whitespace-nowrap',
                       isActive
-                        ? 'text-ink'
-                        : 'text-m-muted hover:text-ink/70',
+                        ? 'bg-paper text-ink shadow-sm ring-1 ring-rule/60'
+                        : 'text-m-muted hover:text-ink hover:bg-paper/60',
                     )}
                   >
-                    <TabIcon size={14} className={isActive ? 'text-signal' : ''} />
+                    <TabIcon size={15} className={isActive ? 'text-signal' : 'text-m-muted'} />
                     <span>{label}</span>
                     {count !== null && count > 0 && (
                       <span
                         className={clsx(
-                          'text-[11px] font-semibold px-1.5 py-0.5 rounded-full leading-none',
-                          isActive ? 'bg-signal/10 text-signal' : 'bg-paper-2 text-m-muted',
+                          'text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center',
+                          isActive ? 'bg-signal text-white' : 'bg-paper-2 text-m-muted',
                         )}
                       >
                         {count}
                       </span>
-                    )}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-signal" />
                     )}
                   </button>
                 );
@@ -2936,36 +2812,75 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
           {/* ── TAB: Responsive ───────────────────────────── */}
           {activeTab === 'responsive' && (() => {
-            const VIEWPORT_DEFS = [
-              { name: 'Desktop', width: 1440, icon: <Globe size={16} />, desc: '1440px wide' },
-              { name: 'Small Desktop', width: 1024, icon: <Globe size={14} />, desc: '1024px wide' },
-              { name: 'Tablet', width: 768, icon: <Smartphone size={14} className="rotate-90" />, desc: '768px wide' },
-              { name: 'Mobile', width: 375, icon: <Smartphone size={14} />, desc: '375px wide' },
-            ];
-            // Filter responsive findings from all findings
+            // Filter responsive-related findings using same heuristic as the tab count.
             const responsiveFindings = findings.filter((f: any) => {
               const t = (f.title || '').toLowerCase();
               const d = (f.description || '').toLowerCase();
               return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted') || d.includes('viewport') || d.includes('responsive design');
             });
-            // Group by viewport
-            const byViewport: Record<string, typeof responsiveFindings> = {};
-            for (const vp of VIEWPORT_DEFS) {
-              byViewport[vp.name] = responsiveFindings.filter((f: any) => {
-                const text = `${f.title} ${f.description}`.toLowerCase();
-                return text.includes(vp.name.toLowerCase()) || text.includes(`${vp.width}px`) || text.includes(`${vp.width} `);
-              });
-            }
-            // Findings not tied to a specific viewport
-            const assigned = new Set(Object.values(byViewport).flat().map((f: any) => f.id));
-            const general = responsiveFindings.filter((f: any) => !assigned.has(f.id));
+
+            // Buckets by viewport based on title/description text. Mobile/tablet/desktop only — we don't claim 4 distinct test runs.
+            const matchVp = (f: any, keys: string[]) => {
+              const text = `${f.title} ${f.description}`.toLowerCase();
+              return keys.some(k => text.includes(k));
+            };
+            const mobileIssues = responsiveFindings.filter((f: any) => matchVp(f, ['mobile', '375', 'touch target', 'text too small']));
+            const tabletIssues = responsiveFindings.filter((f: any) => matchVp(f, ['tablet', '768']));
+            const desktopIssues = responsiveFindings.filter((f: any) => matchVp(f, ['desktop', '1440', '1024']));
+            const assigned = new Set([...mobileIssues, ...tabletIssues, ...desktopIssues].map((f: any) => f.id));
+            const generalIssues = responsiveFindings.filter((f: any) => !assigned.has(f.id));
+
+            const mobilePages = auditPages.filter(p => p.is_mobile_friendly !== null);
+            const mobileFriendlyCount = mobilePages.filter(p => p.is_mobile_friendly).length;
+            const pagesWithViewportMeta = auditPages.filter(p => p.viewport_meta && p.viewport_meta.length > 0).length;
+            const hasResponsiveSignal = responsiveFindings.length > 0 || mobilePages.length > 0;
+
+            const ViewportRow = ({ label, width, count, items }: { label: string; width: string; count: number; items: typeof responsiveFindings }) => {
+              const status = count === 0 ? 'No issues captured' : `${count} issue${count !== 1 ? 's' : ''}`;
+              const statusClass = count === 0 ? 'text-m-muted' : 'text-warn';
+              return (
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 flex items-center gap-3 border-b border-rule/40">
+                    <span className="text-m-muted"><Smartphone size={15} /></span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-ink">{label}</p>
+                      <p className="text-[11px] text-m-muted">{width}</p>
+                    </div>
+                    <span className={`text-[12px] font-semibold ${statusClass}`}>{status}</span>
+                  </div>
+                  {items.length > 0 && (
+                    <div className="divide-y divide-rule/30">
+                      {items.map((f: any) => (
+                        <div key={f.id} className="px-5 py-3">
+                          <div className="flex items-start gap-2.5">
+                            <span className="w-1 h-1 rounded-full bg-warn mt-2 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-medium text-ink mb-0.5">{f.title}</p>
+                              {f.description && <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>}
+                              {f.recommendation && (
+                                <p className="text-[12px] text-ink-2 mt-1.5 leading-relaxed">
+                                  <span className="font-semibold text-ink">Fix: </span>{f.recommendation}
+                                </p>
+                              )}
+                              {f.page_url && (
+                                <p className="text-[11px] text-m-muted/70 mt-1 truncate">{f.page_url}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            };
 
             return (
-              <div className="space-y-6">
-                {/* Transparency alerts for responsive tab */}
+              <div className="space-y-5">
+                {/* Transparency alerts */}
                 {auditLimitations.filter(l => l.tab === 'responsive').map((limitation) => (
-                  <div key={limitation.id} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-start gap-3">
-                    <Info size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <div key={limitation.id} className="p-4 rounded-xl bg-paper-2 border border-rule/40 flex items-start gap-3">
+                    <Info size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink mb-0.5">{limitation.title}</p>
                       <p className="text-xs text-m-muted leading-relaxed">{limitation.description}</p>
@@ -2973,157 +2888,113 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                 ))}
 
-                {/* Hero card */}
-                <div className="rounded-xl border-2 border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
-                  <div className="px-6 py-5 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Smartphone size={18} className="text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">Responsive design check</h3>
-                      <p className="text-[13px] text-ink-2 leading-relaxed">
-                        Every page is tested at 4 viewport sizes using a real browser. We check for layout breaks, touch target sizes, text readability, image overflow, and navigation adaptation. Issues are grouped by viewport below.
-                      </p>
+                {/* Summary card — muted, scannable */}
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Smartphone size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[14px] font-heading font-semibold text-ink mb-0.5">Responsive design summary</h3>
+                      <p className="text-[12px] text-m-muted leading-relaxed">What we captured about how this site adapts to different screen sizes.</p>
                     </div>
                   </div>
+                  <div className="grid grid-cols-3 gap-3 mt-4">
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Pages checked</p>
+                      <p className="text-[18px] font-bold text-ink mt-1">{auditPages.length}</p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">With viewport meta</p>
+                      <p className="text-[18px] font-bold text-ink mt-1">{pagesWithViewportMeta}<span className="text-[12px] font-medium text-m-muted">/{auditPages.length}</span></p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Responsive issues</p>
+                      <p className={`text-[18px] font-bold mt-1 ${responsiveFindings.length === 0 ? 'text-ink' : 'text-warn'}`}>{responsiveFindings.length}</p>
+                    </div>
+                  </div>
+                  {mobilePages.length > 0 && (
+                    <p className="text-[12px] text-m-muted mt-3">
+                      <span className="font-semibold text-ink">{mobileFriendlyCount}/{mobilePages.length}</span> pages reported mobile-friendly by Lighthouse.
+                    </p>
+                  )}
                 </div>
 
-                {/* Viewport status overview */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {VIEWPORT_DEFS.map(vp => {
-                    const vpFindings = byViewport[vp.name] || [];
-                    const hasCritical = vpFindings.some((f: any) => f.severity === 'critical' || f.severity === 'high');
-                    const hasWarnings = vpFindings.some((f: any) => f.severity === 'medium');
-                    const status = vpFindings.length === 0 ? 'pass' : hasCritical ? 'fail' : hasWarnings ? 'warn' : 'warn';
-                    const statusColor = status === 'pass' ? 'text-ok' : status === 'warn' ? 'text-warn' : 'text-severe';
-                    const statusBg = status === 'pass' ? 'bg-ok/5 border-ok/20' : status === 'warn' ? 'bg-warn/5 border-warn/20' : 'bg-severe/5 border-severe/20';
-                    const statusLabel = status === 'pass' ? 'No issues' : `${vpFindings.length} issue${vpFindings.length !== 1 ? 's' : ''}`;
-                    // Mobile-friendly from page data
-                    const mobilePages = auditPages.filter(p => p.is_mobile_friendly !== null);
-                    const mobileFriendlyCount = mobilePages.filter(p => p.is_mobile_friendly).length;
-                    return (
-                      <div key={vp.name} className={`rounded-xl border p-4 ${statusBg}`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={statusColor}>{vp.icon}</span>
-                          <span className="text-[13px] font-semibold text-ink">{vp.name}</span>
-                        </div>
-                        <p className="text-[11px] text-m-muted mb-1">{vp.desc}</p>
-                        <span className={`text-[12px] font-semibold ${statusColor}`}>{statusLabel}</span>
-                        {vp.name === 'Mobile' && mobilePages.length > 0 && (
-                          <p className="text-[10px] text-m-muted mt-1">{mobileFriendlyCount}/{mobilePages.length} pages mobile-friendly</p>
-                        )}
+                {/* Honest empty state — when no responsive-specific findings */}
+                {!hasResponsiveSignal && (
+                  <div className="rounded-xl border border-rule bg-card p-5">
+                    <div className="flex items-start gap-3">
+                      <Info size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-[13px] font-semibold text-ink mb-1">No responsive-specific issues captured</p>
+                        <p className="text-[12px] text-m-muted leading-relaxed mb-3">
+                          The audit didn't surface any findings tied to viewport, touch targets, mobile layout, or text size. That doesn't guarantee the site is responsive — it means automated checks didn't catch anything obvious.
+                        </p>
+                        <p className="text-[12px] font-semibold text-ink mb-1.5">Verify manually:</p>
+                        <ul className="space-y-1 text-[12px] text-ink-2 leading-relaxed">
+                          <li className="flex items-start gap-2"><span className="text-m-muted mt-0.5">•</span><span>Open the site on a real phone and check that the main flow (read, sign up, buy) works without horizontal scrolling.</span></li>
+                          <li className="flex items-start gap-2"><span className="text-m-muted mt-0.5">•</span><span>Use Chrome DevTools device emulation to inspect 375px and 768px breakpoints for layout shifts.</span></li>
+                          <li className="flex items-start gap-2"><span className="text-m-muted mt-0.5">•</span><span>Tap interactive elements with your thumb — buttons and links should be at least 44×44px.</span></li>
+                          <li className="flex items-start gap-2"><span className="text-m-muted mt-0.5">•</span><span>Confirm key images and tables don't overflow the screen on narrow viewports.</span></li>
+                        </ul>
                       </div>
-                    );
-                  })}
-                </div>
-
-                {/* Findings by viewport */}
-                {VIEWPORT_DEFS.map(vp => {
-                  const vpFindings = byViewport[vp.name] || [];
-                  if (vpFindings.length === 0) return null;
-                  return (
-                    <div key={vp.name} className="rounded-xl border border-rule bg-card overflow-hidden">
-                      <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                        <span className="text-signal">{vp.icon}</span>
-                        <h3 className="text-sm font-heading font-semibold text-ink">{vp.name} ({vp.desc})</h3>
-                        <span className="ml-auto text-xs text-m-muted font-medium">{vpFindings.length} issue{vpFindings.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div className="divide-y divide-rule/30">
-                        {vpFindings.map((f: any) => {
-                          const sevColor = f.severity === 'critical' ? 'text-severe bg-severe/10' : f.severity === 'high' ? 'text-severe bg-severe/10' : f.severity === 'medium' ? 'text-warn bg-warn/10' : 'text-m-muted bg-paper-2';
-                          return (
-                            <div key={f.id} className="px-5 py-4">
-                              <div className="flex items-start gap-3">
-                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sevColor} flex-shrink-0 mt-0.5`}>
-                                  {f.severity}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[13px] font-medium text-ink mb-1">{f.title}</p>
-                                  <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>
-                                  {f.recommendation && (
-                                    <p className="text-[12px] text-ok mt-2 leading-relaxed">
-                                      <span className="font-semibold">Fix: </span>{f.recommendation}
-                                    </p>
-                                  )}
-                                  {f.page_url && (
-                                    <p className="text-[10px] text-m-muted/60 mt-1">Page: {f.page_url}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* General responsive findings */}
-                {general.length > 0 && (
-                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                    <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                      <Smartphone size={16} className="text-signal" />
-                      <h3 className="text-sm font-heading font-semibold text-ink">General responsive issues</h3>
-                      <span className="ml-auto text-xs text-m-muted font-medium">{general.length} issue{general.length !== 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="divide-y divide-rule/30">
-                      {general.map((f: any) => {
-                        const sevColor = f.severity === 'critical' ? 'text-severe bg-severe/10' : f.severity === 'high' ? 'text-severe bg-severe/10' : f.severity === 'medium' ? 'text-warn bg-warn/10' : 'text-m-muted bg-paper-2';
-                        return (
-                          <div key={f.id} className="px-5 py-4">
-                            <div className="flex items-start gap-3">
-                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${sevColor} flex-shrink-0 mt-0.5`}>
-                                {f.severity}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-ink mb-1">{f.title}</p>
-                                <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>
-                                {f.recommendation && (
-                                  <p className="text-[12px] text-ok mt-2 leading-relaxed">
-                                    <span className="font-semibold">Fix: </span>{f.recommendation}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Page-level mobile friendliness */}
-                {auditPages.some(p => p.is_mobile_friendly !== null) && (
+                {/* Viewport sections — only render rows for buckets with data, or a compact row showing "no issues captured" */}
+                {hasResponsiveSignal && (
+                  <div className="space-y-3">
+                    <ViewportRow label="Mobile" width="375 px" count={mobileIssues.length} items={mobileIssues} />
+                    <ViewportRow label="Tablet" width="768 px" count={tabletIssues.length} items={tabletIssues} />
+                    <ViewportRow label="Desktop" width="1024 / 1440 px" count={desktopIssues.length} items={desktopIssues} />
+                  </div>
+                )}
+
+                {/* General responsive findings — not attributed to a viewport */}
+                {generalIssues.length > 0 && (
                   <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                    <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                      <CheckCircle2 size={16} className="text-signal" />
-                      <h3 className="text-sm font-heading font-semibold text-ink">Page-level mobile status</h3>
+                    <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                      <Smartphone size={15} className="text-m-muted" />
+                      <h3 className="text-[13px] font-semibold text-ink">Other responsive findings</h3>
+                      <span className="ml-auto text-[11px] text-m-muted font-medium">{generalIssues.length}</span>
                     </div>
                     <div className="divide-y divide-rule/30">
-                      {auditPages.filter(p => p.is_mobile_friendly !== null).map((page, i) => (
-                        <div key={i} className="px-5 py-3 flex items-center gap-3">
-                          {page.is_mobile_friendly ? (
-                            <CheckCircle2 size={14} className="text-ok flex-shrink-0" />
-                          ) : (
-                            <AlertTriangle size={14} className="text-warn flex-shrink-0" />
+                      {generalIssues.map((f: any) => (
+                        <div key={f.id} className="px-5 py-3">
+                          <p className="text-[13px] font-medium text-ink mb-0.5">{f.title}</p>
+                          {f.description && <p className="text-[12px] text-m-muted leading-relaxed">{f.description}</p>}
+                          {f.recommendation && (
+                            <p className="text-[12px] text-ink-2 mt-1.5 leading-relaxed">
+                              <span className="font-semibold text-ink">Fix: </span>{f.recommendation}
+                            </p>
                           )}
-                          <span className="text-[13px] text-ink flex-1 truncate">{page.url}</span>
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${page.is_mobile_friendly ? 'text-ok bg-ok/10' : 'text-warn bg-warn/10'}`}>
-                            {page.is_mobile_friendly ? 'Mobile-friendly' : 'Issues found'}
-                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* All clear message when no issues found */}
-                {responsiveFindings.length === 0 && (
-                  <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4 flex items-start gap-3">
-                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[13px] font-medium text-ink">No responsive issues found</p>
-                      <p className="text-[12px] text-m-muted mt-0.5">All pages passed viewport checks across desktop, tablet, and mobile breakpoints.</p>
+                {/* Per-page mobile status — kept, but neutral palette */}
+                {mobilePages.length > 0 && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                      <CheckCircle2 size={15} className="text-m-muted" />
+                      <h3 className="text-[13px] font-semibold text-ink">Per-page mobile status</h3>
+                      <span className="ml-auto text-[11px] text-m-muted font-medium">{mobileFriendlyCount}/{mobilePages.length} ok</span>
+                    </div>
+                    <div className="divide-y divide-rule/30">
+                      {mobilePages.map((page, i) => (
+                        <div key={i} className="px-5 py-2.5 flex items-center gap-3">
+                          {page.is_mobile_friendly ? (
+                            <CheckCircle2 size={13} className="text-ok flex-shrink-0" />
+                          ) : (
+                            <AlertTriangle size={13} className="text-warn flex-shrink-0" />
+                          )}
+                          <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className={`text-[11px] font-medium ${page.is_mobile_friendly ? 'text-ok' : 'text-warn'}`}>
+                            {page.is_mobile_friendly ? 'Mobile-friendly' : 'Needs review'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -3720,237 +3591,257 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {/* ═══════════════════════════════════════════════════════
               INTELLIGENCE TAB
               ═══════════════════════════════════════════════════════ */}
-          {activeTab === 'intelligence' && (
-            <div className="space-y-6">
+          {activeTab === 'intelligence' && (() => {
+            const probes = intelligenceData?.modelProbes || [];
+            const hasProbes = probes.length > 0;
+            const bench = intelligenceData?.benchmarkPosition;
+            const recs = intelligenceData?.recommendations || [];
+            const avgAccuracy = intelligenceData?.modelBenchmarks?.averageAccuracy ?? (hasProbes ? Math.round(probes.reduce((s: number, p: any) => s + (p.accuracy_score || 0), 0) / probes.length) : null);
+            const totalHallucinated = probes.reduce((s: number, p: any) => s + (p.hallucinated_count || 0), 0);
+            const totalQuestions = probes.reduce((s: number, p: any) => s + (p.results_json?.length || 0), 0);
 
-              {/* Intro explanation — prominent hero card */}
-              <div className="rounded-xl border-2 border-emerald-500/15 bg-emerald-500/5 overflow-hidden">
-                <div className="px-6 py-5 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles size={18} className="text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-heading font-semibold text-ink mb-1.5">How AI models represent your site</h3>
-                    <p className="text-[13px] text-ink-2 leading-relaxed">
-                      We asked leading AI models factual questions about your site and graded their answers against your actual content. This reveals how accurately AI understands your brand, products, and messaging — and where it gets things wrong.
-                    </p>
+            const accuracyVerdict = avgAccuracy == null
+              ? null
+              : avgAccuracy >= 70 ? { label: 'AI represents your site accurately', tone: 'ok' as const }
+              : avgAccuracy >= 40 ? { label: 'AI is partially accurate about your site', tone: 'warn' as const }
+              : { label: "AI doesn't know your site well", tone: 'severe' as const };
+
+            const hasAny = hasProbes || recs.length > 0 || bench;
+
+            return (
+              <div className="space-y-5">
+                {/* Compact intro */}
+                <div className="rounded-xl border border-rule bg-card p-4 flex items-start gap-3">
+                  <Sparkles size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">AI & competitive intelligence</h3>
+                    <p className="text-[12px] text-m-muted leading-relaxed">How AI models represent your site, how you compare to your industry, and the actions most likely to move your score.</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Model benchmark comparison — only show when 2+ models available */}
-              {intelligenceData?.modelProbes?.length > 1 && (
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <BarChart3 size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">What AI models say about your site</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.modelProbes.length} models tested</span>
-                  </div>
-                  <div className="p-5">
-                    {intelligenceData.modelBenchmarks?.insight && (
-                      <p className="text-[13px] text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
-                    )}
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {intelligenceData.modelProbes.map((probe: any) => {
-                        const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
-                        const scBg = probe.accuracy_score >= 70 ? 'bg-ok/5' : probe.accuracy_score >= 40 ? 'bg-warn/5' : 'bg-severe/5';
-                        // Brand-tinted backgrounds per model
-                        const modelTint = probe.model_label === 'Claude' ? 'rgba(217, 119, 87, 0.06)'
-                          : probe.model_label === 'GPT-4o' ? 'rgba(16, 163, 127, 0.06)'
-                          : 'rgba(66, 133, 244, 0.06)';
-                        return (
-                          <div key={probe.id} className="rounded-xl border border-rule p-4" style={{ background: modelTint }}>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
-                              <span className={`text-lg font-bold px-2 py-0.5 rounded-lg ${sc} ${scBg}`}>{probe.accuracy_score}%</span>
-                            </div>
-                            <div className="w-full h-1.5 rounded-full bg-paper-2 mb-3">
-                              <div className={`h-full rounded-full transition-all ${probe.accuracy_score >= 70 ? '[background:var(--ok)]' : probe.accuracy_score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${probe.accuracy_score}%` }} />
-                            </div>
-                            <div className="flex gap-3 text-[11px] font-medium">
-                              <span className="text-ok">{probe.accurate_count} correct</span>
-                              <span className="text-warn">{probe.partial_count} partial</span>
-                              <span className="text-severe">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)} wrong</span>
-                            </div>
-                            {probe.results_json?.length > 0 && (
-                              <details className="mt-3">
-                                <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
-                                <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
-                                  {probe.results_json.map((r: any, j: number) => (
-                                    <div key={j} className="text-xs">
-                                      <p className="font-medium text-ink">{r.question}</p>
-                                      <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
-                                      <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                        r.accuracy === 'accurate' ? 'text-ok bg-ok/10'
-                                          : r.accuracy === 'partial' ? 'text-warn bg-warn/10'
-                                            : r.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
-                                              : r.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
-                                              : 'text-m-muted bg-paper-2'
-                                      }`}>{r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partially correct' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Incorrect' : r.accuracy === 'no_data' ? 'No data' : 'Pending'}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </details>
-                            )}
-                          </div>
-                        );
-                      })}
+                {/* Bottom line — synthesized verdict + next move (only when data supports it) */}
+                {hasAny && (accuracyVerdict || bench || recs.length > 0) && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
+                      <Lightbulb size={15} className="text-signal" />
+                      <h3 className="text-[13px] font-semibold text-ink">Bottom line</h3>
                     </div>
-
-                    {/* Contextual note — differs based on overall accuracy */}
-                    {(() => {
-                      const avgScore = intelligenceData.modelBenchmarks?.averageAccuracy ?? 0;
-                      const totalHallucinated = (intelligenceData.modelProbes || []).reduce((s: number, p: any) => s + (p.hallucinated_count || 0), 0);
-                      if (avgScore <= 15) {
-                        return (
-                          <div className="mt-5 p-4 rounded-xl border border-rule bg-paper-2">
-                            <div className="flex items-start gap-2.5">
-                              <AlertTriangle size={15} className="text-severe flex-shrink-0 mt-0.5" />
-                              <div>
-                                <p className="text-[13px] font-semibold text-ink mb-1">AI doesn't know your site yet</p>
-                                <p className="text-[13px] text-ink-2 leading-relaxed mb-2">
-                                  {totalHallucinated > 0
-                                    ? 'AI models are making up information about your site — users asking AI about you will get wrong answers. This is common for newer or niche products that aren\'t well represented in AI training data.'
-                                    : 'None of the AI models tested have reliable information about your site. This is expected for newer products or smaller brands that haven\'t built enough online presence yet.'}
-                                </p>
-                                <p className="text-[12px] font-semibold text-ink mb-1">What to do about it:</p>
-                                <div className="space-y-1">
-                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">1.</span> Add JSON-LD structured data (Organization + WebSite schema) to your homepage</p>
-                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">2.</span> Create an llms.txt file at your domain root with a clear description of your product</p>
-                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">3.</span> Make sure your homepage explicitly answers: what you are, what you offer, and what makes you different</p>
-                                  <p className="text-[12px] text-ink-2 leading-relaxed flex items-start gap-1.5"><span className="text-signal mt-0.5 flex-shrink-0">4.</span> Build external presence through directories, reviews, and press mentions that AI models can reference</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="mt-5 p-4 rounded-xl border border-rule bg-card">
-                          <div className="flex items-start gap-2.5">
-                            <Info size={15} className="text-signal flex-shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-[13px] font-semibold text-ink mb-1">Why this matters</p>
-                              <p className="text-[13px] text-ink-2 leading-relaxed">
-                                When AI gets your information wrong, users who rely on AI assistants receive inaccurate answers about your products, pricing, or services. Improving your structured data, content clarity, and online presence helps AI models represent you accurately.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <div className="px-5 py-4 space-y-2.5">
+                      {accuracyVerdict && (
+                        <p className="text-[13px] text-ink leading-relaxed">
+                          <span className={`font-semibold ${accuracyVerdict.tone === 'ok' ? 'text-ok' : accuracyVerdict.tone === 'warn' ? 'text-warn' : 'text-severe'}`}>{accuracyVerdict.label}.</span>
+                          {' '}
+                          <span className="text-m-muted">
+                            Average accuracy across {probes.length} model{probes.length !== 1 ? 's' : ''} is {avgAccuracy}%
+                            {totalHallucinated > 0 && `, with ${totalHallucinated} fabricated answer${totalHallucinated !== 1 ? 's' : ''}`}.
+                          </span>
+                        </p>
+                      )}
+                      {bench && (
+                        <p className="text-[13px] text-ink leading-relaxed">
+                          <span className="font-semibold">{bench.rankLabel}</span>
+                          <span className="text-m-muted"> among {intelligenceData.industry} sites — score {bench.userScore} vs. industry average {bench.benchmark.avgScore} ({bench.deltaFromAvg >= 0 ? '+' : ''}{bench.deltaFromAvg}).</span>
+                        </p>
+                      )}
+                      {recs.length > 0 && (
+                        <p className="text-[13px] text-ink leading-relaxed">
+                          <span className="font-semibold">Top next move:</span>
+                          <span className="text-m-muted"> {recs[0].action} <span className="text-ok font-semibold">+{recs[0].predicted_impact}</span> projected impact.</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Industry benchmark */}
-              {intelligenceData?.benchmarkPosition && (
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <TrendingUp size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">How you compare</h3>
-                    <span className="ml-auto text-xs font-semibold text-signal tracking-[0.03em] uppercase bg-signal/10 px-2 py-0.5 rounded-full">{intelligenceData.industry}</span>
-                  </div>
-                  <div className="p-5">
-                    <div className="grid gap-3 sm:grid-cols-3 mb-4">
-                      {/* Your score */}
-                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: 'color-mix(in srgb, var(--signal) 6%, var(--card))' }}>
-                        <div className={`text-2xl font-bold ${scoreColor(intelligenceData.benchmarkPosition.userScore)}`}>{intelligenceData.benchmarkPosition.userScore}</div>
-                        <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
-                      </div>
-                      {/* Industry average */}
-                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: 'color-mix(in srgb, var(--ink) 3%, var(--card))' }}>
-                        <div className="text-2xl font-bold text-m-muted">{intelligenceData.benchmarkPosition.benchmark.avgScore}</div>
-                        <div className="text-[11px] font-medium text-m-muted mt-1">{intelligenceData.industry} average</div>
-                      </div>
-                      {/* Difference */}
-                      <div className="text-center p-4 rounded-xl border border-rule" style={{ background: (() => { const d = intelligenceData.benchmarkPosition.deltaFromAvg; return d > 0 ? 'color-mix(in srgb, var(--ok) 6%, var(--card))' : d < 0 ? 'color-mix(in srgb, var(--severe) 5%, var(--card))' : 'var(--card)'; })() }}>
-                        {(() => {
-                          const delta = intelligenceData.benchmarkPosition.deltaFromAvg;
-                          const color = delta > 0 ? 'text-ok' : delta < 0 ? 'text-severe' : 'text-m-muted';
-                          const sign = delta > 0 ? '+' : '';
+                {/* AI model accuracy — only when probes exist */}
+                {hasProbes && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                      <BarChart3 size={15} className="text-m-muted" />
+                      <h3 className="text-[13px] font-semibold text-ink">How accurately AI describes your site</h3>
+                      <span className="ml-auto text-[11px] text-m-muted">{probes.length} model{probes.length !== 1 ? 's' : ''}{totalQuestions > 0 && ` · ${totalQuestions} questions`}</span>
+                    </div>
+                    <div className="p-5">
+                      {intelligenceData.modelBenchmarks?.insight && (
+                        <p className="text-[12px] text-m-muted mb-4 leading-relaxed">{intelligenceData.modelBenchmarks.insight}</p>
+                      )}
+                      <div className={`grid gap-3 ${probes.length === 1 ? 'sm:grid-cols-1' : probes.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+                        {probes.map((probe: any) => {
+                          const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
+                          const barColor = probe.accuracy_score >= 70 ? 'bg-ok' : probe.accuracy_score >= 40 ? 'bg-warn' : 'bg-severe';
                           return (
-                            <>
-                              <div className={`text-2xl font-bold ${color}`}>{sign}{delta}</div>
-                              <div className="text-[11px] font-medium text-m-muted mt-1">vs. average</div>
-                            </>
+                            <div key={probe.id} className="rounded-lg border border-rule bg-paper p-4">
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
+                                <span className={`text-[18px] font-bold ${sc}`}>{probe.accuracy_score}%</span>
+                              </div>
+                              <div className="w-full h-1 rounded-full bg-paper-2 mb-3 overflow-hidden">
+                                <div className={`h-full ${barColor} transition-all`} style={{ width: `${probe.accuracy_score}%` }} />
+                              </div>
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-m-muted">
+                                {probe.accurate_count > 0 && <span><span className="font-semibold text-ink">{probe.accurate_count}</span> correct</span>}
+                                {probe.partial_count > 0 && <span><span className="font-semibold text-ink">{probe.partial_count}</span> partial</span>}
+                                {((probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)) > 0 && (
+                                  <span><span className="font-semibold text-ink">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)}</span> wrong</span>
+                                )}
+                              </div>
+                              {probe.results_json?.length > 0 && (
+                                <details className="mt-3">
+                                  <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
+                                  <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
+                                    {probe.results_json.map((r: any, j: number) => {
+                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
+                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' || r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
+                                      return (
+                                        <div key={j} className="text-[11px]">
+                                          <p className="font-medium text-ink">{r.question}</p>
+                                          <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
+                                          <span className={`inline-block mt-1 text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
                           );
-                        })()}
+                        })}
                       </div>
-                    </div>
-                    {/* Rank label */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        intelligenceData.benchmarkPosition.percentile >= 75 ? 'bg-ok/10 text-ok'
-                          : intelligenceData.benchmarkPosition.percentile >= 50 ? 'bg-warn/10 text-warn'
-                            : 'bg-severe/10 text-severe'
-                      }`}>{intelligenceData.benchmarkPosition.rankLabel}</span>
-                      <span className="text-[11px] text-m-muted">among {intelligenceData.benchmarkPosition.comparedAgainst || `${intelligenceData.industry} sites`}</span>
-                    </div>
-                    <p className="text-[13px] text-m-muted leading-relaxed">{intelligenceData.benchmarkPosition.insight}</p>
-                    {intelligenceData.benchmarkPosition.benchmark.sampleSize > 0 && (
-                      <p className="text-[10px] text-m-muted/60 mt-2">Based on {intelligenceData.benchmarkPosition.benchmark.sampleSize} audited sites in {intelligenceData.industry}</p>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              {/* Actionable recommendations */}
-              {intelligenceData?.recommendations?.length > 0 && (
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <Lightbulb size={16} className="text-signal" />
-                    <h3 className="text-sm font-heading font-semibold text-ink">What to improve next</h3>
-                    <span className="ml-auto text-xs text-m-muted font-medium">{intelligenceData.recommendations.length} actions</span>
+                      {/* What to do — only when accuracy is low and we have probes */}
+                      {avgAccuracy != null && avgAccuracy < 40 && (
+                        <div className="mt-5 p-4 rounded-lg border border-rule bg-paper">
+                          <p className="text-[12px] font-semibold text-ink mb-2">What this means and what to do</p>
+                          <p className="text-[12px] text-m-muted leading-relaxed mb-3">
+                            {totalHallucinated > 0
+                              ? 'AI assistants are fabricating answers about your site. Users asking ChatGPT or similar about you will get wrong information.'
+                              : 'AI models lack reliable information about your site. Users relying on AI for research will not learn about you accurately.'}
+                          </p>
+                          <ol className="space-y-1.5 text-[12px] text-ink-2 leading-relaxed list-decimal list-inside">
+                            <li>Add JSON-LD structured data (Organization + WebSite schema) to the homepage.</li>
+                            <li>Publish an <code className="text-[11px] bg-paper-2 px-1 py-0.5 rounded">llms.txt</code> at the domain root describing the product clearly.</li>
+                            <li>Make sure the homepage explicitly answers: what you are, what you offer, what makes you different.</li>
+                            <li>Build external presence — directories, reviews, press — so AI models have references to learn from.</li>
+                          </ol>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="px-5 py-3 border-b border-rule/20">
-                    <p className="text-[11px] text-m-muted leading-relaxed">
-                      Based on patterns from other audits, these actions are most likely to improve your score. Higher impact actions are listed first.
-                    </p>
+                )}
+
+                {/* Industry benchmark — muted palette */}
+                {bench && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                      <TrendingUp size={15} className="text-m-muted" />
+                      <h3 className="text-[13px] font-semibold text-ink">How you compare in your industry</h3>
+                      <span className="ml-auto text-[11px] font-medium text-m-muted">{intelligenceData.industry}</span>
+                    </div>
+                    <div className="p-5">
+                      <div className="grid gap-3 sm:grid-cols-3 mb-4">
+                        <div className="text-center p-4 rounded-lg border border-rule bg-paper">
+                          <div className={`text-[22px] font-bold ${scoreColor(bench.userScore)}`}>{bench.userScore}</div>
+                          <div className="text-[11px] font-medium text-m-muted mt-1">Your score</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg border border-rule bg-paper">
+                          <div className="text-[22px] font-bold text-ink">{bench.benchmark.avgScore}</div>
+                          <div className="text-[11px] font-medium text-m-muted mt-1">Industry average</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg border border-rule bg-paper">
+                          {(() => {
+                            const delta = bench.deltaFromAvg;
+                            const color = delta > 0 ? 'text-ok' : delta < 0 ? 'text-severe' : 'text-m-muted';
+                            const sign = delta > 0 ? '+' : '';
+                            return (
+                              <>
+                                <div className={`text-[22px] font-bold ${color}`}>{sign}{delta}</div>
+                                <div className="text-[11px] font-medium text-m-muted mt-1">vs. average</div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className={`text-[11px] font-semibold uppercase tracking-[0.03em] ${
+                          bench.percentile >= 75 ? 'text-ok'
+                            : bench.percentile >= 50 ? 'text-warn'
+                              : 'text-severe'
+                        }`}>{bench.rankLabel}</span>
+                        <span className="text-[11px] text-m-muted">among {bench.comparedAgainst || `${intelligenceData.industry} sites`}</span>
+                      </div>
+                      <p className="text-[12px] text-ink-2 leading-relaxed">{bench.insight}</p>
+                      {bench.benchmark.sampleSize > 0 && (
+                        <p className="text-[10px] text-m-muted/70 mt-2">Based on {bench.benchmark.sampleSize} audited sites in {intelligenceData.industry}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="divide-y divide-rule/30">
-                    {intelligenceData.recommendations.map((rec: any, i: number) => {
-                      const confColor = rec.confidence === 'high' ? 'bg-ok/10 text-ok border-ok/20' : rec.confidence === 'medium' ? 'bg-warn/10 text-warn border-warn/20' : 'bg-paper-2 text-m-muted border-rule';
-                      return (
-                        <div key={rec.id || i} className="px-5 py-4">
+                )}
+
+                {/* Actionable recommendations */}
+                {recs.length > 0 && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                      <Lightbulb size={15} className="text-m-muted" />
+                      <h3 className="text-[13px] font-semibold text-ink">Predicted next actions</h3>
+                      <span className="ml-auto text-[11px] text-m-muted font-medium">{recs.length} action{recs.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="px-5 py-2.5 border-b border-rule/20 bg-paper/40">
+                      <p className="text-[11px] text-m-muted leading-relaxed">
+                        Ranked by predicted score lift based on patterns from comparable audits.
+                      </p>
+                    </div>
+                    <div className="divide-y divide-rule/30">
+                      {recs.map((rec: any, i: number) => (
+                        <div key={rec.id || i} className="px-5 py-3.5">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-ok/10 border border-ok/20">
-                              <span className="text-sm font-bold text-ok">+{rec.predicted_impact}</span>
+                            <div className="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center bg-paper border border-rule">
+                              <span className="text-[12px] font-bold text-ok">+{rec.predicted_impact}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-medium text-ink">{rec.action}</p>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${confColor}`}>
+                              <p className="text-[13px] font-medium text-ink leading-snug">{rec.action}</p>
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span className={`text-[10px] font-semibold uppercase tracking-[0.03em] ${
+                                  rec.confidence === 'high' ? 'text-ok' : rec.confidence === 'medium' ? 'text-warn' : 'text-m-muted'
+                                }`}>
                                   {rec.confidence === 'high' ? 'High confidence' : rec.confidence === 'medium' ? 'Medium confidence' : 'Low confidence'}
                                 </span>
-                                <span className="text-[10px] text-m-muted">{rec.category}</span>
+                                {rec.category && <span className="text-[10px] text-m-muted">· {rec.category}</span>}
                               </div>
                               {rec.evidence && (
-                                <p className="text-[12px] text-m-muted mt-2 leading-relaxed">{rec.evidence}</p>
+                                <p className="text-[12px] text-m-muted mt-1.5 leading-relaxed">{rec.evidence}</p>
                               )}
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Empty state */}
-              {(!intelligenceData || (
-                (!intelligenceData.modelProbes || intelligenceData.modelProbes.length === 0) &&
-                (!intelligenceData.recommendations || intelligenceData.recommendations.length === 0) &&
-                !intelligenceData.benchmarkPosition
-              )) && (
-                <div className="text-center py-12">
-                  <Sparkles size={32} className="mx-auto text-m-muted mb-3 opacity-40" />
-                  <p className="text-sm text-m-muted">Intelligence data will appear here after your next audit.</p>
-                  <p className="text-xs text-m-muted/60 mt-1">Compares how AI models represent your site, benchmarks you against your industry, and suggests what to fix first.</p>
-                </div>
-              )}
-            </div>
-          )}
+                {/* Honest "not captured" notes when individual sections are missing */}
+                {hasAny && (!hasProbes || !bench || recs.length === 0) && (
+                  <div className="rounded-xl border border-rule bg-paper-2 px-5 py-3.5">
+                    <p className="text-[11px] font-semibold text-ink mb-1">Some intelligence sections aren't available for this audit</p>
+                    <ul className="text-[11px] text-m-muted space-y-0.5">
+                      {!hasProbes && <li>· Multi-model AI accuracy probes were not run.</li>}
+                      {!bench && <li>· Industry benchmark position is not available yet.</li>}
+                      {recs.length === 0 && <li>· No predictive recommendations were generated.</li>}
+                    </ul>
+                    <p className="text-[11px] text-m-muted mt-2">Re-run the audit (or use Dig Deeper) to capture missing sections.</p>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {!hasAny && (
+                  <div className="rounded-xl border border-rule bg-card text-center py-12 px-6">
+                    <Sparkles size={28} className="mx-auto text-m-muted/50 mb-3" />
+                    <p className="text-[13px] font-medium text-ink">No intelligence data captured yet</p>
+                    <p className="text-[12px] text-m-muted mt-1 max-w-sm mx-auto">Once captured, this tab compares how AI models represent your site, benchmarks you against your industry, and ranks the next actions most likely to lift your score.</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── Bottom action bar ────────────────────────── */}
           <div className="mt-8 mb-4">
