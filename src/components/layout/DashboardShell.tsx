@@ -206,8 +206,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // audit detail tab. When no audit exists yet, fall back to /dashboard/audits
   // so the user lands on a useful page rather than a dead link.
   const auditTabHref = (tab: string) => {
+    if (tab === 'overview') return '/dashboard/audits';
     if (selectedSite?.kind === 'site' && selectedSite.auditId) {
-      const hash = tab === 'overview' ? '' : `#${tab}`;
+      const hash = tab === 'summary' ? '' : `#${tab}`;
       return `/dashboard/audits/${selectedSite.auditId}${hash}`;
     }
     return '/dashboard/audits';
@@ -252,14 +253,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       label: 'Audit',
       items: [
         { label: 'Overview', href: auditTabHref('overview'), icon: BarChart3, matchHash: 'overview' },
+        { label: 'Summary', href: auditTabHref('summary'), icon: LayoutDashboard, matchHash: 'summary' },
         { label: 'Findings', href: auditTabHref('findings'), icon: AlertTriangle, matchHash: 'findings' },
         { label: 'Pages', href: auditTabHref('pages'), icon: Globe, matchHash: 'pages' },
         { label: 'Responsive', href: auditTabHref('responsive'), icon: Smartphone, matchHash: 'responsive' },
-      ],
-    },
-    {
-      label: 'AI & Discovery',
-      items: [
         { label: 'AI X-Ray', href: auditTabHref('ai_xray'), icon: Brain, matchHash: 'ai_xray' },
         { label: 'Intelligence', href: auditTabHref('intelligence'), icon: Sparkles, matchHash: 'intelligence' },
       ],
@@ -268,7 +265,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       label: 'Brand',
       items: [
         { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
-        { label: 'All audits', href: '/dashboard/audits', icon: FileSearch },
+        { label: 'Brand audit', href: '/dashboard/audits', icon: FileSearch },
       ],
     },
     {
@@ -281,11 +278,15 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   ];
 
   const isActive = (item: NavItem) => {
+    // "Overview" now links to /dashboard/audits (all audits list)
+    if (item.matchHash === 'overview') {
+      return pathname === '/dashboard/audits' && !onAuditDetail;
+    }
     // Hash-aware audit feature nav: only highlight when on the matching detail
-    // page AND the current hash matches (or it's overview with no hash).
+    // page AND the current hash matches (or it's summary with no hash).
     if (item.matchHash) {
       if (!onAuditDetail) return false;
-      if (item.matchHash === 'overview') return !currentHash || currentHash === 'overview';
+      if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
     }
     if (item.href === '/dashboard') return pathname === '/dashboard';
