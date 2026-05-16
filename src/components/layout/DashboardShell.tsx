@@ -224,9 +224,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   type NavGroup = { label: string | null; items: NavItem[] };
 
   const onAuditDetail = pathname?.startsWith('/dashboard/audits/') && pathname.split('/').length >= 4;
-  // We can't read window.location.hash on the server pass. Active state for
-  // hashed nav items is computed on render using a ref-free check below.
-  const currentHash = typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '';
+  // Track URL hash in state so the sidebar's active highlight updates the
+  // moment the audit page's tab changes (via in-page click, sidebar click,
+  // or browser back/forward). usePathname does not re-render on hash change,
+  // so we have to subscribe manually.
+  const [currentHash, setCurrentHash] = useState('');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sync = () => setCurrentHash(window.location.hash.replace(/^#/, ''));
+    sync();
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    return () => {
+      window.removeEventListener('hashchange', sync);
+      window.removeEventListener('popstate', sync);
+    };
+  }, [pathname]);
 
   const navGroups: NavGroup[] = [
     {
@@ -492,27 +505,59 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
+                  // Audit feature items use real <a> tags so clicking while
+                  // already on the audit page produces a real hash navigation
+                  // and reliably fires `hashchange` — Next.js <Link> can
+                  // suppress it via pushState, which the audit page would miss.
+                  const isHashItem = !!item.matchHash;
+                  // When user clicks a feature link but no audit exists, the
+                  // href falls back to /dashboard/audits — make sure the user
+                  // sees that they're being redirected, not silently stuck.
+                  const onClick = () => setSidebarOpen(false);
+                  const linkClass = clsx(
+                    'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
+                    collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
+                    active ? 'font-semibold' : 'hover:bg-black/[0.04]',
+                  );
+                  const linkStyle = {
+                    color: active ? 'var(--ink)' : 'var(--ink-2)',
+                    background: active ? 'var(--paper-2)' : undefined,
+                  } as React.CSSProperties;
+                  const inner = (
+                    <>
+                      <Icon
+                        size={collapsed ? 17 : 15}
+                        strokeWidth={1.75}
+                        style={{ color: active ? 'var(--ink)' : 'var(--m-muted)' }}
+                      />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </>
+                  );
                   return (
                     <li key={`${group.label}-${item.label}`}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        title={collapsed ? item.label : undefined}
-                        aria-current={active ? 'page' : undefined}
-                        className={clsx(
-                          'flex items-center rounded-md transition-all text-[13px]',
-                          collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
-                          active ? 'font-semibold' : 'hover:bg-black/[0.04]',
-                        )}
-                        style={{
-                          color: active ? 'var(--ink)' : 'var(--ink-2)',
-                          background: active ? 'var(--paper-2)' : undefined,
-                          boxShadow: active && !collapsed ? 'inset 2px 0 0 var(--signal)' : undefined,
-                        }}
-                      >
-                        <Icon size={collapsed ? 17 : 15} strokeWidth={1.75} style={{ color: active ? 'var(--signal)' : 'var(--m-muted)' }} />
-                        {!collapsed && <span className="truncate">{item.label}</span>}
-                      </Link>
+                      {isHashItem ? (
+                        <a
+                          href={item.href}
+                          onClick={onClick}
+                          title={collapsed ? item.label : undefined}
+                          aria-current={active ? 'page' : undefined}
+                          className={linkClass}
+                          style={linkStyle}
+                        >
+                          {inner}
+                        </a>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          onClick={onClick}
+                          title={collapsed ? item.label : undefined}
+                          aria-current={active ? 'page' : undefined}
+                          className={linkClass}
+                          style={linkStyle}
+                        >
+                          {inner}
+                        </Link>
+                      )}
                     </li>
                   );
                 })}
@@ -692,11 +737,28 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               <span className="font-sans font-semibold text-[14px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
             </span>
             {selectedSite && (
-              <div className="hidden md:flex items-center gap-2 min-w-0">
+              <div className="hidden md:flex items-center gap-1.5 min-w-0">
                 <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Viewing</span>
-                <span className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>
+                <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
                   {selectedSite.label}
                 </span>
+                {onAuditDetail && (() => {
+                  const featureLabel = !currentHash || currentHash === 'overview' ? 'Overview'
+                    : currentHash === 'findings' ? 'Findings'
+                    : currentHash === 'pages' ? 'Pages'
+                    : currentHash === 'responsive' ? 'Responsive'
+                    : currentHash === 'ai_xray' ? 'AI X-Ray'
+                    : currentHash === 'intelligence' ? 'Intelligence'
+                    : null;
+                  return featureLabel ? (
+                    <>
+                      <ChevronRight size={12} style={{ color: 'var(--m-muted)' }} />
+                      <span className="text-[12px] font-medium truncate" style={{ color: 'var(--m-muted)' }}>
+                        {featureLabel}
+                      </span>
+                    </>
+                  ) : null;
+                })()}
               </div>
             )}
           </div>
