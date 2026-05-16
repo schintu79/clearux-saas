@@ -4,8 +4,8 @@ import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — ClearUX',
-  description: 'How ClearUX handles your data, written in plain language. We only analyse publicly visible content and never sell your data.',
+  title: 'Privacy Policy — Fixpath',
+  description: 'How Fixpath handles your data, written in plain language. We only analyse publicly visible content and never sell your data.',
 }
 
 export default function PrivacyPage() {
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
               <div className="space-y-2 ml-1">
                 <p><span className="font-medium text-ink">Running your audits</span> — crawling pages, generating findings, building reports.</p>
                 <p><span className="font-medium text-ink">Managing your account</span> — login, credits, settings, email notifications about completed audits.</p>
-                <p><span className="font-medium text-ink">Improving ClearUX</span> — aggregated, anonymous usage statistics only. Never your personal data or audit results.</p>
+                <p><span className="font-medium text-ink">Improving Fixpath</span> — aggregated, anonymous usage statistics only. Never your personal data or audit results.</p>
               </div>
             </div>
 

@@ -163,14 +163,14 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
               <Lock size={32} className="text-muted mx-auto mb-3" />
               <h2 className="font-heading font-medium text-lg text-text mb-2">Audit didn&apos;t complete</h2>
               <p className="text-muted text-sm">
-                This audit was unable to finish. The owner can re-run it from their ClearUX dashboard.
+                This audit was unable to finish. The owner can re-run it from their Fixpath dashboard.
               </p>
             </div>
           ) : audit.status !== 'completed' ? (
             <div className="text-center py-16">
               <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-muted text-sm">This audit is still being analysed.</p>
-              <p className="text-muted text-xs mt-1">ClearUX runs 96 checkpoints across 6 pillars — most audits finish in a few minutes.</p>
+              <p className="text-muted text-xs mt-1">Fixpath runs 96 checkpoints across 6 pillars — most audits finish in a few minutes.</p>
             </div>
           ) : report ? (
             <>
@@ -184,7 +184,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                     </div>
                     <div className="flex-1 min-w-0 text-center sm:text-left">
                       <h1 className="font-heading font-medium text-xl sm:text-2xl text-text mb-1">
-                        UX Audit: {domain}
+                        Brand Health Audit: {domain}
                       </h1>
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-sm">
                         <span className={`font-medium ${scoreColor(overall)}`}>{scoreLabel(overall)}</span>

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: `ClearUX Contact <hello@clearux.ai>`,
+      from: `Fixpath Contact <hello@clearux.ai>`,
       to: CONTACT_TO,
       reply_to: email,
       subject: `Contact form: ${name}`,

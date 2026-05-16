@@ -1,4 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the **Fixpath.ai** (formerly ClearUX.ai) Next.js app.
+
+The codebase still uses `clearux` for the repo name, env vars, database tables, and historical migrations — those are infrastructure and were intentionally left alone. User-facing copy and metadata use the **Fixpath** name. See [`FIXPATH-PRODUCT-BIBLE.md`](FIXPATH-PRODUCT-BIBLE.md) for the rename rationale and [`src/lib/branding.ts`](src/lib/branding.ts) for the product naming constants.
+
+---
+
+This project was bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 

@@ -7,9 +7,9 @@ import { Sparkles, ArrowRight, Clock, DollarSign, Layers, Target } from 'lucide-
 const BASE_URL = 'https://clearux.ai'
 
 export const metadata: Metadata = {
-  title: 'Best UX Audit Tools in 2026: Compare Software & Approaches | ClearUX',
+  title: 'Best UX Audit Tools in 2026: Compare Software & Approaches | Fixpath',
   description:
-    'Compare the best UX audit tools and software for 2026. From manual consultancies to accessibility scanners to comprehensive AI platforms like ClearUX — find the right approach for your team.',
+    'Compare the best UX audit tools and software for 2026. From manual consultancies to accessibility scanners to comprehensive AI platforms like Fixpath — find the right approach for your team.',
   keywords: [
     'best ux audit tools',
     'ux audit software',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description:
       'A fair, detailed comparison of UX audit approaches: manual consultancies, single-purpose scanners, and comprehensive AI platforms.',
     url: `${BASE_URL}/best-ux-audit-tools`,
-    siteName: 'ClearUX',
+    siteName: 'Fixpath',
     type: 'article',
   },
 }
@@ -38,7 +38,7 @@ const jsonLd = {
   url: `${BASE_URL}/best-ux-audit-tools`,
   publisher: {
     '@type': 'Organization',
-    name: 'ClearUX',
+    name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-02-01',
@@ -65,7 +65,7 @@ export default function BestUxAuditToolsPage() {
             audits. This guide compares three approaches — manual
             consultancies, single-purpose accessibility tools, and
             comprehensive AI-powered platforms — so you can make an informed
-            decision. We're upfront: ClearUX is one of the tools covered,
+            decision. We're upfront: Fixpath is one of the tools covered,
             but we've done our best to be fair and factual.
           </p>
 
@@ -216,7 +216,7 @@ export default function BestUxAuditToolsPage() {
               scanners miss.
             </p>
             <p className="text-text/80 leading-relaxed mb-4">
-              ClearUX falls into this category. It evaluates 24 categories
+              Fixpath falls into this category. It evaluates 24 categories
               across all four pillars, produces scored reports with specific
               recommendations, and lets teams track improvements over time.
               The audit takes minutes instead of weeks and costs a fraction of
@@ -226,7 +226,7 @@ export default function BestUxAuditToolsPage() {
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <div className="p-5 rounded-2xl border border-border bg-card">
                 <h3 className="font-heading font-medium text-base text-text mb-2">
-                  What ClearUX covers
+                  What Fixpath covers
                 </h3>
                 <ul className="space-y-2 text-text/80 text-sm leading-relaxed">
                   <li className="flex gap-2">
@@ -270,7 +270,7 @@ export default function BestUxAuditToolsPage() {
             <p className="text-text/80 leading-relaxed">
               The ideal workflow for most teams combines all three approaches:
               automated accessibility scanners in CI/CD, a comprehensive
-              platform like ClearUX for regular multi-pillar audits, and
+              platform like Fixpath for regular multi-pillar audits, and
               occasional manual deep-dives for high-stakes flows.
             </p>
           </section>
@@ -287,7 +287,7 @@ export default function BestUxAuditToolsPage() {
                     <th className="px-4 py-3 font-medium text-text">Criteria</th>
                     <th className="px-4 py-3 font-medium text-text">Manual Consultancy</th>
                     <th className="px-4 py-3 font-medium text-text">Accessibility Scanner</th>
-                    <th className="px-4 py-3 font-medium text-text">ClearUX</th>
+                    <th className="px-4 py-3 font-medium text-text">Fixpath</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
@@ -338,7 +338,7 @@ export default function BestUxAuditToolsPage() {
                 <strong className="text-text">If you need regular, comprehensive audits</strong>{' '}
                 that cover accessibility, usability, conversion, and ethical
                 design — and you want results in minutes instead of weeks —
-                ClearUX is built for exactly that use case.
+                Fixpath is built for exactly that use case.
               </li>
             </ul>
           </section>
@@ -352,7 +352,7 @@ export default function BestUxAuditToolsPage() {
               See the difference for yourself
             </h2>
             <p className="text-muted mb-6">
-              Run a free ClearUX audit on your site and compare the results
+              Run a free Fixpath audit on your site and compare the results
               to your existing tools.
             </p>
             <Link

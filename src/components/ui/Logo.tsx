@@ -106,7 +106,7 @@ const Logo: React.FC<LogoProps> = ({
       height={height}
       className={className}
       style={{ width: 'auto' }}
-      aria-label="ClearUX"
+      aria-label="Fixpath"
       role="img"
     >
       {/* C lettermark */}

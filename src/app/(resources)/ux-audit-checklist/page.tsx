@@ -7,9 +7,9 @@ import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react'
 const BASE_URL = 'https://clearux.ai'
 
 export const metadata: Metadata = {
-  title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | ClearUX',
+  title: 'UX Audit Checklist: 16 Categories Across 4 Pillars | Fixpath',
   description:
-    'A comprehensive UX audit checklist organized by 6 modules and 24 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let ClearUX automate it.',
+    'A comprehensive UX audit checklist organized by 6 modules and 24 categories. Use this template to evaluate accessibility, usability, conversion, and ethical design — or let Fixpath automate it.',
   keywords: [
     'ux audit checklist',
     'ux audit template',
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'UX Audit Checklist: 16 Categories Across 4 Pillars',
     description:
-      'The complete UX audit checklist used by ClearUX, covering accessibility, usability, conversion, and ethical design.',
+      'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
     url: `${BASE_URL}/ux-audit-checklist`,
-    siteName: 'ClearUX',
+    siteName: 'Fixpath',
     type: 'article',
   },
 }
@@ -34,11 +34,11 @@ const jsonLd = {
   '@type': 'Article',
   headline: 'UX Audit Checklist: 16 Categories Across 4 Pillars',
   description:
-    'The complete UX audit checklist used by ClearUX, covering accessibility, usability, conversion, and ethical design.',
+    'The complete UX audit checklist used by Fixpath, covering accessibility, usability, conversion, and ethical design.',
   url: `${BASE_URL}/ux-audit-checklist`,
   publisher: {
     '@type': 'Organization',
-    name: 'ClearUX',
+    name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-01-20',
@@ -180,9 +180,9 @@ export default function UxAuditChecklistPage() {
             without a checklist is like performing a code review without
             linting rules — you will catch some issues, but you will miss far
             more. This UX audit checklist covers the 24 categories that
-            ClearUX evaluates, organized into four pillars: Accessibility,
+            Fixpath evaluates, organized into four pillars: Accessibility,
             Usability, Conversion, and Ethical Design. Use it as a template
-            for manual reviews, or let ClearUX automate the entire process.
+            for manual reviews, or let Fixpath automate the entire process.
           </p>
 
           {/* ── How to use ── */}
@@ -199,7 +199,7 @@ export default function UxAuditChecklistPage() {
               a product page, a signup or checkout flow, and a content page.
             </p>
             <p className="text-text/80 leading-relaxed">
-              If you prefer to skip the manual work, ClearUX runs this entire
+              If you prefer to skip the manual work, Fixpath runs this entire
               checklist automatically and generates a scored report you can
               share with your team. Either way, the categories below give you
               a clear picture of what a thorough audit covers.
@@ -246,11 +246,11 @@ export default function UxAuditChecklistPage() {
               continuous practice, not a one-off project.
             </p>
             <p className="text-text/80 leading-relaxed">
-              ClearUX makes this practical by letting you re-run audits after
+              Fixpath makes this practical by letting you re-run audits after
               every release, track score trends over time, and compare
               results across pages. Instead of a static PDF that collects
               dust, you get a living dashboard that keeps your team
-              accountable. Explore how ClearUX compares to other{' '}
+              accountable. Explore how Fixpath compares to other{' '}
               <Link
                 href="/best-ux-audit-tools"
                 className="text-text font-medium underline decoration-brand decoration-2 underline-offset-2 hover:opacity-70 transition-opacity"
@@ -270,7 +270,7 @@ export default function UxAuditChecklistPage() {
               Automate this entire checklist
             </h2>
             <p className="text-muted mb-6">
-              ClearUX evaluates all 24 categories automatically and delivers
+              Fixpath evaluates all 24 categories automatically and delivers
               a scored, shareable report in minutes.
             </p>
             <Link

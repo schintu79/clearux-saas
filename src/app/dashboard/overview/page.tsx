@@ -3,7 +3,7 @@
 /**
  * Overview — answers "What should I do next?"
  *
- * Shows the user's ClearUX score exactly ONCE, the top 3 issues, one
+ * Shows the user's Brand Health Score exactly ONCE, the top 3 issues, one
  * primary next action, module score strip, and last-audit metadata.
  * Empty state offers a URL input and "Run Audit" CTA.
  */
@@ -94,7 +94,7 @@ function ScoreCard({
             {score ?? '—'}
           </span>
           <span className="text-[10px] tracking-[0.08em] uppercase mt-1.5" style={{ color: 'var(--m-muted)' }}>
-            ClearUX score
+            Brand Health
           </span>
         </div>
       </div>
@@ -211,7 +211,7 @@ function OverviewInner() {
         </div>
         <EmptyAudit
           title="Run your first audit"
-          body="Enter a website URL and we will show you your ClearUX score, the top issues hurting it, and a clear next action."
+          body="Enter a website URL and we will show you your Brand Health Score, the top issues hurting it, and a clear next action."
         />
       </div>
     );
@@ -362,7 +362,7 @@ function OverviewInner() {
             Re-audit to track your progress
           </p>
           <p className="text-[12px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-            ClearUX scores the delta between audits and surfaces regressions.
+            Fixpath scores the delta between audits and surfaces regressions.
           </p>
         </div>
         <Link href="/dashboard/new-audit" className="text-[12px] font-medium whitespace-nowrap" style={{ color: 'var(--signal)' }}>

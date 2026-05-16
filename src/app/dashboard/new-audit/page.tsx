@@ -337,7 +337,7 @@ const NewAuditInner: React.FC = () => {
               auditError?.message?.includes('audit_type') ||
               auditError?.message?.includes('brand_identity_id')) {
             throw new Error(
-              'This ClearUX instance is missing required database migrations. ' +
+              'This Fixpath instance is missing required database migrations. ' +
               'Please ask an admin to run supabase/migrations/021 and 022 before trying again.'
             );
           }
@@ -414,7 +414,7 @@ const NewAuditInner: React.FC = () => {
           auditError?.message?.includes('brand_identity_id')) {
         console.error('[new-audit] Required migration columns missing:', auditError);
         throw new Error(
-          'This ClearUX instance is missing required database migrations. ' +
+          'This Fixpath instance is missing required database migrations. ' +
           'Please ask an admin to run supabase/migrations/021 and 022 before trying again.'
         );
       }

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Brand DNA — answers "What should ClearUX compare the site against?"
+ * Brand DNA — answers "What should Fixpath compare the site against?"
  *
  * Surfaces and edits the Phase 1 Brand DNA fields on brand_identities
  * (migration 031): brand name, website URL, brand voice, tone keywords,
@@ -200,7 +200,7 @@ export default function BrandDnaPage() {
         <div>
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Brand DNA</h1>
           <p className="text-[13px] mt-1 max-w-[640px]" style={{ color: 'var(--m-muted)' }}>
-            What should ClearUX compare the site against? Capture your brand name, URL, tone of voice, colours, and logo so the audit can flag drift between your real brand and what the site or AI engines describe.
+            What should Fixpath compare the site against? Capture your brand name, URL, tone of voice, colours, and logo so the audit can flag drift between your real brand and what the site or AI engines describe.
           </p>
         </div>
         <Link
@@ -270,7 +270,7 @@ export default function BrandDnaPage() {
             Capture your brand DNA
           </p>
           <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-            Add the structured fields ClearUX uses to score brand consistency — and upload your bible, voice doc, or guidelines for richer comparison.
+            Add the structured fields Fixpath uses to score brand consistency — and upload your bible, voice doc, or guidelines for richer comparison.
           </p>
           <ul className="text-[12px] mt-4 space-y-1.5" style={{ color: 'var(--ink-2)' }}>
             <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Brand name + primary URL</li>

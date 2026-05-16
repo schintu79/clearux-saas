@@ -115,7 +115,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <circle cx="16" cy="16" r="5.5" fill="currentColor" />
             </svg>
             {!collapsed && (
-              <span className="font-sans font-semibold text-[18px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
+              <span className="font-sans font-semibold text-[18px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>Fixpath</span>
             )}
           </Link>
           {!collapsed && (
@@ -256,7 +256,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
               <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
               <circle cx="16" cy="16" r="5.5" fill="currentColor" />
             </svg>
-            <span className="font-sans font-semibold text-[16px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>ClearUX</span>
+            <span className="font-sans font-semibold text-[16px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>Fixpath</span>
             <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full ml-1" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
               Admin
             </span>

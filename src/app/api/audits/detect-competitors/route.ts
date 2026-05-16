@@ -65,7 +65,7 @@ async function fetchSiteSignals(url: string): Promise<SiteSignals> {
 
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'ClearUX Bot/1.0 (UX Audit)' },
+      headers: { 'User-Agent': 'Fixpath Bot/1.0 (Brand Health Audit)' },
       signal: AbortSignal.timeout(12_000),
       redirect: 'follow',
     })

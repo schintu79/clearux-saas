@@ -38,7 +38,7 @@ const COMPETITORS = [
   { name: 'Lighthouse', ai: false, human: false, wellbeing: false },
   { name: 'Hotjar', ai: false, human: true, wellbeing: false },
   { name: 'Baymard', ai: false, human: true, wellbeing: false },
-  { name: 'ClearUX', ai: true, human: true, wellbeing: true },
+  { name: 'Fixpath', ai: true, human: true, wellbeing: true },
 ]
 
 export function DualPerspective() {
@@ -59,7 +59,7 @@ export function DualPerspective() {
             className="text-[19px] leading-[1.55] text-ink-2 font-sans mx-auto"
             style={{ maxWidth: 640 }}
           >
-            Most tools check one side — performance for search engines, or heatmaps for users. ClearUX checks both AI and human experience together, so nothing slips through.
+            Most tools check one side — performance for search engines, or heatmaps for users. Fixpath checks both AI and human experience together, so nothing slips through.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export function DualPerspective() {
             </div>
             {/* Rows */}
             {COMPETITORS.map((c, i) => {
-              const isClearux = c.name === 'ClearUX'
+              const isClearux = c.name === 'Fixpath'
               return (
                 <div
                   key={c.name}

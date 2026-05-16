@@ -411,7 +411,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
             type: logoIsPng ? 'png' : 'jpg',
             data: logoBuffer,
             transformation: { width: imgW, height: imgH },
-            altText: { title: wlCompany || 'ClearUX Logo', description: wlCompany ? `${wlCompany} logo` : 'ClearUX brand logo', name: 'report-logo' },
+            altText: { title: wlCompany || 'Fixpath Logo', description: wlCompany ? `${wlCompany} logo` : 'Fixpath brand logo', name: 'report-logo' },
           }),
         ],
       }))
@@ -419,7 +419,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
       children.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 40 },
-        children: [new TextRun({ text: wlCompany || 'ClearUX', font: 'Arial', size: 80, bold: true, color: C.text })],
+        children: [new TextRun({ text: wlCompany || 'Fixpath', font: 'Arial', size: 80, bold: true, color: C.text })],
       }))
     }
 
@@ -588,7 +588,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
           margins: { top: 100, bottom: 100, left: 180, right: 180 },
           children: [new Paragraph({
             children: [
-              new TextRun({ text: `For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'ClearUX'} findings with a specialist.`, font: 'Arial', size: 18, italics: true, color: C.textSec }),
+              new TextRun({ text: `For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'Fixpath'} findings with a specialist.`, font: 'Arial', size: 18, italics: true, color: C.textSec }),
             ],
           })],
         })],
@@ -927,7 +927,7 @@ export async function buildDocx(auditId: string): Promise<{ buffer: Buffer; safe
             children: [new Paragraph({
               alignment: AlignmentType.RIGHT,
               children: [
-                new TextRun({ text: wlCompany || 'ClearUX', font: 'Arial', size: 16, bold: true, color: C.textTert }),
+                new TextRun({ text: wlCompany || 'Fixpath', font: 'Arial', size: 16, bold: true, color: C.textTert }),
                 new TextRun({ text: `  |  ${domain}`, font: 'Arial', size: 16, color: C.textTert }),
               ],
             })],
@@ -982,7 +982,7 @@ export async function GET(
 
     const brandName = whitelabelCompany
       ? whitelabelCompany.replace(/[^a-zA-Z0-9 .-]/g, '').replace(/\s+/g, '-')
-      : 'ClearUX'
+      : 'Fixpath'
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {

@@ -345,7 +345,7 @@ const STEPS = [
   {
     number: '01',
     title: 'Paste your URL',
-    description: 'Enter any website. ClearUX crawls every key page automatically — no code, no setup.',
+    description: 'Enter any website. Fixpath crawls every key page automatically — no code, no setup.',
   },
   {
     number: '02',

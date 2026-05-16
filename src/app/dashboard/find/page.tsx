@@ -90,7 +90,7 @@ export default function FindPage() {
         </div>
         <EmptyAudit
           title="No findings yet"
-          body="Run your first audit and ClearUX will rank every issue by severity, module, and fix effort."
+          body="Run your first audit and Fixpath will rank every issue by severity, module, and fix effort."
         />
       </div>
     );

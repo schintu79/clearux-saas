@@ -601,7 +601,7 @@ export function AuditDashboardOverview({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {/* UX Score Card */}
         <div className="rounded-xl border border-rule bg-card p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-text mb-4">UX Score</h3>
+          <h3 className="text-sm font-medium text-text mb-4">Brand Health Score</h3>
           <div className="flex flex-col items-center">
             <ScoreRing score={overallScore} size={130} strokeWidth={8} />
             <p className="text-xs text-muted mt-2">/100</p>

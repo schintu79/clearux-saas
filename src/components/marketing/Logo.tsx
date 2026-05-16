@@ -20,7 +20,7 @@ export function Logo({ className = '', size = 30 }: Props) {
         <circle cx="16" cy="16" r="5.5" fill="currentColor" />
       </svg>
       <span className="font-sans font-bold text-[26px] leading-none tracking-[-0.025em] text-ink">
-        ClearUX
+        Fixpath
       </span>
     </Link>
   )

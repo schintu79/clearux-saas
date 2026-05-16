@@ -193,7 +193,7 @@ export function FindingAnatomy() {
               What a <em className="italic text-signal">real</em> finding looks like.
             </h2>
             <p className="text-[17px] leading-[1.55] text-ink-2 mb-7 font-sans">
-              Every checkpoint in a ClearUX report follows the same anatomy. Severity. Evidence. Business impact. A specific fix your engineer or designer can ship on Monday. This is what closes the loop between &ldquo;audit&rdquo; and &ldquo;outcome.&rdquo;
+              Every checkpoint in a Fixpath report follows the same anatomy. Severity. Evidence. Business impact. A specific fix your engineer or designer can ship on Monday. This is what closes the loop between &ldquo;audit&rdquo; and &ldquo;outcome.&rdquo;
             </p>
 
             <ul className="list-none mt-9">
@@ -242,7 +242,7 @@ export function FindingAnatomy() {
               <div className="mb-[22px]">
                 <div className="font-mono text-[10px] text-signal font-semibold tracking-[0.12em] uppercase mb-2">Business impact</div>
                 <p className="text-[14.5px] leading-[1.55] text-ink-2 font-sans">
-                  Beyond regulatory exposure (estimated &euro;4k&ndash;&euro;20k per violation under GDPR), trust drops measurably post-checkout. ClearUX models a 6&ndash;11% lift in repeat purchase when consent patterns are clean.
+                  Beyond regulatory exposure (estimated &euro;4k&ndash;&euro;20k per violation under GDPR), trust drops measurably post-checkout. Fixpath models a 6&ndash;11% lift in repeat purchase when consent patterns are clean.
                 </p>
               </div>
 

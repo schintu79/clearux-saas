@@ -17,7 +17,7 @@ export default function AboutContent() {
             Full clarity, <em className="italic text-signal">at your fingertips.</em>
           </h1>
           <p className="text-[19px] leading-[1.55] text-ink-2 max-w-[600px] font-sans">
-            ClearUX exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your website, brand identity, and design — giving every team access to professional-grade insights in minutes.
+            Fixpath exists because great user experience shouldn&apos;t be a luxury reserved for companies with six-figure consultancy budgets. We audit your website, brand identity, and design — giving every team access to professional-grade insights in minutes.
           </p>
         </div>
       </section>
@@ -27,7 +27,7 @@ export default function AboutContent() {
         <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
           <SectionMarker number="02" label="Origin" />
           <h2 className="font-serif font-normal text-ink leading-[0.96] tracking-[-0.02em] mb-12" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}>
-            Why ClearUX <em className="italic text-signal">exists</em>
+            Why Fixpath <em className="italic text-signal">exists</em>
           </h2>
 
           {/* Pull quote */}
@@ -93,7 +93,7 @@ export default function AboutContent() {
                   Two decades in product design, UX strategy, and conversion optimisation — from early-stage MVPs to products serving millions. The frustration was always the same: brilliant teams shipping without a structured UX review, because the only option was a consultant charging five figures.
                 </p>
                 <p>
-                  ClearUX was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks.
+                  Fixpath was built to close that gap. Same depth, same rigour, accessible to everyone — in minutes instead of weeks.
                 </p>
               </div>
 

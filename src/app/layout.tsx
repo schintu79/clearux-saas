@@ -55,23 +55,23 @@ const geistSans = Geist({
   display: 'swap',
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fixpath.ai'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    template: '%s | ClearUX',
-    default:  'ClearUX: AI UX Audits in Minutes',
+    template: '%s | Fixpath',
+    default:  'Fixpath: AI Brand & UX Audits in Minutes',
   },
-  description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+  description: 'Fixpath.ai finds what is hurting your website and brand perception, then gives you the clearest path to fix it and track improvement.',
   keywords: [
-    'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
+    'brand health', 'UX audit', 'AI UX analysis', 'website audit', 'user experience review',
     'conversion optimization', 'accessibility audit', 'AI discoverability',
-    'UX report', 'website analysis tool', 'ClearUX',
+    'UX report', 'website analysis tool', 'Fixpath', 'Fixpath.ai',
   ],
-  authors: [{ name: 'ClearUX' }],
-  creator: 'ClearUX',
-  publisher: 'ClearUX',
+  authors: [{ name: 'Fixpath' }],
+  creator: 'Fixpath',
+  publisher: 'Fixpath',
   robots: {
     index: true,
     follow: true,
@@ -81,15 +81,15 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    siteName: 'ClearUX',
-    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, from $9.90',
-    description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
-    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'ClearUX — AI-powered UX audits in minutes' }],
+    siteName: 'Fixpath',
+    title: 'Fixpath: AI Brand & UX Audits in Minutes — Find. Fix. Track.',
+    description: 'Fixpath.ai finds what is hurting your website and brand perception, then gives you the clearest path to fix it and track improvement.',
+    images: [{ url: '/api/og', width: 1200, height: 630, alt: 'Fixpath — Find the issue. Follow the fix path. Track improvement.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearUX: AI UX Audits in Minutes — 96 Checkpoints, from $9.90',
-    description: 'AI-powered UX audits from $9.90. 96 checkpoints covering accessibility, dark patterns, conversion psychology, and AI readiness — delivered in minutes.',
+    title: 'Fixpath: AI Brand & UX Audits in Minutes — Find. Fix. Track.',
+    description: 'Fixpath.ai finds what is hurting your website and brand perception, then gives you the clearest path to fix it and track improvement.',
     images: ['/api/og'],
   },
   icons: {

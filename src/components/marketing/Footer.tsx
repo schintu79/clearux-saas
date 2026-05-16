@@ -66,7 +66,7 @@ export function Footer() {
         </div>
 
         <div className="mt-6 flex justify-between items-center font-mono text-[11px] text-m-muted tracking-[0.06em] uppercase">
-          <span>&copy; 2026 ClearUX</span>
+          <span>&copy; 2026 Fixpath</span>
           <span>SSL · GDPR · Stripe</span>
         </div>
       </div>

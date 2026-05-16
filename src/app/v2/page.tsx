@@ -12,7 +12,7 @@ import { Coda } from '@/components/marketing/Coda'
 import { Footer } from '@/components/marketing/Footer'
 
 export const metadata: Metadata = {
-  title: 'ClearUX — The audit your team actually ships from.',
+  title: 'Fixpath — The audit your team actually ships from.',
   description:
     'AI-powered UX audits: 96 checkpoints, 6 modules. Severity-ranked, evidence-backed, shippable fixes. First audit free.',
 }

@@ -6,8 +6,8 @@ import { FaqJsonLd } from '@/components/seo/JsonLd'
 import FaqContent from './FaqContent'
 
 export const metadata: Metadata = {
-  title: 'FAQ — ClearUX',
-  description: 'Everything you need to know about ClearUX audits, pricing, and reports.',
+  title: 'FAQ — Fixpath',
+  description: 'Everything you need to know about Fixpath audits, pricing, and reports.',
 }
 
 export default function FaqPage() {
