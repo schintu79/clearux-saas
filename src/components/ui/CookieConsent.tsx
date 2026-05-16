@@ -46,11 +46,11 @@ export default function CookieConsent() {
     >
       <div className="max-w-5xl mx-auto px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p id="cookie-consent-description" className="text-sm text-muted flex-1">
+          <p id="cookie-consent-description" className="text-sm text-text flex-1">
             We use essential cookies only — no tracking, no ads, no third-party cookies.{' '}
             <Link
               href="/cookies"
-              className="text-brand font-medium hover:underline"
+              className="text-brand font-semibold underline underline-offset-2 hover:no-underline"
             >
               Read our Cookie Policy
             </Link>

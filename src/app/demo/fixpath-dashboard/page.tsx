@@ -294,11 +294,11 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
               e.preventDefault();
               onChange(t);
             }}
-            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
+            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer hover:text-ink"
             style={{
-              background: isActive ? 'var(--card)' : 'transparent',
-              color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-              boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              background: isActive ? 'var(--paper-3)' : 'transparent',
+              color: isActive ? 'var(--ink)' : 'var(--ink-2)',
+              boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.18)' : 'none',
             }}
           >
             {t}
@@ -989,13 +989,38 @@ function PortfolioTab() {
 // Page
 // ----------------------------------------------------------------
 
+// Scoped contrast overrides for the demo only. The global dark palette
+// uses #8A857A for --m-muted which sits around ~4.9:1 on the dark warm
+// paper — borderline for AA at the small (10–11px) sizes used in this
+// preview. We bump muted tones and card surfaces inside the demo root
+// so readability comfortably passes WCAG AA without affecting the rest
+// of the app.
+const DEMO_SCOPED_STYLES = `
+[data-testid="fixpath-demo-root"] {
+  --m-muted: #B8B2A4;
+  --m-muted-2: #9A9387;
+  --rule: rgba(242, 237, 227, 0.18);
+  --rule-2: rgba(242, 237, 227, 0.28);
+  --card: rgba(255, 255, 255, 0.045);
+  --card-hover: rgba(255, 255, 255, 0.075);
+}
+.theme-light [data-testid="fixpath-demo-root"],
+:root:not(.dark) [data-testid="fixpath-demo-root"] {
+  --m-muted: #5A5648;
+  --m-muted-2: #76705F;
+}
+`;
+
 export default function FixpathDashboardPreviewPage() {
   const [tab, setTab] = useState<Tab>('Overview');
 
   return (
     <div style={{ background: 'var(--paper)', minHeight: '100vh' }} data-testid="fixpath-demo-root" data-active-tab={tab}>
+      <style dangerouslySetInnerHTML={{ __html: DEMO_SCOPED_STYLES }} />
       <DemoBanner activeTab={tab} />
-      <main className="max-w-[1100px] mx-auto px-5 py-8">
+      {/* pb-40 leaves room for the global cookie consent banner so it
+          does not overlap demo content in screenshots. */}
+      <main className="max-w-[1100px] mx-auto px-5 py-8 pb-40">
         <BrandHeader />
         <TabBar active={tab} onChange={setTab} />
         <div
