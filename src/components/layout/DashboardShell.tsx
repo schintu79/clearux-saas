@@ -280,10 +280,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     },
     {
       label: 'Brand',
-      items: [
-        { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
-        { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
-      ],
+      items: selectedSite?.kind === 'brand'
+        ? [
+            { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
+            { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
+          ]
+        : [
+            { label: 'Add brand identity', href: '/dashboard/brand-identity', icon: Plus },
+          ],
     },
   ];
 
