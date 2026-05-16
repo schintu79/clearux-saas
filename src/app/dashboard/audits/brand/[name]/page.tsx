@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   Fingerprint,
   Sparkles,
   Clock,
@@ -225,15 +224,6 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-4">
-      {/* Back to all audits */}
-      <Link
-        href="/dashboard/audits?type=brand_identity"
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition-colors mb-6"
-      >
-        <ArrowLeft size={16} />
-        Back to Audits
-      </Link>
-
       {/* Brand header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">

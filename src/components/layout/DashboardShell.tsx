@@ -47,6 +47,8 @@ type SiteEntry = {
   // Display sublabel — domain hostname or "Brand identity".
   sub: string;
   auditId?: string | null;
+  // Whether brand audits exist for this entry (used for Brand audit nav link)
+  hasBrandAudits?: boolean;
 };
 
 const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
@@ -108,13 +110,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       const [{ data: audits }, brandsRes] = await Promise.all([
         supabase
           .from('audits')
-          .select('id, product_url, completed_at, created_at, status')
+          .select('id, product_url, completed_at, created_at, status, brand_identity_id')
           .eq('user_id', user.id)
           .order('completed_at', { ascending: false, nullsFirst: false } as any)
           .limit(50),
         fetch('/api/brand-identities').then(r => r.ok ? r.json() : { identities: [] }).catch(() => ({ identities: [] })),
       ]);
       if (cancelled) return;
+
+      // Track which brand_identity_ids have audits
+      const brandIdsWithAudits = new Set<string>();
+      for (const a of (audits || []) as any[]) {
+        if (a.brand_identity_id) brandIdsWithAudits.add(a.brand_identity_id);
+      }
 
       const byDomain = new Map<string, SiteEntry>();
       for (const a of (audits || []) as any[]) {
@@ -133,11 +141,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       }
       const siteEntries = Array.from(byDomain.values());
 
-      const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b) => ({
+      const brandEntries: SiteEntry[] = ((brandsRes?.identities || []) as any[]).map((b: any) => ({
         kind: 'brand',
         id: `brand:${b.id}`,
         label: b.name || 'Untitled brand',
         sub: 'Brand identity',
+        hasBrandAudits: brandIdsWithAudits.has(b.id),
       }));
 
       const all = [...siteEntries, ...brandEntries];
@@ -248,6 +257,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     };
   }, [pathname]);
 
+  // Dynamic href for Brand audit nav item based on selected brand
+  const brandAuditHref = (() => {
+    if (selectedSite?.kind === 'brand' && selectedSite.hasBrandAudits) {
+      return `/dashboard/audits/brand/${encodeURIComponent(selectedSite.label)}`;
+    }
+    return '/dashboard/new-audit?type=brand_identity';
+  })();
+
   const navGroups: NavGroup[] = [
     {
       label: 'Audit',
@@ -265,7 +282,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       label: 'Brand',
       items: [
         { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
-        { label: 'Brand audit', href: '/dashboard/audits', icon: FileSearch },
+        { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
       ],
     },
   ];
@@ -284,10 +301,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
     }
-    // Brand audit links to /dashboard/audits but should NOT highlight when
-    // viewing a specific audit detail page — that's the Audit section's job.
-    if (item.href === '/dashboard/audits' && !item.matchHash) {
-      return pathname === '/dashboard/audits';
+    // Brand audit: highlight when on brand overview page
+    if (item.matchPaths?.includes('/dashboard/audits/brand')) {
+      return pathname?.startsWith('/dashboard/audits/brand/') || false;
     }
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;

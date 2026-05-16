@@ -2085,7 +2085,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           ═══════════════════════════════════════════════════════ */}
       {isCompleted && report && (
         <>
-          {/* ── Hero Score Card ─────────────────────────────── */}
+          {/* ── Hero Score Card + Score Over Time + Tip — only on Summary/Overview tab ── */}
+          {(activeTab === 'overview' || activeTab === 'summary') && <>
           <div ref={scoreCardRef} className="border border-rule overflow-hidden mb-6 bg-card">
             <div className="p-6 sm:p-8">
               {/* Mobile: centered stack — Desktop: horizontal row */}
@@ -2184,6 +2185,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <span className="font-medium text-ink">Track your progress</span> — update finding statuses as you fix them, dismiss false positives with a reason, then re-audit to compare your score.
             </p>
           </div>
+          </>}
 
           {/* ── Tab Navigation — mobile-only fallback. The desktop sidebar
               owns feature navigation; on small screens (where the sidebar
@@ -3997,8 +3999,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             );
           })()}
 
-          {/* ── Bottom action bar ────────────────────────── */}
-          <div className="mt-8 mb-4">
+          {/* ── Bottom action bar — only on Summary/Overview tab ── */}
+          {(activeTab === 'overview' || activeTab === 'summary') && <div className="mt-8 mb-4">
             <div className="rounded-xl border border-rule bg-card overflow-hidden">
               <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
                 <Download size={14} className="text-signal" />
@@ -4050,7 +4052,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 )}
               </div>
             </div>
-          </div>
+          </div>}
         </>
       )}
 
