@@ -206,7 +206,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // audit detail tab. When no audit exists yet, fall back to /dashboard/audits
   // so the user lands on a useful page rather than a dead link.
   const auditTabHref = (tab: string) => {
-    if (tab === 'overview') return '/dashboard/audits';
+    if (tab === 'overview') {
+      // Link to the site-specific overview page when a site is selected
+      if (selectedSite?.kind === 'site') {
+        return `/dashboard/audits/site/${selectedSite.label}`;
+      }
+      return '/dashboard/audits';
+    }
     if (selectedSite?.kind === 'site' && selectedSite.auditId) {
       const hash = tab === 'summary' ? '' : `#${tab}`;
       return `/dashboard/audits/${selectedSite.auditId}${hash}`;
@@ -265,9 +271,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   ];
 
   const isActive = (item: NavItem) => {
-    // "Overview" now links to /dashboard/audits (all audits list)
+    // "Overview" links to the site-specific overview (/dashboard/audits/site/domain)
     if (item.matchHash === 'overview') {
-      return pathname === '/dashboard/audits' && !onAuditDetail;
+      return pathname?.startsWith('/dashboard/audits/site/') || false;
     }
     // Hash-aware audit feature nav: only highlight when on the matching detail
     // page AND the current hash matches (or it's summary with no hash).
