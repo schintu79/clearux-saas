@@ -132,22 +132,85 @@ export const PHASE1_MODULES = [
   'Brand Consistency',
 ] as const
 
-export function moduleScoresFromReport(report: Report | null): Array<{ name: string; score: number | null }> {
+/**
+ * Severity weight used when deriving per-module scores from findings.
+ *
+ * Mirrors the penalty schedule in /api/findings/[id] (severityPenalty) so the
+ * presentation-layer module strip stays consistent with how the audit
+ * engine actually moves the overall score when a finding flips status.
+ * If the engine schedule ever changes, update both here and there.
+ */
+const SEVERITY_PENALTY: Record<string, number> = {
+  critical: 8,
+  high: 5,
+  medium: 3,
+  low: 1.5,
+}
+
+/**
+ * Per-module Phase 1 score strip.
+ *
+ * Strategy: prefer the report's per-module sub-scores when they map cleanly
+ * (rare today — see follow-up note); otherwise derive each module's score
+ * from the OPEN finding load attributable to that module via
+ * `category_index` (0..23, four categories per module). The result is a
+ * presentation-layer estimate that respects the audit engine output and
+ * never writes back to it. Closed (fixed) findings are excluded — they
+ * count as resolved deficit.
+ *
+ * `findings` is optional so the report-only callers (single audit row,
+ * no findings loaded) keep working with the legacy mapping.
+ */
+export function moduleScoresFromReport(
+  report: Report | null,
+  findings?: AuditFinding[],
+): Array<{ name: string; score: number | null }> {
   if (!report) return PHASE1_MODULES.map((n) => ({ name: n, score: null }))
-  // Map report fields to display modules. Report doesn't store per-module scores
-  // by name yet, but exposes related sub-scores we can surface as a strip.
-  // Order kept consistent with PHASE1_MODULES for the UI strip.
-  const ux = report.ux_score
-  const conv = report.conversion_score
-  const mobile = report.mobile_score
-  const ai = report.ai_discoverability_score
-  const content = report.content_score
-  return [
-    { name: 'Foundation', score: content ?? null },
-    { name: 'Human Experience', score: ux ?? null },
-    { name: 'Inclusive Design', score: mobile ?? null },
-    { name: 'Future Readiness', score: ai ?? null },
-    { name: 'SEO Structure', score: conv ?? null },
+
+  // Legacy heuristic fallback if findings aren't supplied. Maps the
+  // narrowly-typed sub-scores on `reports` to the six display modules,
+  // overall score for Brand Consistency where we have no proxy field.
+  const legacy = (): Array<{ name: string; score: number | null }> => [
+    { name: 'Foundation', score: report.content_score ?? null },
+    { name: 'Human Experience', score: report.ux_score ?? null },
+    { name: 'Inclusive Design', score: report.mobile_score ?? null },
+    { name: 'Future Readiness', score: report.ai_discoverability_score ?? null },
+    { name: 'SEO Structure', score: report.conversion_score ?? null },
     { name: 'Brand Consistency', score: report.overall_score ?? null },
   ]
+
+  if (!findings || findings.length === 0) return legacy()
+
+  // Aggregate severity-weighted open-finding load per module (0..5).
+  const loadByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
+  const countByModule = new Array(PHASE1_MODULES.length).fill(0) as number[]
+  let anyCategorized = false
+
+  for (const f of findings) {
+    if (f.dismissed) continue
+    if (f.status === 'fixed') continue
+    if (f.category_index == null) continue
+    anyCategorized = true
+    const moduleIdx = Math.max(0, Math.min(PHASE1_MODULES.length - 1, Math.floor(f.category_index / 4)))
+    loadByModule[moduleIdx] += SEVERITY_PENALTY[f.severity] ?? 3
+    countByModule[moduleIdx] += 1
+  }
+
+  // If no findings carry category_index yet (older audits before migration
+  // 025), fall back to the legacy mapping rather than guess.
+  if (!anyCategorized) return legacy()
+
+  const baseline = typeof report.overall_score === 'number' ? report.overall_score : 100
+  // Scale: each module's score = clamp(100 - load, 0, 100), then blend with
+  // the report's overall baseline so a clean module never reads higher than
+  // the audit-engine's own ceiling. Keeps this estimator conservative.
+  return PHASE1_MODULES.map((name, i) => {
+    const load = loadByModule[i]
+    const raw = 100 - load
+    const clamped = Math.max(0, Math.min(100, raw))
+    // Blend 70% finding-derived / 30% overall baseline so a single critical
+    // doesn't flatten an otherwise-healthy module into the floor.
+    const blended = Math.round(clamped * 0.7 + baseline * 0.3)
+    return { name, score: Math.max(0, Math.min(100, blended)) }
+  })
 }

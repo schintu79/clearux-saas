@@ -413,6 +413,14 @@ export interface BrandIdentity {
   user_id:     string
   name:        string
   description: string | null
+  // Phase 1 Brand DNA capture (migration 031). Optional so existing
+  // rows continue to load; the UI prompts users to fill them in but
+  // never blocks audit runs on missing values.
+  website_url:    string | null
+  brand_voice:    string | null
+  tone_keywords:  string[]
+  primary_colors: string[]
+  logo_url:       string | null
   created_at:  string
   updated_at:  string
 }

@@ -131,7 +131,11 @@ export default function TrackPage() {
   const fixed = findings.filter((f) => f.status === 'fixed').length;
   const backlog = findings.filter((f) => f.status === 'backlog').length;
 
-  const latestModules = moduleScoresFromReport(report);
+  // For the latest audit we have findings in the bundle, so the module
+  // strip uses the finding-derived estimator. The prior audit's findings
+  // aren't in the bundle (would require a second query); the legacy
+  // sub-score mapping is good enough for a delta comparison.
+  const latestModules = moduleScoresFromReport(report, findings);
   const priorModules = moduleScoresFromReport(prior?.report || null);
   const moduleDeltas = latestModules.map((m, i) => ({
     name: m.name,

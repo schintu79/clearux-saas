@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy Resend client — defer construction so module-import-time stays safe
+// when RESEND_API_KEY is not set (e.g. during `next build` page-data
+// collection). Matches the pattern used in src/lib/audit-engine/email.ts.
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (_resend) return _resend
+  const key = process.env.RESEND_API_KEY
+  if (!key) return null
+  _resend = new Resend(key)
+  return _resend
+}
 
 const CONTACT_TO = 'support@clearux.ai'
 
@@ -21,6 +31,15 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: 'Invalid email address.' },
         { status: 400 },
+      )
+    }
+
+    const resend = getResend()
+    if (!resend) {
+      console.warn('[contact] RESEND_API_KEY not set — refusing to send')
+      return NextResponse.json(
+        { error: 'Contact form is temporarily unavailable. Please email support directly.' },
+        { status: 503 },
       )
     }
 

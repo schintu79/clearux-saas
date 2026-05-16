@@ -226,7 +226,7 @@ function OverviewInner() {
 
   const openFindings = findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
   const top3 = rankFindings(openFindings).slice(0, 3);
-  const modules = moduleScoresFromReport(report);
+  const modules = moduleScoresFromReport(report, findings);
 
   // Next-best-action: the single highest-priority finding, or re-audit when all open are fixed.
   const next = top3[0] || null;
