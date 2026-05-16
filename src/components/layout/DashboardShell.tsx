@@ -244,12 +244,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
   const navGroups: NavGroup[] = [
     {
-      label: null,
-      items: [
-        { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      ],
-    },
-    {
       label: 'Audit',
       items: [
         { label: 'Overview', href: auditTabHref('overview'), icon: BarChart3, matchHash: 'overview' },
@@ -268,13 +262,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Brand audit', href: '/dashboard/audits', icon: FileSearch },
       ],
     },
-    {
-      label: 'Configuration',
-      items: [
-        { label: 'Settings', href: '/dashboard/settings', icon: Settings, matchPaths: ['/dashboard/white-label'] },
-        { label: 'Buy credits', href: '/dashboard/buy-credits', icon: Coins },
-      ],
-    },
   ];
 
   const isActive = (item: NavItem) => {
@@ -289,7 +276,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
     }
-    if (item.href === '/dashboard') return pathname === '/dashboard';
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;
     return false;
@@ -353,47 +339,90 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       >
         {SidebarLogo}
 
-        {/* Brand/site selector — only when we have at least one entry */}
+        {/* New audit CTA — top of sidebar */}
+        <div className={clsx('pt-3 pb-1', collapsed ? 'px-2' : 'px-3')}>
+          <Link
+            href="/dashboard/new-audit"
+            onClick={() => setSidebarOpen(false)}
+            className={clsx(
+              'flex items-center justify-center w-full rounded-lg transition-all hover:opacity-90',
+              collapsed ? 'px-0 py-2.5' : 'gap-2 px-3 py-2.5 text-[13px] font-semibold',
+            )}
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            title={collapsed ? 'New audit' : undefined}
+          >
+            <PlusCircle size={collapsed ? 17 : 15} strokeWidth={1.75} />
+            {!collapsed && 'New Audit'}
+          </Link>
+        </div>
+
+        {/* Dashboard link — standalone above brand selector */}
+        <div className={clsx('pb-1', collapsed ? 'px-1.5' : 'px-2')}>
+          <Link
+            href="/dashboard"
+            onClick={() => setSidebarOpen(false)}
+            title={collapsed ? 'Dashboard' : undefined}
+            aria-current={pathname === '/dashboard' ? 'page' : undefined}
+            className={clsx(
+              'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
+              collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
+              pathname === '/dashboard' ? 'font-semibold' : 'hover:bg-black/[0.04]',
+            )}
+            style={{
+              color: pathname === '/dashboard' ? 'var(--ink)' : 'var(--ink-2)',
+              background: pathname === '/dashboard' ? 'var(--paper-2)' : undefined,
+            }}
+          >
+            <LayoutDashboard
+              size={collapsed ? 17 : 15}
+              strokeWidth={1.75}
+              style={{ color: pathname === '/dashboard' ? 'var(--ink)' : 'var(--m-muted)' }}
+            />
+            {!collapsed && <span className="truncate">Dashboard</span>}
+          </Link>
+        </div>
+
+        {/* Brand/site selector — BIGGER and more prominent */}
         {!collapsed && (
-          <div className="px-3 pt-3 pb-2" ref={brandMenuRef}>
+          <div className="px-3 pt-2 pb-3" ref={brandMenuRef}>
             <div className="relative">
               <button
                 onClick={() => setBrandMenuOpen((v) => !v)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors hover:bg-black/[0.04]"
-                style={{ border: '1px solid var(--rule)', background: 'var(--paper-2)' }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors hover:bg-black/[0.04]"
+                style={{ border: '1.5px solid var(--rule)', background: 'var(--paper-2)' }}
                 aria-haspopup="listbox"
                 aria-expanded={brandMenuOpen}
                 aria-label="Switch site or brand"
               >
                 <span
-                  className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
                   {selectedSite?.kind === 'brand'
-                    ? <Fingerprint size={14} strokeWidth={1.75} />
-                    : <Globe size={14} strokeWidth={1.75} />}
+                    ? <Fingerprint size={16} strokeWidth={1.75} />
+                    : <Globe size={16} strokeWidth={1.75} />}
                 </span>
                 <span className="flex-1 min-w-0 text-left">
-                  <span className="block text-[12px] font-semibold truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                  <span className="block text-[13px] font-semibold truncate leading-tight" style={{ color: 'var(--ink)' }}>
                     {selectedSite?.label || 'No site yet'}
                   </span>
-                  <span className="block text-[10px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                  <span className="block text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
                     {selectedSite?.sub || 'Run your first audit'}
                   </span>
                 </span>
-                <ChevronDown size={13} style={{ color: 'var(--m-muted)' }} />
+                <ChevronDown size={15} style={{ color: 'var(--m-muted)' }} />
               </button>
 
               {brandMenuOpen && (
                 <div
-                  className="absolute left-0 right-0 mt-1.5 rounded-lg shadow-lg overflow-hidden z-50"
+                  className="absolute left-0 right-0 mt-1.5 rounded-xl shadow-lg overflow-hidden z-50"
                   style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
                   role="listbox"
                 >
-                  <div className="max-h-[260px] overflow-y-auto py-1">
+                  <div className="max-h-[300px] overflow-y-auto py-1">
                     {sites.length === 0 && (
-                      <p className="px-3 py-2 text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                        No sites or brands yet.
+                      <p className="px-3 py-3 text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                        No sites or brands yet. Run your first audit to get started.
                       </p>
                     )}
                     {sites.map((s) => {
@@ -413,25 +442,25 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                               router.push(`/dashboard/brand-identity/${bid}`);
                             }
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.04]"
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-black/[0.04]"
                         >
                           <span
-                            className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
                           >
                             {s.kind === 'brand'
-                              ? <Fingerprint size={11} strokeWidth={1.75} />
-                              : <Globe size={11} strokeWidth={1.75} />}
+                              ? <Fingerprint size={13} strokeWidth={1.75} />
+                              : <Globe size={13} strokeWidth={1.75} />}
                           </span>
                           <span className="flex-1 min-w-0">
-                            <span className="block text-[12px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
+                            <span className="block text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--ink)' }}>
                               {s.label}
                             </span>
-                            <span className="block text-[10px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                            <span className="block text-[11px] truncate leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
                               {s.sub}
                             </span>
                           </span>
-                          {selected && <Check size={13} style={{ color: 'var(--signal)' }} />}
+                          {selected && <Check size={14} style={{ color: 'var(--signal)' }} />}
                         </button>
                       );
                     })}
@@ -440,10 +469,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     <Link
                       href="/dashboard/new-audit"
                       onClick={() => { setBrandMenuOpen(false); setSidebarOpen(false); }}
-                      className="flex items-center gap-2 px-3 py-2 text-[12px] font-medium transition-colors hover:bg-black/[0.04]"
+                      className="flex items-center gap-2 px-3 py-2.5 text-[12px] font-medium transition-colors hover:bg-black/[0.04]"
                       style={{ color: 'var(--ink)' }}
                     >
-                      <Plus size={12} />
+                      <Plus size={13} />
                       Add site or brand
                     </Link>
                   </div>
@@ -458,36 +487,19 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           <div className="px-2 pt-2 pb-1">
             <button
               onClick={() => setCollapsed(false)}
-              className="w-full flex items-center justify-center py-2 rounded-md hover:bg-black/[0.04] transition-colors"
+              className="w-full flex items-center justify-center py-2.5 rounded-lg hover:bg-black/[0.04] transition-colors"
               title={selectedSite ? `${selectedSite.label}` : 'Switch site / brand'}
               aria-label="Switch site or brand"
-              style={{ color: 'var(--ink)' }}
+              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
             >
               {selectedSite?.kind === 'brand'
-                ? <Fingerprint size={16} strokeWidth={1.75} />
-                : <Globe size={16} strokeWidth={1.75} />}
+                ? <Fingerprint size={17} strokeWidth={1.75} />
+                : <Globe size={17} strokeWidth={1.75} />}
             </button>
           </div>
         )}
 
-        {/* New audit CTA */}
-        <div className={clsx('pt-1 pb-2', collapsed ? 'px-2' : 'px-3')}>
-          <Link
-            href="/dashboard/new-audit"
-            onClick={() => setSidebarOpen(false)}
-            className={clsx(
-              'flex items-center justify-center w-full rounded-lg transition-all hover:opacity-90',
-              collapsed ? 'px-0 py-2' : 'gap-1.5 px-3 py-2 text-[12px] font-medium',
-            )}
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-            title={collapsed ? 'New audit' : undefined}
-          >
-            <PlusCircle size={collapsed ? 16 : 13} strokeWidth={1.75} />
-            {!collapsed && 'New audit'}
-          </Link>
-        </div>
-
-        {/* Navigation */}
+        {/* Navigation — Audit + Brand groups */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>
           {navGroups.map((group, gi) => (
             <div key={`g-${gi}`} className={clsx(gi > 0 && 'mt-3')}>
@@ -506,14 +518,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
-                  // Audit feature items use real <a> tags so clicking while
-                  // already on the audit page produces a real hash navigation
-                  // and reliably fires `hashchange` — Next.js <Link> can
-                  // suppress it via pushState, which the audit page would miss.
                   const isHashItem = !!item.matchHash;
-                  // When user clicks a feature link but no audit exists, the
-                  // href falls back to /dashboard/audits — make sure the user
-                  // sees that they're being redirected, not silently stuck.
                   const onClick = () => setSidebarOpen(false);
                   const linkClass = clsx(
                     'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
@@ -567,92 +572,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
           ))}
         </nav>
 
-        {/* Plan & credits card — keep, slim down */}
-        {creditData && !collapsed && (
-          <div className="mx-3 mb-2">
-            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--rule)' }}>
-              <div className="px-3 py-2" style={{ background: isSubscribed ? 'var(--ink)' : 'var(--paper-2)' }}>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-[10px] font-semibold tracking-[0.04em] uppercase"
-                    style={{ color: isSubscribed ? 'var(--paper)' : 'var(--ink)' }}
-                  >
-                    {planName} plan
-                  </span>
-                  {isSubscribed && (
-                    <span className="text-[9px] font-medium px-1.5 py-[1px] rounded-full" style={{ background: 'rgba(255,255,255,0.15)', color: 'var(--paper)' }}>
-                      Active
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="px-3 py-2" style={{ background: 'var(--card)' }}>
-                {isSubscribed && auditsPerMonth > 0 && (
-                  <div className="mb-2">
-                    <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Monthly audits</span>
-                      <span className="text-[11px] font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
-                        {auditsRemaining}<span style={{ color: 'var(--m-muted)' }}>/{auditsPerMonth}</span>
-                      </span>
-                    </div>
-                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--rule)' }}>
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${usagePercent}%`,
-                          background: usagePercent > 20 ? 'var(--ink)' : 'var(--warn)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-between" style={isSubscribed && auditsPerMonth > 0 ? { paddingTop: '2px', borderTop: '1px solid var(--rule)' } : undefined}>
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                    {isSubscribed ? 'Extra credits' : 'Available credits'}
-                  </span>
-                  <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
-                    {credits}
-                  </span>
-                </div>
-                <Link
-                  href="/dashboard/buy-credits"
-                  className="block text-center text-[10px] font-medium rounded-md py-1.5 mt-2 transition-all hover:opacity-90"
-                  style={
-                    isFreeUser
-                      ? { background: 'var(--ink)', color: 'var(--paper)' }
-                      : { color: 'var(--m-muted)', border: '1px solid var(--rule)' }
-                  }
-                >
-                  {isFreeUser ? 'Get started' : isSubscribed ? 'Manage plan' : 'Buy credits'}
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-        {creditData && collapsed && (
-          <div className="mx-1.5 mb-2">
-            <Link
-              href="/dashboard/buy-credits"
-              title={`${planName} · ${totalAvailable} credits`}
-              className="flex flex-col items-center justify-center w-full py-2 gap-0.5 rounded-lg text-[10px] font-medium tabular-nums"
-              style={{ background: 'var(--paper-2)', color: 'var(--ink)' }}
-            >
-              <Coins size={13} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-              <span>{totalAvailable}</span>
-            </Link>
-          </div>
-        )}
-
-        {/* User area — sits ABOVE settings logically; settings already moved
-            into the Configuration group above. */}
+        {/* Bottom area: Account + Settings + Buy credits */}
         <div className={clsx('py-2 space-y-0.5', collapsed ? 'px-1.5' : 'px-2')} style={{ borderTop: '1px solid var(--rule)' }}>
+          {/* Account holder info */}
           {!loading && user && !collapsed && (
-            <Link
-              href="/dashboard/settings"
-              className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-black/[0.04] transition-colors"
-              aria-label="Account settings"
-            >
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium flex-shrink-0" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+            <div className="flex items-center gap-2.5 px-3 py-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -665,49 +590,86 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                   {user.email}
                 </p>
               </div>
-            </Link>
+            </div>
           )}
           {!loading && user && collapsed && (
-            <Link
-              href="/dashboard/settings"
-              title={displayName || user.email || ''}
-              className="flex items-center justify-center py-2 rounded-md hover:bg-black/[0.04] transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
+            <div className="flex items-center justify-center py-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}>
                 {initials}
               </div>
-            </Link>
+            </div>
           )}
 
+          {/* Settings */}
+          <Link
+            href="/dashboard/settings"
+            onClick={() => setSidebarOpen(false)}
+            title={collapsed ? 'Settings' : undefined}
+            aria-current={pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label') ? 'page' : undefined}
+            className={clsx(
+              'w-full flex items-center rounded-lg text-[13px] transition-all hover:bg-black/[0.04]',
+              collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
+              (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'font-semibold' : '',
+            )}
+            style={{
+              color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--ink-2)',
+              background: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--paper-2)' : undefined,
+            }}
+          >
+            <Settings size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: (pathname?.startsWith('/dashboard/settings') || pathname?.startsWith('/dashboard/white-label')) ? 'var(--ink)' : 'var(--m-muted)' }} />
+            {!collapsed && <span className="truncate">Settings</span>}
+          </Link>
+
+          {/* Buy credits */}
+          <Link
+            href="/dashboard/buy-credits"
+            onClick={() => setSidebarOpen(false)}
+            title={collapsed ? 'Buy credits' : undefined}
+            aria-current={pathname === '/dashboard/buy-credits' ? 'page' : undefined}
+            className={clsx(
+              'w-full flex items-center rounded-lg text-[13px] transition-all hover:bg-black/[0.04]',
+              collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
+              pathname === '/dashboard/buy-credits' ? 'font-semibold' : '',
+            )}
+            style={{
+              color: pathname === '/dashboard/buy-credits' ? 'var(--ink)' : 'var(--ink-2)',
+              background: pathname === '/dashboard/buy-credits' ? 'var(--paper-2)' : undefined,
+            }}
+          >
+            <Coins size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: pathname === '/dashboard/buy-credits' ? 'var(--ink)' : 'var(--m-muted)' }} />
+            {!collapsed && <span className="truncate">Buy credits</span>}
+          </Link>
+
+          {/* Admin link (only for admins) */}
           {((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') && (
             <Link
               href="/admin"
               title={collapsed ? 'Admin' : undefined}
               className={clsx(
-                'w-full flex items-center rounded-md text-[12px] transition-all hover:bg-black/[0.04]',
-                collapsed ? 'justify-center py-2' : 'gap-2.5 px-3 py-[6px]',
+                'w-full flex items-center rounded-lg text-[13px] transition-all hover:bg-black/[0.04]',
+                collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
               )}
               style={{ color: 'var(--ink-2)' }}
             >
-              <ShieldCheck size={collapsed ? 16 : 14} strokeWidth={1.75} />
-              {!collapsed && 'Admin'}
+              <ShieldCheck size={collapsed ? 16 : 15} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+              {!collapsed && <span className="truncate">Admin</span>}
             </Link>
           )}
 
-          <button
-            onClick={() => signOut()}
-            title={collapsed ? 'Sign out' : undefined}
-            className={clsx(
-              'w-full flex items-center rounded-md text-[12px] transition-all hover:bg-black/[0.04]',
-              collapsed ? 'justify-center py-2' : 'gap-2.5 px-3 py-[6px]',
-            )}
-            style={{ color: 'var(--ink-2)' }}
-          >
-            <LogOut size={collapsed ? 16 : 14} strokeWidth={1.75} />
-            {!collapsed && 'Sign out'}
-          </button>
-
-          <div className={clsx('flex items-center pt-1 mt-1', collapsed ? 'flex-col gap-1' : 'justify-start px-1')} style={{ borderTop: '1px solid var(--rule)' }}>
+          {/* Sign out + theme toggle */}
+          <div className={clsx('flex items-center pt-1 mt-1', collapsed ? 'flex-col gap-1' : 'gap-1 px-1')} style={{ borderTop: '1px solid var(--rule)' }}>
+            <button
+              onClick={() => signOut()}
+              title={collapsed ? 'Sign out' : 'Sign out'}
+              className={clsx(
+                'flex items-center rounded-md text-[12px] transition-all hover:bg-black/[0.04]',
+                collapsed ? 'justify-center py-2 w-full' : 'gap-1.5 px-2 py-1.5',
+              )}
+              style={{ color: 'var(--ink-2)' }}
+            >
+              <LogOut size={14} strokeWidth={1.75} />
+              {!collapsed && 'Sign out'}
+            </button>
             <ThemeToggle variant="icon" className="!p-1.5" />
           </div>
         </div>
