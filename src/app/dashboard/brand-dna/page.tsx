@@ -1,20 +1,21 @@
 'use client';
 
 /**
- * Brand DNA — answers "What should Fixpath compare the site against?"
+ * Brand DNA — selected-brand workspace.
  *
  * Surfaces and edits the Phase 1 Brand DNA fields on brand_identities
- * (migration 031): brand name, website URL, brand voice, tone keywords,
- * primary colours, logo URL, and brand promise. File uploads remain on
- * the existing /dashboard/brand-identity/[id] flow — the inline editor
- * here only covers the structured fields the bible calls out.
+ * (migration 031) for the SINGLE brand currently selected in the
+ * dashboard switcher. Mirrors the selected-brand rule that Overview /
+ * Find / Fix / Track follow: this page never lists portfolio data and
+ * never falls back to another brand's DNA when the selected brand has
+ * none. Portfolio remains reachable as a parent context via the "All
+ * brands" link in the sidebar.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Fingerprint,
-  Plus,
   FileText,
   ArrowRight,
   CheckCircle2,
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
+import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 
 interface BrandFile {
   id: string;
@@ -48,11 +50,6 @@ interface BrandIdentity {
   created_at: string;
   updated_at: string;
   brand_identity_files: BrandFile[];
-}
-
-interface UserSite {
-  domain: string;
-  audits: number;
 }
 
 interface BrandEditState {
@@ -84,68 +81,111 @@ function toEditState(b: BrandIdentity): BrandEditState {
   };
 }
 
+function hostnameOf(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null }
+}
+
 export default function BrandDnaPage() {
   const { user, loading: authLoading } = useAuth();
-  const [identities, setIdentities] = useState<BrandIdentity[]>([]);
-  const [sites, setSites] = useState<UserSite[]>([]);
+  const { selection, ready } = useBrandSelection();
+  const [identity, setIdentity] = useState<BrandIdentity | null>(null);
+  const [siteLabel, setSiteLabel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<BrandEditState | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || !user) {
-      if (!authLoading) setLoading(false);
+    if (authLoading || !user || !ready) {
+      if (!authLoading && ready) setLoading(false);
       return;
     }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setIdentity(null);
+    setSiteLabel(null);
+    setEditing(false);
+    setEditState(null);
+
     (async () => {
       try {
-        const [identitiesRes, sitesRes] = await Promise.all([
-          fetch('/api/brand-identities').then((r) => r.ok ? r.json() : { identities: [] }),
-          (async () => {
-            const supabase = createBrowserSupabase();
-            const { data } = await supabase
-              .from('audits')
-              .select('product_url')
-              .eq('user_id', user.id)
-              .or('audit_type.is.null,audit_type.eq.website');
-            return (data || []) as Array<{ product_url: string | null }>;
-          })(),
-        ]);
-        setIdentities(identitiesRes.identities || []);
-        const counts = new Map<string, number>();
-        for (const row of sitesRes) {
-          if (!row.product_url) continue;
-          try {
-            const host = new URL(row.product_url).hostname.replace(/^www\./, '');
-            counts.set(host, (counts.get(host) || 0) + 1);
-          } catch {}
+        if (!selection) {
+          if (!cancelled) setLoading(false);
+          return;
         }
-        setSites(Array.from(counts.entries()).map(([domain, audits]) => ({ domain, audits })));
+
+        if (selection.kind === 'brand') {
+          const res = await fetch(`/api/brand-identities/${selection.brandId}`);
+          if (cancelled) return;
+          if (res.status === 404) {
+            setLoading(false);
+            return;
+          }
+          if (!res.ok) throw new Error('Failed to load brand DNA');
+          const data = await res.json();
+          if (cancelled) return;
+          setIdentity(data.identity || null);
+          setLoading(false);
+          return;
+        }
+
+        // selection.kind === 'site' — find the brand_identity linked to the
+        // most recent audit for this host, if any.
+        setSiteLabel(selection.host);
+        const supabase = createBrowserSupabase();
+        const { data: audits } = await supabase
+          .from('audits')
+          .select('product_url, brand_identity_id, completed_at, created_at')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false, nullsFirst: false } as any)
+          .limit(100);
+        if (cancelled) return;
+        const match = (audits || []).find((a: any) =>
+          hostnameOf(a.product_url) === selection.host && !!a.brand_identity_id,
+        );
+        if (!match) {
+          setLoading(false);
+          return;
+        }
+        const res = await fetch(`/api/brand-identities/${(match as any).brand_identity_id}`);
+        if (cancelled) return;
+        if (res.status === 404) {
+          setLoading(false);
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to load brand DNA');
+        const data = await res.json();
+        if (cancelled) return;
+        setIdentity(data.identity || null);
+        setLoading(false);
       } catch {
-        setError('Could not load your brand DNA. Try again.');
-      } finally {
+        if (cancelled) return;
+        setError('Could not load Brand DNA. Try again.');
         setLoading(false);
       }
     })();
-  }, [authLoading, user]);
+    return () => { cancelled = true; };
+  }, [authLoading, user, ready, selection]);
 
-  const beginEdit = (b: BrandIdentity) => {
-    setEditingId(b.id);
-    setEditState(toEditState(b));
+  const beginEdit = () => {
+    if (!identity) return;
+    setEditing(true);
+    setEditState(toEditState(identity));
     setSaveError(null);
   };
 
   const cancelEdit = () => {
-    setEditingId(null);
+    setEditing(false);
     setEditState(null);
     setSaveError(null);
   };
 
-  const saveEdit = async (id: string) => {
-    if (!editState) return;
+  const saveEdit = async () => {
+    if (!identity || !editState) return;
     if (!editState.name.trim()) {
       setSaveError('Brand name is required.');
       return;
@@ -162,7 +202,7 @@ export default function BrandDnaPage() {
         primary_colors: editState.primary_colors.split(',').map((s) => s.trim()).filter(Boolean),
         logo_url: editState.logo_url.trim() || null,
       };
-      const res = await fetch(`/api/brand-identities/${id}`, {
+      const res = await fetch(`/api/brand-identities/${identity.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -172,8 +212,8 @@ export default function BrandDnaPage() {
         throw new Error(data.error || 'Failed to save');
       }
       const data = await res.json();
-      setIdentities((prev) => prev.map((b) => b.id === id ? { ...b, ...(data.identity || {}) } : b));
-      setEditingId(null);
+      setIdentity((prev) => prev ? { ...prev, ...(data.identity || {}) } : prev);
+      setEditing(false);
       setEditState(null);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save');
@@ -182,7 +222,7 @@ export default function BrandDnaPage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !ready) {
     return (
       <div>
         <div className="h-8 w-40 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
@@ -194,22 +234,28 @@ export default function BrandDnaPage() {
     );
   }
 
+  const selectedLabel = selection?.kind === 'brand'
+    ? (identity?.name || 'this brand')
+    : (selection?.kind === 'site' ? selection.host : null);
+
   return (
     <div>
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Brand DNA</h1>
           <p className="text-[13px] mt-1 max-w-[640px]" style={{ color: 'var(--m-muted)' }}>
-            What should Fixpath compare the site against? Capture your brand name, URL, tone of voice, colours, and logo so the audit can flag drift between your real brand and what the site or AI engines describe.
+            What should Fixpath compare {selectedLabel ? <strong style={{ color: 'var(--ink)' }}>{selectedLabel}</strong> : 'this brand'} against? Capture your brand name, URL, tone of voice, colours, and logo so the audit can flag drift between your real brand and what the site or AI engines describe.
           </p>
         </div>
-        <Link
-          href="/dashboard/brand-identity/new"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
-          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-        >
-          <Plus size={13} /> Add brand
-        </Link>
+        {identity && (
+          <Link
+            href={`/dashboard/brand-identity/${identity.id}`}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
+            style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+          >
+            <FileText size={13} /> Manage files
+          </Link>
+        )}
       </div>
 
       {error && (
@@ -222,90 +268,82 @@ export default function BrandDnaPage() {
         </div>
       )}
 
-      {sites.length > 0 && (
-        <div
-          className="rounded-xl p-5 mb-5"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
-            Sites we audit for you
-          </p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {sites.map((s) => (
-              <li
-                key={s.domain}
-                className="rounded-lg px-3 py-2.5 flex items-center justify-between"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-              >
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium truncate" style={{ color: 'var(--ink)' }}>{s.domain}</p>
-                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{s.audits} audit{s.audits === 1 ? '' : 's'}</p>
-                </div>
-                <Link
-                  href={`/dashboard/audits/site/${encodeURIComponent(s.domain)}`}
-                  className="text-[11px] font-medium"
-                  style={{ color: 'var(--signal)' }}
-                >
-                  Open
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {identities.length === 0 ? (
-        <div
-          className="rounded-xl p-8"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          data-testid="brand-dna-empty"
-        >
-          <div
-            className="w-11 h-11 rounded-lg flex items-center justify-center mb-4"
-            style={{ background: 'color-mix(in srgb, #8B5CF6 10%, transparent)' }}
-          >
-            <Fingerprint size={20} strokeWidth={1.6} style={{ color: '#8B5CF6' }} />
-          </div>
-          <p className="text-[16px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
-            Capture your brand DNA
-          </p>
-          <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-            Add the structured fields Fixpath uses to score brand consistency — and upload your bible, voice doc, or guidelines for richer comparison.
-          </p>
-          <ul className="text-[12px] mt-4 space-y-1.5" style={{ color: 'var(--ink-2)' }}>
-            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Brand name + primary URL</li>
-            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Tone of voice / brand voice keywords</li>
-            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Colour palette + logo URL</li>
-            <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Short brand promise / positioning</li>
-          </ul>
-          <Link
-            href="/dashboard/brand-identity/new"
-            className="inline-flex items-center gap-1.5 mt-5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            Add your brand DNA
-            <ArrowRight size={13} />
-          </Link>
-        </div>
+      {!selection ? (
+        <EmptyState
+          title="Pick a brand to see its DNA"
+          body="Brand DNA is scoped to the brand you have selected in the sidebar. Choose a brand or site to view and edit its DNA."
+          ctaHref="/dashboard/portfolio"
+          ctaLabel="Go to All brands"
+        />
+      ) : !identity ? (
+        <EmptyState
+          title={selection.kind === 'brand' ? 'No Brand DNA on file yet' : `No Brand DNA on file for ${siteLabel || 'this site'}`}
+          body={selection.kind === 'brand'
+            ? 'Capture this brand’s name, URL, tone of voice, colours, and logo so Fixpath can score brand consistency.'
+            : 'Link this site to a brand identity (or create one) so Fixpath can score brand consistency against your real brand DNA.'}
+          ctaHref="/dashboard/brand-identity/new"
+          ctaLabel="Add brand DNA"
+        />
       ) : (
-        <ul className="space-y-3">
-          {identities.map((b) => (
-            <li key={b.id}>
-              <BrandCard
-                brand={b}
-                editing={editingId === b.id}
-                editState={editingId === b.id ? editState : null}
-                onEditChange={setEditState}
-                onBeginEdit={() => beginEdit(b)}
-                onCancelEdit={cancelEdit}
-                onSave={() => saveEdit(b.id)}
-                saving={saving}
-                saveError={editingId === b.id ? saveError : null}
-              />
-            </li>
-          ))}
-        </ul>
+        <BrandCard
+          brand={identity}
+          editing={editing}
+          editState={editing ? editState : null}
+          onEditChange={setEditState}
+          onBeginEdit={beginEdit}
+          onCancelEdit={cancelEdit}
+          onSave={saveEdit}
+          saving={saving}
+          saveError={editing ? saveError : null}
+        />
       )}
+    </div>
+  );
+}
+
+function EmptyState({
+  title,
+  body,
+  ctaHref,
+  ctaLabel,
+}: {
+  title: string;
+  body: string;
+  ctaHref: string;
+  ctaLabel: string;
+}) {
+  return (
+    <div
+      className="rounded-xl p-8"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      data-testid="brand-dna-empty"
+    >
+      <div
+        className="w-11 h-11 rounded-lg flex items-center justify-center mb-4"
+        style={{ background: 'color-mix(in srgb, #8B5CF6 10%, transparent)' }}
+      >
+        <Fingerprint size={20} strokeWidth={1.6} style={{ color: '#8B5CF6' }} />
+      </div>
+      <p className="text-[16px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+        {title}
+      </p>
+      <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+        {body}
+      </p>
+      <ul className="text-[12px] mt-4 space-y-1.5" style={{ color: 'var(--ink-2)' }}>
+        <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Brand name + primary URL</li>
+        <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Tone of voice / brand voice keywords</li>
+        <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Colour palette + logo URL</li>
+        <li className="flex items-start gap-2"><span className="w-1 h-1 rounded-full mt-2" style={{ background: 'var(--m-muted)' }} />Short brand promise / positioning</li>
+      </ul>
+      <Link
+        href={ctaHref}
+        className="inline-flex items-center gap-1.5 mt-5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90"
+        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+      >
+        {ctaLabel}
+        <ArrowRight size={13} />
+      </Link>
     </div>
   );
 }
@@ -639,3 +677,4 @@ function BrandSlot({
     </div>
   );
 }
+
