@@ -218,10 +218,11 @@ function fmtDate(iso: string): string {
 // Shared chrome
 // ----------------------------------------------------------------
 
-function DemoBanner() {
+function DemoBanner({ activeTab }: { activeTab?: string }) {
   return (
     <div
       role="status"
+      data-testid="demo-banner"
       className="w-full px-4 py-2 text-center text-[12px] font-semibold tracking-[0.04em] uppercase"
       style={{
         background: 'color-mix(in srgb, var(--warn) 12%, transparent)',
@@ -230,6 +231,11 @@ function DemoBanner() {
       }}
     >
       Preview · Fixpath Dashboard Design Direction · Static mock data only
+      {activeTab && (
+        <span data-testid="demo-banner-active-tab" className="ml-2 normal-case opacity-80">
+          (showing: {activeTab})
+        </span>
+      )}
     </div>
   );
 }
@@ -266,16 +272,29 @@ type Tab = typeof TABS[number];
 function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
   return (
     <div
+      role="tablist"
+      aria-label="Dashboard sections"
+      data-testid="demo-tablist"
       className="flex items-center gap-1 mb-6 p-1 rounded-xl"
       style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
     >
       {TABS.map((t) => {
         const isActive = t === active;
+        const slug = t.toLowerCase();
         return (
           <button
             key={t}
-            onClick={() => onChange(t)}
-            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all"
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            aria-controls="demo-panel"
+            data-testid={`tab-${slug}`}
+            data-active={isActive ? 'true' : 'false'}
+            onClick={(e) => {
+              e.preventDefault();
+              onChange(t);
+            }}
+            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
             style={{
               background: isActive ? 'var(--card)' : 'transparent',
               color: isActive ? 'var(--ink)' : 'var(--m-muted)',
@@ -418,9 +437,9 @@ function ModuleStrip() {
 function OverviewTab() {
   const top3 = MOCK_FINDINGS.filter((f) => f.status === 'open' || f.status === 'in_progress').slice(0, 3);
   return (
-    <div>
+    <div data-testid="panel-overview">
       <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+        <h1 data-testid="panel-heading" className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
           Overview
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -520,9 +539,9 @@ function FindTab() {
   });
 
   return (
-    <div>
+    <div data-testid="panel-find">
       <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+        <h1 data-testid="panel-heading" className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
           Find
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -720,9 +739,9 @@ function FixTab() {
     .filter((f) => f.status === 'open' || f.status === 'in_progress')
     .slice(0, 5);
   return (
-    <div>
+    <div data-testid="panel-fix">
       <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+        <h1 data-testid="panel-heading" className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
           Fix
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -776,9 +795,9 @@ function TrackTab() {
   const backlog = MOCK_FINDINGS.filter((f) => f.status === 'backlog').length;
 
   return (
-    <div>
+    <div data-testid="panel-track">
       <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+        <h1 data-testid="panel-heading" className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
           Track
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -895,10 +914,10 @@ function PortfolioTab() {
   });
 
   return (
-    <div>
+    <div data-testid="panel-portfolio">
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+          <h1 data-testid="panel-heading" className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
             Portfolio
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -974,16 +993,25 @@ export default function FixpathDashboardPreviewPage() {
   const [tab, setTab] = useState<Tab>('Overview');
 
   return (
-    <div style={{ background: 'var(--paper)', minHeight: '100vh' }}>
-      <DemoBanner />
+    <div style={{ background: 'var(--paper)', minHeight: '100vh' }} data-testid="fixpath-demo-root" data-active-tab={tab}>
+      <DemoBanner activeTab={tab} />
       <main className="max-w-[1100px] mx-auto px-5 py-8">
         <BrandHeader />
         <TabBar active={tab} onChange={setTab} />
-        {tab === 'Overview'  && <OverviewTab />}
-        {tab === 'Find'      && <FindTab />}
-        {tab === 'Fix'       && <FixTab />}
-        {tab === 'Track'     && <TrackTab />}
-        {tab === 'Portfolio' && <PortfolioTab />}
+        <div
+          id="demo-panel"
+          role="tabpanel"
+          aria-label={`${tab} panel`}
+          data-testid="demo-panel"
+          data-tab={tab}
+          key={tab}
+        >
+          {tab === 'Overview'  && <OverviewTab />}
+          {tab === 'Find'      && <FindTab />}
+          {tab === 'Fix'       && <FixTab />}
+          {tab === 'Track'     && <TrackTab />}
+          {tab === 'Portfolio' && <PortfolioTab />}
+        </div>
 
         <footer className="mt-12 pt-6 text-center text-[11px]" style={{ color: 'var(--m-muted)', borderTop: '1px solid var(--rule)' }}>
           Fixpath.ai — Find. Fix. Track. · Design preview with mock data · Not connected to any user account.
