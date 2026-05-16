@@ -257,6 +257,17 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     };
   }, [pathname]);
 
+  // Dynamic href for Brand identity nav item based on selected brand/site
+  const brandIdentityHref = (() => {
+    if (selectedSite?.kind === 'brand') {
+      // Link to this brand's detail page (id is "brand:<uuid>")
+      const brandId = selectedSite.id.replace('brand:', '');
+      return `/dashboard/brand-identity/${brandId}`;
+    }
+    // Site selected — link to brand identity list (or new page)
+    return '/dashboard/brand-identity';
+  })();
+
   // Dynamic href for Brand audit nav item based on selected brand
   const brandAuditHref = (() => {
     if (selectedSite?.kind === 'brand' && selectedSite.hasBrandAudits) {
@@ -280,14 +291,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     },
     {
       label: 'Brand',
-      items: selectedSite?.kind === 'brand'
-        ? [
-            { label: 'Brand identity', href: '/dashboard/brand-identity', icon: Fingerprint },
-            { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
-          ]
-        : [
-            { label: 'Add brand identity', href: '/dashboard/brand-identity', icon: Plus },
-          ],
+      items: [
+        { label: 'Brand identity', href: brandIdentityHref, icon: Fingerprint },
+        { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
+      ],
     },
   ];
 
