@@ -264,8 +264,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       const brandId = selectedSite.id.replace('brand:', '');
       return `/dashboard/brand-identity/${brandId}`;
     }
-    // Site selected — link to brand identity list (or new page)
-    return '/dashboard/brand-identity';
+    // Site selected — no brand identity exists, go to create new
+    return '/dashboard/brand-identity/new';
   })();
 
   // Dynamic href for Brand audit nav item based on selected brand
