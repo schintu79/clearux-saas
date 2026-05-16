@@ -5,8 +5,8 @@ import { Footer } from '@/components/marketing/Footer'
 import AboutContent from './AboutContent'
 
 export const metadata: Metadata = {
-  title: 'About ClearUX — Full Clarity, at Your Fingertips',
-  description: 'ClearUX gives product teams 360° clarity on every layer of user experience. Learn why we exist and who built it.',
+  title: 'About Fixpath — Full Clarity, at Your Fingertips',
+  description: 'Fixpath gives product teams 360° clarity on every layer of user experience. Learn why we exist and who built it.',
 }
 
 export default function AboutPage() {

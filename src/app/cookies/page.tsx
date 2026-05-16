@@ -4,8 +4,8 @@ import { Nav } from '@/components/marketing/Nav'
 import { Footer } from '@/components/marketing/Footer'
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy — ClearUX',
-  description: 'ClearUX cookie policy — what cookies we use, why, and how our consent banner is designed ethically.',
+  title: 'Cookie Policy — Fixpath',
+  description: 'Fixpath cookie policy — what cookies we use, why, and how our consent banner is designed ethically.',
 }
 
 export default function CookiesPage() {
@@ -32,7 +32,7 @@ export default function CookiesPage() {
 
             <div>
               <h2 className="font-sans font-medium text-[17px] text-ink mb-3">Cookies we use</h2>
-              <p className="mb-4">ClearUX uses only essential cookies. We don&apos;t use advertising, analytics, or third-party tracking cookies.</p>
+              <p className="mb-4">Fixpath uses only essential cookies. We don&apos;t use advertising, analytics, or third-party tracking cookies.</p>
               <div className="overflow-x-auto border border-ink">
                 <table className="w-full text-[14px] border-collapse">
                   <thead>
@@ -80,7 +80,7 @@ export default function CookiesPage() {
 
             <div>
               <h2 className="font-sans font-medium text-[17px] text-ink mb-3">Our consent banner: ethical by design</h2>
-              <p className="mb-3">ClearUX audits products for dark patterns — so we hold our own cookie consent to the same standard. Here is how our banner works:</p>
+              <p className="mb-3">Fixpath audits products for dark patterns — so we hold our own cookie consent to the same standard. Here is how our banner works:</p>
               <div className="space-y-2 ml-1">
                 <p><span className="font-medium text-ink">Equal prominence:</span> the &ldquo;Reject all&rdquo; and &ldquo;Accept all&rdquo; buttons are identical in size, colour, contrast, and visual weight. Neither is emphasised over the other.</p>
                 <p><span className="font-medium text-ink">Equal effort:</span> rejecting cookies takes exactly one click — the same as accepting. There is no &ldquo;Manage preferences&rdquo; detour that makes rejection harder.</p>

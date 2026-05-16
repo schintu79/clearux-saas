@@ -469,10 +469,10 @@ export default function WhyClearUX() {
         >
           <p className="text-[13px] font-medium tracking-widest uppercase mb-4 text-muted">What others miss</p>
           <h2 className="font-heading text-3xl sm:text-4xl md:text-[2.75rem] font-medium text-text mb-5" style={{ lineHeight: '1.1' }}>
-            Why ClearUX
+            Why Fixpath
           </h2>
           <p className="text-muted text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
-            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. ClearUX is the only audit that covers all four — in minutes, from $9.90 per audit.
+            User-behavior tools show what happened. Accessibility scanners check WCAG boxes. UX consultants cost $5K&ndash;15K and take weeks. Fixpath is the only audit that covers all four — in minutes, from $9.90 per audit.
           </p>
         </motion.div>
 

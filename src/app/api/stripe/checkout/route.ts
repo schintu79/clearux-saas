@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `ClearUX ${plan.name}`,
+              name: `Fixpath ${plan.name}`,
               description: `${plan.auditsPerMonth} audits/month + unlimited re-audits`,
             },
             unit_amount: isYearly ? plan.yearlyPrice * 12 : unitAmount,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `ClearUX ${pack.name} Pack`,
+              name: `Fixpath ${pack.name} Pack`,
               description: `${pack.credits} audit credits — ${pack.perAudit}/audit`,
             },
             unit_amount: pack.price,
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'ClearUX Audit',
+            name: 'Fixpath Audit',
             description: `AI-powered UX audit — ${(audit as any).product_url}`,
           },
           unit_amount: 1300,

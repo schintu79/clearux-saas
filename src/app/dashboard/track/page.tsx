@@ -117,7 +117,7 @@ export default function TrackPage() {
         </div>
         <EmptyAudit
           title="No audits to track yet"
-          body="Run your first audit to establish a baseline. ClearUX will compare every future audit against it."
+          body="Run your first audit to establish a baseline. Fixpath will compare every future audit against it."
         />
       </div>
     );

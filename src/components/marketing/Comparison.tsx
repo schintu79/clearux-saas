@@ -94,7 +94,7 @@ export function Comparison() {
               className="font-serif font-normal leading-[1.05] tracking-[-0.03em] mx-auto"
               style={{ fontSize: 'clamp(48px, 7vw, 96px)', color: isDark ? 'var(--ink)' : '#ffffff', maxWidth: '960px' }}
             >
-              ClearUX audits the{' '}
+              Fixpath audits the{' '}
               <em className="italic text-signal">human</em>{' '}
               experience.
             </h2>
@@ -201,7 +201,7 @@ export function Comparison() {
               findings.
             </h2>
             <p className="text-[17px] leading-[1.55] text-ink-2 font-sans mt-5 max-w-[540px]">
-              Three real findings, side by side. What traditional tools flag versus what ClearUX surfaces.
+              Three real findings, side by side. What traditional tools flag versus what Fixpath surfaces.
             </p>
           </div>
 
@@ -265,7 +265,7 @@ export function Comparison() {
                         className="font-mono text-[10px] tracking-[0.08em] uppercase font-semibold px-2.5 py-1 rounded"
                         style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                       >
-                        ClearUX
+                        Fixpath
                       </span>
                     </div>
                     <p className="text-[15px] font-sans font-semibold text-ink leading-[1.35] mb-2">

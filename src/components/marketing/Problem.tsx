@@ -37,7 +37,7 @@ export function Problem() {
             </div>
 
             <p className="font-sans font-semibold text-ink mt-9 mb-0 text-[19px] leading-[1.55]">
-              ClearUX is built to improve the human experience. Paste a URL. Get a senior-rigor report in minutes.
+              Fixpath is built to improve the human experience. Paste a URL. Get a senior-rigor report in minutes.
             </p>
 
             {/* Comparison columns */}
@@ -60,7 +60,7 @@ export function Problem() {
               {/* ClearUX way */}
               <div>
                 <h4 className="font-mono text-[11px] font-medium tracking-[0.14em] uppercase text-m-muted mb-5">
-                  <span className="text-signal font-semibold mr-2.5">+</span>The ClearUX way
+                  <span className="text-signal font-semibold mr-2.5">+</span>The Fixpath way
                 </h4>
                 <ul className="list-none">
                   {clearuxWay.map((item) => (

@@ -61,14 +61,14 @@ function emailLayout(content: string, preheader?: string): string {
   <div class="outer">
     <div class="container">
       <div class="header">
-        <div class="logo"><a href="${APP_URL}"><img src="${APP_URL}/email-logo.png" alt="ClearUX" width="56" height="56" style="display:block;margin:0 auto;border-radius:12px;border:0" /></a></div>
+        <div class="logo"><a href="${APP_URL}"><img src="${APP_URL}/email-logo.png" alt="Fixpath" width="56" height="56" style="display:block;margin:0 auto;border-radius:12px;border:0" /></a></div>
         ${content.split('<!--HEADER-->')[0]}
       </div>
       <div class="body">
         ${content.split('<!--HEADER-->')[1]?.split('<!--FOOTER-->')[0] || ''}
       </div>
       <div class="footer">
-        ${content.split('<!--FOOTER-->')[1] || `<p>&copy; ${new Date().getFullYear()} ClearUX. All rights reserved.</p><p><a href="${APP_URL}">clearux.ai</a> &middot; <a href="${APP_URL}/contact">Contact support</a></p>`}
+        ${content.split('<!--FOOTER-->')[1] || `<p>&copy; ${new Date().getFullYear()} Fixpath. All rights reserved.</p><p><a href="${APP_URL}">fixpath.ai</a> &middot; <a href="${APP_URL}/contact">Contact support</a></p>`}
       </div>
     </div>
   </div>
@@ -116,7 +116,7 @@ export async function sendWelcomeEmail(
   const dashboardUrl = `${APP_URL}/dashboard`
 
   const content = `
-    <h1>Welcome to ClearUX</h1>
+    <h1>Welcome to Fixpath</h1>
     <!--HEADER-->
     <p>Hi ${name},</p>
     <p>Your account is ready. You can now run professional-grade UX audits on any website in under 10 minutes.</p>
@@ -139,9 +139,9 @@ export async function sendWelcomeEmail(
   `
 
   return send(
-    'ClearUX <hello@clearux.ai>',
+    'Fixpath <hello@clearux.ai>',
     email,
-    'Welcome to ClearUX -- your first audit is free',
+    'Welcome to Fixpath -- your first audit is free',
     emailLayout(content, `Welcome ${name}! Run your first UX audit for free.`),
   )
 }
@@ -199,7 +199,7 @@ export async function sendAuditComplete(
   `
 
   return send(
-    'ClearUX <audits@clearux.ai>',
+    'Fixpath <audits@clearux.ai>',
     email,
     `Your ${typeLabel} for ${displayName} is ready`,
     emailLayout(content, `Your ${typeLabel} for ${displayName} is complete. View your report now.`),
@@ -257,7 +257,7 @@ export async function sendPaymentConfirmation(
   `
 
   return send(
-    'ClearUX <billing@clearux.ai>',
+    'Fixpath <billing@clearux.ai>',
     email,
     `Payment received -- your ${typeLabel} is starting`,
     emailLayout(content, `Payment of $${amountUSD} received. Your ${typeLabel} for ${displayName} is processing.`),
@@ -306,7 +306,7 @@ export async function sendCreditsPurchased(
   `
 
   return send(
-    'ClearUX <billing@clearux.ai>',
+    'Fixpath <billing@clearux.ai>',
     email,
     `${creditsAdded} audit credits added to your account`,
     emailLayout(content, `${creditsAdded} credits added. Your new balance is ${newBalance}.`),
@@ -327,7 +327,7 @@ export async function sendAccountDeleted(
     <h1>Account deleted</h1>
     <!--HEADER-->
     <p>Hi ${name},</p>
-    <p>Your ClearUX account and all associated data have been permanently deleted. This includes all audit reports, findings, and personal information.</p>
+    <p>Your Fixpath account and all associated data have been permanently deleted. This includes all audit reports, findings, and personal information.</p>
 
     <div class="info-box">
       <table width="100%" cellspacing="0" cellpadding="0" style="font-size:14px">
@@ -349,10 +349,10 @@ export async function sendAccountDeleted(
   `
 
   return send(
-    'ClearUX <hello@clearux.ai>',
+    'Fixpath <hello@clearux.ai>',
     email,
-    'Your ClearUX account has been deleted',
-    emailLayout(content, 'Your ClearUX account and all data have been permanently deleted.'),
+    'Your Fixpath account has been deleted',
+    emailLayout(content, 'Your Fixpath account and all data have been permanently deleted.'),
   )
 }
 
@@ -409,7 +409,7 @@ export async function sendFreeAuditReady(
   `
 
   return send(
-    'ClearUX <audits@clearux.ai>',
+    'Fixpath <audits@clearux.ai>',
     email,
     `Your free ${typeLabel} for ${displayName} is ready`,
     emailLayout(content, `Your free ${typeLabel} for ${displayName} is complete. View your report now.`),

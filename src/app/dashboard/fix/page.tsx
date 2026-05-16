@@ -275,7 +275,7 @@ export default function FixPage() {
         </div>
         <EmptyAudit
           title="No fixes ready"
-          body="Run your first audit and ClearUX will surface copy-paste snippets and step-by-step fixes."
+          body="Run your first audit and Fixpath will surface copy-paste snippets and step-by-step fixes."
         />
       </div>
     );

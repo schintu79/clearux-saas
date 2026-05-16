@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     } else if ((globalCount ?? 0) >= FREE_AUDIT_GLOBAL_BURST_PER_HOUR) {
       console.warn(`[free-audit] Global burst limit hit (${globalCount}/${FREE_AUDIT_GLOBAL_BURST_PER_HOUR})`)
       return NextResponse.json(
-        { error: 'ClearUX is experiencing unusually high free-audit volume. Please try again shortly.' },
+        { error: 'Fixpath is experiencing unusually high free-audit volume. Please try again shortly.' },
         { status: 429 },
       )
     }

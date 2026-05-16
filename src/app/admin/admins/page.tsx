@@ -45,7 +45,7 @@ export default function AdminManagementPage() {
       )
 
       if (!matchedUser) {
-        setError('User not found. They must have a ClearUX account first.')
+        setError('User not found. They must have a Fixpath account first.')
         setSubmitting(false)
         return
       }

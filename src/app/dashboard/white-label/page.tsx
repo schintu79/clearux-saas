@@ -243,7 +243,7 @@ const WhiteLabelPage: React.FC = () => {
                 Upgrade to unlock white-label reports
               </h2>
               <p className="text-sm text-muted mb-4">
-                White-label branding is available on Growth, Agency, and Scale plans. Replace ClearUX branding with your own company name, logo, and colors in all generated reports.
+                White-label branding is available on Growth, Agency, and Scale plans. Replace Fixpath branding with your own company name, logo, and colors in all generated reports.
               </p>
               <Link
                 href="/dashboard/buy-credits"
@@ -418,7 +418,7 @@ const WhiteLabelPage: React.FC = () => {
               disabled={!canEdit}
             />
             <p className="text-xs text-muted mt-1">
-              Replaces the default ClearUX footer in reports
+              Replaces the default Fixpath footer in reports
             </p>
           </div>
 
@@ -427,7 +427,7 @@ const WhiteLabelPage: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-text">Enable white-label</p>
               <p className="text-xs text-muted mt-0.5">
-                When disabled, reports use default ClearUX branding
+                When disabled, reports use default Fixpath branding
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

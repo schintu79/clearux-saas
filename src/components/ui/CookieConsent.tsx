@@ -34,45 +34,72 @@ export default function CookieConsent() {
      color, and prominence. No pre-checked options. Reject and
      Accept require exactly one click each. Language is neutral.
      See /cookies for documentation of this implementation.
+
+     Layout: compact bottom-right card on >=sm, narrow enough that
+     it does not span across the main content area. On mobile it
+     spans the bottom with margins so it does not extend behind a
+     thumb-reach gesture area. Either way it sits well below the
+     primary dashboard / demo content at 1440x1100 and on phones.
      ───────────────────────────────────────────────────────────── */
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/60 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
-      style={{ animation: 'slideUp 0.3s ease-out' }}
+      data-testid="cookie-consent-banner"
+      className="fixed z-50 bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[300px] rounded-2xl backdrop-blur-md"
+      style={{
+        animation: 'slideUp 0.3s ease-out',
+        background: 'color-mix(in srgb, var(--paper) 94%, transparent)',
+        border: '1px solid var(--rule-2)',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset',
+      }}
       role="dialog"
       aria-label="Cookie consent"
       aria-describedby="cookie-consent-description"
     >
-      <div className="max-w-5xl mx-auto px-4 py-4 sm:px-6 sm:py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p id="cookie-consent-description" className="text-sm text-muted flex-1">
-            We use essential cookies only — no tracking, no ads, no third-party cookies.{' '}
-            <Link
-              href="/cookies"
-              className="text-brand font-medium hover:underline"
-            >
-              Read our Cookie Policy
-            </Link>
-          </p>
+      <div className="px-4 py-4 sm:px-5 sm:py-5">
+        <p
+          id="cookie-consent-description"
+          className="text-[13px] leading-relaxed"
+          style={{ color: 'var(--ink)' }}
+        >
+          We use essential cookies only — no tracking, no ads, no third-party cookies.{' '}
+          <Link
+            href="/cookies"
+            className="font-semibold underline underline-offset-2 hover:no-underline"
+            style={{ color: 'var(--signal)' }}
+          >
+            Cookie Policy
+          </Link>
+        </p>
 
-          {/* Both buttons are identical in size, style, and visual weight */}
-          <div className="flex gap-3 flex-shrink-0 w-full sm:w-auto">
-            <button
-              onClick={handleReject}
-              aria-label="Reject all cookies"
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
-            >
-              Reject all
-            </button>
-            <button
-              onClick={handleAccept}
-              aria-label="Accept all cookies"
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium min-h-[44px] bg-card border border-border text-text hover:bg-off transition-colors"
-            >
-              Accept all
-            </button>
-          </div>
+        {/* Both buttons are identical in size, style, and visual weight */}
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={handleReject}
+            aria-label="Reject all cookies"
+            data-testid="cookie-reject"
+            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold min-h-[40px] transition-colors"
+            style={{
+              background: 'var(--paper-2)',
+              border: '1px solid var(--rule-2)',
+              color: 'var(--ink)',
+            }}
+          >
+            Reject all
+          </button>
+          <button
+            onClick={handleAccept}
+            aria-label="Accept all cookies"
+            data-testid="cookie-accept"
+            className="flex-1 px-3 py-2 rounded-lg text-[13px] font-semibold min-h-[40px] transition-colors"
+            style={{
+              background: 'var(--paper-2)',
+              border: '1px solid var(--rule-2)',
+              color: 'var(--ink)',
+            }}
+          >
+            Accept all
+          </button>
         </div>
       </div>
     </div>

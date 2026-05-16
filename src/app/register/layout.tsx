@@ -1,17 +1,17 @@
 import type { Metadata } from 'next'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://clearux.ai'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fixpath.ai'
 
 export const metadata: Metadata = {
   title: 'Create Your Free Account',
   description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
   openGraph: {
-    title: 'Create Your Free Account | ClearUX',
+    title: 'Create Your Free Account | Fixpath',
     description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
     url: `${siteUrl}/register`,
   },
   twitter: {
-    title: 'Create Your Free Account | ClearUX',
+    title: 'Create Your Free Account | Fixpath',
     description: '96 checkpoints across 6 modules. No credit card required. Your first UX audit is free — sign up in seconds.',
   },
   alternates: {

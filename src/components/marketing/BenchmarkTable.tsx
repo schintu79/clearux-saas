@@ -32,7 +32,7 @@ const rows = [
     highlight: false,
   },
   {
-    label: 'ClearUX',
+    label: 'Fixpath',
     sub: '96 checkpoints · 6 modules',
     cost: 'From $9.90',
     turn: '< 10 minutes',

@@ -17,7 +17,7 @@ import { Footer } from '@/components/marketing/Footer'
 import { HomeJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'ClearUX — The UX audit platform that finds what you miss.',
+  title: 'Fixpath — Find what is hurting your site. Follow the path to fix it.',
   description:
     'Audit your website UX, brand identity, and AI visibility in one place. 96 checkpoints, 6 modules. Severity-ranked findings with evidence and fixes. First audit free.',
 }

@@ -306,7 +306,7 @@ export async function GET(
     if (!logoLoaded) {
       // DOCX fallback: size 80 half-pt = 40pt
       doc.fontSize(40).font('Helvetica-Bold').fillColor(C.text)
-        .text(wlCompany || 'ClearUX', leftM, doc.y, { align: 'center', width: contentW })
+        .text(wlCompany || 'Fixpath', leftM, doc.y, { align: 'center', width: contentW })
     }
 
     // Subtitle (DOCX: size 22 = 11pt)
@@ -396,7 +396,7 @@ export async function GET(
     doc.rect(leftM, doc.y, contentW, 30).fill(C.bg)
     const noteY = doc.y
     doc.fontSize(9).font('Helvetica-Oblique').fillColor(C.textSec)
-      .text(`For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'ClearUX'} findings with a specialist.`,
+      .text(`For deep qualitative research (user interviews, usability testing), we recommend pairing ${wlCompany || 'Fixpath'} findings with a specialist.`,
         leftM + 12, noteY + 8, { width: contentW - 24 })
     doc.y = noteY + 34
 
@@ -619,7 +619,7 @@ export async function GET(
       // Header (skip cover page)
       if (i > 0) {
         doc.fontSize(7).font('Helvetica-Bold').fillColor(C.textTert)
-          .text(wlCompany || 'ClearUX', leftM, 50, { width: contentW, align: 'right', continued: true })
+          .text(wlCompany || 'Fixpath', leftM, 50, { width: contentW, align: 'right', continued: true })
         doc.font('Helvetica').text(`  |  ${domain}`)
       }
     }
@@ -633,7 +633,7 @@ export async function GET(
     const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '_')
     const brandName = wlCompany
       ? wlCompany.replace(/[^a-zA-Z0-9 .-]/g, '').replace(/\s+/g, '-')
-      : 'ClearUX'
+      : 'Fixpath'
 
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {

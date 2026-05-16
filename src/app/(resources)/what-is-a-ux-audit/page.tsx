@@ -7,9 +7,9 @@ import { Sparkles, CheckCircle, ArrowRight } from 'lucide-react'
 const BASE_URL = 'https://clearux.ai'
 
 export const metadata: Metadata = {
-  title: 'What Is a UX Audit? Definition, Process & Why It Matters | ClearUX',
+  title: 'What Is a UX Audit? Definition, Process & Why It Matters | Fixpath',
   description:
-    'Learn what a UX audit is, why your product needs one, and how the UX audit process works. Discover what gets evaluated — from accessibility to ethical design — and how ClearUX automates the entire workflow.',
+    'Learn what a UX audit is, why your product needs one, and how the UX audit process works. Discover what gets evaluated — from accessibility to ethical design — and how Fixpath automates the entire workflow.',
   keywords: [
     'what is a ux audit',
     'ux audit definition',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description:
       'A complete guide to understanding UX audits: what they cover, why they matter, and how to run one efficiently.',
     url: `${BASE_URL}/what-is-a-ux-audit`,
-    siteName: 'ClearUX',
+    siteName: 'Fixpath',
     type: 'article',
   },
 }
@@ -38,7 +38,7 @@ const jsonLd = {
   url: `${BASE_URL}/what-is-a-ux-audit`,
   publisher: {
     '@type': 'Organization',
-    name: 'ClearUX',
+    name: 'Fixpath',
     url: BASE_URL,
   },
   datePublished: '2025-01-15',
@@ -220,16 +220,16 @@ export default function WhatIsAUxAuditPage() {
             </p>
           </section>
 
-          {/* ── Section: ClearUX ── */}
+          {/* ── Section: Fixpath ── */}
           <section className="mb-12">
             <h2 className="font-heading font-medium text-2xl text-text mb-4">
-              How ClearUX Automates the UX Audit Process
+              How Fixpath Automates the UX Audit Process
             </h2>
             <p className="text-text/80 leading-relaxed mb-4">
-              ClearUX replaces the manual audit workflow with an AI-powered
+              Fixpath replaces the manual audit workflow with an AI-powered
               platform that evaluates your product across all four pillars — 16
               categories in total — in minutes, not weeks. You submit a URL, and
-              ClearUX returns a comprehensive report with scores, issue
+              Fixpath returns a comprehensive report with scores, issue
               descriptions, severity ratings, and actionable recommendations.
             </p>
             <p className="text-text/80 leading-relaxed mb-4">

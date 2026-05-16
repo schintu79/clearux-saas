@@ -5,8 +5,8 @@ import { Footer } from '@/components/marketing/Footer'
 import ContactContent from './ContactContent'
 
 export const metadata: Metadata = {
-  title: 'Contact — ClearUX',
-  description: 'Have a question, feedback, or need help? Get in touch with the ClearUX team.',
+  title: 'Contact — Fixpath',
+  description: 'Have a question, feedback, or need help? Get in touch with the Fixpath team.',
 }
 
 export default function ContactPage() {
