@@ -1551,6 +1551,16 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
+  // Restore persisted verification alert dismissal.
+  // NOTE: This hook must stay above the early returns below (loading / error /
+  // brand_identity) so React always sees the same hook order between renders.
+  // React production error #310 fires when a hook is registered on one render
+  // but skipped by an early return on the next.
+  const persistedVerificationDismissed = ((audit?.report as Report | null)?.raw_json as any)?.verificationAlertsDismissed;
+  useEffect(() => {
+    if (persistedVerificationDismissed) setVerificationAlertDismissed(true);
+  }, [persistedVerificationDismissed]);
+
   const handleRevokeShare = async () => {
     if (!audit || !auditId) return;
     if (!confirm('Revoke the share link? Anyone with the link will no longer be able to view this audit.')) return;
@@ -1664,11 +1674,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
-
-  // Restore persisted verification alert dismissal
-  useEffect(() => {
-    if (rawJson?.verificationAlertsDismissed) setVerificationAlertDismissed(true);
-  }, [rawJson?.verificationAlertsDismissed]);
 
   const categoryScores: Array<{ name: string; score: number; summary: string }> =
     rawJson?.categoryScores && Array.isArray(rawJson.categoryScores) ? rawJson.categoryScores : [];
