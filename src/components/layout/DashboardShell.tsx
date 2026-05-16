@@ -28,6 +28,11 @@ import {
   Check,
   PanelLeftClose,
   PanelLeft,
+  Search,
+  Wrench,
+  LineChart,
+  FileText,
+  Briefcase,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -278,10 +283,26 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
   const navGroups: NavGroup[] = [
     {
-      label: 'Audit',
+      label: 'Workspace',
       items: [
-        { label: 'Overview', href: auditTabHref('overview'), icon: BarChart3, matchHash: 'overview' },
-        { label: 'Summary', href: auditTabHref('summary'), icon: LayoutDashboard, matchHash: 'summary' },
+        { label: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
+        { label: 'Find', href: '/dashboard/find', icon: Search },
+        { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
+        { label: 'Track', href: '/dashboard/track', icon: LineChart },
+        { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
+        { label: 'Reports', href: '/dashboard/reports', icon: FileText, matchPaths: ['/dashboard/audits'] },
+      ],
+    },
+    {
+      label: 'Agency',
+      items: [
+        { label: 'Portfolio', href: '/dashboard/portfolio', icon: Briefcase },
+      ],
+    },
+    {
+      label: 'Audit deep dive',
+      items: [
+        { label: 'Audit detail', href: auditTabHref('summary'), icon: LayoutDashboard, matchHash: 'summary' },
         { label: 'Findings', href: auditTabHref('findings'), icon: AlertTriangle, matchHash: 'findings' },
         { label: 'Pages', href: auditTabHref('pages'), icon: Globe, matchHash: 'pages' },
         { label: 'Responsive', href: auditTabHref('responsive'), icon: Smartphone, matchHash: 'responsive' },
@@ -289,20 +310,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Intelligence', href: auditTabHref('intelligence'), icon: Sparkles, matchHash: 'intelligence' },
       ],
     },
-    {
-      label: 'Brand',
-      items: [
-        { label: 'Brand identity', href: brandIdentityHref, icon: Fingerprint },
-        { label: 'Brand audit', href: brandAuditHref, icon: FileSearch, matchPaths: ['/dashboard/audits/brand'] },
-      ],
-    },
   ];
 
   const isActive = (item: NavItem) => {
-    // "Overview" links to the site-specific overview (/dashboard/audits/site/domain)
-    if (item.matchHash === 'overview') {
-      return pathname?.startsWith('/dashboard/audits/site/') || false;
-    }
     // Hash-aware audit feature nav: only highlight when on an actual audit
     // detail page (/dashboard/audits/<uuid>) AND the hash matches.
     // Exclude /dashboard/audits/site/* and /dashboard/audits/brand/* paths.
@@ -311,10 +321,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (!isRealAuditDetail) return false;
       if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
-    }
-    // Brand audit: highlight when on brand overview page
-    if (item.matchPaths?.includes('/dashboard/audits/brand')) {
-      return pathname?.startsWith('/dashboard/audits/brand/') || false;
     }
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;
