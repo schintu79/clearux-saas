@@ -276,6 +276,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
       return currentHash === item.matchHash;
     }
+    // Brand audit links to /dashboard/audits but should NOT highlight when
+    // viewing a specific audit detail page — that's the Audit section's job.
+    if (item.href === '/dashboard/audits' && !item.matchHash) {
+      return pathname === '/dashboard/audits';
+    }
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;
     return false;
