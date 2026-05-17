@@ -25,6 +25,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding } from '@/types/database';
 
@@ -100,6 +101,15 @@ export default function FindPage() {
 
   const totalOpen = useMemo(() => buckets.reduce((acc, b) => acc + b.groups.length, 0), [buckets]);
 
+  const openFindings = useMemo(
+    () => (bundle?.findings ?? []).filter((f) => f.status !== 'fixed' && !f.dismissed),
+    [bundle],
+  );
+  const priorityRecs = useMemo(
+    () => derivePriorityRecs(bundle?.report ?? null, openFindings),
+    [bundle, openFindings],
+  );
+
   if (authLoading || loading || !ready) {
     return (
       <div>
@@ -145,6 +155,16 @@ export default function FindPage() {
           for evidence and per-page data.
         </p>
       </div>
+
+      {priorityRecs.length > 0 && bundle?.audit && (
+        <div className="mb-4">
+          <PriorityRecommendations
+            recs={priorityRecs}
+            findings={openFindings}
+            auditId={bundle.audit.id}
+          />
+        </div>
+      )}
 
       {totalOpen === 0 ? (
         <div
