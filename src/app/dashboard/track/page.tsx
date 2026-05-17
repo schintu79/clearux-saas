@@ -147,7 +147,7 @@ export default function TrackPage() {
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Score and issue trend for this brand.
+          Brand Health Score and issue trend for this brand. Re-audit to confirm fixes landed.
         </p>
       </div>
 

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
-  FileSearch,
   PlusCircle,
   Settings,
   LogOut,
@@ -15,14 +14,9 @@ import {
   Fingerprint,
   Menu,
   X,
-  ChevronLeft,
   ChevronRight,
   ChevronDown,
-  AlertTriangle,
   Globe,
-  Smartphone,
-  Brain,
-  Sparkles,
   BarChart3,
   Plus,
   Check,
@@ -31,7 +25,7 @@ import {
   Search,
   Wrench,
   LineChart,
-  FileText,
+  FileSearch,
   ArrowLeft,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -240,31 +234,12 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     ? Math.round((auditsRemaining / auditsPerMonth) * 100)
     : 0;
 
-  // Deep-link helper. AUDIT feature items target the selected site's latest
-  // audit detail tab. When no audit exists yet, fall back to /dashboard/audits
-  // so the user lands on a useful page rather than a dead link.
-  const auditTabHref = (tab: string) => {
-    if (tab === 'overview') {
-      // Link to the site-specific overview page when a site is selected
-      if (selectedSite?.kind === 'site') {
-        return `/dashboard/audits/site/${selectedSite.label}`;
-      }
-      return '/dashboard/audits';
-    }
-    if (selectedSite?.kind === 'site' && selectedSite.auditId) {
-      const hash = tab === 'summary' ? '' : `#${tab}`;
-      return `/dashboard/audits/${selectedSite.auditId}${hash}`;
-    }
-    return '/dashboard/audits';
-  };
-
   type NavItem = {
     label: string;
     href: string;
     icon: React.ElementType;
     badge?: boolean;
     matchPaths?: string[]; // additional paths considered "active"
-    matchHash?: string; // for tab-aware audit deep links
   };
   type NavGroup = { label: string | null; items: NavItem[] };
 
@@ -305,46 +280,29 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     return '/dashboard/new-audit?type=brand_identity';
   })();
 
-  // Brand workspace IA: when a brand/site is selected, the sidebar shows ONLY
-  // that brand's nav. Portfolio is reachable as a parent context via the
-  // dedicated "Back to all brands" link near the brand switcher — it is NOT a
-  // peer tab inside the brand workspace. This keeps the working context clean
-  // and prevents portfolio/agency widgets from competing with brand work.
+  // Brand workspace IA: once inside a selected audit/brand workspace, the
+  // sidebar exposes ONLY the practical operator path — Overview, Find, Fix,
+  // Track, Brand DNA. Find/Fix/Track are where findings, page-level data, AI
+  // readability, X-Ray, and Intelligence live; the audit detail page exposes
+  // those same surfaces as in-page tabs. Reports is a parent/account-level
+  // destination and is intentionally NOT a peer of audit workflow items.
+  // Audit deep-dive features are reached through the audit detail page (in-
+  // page tabs) and Find/Fix/Track — not as sidebar peers, which previously
+  // created competing nav and made the audit area feel like a feature gallery.
   const navGroups: NavGroup[] = [
     {
-      label: 'Workspace',
+      label: 'Audit workspace',
       items: [
         { label: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
-        { label: 'Find', href: '/dashboard/find', icon: Search },
+        { label: 'Find', href: '/dashboard/find', icon: Search, matchPaths: ['/dashboard/audits'] },
         { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
         { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
-        { label: 'Reports', href: '/dashboard/reports', icon: FileText, matchPaths: ['/dashboard/audits'] },
-      ],
-    },
-    {
-      label: 'Audit deep dive',
-      items: [
-        { label: 'Audit detail', href: auditTabHref('summary'), icon: LayoutDashboard, matchHash: 'summary' },
-        { label: 'Findings', href: auditTabHref('findings'), icon: AlertTriangle, matchHash: 'findings' },
-        { label: 'Pages', href: auditTabHref('pages'), icon: Globe, matchHash: 'pages' },
-        { label: 'Responsive', href: auditTabHref('responsive'), icon: Smartphone, matchHash: 'responsive' },
-        { label: 'AI X-Ray', href: auditTabHref('ai_xray'), icon: Brain, matchHash: 'ai_xray' },
-        { label: 'Intelligence', href: auditTabHref('intelligence'), icon: Sparkles, matchHash: 'intelligence' },
       ],
     },
   ];
 
   const isActive = (item: NavItem) => {
-    // Hash-aware audit feature nav: only highlight when on an actual audit
-    // detail page (/dashboard/audits/<uuid>) AND the hash matches.
-    // Exclude /dashboard/audits/site/* and /dashboard/audits/brand/* paths.
-    if (item.matchHash) {
-      const isRealAuditDetail = onAuditDetail && !pathname?.startsWith('/dashboard/audits/site/') && !pathname?.startsWith('/dashboard/audits/brand/');
-      if (!isRealAuditDetail) return false;
-      if (item.matchHash === 'summary') return !currentHash || currentHash === 'overview' || currentHash === 'summary';
-      return currentHash === item.matchHash;
-    }
     if (pathname === item.href || pathname?.startsWith(item.href + '/')) return true;
     if (item.matchPaths?.some(p => pathname === p || pathname?.startsWith(p + '/'))) return true;
     return false;
@@ -450,6 +408,39 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             />
             {!collapsed && <span className="truncate">Dashboard</span>}
           </Link>
+        </div>
+
+        {/* My Audits — parent-level destination listing all audits across
+            brands/sites. Lives at parent level (next to Dashboard), NOT inside
+            the audit workspace, so audit workflow nav stays clean. */}
+        <div className={clsx('pb-1', collapsed ? 'px-1.5' : 'px-2')}>
+          {(() => {
+            const myAuditsActive = pathname === '/dashboard/audits';
+            return (
+              <Link
+                href="/dashboard/audits"
+                onClick={() => setSidebarOpen(false)}
+                title={collapsed ? 'My Audits' : undefined}
+                aria-current={myAuditsActive ? 'page' : undefined}
+                className={clsx(
+                  'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
+                  collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
+                  myAuditsActive ? 'font-semibold' : 'hover:bg-black/[0.04]',
+                )}
+                style={{
+                  color: myAuditsActive ? 'var(--ink)' : 'var(--ink-2)',
+                  background: myAuditsActive ? '#ffffff' : undefined,
+                }}
+              >
+                <FileSearch
+                  size={collapsed ? 17 : 15}
+                  strokeWidth={1.75}
+                  style={{ color: myAuditsActive ? 'var(--ink)' : 'var(--m-muted)' }}
+                />
+                {!collapsed && <span className="truncate">My Audits</span>}
+              </Link>
+            );
+          })()}
         </div>
 
         {/* Brand/site selector — BIGGER and more prominent */}
@@ -613,7 +604,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
-                  const isHashItem = !!item.matchHash;
                   const onClick = () => setSidebarOpen(false);
                   const linkClass = clsx(
                     'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
@@ -625,41 +615,23 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     background: active ? '#ffffff' : undefined,
                     boxShadow: active ? '0 1px 2px rgba(20,19,15,0.04)' : undefined,
                   } as React.CSSProperties;
-                  const inner = (
-                    <>
-                      <Icon
-                        size={collapsed ? 17 : 15}
-                        strokeWidth={1.75}
-                        style={{ color: active ? 'var(--ink)' : 'var(--m-muted)' }}
-                      />
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                    </>
-                  );
                   return (
                     <li key={`${group.label}-${item.label}`}>
-                      {isHashItem ? (
-                        <a
-                          href={item.href}
-                          onClick={onClick}
-                          title={collapsed ? item.label : undefined}
-                          aria-current={active ? 'page' : undefined}
-                          className={linkClass}
-                          style={linkStyle}
-                        >
-                          {inner}
-                        </a>
-                      ) : (
-                        <Link
-                          href={item.href}
-                          onClick={onClick}
-                          title={collapsed ? item.label : undefined}
-                          aria-current={active ? 'page' : undefined}
-                          className={linkClass}
-                          style={linkStyle}
-                        >
-                          {inner}
-                        </Link>
-                      )}
+                      <Link
+                        href={item.href}
+                        onClick={onClick}
+                        title={collapsed ? item.label : undefined}
+                        aria-current={active ? 'page' : undefined}
+                        className={linkClass}
+                        style={linkStyle}
+                      >
+                        <Icon
+                          size={collapsed ? 17 : 15}
+                          strokeWidth={1.75}
+                          style={{ color: active ? 'var(--ink)' : 'var(--m-muted)' }}
+                        />
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                      </Link>
                     </li>
                   );
                 })}
@@ -806,7 +778,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     : currentHash === 'findings' ? 'Findings'
                     : currentHash === 'pages' ? 'Pages'
                     : currentHash === 'responsive' ? 'Responsive'
-                    : currentHash === 'ai_xray' ? 'AI X-Ray'
+                    : currentHash === 'ai_xray' ? 'AI Readability'
                     : currentHash === 'intelligence' ? 'Intelligence'
                     : null;
                   return featureLabel ? (

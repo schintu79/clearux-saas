@@ -2204,7 +2204,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
                   : tab === 'responsive' ? 'Responsive'
-                  : tab === 'ai_xray' ? 'AI X-Ray'
+                  : tab === 'ai_xray' ? 'AI Readability'
                   : 'Intelligence';
                 const responsiveFindings = findings.filter((f: any) => {
                   const t = (f.title || '').toLowerCase();
@@ -2261,7 +2261,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               findings: { icon: AlertTriangle, title: 'Findings' },
               pages: { icon: Globe, title: 'Pages' },
               responsive: { icon: Smartphone, title: 'Responsive' },
-              ai_xray: { icon: Brain, title: 'AI X-Ray' },
+              ai_xray: { icon: Brain, title: 'AI Readability' },
               intelligence: { icon: Sparkles, title: 'Intelligence' },
             };
             const meta = tabMeta[activeTab];
