@@ -2,7 +2,7 @@
 const nextConfig = {
   // PDFKit requires native Node.js modules and font file access.
   // Mark it as external so webpack doesn't try to bundle it.
-  serverExternalPackages: ['pdfkit', '@sparticuz/chromium', 'puppeteer-core'],
+  serverExternalPackages: ['pdfkit', '@sparticuz/chromium', 'puppeteer-core', 'ssh2', 'basic-ftp'],
 
   // Increase serverless function timeout for Inngest steps
   // (crawling + AI analysis can take up to 5 minutes per step)

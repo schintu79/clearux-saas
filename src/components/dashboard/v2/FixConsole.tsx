@@ -106,7 +106,10 @@ export default function FixConsole({
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiNote, setAiNote] = useState<string | null>(null);
   const [showPushNotice, setShowPushNotice] = useState(false);
+  // Tracks whether an AI refine has happened in this session so we can show
+  // Undo and snap back to the pre-refine patch (even if that was empty).
   const lastPatchRef = useRef<string>(initialPatch);
+  const [hasRefined, setHasRefined] = useState(false);
 
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const isJson = useMemo(() => fixType === 'schema' || looksLikeJson(patch), [fixType, patch]);
@@ -145,7 +148,7 @@ export default function FixConsole({
   };
 
   const handleAiRefine = async () => {
-    if (!instruction.trim() || !patch.trim() || aiBusy) return;
+    if (!instruction.trim() || aiBusy) return;
     setAiBusy(true);
     setAiError(null);
     setAiNote(null);
@@ -155,13 +158,14 @@ export default function FixConsole({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patch, instruction }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        setAiError(data?.error || 'Could not generate a suggestion.');
+        setAiError(data?.error || `Could not generate a suggestion (status ${res.status}).`);
         return;
       }
       if (typeof data.suggestion === 'string' && data.suggestion.trim()) {
         lastPatchRef.current = patch;
+        setHasRefined(true);
         setPatch(data.suggestion);
         setInstruction('');
         if (data.source === 'fallback') {
@@ -179,6 +183,7 @@ export default function FixConsole({
 
   const handleUndo = () => {
     setPatch(lastPatchRef.current);
+    setHasRefined(false);
     setAiNote(null);
   };
 
@@ -331,8 +336,8 @@ export default function FixConsole({
         </div>
         <p className="text-[11px] mb-2" style={{ color: 'var(--m-muted)' }}>
           Ask for a refinement — e.g. &ldquo;make the title clearer&rdquo;, &ldquo;tighten this meta
-          description&rdquo;, &ldquo;make this more brand aligned&rdquo;. The suggestion replaces the
-          fix above; you can undo or edit.
+          description&rdquo;, &ldquo;make this more brand aligned&rdquo;. If the fix above is empty,
+          the helper will draft one from the finding. The suggestion replaces the fix; you can undo or edit.
         </p>
         <div className="flex items-stretch gap-2 flex-col sm:flex-row">
           <input
@@ -358,7 +363,7 @@ export default function FixConsole({
           <button
             type="button"
             onClick={handleAiRefine}
-            disabled={aiBusy || !instruction.trim() || !patch.trim()}
+            disabled={aiBusy || !instruction.trim()}
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
             style={{
               background: 'var(--ink)',
@@ -367,9 +372,9 @@ export default function FixConsole({
             aria-label="Generate AI suggestion"
           >
             {aiBusy ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            {aiBusy ? 'Thinking...' : 'Suggest'}
+            {aiBusy ? 'Thinking...' : patch.trim() ? 'Suggest' : 'Draft fix'}
           </button>
-          {lastPatchRef.current !== patch && lastPatchRef.current !== initialPatch && (
+          {hasRefined && (
             <button
               type="button"
               onClick={handleUndo}
