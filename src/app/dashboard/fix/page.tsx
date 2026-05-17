@@ -41,6 +41,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import FixConsole from '@/components/dashboard/v2/FixConsole';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
@@ -227,7 +228,13 @@ function FixCard({
               </div>
             )}
 
-            {/* Why it matters / Recommended fix / Business impact */}
+            {/* Finding / Fix / Impact — clearly sectioned */}
+            <div
+              className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.06em]"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              Overview
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3">
               <div
                 className="p-4"
@@ -236,7 +243,7 @@ function FixCard({
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={12} style={{ color: severityColor(finding.severity) }} />
                   <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    Why it matters
+                    Finding
                   </p>
                 </div>
                 <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--ink-2)' }}>
@@ -255,7 +262,7 @@ function FixCard({
                 <div className="flex items-center gap-2 mb-2">
                   <Lightbulb size={12} style={{ color: 'var(--signal)' }} />
                   <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--signal)' }}>
-                    Recommended fix
+                    Fix
                   </p>
                 </div>
                 <p className="text-[13px] leading-[1.65] font-medium whitespace-pre-wrap" style={{ color: 'var(--ink)' }}>
@@ -270,7 +277,7 @@ function FixCard({
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp size={12} style={{ color: 'var(--ok)' }} />
                   <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    Business impact
+                    Impact
                   </p>
                 </div>
                 {hasImpact ? (
@@ -284,6 +291,13 @@ function FixCard({
                 )}
               </div>
             </div>
+
+            {/* Fix Console — editable patch, copy/download, AI helper, gated push */}
+            <FixConsole
+              finding={finding}
+              onApproveLocal={() => onStatus(finding.id, 'fixed')}
+              pending={pending}
+            />
 
             {/* Status row — matches screenshot footer */}
             <div className="px-4 py-3 flex items-center gap-3 flex-wrap" style={{ background: 'var(--paper-2)' }}>
