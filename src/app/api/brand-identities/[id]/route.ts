@@ -69,11 +69,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Only set Brand DNA fields when the caller actually sent them — keeps
-    // PUT idempotent for legacy clients that still only send name/description.
+    // PUT idempotent for partial updates (e.g. "set as logo" sends just name + logo_url).
     const update: Record<string, unknown> = {
       name: name.trim(),
-      description: typeof description === 'string' ? description.trim() || null : null,
       updated_at: new Date().toISOString(),
+    }
+    if ('description' in (body || {})) {
+      update.description = typeof description === 'string' ? description.trim() || null : null
     }
     if ('website_url' in (body || {})) update.website_url = normalizeUrl(website_url)
     if ('brand_voice' in (body || {})) {
