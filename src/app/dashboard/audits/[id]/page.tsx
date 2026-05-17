@@ -66,6 +66,7 @@ import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/A
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
+import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -1306,6 +1307,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         }
 
         setAudit(combined);
+
+        // Sync the global brand/site selection to this audit's identity
+        // so the sidebar selector + topbar "Viewing X" mirror the audit
+        // the operator just opened. Without this, clicking a supabase.com
+        // audit while the selector is on clearux.ai would leave the
+        // selector on clearux.ai and the audit body on supabase.com —
+        // the divergence reported in the bug.
+        try {
+          if ((auditData as any).audit_type === 'brand_identity' && (auditData as any).brand_identity_id) {
+            writeSelection({ kind: 'brand', brandId: (auditData as any).brand_identity_id });
+          } else if (auditData.product_url) {
+            const host = new URL(auditData.product_url).hostname.replace(/^www\./, '');
+            if (host) writeSelection({ kind: 'site', host });
+          }
+        } catch {}
 
         if (auditData.status === 'completed') {
           const [findingsRes, pagesRes] = await Promise.all([

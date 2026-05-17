@@ -60,6 +60,7 @@ import {
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { writeSelection } from '@/lib/dashboard/brand-selection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import type { Audit, Report, AuditFinding } from '@/types/database';
 
@@ -184,6 +185,32 @@ function OverviewInner() {
       } catch {}
     })();
   }, [user, selection]);
+
+  // Defensive sync: if the loaded bundle's audit identity does NOT match
+  // the current selection (e.g. selection was null on a direct visit and
+  // the loader returned the globally-most-recent audit), write the
+  // resolved audit's identity back to the selection store so the sidebar
+  // selector + topbar "Viewing X" agree with what the body is showing.
+  // Guarded by an equality check to avoid loops with the subscribe-
+  // driven mirror in DashboardShell.
+  useEffect(() => {
+    const resolved = bundle?.audit;
+    if (!resolved) return;
+    let resolvedSel: { kind: 'brand'; brandId: string } | { kind: 'site'; host: string } | null = null;
+    if ((resolved as any).audit_type === 'brand_identity' && (resolved as any).brand_identity_id) {
+      resolvedSel = { kind: 'brand', brandId: (resolved as any).brand_identity_id };
+    } else if (resolved.product_url) {
+      try {
+        const host = new URL(resolved.product_url).hostname.replace(/^www\./, '');
+        if (host) resolvedSel = { kind: 'site', host };
+      } catch {}
+    }
+    if (!resolvedSel) return;
+    const matches =
+      (selection?.kind === 'site' && resolvedSel.kind === 'site' && selection.host === resolvedSel.host) ||
+      (selection?.kind === 'brand' && resolvedSel.kind === 'brand' && selection.brandId === resolvedSel.brandId);
+    if (!matches) writeSelection(resolvedSel);
+  }, [bundle, selection]);
 
   // Once we have a latest completed audit, hydrate findings, category
   // scores, score trend, and stored competitor benchmarks. Each fetch

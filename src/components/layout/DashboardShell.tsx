@@ -35,6 +35,8 @@ import {
   readSelection,
   writeSelection,
   selectionFromSidebarId,
+  subscribeSelection,
+  type BrandSelection,
 } from '@/lib/dashboard/brand-selection';
 
 interface DashboardShellProps {
@@ -86,14 +88,28 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // value is hydrated from localStorage on mount in the effect below.
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
 
-  // Hydrate selection from localStorage on first render so the dashboard
-  // pages mount with the correct scope rather than the user's globally
-  // most-recent audit.
+  // Hydrate selection from localStorage on first render AND subscribe to
+  // external changes so the shell's selectedSiteId mirrors the persistent
+  // store. Without the subscription, callers like `/dashboard/page.tsx`
+  // (portfolio rows) and the audit detail pages can call `writeSelection`
+  // and the body would scope to the new brand, while the sidebar/header
+  // (which read from this state) stay on the old one. That divergence is
+  // exactly the bug we're fixing here.
+  const sidebarIdFromSelection = (sel: BrandSelection): string | null => {
+    if (!sel) return null;
+    if (sel.kind === 'site') return `site:${sel.host}`;
+    if (sel.kind === 'brand') return `brand:${sel.brandId}`;
+    return null;
+  };
   useEffect(() => {
     const sel = readSelection();
-    if (!sel) return;
-    if (sel.kind === 'site') setSelectedSiteId(`site:${sel.host}`);
-    else if (sel.kind === 'brand') setSelectedSiteId(`brand:${sel.brandId}`);
+    const id = sidebarIdFromSelection(sel);
+    if (id) setSelectedSiteId(id);
+    const unsub = subscribeSelection((next) => {
+      const nextId = sidebarIdFromSelection(next);
+      setSelectedSiteId((prev) => (nextId === prev ? prev : nextId));
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {
@@ -191,8 +207,28 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
   // Mirror every selection change into the persistent brand-selection store
   // so Overview / Find / Fix / Track scope their queries to the same brand.
+  // Skip the write when the derived selection already matches the persisted
+  // store — that avoids two race conditions:
+  //   1. On first mount we'd otherwise write `null` before the hydrate
+  //      effect populates `selectedSiteId` from localStorage, briefly
+  //      clobbering the persisted selection and causing the body of
+  //      `/dashboard/overview` (which reads the store) to fetch the
+  //      user's globally-most-recent audit instead of the selected one
+  //      — that is the divergence reported in the bug.
+  //   2. The subscribe-driven mirror (above) re-enters this effect with
+  //      the same value; without the guard, it would re-dispatch the
+  //      change event in a loop.
   useEffect(() => {
-    writeSelection(selectionFromSidebarId(selectedSiteId));
+    const next = selectionFromSidebarId(selectedSiteId);
+    const current = readSelection();
+    const sameSite = next?.kind === 'site' && current?.kind === 'site' && next.host === current.host;
+    const sameBrand = next?.kind === 'brand' && current?.kind === 'brand' && next.brandId === current.brandId;
+    const bothNull = next == null && current == null;
+    if (sameSite || sameBrand || bothNull) return;
+    // Don't clobber a real persisted selection with `null` during the
+    // initial render window before hydrate has populated state.
+    if (next == null && current != null) return;
+    writeSelection(next);
   }, [selectedSiteId]);
 
   // Click-outside / Escape to close brand menu.

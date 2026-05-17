@@ -21,6 +21,7 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import { PILLAR_FOR_CATEGORY } from '@/lib/audit-checkpoints';
 import type { Audit, Report, AuditFinding } from '@/types/database';
+import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -90,6 +91,12 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
       }
 
       const brandIds = brands.map(b => b.id);
+
+      // Sync the sidebar selector + topbar to this brand so the body, the
+      // selector, and the "Viewing X" topbar agree. Without this they
+      // would diverge when the user opened a brand from a list while a
+      // different selection was persisted.
+      if (brandIds[0]) writeSelection({ kind: 'brand', brandId: brandIds[0] });
 
       // Fetch audits for these brand identities
       const { data: rows, error: fetchError } = await supabase
