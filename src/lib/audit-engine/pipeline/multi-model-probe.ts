@@ -163,54 +163,132 @@ async function probeOpenAI(
 }
 
 /**
+ * Resolve the Google Gemini API key from the environment.
+ *
+ * Canonical var: `GEMINI_API_KEY` (matches Google AI Studio's own
+ * default naming and the variable name shown on aistudio.google.com).
+ * We also accept several other common aliases — this is forgiving on
+ * purpose because operators frequently set whichever name they saw
+ * first in docs or another SDK:
+ *   - GEMINI_API_KEY              (canonical, recommended)
+ *   - GOOGLE_AI_API_KEY           (legacy name in this repo's docs)
+ *   - GOOGLE_GENERATIVE_AI_API_KEY (Vercel AI SDK convention)
+ *   - GOOGLE_API_KEY              (generic Google Cloud)
+ */
+function resolveGeminiApiKey(): string | null {
+  const candidates = [
+    process.env.GEMINI_API_KEY,
+    process.env.GOOGLE_AI_API_KEY,
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    process.env.GOOGLE_API_KEY,
+  ]
+  for (const v of candidates) {
+    if (v && v.trim()) return v.trim()
+  }
+  return null
+}
+
+const GEMINI_SYSTEM_PROMPT =
+  'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.'
+
+// Models tried in order. We start with a current stable model, then
+// fall back to widely-available ones if the first 404s on the account's
+// API tier. Keeps the probe resilient as Google rotates model names.
+const GEMINI_MODEL_FALLBACKS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-pro',
+]
+
+/**
  * Probe using Gemini via Google AI API.
- * Falls back gracefully if GOOGLE_AI_API_KEY is not set.
+ * Falls back gracefully if no Gemini API key is set. Uses a tolerant
+ * env-var lookup ([[resolveGeminiApiKey]]) and tries multiple Gemini
+ * model IDs so a single deprecation does not silently break X-Ray.
  */
 async function probeGemini(
   domain: string,
   questions: string[],
 ): Promise<Array<{ question: string; answer: string }>> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
+  const apiKey = resolveGeminiApiKey()
   if (!apiKey) {
     return questions.map((q) => ({
       question: q,
-      answer: '[Google AI API key not configured — skipped]',
+      answer: '[Gemini API key not configured — skipped]',
     }))
   }
 
   const results: Array<{ question: string; answer: string }> = []
+  // Remember which model actually worked so we don't re-probe fallbacks
+  // for every question once we've found a live one.
+  let workingModel: string | null = null
 
   for (const q of questions) {
-    try {
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: q }] }],
-            generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
-            systemInstruction: {
-              parts: [{ text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.' }],
-            },
-          }),
-          signal: AbortSignal.timeout(20_000),
-        },
-      )
+    const modelsToTry: readonly string[] = workingModel
+      ? [workingModel]
+      : GEMINI_MODEL_FALLBACKS
+    let answer: string | null = null
+    let lastError: string | null = null
 
-      if (!resp.ok) {
-        results.push({ question: q, answer: `[Gemini probe failed: HTTP ${resp.status}]` })
-        continue
-      }
+    for (const model of modelsToTry) {
+      try {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: q }] }],
+              generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
+              systemInstruction: {
+                parts: [{ text: GEMINI_SYSTEM_PROMPT }],
+              },
+            }),
+            signal: AbortSignal.timeout(20_000),
+          },
+        )
 
-      const data = (await resp.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+        if (!resp.ok) {
+          // 404 = model not available on this key's tier; try next fallback.
+          // 400/403/429 etc = surface the error but stop trying other models
+          // (auth/quota issues won't change between models).
+          const body = await resp.text().catch(() => '')
+          lastError = `HTTP ${resp.status}${body ? ` ${body.slice(0, 160)}` : ''}`
+          console.error(`[multi-model] Gemini ${model} failed: ${lastError}`)
+          if (resp.status === 404 && !workingModel) continue
+          break
+        }
+
+        const data = (await resp.json()) as {
+          candidates?: Array<{
+            content?: { parts?: Array<{ text?: string }> }
+            finishReason?: string
+          }>
+          promptFeedback?: { blockReason?: string }
+        }
+
+        if (data.promptFeedback?.blockReason) {
+          answer = `[Gemini blocked: ${data.promptFeedback.blockReason}]`
+        } else {
+          const parts = data.candidates?.[0]?.content?.parts || []
+          const text = parts.map((p) => p?.text || '').join('').trim()
+          answer = text || '[No response]'
+        }
+        workingModel = model
+        break
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err)
+        console.error(`[multi-model] Gemini ${model} threw: ${lastError}`)
+        // Network errors / timeouts: don't churn through every fallback.
+        break
       }
-      const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '[No response]'
-      results.push({ question: q, answer })
-    } catch {
-      results.push({ question: q, answer: '[Gemini probe timed out]' })
     }
+
+    results.push({
+      question: q,
+      answer: answer ?? `[Gemini probe failed: ${lastError || 'unknown error'}]`,
+    })
   }
   return results
 }

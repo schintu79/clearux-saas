@@ -148,7 +148,7 @@ export default function AIReadabilityPage() {
         </div>
         <EmptyAudit
           title="No audit to analyse yet"
-          body="Run a Fixpath audit to see how Claude, ChatGPT, Google, and Perplexity read your brand — and what to fix so they get it right."
+          body="Run a Fixpath audit to see how Claude, ChatGPT, Gemini, and Perplexity read your brand — and what to fix so they get it right."
         />
       </div>
     );
