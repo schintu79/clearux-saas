@@ -576,6 +576,8 @@ export function AuditDashboardOverview({
   onBenchmark,
   onStatCardClick,
   hideBenchmarks,
+  defaultOpenHeuristic = false,
+  defaultOpenBenchmarks = false,
 }: {
   overallScore: number;
   scoreTrend: Array<{ auditId: string; date: string; overallScore: number }>;
@@ -590,10 +592,14 @@ export function AuditDashboardOverview({
   onStatCardClick?: (filter: string) => void;
   /** Hide benchmarks section (e.g. for brand identity audits) */
   hideBenchmarks?: boolean;
+  /** Open the heuristic radar by default (command-center mode). */
+  defaultOpenHeuristic?: boolean;
+  /** Open the benchmarks section by default (command-center mode). */
+  defaultOpenBenchmarks?: boolean;
 }) {
   const totalFindings = findings.filter(f => !f.dismissed && f.status !== 'fixed').length;
-  const [heuristicOpen, setHeuristicOpen] = useState(false);
-  const [benchmarksOpen, setBenchmarksOpen] = useState(false);
+  const [heuristicOpen, setHeuristicOpen] = useState(defaultOpenHeuristic);
+  const [benchmarksOpen, setBenchmarksOpen] = useState(defaultOpenBenchmarks);
 
   return (
     <>

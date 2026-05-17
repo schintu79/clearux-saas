@@ -26,7 +26,6 @@ import {
   Wrench,
   LineChart,
   FileSearch,
-  ArrowLeft,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -494,14 +493,21 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           role="option"
                           aria-selected={selected}
                           onClick={() => {
+                            // Selecting a brand/site updates the selection and
+                            // sends the user to the workspace Overview for that
+                            // brand. Overview is the entry point for Find/Fix/
+                            // Track; deep audit-detail pages are reachable from
+                            // there. This avoids dropping users into a sub-
+                            // surface (Brand DNA / a specific audit detail)
+                            // that may not match what they were doing.
                             setSelectedSiteId(s.id);
                             setBrandMenuOpen(false);
-                            if (s.kind === 'site' && s.auditId) {
-                              router.push(`/dashboard/audits/${s.auditId}`);
-                            } else if (s.kind === 'brand') {
-                              const bid = s.id.replace(/^brand:/, '');
-                              router.push(`/dashboard/brand-identity/${bid}`);
-                            }
+                            // Persist selection synchronously so the Overview
+                            // route mounts with the correct scope on first
+                            // render (the effect that mirrors selectedSiteId
+                            // would otherwise race the navigation).
+                            writeSelection(selectionFromSidebarId(s.id));
+                            router.push('/dashboard/overview');
                           }}
                           className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-black/[0.04]"
                         >
@@ -559,31 +565,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </button>
           </div>
         )}
-
-        {/* Back-to-portfolio link. Portfolio is a parent context, not a peer
-            tab inside the brand workspace — surfacing it here keeps the
-            switcher discoverable without competing with brand work in the
-            primary nav. */}
-        <div className={clsx('pb-2', collapsed ? 'px-1.5' : 'px-2')}>
-          <Link
-            href="/dashboard/portfolio"
-            onClick={() => setSidebarOpen(false)}
-            title={collapsed ? 'All brands' : undefined}
-            aria-current={pathname?.startsWith('/dashboard/portfolio') ? 'page' : undefined}
-            className={clsx(
-              'flex items-center rounded-lg transition-colors text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
-              collapsed ? 'justify-center px-0 py-2' : 'gap-2 px-2.5 py-[7px]',
-              pathname?.startsWith('/dashboard/portfolio') ? 'font-semibold' : 'hover:bg-black/[0.04]',
-            )}
-            style={{
-              color: pathname?.startsWith('/dashboard/portfolio') ? 'var(--ink)' : 'var(--m-muted)',
-              background: pathname?.startsWith('/dashboard/portfolio') ? 'var(--card)' : undefined,
-            }}
-          >
-            <ArrowLeft size={collapsed ? 16 : 13} strokeWidth={1.75} />
-            {!collapsed && <span className="truncate">All brands</span>}
-          </Link>
-        </div>
 
         {/* Navigation — Brand workspace nav (brand-only IA) */}
         <nav aria-label="Dashboard navigation" className={clsx('flex-1 overflow-y-auto pb-2', collapsed ? 'px-1.5' : 'px-2')}>

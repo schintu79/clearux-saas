@@ -1,162 +1,103 @@
 'use client';
 
 /**
- * Overview — selected brand workspace, Find/Fix/Track entry point.
+ * Overview — brand audit command center for the SELECTED brand/site.
  *
- * Shows for the SELECTED brand only:
- *   - Brand Health Score + 3 supporting metrics (4 KPIs total)
- *   - Next Best Fix (one card, one CTA)
- *   - Top issues hurting score (top 3)
- *   - Module health (six-module strip)
+ * Lives at `/dashboard/overview` and is the landing page after a user
+ * picks a brand or site from the sidebar selector. Mirrors the layout
+ * of the per-domain dashboard at `/dashboard/audits/site/[domain]` —
+ * brand-health score, score-over-time, severity cards, heuristic
+ * radar, benchmarks, audit history — but scoped to the persisted
+ * brand/site selection so the user does not bounce between
+ * differently-shaped surfaces just because they switched brands.
  *
- * No portfolio data, no marketing copy, no extra panels. If the
- * selected brand has no audit, render a clean empty state pointing
- * to "Run audit" — never another brand's audit.
+ * If the selected brand has no audit yet, render a clean empty state
+ * pointing to "Run audit" — never another brand's data.
  */
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowRight,
+  Globe,
+  Fingerprint,
+  ExternalLink,
+  Download,
+  RefreshCw,
+  Search,
   Clock,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   CheckCircle2,
   X,
+  FileSearch,
+  ChevronRight,
+  Sparkles,
+  Zap,
+  AlertTriangle,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { createBrowserSupabase } from '@/lib/supabase-ssr';
+import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import {
   loadLatestAuditBundle,
-  rankFindings,
-  severityColor,
-  severityLabel,
-  moduleNameForFinding,
   moduleScoresFromReport,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import type { Audit, Report, AuditFinding } from '@/types/database';
 
-function scoreTone(s: number | null | undefined): string {
-  if (s == null) return 'var(--m-muted)';
-  if (s >= 70) return 'var(--ok)';
-  if (s >= 40) return 'var(--warn)';
-  return 'var(--severe)';
+/* ── Pillar config (must match audit detail page) ────────── */
+const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Brand Consistency'];
+const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
+
+const statusMeta: Record<string, { label: string; icon: React.ElementType }> = {
+  pending_payment:   { label: 'Awaiting payment', icon: Clock },
+  payment_received:  { label: 'Processing',       icon: Zap },
+  crawling:          { label: 'Crawling...',      icon: Globe },
+  analysing:         { label: 'Analysing...',     icon: Sparkles },
+  generating_report: { label: 'Generating...',    icon: FileSearch },
+  completed:         { label: 'Completed',        icon: CheckCircle2 },
+  failed:            { label: 'Failed',           icon: AlertTriangle },
+};
+
+function formatDate(d: string) {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(d));
 }
 
-function relativeDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function scoreColor(s: number) {
+  if (s >= 70) return 'text-ok';
+  if (s >= 40) return 'text-warn';
+  return 'text-severe';
 }
 
-function ScoreCard({
-  score,
-  delta,
-  domain,
-  completedAt,
-}: {
-  score: number | null;
-  delta: number | null;
-  domain: string | null;
-  completedAt: string | null;
-}) {
-  const size = 110;
-  const stroke = 9;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const val = score ?? 0;
-  const offset = c - (Math.max(0, Math.min(100, val)) / 100) * c;
-  const col = scoreTone(score);
-
-  return (
-    <div
-      className="rounded-xl p-6 flex items-center gap-6"
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      data-testid="overview-score"
-    >
-      <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--rule)" strokeWidth={stroke} />
-          {score != null && (
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={r}
-              fill="none"
-              stroke={col}
-              strokeWidth={stroke}
-              strokeDasharray={c}
-              strokeDashoffset={offset}
-              strokeLinecap="round"
-            />
-          )}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-sans font-semibold tabular-nums leading-none" style={{ fontSize: 32, color: col }}>
-            {score ?? '—'}
-          </span>
-          <span className="text-[10px] tracking-[0.08em] uppercase mt-1.5" style={{ color: 'var(--m-muted)' }}>
-            Brand Health
-          </span>
-        </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-          Latest audit
-        </p>
-        <p className="text-[18px] font-sans font-semibold mt-1 truncate" style={{ color: 'var(--ink)' }}>
-          {domain || 'Run an audit to begin'}
-        </p>
-        <div className="flex items-center gap-3 mt-2 flex-wrap">
-          {delta != null && (
-            <span
-              className="inline-flex items-center gap-1 text-[12px] font-semibold"
-              style={{ color: delta > 0 ? 'var(--ok)' : delta < 0 ? 'var(--severe)' : 'var(--m-muted)' }}
-            >
-              {delta > 0 ? <TrendingUp size={12} /> : delta < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
-              {delta > 0 ? '+' : ''}
-              {delta} pts vs. previous
-            </span>
-          )}
-          {completedAt && (
-            <span className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--m-muted)' }}>
-              <Clock size={11} />
-              {relativeDate(completedAt)}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MetricTile({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
-  return (
-    <div
-      className="rounded-xl px-4 py-4"
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-    >
-      <p className="text-[10px] font-semibold tracking-[0.06em] uppercase" style={{ color: 'var(--m-muted)' }}>
-        {label}
-      </p>
-      <p className="text-[22px] font-sans font-semibold tabular-nums mt-1" style={{ color: tone || 'var(--ink)' }}>
-        {value}
-      </p>
-    </div>
-  );
+function langCode(code: string | null | undefined): string {
+  if (!code || code === 'en') return 'EN';
+  return code.toUpperCase();
 }
 
 function OverviewInner() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [creditsBanner, setCreditsBanner] = useState(false);
 
+  // Extra data layered on top of the shared audit bundle. Loaded
+  // separately so a slow trend/competitor fetch never blocks the
+  // primary score render.
+  const [scoreTrend, setScoreTrend] = useState<Array<{ auditId: string; date: string; overallScore: number }>>([]);
+  const [competitors, setCompetitors] = useState<Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>>([]);
+  const [detectingCompetitors, setDetectingCompetitors] = useState(false);
+  const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
+  const [findings, setFindings] = useState<AuditFinding[]>([]);
+  const [brandName, setBrandName] = useState<string | null>(null);
+
+  // Surfacing a one-shot "credits added" banner — only after the user
+  // returns from the Stripe checkout. Same behaviour as before the
+  // redesign so the existing checkout flow still gets confirmation.
   useEffect(() => {
     if (searchParams.get('credits') !== 'purchased') return;
     setCreditsBanner(true);
@@ -166,40 +107,130 @@ function OverviewInner() {
     return () => clearTimeout(t);
   }, [searchParams]);
 
+  // Load latest bundle whenever auth or selection changes.
   useEffect(() => {
     if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
       return;
     }
     setLoading(true);
+    setScoreTrend([]);
+    setCompetitors([]);
+    setCategoryScores([]);
+    setFindings([]);
     loadLatestAuditBundle(user.id, selection)
       .then(setBundle)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
+  // Resolve a human-readable brand name when the selection is a brand
+  // identity (the bundle only carries audits, not the brand row itself).
+  useEffect(() => {
+    if (!user || selection?.kind !== 'brand') {
+      setBrandName(null);
+      return;
+    }
+    const supabase = createBrowserSupabase();
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('brand_identities')
+          .select('name')
+          .eq('id', selection.brandId)
+          .maybeSingle();
+        setBrandName((data as any)?.name || null);
+      } catch {}
+    })();
+  }, [user, selection]);
+
+  // Once we have a latest completed audit, hydrate findings, category
+  // scores, score trend, and stored competitor benchmarks. Each fetch
+  // is independent so a single slow endpoint does not stall the page.
+  const latestCompleted = bundle?.audit && bundle.report ? bundle.audit : null;
+  useEffect(() => {
+    if (!latestCompleted) return;
+    const supabase = createBrowserSupabase();
+
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', latestCompleted.id)
+          .order('sort_order', { ascending: true });
+        setFindings((data || []) as AuditFinding[]);
+      } catch {}
+    })();
+
+    const rawJson = (bundle?.report?.raw_json || null) as any;
+    if (rawJson?.categoryScores && Array.isArray(rawJson.categoryScores)) {
+      setCategoryScores(rawJson.categoryScores);
+    }
+
+    const productUrl = latestCompleted.product_url;
+    if (productUrl) {
+      fetch(`/api/audits/score-trend?url=${encodeURIComponent(productUrl)}`)
+        .then(r => r.json())
+        .then(d => { if (d.trend) setScoreTrend(d.trend); })
+        .catch(() => {});
+
+      fetch(`/api/audits/detect-competitors?url=${encodeURIComponent(productUrl)}`)
+        .then(r => r.json())
+        .then(d => { if (d.competitors && d.competitors.length > 0) setCompetitors(d.competitors); })
+        .catch(() => {});
+    }
+  }, [latestCompleted, bundle]);
+
+  const handleBenchmark = useCallback((mode: 'auto' | 'manual', domains?: string[]) => {
+    if (!latestCompleted?.product_url) return;
+    setDetectingCompetitors(true);
+    fetch('/api/audits/detect-competitors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: latestCompleted.product_url, mode, competitors: domains }),
+    })
+      .then(r => r.json())
+      .then(d => { if (d.competitors && d.competitors.length > 0) setCompetitors(d.competitors); })
+      .catch(() => {})
+      .finally(() => setDetectingCompetitors(false));
+  }, [latestCompleted]);
+
+  const handleStatCardClick = useCallback((filter: string) => {
+    if (!latestCompleted || filter === 'passed') return;
+    router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+  }, [latestCompleted, router]);
+
+  /* ── Loading skeleton ─────────────────────────────────── */
   if (authLoading || loading || !ready) {
     return (
-      <div>
-        <div className="h-8 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-5 w-72 rounded-md animate-pulse mb-8" style={{ background: 'var(--paper-2)' }} />
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-          <div className="h-[160px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
-          <div className="h-[160px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
+      <div className="max-w-5xl mx-auto">
+        <div className="h-8 w-64 bg-off rounded-lg animate-pulse mb-2" />
+        <div className="h-4 w-40 bg-off rounded-md animate-pulse mb-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="h-56 bg-off rounded-xl animate-pulse" />
+          <div className="h-56 bg-off rounded-xl animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-off rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
   }
 
-  if (!bundle?.audit) {
+  /* ── Empty state — no audit for the selected brand ────── */
+  if (!bundle?.audit || !bundle.report) {
     return (
-      <div>
+      <div className="max-w-5xl mx-auto">
+        {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
             Overview
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection ? 'No audit for this brand yet. Run one to populate Find, Fix, and Track.' : 'Run your first audit to see what to fix next.'}
+            {selection
+              ? 'No audit for this brand yet. Run one to see your Brand Health Score and what to fix next.'
+              : 'Pick a brand or run your first audit to see your Brand Health Score.'}
           </p>
         </div>
         <EmptyAudit
@@ -210,184 +241,251 @@ function OverviewInner() {
     );
   }
 
-  const { audit, report, findings, prior } = bundle;
+  /* ── Derived data ────────────────────────────────────── */
+  const audit = bundle.audit as Audit;
+  const report = bundle.report as Report;
+  const overallScore = report.overall_score ?? 0;
+  const auditCount = bundle.history.length;
+
   let domain: string | null = null;
   try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
-  const score = report?.overall_score ?? null;
-  const priorScore = prior?.report?.overall_score ?? null;
-  const delta = score != null && priorScore != null ? score - priorScore : null;
 
-  const openFindings = findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
-  const fixedCount = findings.filter((f) => f.status === 'fixed').length;
-  const criticalOpen = openFindings.filter((f) => f.severity === 'critical' || f.severity === 'high').length;
-  const top3 = rankFindings(openFindings).slice(0, 3);
-  const modules = moduleScoresFromReport(report, findings);
-  const next = top3[0] || null;
+  const displayTitle = selection?.kind === 'brand' && brandName
+    ? brandName
+    : (domain || 'Latest audit');
+  const headerIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const HeaderIcon = headerIcon;
+  const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
+
+  // Severity counts from open findings (mirror domain dashboard).
+  const openFindings = findings.filter((f) => f.status !== 'fixed' && !f.dismissed);
+  const severityCounts = {
+    critical: openFindings.filter((f) => f.severity === 'critical').length,
+    high: openFindings.filter((f) => f.severity === 'high').length,
+    medium: openFindings.filter((f) => f.severity === 'medium').length,
+    low: openFindings.filter((f) => f.severity === 'low').length,
+  };
+
+  // Pillar scores: prefer fine-grained categoryScores from raw_json
+  // (matches the existing audit detail page). Fall back to the module
+  // helper so a brand-identity-only audit still gets a radar chart.
+  let pillarScores: Array<{ name: string; score: number }>;
+  if (categoryScores.length > 0) {
+    pillarScores = PILLAR_NAMES.map((name, i) => {
+      const [start, end] = PILLAR_RANGES[i];
+      const cats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+      return {
+        name,
+        score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : -1,
+      };
+    }).filter(p => p.score >= 0);
+  } else {
+    pillarScores = moduleScoresFromReport(report, findings)
+      .filter((m): m is { name: string; score: number } => m.score != null);
+  }
+
+  const hideBenchmarks = (audit as any).audit_type === 'brand_identity' || selection?.kind === 'brand';
 
   return (
-    <div>
-      {creditsBanner && (
-        <div role="status" aria-live="polite" className="mb-5 px-4 py-3 rounded-lg flex items-center gap-3" style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 14%, transparent)' }}>
-          <CheckCircle2 size={15} style={{ color: 'var(--ok)' }} />
-          <p className="text-[13px]" style={{ color: 'var(--ink)' }}>Credits added to your account.</p>
-          <button onClick={() => setCreditsBanner(false)} className="ml-auto p-1 rounded-md hover:bg-black/5" style={{ color: 'var(--m-muted)' }} aria-label="Dismiss">
-            <X size={12} />
-          </button>
-        </div>
-      )}
-      <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-          Overview
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          What to fix next, in order of impact.
-        </p>
-      </div>
+    <div className="max-w-5xl mx-auto">
+      {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
 
-      {/* 4 KPI cards: Brand Health Score (hero) + 3 supporting metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-3 mb-5">
-        <ScoreCard score={score} delta={delta} domain={domain} completedAt={audit.completed_at} />
-        <MetricTile label="Open issues" value={openFindings.length} tone={openFindings.length === 0 ? 'var(--ok)' : 'var(--ink)'} />
-        <MetricTile label="Critical / high" value={criticalOpen} tone={criticalOpen > 0 ? 'var(--severe)' : 'var(--ok)'} />
-        <MetricTile label="Fixed" value={fixedCount} tone={fixedCount > 0 ? 'var(--ok)' : 'var(--m-muted)'} />
-      </div>
-
-      {/* Next Best Fix */}
-      <div
-        className="rounded-xl p-5 mb-6 flex items-start gap-4"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        data-testid="overview-next-action"
-      >
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-            Next Best Fix
+      {/* ── Identity header ─────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
+              {displayTitle}
+            </h1>
+            {productUrl && selection?.kind !== 'brand' && (
+              <a
+                href={productUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand/80 transition-colors"
+                aria-label="Open site in new tab"
+              >
+                <ExternalLink size={11} />
+              </a>
+            )}
+          </div>
+          <p className="text-muted text-xs">
+            {auditCount} audit{auditCount !== 1 ? 's' : ''}
+            {overallScore > 0 && (
+              <> · Latest score: <span className={`font-medium ${scoreColor(overallScore)}`}>{overallScore}/100</span></>
+            )}
+            {audit.completed_at && <> · {formatDate(audit.completed_at)}</>}
           </p>
-          {next ? (
-            <>
-              <p className="text-[16px] font-sans font-semibold mt-1.5 leading-snug" style={{ color: 'var(--ink)' }}>
-                {next.title}
-              </p>
-              <p className="text-[12px] mt-1.5 leading-relaxed line-clamp-2" style={{ color: 'var(--m-muted)' }}>
-                {severityLabel(next.severity)} · {moduleNameForFinding(next)}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-[16px] font-sans font-semibold mt-1.5" style={{ color: 'var(--ink)' }}>
-                All findings closed — re-audit to verify
-              </p>
-              <p className="text-[12px] mt-1.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-                Run a re-audit to confirm your fixes landed.
-              </p>
-            </>
-          )}
         </div>
-        <Link
-          href={next ? '/dashboard/fix' : '/dashboard/new-audit'}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
-          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-        >
-          {next ? 'Fix this' : 'Run re-audit'}
-          <ArrowRight size={13} />
-        </Link>
-      </div>
-
-      {/* Top 3 issues hurting score */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-            Top issues hurting your score
-          </p>
-          <Link href="/dashboard/find" className="text-[12px] font-medium" style={{ color: 'var(--signal)' }}>
-            See all →
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <a
+            href={`/api/reports/${audit.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+          >
+            <Download size={12} /> Report
+          </a>
+          <Link
+            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit'}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
+          >
+            <RefreshCw size={13} />
+            Re-audit
+          </Link>
+          <Link
+            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
+            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+          >
+            <Search size={13} />
+            Dig deeper
           </Link>
         </div>
-        {top3.length === 0 ? (
-          <div
-            className="rounded-xl p-5 text-[13px]"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
-            data-testid="overview-top3-empty"
-          >
-            Every open issue is fixed or dismissed. Run a re-audit to confirm.
-          </div>
-        ) : (
-          <ul className="space-y-2" data-testid="overview-top3">
-            {top3.map((f) => (
-              <li key={f.id}>
-                <Link
-                  href={`/dashboard/fix#finding-${f.id}`}
-                  className="rounded-xl p-4 flex items-start gap-3 transition-all hover:shadow-sm group"
-                  style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                    style={{ background: severityColor(f.severity) }}
-                    aria-hidden
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
-                      {f.title}
-                    </span>
-                    <span className="block text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                      {severityLabel(f.severity)} · {moduleNameForFinding(f)}
-                    </span>
-                  </span>
-                  <span
-                    className="inline-flex items-center gap-1 text-[12px] font-medium opacity-70 group-hover:opacity-100"
-                    style={{ color: 'var(--signal)' }}
-                  >
-                    Fix
-                    <ArrowRight size={11} />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      {/* Module health */}
-      <div
-        className="rounded-xl p-5"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        data-testid="overview-module-strip"
-      >
-        <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
-          Module health
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {modules.map((s) => (
-            <div
-              key={s.name}
-              className="rounded-lg px-3 py-3"
-              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-            >
-              <p className="text-[10px] font-semibold tracking-[0.04em] uppercase leading-tight" style={{ color: 'var(--m-muted)' }}>
-                {s.name}
-              </p>
-              <p className="text-[20px] font-sans font-semibold tabular-nums mt-1" style={{ color: scoreTone(s.score) }}>
-                {s.score ?? '—'}
-              </p>
-            </div>
-          ))}
+      {/* ── Dashboard: score, trend, severity cards, radar, benchmarks ── */}
+      <AuditDashboardOverview
+        overallScore={overallScore}
+        scoreTrend={scoreTrend}
+        severityCounts={severityCounts}
+        findings={findings}
+        pillarScores={pillarScores}
+        productUrl={productUrl}
+        latestAuditId={audit.id}
+        competitors={competitors.length > 0 ? competitors : undefined}
+        detecting={detectingCompetitors}
+        onBenchmark={handleBenchmark}
+        onStatCardClick={handleStatCardClick}
+        hideBenchmarks={hideBenchmarks}
+        defaultOpenHeuristic
+        defaultOpenBenchmarks
+      />
+
+      {/* ── Quick links into Find / Fix / Track ─────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <QuickLink
+          href="/dashboard/find"
+          title="Find"
+          body="See every open issue, sorted by what hurts your score most."
+        />
+        <QuickLink
+          href="/dashboard/fix"
+          title="Fix"
+          body="Work through the recommended fixes with copy-paste guidance."
+        />
+        <QuickLink
+          href="/dashboard/track"
+          title="Track"
+          body="Watch your Brand Health Score move as you ship fixes."
+        />
+      </div>
+
+      {/* ── Audit history for this brand/site ───────────── */}
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-text" style={{ color: 'var(--ink)' }}>Audit history</h2>
+        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{auditCount} total</p>
+      </div>
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}>
+        <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
+          {bundle.history.slice(0, 8).map((h) => {
+            const a = h.audit;
+            const r = h.report;
+            const meta = statusMeta[a.status] || statusMeta.pending_payment;
+            const Icon = meta.icon;
+            const done = a.status === 'completed';
+            const aLang = langCode((a as any).language);
+            return (
+              <Link
+                key={a.id}
+                href={`/dashboard/audits/${a.id}`}
+                className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row"
+              >
+                <div className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0 flex-wrap">
+                    <span className="text-text font-medium" style={{ color: 'var(--ink)' }}>
+                      {formatDate(a.completed_at || a.created_at)}
+                    </span>
+                    <span className="text-border">·</span>
+                    <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
+                    <span className="text-border">·</span>
+                    <span
+                      className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+                      style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}
+                    >
+                      {aLang}
+                    </span>
+                    {done && r?.overall_score != null && (
+                      <>
+                        <span className="text-border">·</span>
+                        <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
+                      </>
+                    )}
+                    {(a as any).depth_mode === 'deep' && (
+                      <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">Deep</span>
+                    )}
+                  </div>
+                  <ChevronRight size={12} className="text-muted/40 group-hover/row:text-brand transition-colors flex-shrink-0" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
+function CreditsBanner({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mb-5 px-4 py-3 rounded-lg flex items-center gap-3"
+      style={{
+        background: 'color-mix(in srgb, var(--ok) 6%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--ok) 14%, transparent)',
+      }}
+    >
+      <CheckCircle2 size={15} style={{ color: 'var(--ok)' }} />
+      <p className="text-[13px]" style={{ color: 'var(--ink)' }}>Credits added to your account.</p>
+      <button onClick={onClose} className="ml-auto p-1 rounded-md hover:bg-black/5" style={{ color: 'var(--m-muted)' }} aria-label="Dismiss">
+        <X size={12} />
+      </button>
+    </div>
+  );
+}
+
+function QuickLink({ href, title, body }: { href: string; title: string; body: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl p-4 transition-all hover:shadow-sm flex flex-col gap-1.5"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{title}</p>
+        <ChevronRight size={13} style={{ color: 'var(--m-muted)' }} />
+      </div>
+      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{body}</p>
+    </Link>
+  );
+}
+
 export default function OverviewPage() {
   return (
-    <Suspense fallback={
-      <div>
-        <div className="h-8 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-5 w-72 rounded-md animate-pulse mb-8" style={{ background: 'var(--paper-2)' }} />
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-          <div className="h-[160px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
-          <div className="h-[160px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
+    <Suspense
+      fallback={
+        <div className="max-w-5xl mx-auto">
+          <div className="h-8 w-64 bg-off rounded-lg animate-pulse mb-2" />
+          <div className="h-4 w-40 bg-off rounded-md animate-pulse mb-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="h-56 bg-off rounded-xl animate-pulse" />
+            <div className="h-56 bg-off rounded-xl animate-pulse" />
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <OverviewInner />
     </Suspense>
   );
