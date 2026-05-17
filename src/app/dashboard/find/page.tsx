@@ -98,7 +98,15 @@ export default function FindPage() {
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Find</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          What is hurting your score, ranked by severity.
+          What is hurting your score, ranked by severity. For per-page AI readability, mobile checks, and the full breakdown,{' '}
+          <Link
+            href={`/dashboard/audits/${bundle.audit.id}`}
+            className="font-medium underline-offset-2 hover:underline"
+            style={{ color: 'var(--signal)' }}
+          >
+            open the audit detail
+          </Link>
+          .
         </p>
       </div>
 
