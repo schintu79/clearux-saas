@@ -248,7 +248,10 @@ export function HeuristicRadarChart({ pillarScores }: {
   const n = pillarScores.length;
   if (n < 3) return null;
 
-  const cx = 320, cy = 175, R = 100;
+  // Tighter viewBox + larger radius now that we no longer render full pillar
+  // name labels outside the polygon. Score-only labels hug each data point, so
+  // we get a more compact visual that works well in narrow columns / mobile.
+  const cx = 160, cy = 160, R = 110;
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
@@ -264,20 +267,13 @@ export function HeuristicRadarChart({ pillarScores }: {
   const dataPoints = pillarScores.map((ps, i) => {
     const angle = startAngle + i * angleStep;
     const r = (ps.score / 100) * R;
-    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), angle };
   });
   const dataPolygon = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
 
-  // Labels placed further out with score underneath
-  const labelPoints = pillarScores.map((ps, i) => {
-    const angle = startAngle + i * angleStep;
-    const r = R + 55;
-    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: ps.name, score: ps.score };
-  });
-
   return (
     <div className="flex-1 min-w-0">
-      <svg viewBox="0 0 640 390" className="w-full h-auto mx-auto" style={{ maxWidth: 540 }}>
+      <svg viewBox="0 0 320 320" className="w-full h-auto mx-auto" style={{ maxWidth: 360 }}>
         {/* Background fill for innermost area */}
         <polygon points={levelPolygons[0]} fill="var(--border)" fillOpacity="0.04" />
 
@@ -303,10 +299,15 @@ export function HeuristicRadarChart({ pillarScores }: {
         </defs>
         <polygon points={dataPolygon} fill="url(#radarFill)" stroke="#6366F1" strokeWidth="2" strokeLinejoin="round" />
 
-        {/* Data points + hover areas */}
+        {/* Data points + score-only labels hugging each segment */}
         {dataPoints.map((p, i) => {
           const isHovered = hoveredIdx === i;
           const color = PILLAR_COLORS[i] || '#6366F1';
+          // Score badge sits just past the data point along the same axis so
+          // it always reads close to the segment without overlapping siblings.
+          const labelR = Math.min((pillarScores[i].score / 100) * R + 18, R + 14);
+          const lx = cx + labelR * Math.cos(p.angle);
+          const ly = cy + labelR * Math.sin(p.angle);
           return (
             <g key={i}>
               <circle
@@ -324,40 +325,37 @@ export function HeuristicRadarChart({ pillarScores }: {
                 className="transition-all duration-150"
                 style={{ pointerEvents: 'none' }}
               />
-              {/* Hover tooltip — dynamic width based on text length */}
+              {/* Score-only label near the dot */}
+              <text
+                x={lx}
+                y={ly}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="11"
+                fontWeight="600"
+                fill={color}
+                fontFamily="var(--font-inter)"
+                style={{ pointerEvents: 'none' }}
+              >
+                {pillarScores[i].score}
+              </text>
+              {/* Hover tooltip — full name reveals only on hover */}
               {isHovered && (() => {
                 const tooltipText = `${pillarScores[i].name}: ${pillarScores[i].score}/100`;
-                const tooltipW = tooltipText.length * 7.5 + 20;
+                const tooltipW = tooltipText.length * 6 + 16;
                 return (
                   <g style={{ pointerEvents: 'none' }}>
                     <rect
-                      x={p.x - tooltipW / 2} y={p.y - 36}
-                      width={tooltipW} height="28"
-                      rx="7" fill="#1e1e2e" opacity="0.94"
+                      x={p.x - tooltipW / 2} y={p.y - 30}
+                      width={tooltipW} height="22"
+                      rx="6" fill="#1e1e2e" opacity="0.94"
                     />
-                    <text x={p.x} y={p.y - 19} textAnchor="middle" fontSize="11.5" fontWeight="500" fill="white" fontFamily="var(--font-inter)">
+                    <text x={p.x} y={p.y - 15.5} textAnchor="middle" fontSize="10" fontWeight="500" fill="white" fontFamily="var(--font-inter)">
                       {tooltipText}
                     </text>
                   </g>
                 );
               })()}
-            </g>
-          );
-        })}
-
-        {/* Labels — full name + score below */}
-        {labelPoints.map((lp, i) => {
-          const anchor = Math.abs(lp.x - cx) < 5 ? 'middle' : lp.x > cx ? 'start' : 'end';
-          const isTop = lp.y < cy;
-          const color = PILLAR_COLORS[i] || '#6366F1';
-          return (
-            <g key={i}>
-              <text x={lp.x} y={isTop ? lp.y - 3 : lp.y} textAnchor={anchor} dominantBaseline="middle" fontSize="13.5" fontWeight="500" fill="var(--text)" fontFamily="var(--font-inter)" opacity="0.85">
-                {lp.name}
-              </text>
-              <text x={lp.x} y={isTop ? lp.y + 13 : lp.y + 16} textAnchor={anchor} dominantBaseline="middle" fontSize="15" fontWeight="500" fill={color} fontFamily="var(--font-inter)">
-                {lp.score}
-              </text>
             </g>
           );
         })}

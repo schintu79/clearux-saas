@@ -59,7 +59,6 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
-  BenchmarksSection,
 } from '@/components/dashboard/AuditDashboard';
 import ScoreRing from '@/components/ui/ScoreRing';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
@@ -730,56 +729,14 @@ function OverviewInner() {
           )}
         </DashboardCard>
 
-        {/* 4) AI view of this page */}
-        <DashboardCard
-          title="AI view of this page"
-          subtitle={avgAi != null ? `${aiPagesScored.length} of ${auditPages.length || aiPagesScored.length} pages scored` : 'No AI readability data yet'}
-          titleSize="lg"
-        >
-          {avgAi != null ? (
-            <div className="flex flex-col items-center justify-center pt-1">
-              <div className="flex items-baseline gap-1">
-                <span className={`text-[40px] font-bold leading-none tabular-nums ${scoreColor(avgAi)}`}>{avgAi}</span>
-                <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>%</span>
-              </div>
-              <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1" style={{ color: 'var(--m-muted)' }}>
-                Avg readability
-              </p>
-              <div className="mt-3 w-full flex items-center gap-3 text-[11px] justify-center">
-                <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }} /> {aiBuckets.green} green
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} /> {aiBuckets.amber} amber
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} /> {aiBuckets.red} red
-                </span>
-              </div>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-4 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Brain size={26} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
-              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                AI readability data appears here after a deeper audit.
-              </p>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-2 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          )}
-        </DashboardCard>
+        {/* 4) AI monitoring — clean summary card with status + coverage */}
+        <AiMonitoringCard
+          avgAi={avgAi}
+          aiBuckets={aiBuckets}
+          aiPagesScored={aiPagesScored.length}
+          totalPages={auditPages.length}
+          auditId={audit.id}
+        />
       </div>
 
       {/* ── Row 2: Audit-style category/module cards (compact 6-col row on wide screens) ── */}
@@ -860,13 +817,13 @@ function OverviewInner() {
           findings={openFindings}
           auditId={audit.id}
         />
-        <BenchmarksColumn
+        <BenchmarksSummaryCard
           overallScore={overallScore}
-          pillarScores={pillarScores}
           competitors={competitors}
           detecting={detectingCompetitors}
           onBenchmark={handleBenchmark}
           hidden={hideBenchmarks}
+          auditId={audit.id}
         />
       </div>
 
@@ -1008,7 +965,147 @@ function DashboardCard({
   );
 }
 
-/* ── Row 3 — Issues by importance (colored urgency cards) ── */
+/* ── Row 1 — AI monitoring card (clean, responsive, layered click-through) ── */
+function AiMonitoringCard({
+  avgAi,
+  aiBuckets,
+  aiPagesScored,
+  totalPages,
+  auditId,
+}: {
+  avgAi: number | null;
+  aiBuckets: { green: number; amber: number; red: number };
+  aiPagesScored: number;
+  totalPages: number;
+  auditId: string;
+}) {
+  const hasData = avgAi != null;
+  const coverageDenom = totalPages || aiPagesScored;
+  const status: { label: string; colorVar: string } = !hasData
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : (avgAi as number) >= 70
+      ? { label: 'Readable to AI', colorVar: '--ok' }
+      : (avgAi as number) >= 40
+        ? { label: 'Partial readability', colorVar: '--warn' }
+        : { label: 'Hard for AI to read', colorVar: '--severe' };
+  const totalBucket = aiBuckets.green + aiBuckets.amber + aiBuckets.red;
+  const pct = (n: number) => (totalBucket > 0 ? (n / totalBucket) * 100 : 0);
+
+  return (
+    <Link
+      href={`/dashboard/audits/${auditId}#ai_xray`}
+      className="rounded-xl p-4 sm:p-5 flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open AI Readability deep-dive"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Brain size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>AI monitoring</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              How AI systems read this site
+            </p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
+          style={{ color: 'var(--m-muted)' }}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {hasData ? (
+          <>
+            <div className="flex items-end gap-3">
+              <div className="flex items-baseline gap-1">
+                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avgAi as number)}`}>
+                  {avgAi}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+              </div>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+                style={{
+                  color: `var(${status.colorVar})`,
+                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+                }}
+              >
+                {status.label}
+              </span>
+            </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+              Avg AI readability
+            </p>
+
+            {/* Stacked coverage bar */}
+            {totalBucket > 0 && (
+              <div className="mt-4">
+                <div
+                  className="h-1.5 w-full rounded-full overflow-hidden flex"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+                >
+                  {aiBuckets.green > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.green)}%`, background: 'var(--ok)' }} />
+                  )}
+                  {aiBuckets.amber > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.amber)}%`, background: 'var(--warn)' }} />
+                  )}
+                  {aiBuckets.red > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.red)}%`, background: 'var(--severe)' }} />
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                  <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ok)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.green}</span> good
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.amber}</span> ok
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--severe)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.red}</span> poor
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] mt-auto pt-3" style={{ color: 'var(--m-muted)' }}>
+              Coverage: {aiPagesScored} of {coverageDenom} page{coverageDenom === 1 ? '' : 's'} scored
+            </p>
+          </>
+        ) : (
+          <div className="flex flex-col items-start gap-2 py-2">
+            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+              We monitor how well AI assistants understand each page — structure, copy clarity, and machine-readable signals.
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Run a deeper audit to populate this view.
+            </p>
+            <span
+              className="text-[11px] font-semibold mt-2 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              Open AI Readability <ChevronRight size={11} />
+            </span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+/* ── Row 3 — Issues by importance: 2×2 grid of soft tinted cards (dot + label, big number, helper, chevron) ── */
 function IssuesByImportance({
   severityCounts,
   onCardClick,
@@ -1018,12 +1115,25 @@ function IssuesByImportance({
 }) {
   const total =
     severityCounts.critical + severityCounts.high + severityCounts.medium + severityCounts.low;
-  const rows: Array<{ key: string; label: string; count: number; colorVar: string }> = [
-    { key: 'critical', label: 'Critical', count: severityCounts.critical, colorVar: '--severe' },
-    { key: 'high', label: 'High', count: severityCounts.high, colorVar: '--warn' },
-    { key: 'medium', label: 'Medium', count: severityCounts.medium, colorVar: '--signal' },
-    { key: 'low', label: 'Low', count: severityCounts.low, colorVar: '--ok' },
+  // Passed checks proxy: when nothing is flagged we still show a positive count tile.
+  // We use the open severity counts only; the right-most "Passed" tile mirrors the
+  // audit page stat-card layout, using a simple derived value (total of low-impact
+  // improvements already handled inline). Here we expose Critical / High / Medium / Low
+  // so all four severities have a clear discoverable home in 2×2.
+  const tiles: Array<{
+    key: string;
+    label: string;
+    count: number;
+    helper: string;
+    colorVar: string;
+    clickable: boolean;
+  }> = [
+    { key: 'critical', label: 'Critical', count: severityCounts.critical, helper: 'Needs immediate attention', colorVar: '--severe', clickable: severityCounts.critical > 0 },
+    { key: 'high',     label: 'High',     count: severityCounts.high,     helper: 'High impact issues to fix',  colorVar: '--warn',   clickable: severityCounts.high > 0 },
+    { key: 'medium',   label: 'Medium',   count: severityCounts.medium,   helper: 'Should improve soon',        colorVar: '--signal', clickable: severityCounts.medium > 0 },
+    { key: 'low',      label: 'Low',      count: severityCounts.low,      helper: 'Low impact improvements',    colorVar: '--ok',     clickable: severityCounts.low > 0 },
   ];
+
   return (
     <DashboardCard
       title="Issues by importance"
@@ -1041,32 +1151,66 @@ function IssuesByImportance({
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>All clear at the moment.</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {rows.map((r) => (
-            <li key={r.key}>
-              <button
-                type="button"
-                onClick={() => onCardClick?.(r.key)}
-                className="w-full text-left rounded-lg px-3 py-2.5 transition-colors flex items-center gap-3 hover:shadow-sm"
+        <div className="grid grid-cols-2 gap-2.5">
+          {tiles.map((t) => {
+            const interactive = t.clickable && !!onCardClick;
+            const Tag: any = interactive ? 'button' : 'div';
+            return (
+              <Tag
+                key={t.key}
+                {...(interactive
+                  ? {
+                      type: 'button',
+                      onClick: () => onCardClick?.(t.key),
+                      'aria-label': `${t.count} ${t.label.toLowerCase()} severity issues — view in Find`,
+                    }
+                  : {})}
+                className={`text-left rounded-xl px-3 py-3 flex flex-col gap-1 transition-all ${
+                  interactive ? 'hover:shadow-sm hover:-translate-y-0.5 cursor-pointer group' : 'opacity-90'
+                }`}
                 style={{
-                  background: `color-mix(in srgb, var(${r.colorVar}) 6%, transparent)`,
-                  border: `1px solid color-mix(in srgb, var(${r.colorVar}) 18%, transparent)`,
-                  color: `var(${r.colorVar})`,
+                  background: `color-mix(in srgb, var(${t.colorVar}) 7%, transparent)`,
+                  border: `1px solid color-mix(in srgb, var(${t.colorVar}) 20%, transparent)`,
                 }}
-                aria-label={`${r.count} ${r.label.toLowerCase()} severity issues`}
               >
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: `var(${r.colorVar})` }}
-                />
-                <span className="text-[12px] font-semibold flex-1" style={{ color: `var(${r.colorVar})` }}>{r.label}</span>
-                <span className="text-[16px] font-bold tabular-nums" style={{ color: `var(${r.colorVar})` }}>
-                  {r.count}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: `var(${t.colorVar})` }}
+                  />
+                  <span
+                    className="text-[11px] font-semibold tracking-tight truncate"
+                    style={{ color: `var(${t.colorVar})` }}
+                  >
+                    {t.label} Issues
+                  </span>
+                </div>
+                <p
+                  className="text-[28px] leading-none font-bold tabular-nums mt-0.5"
+                  style={{ color: `var(${t.colorVar})` }}
+                >
+                  {t.count}
+                </p>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <p
+                    className="text-[10px] leading-snug truncate"
+                    style={{ color: 'var(--m-muted)' }}
+                    title={t.helper}
+                  >
+                    {t.helper}
+                  </p>
+                  {interactive && (
+                    <ChevronRight
+                      size={12}
+                      className="flex-shrink-0 transition-transform group-hover:translate-x-0.5"
+                      style={{ color: `color-mix(in srgb, var(${t.colorVar}) 65%, transparent)` }}
+                    />
+                  )}
+                </div>
+              </Tag>
+            );
+          })}
+        </div>
       )}
     </DashboardCard>
   );
@@ -1305,21 +1449,21 @@ function CheckpointHealthCard({
   );
 }
 
-/* ── Row 3 — Benchmarks column ────────────────────────── */
-function BenchmarksColumn({
+/* ── Row 3 — Benchmarks summary card (layered: clean summary → deep-dive on click) ── */
+function BenchmarksSummaryCard({
   overallScore,
-  pillarScores,
   competitors,
   detecting,
   onBenchmark,
   hidden,
+  auditId,
 }: {
   overallScore: number;
-  pillarScores: Array<{ name: string; score: number }>;
   competitors: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting: boolean;
   onBenchmark: (mode: 'auto' | 'manual', domains?: string[]) => void;
   hidden: boolean;
+  auditId: string;
 }) {
   if (hidden) {
     return (
@@ -1337,16 +1481,153 @@ function BenchmarksColumn({
       </DashboardCard>
     );
   }
+
+  const top = competitors.slice(0, 3);
+  const hasCompetitors = top.length > 0;
+  const compScores = top.map(c => c.score);
+  const avgCompetitor = compScores.length > 0
+    ? Math.round(compScores.reduce((s, n) => s + n, 0) / compScores.length)
+    : null;
+  const delta = avgCompetitor != null ? overallScore - avgCompetitor : null;
+  const status: { label: string; colorVar: string } = !hasCompetitors
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : delta == null
+      ? { label: 'Tracking', colorVar: '--m-muted' }
+      : delta >= 5
+        ? { label: 'Ahead of peers', colorVar: '--ok' }
+        : delta <= -5
+          ? { label: 'Behind peers', colorVar: '--severe' }
+          : { label: 'On par', colorVar: '--warn' };
+
   return (
-    <div className="[&>div]:mb-0 [&>div]:h-full">
-      <BenchmarksSection
-        overallScore={overallScore}
-        pillarScores={pillarScores}
-        competitors={competitors}
-        detecting={detecting}
-        onBenchmark={onBenchmark}
-      />
-    </div>
+    <Link
+      href={`/dashboard/audits/${auditId}#intelligence`}
+      className="rounded-xl p-4 sm:p-5 flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open competitive benchmarks"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <LineChart size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              {hasCompetitors
+                ? `vs. ${top.length} competitor${top.length === 1 ? '' : 's'}`
+                : 'Compare against competitors'}
+            </p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
+          style={{ color: 'var(--m-muted)' }}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {detecting ? (
+          <div className="flex flex-col items-center justify-center text-center py-4 flex-1">
+            <Sparkles size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2 animate-pulse" />
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Analysing competitors…</p>
+          </div>
+        ) : hasCompetitors ? (
+          <>
+            <div className="flex items-end gap-3">
+              <div className="flex items-baseline gap-1">
+                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(overallScore)}`}>
+                  {overallScore}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+              </div>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+                style={{
+                  color: `var(${status.colorVar})`,
+                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+                }}
+              >
+                {status.label}
+                {delta != null && delta !== 0 && (
+                  <> · {delta > 0 ? '+' : ''}{delta}</>
+                )}
+              </span>
+            </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+              Your score
+            </p>
+
+            {/* Compact competitor rows */}
+            <ul className="mt-4 space-y-1.5">
+              {top.map((c) => {
+                const cDelta = overallScore - c.score;
+                return (
+                  <li key={c.domain} className="flex items-center gap-2 text-[11px]">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: 'var(--m-muted)', opacity: 0.5 }}
+                    />
+                    <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }} title={c.domain}>
+                      {c.domain}
+                    </span>
+                    <span className={`tabular-nums font-semibold ${scoreColor(c.score)}`}>{c.score}</span>
+                    <span
+                      className="tabular-nums text-[10px] w-9 text-right"
+                      style={{
+                        color: cDelta > 0 ? 'var(--ok)' : cDelta < 0 ? 'var(--severe)' : 'var(--m-muted)',
+                      }}
+                    >
+                      {cDelta > 0 ? `+${cDelta}` : cDelta}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <span
+              className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              Open benchmarks <ChevronRight size={11} />
+            </span>
+          </>
+        ) : (
+          <div className="flex flex-col items-start gap-2 py-2">
+            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+              See how your Brand Health Score stacks up against competitors across every pillar.
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Add up to 3 competitor domains to start.
+            </p>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onBenchmark('auto');
+              }}
+              className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              <Sparkles size={11} /> Auto-detect competitors
+            </button>
+            <span
+              className="text-[11px] mt-1 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              or open the full benchmarks view <ChevronRight size={11} />
+            </span>
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 
