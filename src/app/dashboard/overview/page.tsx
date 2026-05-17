@@ -152,6 +152,7 @@ function OverviewInner() {
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [auditPages, setAuditPages] = useState<AuditPage[]>([]);
   const [brandName, setBrandName] = useState<string | null>(null);
+  const [modelProbes, setModelProbes] = useState<Array<{ model_id: string; model_label: string; accuracy_score: number }>>([]);
 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -294,6 +295,18 @@ function OverviewInner() {
         .then(d => { if (d.competitors && d.competitors.length > 0) setCompetitors(d.competitors); })
         .catch(() => {});
     }
+
+    // AI X-Ray: pull multi-model probes (Claude / GPT-4o=ChatGPT /
+    // Gemini=Google) for the latest audit. Perplexity is not probed
+    // directly — surfaced as "Not yet measured" in the card.
+    setModelProbes([]);
+    fetch(`/api/audits/intelligence?audit_id=${latestCompleted.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+        setModelProbes(probes);
+      })
+      .catch(() => {});
   }, [latestCompleted, bundle]);
 
   const handleBenchmark = useCallback((mode: 'auto' | 'manual', domains?: string[]) => {
@@ -756,8 +769,8 @@ function OverviewInner() {
         </div>
       )}
 
-      {/* ── Row 3: Issues by importance · Benchmarks · AI Monitoring ─ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
+      {/* ── Row 3: Issues · Benchmarks · AI Monitoring · AI X-Ray ─ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
@@ -768,15 +781,14 @@ function OverviewInner() {
           detecting={detectingCompetitors}
           onBenchmark={handleBenchmark}
           hidden={hideBenchmarks}
-          auditId={audit.id}
         />
         <AiMonitoringCard
           avgAi={avgAi}
           aiBuckets={aiBuckets}
           aiPagesScored={aiPagesScored.length}
           totalPages={auditPages.length}
-          auditId={audit.id}
         />
+        <AIXRayCard probes={modelProbes} />
       </div>
 
       {/* ── Row 4: Checkpoint Health + Audit History ───── */}
@@ -875,13 +887,11 @@ function AiMonitoringCard({
   aiBuckets,
   aiPagesScored,
   totalPages,
-  auditId,
 }: {
   avgAi: number | null;
   aiBuckets: { green: number; amber: number; red: number };
   aiPagesScored: number;
   totalPages: number;
-  auditId: string;
 }) {
   const hasData = avgAi != null;
   const coverageDenom = totalPages || aiPagesScored;
@@ -897,7 +907,7 @@ function AiMonitoringCard({
 
   return (
     <Link
-      href={`/dashboard/audits/${auditId}#ai_xray`}
+      href="/dashboard/ai-readability"
       className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open AI Readability deep-dive"
@@ -1004,6 +1014,175 @@ function AiMonitoringCard({
             </span>
           </div>
         )}
+      </div>
+    </Link>
+  );
+}
+
+/* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Google, Perplexity) ──
+ *
+ * Surfaces multi-model probes from /api/audits/intelligence. We probe
+ * Claude (Anthropic), GPT-4o (rendered as ChatGPT), and Gemini (rendered
+ * as Google). Perplexity is shown as "Not yet measured" — we don't
+ * fabricate scores for it.
+ */
+const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string }> = [
+  { key: 'claude',     label: 'Claude' },
+  { key: 'gpt4o',      label: 'ChatGPT' },
+  { key: 'gemini',     label: 'Google' },
+  { key: 'perplexity', label: 'Perplexity' },
+];
+
+function platformBadge(label: string): string {
+  // Two-letter monogram, e.g. Claude→Cl, ChatGPT→Ch, Google→Go, Perplexity→Px.
+  if (label === 'Perplexity') return 'Px';
+  return label.slice(0, 2);
+}
+
+function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label: string; accuracy_score: number }> }) {
+  const byId = new Map(probes.map(p => [p.model_id, p]));
+  const rows = AI_PLATFORMS.map((p) => {
+    const probe = byId.get(p.key);
+    return {
+      key: p.key,
+      label: p.label,
+      score: probe ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score))) : null,
+    };
+  });
+  const measured = rows.filter(r => r.score != null) as Array<{ key: string; label: string; score: number }>;
+  const avg = measured.length > 0
+    ? Math.round(measured.reduce((s, r) => s + r.score, 0) / measured.length)
+    : null;
+  const status: { label: string; colorVar: string } = avg == null
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : avg >= 70
+      ? { label: 'AI knows you', colorVar: '--ok' }
+      : avg >= 40
+        ? { label: 'Partial visibility', colorVar: '--warn' }
+        : { label: 'Invisible to AI', colorVar: '--severe' };
+
+  return (
+    <Link
+      href="/dashboard/ai-readability#x-ray"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open AI X-Ray"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Sparkles size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              How AI assistants read this brand
+            </p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
+          style={{ color: 'var(--m-muted)' }}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {avg != null ? (
+          <div className="flex items-end gap-3">
+            <div className="flex items-baseline gap-1">
+              <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avg)}`}>
+                {avg}
+              </span>
+              <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+            </div>
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+              style={{
+                color: `var(${status.colorVar})`,
+                background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+              }}
+            >
+              {status.label}
+            </span>
+          </div>
+        ) : (
+          <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+            We ask each AI model what it knows about your brand and score the answer.
+          </p>
+        )}
+
+        {avg != null && (
+          <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+            Avg accuracy across models
+          </p>
+        )}
+
+        {/* Per-platform rows */}
+        <ul className="mt-4 space-y-1.5">
+          {rows.map((r) => {
+            const measured = r.score != null;
+            const colorVar = !measured
+              ? '--m-muted'
+              : (r.score as number) >= 70
+                ? '--ok'
+                : (r.score as number) >= 40
+                  ? '--warn'
+                  : '--severe';
+            return (
+              <li key={r.key} className="flex items-center gap-2 text-[11px]">
+                <span
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[9px] font-bold tracking-wide flex-shrink-0"
+                  style={{
+                    background: `color-mix(in srgb, var(${colorVar}) 10%, transparent)`,
+                    color: `var(${colorVar})`,
+                  }}
+                  aria-hidden
+                >
+                  {platformBadge(r.label)}
+                </span>
+                <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
+                  {r.label}
+                </span>
+                {measured ? (
+                  <>
+                    <span
+                      className="h-1.5 rounded-full overflow-hidden flex-shrink-0"
+                      style={{ width: 56, background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+                    >
+                      <span
+                        className="block h-full"
+                        style={{ width: `${r.score}%`, background: `var(${colorVar})` }}
+                      />
+                    </span>
+                    <span
+                      className="tabular-nums font-semibold w-7 text-right"
+                      style={{ color: `var(${colorVar})` }}
+                    >
+                      {r.score}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                    Not yet measured
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        <span
+          className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
+          style={{ color: 'var(--ink)' }}
+        >
+          {avg != null ? 'Open AI X-Ray' : 'Run an audit to populate'} <ChevronRight size={11} />
+        </span>
       </div>
     </Link>
   );
@@ -1508,14 +1687,12 @@ function BenchmarksSummaryCard({
   detecting,
   onBenchmark,
   hidden,
-  auditId,
 }: {
   overallScore: number;
   competitors: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting: boolean;
   onBenchmark: (mode: 'auto' | 'manual', domains?: string[]) => void;
   hidden: boolean;
-  auditId: string;
 }) {
   if (hidden) {
     return (
@@ -1554,7 +1731,7 @@ function BenchmarksSummaryCard({
 
   return (
     <Link
-      href={`/dashboard/audits/${auditId}#intelligence`}
+      href="/dashboard/intelligence"
       className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open competitive benchmarks"
