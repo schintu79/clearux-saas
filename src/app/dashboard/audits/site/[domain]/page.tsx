@@ -22,6 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AuditDashboardOverview } from '@/components/dashboard/AuditDashboard';
 import type { Audit, Report, AuditFinding } from '@/types/database';
+import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ───────────────────────────────────────────────── */
 
@@ -153,6 +154,14 @@ export default function DomainAuditsPage({ params }: { params: Promise<{ domain:
     if (!user) { setLoading(false); return; }
     fetchAudits(user.id);
   }, [authLoading, user?.id, fetchAudits]);
+
+  // Sync sidebar selector + topbar to this domain. Without this, the
+  // selector keeps showing whatever was previously selected while the
+  // page body is showing a different site, which was the divergence
+  // reported in the bug.
+  useEffect(() => {
+    if (domain) writeSelection({ kind: 'site', host: domain });
+  }, [domain]);
 
   // Poll for in-progress audits
   useEffect(() => {
