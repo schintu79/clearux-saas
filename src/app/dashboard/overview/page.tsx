@@ -300,14 +300,22 @@ function OverviewInner() {
     // Gemini=Google) for the latest audit. Perplexity is not probed
     // directly — surfaced as "Not yet measured" in the card.
     setModelProbes([]);
-    fetch(`/api/audits/intelligence?audit_id=${latestCompleted.id}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number }>;
-        setModelProbes(probes);
-      })
-      .catch(() => {});
+    void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, bundle]);
+
+  const refreshModelProbes = useCallback(async (auditId: string) => {
+    try {
+      const r = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+      setModelProbes(probes);
+    } catch {}
+  }, []);
+
+  const handleXRayRefreshed = useCallback(() => {
+    if (latestCompleted?.id) void refreshModelProbes(latestCompleted.id);
+  }, [latestCompleted, refreshModelProbes]);
 
   const handleBenchmark = useCallback((mode: 'auto' | 'manual', domains?: string[]) => {
     if (!latestCompleted?.product_url) return;
@@ -788,7 +796,11 @@ function OverviewInner() {
           aiPagesScored={aiPagesScored.length}
           totalPages={auditPages.length}
         />
-        <AIXRayCard probes={modelProbes} />
+        <AIXRayCard
+          probes={modelProbes}
+          auditId={latestCompleted?.id || null}
+          onRefreshed={handleXRayRefreshed}
+        />
       </div>
 
       {/* ── Row 4: Checkpoint Health + Audit History ───── */}
@@ -924,7 +936,7 @@ function AiMonitoringCard({
           <div className="min-w-0">
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI Monitoring</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              How AI systems read this site
+              Can AI crawlers parse and extract from your pages?
             </p>
           </div>
         </div>
@@ -1001,7 +1013,7 @@ function AiMonitoringCard({
         ) : (
           <div className="flex flex-col items-start gap-2 py-2">
             <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              We monitor how well AI assistants understand each page — structure, copy clarity, and machine-readable signals.
+              We check what AI crawlers can actually parse and extract from each page — headings, metadata, structured data, and machine-readable signals.
             </p>
             <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
               Run a deeper audit to populate this view.
@@ -1039,7 +1051,43 @@ function platformBadge(label: string): string {
   return label.slice(0, 2);
 }
 
-function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label: string; accuracy_score: number }> }) {
+function AIXRayCard({
+  probes,
+  auditId,
+  onRefreshed,
+}: {
+  probes: Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+  auditId: string | null;
+  onRefreshed?: () => void;
+}) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [refreshOk, setRefreshOk] = useState(false);
+
+  const handleRefresh = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!auditId || refreshing) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    setRefreshOk(false);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/rescan-xray`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRefreshError(typeof data?.error === 'string' ? data.error : 'Re-scan failed');
+      } else {
+        setRefreshOk(true);
+        onRefreshed?.();
+        setTimeout(() => setRefreshOk(false), 2500);
+      }
+    } catch {
+      setRefreshError('Re-scan failed');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [auditId, refreshing, onRefreshed]);
+
   const byId = new Map(probes.map(p => [p.model_id, p]));
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
@@ -1080,15 +1128,28 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
           <div className="min-w-0">
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              How AI assistants read this brand
+              What Claude, ChatGPT &amp; Google currently say about you
             </p>
           </div>
         </div>
-        <ChevronRight
-          size={14}
-          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
-          style={{ color: 'var(--m-muted)' }}
-        />
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={!auditId || refreshing}
+            className="p-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: 'var(--m-muted)' }}
+            aria-label={refreshing ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray'}
+            title={refreshing ? 'Re-scanning…' : refreshOk ? 'Re-scan complete' : refreshError ? refreshError : 'Re-scan AI X-Ray (probes models only)'}
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <ChevronRight
+            size={14}
+            className="mt-1 transition-transform group-hover:translate-x-0.5"
+            style={{ color: 'var(--m-muted)' }}
+          />
+        </div>
       </div>
 
       {/* Body */}
@@ -1176,6 +1237,15 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
             );
           })}
         </ul>
+
+        {(refreshing || refreshError || refreshOk) && (
+          <p
+            className="text-[10px] mt-2"
+            style={{ color: refreshError ? 'var(--severe)' : refreshOk ? 'var(--ok)' : 'var(--m-muted)' }}
+          >
+            {refreshing ? 'Re-scanning model probes…' : refreshError ? refreshError : 'Re-scan complete'}
+          </p>
+        )}
 
         <span
           className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
