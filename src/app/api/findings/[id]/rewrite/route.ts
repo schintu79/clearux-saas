@@ -23,9 +23,9 @@ function getAnthropicClient(): Anthropic | null {
   return _anthropic
 }
 
-function deterministicSuggestion(patch: string, instruction: string): string {
+function deterministicSuggestion(patch: string, instruction: string, fallback: string): string {
   const i = instruction.toLowerCase()
-  const trimmed = patch.trim()
+  const trimmed = patch.trim() || fallback.trim()
   if (!trimmed) return ''
   if (i.includes('short') || i.includes('tight') || i.includes('concise')) {
     const sentences = trimmed.split(/(?<=[.!?])\s+/)
@@ -48,8 +48,8 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const patch = typeof body.patch === 'string' ? body.patch : ''
     const instruction = typeof body.instruction === 'string' ? body.instruction.slice(0, 500) : ''
-    if (!patch.trim() || !instruction.trim()) {
-      return NextResponse.json({ error: 'patch and instruction required' }, { status: 400 })
+    if (!instruction.trim()) {
+      return NextResponse.json({ error: 'instruction required' }, { status: 400 })
     }
 
     const db = createServiceSupabase()
@@ -69,22 +69,25 @@ export async function POST(
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
 
+    const f = finding as any
+    const findingContext = `${f.title}. ${f.description || ''}`.trim()
     const anthropic = getAnthropicClient()
     if (!anthropic) {
       return NextResponse.json({
-        suggestion: deterministicSuggestion(patch, instruction),
+        suggestion: deterministicSuggestion(patch, instruction, findingContext),
         source: 'fallback',
         note: 'AI key not configured — returned a basic local rewrite. Edit before approving.',
       })
     }
 
-    const f = finding as any
+    const hasPatch = patch.trim().length > 0
     const resp = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       messages: [{
         role: 'user',
-        content: `You are helping a website owner refine an implementation-ready fix snippet.
+        content: hasPatch
+          ? `You are helping a website owner refine an implementation-ready fix snippet.
 
 FINDING TITLE: ${f.title}
 FINDING CONTEXT: ${f.description?.slice(0, 600) || '(none)'}
@@ -98,7 +101,18 @@ USER INSTRUCTION: ${instruction}
 
 Return ONLY the rewritten fix text — no preamble, no markdown fences, no commentary.
 Preserve the format (if the input is JSON, return valid JSON; if it's copy text, return copy text).
-Stay practical and concise. Do not invent facts. If the instruction is unclear, make the smallest improvement that helps.`,
+Stay practical and concise. Do not invent facts. If the instruction is unclear, make the smallest improvement that helps.`
+          : `You are helping a website owner draft an implementation-ready fix for an audit finding.
+
+FINDING TITLE: ${f.title}
+FINDING CONTEXT: ${f.description?.slice(0, 600) || '(none)'}
+
+USER INSTRUCTION: ${instruction}
+
+There is no existing fix text yet — draft one from scratch based on the finding above.
+Return ONLY the fix text — no preamble, no markdown fences, no commentary.
+Choose the most natural format (copy text, JSON-LD, HTML snippet, etc.) based on the finding.
+Stay practical and concise. Do not invent facts beyond what the finding suggests.`,
       }],
     })
 
@@ -106,7 +120,7 @@ Stay practical and concise. Do not invent facts. If the instruction is unclear, 
     const cleaned = text.replace(/^```[a-zA-Z]*\n?/g, '').replace(/```\s*$/g, '').trim()
 
     return NextResponse.json({
-      suggestion: cleaned || deterministicSuggestion(patch, instruction),
+      suggestion: cleaned || deterministicSuggestion(patch, instruction, findingContext),
       source: cleaned ? 'ai' : 'fallback',
     })
   } catch (err) {

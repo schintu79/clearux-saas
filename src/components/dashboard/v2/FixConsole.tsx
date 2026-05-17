@@ -3,16 +3,20 @@
 /**
  * FixConsole — practical implementation panel for a single finding.
  *
- * Sits inside the expanded Fix card. Gives the user:
- *  - an editable patch area seeded from the AI-recommended fix
- *  - copy / download actions
- *  - a small AI helper to refine the fix in-place
- *  - a clearly gated "Approve & push" CTA
+ * Sits inside the expanded Fix card but reads visually as a separate
+ * console layer (distinct header bar, console-tinted surface, clear zones).
+ *
+ * Zones, top to bottom:
+ *  1. Console header — status pill, fix type, lock indicator
+ *  2. Prepare fix — editable patch + dirty state
+ *  3. AI copy helper — ONLY rendered when the fix is content-like
+ *     (the user explicitly asked for this gating; for technical/
+ *     performance/config issues a rewrite is not what's needed)
+ *  4. Export — copy / download / reset
+ *  5. Approve & deploy — push (gated) + mark fixed
  *
  * Safety contract: this component NEVER mutates a live site. The push
- * action is intentionally gated until a deployment target is connected
- * (WordPress / CMS / FTP). All copy in the UI reinforces "you are in
- * control — nothing changes silently".
+ * action stays gated until a deployment target is connected.
  */
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -27,6 +31,10 @@ import {
   RotateCcw,
   AlertCircle,
   Loader2,
+  Terminal,
+  FileEdit,
+  PackageCheck,
+  Rocket,
 } from 'lucide-react';
 import type { AuditFinding } from '@/types/database';
 
@@ -58,6 +66,41 @@ function inferFixType(finding: AuditFinding): FixType {
   if (/faq|paragraph|copy|tagline|wording|message|cta|button text/.test(blob)) return 'copy';
   if (/redirect|sitemap|robots|canonical|performance|cache|lazy/.test(blob)) return 'technical';
   return 'content';
+}
+
+/**
+ * Decide whether the AI copy helper has anything useful to offer here.
+ *
+ * Strict rule: content-like types always get the helper. Technical /
+ * structural fixes only get it if the recommendation actually contains
+ * editable user-facing text (heuristic: contains quoted copy or a
+ * sentence longer than ~40 chars). This keeps the helper out of the
+ * way of pure ops fixes — redirects, caching, lazy-loading, etc. —
+ * where a rewrite would be noise.
+ */
+function isAiHelperApplicable(fixType: FixType, recommendation: string): boolean {
+  if (fixType === 'copy' || fixType === 'heading' || fixType === 'meta' || fixType === 'content') {
+    return true;
+  }
+  const rec = recommendation || '';
+  // alt text — content if the recommendation suggests writing copy
+  if (fixType === 'accessibility') {
+    if (/alt text|alt=|aria-label|button text|link text|describe|label/.test(rec.toLowerCase())) return true;
+    return false;
+  }
+  // schema/JSON-LD — content only if there's actual JSON or copy text to refine
+  if (fixType === 'schema') {
+    if (/"[^"]{20,}"/.test(rec) || /\{[\s\S]*"/.test(rec)) return true;
+    return false;
+  }
+  // technical — only if the recommendation has a long user-facing sentence
+  // (heuristic catches copy embedded inside otherwise-technical guidance)
+  if (fixType === 'technical') {
+    if (/"[^"]{20,}"/.test(rec)) return true;
+    if (/(write|rewrite|update|tagline|heading|paragraph|description) /i.test(rec) && rec.length > 80) return true;
+    return false;
+  }
+  return false;
 }
 
 function looksLikeJson(text: string): boolean {
@@ -107,8 +150,13 @@ export default function FixConsole({
   const [aiNote, setAiNote] = useState<string | null>(null);
   const [showPushNotice, setShowPushNotice] = useState(false);
   const lastPatchRef = useRef<string>(initialPatch);
+  const [hasRefined, setHasRefined] = useState(false);
 
   const fixType = useMemo(() => inferFixType(finding), [finding]);
+  const aiApplicable = useMemo(
+    () => isAiHelperApplicable(fixType, finding.recommendation || ''),
+    [fixType, finding.recommendation],
+  );
   const isJson = useMemo(() => fixType === 'schema' || looksLikeJson(patch), [fixType, patch]);
   const dirty = patch !== initialPatch;
 
@@ -145,7 +193,7 @@ export default function FixConsole({
   };
 
   const handleAiRefine = async () => {
-    if (!instruction.trim() || !patch.trim() || aiBusy) return;
+    if (!instruction.trim() || aiBusy) return;
     setAiBusy(true);
     setAiError(null);
     setAiNote(null);
@@ -155,13 +203,14 @@ export default function FixConsole({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ patch, instruction }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        setAiError(data?.error || 'Could not generate a suggestion.');
+        setAiError(data?.error || `Could not generate a suggestion (status ${res.status}).`);
         return;
       }
       if (typeof data.suggestion === 'string' && data.suggestion.trim()) {
         lastPatchRef.current = patch;
+        setHasRefined(true);
         setPatch(data.suggestion);
         setInstruction('');
         if (data.source === 'fallback') {
@@ -179,6 +228,7 @@ export default function FixConsole({
 
   const handleUndo = () => {
     setPatch(lastPatchRef.current);
+    setHasRefined(false);
     setAiNote(null);
   };
 
@@ -189,58 +239,83 @@ export default function FixConsole({
   };
 
   return (
-    <div style={{ borderTop: '1px solid var(--rule)', background: 'var(--card)' }}>
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-3 flex-wrap">
+    <section
+      aria-label="Deploy console"
+      className="mx-3 mt-4 mb-4 rounded-xl overflow-hidden"
+      style={{
+        // Console reads as a distinct surface — slightly darker than the
+        // parent card, with a more pronounced border + soft shadow.
+        background: 'var(--paper-2)',
+        border: '1px solid var(--rule)',
+        boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--ink) 3%, transparent)',
+      }}
+    >
+      {/* ── Console header bar ───────────────────────────────────── */}
+      <header
+        className="px-4 py-2.5 flex items-center gap-3 flex-wrap"
+        style={{
+          background: 'color-mix(in srgb, var(--ink) 92%, transparent)',
+          color: 'var(--paper)',
+          borderBottom: '1px solid var(--rule)',
+        }}
+      >
         <div className="flex items-center gap-2 min-w-0">
-          <Sparkles size={13} style={{ color: 'var(--signal)' }} />
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.06em]"
-            style={{ color: 'var(--m-muted)' }}
-          >
-            Deploy this fix · Implementation console
-          </p>
+          <Terminal size={14} aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate">
+            Deploy console
+          </span>
         </div>
         <span
-          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
           style={{
-            background: 'var(--paper-2)',
-            color: 'var(--ink-2)',
-            border: '1px solid var(--rule)',
+            background: 'color-mix(in srgb, var(--paper) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--paper) 18%, transparent)',
           }}
           title="Inferred from finding category and recommendation"
         >
           {FIX_TYPE_LABEL[fixType]}
         </span>
-      </div>
+        {dirty && (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+            style={{
+              background: 'color-mix(in srgb, var(--warn) 28%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--warn) 48%, transparent)',
+            }}
+          >
+            <FileEdit size={10} />
+            Edited (not saved)
+          </span>
+        )}
+        <span
+          className="ml-auto inline-flex items-center gap-1.5 text-[10px]"
+          style={{ color: 'color-mix(in srgb, var(--paper) 75%, transparent)' }}
+          title="No live changes are made until you explicitly approve and push."
+        >
+          <Lock size={11} aria-hidden />
+          Safe mode · No silent changes
+        </span>
+      </header>
 
+      {/* ── Safety strip ─────────────────────────────────────────── */}
       <div
-        className="mx-4 mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[11px]"
+        className="px-4 py-2 flex items-start gap-2 text-[11px]"
         style={{
           background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--signal) 25%, transparent)',
+          borderBottom: '1px solid var(--rule)',
           color: 'var(--ink-2)',
         }}
       >
-        <ShieldCheck
-          size={13}
-          className="mt-px flex-shrink-0"
-          style={{ color: 'var(--signal)' }}
-          aria-hidden
-        />
+        <ShieldCheck size={12} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--signal)' }} aria-hidden />
         <span>
-          Nothing changes on your site until you approve and push. Edit freely below, ask the AI
-          helper for refinements, and copy or download the result for your team.
+          Edit freely below. Copy or download the result for your team — nothing reaches your site until you
+          explicitly approve and push.
         </span>
       </div>
 
-      <div className="px-4 pb-3">
-        <label
-          htmlFor={`patch-${finding.id}`}
-          className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5"
-          style={{ color: 'var(--m-muted)' }}
-        >
-          Editable fix
-        </label>
+      {/* ── Zone 1 · Prepare fix ─────────────────────────────────── */}
+      <div className="px-4 pt-3 pb-3" style={{ background: 'var(--card)' }}>
+        <ZoneHeader icon={FileEdit} label="Prepare fix" hint="Edit the snippet your team will ship" />
         <textarea
           id={`patch-${finding.id}`}
           value={patch}
@@ -255,9 +330,109 @@ export default function FixConsole({
             minHeight: '110px',
             resize: 'vertical',
           }}
+          placeholder={
+            initialPatch
+              ? undefined
+              : 'No recommendation captured — draft your fix here, or use the AI helper below if available.'
+          }
           aria-label="Editable fix text"
         />
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
+      </div>
+
+      {/* ── Zone 2 · AI copy helper (gated) ──────────────────────── */}
+      {aiApplicable ? (
+        <div
+          className="px-4 pt-3 pb-3"
+          style={{
+            background: 'var(--card)',
+            borderTop: '1px solid var(--rule)',
+          }}
+        >
+          <ZoneHeader
+            icon={Sparkles}
+            label="AI copy help"
+            hint='Optional — ask for a refinement like "make this clearer" or "tighten this"'
+            optional
+          />
+          <div className="flex items-stretch gap-2 flex-col sm:flex-row">
+            <input
+              type="text"
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAiRefine();
+                }
+              }}
+              placeholder="Describe how to refine the fix..."
+              disabled={aiBusy}
+              className="flex-1 rounded-md px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
+              style={{
+                background: 'var(--paper-2)',
+                border: '1px solid var(--rule)',
+                color: 'var(--ink)',
+              }}
+              aria-label="AI rewrite instruction"
+            />
+            <button
+              type="button"
+              onClick={handleAiRefine}
+              disabled={aiBusy || !instruction.trim()}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
+              style={{
+                background: 'var(--ink)',
+                color: 'var(--paper)',
+              }}
+              aria-label="Generate AI suggestion"
+            >
+              {aiBusy ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {aiBusy ? 'Thinking...' : patch.trim() ? 'Suggest' : 'Draft fix'}
+            </button>
+            {hasRefined && (
+              <button
+                type="button"
+                onClick={handleUndo}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--rule)',
+                  color: 'var(--m-muted)',
+                }}
+              >
+                <RotateCcw size={12} />
+                Undo
+              </button>
+            )}
+          </div>
+          {aiError && (
+            <div className="mt-2 flex items-start gap-1.5 text-[11px]" style={{ color: 'var(--warn)' }}>
+              <AlertCircle size={11} className="mt-px flex-shrink-0" />
+              <span>{aiError}</span>
+            </div>
+          )}
+          {aiNote && (
+            <p className="mt-2 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              {aiNote}
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {/* ── Zone 3 · Export ──────────────────────────────────────── */}
+      <div
+        className="px-4 pt-3 pb-3"
+        style={{
+          background: 'var(--card)',
+          borderTop: '1px solid var(--rule)',
+        }}
+      >
+        <ZoneHeader
+          icon={PackageCheck}
+          label="Export"
+          hint="Hand the snippet to your team — copy or download for handoff"
+        />
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={handleCopy}
@@ -301,120 +476,31 @@ export default function FixConsole({
               aria-label="Reset to original recommendation"
             >
               <RotateCcw size={12} />
-              Reset
-            </button>
-          )}
-          <span
-            className="ml-auto text-[11px]"
-            style={{ color: dirty ? 'var(--warn)' : 'var(--m-muted)' }}
-          >
-            {dirty ? 'Edited (not saved)' : 'Unchanged'}
-          </span>
-        </div>
-      </div>
-
-      <div
-        className="mx-4 mb-4 rounded-lg p-3"
-        style={{
-          background: 'var(--paper-2)',
-          border: '1px solid var(--rule)',
-        }}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={12} style={{ color: 'var(--signal)' }} />
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.06em]"
-            style={{ color: 'var(--m-muted)' }}
-          >
-            AI copy helper
-          </p>
-        </div>
-        <p className="text-[11px] mb-2" style={{ color: 'var(--m-muted)' }}>
-          Ask for a refinement — e.g. &ldquo;make the title clearer&rdquo;, &ldquo;tighten this meta
-          description&rdquo;, &ldquo;make this more brand aligned&rdquo;. The suggestion replaces the
-          fix above; you can undo or edit.
-        </p>
-        <div className="flex items-stretch gap-2 flex-col sm:flex-row">
-          <input
-            type="text"
-            value={instruction}
-            onChange={(e) => setInstruction(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleAiRefine();
-              }
-            }}
-            placeholder="Describe how to refine the fix..."
-            disabled={aiBusy}
-            className="flex-1 rounded-md px-3 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-            style={{
-              background: 'var(--card)',
-              border: '1px solid var(--rule)',
-              color: 'var(--ink)',
-            }}
-            aria-label="AI rewrite instruction"
-          />
-          <button
-            type="button"
-            onClick={handleAiRefine}
-            disabled={aiBusy || !instruction.trim() || !patch.trim()}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
-            style={{
-              background: 'var(--ink)',
-              color: 'var(--paper)',
-            }}
-            aria-label="Generate AI suggestion"
-          >
-            {aiBusy ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            {aiBusy ? 'Thinking...' : 'Suggest'}
-          </button>
-          {lastPatchRef.current !== patch && lastPatchRef.current !== initialPatch && (
-            <button
-              type="button"
-              onClick={handleUndo}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium"
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--rule)',
-                color: 'var(--m-muted)',
-              }}
-            >
-              <RotateCcw size={12} />
-              Undo
+              Reset to original
             </button>
           )}
         </div>
-        {aiError && (
-          <div
-            className="mt-2 flex items-start gap-1.5 text-[11px]"
-            style={{ color: 'var(--warn)' }}
-          >
-            <AlertCircle size={11} className="mt-px flex-shrink-0" />
-            <span>{aiError}</span>
-          </div>
-        )}
-        {aiNote && (
-          <p className="mt-2 text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            {aiNote}
-          </p>
-        )}
       </div>
 
+      {/* ── Zone 4 · Approve & deploy ────────────────────────────── */}
       <div
         className="px-4 py-3 flex items-center gap-3 flex-wrap"
         style={{
-          background: 'var(--paper-2)',
+          background: 'color-mix(in srgb, var(--ink) 4%, transparent)',
           borderTop: '1px solid var(--rule)',
         }}
       >
-        <div className="flex-1 min-w-[200px]">
-          <p className="text-[11px] font-semibold" style={{ color: 'var(--ink)' }}>
-            Ready to ship this fix?
-          </p>
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            Copy or download the snippet for your team, or mark it fixed once it&apos;s live.
-          </p>
+        <div className="flex items-start gap-2 flex-1 min-w-[220px]">
+          <Rocket size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} aria-hidden />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
+              Approve &amp; deploy
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Direct push is gated until a deployment target is connected. Until then, mark as fixed once your team
+              ships the snippet.
+            </p>
+          </div>
         </div>
         <button
           type="button"
@@ -450,10 +536,10 @@ export default function FixConsole({
 
       {showPushNotice && (
         <div
-          className="mx-4 mb-4 rounded-lg px-3 py-3 text-[12px]"
+          className="px-4 py-3 text-[12px]"
           style={{
             background: 'color-mix(in srgb, var(--warn) 6%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
+            borderTop: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
             color: 'var(--ink-2)',
           }}
           role="status"
@@ -465,11 +551,11 @@ export default function FixConsole({
                 Deployment target not connected
               </p>
               <p style={{ color: 'var(--m-muted)' }}>
-                Direct push to your site isn&apos;t available yet. Connect WordPress, a CMS, or a
-                deployment target to enable one-click push. Until then, use{' '}
-                <strong style={{ color: 'var(--ink)' }}>Copy fix</strong> or{' '}
-                <strong style={{ color: 'var(--ink)' }}>Download</strong> and hand the snippet to
-                your team — then mark this finding as fixed when it&apos;s live.
+                Direct push to your site isn&apos;t available yet. Connect WordPress, a CMS, or an FTP target from{' '}
+                <strong style={{ color: 'var(--ink)' }}>Connect site</strong> to enable one-click push. Until then,
+                use <strong style={{ color: 'var(--ink)' }}>Copy fix</strong> or{' '}
+                <strong style={{ color: 'var(--ink)' }}>Download</strong> and hand the snippet to your team — then
+                mark this finding as fixed when it&apos;s live.
               </p>
               <p className="mt-1" style={{ color: 'var(--m-muted)' }}>
                 We will never change your site without your explicit approval.
@@ -477,6 +563,51 @@ export default function FixConsole({
             </div>
           </div>
         </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Tiny zone heading used inside the console — keeps every zone visually
+ * labelled with the same rhythm so the user can scan top-to-bottom.
+ */
+function ZoneHeader({
+  icon: Icon,
+  label,
+  hint,
+  optional,
+}: {
+  icon: React.ElementType;
+  label: string;
+  hint?: string;
+  optional?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-2 flex-wrap">
+      <Icon size={12} style={{ color: 'var(--m-muted)' }} aria-hidden />
+      <span
+        className="text-[10px] font-semibold uppercase tracking-[0.06em]"
+        style={{ color: 'var(--m-muted)' }}
+      >
+        {label}
+      </span>
+      {optional && (
+        <span
+          className="text-[9px] font-semibold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full"
+          style={{
+            background: 'var(--paper-2)',
+            color: 'var(--m-muted)',
+            border: '1px solid var(--rule)',
+          }}
+        >
+          Optional
+        </span>
+      )}
+      {hint && (
+        <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+          {hint}
+        </span>
       )}
     </div>
   );
