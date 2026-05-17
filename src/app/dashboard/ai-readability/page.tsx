@@ -15,7 +15,7 @@
  * users into the legacy audit detail screen.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Brain,
@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   ArrowRight,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -151,7 +152,7 @@ export default function AIReadabilityPage() {
   }
 
   return (
-    <AIReadabilityBody bundle={bundle} pages={pages} probes={probes} />
+    <AIReadabilityBody bundle={bundle} pages={pages} probes={probes} onProbesUpdated={setProbes} />
   );
 }
 
@@ -159,12 +160,43 @@ function AIReadabilityBody({
   bundle,
   pages,
   probes,
+  onProbesUpdated,
 }: {
   bundle: LatestAuditBundle;
   pages: AuditPageRow[];
   probes: ModelProbe[];
+  onProbesUpdated: (probes: ModelProbe[]) => void;
 }) {
   const audit = bundle.audit!;
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanStatus, setRescanStatus] = useState<null | { kind: 'ok' | 'err'; msg: string }>(null);
+
+  const handleRescan = useCallback(async () => {
+    if (rescanning || !audit?.id) return;
+    setRescanning(true);
+    setRescanStatus(null);
+    try {
+      const res = await fetch('/api/audits/intelligence/rescan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audit_id: audit.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRescanStatus({ kind: 'err', msg: data?.error || 'Re-scan failed' });
+      } else {
+        const next = (data?.modelProbes || []) as ModelProbe[];
+        onProbesUpdated(next);
+        setRescanStatus({ kind: 'ok', msg: 'Re-scan complete' });
+        setTimeout(() => setRescanStatus(null), 4000);
+      }
+    } catch (err) {
+      setRescanStatus({ kind: 'err', msg: err instanceof Error ? err.message : 'Re-scan failed' });
+    } finally {
+      setRescanning(false);
+    }
+  }, [audit, rescanning, onProbesUpdated]);
+
   const byId = useMemo(() => new Map(probes.map(p => [p.model_id, p])), [probes]);
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
@@ -198,7 +230,7 @@ function AIReadabilityBody({
 
       {/* ── AI X-Ray ─────────────────────────────────────────── */}
       <section id="x-ray" className="rounded-xl p-5 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-        <div className="flex items-start gap-2 mb-4">
+        <div className="flex items-start gap-3 mb-4">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
@@ -212,15 +244,46 @@ function AIReadabilityBody({
             <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
               We ask each model what it knows about your brand and grade its answer for accuracy.
             </p>
+            {rescanStatus && (
+              <p
+                className="text-[11px] font-semibold mt-1.5"
+                style={{ color: rescanStatus.kind === 'ok' ? 'var(--ok)' : 'var(--severe)' }}
+              >
+                {rescanStatus.msg}
+              </p>
+            )}
+            {rescanning && !rescanStatus && (
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                Re-running probes across Claude, ChatGPT, and Google…
+              </p>
+            )}
           </div>
-          {avg != null && (
-            <div className="flex items-baseline gap-1 flex-shrink-0">
-              <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
-                {avg}
-              </span>
-              <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {avg != null && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
+                  {avg}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleRescan}
+              disabled={rescanning}
+              title="Re-scan AI X-Ray now"
+              aria-label={rescanning ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray'}
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[11px] font-semibold transition-colors disabled:opacity-60"
+              style={{
+                background: 'color-mix(in srgb, var(--ink) 6%, transparent)',
+                color: 'var(--ink)',
+                border: '1px solid var(--rule)',
+              }}
+            >
+              <RefreshCw size={12} className={rescanning ? 'animate-spin' : ''} />
+              {rescanning ? 'Re-scanning…' : 'Re-scan'}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

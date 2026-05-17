@@ -486,6 +486,21 @@ function OverviewInner() {
     red:   aiPagesScored.filter(p => (p as any).ai_readability?.status === 'red'   || (p as any).ai_readability?.overallScore < 40).length,
   };
 
+  // Most frequent missing AI signal across crawled pages.
+  const missingTally: Record<string, number> = {};
+  for (const p of aiPagesScored) {
+    const missing = ((p as any).ai_readability?.missing as string[] | undefined) || [];
+    for (const m of missing) {
+      missingTally[m] = (missingTally[m] || 0) + 1;
+    }
+  }
+  let topMissingSignal: { label: string; pages: number } | null = null;
+  for (const [label, pages] of Object.entries(missingTally)) {
+    if (!topMissingSignal || pages > topMissingSignal.pages) {
+      topMissingSignal = { label, pages };
+    }
+  }
+
   return (
     <div className="w-full">
       {creditsBanner && <CreditsBanner onClose={() => setCreditsBanner(false)} />}
@@ -787,8 +802,13 @@ function OverviewInner() {
           aiBuckets={aiBuckets}
           aiPagesScored={aiPagesScored.length}
           totalPages={auditPages.length}
+          topMissingSignal={topMissingSignal}
         />
-        <AIXRayCard probes={modelProbes} />
+        <AIXRayCard
+          probes={modelProbes}
+          auditId={audit.id}
+          onProbesUpdated={setModelProbes}
+        />
       </div>
 
       {/* ── Row 4: Checkpoint Health + Audit History ───── */}
@@ -887,11 +907,13 @@ function AiMonitoringCard({
   aiBuckets,
   aiPagesScored,
   totalPages,
+  topMissingSignal,
 }: {
   avgAi: number | null;
   aiBuckets: { green: number; amber: number; red: number };
   aiPagesScored: number;
   totalPages: number;
+  topMissingSignal: { label: string; pages: number } | null;
 }) {
   const hasData = avgAi != null;
   const coverageDenom = totalPages || aiPagesScored;
@@ -994,6 +1016,27 @@ function AiMonitoringCard({
               </div>
             )}
 
+            {topMissingSignal && (
+              <div
+                className="mt-3 px-2.5 py-2 rounded-lg flex items-start gap-2"
+                style={{
+                  background: 'color-mix(in srgb, var(--severe) 6%, transparent)',
+                  border: '1px solid color-mix(in srgb, var(--severe) 14%, transparent)',
+                }}
+              >
+                <AlertTriangle size={11} style={{ color: 'var(--severe)', flexShrink: 0, marginTop: 2 }} />
+                <div className="min-w-0 leading-tight">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--severe)' }}>
+                    Top missing signal
+                  </p>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--ink)' }} title={topMissingSignal.label}>
+                    {topMissingSignal.label}
+                    <span style={{ color: 'var(--m-muted)' }}> · {topMissingSignal.pages} page{topMissingSignal.pages === 1 ? '' : 's'}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             <p className="text-[10px] mt-auto pt-3" style={{ color: 'var(--m-muted)' }}>
               Coverage: {aiPagesScored} of {coverageDenom} page{coverageDenom === 1 ? '' : 's'} scored
             </p>
@@ -1039,7 +1082,46 @@ function platformBadge(label: string): string {
   return label.slice(0, 2);
 }
 
-function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label: string; accuracy_score: number }> }) {
+function AIXRayCard({
+  probes,
+  auditId,
+  onProbesUpdated,
+}: {
+  probes: Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+  auditId?: string;
+  onProbesUpdated?: (probes: Array<{ model_id: string; model_label: string; accuracy_score: number }>) => void;
+}) {
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanStatus, setRescanStatus] = useState<null | { kind: 'ok' | 'err'; msg: string }>(null);
+
+  const handleRescan = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!auditId || rescanning) return;
+    setRescanning(true);
+    setRescanStatus(null);
+    try {
+      const res = await fetch('/api/audits/intelligence/rescan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audit_id: auditId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRescanStatus({ kind: 'err', msg: data?.error || 'Re-scan failed' });
+      } else {
+        const next = (data?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+        onProbesUpdated?.(next);
+        setRescanStatus({ kind: 'ok', msg: 'Re-scan complete' });
+        setTimeout(() => setRescanStatus(null), 3500);
+      }
+    } catch (err) {
+      setRescanStatus({ kind: 'err', msg: err instanceof Error ? err.message : 'Re-scan failed' });
+    } finally {
+      setRescanning(false);
+    }
+  }, [auditId, rescanning, onProbesUpdated]);
+
   const byId = new Map(probes.map(p => [p.model_id, p]));
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
@@ -1062,14 +1144,20 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
         : { label: 'Invisible to AI', colorVar: '--severe' };
 
   return (
-    <Link
-      href="/dashboard/ai-readability#x-ray"
-      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
+    <div
+      className="relative rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      aria-label="Open AI X-Ray"
     >
+      {/* Stretched link covers the whole card for the navigation click target.
+          Interactive children (refresh button) must sit above with z-index. */}
+      <Link
+        href="/dashboard/ai-readability#x-ray"
+        aria-label="Open AI X-Ray"
+        className="absolute inset-0 z-0 rounded-xl"
+      />
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
+      <div className="flex items-start justify-between gap-2 mb-3 relative z-10 pointer-events-none">
         <div className="min-w-0 flex items-start gap-2">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -1084,15 +1172,33 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
             </p>
           </div>
         </div>
-        <ChevronRight
-          size={14}
-          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
-          style={{ color: 'var(--m-muted)' }}
-        />
+        <div className="flex items-center gap-1 flex-shrink-0 pointer-events-auto">
+          {auditId && (
+            <button
+              type="button"
+              onClick={handleRescan}
+              disabled={rescanning}
+              aria-label={rescanning ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray now'}
+              title="Re-scan AI X-Ray"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors disabled:opacity-60"
+              style={{
+                background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
+                color: 'var(--ink)',
+              }}
+            >
+              <RefreshCw size={11} className={rescanning ? 'animate-spin' : ''} />
+            </button>
+          )}
+          <ChevronRight
+            size={14}
+            className="mt-1 transition-transform group-hover:translate-x-0.5"
+            style={{ color: 'var(--m-muted)' }}
+          />
+        </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col relative z-10 pointer-events-none">
         {avg != null ? (
           <div className="flex items-end gap-3">
             <div className="flex items-baseline gap-1">
@@ -1114,6 +1220,22 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
         ) : (
           <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
             We ask each AI model what it knows about your brand and score the answer.
+          </p>
+        )}
+
+        {rescanStatus && (
+          <p
+            className="text-[10px] font-semibold mt-1.5 inline-flex items-center gap-1"
+            style={{
+              color: rescanStatus.kind === 'ok' ? 'var(--ok)' : 'var(--severe)',
+            }}
+          >
+            {rescanStatus.msg}
+          </p>
+        )}
+        {rescanning && !rescanStatus && (
+          <p className="text-[10px] font-medium mt-1.5" style={{ color: 'var(--m-muted)' }}>
+            Re-scanning models…
           </p>
         )}
 
@@ -1184,7 +1306,7 @@ function AIXRayCard({ probes }: { probes: Array<{ model_id: string; model_label:
           {avg != null ? 'Open AI X-Ray' : 'Run an audit to populate'} <ChevronRight size={11} />
         </span>
       </div>
-    </Link>
+    </div>
   );
 }
 
