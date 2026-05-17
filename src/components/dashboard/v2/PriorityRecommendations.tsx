@@ -113,20 +113,11 @@ export default function PriorityRecommendations({ recs, findings, auditId }: Pro
                     <div className="mt-1.5 flex items-center gap-3 flex-wrap text-[11px]">
                       {linkedFinding && (
                         <Link
-                          href={`/dashboard/audits/${auditId}?finding=${linkedFinding.id}`}
-                          className="inline-flex items-center gap-0.5 hover:underline"
-                          style={{ color: 'var(--m-muted)' }}
-                        >
-                          View finding <ChevronRight size={10} />
-                        </Link>
-                      )}
-                      {linkedFinding && (
-                        <Link
                           href={`/dashboard/fix#finding-${linkedFinding.id}`}
                           className="inline-flex items-center gap-1 font-semibold hover:underline"
                           style={{ color: 'var(--signal)' }}
                         >
-                          <Wrench size={10} /> Fix it
+                          <Wrench size={10} /> Open in Fix
                         </Link>
                       )}
                     </div>

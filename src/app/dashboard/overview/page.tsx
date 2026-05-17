@@ -224,13 +224,23 @@ function OverviewInner() {
   // visit and the loader returned the globally-most-recent audit), write
   // the resolved audit's identity back to the selection store so the
   // sidebar selector + topbar "Viewing X" agree with what the body is
-  // showing. Guarded by an equality check to avoid loops with the
-  // subscribe-driven mirror in DashboardShell.
+  // showing.
+  //
+  // CRITICAL: this only fires when the selection is null/missing. We
+  // must NEVER overwrite a real brand selection with a derived site
+  // selection — that was the brand-selection loop bug. When the user
+  // picked a brand and the loader returned a website-type audit that
+  // belongs to that brand (joined via brand_identity_id), the previous
+  // implementation flipped the selection from {brand:B} to {site:H},
+  // which then made the sidebar visibly switch to the site even though
+  // the user had just picked the brand. Guard against that by only
+  // syncing when the selection is null.
   useEffect(() => {
+    if (selection) return;
     const resolved = bundle?.audit;
     if (!resolved) return;
     let resolvedSel: { kind: 'brand'; brandId: string } | { kind: 'site'; host: string } | null = null;
-    if ((resolved as any).audit_type === 'brand_identity' && (resolved as any).brand_identity_id) {
+    if ((resolved as any).brand_identity_id) {
       resolvedSel = { kind: 'brand', brandId: (resolved as any).brand_identity_id };
     } else if (resolved.product_url) {
       try {
@@ -238,11 +248,7 @@ function OverviewInner() {
         if (host) resolvedSel = { kind: 'site', host };
       } catch {}
     }
-    if (!resolvedSel) return;
-    const matches =
-      (selection?.kind === 'site' && resolvedSel.kind === 'site' && selection.host === resolvedSel.host) ||
-      (selection?.kind === 'brand' && resolvedSel.kind === 'brand' && selection.brandId === resolvedSel.brandId);
-    if (!matches) writeSelection(resolvedSel);
+    if (resolvedSel) writeSelection(resolvedSel);
   }, [bundle, selection]);
 
   const latestCompleted = bundle?.audit && bundle.report ? bundle.audit : null;
@@ -306,7 +312,10 @@ function OverviewInner() {
 
   const handleStatCardClick = useCallback((filter: string) => {
     if (!latestCompleted || filter === 'passed') return;
-    router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+    // Severity tiles route into Fix (the action view) with a severity
+    // prefilter. Fix is where triage status lives; Find is discovery
+    // and doesn't currently support a severity prefilter via URL.
+    router.push(`/dashboard/fix?severity=${filter}`);
   }, [latestCompleted, router]);
 
   useEffect(() => {
@@ -740,7 +749,7 @@ function OverviewInner() {
                   score: cat.score,
                   Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
                 }))}
-                href={`/dashboard/audits/${audit.id}?tab=findings`}
+                href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
               />
             );
           })}
@@ -1058,7 +1067,7 @@ function IssuesByImportance({
                   ? {
                       type: 'button',
                       onClick: () => onCardClick?.(t.key),
-                      'aria-label': `${t.count} ${t.label.toLowerCase()} severity issues — view in Find`,
+                      'aria-label': `${t.count} ${t.label.toLowerCase()} severity issues — open in Fix`,
                     }
                   : {})}
                 className={`text-left rounded-xl px-3 py-3 flex flex-col gap-1 transition-all ${
@@ -1464,7 +1473,7 @@ function CheckpointHealthCard({
                             </p>
                             {finding && (
                               <Link
-                                href={`/dashboard/audits/${auditId}?finding=${finding.id}`}
+                                href={`/dashboard/fix#finding-${finding.id}`}
                                 className="text-[11px] mt-0.5 line-clamp-1 hover:underline"
                                 style={{ color: 'var(--m-muted)' }}
                               >
@@ -1709,7 +1718,7 @@ function AlertOrSummary({
           </p>
         </div>
         <Link
-          href={`/dashboard/audits/${latestAuditId}?tab=findings&severity=critical`}
+          href={`/dashboard/fix?severity=critical`}
           className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
           style={{ background: 'var(--severe)', color: '#fff' }}
         >
