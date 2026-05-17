@@ -1,8 +1,8 @@
 // ============================================================
 // ClearUX Audit Engine — Multi-Model AI Benchmarking
 // ============================================================
-// Probes multiple AI models (Claude, GPT-4o, Gemini) about the
-// audited domain and compares their knowledge/accuracy.
+// Probes multiple AI models (Claude, GPT-4o, Gemini, Perplexity)
+// about the audited domain and compares their knowledge/accuracy.
 // Tracks how different models represent the site over time.
 //
 // "Semrush tells you your SEO score. ClearUX shows you what
@@ -17,7 +17,7 @@ import type { SiteGroundTruth } from './llm-probe'
 
 /* ── Types ──────────────────────────────────────────────────── */
 
-export type AIModelId = 'claude' | 'gpt4o' | 'gemini'
+export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
 
 export interface ModelProbeResult {
   modelId: AIModelId
@@ -215,6 +215,70 @@ async function probeGemini(
   return results
 }
 
+/**
+ * Probe using Perplexity via their OpenAI-compatible chat completions API.
+ * Falls back gracefully if PERPLEXITY_API_KEY is not set.
+ *
+ * Uses Perplexity's stable `sonar` model (search-augmented). We disable
+ * web search to make the probe comparable to the other models — we want
+ * to measure what the model *knows* from training/index, not what it can
+ * retrieve in real time. Perplexity returns the same shape as OpenAI
+ * (`choices[0].message.content`).
+ */
+async function probePerplexity(
+  domain: string,
+  questions: string[],
+): Promise<Array<{ question: string; answer: string }>> {
+  const apiKey = process.env.PERPLEXITY_API_KEY
+  if (!apiKey) {
+    return questions.map((q) => ({
+      question: q,
+      answer: '[Perplexity API key not configured — skipped]',
+    }))
+  }
+
+  const results: Array<{ question: string; answer: string }> = []
+
+  for (const q of questions) {
+    try {
+      const resp = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'sonar',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.',
+            },
+            { role: 'user', content: q },
+          ],
+          max_tokens: 400,
+          temperature: 0.3,
+        }),
+        signal: AbortSignal.timeout(20_000),
+      })
+
+      if (!resp.ok) {
+        results.push({ question: q, answer: `[Perplexity probe failed: HTTP ${resp.status}]` })
+        continue
+      }
+
+      const data = (await resp.json()) as {
+        choices?: Array<{ message?: { content?: string } }>
+      }
+      const answer = data.choices?.[0]?.message?.content?.trim() || '[No response]'
+      results.push({ question: q, answer })
+    } catch {
+      results.push({ question: q, answer: '[Perplexity probe timed out]' })
+    }
+  }
+  return results
+}
+
 /* ── Grading ───────────────────────────────────────────────── */
 
 async function gradeModelAnswers(
@@ -273,11 +337,7 @@ Respond with a JSON array:
     }>
 
     return answers.map((a, i) => ({
-      modelId: modelLabel.toLowerCase().includes('claude')
-        ? 'claude' as AIModelId
-        : modelLabel.toLowerCase().includes('gpt')
-          ? 'gpt4o' as AIModelId
-          : 'gemini' as AIModelId,
+      modelId: resolveModelId(modelLabel),
       modelLabel,
       question: a.question,
       answer: a.answer,
@@ -286,11 +346,7 @@ Respond with a JSON array:
     }))
   } catch {
     return answers.map((a) => ({
-      modelId: modelLabel.toLowerCase().includes('claude')
-        ? 'claude' as AIModelId
-        : modelLabel.toLowerCase().includes('gpt')
-          ? 'gpt4o' as AIModelId
-          : 'gemini' as AIModelId,
+      modelId: resolveModelId(modelLabel),
       modelLabel,
       question: a.question,
       answer: a.answer,
@@ -298,6 +354,14 @@ Respond with a JSON array:
       accuracyNote: 'Grading failed',
     }))
   }
+}
+
+function resolveModelId(modelLabel: string): AIModelId {
+  const n = modelLabel.toLowerCase()
+  if (n.includes('claude')) return 'claude'
+  if (n.includes('gpt')) return 'gpt4o'
+  if (n.includes('perplexity')) return 'perplexity'
+  return 'gemini'
 }
 
 function normalizeAccuracy(raw: string | undefined): LlmProbeAccuracy {
@@ -356,17 +420,19 @@ export async function runMultiModelBenchmark(
   const questions = BENCHMARK_QUESTIONS.map((q) => q.replace('{domain}', domain))
 
   // Probe all models in parallel
-  const [claudeAnswers, gptAnswers, geminiAnswers] = await Promise.all([
+  const [claudeAnswers, gptAnswers, geminiAnswers, perplexityAnswers] = await Promise.all([
     probeClaude(domain, questions),
     probeOpenAI(domain, questions),
     probeGemini(domain, questions),
+    probePerplexity(domain, questions),
   ])
 
   // Grade all answers in parallel
-  const [claudeGrades, gptGrades, geminiGrades] = await Promise.all([
+  const [claudeGrades, gptGrades, geminiGrades, perplexityGrades] = await Promise.all([
     gradeModelAnswers(domain, 'Claude', claudeAnswers, groundTruth),
     gradeModelAnswers(domain, 'GPT-4o', gptAnswers, groundTruth),
     gradeModelAnswers(domain, 'Gemini', geminiAnswers, groundTruth),
+    gradeModelAnswers(domain, 'Perplexity', perplexityAnswers, groundTruth),
   ])
 
   // Build benchmarks
@@ -374,6 +440,7 @@ export async function runMultiModelBenchmark(
     buildBenchmark('claude', 'Claude', claudeGrades),
     buildBenchmark('gpt4o', 'GPT-4o', gptGrades),
     buildBenchmark('gemini', 'Gemini', geminiGrades),
+    buildBenchmark('perplexity', 'Perplexity', perplexityGrades),
   ]
 
   // Filter out models that returned all skipped/failed

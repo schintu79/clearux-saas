@@ -298,8 +298,7 @@ function OverviewInner() {
     }
 
     // AI X-Ray: pull multi-model probes (Claude / GPT-4o=ChatGPT /
-    // Gemini) for the latest audit. Perplexity is not probed
-    // directly — surfaced as "Probe not configured" in the card.
+    // Gemini / Perplexity) for the latest audit.
     setModelProbes([]);
     void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, bundle]);
@@ -1035,10 +1034,11 @@ function AiMonitoringCard({
 /* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Gemini, Perplexity) ──
  *
  * Surfaces multi-model probes from /api/audits/intelligence. We probe
- * Claude (Anthropic), GPT-4o (rendered as ChatGPT), and Gemini (Google's
- * model — labeled "Gemini" because that's the product users recognize).
- * Perplexity is shown as "Probe not configured" — we don't fabricate
- * scores for it.
+ * Claude (Anthropic), GPT-4o (rendered as ChatGPT), Gemini (Google's
+ * model — labeled "Gemini" because that's the product users recognize),
+ * and Perplexity (sonar). Each row shows "Not yet measured" until a
+ * probe row exists; if the provider's API key is missing, the probe
+ * runs but is filtered out as inactive so the row stays unmeasured.
  */
 const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string }> = [
   { key: 'claude',     label: 'Claude' },
@@ -1229,9 +1229,8 @@ function AIXRayCard({
                   <span
                     className="text-[10px]"
                     style={{ color: 'var(--m-muted)' }}
-                    title={r.key === 'perplexity' ? 'Perplexity will appear once the probe is connected (admin: set PERPLEXITY_API_KEY and enable the Perplexity probe).' : undefined}
                   >
-                    {r.key === 'perplexity' ? 'Probe not configured' : 'Not yet measured'}
+                    Not yet measured
                   </span>
                 )}
               </li>

@@ -5,8 +5,8 @@
  *
  * Surfaces two layers in one page:
  *  1) AI X-Ray (#x-ray) — per-platform accuracy from multi-model probes
- *     (Claude, ChatGPT, Gemini, Perplexity). Perplexity is shown as
- *     "Probe not configured" until we wire a probe for it; we never fabricate.
+ *     (Claude, ChatGPT, Gemini, Perplexity). Rows show "Not yet measured"
+ *     until a probe row exists; we never fabricate scores.
  *  2) Per-page AI readability — what AI crawlers can extract from each
  *     crawled page (score, status, extractable signals, missing signals).
  *
@@ -63,7 +63,7 @@ const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; l
   { key: 'claude',     label: 'Claude',     note: 'Anthropic Claude' },
   { key: 'gpt4o',      label: 'ChatGPT',    note: 'OpenAI GPT-4o' },
   { key: 'gemini',     label: 'Gemini',     note: 'Google Gemini' },
-  { key: 'perplexity', label: 'Perplexity', note: 'Probe not configured' },
+  { key: 'perplexity', label: 'Perplexity', note: 'Perplexity Sonar' },
 ];
 
 function scoreColor(s: number | null): string {
@@ -242,7 +242,7 @@ function AIReadabilityBody({
         <div className="min-w-0">
           <p>
             <strong>AI Readability</strong> (this page) measures crawlability and what bots can parse from your pages.{' '}
-            <strong>AI X-Ray</strong> (below) measures what Claude, ChatGPT and Gemini currently say about your brand (Perplexity probe not yet configured).{' '}
+            <strong>AI X-Ray</strong> (below) measures what Claude, ChatGPT, Gemini and Perplexity currently say about your brand.{' '}
             <span style={{ color: 'var(--m-muted)' }}>
               AI Visibility / Share of Voice across non-branded buyer prompts is a separate layer and is not measured yet.
             </span>
@@ -354,19 +354,8 @@ function AIReadabilityBody({
                 ) : (
                   <div className="flex flex-col gap-1">
                     <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                      {r.key === 'perplexity'
-                        ? 'Perplexity will appear once the probe is connected.'
-                        : 'Not yet measured for this brand.'}
+                      Not yet measured for this brand.
                     </p>
-                    {r.key === 'perplexity' && (
-                      <p
-                        className="text-[10px] leading-snug"
-                        style={{ color: 'var(--m-muted)' }}
-                        title="Admin / developer: set PERPLEXITY_API_KEY and enable the Perplexity probe in the multi-model probe runner."
-                      >
-                        Admin: set <code style={{ fontSize: '10px' }}>PERPLEXITY_API_KEY</code> and enable the Perplexity probe.
-                      </p>
-                    )}
                   </div>
                 )}
               </div>

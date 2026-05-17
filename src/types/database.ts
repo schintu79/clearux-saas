@@ -300,7 +300,7 @@ export interface ModelBenchmarksSummary {
   insight: string
 }
 
-export type AIModelId = 'claude' | 'gpt4o' | 'gemini'
+export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
 
 export interface MultiModelProbe {
   id:                string
