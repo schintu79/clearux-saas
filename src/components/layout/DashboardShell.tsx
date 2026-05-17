@@ -26,6 +26,7 @@ import {
   Wrench,
   LineChart,
   FileSearch,
+  Upload,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -333,6 +334,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
         { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
+        { label: 'Deploy', href: '/dashboard/deploy', icon: Upload, matchPaths: ['/dashboard/connect'] },
       ],
     },
   ];
