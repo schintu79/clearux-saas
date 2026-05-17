@@ -298,8 +298,8 @@ function OverviewInner() {
     }
 
     // AI X-Ray: pull multi-model probes (Claude / GPT-4o=ChatGPT /
-    // Gemini=Google) for the latest audit. Perplexity is not probed
-    // directly — surfaced as "Not yet measured" in the card.
+    // Gemini) for the latest audit. Perplexity is not probed
+    // directly — surfaced as "Probe not configured" in the card.
     setModelProbes([]);
     void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, bundle]);
@@ -1032,17 +1032,18 @@ function AiMonitoringCard({
   );
 }
 
-/* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Google, Perplexity) ──
+/* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Gemini, Perplexity) ──
  *
  * Surfaces multi-model probes from /api/audits/intelligence. We probe
- * Claude (Anthropic), GPT-4o (rendered as ChatGPT), and Gemini (rendered
- * as Google). Perplexity is shown as "Not yet measured" — we don't
- * fabricate scores for it.
+ * Claude (Anthropic), GPT-4o (rendered as ChatGPT), and Gemini (Google's
+ * model — labeled "Gemini" because that's the product users recognize).
+ * Perplexity is shown as "Probe not configured" — we don't fabricate
+ * scores for it.
  */
 const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string }> = [
   { key: 'claude',     label: 'Claude' },
   { key: 'gpt4o',      label: 'ChatGPT' },
-  { key: 'gemini',     label: 'Google' },
+  { key: 'gemini',     label: 'Gemini' },
   { key: 'perplexity', label: 'Perplexity' },
 ];
 
@@ -1123,7 +1124,7 @@ function AIXRayCard({
           <div className="min-w-0">
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              What Claude, ChatGPT, Google &amp; Perplexity currently say about you
+              What Claude, ChatGPT, Gemini &amp; Perplexity currently say about you
             </p>
           </div>
         </div>
@@ -1228,7 +1229,7 @@ function AIXRayCard({
                   <span
                     className="text-[10px]"
                     style={{ color: 'var(--m-muted)' }}
-                    title={r.key === 'perplexity' ? 'Perplexity probe not yet configured' : undefined}
+                    title={r.key === 'perplexity' ? 'Perplexity will appear once the probe is connected (admin: set PERPLEXITY_API_KEY and enable the Perplexity probe).' : undefined}
                   >
                     {r.key === 'perplexity' ? 'Probe not configured' : 'Not yet measured'}
                   </span>
