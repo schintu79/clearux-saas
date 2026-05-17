@@ -42,16 +42,8 @@ import {
   ArrowRight,
   Brain,
   Eye,
-  Target,
-  Map as MapIcon,
-  Type,
-  MousePointerClick,
-  Shield,
   Heart,
   Accessibility,
-  Smartphone,
-  Gauge,
-  MessageSquare,
   Scale,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -77,16 +69,6 @@ import type { Audit, Report, AuditFinding } from '@/types/database';
 const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency'];
 const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]];
 const PILLAR_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
-
-/** Category icons in 24-index order — matches analyzer.ts. */
-const CATEGORY_ICONS: React.ElementType[] = [
-  Eye, Target, MapIcon, Type,
-  MousePointerClick, Shield, AlertTriangle, Heart,
-  Accessibility, Brain, Sparkles, Smartphone,
-  Gauge, Search, Zap, Globe,
-  FileSearch, LinkIcon, Share2, Scale,
-  Eye, MessageSquare, Target, CheckCircle2,
-];
 
 /** Module tints — same palette as the audit page so colors don't drift. */
 const MODULE_TINTS = [
@@ -730,66 +712,22 @@ function OverviewInner() {
           )}
         </DashboardCard>
 
-        {/* 4) AI view of this page */}
-        <DashboardCard
-          title="AI view of this page"
-          subtitle={avgAi != null ? `${aiPagesScored.length} of ${auditPages.length || aiPagesScored.length} pages scored` : 'No AI readability data yet'}
-          titleSize="lg"
-        >
-          {avgAi != null ? (
-            <div className="flex flex-col items-center justify-center pt-1">
-              <div className="flex items-baseline gap-1">
-                <span className={`text-[40px] font-bold leading-none tabular-nums ${scoreColor(avgAi)}`}>{avgAi}</span>
-                <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>%</span>
-              </div>
-              <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1" style={{ color: 'var(--m-muted)' }}>
-                Avg readability
-              </p>
-              <div className="mt-3 w-full flex items-center gap-3 text-[11px] justify-center">
-                <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }} /> {aiBuckets.green} green
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} /> {aiBuckets.amber} amber
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} /> {aiBuckets.red} red
-                </span>
-              </div>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-4 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Brain size={26} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
-              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                AI readability data appears here after a deeper audit.
-              </p>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-2 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          )}
-        </DashboardCard>
+        {/* 4) AI Readability — single clickable Kime-style card */}
+        <AIReadabilityCard
+          auditId={audit.id}
+          avgAi={avgAi}
+          aiBuckets={aiBuckets}
+          scoredPages={aiPagesScored.length}
+          totalPages={auditPages.length || aiPagesScored.length}
+        />
       </div>
 
-      {/* ── Row 2: Audit-style category/module cards (compact 6-col row on wide screens) ── */}
+      {/* ── Row 2: Category/module cards — clean layered excerpts ── */}
       {pillarScores.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
           {pillarScores.map((p) => {
             const pillarIdx = PILLAR_NAMES.indexOf(p.name);
             if (pillarIdx < 0) return null;
-            const [start, end] = PILLAR_RANGES[pillarIdx];
-            const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
             const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
             const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
             const findingCount = findingsByPillarName[p.name]?.length || 0;
@@ -797,7 +735,8 @@ function OverviewInner() {
               <Link
                 key={p.name}
                 href={`/dashboard/audits/${audit.id}?tab=findings`}
-                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group flex flex-col"
+                aria-label={`Open ${p.name} findings — score ${p.score} out of 100, ${findingCount} finding${findingCount === 1 ? '' : 's'}`}
+                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer group flex flex-col"
                 style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
               >
                 <div className="flex items-start gap-2 px-3 pt-3 pb-2">
@@ -808,39 +747,30 @@ function OverviewInner() {
                     <PIcon size={14} style={{ color: tint.dot }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-medium text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }} title={p.name}>{p.name}</h3>
+                    <h3
+                      className="font-sans font-medium text-[12px] leading-tight truncate"
+                      style={{ color: 'var(--ink)' }}
+                      title={p.name}
+                    >
+                      {p.name}
+                    </h3>
                     <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
                       {findingCount} finding{findingCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
 
-                <div className="px-3 pb-2 flex items-baseline gap-1">
-                  <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(p.score)}`}>{p.score}</span>
+                <div className="px-3 pb-3 flex items-baseline gap-1 flex-1">
+                  <span className={`text-[26px] font-bold leading-none tabular-nums ${scoreColor(p.score)}`}>{p.score}</span>
                   <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
                 </div>
 
-                {pillarCats.length > 0 && (
-                  <div className="px-3 pb-2 pt-2 space-y-1.5 flex-1" style={{ borderTop: `1px solid ${tint.border}` }}>
-                    {pillarCats.slice(0, 4).map((cat, relIdx) => {
-                      const CIcon = CATEGORY_ICONS[start + relIdx] || Sparkles;
-                      return (
-                        <div key={relIdx} className="flex items-center gap-1.5">
-                          <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-                          <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>{cat.name}</span>
-                          <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
                 <div
-                  className="px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium group-hover:gap-2 transition-all mt-auto"
+                  className="px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium mt-auto"
                   style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
                 >
-                  <span>View findings</span>
-                  <ArrowRight size={10} />
+                  <span>Open findings</span>
+                  <ArrowRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </Link>
             );
@@ -867,6 +797,7 @@ function OverviewInner() {
           detecting={detectingCompetitors}
           onBenchmark={handleBenchmark}
           hidden={hideBenchmarks}
+          auditId={audit.id}
         />
       </div>
 
@@ -1144,6 +1075,97 @@ function PriorityRecommendations({
   );
 }
 
+/* ── Row 1 — AI Readability (clickable Kime-style excerpt) ─── */
+function AIReadabilityCard({
+  auditId,
+  avgAi,
+  aiBuckets,
+  scoredPages,
+  totalPages,
+}: {
+  auditId: string;
+  avgAi: number | null;
+  aiBuckets: { green: number; amber: number; red: number };
+  scoredPages: number;
+  totalPages: number;
+}) {
+  const href = `/dashboard/audits/${auditId}#ai_xray`;
+  const subtitle = avgAi != null
+    ? `${scoredPages} of ${totalPages || scoredPages} pages scored`
+    : 'No AI readability data yet';
+
+  return (
+    <Link
+      href={href}
+      aria-label={avgAi != null
+        ? `Open AI Readability details — average score ${avgAi} percent`
+        : 'Open AI Readability details'}
+      className="group rounded-xl p-4 sm:p-5 flex flex-col cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+    >
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-center gap-2">
+          <span
+            className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)', color: 'var(--signal)' }}
+          >
+            <Brain size={13} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>AI Readability</h3>
+            <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="group-hover:translate-x-0.5 transition-transform flex-shrink-0 mt-1"
+          style={{ color: 'var(--m-muted)' }}
+        />
+      </div>
+
+      <div className="flex-1 min-h-0">
+        {avgAi != null ? (
+          <div className="flex flex-col items-center justify-center pt-1">
+            <div className="flex items-baseline gap-1">
+              <span className={`text-[40px] font-bold leading-none tabular-nums ${scoreColor(avgAi)}`}>{avgAi}</span>
+              <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>%</span>
+            </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1" style={{ color: 'var(--m-muted)' }}>
+              Avg readability
+            </p>
+            <div className="mt-3 w-full flex items-center gap-3 text-[11px] justify-center">
+              <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }} /> {aiBuckets.green} green
+              </span>
+              <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} /> {aiBuckets.amber} amber
+              </span>
+              <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} /> {aiBuckets.red} red
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Brain size={26} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              AI readability data appears here after a deeper audit.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div
+        className="mt-3 pt-3 flex items-center justify-between gap-1 text-[11px] font-medium"
+        style={{ borderTop: '1px solid var(--rule)', color: 'var(--ink)' }}
+      >
+        <span>Open details</span>
+        <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+      </div>
+    </Link>
+  );
+}
+
 /* ── Row 3 — Checkpoint Health: full list with expandable rows ── */
 function CheckpointHealthCard({
   categoryScores,
@@ -1305,7 +1327,7 @@ function CheckpointHealthCard({
   );
 }
 
-/* ── Row 3 — Benchmarks column ────────────────────────── */
+/* ── Row 3 — Benchmarks column (layered: excerpt → details) ── */
 function BenchmarksColumn({
   overallScore,
   pillarScores,
@@ -1313,6 +1335,7 @@ function BenchmarksColumn({
   detecting,
   onBenchmark,
   hidden,
+  auditId,
 }: {
   overallScore: number;
   pillarScores: Array<{ name: string; score: number }>;
@@ -1320,6 +1343,7 @@ function BenchmarksColumn({
   detecting: boolean;
   onBenchmark: (mode: 'auto' | 'manual', domains?: string[]) => void;
   hidden: boolean;
+  auditId: string;
 }) {
   if (hidden) {
     return (
@@ -1337,6 +1361,65 @@ function BenchmarksColumn({
       </DashboardCard>
     );
   }
+
+  const hasCompetitors = competitors.length > 0;
+
+  // With competitors: compact Kime-style excerpt; whole card click-through
+  // to the audit's intelligence tab (industry benchmark + competitor data).
+  if (hasCompetitors) {
+    const top = competitors.slice(0, 3);
+    const intelHref = `/dashboard/audits/${auditId}#intelligence`;
+    return (
+      <Link
+        href={intelHref}
+        aria-label={`Open benchmark details — ${overallScore} vs ${top.length} competitor${top.length === 1 ? '' : 's'}`}
+        className="group rounded-xl flex flex-col cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 overflow-hidden"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      >
+        <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start justify-between gap-2">
+          <div className="min-w-0 flex items-center gap-2">
+            <span
+              className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--brand) 12%, transparent)', color: 'var(--brand)' }}
+            >
+              <LineChart size={13} />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
+              <p className="text-[11px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                You vs. {top.length} competitor{top.length === 1 ? '' : 's'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight
+            size={14}
+            className="group-hover:translate-x-0.5 transition-transform flex-shrink-0 mt-1"
+            style={{ color: 'var(--m-muted)' }}
+          />
+        </div>
+
+        <div className="px-4 sm:px-5 pb-3 space-y-1.5">
+          <BenchmarkRow label="You" score={overallScore} highlight />
+          {top.map((c) => {
+            const delta = overallScore - c.score;
+            return <BenchmarkRow key={c.domain} label={c.domain} score={c.score} delta={delta} />;
+          })}
+        </div>
+
+        <div
+          className="px-4 sm:px-5 py-2 flex items-center justify-between gap-1 text-[11px] font-medium mt-auto"
+          style={{ borderTop: '1px solid var(--rule)', color: 'var(--ink)' }}
+        >
+          <span>Open intelligence</span>
+          <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+        </div>
+      </Link>
+    );
+  }
+
+  // No competitors yet — preserve inline setup form via BenchmarksSection
+  // (this is the only "controls" surface; making it a link with no
+  // destination would be a broken affordance).
   return (
     <div className="[&>div]:mb-0 [&>div]:h-full">
       <BenchmarksSection
@@ -1346,6 +1429,56 @@ function BenchmarksColumn({
         detecting={detecting}
         onBenchmark={onBenchmark}
       />
+    </div>
+  );
+}
+
+/* Compact benchmark row used by BenchmarksColumn excerpt. */
+function BenchmarkRow({
+  label,
+  score,
+  delta,
+  highlight,
+}: {
+  label: string;
+  score: number;
+  delta?: number;
+  highlight?: boolean;
+}) {
+  const tone = score >= 70 ? 'var(--ok)' : score >= 40 ? 'var(--warn)' : 'var(--severe)';
+  return (
+    <div
+      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
+      style={{
+        background: highlight ? 'color-mix(in srgb, var(--brand) 6%, transparent)' : 'var(--paper-2)',
+        border: highlight ? '1px solid color-mix(in srgb, var(--brand) 18%, transparent)' : '1px solid transparent',
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ background: tone }}
+      />
+      <span
+        className="flex-1 text-[12px] truncate font-medium"
+        style={{ color: 'var(--ink)' }}
+        title={label}
+      >
+        {label}
+      </span>
+      {delta != null && (
+        <span
+          className="text-[10px] font-semibold tabular-nums flex-shrink-0"
+          style={{ color: delta >= 0 ? 'var(--ok)' : 'var(--severe)' }}
+        >
+          {delta >= 0 ? '+' : ''}{delta}
+        </span>
+      )}
+      <span
+        className="text-[13px] font-bold tabular-nums flex-shrink-0"
+        style={{ color: tone }}
+      >
+        {score}
+      </span>
     </div>
   );
 }
