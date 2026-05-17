@@ -782,9 +782,9 @@ function OverviewInner() {
         </DashboardCard>
       </div>
 
-      {/* ── Row 2: Audit-style category/module cards ───── */}
+      {/* ── Row 2: Audit-style category/module cards (compact 6-col row on wide screens) ── */}
       {pillarScores.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
           {pillarScores.map((p) => {
             const pillarIdx = PILLAR_NAMES.indexOf(p.name);
             if (pillarIdx < 0) return null;
@@ -797,41 +797,38 @@ function OverviewInner() {
               <Link
                 key={p.name}
                 href={`/dashboard/audits/${audit.id}?tab=findings`}
-                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group"
+                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group flex flex-col"
                 style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
               >
-                <div className="flex items-center gap-3 px-5 py-4">
+                <div className="flex items-start gap-2 px-3 pt-3 pb-2">
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: `${tint.dot}15` }}
                   >
-                    <PIcon size={16} style={{ color: tint.dot }} />
+                    <PIcon size={14} style={{ color: tint.dot }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-medium text-[14px] truncate" style={{ color: 'var(--ink)' }}>{p.name}</h3>
-                    <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                    <h3 className="font-sans font-medium text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }} title={p.name}>{p.name}</h3>
+                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
                       {findingCount} finding{findingCount !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className={`text-[24px] font-bold leading-none ${scoreColor(p.score)}`}>{p.score}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>/100</p>
-                  </div>
+                </div>
+
+                <div className="px-3 pb-2 flex items-baseline gap-1">
+                  <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(p.score)}`}>{p.score}</span>
+                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
                 </div>
 
                 {pillarCats.length > 0 && (
-                  <div className="px-5 pb-4 space-y-2" style={{ borderTop: `1px solid ${tint.border}` }}>
-                    <div className="pt-3" />
-                    {pillarCats.map((cat, relIdx) => {
+                  <div className="px-3 pb-2 pt-2 space-y-1.5 flex-1" style={{ borderTop: `1px solid ${tint.border}` }}>
+                    {pillarCats.slice(0, 4).map((cat, relIdx) => {
                       const CIcon = CATEGORY_ICONS[start + relIdx] || Sparkles;
                       return (
-                        <div key={relIdx} className="flex items-center gap-2.5">
-                          <CIcon size={13} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-                          <span className="flex-1 text-[13px] truncate" style={{ color: 'var(--ink)' }}>{cat.name}</span>
-                          <div className="w-16 h-[3px] rounded-full flex-shrink-0" style={{ background: `${tint.dot}15` }}>
-                            <div className="h-full rounded-full" style={{ width: `${cat.score}%`, background: tint.dot, opacity: 0.6 }} />
-                          </div>
-                          <span className={`text-[13px] font-semibold w-7 text-right flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+                        <div key={relIdx} className="flex items-center gap-1.5">
+                          <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+                          <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>{cat.name}</span>
+                          <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
                         </div>
                       );
                     })}
@@ -839,11 +836,11 @@ function OverviewInner() {
                 )}
 
                 <div
-                  className="px-5 py-2.5 flex items-center justify-end gap-1 text-[11px] font-medium group-hover:gap-2 transition-all"
+                  className="px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium group-hover:gap-2 transition-all mt-auto"
                   style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
                 >
-                  View findings
-                  <ArrowRight size={12} />
+                  <span>View findings</span>
+                  <ArrowRight size={10} />
                 </div>
               </Link>
             );
