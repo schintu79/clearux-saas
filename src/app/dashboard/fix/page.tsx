@@ -11,8 +11,9 @@
  * because this is the action queue.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   ArrowRight,
@@ -370,9 +371,10 @@ function fixPriority(f: AuditFinding): number {
   return SEVERITY_RANK[f.severity] || 0;
 }
 
-export default function FixPage() {
+function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
+  const searchParams = useSearchParams();
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Record<string, boolean>>({});
@@ -382,6 +384,24 @@ export default function FixPage() {
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [sevFilter, setSevFilter] = useState<typeof SEVERITIES[number]>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus>('all');
+
+  // Hydrate filters from URL params so Overview's severity tiles and the
+  // category-card links land prefiltered. Only runs on mount + when params
+  // actually change so user edits don't get clobbered.
+  useEffect(() => {
+    const sev = searchParams.get('severity');
+    if (sev && (SEVERITIES as readonly string[]).includes(sev)) {
+      setSevFilter(sev as typeof SEVERITIES[number]);
+    }
+    const mod = searchParams.get('module');
+    if (mod && (PHASE1_MODULES as readonly string[]).includes(mod)) {
+      setModuleFilter(mod);
+    }
+    const status = searchParams.get('status');
+    if (status && (STATUS_KEYS as readonly string[]).includes(status)) {
+      setStatusFilter(status as FindingStatus);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (authLoading || !user || !ready) {
@@ -395,13 +415,31 @@ export default function FixPage() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
-  // Auto-expand the finding referenced by URL hash — preserves the
-  // /dashboard/fix#finding-<id> deep link from Find.
+  // Auto-expand and scroll to the finding referenced by URL hash —
+  // preserves the /dashboard/fix#finding-<id> deep link from Find.
+  // Depends on `bundle` so the effect re-fires after the findings list
+  // mounts (otherwise the target DOM node doesn't exist yet on a fresh
+  // client-side nav from Find).
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const apply = () => {
-      const h = window.location.hash.replace(/^#finding-/, '');
-      if (h) setExpanded((e) => ({ ...e, [h]: true }));
+      const raw = window.location.hash.replace(/^#/, '');
+      const m = raw.match(/^finding-(.+)$/);
+      if (!m) return;
+      const id = m[1];
+      setExpanded((e) => (e[id] ? e : { ...e, [id]: true }));
+      // Wait one paint so the expanded body renders before we scroll —
+      // otherwise the scroll target moves as the card grows. Run twice
+      // (rAF + setTimeout) to cover both list mount and re-renders from
+      // the loading bundle.
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`finding-${id}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      setTimeout(() => {
+        const el = document.getElementById(`finding-${id}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 250);
     };
     apply();
     window.addEventListener('hashchange', apply);
@@ -646,5 +684,20 @@ export default function FixPage() {
         </ul>
       )}
     </div>
+  );
+}
+
+export default function FixPage() {
+  return (
+    <Suspense
+      fallback={
+        <div>
+          <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
+          <div className="h-5 w-80 rounded-md animate-pulse mb-8" style={{ background: 'var(--paper-2)' }} />
+        </div>
+      }
+    >
+      <FixPageInner />
+    </Suspense>
   );
 }
