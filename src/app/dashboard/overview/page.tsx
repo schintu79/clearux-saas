@@ -15,7 +15,7 @@
  * pointing to "Run audit" — never another brand's data.
  */
 
-import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -33,6 +33,13 @@ import {
   Sparkles,
   Zap,
   AlertTriangle,
+  Share2,
+  MoreVertical,
+  Link as LinkIcon,
+  Wrench,
+  LineChart,
+  Check,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -94,6 +101,30 @@ function OverviewInner() {
   const [categoryScores, setCategoryScores] = useState<Array<{ name: string; score: number; summary: string }>>([]);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [brandName, setBrandName] = useState<string | null>(null);
+
+  // Share + overflow menu state. Mirrors the audit detail page so the
+  // operator gets the same affordance wherever they look at an audit.
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareEnabled, setShareEnabled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   // Surfacing a one-shot "credits added" banner — only after the user
   // returns from the Stripe checkout. Same behaviour as before the
@@ -200,6 +231,46 @@ function OverviewInner() {
     if (!latestCompleted || filter === 'passed') return;
     router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
   }, [latestCompleted, router]);
+
+  // Reset share state when the active audit changes.
+  useEffect(() => {
+    setShareUrl(null);
+    setShareCopied(false);
+    setShareEnabled(!!(latestCompleted as any)?.share_enabled);
+  }, [latestCompleted]);
+
+  const handleShare = useCallback(async () => {
+    if (!latestCompleted) return;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/audits/${latestCompleted.id}/share`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.share_url) {
+        setShareUrl(data.share_url);
+        setShareEnabled(true);
+        // Clipboard API is gated on secure contexts and user gesture; if it
+        // throws we surface the URL anyway so the user can copy manually.
+        try {
+          if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(data.share_url);
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2500);
+          }
+        } catch {}
+      }
+    } catch {}
+    setShareLoading(false);
+  }, [latestCompleted]);
+
+  const handleRevokeShare = useCallback(async () => {
+    if (!latestCompleted) return;
+    if (!confirm('Revoke the share link? Anyone with the link will no longer be able to view this audit.')) return;
+    try {
+      await fetch(`/api/audits/${latestCompleted.id}/share`, { method: 'DELETE' });
+      setShareUrl(null);
+      setShareEnabled(false);
+    } catch {}
+  }, [latestCompleted]);
 
   /* ── Loading skeleton ─────────────────────────────────── */
   if (authLoading || loading || !ready) {
@@ -318,7 +389,7 @@ function OverviewInner() {
             {audit.completed_at && <> · {formatDate(audit.completed_at)}</>}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0" ref={menuRef}>
           <a
             href={`/api/reports/${audit.id}/pdf`}
             target="_blank"
@@ -327,6 +398,19 @@ function OverviewInner() {
           >
             <Download size={12} /> Report
           </a>
+          <button
+            type="button"
+            onClick={handleShare}
+            disabled={shareLoading}
+            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-60"
+            aria-label={shareEnabled ? 'Copy share link' : 'Create share link'}
+          >
+            {shareCopied ? (
+              <><Check size={12} className="text-ok" /> Copied</>
+            ) : (
+              <><Share2 size={12} /> Share</>
+            )}
+          </button>
           <Link
             href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit'}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
@@ -334,13 +418,91 @@ function OverviewInner() {
             <RefreshCw size={13} />
             Re-audit
           </Link>
-          <Link
-            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
-            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
-          >
-            <Search size={13} />
-            Dig deeper
-          </Link>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+              aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+            >
+              <MoreVertical size={14} />
+            </button>
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-10 z-50 w-60 rounded-xl py-1.5 shadow-lg"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+              >
+                <Link
+                  href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <Search size={13} className="text-m-muted" />
+                  Dig deeper (full re-audit)
+                </Link>
+                <a
+                  href={`/api/reports/${audit.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <Download size={13} className="text-m-muted" />
+                  Download report (PDF)
+                </a>
+                <button
+                  type="button"
+                  onClick={() => { handleShare(); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors text-left"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <Share2 size={13} className="text-m-muted" />
+                  {shareEnabled || shareUrl ? 'Copy share link' : 'Create share link'}
+                </button>
+                {(shareEnabled || shareUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => { handleRevokeShare(); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
+                    style={{ color: 'var(--severe)' }}
+                  >
+                    <LinkIcon size={13} />
+                    Revoke share link
+                  </button>
+                )}
+                <div className="my-1 h-px" style={{ background: 'var(--rule)' }} />
+                <Link
+                  href="/dashboard/audits"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
+                  style={{ color: 'var(--ink)' }}
+                >
+                  <FileSearch size={13} className="text-m-muted" />
+                  View all audits
+                </Link>
+                {/* Destructive option intentionally disabled: no DELETE
+                    endpoint exists for audits today, and silently dropping
+                    rows from the client would leave reports/findings/
+                    storage orphaned. */}
+                <button
+                  type="button"
+                  disabled
+                  title="Coming soon — audit deletion is not available yet."
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs opacity-50 cursor-not-allowed text-left"
+                  style={{ color: 'var(--m-muted)' }}
+                >
+                  <Trash2 size={13} />
+                  Delete audit
+                  <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -362,33 +524,75 @@ function OverviewInner() {
         defaultOpenBenchmarks
       />
 
-      {/* ── Quick links into Find / Fix / Track ─────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      {/* ── Quick links into Find / Fix / Track ─────────────
+          Three operator stages, color-coded so the user reads the
+          intent at a glance: red/severe = problems to identify,
+          amber/warn = take action, green/ok = monitor improvement.
+          Same hue family as the severity counts above to keep the
+          page's visual grammar consistent. */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 mt-6">
         <QuickLink
           href="/dashboard/find"
           title="Find"
-          body="See every open issue, sorted by what hurts your score most."
+          subtitle="Identify issues"
+          body={severityCounts.critical + severityCounts.high > 0
+            ? `${severityCounts.critical + severityCounts.high} high-impact issue${severityCounts.critical + severityCounts.high === 1 ? '' : 's'} waiting to be triaged.`
+            : 'See every open issue, ranked by impact on your score.'}
+          icon={Search}
+          accent="severe"
         />
         <QuickLink
           href="/dashboard/fix"
           title="Fix"
-          body="Work through the recommended fixes with copy-paste guidance."
+          subtitle="Take action"
+          body="Work through recommended fixes with copy-paste guidance and snippets."
+          icon={Wrench}
+          accent="warn"
         />
         <QuickLink
           href="/dashboard/track"
           title="Track"
-          body="Watch your Brand Health Score move as you ship fixes."
+          subtitle="Monitor improvement"
+          body="Watch your Brand Health Score move as you ship fixes over time."
+          icon={LineChart}
+          accent="ok"
         />
       </div>
 
-      {/* ── Audit history for this brand/site ───────────── */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-text" style={{ color: 'var(--ink)' }}>Audit history</h2>
-        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{auditCount} total</p>
-      </div>
+      {/* ── Audit history for this brand/site ─────────────
+          Always show a label that matches what we actually render. If
+          the brand has more than 8 audits we collapse to the latest 8
+          but let the user expand inline rather than silently lying. */}
+      {(() => {
+        const HISTORY_PREVIEW = 8;
+        const showingAll = showAllHistory || auditCount <= HISTORY_PREVIEW;
+        const shownCount = showingAll ? auditCount : Math.min(HISTORY_PREVIEW, auditCount);
+        const label = showingAll
+          ? `${auditCount} total`
+          : `Latest ${shownCount} of ${auditCount}`;
+        return (
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-text" style={{ color: 'var(--ink)' }}>Audit history</h2>
+            <div className="flex items-center gap-2">
+              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>{label}</p>
+              {auditCount > HISTORY_PREVIEW && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllHistory((v) => !v)}
+                  className="text-[11px] font-medium hover:underline"
+                  style={{ color: 'var(--ink)' }}
+                  aria-expanded={showingAll}
+                >
+                  {showingAll ? 'Show less' : 'View all'}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}>
         <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
-          {bundle.history.slice(0, 8).map((h) => {
+          {(showAllHistory ? bundle.history : bundle.history.slice(0, 8)).map((h) => {
             const a = h.audit;
             const r = h.report;
             const meta = statusMeta[a.status] || statusMeta.pending_payment;
@@ -456,16 +660,60 @@ function CreditsBanner({ onClose }: { onClose: () => void }) {
   );
 }
 
-function QuickLink({ href, title, body }: { href: string; title: string; body: string }) {
+type QuickLinkAccent = 'severe' | 'warn' | 'ok';
+
+function QuickLink({
+  href,
+  title,
+  subtitle,
+  body,
+  icon: Icon,
+  accent,
+}: {
+  href: string;
+  title: string;
+  subtitle: string;
+  body: string;
+  icon: React.ElementType;
+  accent: QuickLinkAccent;
+}) {
+  // Map accent to a CSS variable so the cards stay theme-aware.
+  const accentVar =
+    accent === 'severe' ? 'var(--severe)' :
+    accent === 'warn' ? 'var(--warn)' : 'var(--ok)';
   return (
     <Link
       href={href}
-      className="rounded-xl p-4 transition-all hover:shadow-sm flex flex-col gap-1.5"
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      className="group rounded-xl p-4 transition-all hover:shadow-sm flex flex-col gap-2 relative overflow-hidden"
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--rule)',
+        // Tinted left edge — readable color signal without flooding the card.
+        borderLeft: `3px solid ${accentVar}`,
+      }}
     >
       <div className="flex items-center justify-between">
-        <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>{title}</p>
-        <ChevronRight size={13} style={{ color: 'var(--m-muted)' }} />
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{
+              background: `color-mix(in srgb, ${accentVar} 12%, transparent)`,
+              color: accentVar,
+            }}
+          >
+            <Icon size={13} strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{title}</p>
+            <p
+              className="text-[10px] font-medium uppercase tracking-wide leading-tight mt-0.5"
+              style={{ color: accentVar }}
+            >
+              {subtitle}
+            </p>
+          </div>
+        </div>
+        <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" style={{ color: 'var(--m-muted)' }} />
       </div>
       <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{body}</p>
     </Link>
