@@ -272,8 +272,8 @@ export default function BrandDnaPage() {
         <EmptyState
           title="Pick a brand to see its DNA"
           body="Brand DNA is scoped to the brand you have selected in the sidebar. Choose a brand or site to view and edit its DNA."
-          ctaHref="/dashboard/portfolio"
-          ctaLabel="Go to All brands"
+          ctaHref="/dashboard/new-audit"
+          ctaLabel="Run your first audit"
         />
       ) : !identity ? (
         <EmptyState
