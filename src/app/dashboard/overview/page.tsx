@@ -1783,7 +1783,7 @@ function BenchmarksSummaryCard({
     );
   }
 
-  const top = competitors.slice(0, 3);
+  const top = competitors.slice(0, 5);
   const hasCompetitors = top.length > 0;
   const compScores = top.map(c => c.score);
   const avgCompetitor = compScores.length > 0
@@ -1902,28 +1902,16 @@ function BenchmarksSummaryCard({
         ) : (
           <div className="flex flex-col items-start gap-2 py-2">
             <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              See how your Brand Health Score stacks up against competitors across every pillar.
+              No competitors configured yet.
             </p>
             <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Add up to 3 competitor domains to start.
+              Add up to 5 competitor domains, or auto-detect suggestions. You stay in control.
             </p>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onBenchmark('auto');
-              }}
-              className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 hover:underline"
+            <span
+              className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 group-hover:underline"
               style={{ color: 'var(--ink)' }}
             >
-              <Sparkles size={11} /> Auto-detect competitors
-            </button>
-            <span
-              className="text-[11px] mt-1 inline-flex items-center gap-1 group-hover:underline"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              or open the full benchmarks view <ChevronRight size={11} />
+              Configure benchmarks <ChevronRight size={11} />
             </span>
           </div>
         )}
