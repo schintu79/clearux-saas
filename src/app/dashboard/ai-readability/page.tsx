@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   ArrowRight,
   ExternalLink,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -95,6 +97,15 @@ export default function AIReadabilityPage() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
+  const refreshProbes = React.useCallback(async (auditId: string) => {
+    try {
+      const r = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setProbes((d?.modelProbes || []) as ModelProbe[]);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     const auditId = bundle?.audit?.id;
     if (!auditId) {
@@ -109,11 +120,8 @@ export default function AIReadabilityPage() {
       .eq('audit_id', auditId)
       .then(({ data }) => setPages((data || []) as AuditPageRow[]));
 
-    fetch(`/api/audits/intelligence?audit_id=${auditId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => setProbes((d?.modelProbes || []) as ModelProbe[]))
-      .catch(() => {});
-  }, [bundle]);
+    void refreshProbes(auditId);
+  }, [bundle, refreshProbes]);
 
   if (authLoading || loading || !ready) {
     return (
@@ -151,7 +159,12 @@ export default function AIReadabilityPage() {
   }
 
   return (
-    <AIReadabilityBody bundle={bundle} pages={pages} probes={probes} />
+    <AIReadabilityBody
+      bundle={bundle}
+      pages={pages}
+      probes={probes}
+      onProbesRefreshed={() => bundle?.audit?.id && refreshProbes(bundle.audit.id)}
+    />
   );
 }
 
@@ -159,12 +172,40 @@ function AIReadabilityBody({
   bundle,
   pages,
   probes,
+  onProbesRefreshed,
 }: {
   bundle: LatestAuditBundle;
   pages: AuditPageRow[];
   probes: ModelProbe[];
+  onProbesRefreshed: () => void;
 }) {
   const audit = bundle.audit!;
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanError, setRescanError] = useState<string | null>(null);
+  const [rescanOk, setRescanOk] = useState(false);
+
+  const handleRescan = async () => {
+    if (!audit?.id || rescanning) return;
+    setRescanning(true);
+    setRescanError(null);
+    setRescanOk(false);
+    try {
+      const res = await fetch(`/api/audits/${audit.id}/rescan-xray`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRescanError(typeof data?.error === 'string' ? data.error : 'Re-scan failed');
+      } else {
+        setRescanOk(true);
+        onProbesRefreshed();
+        setTimeout(() => setRescanOk(false), 3000);
+      }
+    } catch {
+      setRescanError('Re-scan failed');
+    } finally {
+      setRescanning(false);
+    }
+  };
+
   const byId = useMemo(() => new Map(probes.map(p => [p.model_id, p])), [probes]);
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
@@ -196,6 +237,23 @@ function AIReadabilityBody({
         </p>
       </div>
 
+      {/* ── Layer-clarification note ──────────────────────────── */}
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-2.5 text-[12px]"
+        style={{ background: 'var(--paper)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+      >
+        <Info size={14} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+        <div className="min-w-0">
+          <p>
+            <strong>AI Readability</strong> (this page) measures crawlability and what bots can parse from your pages.{' '}
+            <strong>AI X-Ray</strong> (below) measures what Claude, ChatGPT and Google currently say about your brand.{' '}
+            <span style={{ color: 'var(--m-muted)' }}>
+              AI Visibility / Share of Voice across non-branded buyer prompts is a separate layer and is not measured yet.
+            </span>
+          </p>
+        </div>
+      </div>
+
       {/* ── AI X-Ray ─────────────────────────────────────────── */}
       <section id="x-ray" className="rounded-xl p-5 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
         <div className="flex items-start gap-2 mb-4">
@@ -207,21 +265,47 @@ function AIReadabilityBody({
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
-              AI X-Ray
+              AI X-Ray <span className="text-[11px] font-normal" style={{ color: 'var(--m-muted)' }}>· AI Perception</span>
             </h2>
             <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
               We ask each model what it knows about your brand and grade its answer for accuracy.
             </p>
           </div>
-          {avg != null && (
-            <div className="flex items-baseline gap-1 flex-shrink-0">
-              <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
-                {avg}
-              </span>
-              <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleRescan}
+              disabled={rescanning}
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+              aria-label="Re-scan AI X-Ray"
+              title="Re-run model probes only — does not re-crawl your site"
+            >
+              <RefreshCw size={12} className={rescanning ? 'animate-spin' : ''} />
+              {rescanning ? 'Re-scanning' : 'Re-scan'}
+            </button>
+            {avg != null && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
+                  {avg}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {(rescanError || rescanOk) && (
+          <div
+            className="text-[11px] mb-3 px-3 py-2 rounded-md"
+            style={{
+              color: rescanError ? 'var(--severe)' : 'var(--ok)',
+              background: `color-mix(in srgb, var(${rescanError ? '--severe' : '--ok'}) 8%, transparent)`,
+            }}
+          >
+            {rescanError || 'Re-scan complete — refreshed model perception scores.'}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {rows.map((r) => {
