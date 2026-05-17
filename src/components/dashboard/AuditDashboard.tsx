@@ -374,7 +374,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
   onBenchmark?: (mode: 'auto' | 'manual', domains?: string[]) => void;
   onCollapse?: () => void;
 }) {
-  const [manualInputs, setManualInputs] = useState<string[]>(['', '', '']);
+  const [manualInputs, setManualInputs] = useState<string[]>(['', '', '', '', '']);
   const [editing, setEditing] = useState(false);
   const maxCompetitors = competitors?.slice(0, 3) || [];
   const hasCompetitors = maxCompetitors.length > 0;
@@ -400,7 +400,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
   /* ── Input form (empty state or editing) ── */
   const renderForm = () => (
     <div className="px-5 pb-5 pt-3">
-      <p className="text-sm text-muted mb-3">Enter up to 3 competitor domains to benchmark against:</p>
+      <p className="text-sm text-muted mb-3">Enter up to 5 competitor domains to benchmark against:</p>
       <div className="space-y-2 mb-4">
         {manualInputs.map((val, i) => (
           <input
@@ -468,7 +468,7 @@ export function BenchmarksSection({ overallScore, pillarScores, competitors, det
             </div>
             <p className="text-base font-medium text-text mb-1">Benchmark against competitors</p>
             <p className="text-sm text-muted max-w-sm mb-5">
-              Add up to 3 competitor domains. We analyse their real website and score their UX across all pillars.
+              Add up to 5 competitor domains. We analyse their real website and score their UX across all pillars.
             </p>
             {renderForm()}
           </div>
