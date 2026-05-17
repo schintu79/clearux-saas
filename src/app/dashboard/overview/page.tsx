@@ -31,11 +31,9 @@ import {
   Share2,
   MoreVertical,
   Link as LinkIcon,
-  Wrench,
   LineChart,
   Check,
   Trash2,
-  Lightbulb,
   ListChecks,
   Info,
   TrendingUp,
@@ -453,30 +451,9 @@ function OverviewInner() {
 
   const hideBenchmarks = (audit as any).audit_type === 'brand_identity' || selection?.kind === 'brand';
 
-  // Priority recommendations.
-  const rawJson = (report.raw_json || null) as any;
-  const recommendationsFromRaw: string[] = Array.isArray(rawJson?.topRecommendations)
-    ? rawJson.topRecommendations.filter((r: any) => typeof r === 'string' && r.trim().length > 0).slice(0, 3)
-    : [];
-  const recommendationsFromKey: string[] = !recommendationsFromRaw.length && report.key_recommendation
-    ? [report.key_recommendation]
-    : [];
-  const recommendationsFromFindings: string[] = !recommendationsFromRaw.length && !recommendationsFromKey.length
-    ? openFindings
-        .filter((f) => (f.severity === 'critical' || f.severity === 'high') && f.recommendation)
-        .slice(0, 3)
-        .map((f) => f.recommendation as string)
-    : [];
-  const priorityRecs = recommendationsFromRaw.length
-    ? recommendationsFromRaw
-    : recommendationsFromKey.length
-      ? recommendationsFromKey
-      : recommendationsFromFindings;
-
-  const alertCritical = severityCounts.critical > 0;
   const execSummary = (report.executive_summary || '').trim();
 
-  // AI readability summary (Row 1, card 4).
+  // AI readability summary (Row 3, AI monitoring card).
   const aiPagesScored = auditPages.filter(p => (p as any).ai_readability?.overallScore != null);
   const avgAi = aiPagesScored.length > 0
     ? Math.round(aiPagesScored.reduce((s, p) => s + ((p as any).ai_readability.overallScore || 0), 0) / aiPagesScored.length)
@@ -486,10 +463,6 @@ function OverviewInner() {
     amber: aiPagesScored.filter(p => (p as any).ai_readability?.status === 'amber' || ((p as any).ai_readability?.overallScore >= 40 && (p as any).ai_readability?.overallScore < 70)).length,
     red:   aiPagesScored.filter(p => (p as any).ai_readability?.status === 'red'   || (p as any).ai_readability?.overallScore < 40).length,
   };
-
-  // History toggle
-  const HISTORY_PREVIEW = 8;
-  const showingAll = showAllHistory || auditCount <= HISTORY_PREVIEW;
 
   return (
     <div className="w-full">
@@ -645,20 +618,21 @@ function OverviewInner() {
         completedAt={audit.completed_at || audit.created_at}
       />
 
-      {/* ── Row 1: 4 cards ─────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      {/* ── Row 1: 3 equal summary cards ─────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         {/* 1) Brand Health Score + module dots */}
         <DashboardCard
           title="Brand Health Score"
           subtitle="Latest audit"
           rightLabel={audit.completed_at ? formatDate(audit.completed_at) : null}
+          icon={Heart}
           titleSize="lg"
         >
-          <div className="flex flex-col items-center justify-center pt-1 pb-2">
-            <ScoreRing score={overallScore} size={130} strokeWidth={9} />
-            <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>/100</p>
+          <div className="flex flex-col items-center justify-center">
+            <ScoreRing score={overallScore} size={120} strokeWidth={9} />
+            <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>/100</p>
             <span
-              className="text-[11px] font-medium mt-2 px-3 py-0.5 rounded-full"
+              className="text-[11px] font-medium mt-1.5 px-3 py-0.5 rounded-full"
               style={{
                 color: scoreColorVar(overallScore),
                 background: `color-mix(in srgb, ${scoreColorVar(overallScore)} 10%, transparent)`,
@@ -692,6 +666,7 @@ function OverviewInner() {
         <DashboardCard
           title="Score Over Time"
           subtitle={scoreTrend.length >= 2 ? `${scoreTrend.length} audits` : 'Trend appears after next audit'}
+          icon={TrendingUp}
           titleSize="lg"
         >
           {scoreTrend.length >= 2 ? (
@@ -715,6 +690,7 @@ function OverviewInner() {
         <DashboardCard
           title="Heuristic Breakdown"
           subtitle={pillarScores.length >= 3 ? 'Hover a point for the category' : 'Not enough data for radar'}
+          icon={Target}
           titleSize="lg"
         >
           {pillarScores.length >= 3 ? (
@@ -729,17 +705,18 @@ function OverviewInner() {
           )}
         </DashboardCard>
 
-        {/* 4) AI monitoring — clean summary card with status + coverage */}
-        <AiMonitoringCard
-          avgAi={avgAi}
-          aiBuckets={aiBuckets}
-          aiPagesScored={aiPagesScored.length}
-          totalPages={auditPages.length}
-          auditId={audit.id}
-        />
       </div>
 
-      {/* ── Row 2: Audit-style category/module cards (compact 6-col row on wide screens) ── */}
+      {/* ── Row 2: Category module cards — clean by default, expand for breakdown ── */}
+      {pillarScores.length > 0 && (
+        <div className="mb-2 flex items-center gap-2">
+          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+          <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
+          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
+          </p>
+        </div>
+      )}
       {pillarScores.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
           {pillarScores.map((p) => {
@@ -751,71 +728,30 @@ function OverviewInner() {
             const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
             const findingCount = findingsByPillarName[p.name]?.length || 0;
             return (
-              <Link
+              <CategoryModuleCard
                 key={p.name}
+                name={p.name}
+                score={p.score}
+                tint={tint}
+                Icon={PIcon}
+                findingCount={findingCount}
+                breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
+                  name: cat.name,
+                  score: cat.score,
+                  Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
+                }))}
                 href={`/dashboard/audits/${audit.id}?tab=findings`}
-                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group flex flex-col"
-                style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-              >
-                <div className="flex items-start gap-2 px-3 pt-3 pb-2">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${tint.dot}15` }}
-                  >
-                    <PIcon size={14} style={{ color: tint.dot }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-medium text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }} title={p.name}>{p.name}</h3>
-                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                      {findingCount} finding{findingCount !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="px-3 pb-2 flex items-baseline gap-1">
-                  <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(p.score)}`}>{p.score}</span>
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
-                </div>
-
-                {pillarCats.length > 0 && (
-                  <div className="px-3 pb-2 pt-2 space-y-1.5 flex-1" style={{ borderTop: `1px solid ${tint.border}` }}>
-                    {pillarCats.slice(0, 4).map((cat, relIdx) => {
-                      const CIcon = CATEGORY_ICONS[start + relIdx] || Sparkles;
-                      return (
-                        <div key={relIdx} className="flex items-center gap-1.5">
-                          <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-                          <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>{cat.name}</span>
-                          <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div
-                  className="px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium group-hover:gap-2 transition-all mt-auto"
-                  style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
-                >
-                  <span>View findings</span>
-                  <ArrowRight size={10} />
-                </div>
-              </Link>
+              />
             );
           })}
         </div>
       )}
 
-      {/* ── Row 3: Issues · Checkpoint Health · Benchmarks ─ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      {/* ── Row 3: Issues by importance · Benchmarks · AI Monitoring ─ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
-        />
-        <CheckpointHealthCard
-          categoryScores={categoryScores}
-          pillarScores={pillarScores}
-          findings={openFindings}
-          auditId={audit.id}
         />
         <BenchmarksSummaryCard
           overallScore={overallScore}
@@ -825,84 +761,31 @@ function OverviewInner() {
           hidden={hideBenchmarks}
           auditId={audit.id}
         />
-      </div>
-
-      {/* ── Row 3.5: Find/Fix/Track + Priority Recommendations ─ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <FindFixTrackCard severityCounts={severityCounts} />
-        <PriorityRecommendations
-          recs={priorityRecs}
-          findings={openFindings}
+        <AiMonitoringCard
+          avgAi={avgAi}
+          aiBuckets={aiBuckets}
+          aiPagesScored={aiPagesScored.length}
+          totalPages={auditPages.length}
           auditId={audit.id}
         />
       </div>
 
-      {/* ── Row 4: Audit history ───────────────────────── */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Audit history</h2>
-        <div className="flex items-center gap-2">
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            {showingAll ? `${auditCount} total` : `Latest ${Math.min(HISTORY_PREVIEW, auditCount)} of ${auditCount}`}
-          </p>
-          {auditCount > HISTORY_PREVIEW && (
-            <button
-              type="button"
-              onClick={() => setShowAllHistory((v) => !v)}
-              className="text-[11px] font-medium hover:underline"
-              style={{ color: 'var(--ink)' }}
-              aria-expanded={showingAll}
-            >
-              {showingAll ? 'Show less' : 'View all'}
-            </button>
-          )}
-        </div>
+      {/* ── Row 4: Checkpoint Health + Audit History ───── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <CheckpointHealthCard
+          categoryScores={categoryScores}
+          pillarScores={pillarScores}
+          findings={openFindings}
+          auditId={audit.id}
+        />
+        <AuditHistoryCard
+          history={bundle.history}
+          auditCount={auditCount}
+          showAllHistory={showAllHistory}
+          onToggleAll={() => setShowAllHistory((v) => !v)}
+        />
       </div>
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}>
-        <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
-          {(showingAll ? bundle.history : bundle.history.slice(0, HISTORY_PREVIEW)).map((h) => {
-            const a = h.audit;
-            const r = h.report;
-            const meta = statusMeta[a.status] || statusMeta.pending_payment;
-            const Icon = meta.icon;
-            const done = a.status === 'completed';
-            const aLang = langCode((a as any).language);
-            return (
-              <Link
-                key={a.id}
-                href={`/dashboard/audits/${a.id}`}
-                className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row"
-              >
-                <div className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0 flex-wrap">
-                    <span className="text-text font-medium" style={{ color: 'var(--ink)' }}>
-                      {formatDate(a.completed_at || a.created_at)}
-                    </span>
-                    <span className="text-border">·</span>
-                    <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
-                    <span className="text-border">·</span>
-                    <span
-                      className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-                      style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}
-                    >
-                      {aLang}
-                    </span>
-                    {done && r?.overall_score != null && (
-                      <>
-                        <span className="text-border">·</span>
-                        <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
-                      </>
-                    )}
-                    {(a as any).depth_mode === 'deep' && (
-                      <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">Deep</span>
-                    )}
-                  </div>
-                  <ChevronRight size={12} className="text-muted/40 group-hover/row:text-brand transition-colors flex-shrink-0" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+
     </div>
   );
 }
@@ -933,28 +816,40 @@ function DashboardCard({
   subtitle,
   rightLabel,
   children,
-  titleSize = 'md',
+  icon: Icon,
+  titleSize = 'lg',
 }: {
   title: string;
   subtitle?: string | null;
   rightLabel?: string | null;
   children: React.ReactNode;
+  icon?: React.ElementType;
   titleSize?: 'md' | 'lg';
 }) {
   const titleCls = titleSize === 'lg'
-    ? 'text-[15px] font-semibold leading-tight'
+    ? 'text-[15px] font-semibold leading-tight tracking-[-0.005em]'
     : 'text-[13px] font-semibold leading-tight';
   return (
     <div
-      className="rounded-xl p-4 sm:p-5 flex flex-col"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0">
-          <h3 className={titleCls} style={{ color: 'var(--ink)' }}>{title}</h3>
-          {subtitle && (
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+        <div className="min-w-0 flex items-start gap-2">
+          {Icon && (
+            <span
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+            >
+              <Icon size={14} />
+            </span>
           )}
+          <div className="min-w-0">
+            <h3 className={titleCls} style={{ color: 'var(--ink)' }}>{title}</h3>
+            {subtitle && (
+              <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+            )}
+          </div>
         </div>
         {rightLabel && (
           <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{rightLabel}</span>
@@ -994,7 +889,7 @@ function AiMonitoringCard({
   return (
     <Link
       href={`/dashboard/audits/${auditId}#ai_xray`}
-      className="rounded-xl p-4 sm:p-5 flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open AI Readability deep-dive"
     >
@@ -1008,7 +903,7 @@ function AiMonitoringCard({
             <Brain size={14} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>AI monitoring</h3>
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI Monitoring</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
               How AI systems read this site
             </p>
@@ -1138,6 +1033,7 @@ function IssuesByImportance({
     <DashboardCard
       title="Issues by importance"
       subtitle={total === 0 ? 'No open issues — nice.' : `${total} open issue${total === 1 ? '' : 's'}`}
+      icon={AlertTriangle}
       titleSize="lg"
     >
       {total === 0 ? (
@@ -1217,78 +1113,217 @@ function IssuesByImportance({
 }
 
 /* ── Row 3 — Priority recommendations ────────────────── */
-function PriorityRecommendations({
-  recs,
-  findings,
-  auditId,
+/* ── Row 2 — Category module card with collapsible breakdown ── */
+function CategoryModuleCard({
+  name,
+  score,
+  tint,
+  Icon,
+  findingCount,
+  breakdown,
+  href,
 }: {
-  recs: string[];
-  findings: AuditFinding[];
-  auditId: string;
+  name: string;
+  score: number;
+  tint: { dot: string; bg: string; border: string };
+  Icon: React.ElementType;
+  findingCount: number;
+  breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
+  href: string;
 }) {
-  const topFindings = findings
-    .filter((f) => (f.severity === 'critical' || f.severity === 'high') && f.recommendation)
-    .slice(0, 3);
-
+  const [expanded, setExpanded] = useState(false);
   return (
-    <DashboardCard
-      title="Priority recommendations"
-      subtitle={recs.length > 0 ? `Top ${recs.length} action${recs.length === 1 ? '' : 's'}` : 'Nothing flagged'}
-      titleSize="lg"
+    <div
+      className="rounded-xl overflow-hidden flex flex-col"
+      style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
     >
-      {recs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <Lightbulb size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2" />
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            No priority recommendations from the latest audit.
+      <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: `${tint.dot}15` }}
+        >
+          <Icon size={14} style={{ color: tint.dot }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3
+            className="font-sans font-semibold text-[12.5px] leading-tight truncate"
+            style={{ color: 'var(--ink)' }}
+            title={name}
+          >
+            {name}
+          </h3>
+          <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+            {findingCount} finding{findingCount !== 1 ? 's' : ''}
           </p>
         </div>
-      ) : (
-        <ul className="space-y-2">
-          {recs.slice(0, 3).map((rec, i) => {
-            const linkedFinding = topFindings[i];
+      </div>
+
+      <div className="px-3 pb-2 flex items-baseline gap-1">
+        <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(score)}`}>{score}</span>
+        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
+      </div>
+
+      {breakdown.length > 0 && expanded && (
+        <div className="px-3 pb-2 pt-2 space-y-1.5" style={{ borderTop: `1px solid ${tint.border}` }}>
+          {breakdown.map((cat, i) => {
+            const CIcon = cat.Icon;
             return (
-              <li
-                key={i}
-                className="rounded-lg p-3"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-              >
-                <div className="flex items-start gap-2">
-                  <span
-                    className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-semibold"
-                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                    aria-hidden="true"
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="text-[12px] leading-snug line-clamp-3"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {rec}
-                    </p>
-                    {linkedFinding && (
-                      <Link
-                        href={`/dashboard/audits/${auditId}?finding=${linkedFinding.id}`}
-                        className="text-[10px] mt-1.5 inline-flex items-center gap-0.5 hover:underline"
-                        style={{ color: 'var(--m-muted)' }}
-                      >
-                        View finding <ChevronRight size={10} />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </li>
+              <div key={i} className="flex items-center gap-1.5">
+                <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+                <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>
+                  {cat.name}
+                </span>
+                <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
-    </DashboardCard>
+
+      <div
+        className="mt-auto px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium"
+        style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
+      >
+        <Link href={href} className="inline-flex items-center gap-1 hover:gap-1.5 transition-all">
+          <span>View findings</span>
+          <ArrowRight size={10} />
+        </Link>
+        {breakdown.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="inline-flex items-center gap-0.5 hover:opacity-80 transition-opacity"
+            aria-expanded={expanded}
+            aria-label={expanded ? `Hide ${name} breakdown` : `Show ${name} breakdown`}
+          >
+            <span>{expanded ? 'Hide' : 'Breakdown'}</span>
+            <ChevronDown
+              size={10}
+              className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
-/* ── Row 3 — Checkpoint Health: full list with expandable rows ── */
+/* ── Row 4 — Audit history card ───────────────────────── */
+function AuditHistoryCard({
+  history,
+  auditCount,
+  showAllHistory,
+  onToggleAll,
+}: {
+  history: LatestAuditBundle['history'];
+  auditCount: number;
+  showAllHistory: boolean;
+  onToggleAll: () => void;
+}) {
+  const PREVIEW = 8;
+  const showingAll = showAllHistory || auditCount <= PREVIEW;
+  const rows = showingAll ? history : history.slice(0, PREVIEW);
+
+  return (
+    <section
+      className="rounded-xl flex flex-col overflow-hidden h-full"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-labelledby="audit-history-heading"
+    >
+      <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Clock size={14} />
+          </span>
+          <div className="min-w-0">
+            <h2
+              id="audit-history-heading"
+              className="text-[15px] font-semibold leading-tight tracking-[-0.005em]"
+              style={{ color: 'var(--ink)' }}
+            >
+              Audit history
+            </h2>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              {showingAll
+                ? `${auditCount} total audit${auditCount === 1 ? '' : 's'}`
+                : `Latest ${Math.min(PREVIEW, auditCount)} of ${auditCount}`}
+            </p>
+          </div>
+        </div>
+        {auditCount > PREVIEW && (
+          <button
+            type="button"
+            onClick={onToggleAll}
+            className="text-[11px] font-medium hover:underline"
+            style={{ color: 'var(--ink)' }}
+            aria-expanded={showingAll}
+          >
+            {showingAll ? 'Show less' : 'View all'}
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-[520px] overflow-y-auto divide-y" style={{ borderColor: 'var(--rule)' }}>
+        {rows.map((h) => {
+          const a = h.audit;
+          const r = h.report;
+          const meta = statusMeta[a.status] || statusMeta.pending_payment;
+          const Icon = meta.icon;
+          const done = a.status === 'completed';
+          const aLang = langCode((a as any).language);
+          return (
+            <Link
+              key={a.id}
+              href={`/dashboard/audits/${a.id}`}
+              className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row"
+            >
+              <div className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3">
+                <div className="flex items-center gap-2 text-[11px] flex-1 min-w-0 flex-wrap">
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>
+                    {formatDate(a.completed_at || a.created_at)}
+                  </span>
+                  <span style={{ color: 'var(--rule)' }}>·</span>
+                  <span className="flex items-center gap-0.5" style={{ color: 'var(--m-muted)' }}>
+                    <Icon size={10} />
+                    {meta.label}
+                  </span>
+                  <span style={{ color: 'var(--rule)' }}>·</span>
+                  <span
+                    className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+                    style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}
+                  >
+                    {aLang}
+                  </span>
+                  {done && r?.overall_score != null && (
+                    <>
+                      <span style={{ color: 'var(--rule)' }}>·</span>
+                      <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
+                    </>
+                  )}
+                  {(a as any).depth_mode === 'deep' && (
+                    <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                      Deep
+                    </span>
+                  )}
+                </div>
+                <ChevronRight
+                  size={12}
+                  className="group-hover/row:text-brand transition-colors flex-shrink-0"
+                  style={{ color: 'var(--m-muted)', opacity: 0.5 }}
+                />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ── Row 4 — Checkpoint Health: full list with expandable rows ── */
 function CheckpointHealthCard({
   categoryScores,
   pillarScores,
@@ -1335,17 +1370,25 @@ function CheckpointHealthCard({
 
   return (
     <div
-      className="rounded-xl flex flex-col overflow-hidden"
+      className="rounded-xl flex flex-col overflow-hidden h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
       <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Checkpoint health</h3>
-          {totalCategories > 0 && (
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              {totalCategories * 4} checkpoints across {totalCategories} categories
-            </p>
-          )}
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <ListChecks size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Checkpoint health</h3>
+            {totalCategories > 0 && (
+              <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+                {totalCategories * 4} checkpoints across {totalCategories} categories
+              </p>
+            )}
+          </div>
         </div>
         {totalIssues > 0 && (
           <span className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>
@@ -1470,6 +1513,7 @@ function BenchmarksSummaryCard({
       <DashboardCard
         title="Benchmarks"
         subtitle="Not available for brand audits"
+        icon={LineChart}
         titleSize="lg"
       >
         <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -1502,7 +1546,7 @@ function BenchmarksSummaryCard({
   return (
     <Link
       href={`/dashboard/audits/${auditId}#intelligence`}
-      className="rounded-xl p-4 sm:p-5 flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
       aria-label="Open competitive benchmarks"
     >
@@ -1516,7 +1560,7 @@ function BenchmarksSummaryCard({
             <LineChart size={14} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
               {hasCompetitors
                 ? `vs. ${top.length} competitor${top.length === 1 ? '' : 's'}`
@@ -1628,98 +1672,6 @@ function BenchmarksSummaryCard({
         )}
       </div>
     </Link>
-  );
-}
-
-/* ── Row 3.5 — Find / Fix / Track grouped card ─────────── */
-function FindFixTrackCard({
-  severityCounts,
-}: {
-  severityCounts: { critical: number; high: number; medium: number; low: number };
-}) {
-  const topPainCount = severityCounts.critical + severityCounts.high;
-  const items: Array<{
-    href: string;
-    title: string;
-    subtitle: string;
-    body: string;
-    icon: React.ElementType;
-    accentVar: string;
-  }> = [
-    {
-      href: '/dashboard/find',
-      title: 'Find',
-      subtitle: 'Identify issues',
-      body: topPainCount > 0
-        ? `${topPainCount} high-impact issue${topPainCount === 1 ? '' : 's'} waiting to be triaged.`
-        : 'See every open issue, ranked by impact on your score.',
-      icon: Search,
-      accentVar: 'var(--severe)',
-    },
-    {
-      href: '/dashboard/fix',
-      title: 'Fix',
-      subtitle: 'Take action',
-      body: 'Work through recommended fixes with copy-paste guidance and snippets.',
-      icon: Wrench,
-      accentVar: 'var(--warn)',
-    },
-    {
-      href: '/dashboard/track',
-      title: 'Track',
-      subtitle: 'Monitor improvement',
-      body: 'Watch your Brand Health Score move as you ship fixes over time.',
-      icon: LineChart,
-      accentVar: 'var(--ok)',
-    },
-  ];
-  return (
-    <DashboardCard
-      title="Find · Fix · Track"
-      subtitle="Your remediation workflow"
-      titleSize="lg"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {items.map((it) => {
-          const Icon = it.icon;
-          return (
-            <Link
-              key={it.title}
-              href={it.href}
-              className="group rounded-xl p-3 transition-all hover:shadow-sm flex flex-col gap-2 relative overflow-hidden"
-              style={{
-                background: 'var(--card)',
-                border: '1px solid var(--rule)',
-                borderLeft: `3px solid ${it.accentVar}`,
-              }}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: `color-mix(in srgb, ${it.accentVar} 12%, transparent)`,
-                    color: it.accentVar,
-                  }}
-                >
-                  <Icon size={13} strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{it.title}</p>
-                  <p
-                    className="text-[9px] font-semibold uppercase tracking-[0.05em] leading-tight mt-0.5"
-                    style={{ color: it.accentVar }}
-                  >
-                    {it.subtitle}
-                  </p>
-                </div>
-                <ChevronRight size={12} className="ml-auto group-hover:translate-x-0.5 transition-transform" style={{ color: 'var(--m-muted)' }} />
-              </div>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{it.body}</p>
-            </Link>
-          );
-        })}
-      </div>
-    </DashboardCard>
   );
 }
 
