@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
   loadLatestAuditBundle,
   type LatestAuditBundle,
@@ -62,7 +63,7 @@ const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; l
   { key: 'claude',     label: 'Claude',     note: 'Anthropic Claude' },
   { key: 'gpt4o',      label: 'ChatGPT',    note: 'OpenAI GPT-4o' },
   { key: 'gemini',     label: 'Google',     note: 'Google Gemini' },
-  { key: 'perplexity', label: 'Perplexity', note: 'Not yet measured' },
+  { key: 'perplexity', label: 'Perplexity', note: 'Probe not configured' },
 ];
 
 function scoreColor(s: number | null): string {
@@ -70,11 +71,6 @@ function scoreColor(s: number | null): string {
   if (s >= 70) return 'var(--ok)';
   if (s >= 40) return 'var(--warn)';
   return 'var(--severe)';
-}
-
-function platformBadge(label: string): string {
-  if (label === 'Perplexity') return 'Px';
-  return label.slice(0, 2);
 }
 
 export default function AIReadabilityPage() {
@@ -246,7 +242,7 @@ function AIReadabilityBody({
         <div className="min-w-0">
           <p>
             <strong>AI Readability</strong> (this page) measures crawlability and what bots can parse from your pages.{' '}
-            <strong>AI X-Ray</strong> (below) measures what Claude, ChatGPT and Google currently say about your brand.{' '}
+            <strong>AI X-Ray</strong> (below) measures what Claude, ChatGPT and Google currently say about your brand (Perplexity probe not yet configured).{' '}
             <span style={{ color: 'var(--m-muted)' }}>
               AI Visibility / Share of Voice across non-branded buyer prompts is a separate layer and is not measured yet.
             </span>
@@ -311,6 +307,7 @@ function AIReadabilityBody({
           {rows.map((r) => {
             const measuredRow = r.score != null;
             const color = scoreColor(r.score ?? null);
+            const iconKey = providerKeyToIcon(r.key);
             return (
               <div
                 key={r.key}
@@ -322,14 +319,14 @@ function AIReadabilityBody({
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-md text-[10px] font-bold tracking-wide flex-shrink-0"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0"
                     style={{
                       background: `color-mix(in srgb, ${color} 12%, transparent)`,
                       color,
                     }}
                     aria-hidden
                   >
-                    {platformBadge(r.label)}
+                    {iconKey ? <AIProviderIcon provider={iconKey} size={15} /> : null}
                   </span>
                   <div className="min-w-0">
                     <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{r.label}</p>
@@ -356,7 +353,9 @@ function AIReadabilityBody({
                   </>
                 ) : (
                   <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                    Not yet measured for this brand.
+                    {r.key === 'perplexity'
+                      ? 'Perplexity probe not yet configured.'
+                      : 'Not yet measured for this brand.'}
                   </p>
                 )}
               </div>

@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
@@ -1045,12 +1046,6 @@ const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; l
   { key: 'perplexity', label: 'Perplexity' },
 ];
 
-function platformBadge(label: string): string {
-  // Two-letter monogram, e.g. Claude→Cl, ChatGPT→Ch, Google→Go, Perplexity→Px.
-  if (label === 'Perplexity') return 'Px';
-  return label.slice(0, 2);
-}
-
 function AIXRayCard({
   probes,
   auditId,
@@ -1128,7 +1123,7 @@ function AIXRayCard({
           <div className="min-w-0">
             <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              What Claude, ChatGPT &amp; Google currently say about you
+              What Claude, ChatGPT, Google &amp; Perplexity currently say about you
             </p>
           </div>
         </div>
@@ -1195,17 +1190,18 @@ function AIXRayCard({
                 : (r.score as number) >= 40
                   ? '--warn'
                   : '--severe';
+            const iconKey = providerKeyToIcon(r.key);
             return (
               <li key={r.key} className="flex items-center gap-2 text-[11px]">
                 <span
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[9px] font-bold tracking-wide flex-shrink-0"
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md flex-shrink-0"
                   style={{
                     background: `color-mix(in srgb, var(${colorVar}) 10%, transparent)`,
                     color: `var(${colorVar})`,
                   }}
                   aria-hidden
                 >
-                  {platformBadge(r.label)}
+                  {iconKey ? <AIProviderIcon provider={iconKey} size={13} /> : null}
                 </span>
                 <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
                   {r.label}
@@ -1229,8 +1225,12 @@ function AIXRayCard({
                     </span>
                   </>
                 ) : (
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                    Not yet measured
+                  <span
+                    className="text-[10px]"
+                    style={{ color: 'var(--m-muted)' }}
+                    title={r.key === 'perplexity' ? 'Perplexity probe not yet configured' : undefined}
+                  >
+                    {r.key === 'perplexity' ? 'Probe not configured' : 'Not yet measured'}
                   </span>
                 )}
               </li>
