@@ -15,6 +15,26 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import type { Audit, AuditFinding, Report } from '@/types/database'
 import type { BrandSelection } from '@/lib/dashboard/brand-selection'
 
+/**
+ * Non-terminal audit statuses — an audit in any of these states is
+ * actively being processed. Surfaced separately on Overview so the
+ * "no audit yet" form is NEVER shown while an audit is running.
+ */
+export const IN_PROGRESS_AUDIT_STATUSES = [
+  'pending_payment',
+  'payment_received',
+  'crawling',
+  'analysing',
+  'generating_report',
+] as const
+
+export type InProgressAuditStatus = (typeof IN_PROGRESS_AUDIT_STATUSES)[number]
+
+export function isInProgressAuditStatus(s: string | null | undefined): boolean {
+  if (!s) return false
+  return (IN_PROGRESS_AUDIT_STATUSES as readonly string[]).includes(s)
+}
+
 export interface LatestAuditBundle {
   audit: Audit | null
   report: Report | null
@@ -23,6 +43,22 @@ export interface LatestAuditBundle {
   prior: { audit: Audit; report: Report | null } | null
   /** Completed audits matching the selection (newest first), used for trend. */
   history: Array<{ audit: Audit; report: Report | null }>
+  /**
+   * The most recent non-terminal audit for this selection, if any.
+   * Lets Overview show an in-progress dashboard ("Auditing your
+   * website…") instead of the no-audit form while a fresh audit is
+   * still crawling/analysing. May coexist with `audit` (a prior
+   * completed audit exists and a new one is currently running) — in
+   * that case Overview can choose to show the running banner on top
+   * of the populated dashboard.
+   */
+  inProgressAudit: Audit | null
+  /**
+   * The most recent failed audit for this selection, surfaced only
+   * when there is no completed audit yet (so the user sees a clear
+   * retry CTA instead of the no-audit form).
+   */
+  failedAudit: Audit | null
   /**
    * Echoed selection used for the query. When `selection` is set but
    * `audit` is null, the caller should render an empty state for that
@@ -64,8 +100,27 @@ export async function loadLatestAuditBundle(
     auditRows = auditRows.filter((a) => hostnameOf(a.product_url) === selection.host)
   }
 
+  // Separately fetch the most recent non-terminal audit (in-progress)
+  // and the most recent failed audit for this selection. Surfaced so
+  // Overview can show a calm "Auditing your website…" or a clear
+  // retry state instead of the no-audit form. We only need the
+  // top-most row of each, so cap small.
+  const [inProgressAudit, failedAudit] = await Promise.all([
+    fetchLatestAuditByStatus(supabase, userId, selection, [...IN_PROGRESS_AUDIT_STATUSES]),
+    fetchLatestAuditByStatus(supabase, userId, selection, ['failed']),
+  ])
+
   if (auditRows.length === 0) {
-    return { audit: null, report: null, findings: [], prior: null, history: [], selection }
+    return {
+      audit: null,
+      report: null,
+      findings: [],
+      prior: null,
+      history: [],
+      inProgressAudit,
+      failedAudit,
+      selection,
+    }
   }
 
   const auditIds = auditRows.map((a) => a.id)
@@ -99,8 +154,48 @@ export async function loadLatestAuditBundle(
     findings: ((findings || []) as AuditFinding[]).filter((f) => !f.dismissed),
     prior,
     history,
+    inProgressAudit,
+    failedAudit,
     selection,
   }
+}
+
+/**
+ * Fetch the most recent audit row for the given user + selection that
+ * is in one of the supplied statuses. Returns null if none.
+ *
+ * Uses the same selection scoping rules as the main bundle query
+ * (brand scoped server-side, site filtered client-side by hostname).
+ */
+async function fetchLatestAuditByStatus(
+  supabase: ReturnType<typeof createBrowserSupabase>,
+  userId: string,
+  selection: BrandSelection,
+  statuses: string[],
+): Promise<Audit | null> {
+  let q = supabase
+    .from('audits')
+    .select('*')
+    .eq('user_id', userId)
+    .in('status', statuses)
+    .or('audit_type.is.null,audit_type.eq.website')
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  if (selection?.kind === 'brand') {
+    q = q.eq('brand_identity_id', selection.brandId)
+  }
+
+  const { data } = await q
+  const rows = (data || []) as Audit[]
+  if (rows.length === 0) return null
+
+  if (selection?.kind === 'site') {
+    const match = rows.find((a) => hostnameOf(a.product_url) === selection.host)
+    return match || null
+  }
+
+  return rows[0]
 }
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 }
