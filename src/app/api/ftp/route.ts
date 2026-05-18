@@ -119,6 +119,10 @@ export async function POST(request: NextRequest) {
         return handleRead(body, user.id);
       case 'write':
         return handleWrite(body, user.id);
+      case 'restore':
+        return handleRestore(body, user.id);
+      case 'deploy-history':
+        return handleDeployHistory(body, user.id);
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }
@@ -334,7 +338,7 @@ async function handleWrite(body: any, userId: string) {
     await client.disconnect();
 
     // Log the deploy
-    await db.from('ftp_deploy_log').insert({
+    const { data: logData } = await db.from('ftp_deploy_log').insert({
       connection_id: connectionId,
       user_id: userId,
       audit_id: auditId || null,
@@ -344,9 +348,9 @@ async function handleWrite(body: any, userId: string) {
       backup_content: backupContent,
       new_content: content.substring(0, 50000), // cap at 50KB for storage
       status: 'success',
-    } as any);
+    } as any).select('id').single();
 
-    return NextResponse.json({ success: true, hadBackup: !!backupContent });
+    return NextResponse.json({ success: true, hadBackup: !!backupContent, deployLogId: logData?.id || null });
   } catch (err: any) {
     // Log failure
     try {
@@ -364,6 +368,99 @@ async function handleWrite(body: any, userId: string) {
 
     return NextResponse.json({ error: err?.message || 'Failed to write file' }, { status: 500 });
   }
+}
+
+async function handleRestore(body: any, userId: string) {
+  const { deployLogId, connectionId } = body;
+  if (!deployLogId)
+    return NextResponse.json({ error: 'Missing deployLogId' }, { status: 400 });
+
+  const db = createServiceSupabase();
+
+  // Fetch the deploy log entry — verify ownership
+  const { data: logEntry, error: logErr } = await db
+    .from('ftp_deploy_log')
+    .select('*')
+    .eq('id', deployLogId)
+    .eq('user_id', userId)
+    .single();
+
+  if (logErr || !logEntry) {
+    if (logErr && isMissingTable(logErr)) return notProvisionedResponse();
+    return NextResponse.json({ error: 'Deploy log entry not found' }, { status: 404 });
+  }
+
+  const entry = logEntry as any;
+  if (!entry.backup_content) {
+    return NextResponse.json({ error: 'No backup content available for this deploy. The file may have been newly created.' }, { status: 400 });
+  }
+
+  // Use either the supplied connectionId or the one from the log
+  const connId = connectionId || entry.connection_id;
+  const creds = await getCredentials(connId, userId);
+  if (!creds) return NextResponse.json({ error: 'FTP connection not found' }, { status: 404 });
+
+  const client = await createFtpClient(creds);
+  try {
+    await client.connect();
+    await client.write(entry.file_path, entry.backup_content);
+    await client.disconnect();
+
+    // Log the restore as its own deploy log entry
+    await db.from('ftp_deploy_log').insert({
+      connection_id: connId,
+      user_id: userId,
+      audit_id: entry.audit_id || null,
+      finding_id: entry.finding_id || null,
+      file_path: entry.file_path,
+      action: 'restore',
+      backup_content: entry.new_content, // save current (the bad deploy) as backup
+      new_content: entry.backup_content.substring(0, 50000),
+      status: 'success',
+      restored_from_log_id: deployLogId,
+    } as any);
+
+    return NextResponse.json({ success: true, filePath: entry.file_path, message: 'Original file restored successfully.' });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Failed to restore file' }, { status: 500 });
+  }
+}
+
+async function handleDeployHistory(body: any, userId: string) {
+  const { connectionId, findingId, filePath, limit: maxEntries } = body;
+
+  const db = createServiceSupabase();
+  let query = db
+    .from('ftp_deploy_log')
+    .select('id, connection_id, file_path, action, status, backup_content, created_at, finding_id, audit_id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(maxEntries || 20);
+
+  if (connectionId) query = query.eq('connection_id', connectionId);
+  if (findingId) query = query.eq('finding_id', findingId);
+  if (filePath) query = query.eq('file_path', filePath);
+
+  const { data, error } = await query;
+  if (error) {
+    if (isMissingTable(error)) return notProvisionedResponse();
+    throw error;
+  }
+
+  // Don't send full backup content in listing — just indicate if it's available
+  const entries = (data || []).map((e: any) => ({
+    id: e.id,
+    connectionId: e.connection_id,
+    filePath: e.file_path,
+    action: e.action,
+    status: e.status,
+    hasBackup: !!e.backup_content,
+    findingId: e.finding_id,
+    auditId: e.audit_id,
+    createdAt: e.created_at,
+  }));
+
+  return NextResponse.json({ entries });
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */

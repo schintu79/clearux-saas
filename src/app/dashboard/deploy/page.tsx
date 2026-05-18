@@ -197,6 +197,31 @@ function DeployPageInner() {
   // Deploy form state (guided mode)
   const [remotePath, setRemotePath] = useState('');
   const [deploying, setDeploying] = useState(false);
+  const [lastDeployLogId, setLastDeployLogId] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  const handleRollback = async () => {
+    if (!lastDeployLogId || restoring) return;
+    setRestoring(true);
+    try {
+      const res = await fetch('/api/ftp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore', deployLogId: lastDeployLogId, connectionId }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        pushToast('warn', data?.error || 'Rollback failed.');
+      } else {
+        pushToast('ok', 'Original file restored successfully.');
+        setLastDeployLogId(null);
+      }
+    } catch (err: any) {
+      pushToast('warn', err?.message || 'Network error during rollback.');
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   const pushToast = useCallback((tone: Toast['tone'], message: string) => {
     const id = Date.now() + Math.random();
@@ -457,6 +482,7 @@ function DeployPageInner() {
         return;
       }
       pushToast('ok', data?.hadBackup ? 'Deployed (backup captured).' : 'Deployed successfully.');
+      if (data?.deployLogId) setLastDeployLogId(data.deployLogId);
 
       // Auto-mark fixed — triggers score recalculation server-side
       await handleStatus(guided.id, 'fixed');
@@ -710,13 +736,25 @@ function DeployPageInner() {
                   <button
                     type="button"
                     onClick={handleDeploy}
-                    disabled={deploying || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
+                    disabled={deploying || restoring || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
                     style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                   >
                     {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
                     {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
                   </button>
+                  {lastDeployLogId && (
+                    <button
+                      type="button"
+                      onClick={handleRollback}
+                      disabled={restoring}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                      style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+                    >
+                      {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                      {restoring ? 'Restoring…' : 'Undo deploy'}
+                    </button>
+                  )}
                 </div>
 
                 <p className="text-[10.5px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>

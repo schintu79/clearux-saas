@@ -153,7 +153,7 @@ async function safeFetch(url: string, timeoutMs: number): Promise<Response | nul
     const resp = await fetch(url, {
       signal: controller.signal,
       redirect: 'follow',
-      headers: { 'User-Agent': 'ClearUX-Audit/1.0' },
+      headers: { 'User-Agent': 'Fixpath-Audit/1.0' },
     })
     return resp
   } catch {

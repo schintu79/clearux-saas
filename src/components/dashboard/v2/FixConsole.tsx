@@ -162,7 +162,8 @@ export default function FixConsole({
   );
   const [deployPath, setDeployPath] = useState<string>('');
   const [deploying, setDeploying] = useState(false);
-  const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string; deployLogId?: string } | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   // Auto-suggest deploy path when connection changes
   const selectedConn = useMemo(
@@ -642,7 +643,7 @@ export default function FixConsole({
             )}
 
             {/* Deploy action */}
-            <div className="flex items-center gap-2 pt-0.5">
+            <div className="flex items-center gap-2 pt-0.5 flex-wrap">
               <button
                 type="button"
                 onClick={async () => {
@@ -668,7 +669,7 @@ export default function FixConsole({
                       setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
                       return;
                     }
-                    setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.' });
+                    setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
                     // Auto-mark as fixed
                     onApproveLocal();
                   } catch (err: any) {
@@ -677,13 +678,52 @@ export default function FixConsole({
                     setDeploying(false);
                   }
                 }}
-                disabled={deploying || !deployConnectionId || !deployPath.trim() || !patch.trim()}
+                disabled={deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
                 {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
                 {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
               </button>
+
+              {/* Rollback button — appears after successful deploy */}
+              {deployResult?.ok && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (restoring) return;
+                    setRestoring(true);
+                    try {
+                      const res = await fetch('/api/ftp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'restore',
+                          deployLogId: deployResult.deployLogId,
+                          connectionId: deployConnectionId,
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({} as any));
+                      if (!res.ok) {
+                        setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
+                      } else {
+                        setDeployResult({ ok: true, msg: 'Original file restored successfully.' });
+                      }
+                    } catch (err: any) {
+                      setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
+                    } finally {
+                      setRestoring(false);
+                    }
+                  }}
+                  disabled={restoring}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                  style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+                >
+                  {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                  {restoring ? 'Restoring…' : 'Rollback'}
+                </button>
+              )}
+
               <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
                 Backs up the existing file before overwriting.
               </p>
