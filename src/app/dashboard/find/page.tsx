@@ -5,9 +5,10 @@
  * grouped by module, with severity at a glance.
  *
  * Visual rules (Fix-aligned redesign):
- *  - Filters are clickable chips (module + severity), matching Fix.
+ *  - Filters are compact select dropdowns (severity + module), matching
+ *    the Fix page's filter language. An active dropdown turns dark.
  *  - Module groupings stay so users can see where the work concentrates,
- *    but the chip rail short-circuits to a single bucket on click.
+ *    but selecting a module short-circuits to that bucket.
  *  - Each row links straight to the corresponding card on Fix.
  */
 
@@ -27,6 +28,7 @@ import {
   Brain,
   FileSearch,
   Eye,
+  X,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
@@ -61,53 +63,38 @@ interface ModuleBucket {
   counts: { critical: number; high: number; medium: number; low: number };
 }
 
-/** Clickable filter chip — shared visual language with Fix. */
-function FilterChip({
-  active,
-  onClick,
-  color,
-  children,
-  count,
+/** Filter dropdown — shared visual language with Fix. Goes dark when active. */
+function FilterDropdown({
+  value,
+  onChange,
+  label,
+  options,
 }: {
-  active: boolean;
-  onClick: () => void;
-  color?: string;
-  children: React.ReactNode;
-  count?: number;
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+  options: { value: string; label: string }[];
 }) {
+  const isActive = value !== 'all';
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-medium transition-colors"
-      style={
-        active
-          ? {
-              background: color ? `color-mix(in srgb, ${color} 14%, transparent)` : 'var(--ink)',
-              color: color || 'var(--paper)',
-              border: `1px solid ${color || 'var(--ink)'}`,
-            }
-          : {
-              background: 'var(--card)',
-              color: 'var(--ink-2)',
-              border: '1px solid var(--rule)',
-            }
-      }
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-signal/30"
+      style={{
+        background: isActive ? 'var(--ink)' : 'var(--card)',
+        color: isActive ? 'var(--paper)' : 'var(--ink)',
+        border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 6px center',
+      }}
+      aria-label={label}
     >
-      {children}
-      {typeof count === 'number' && (
-        <span
-          className="tabular-nums text-[10px] font-semibold px-1.5 rounded-full"
-          style={{
-            background: active ? 'transparent' : 'var(--paper-2)',
-            color: active ? 'inherit' : 'var(--m-muted)',
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </button>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }
 
@@ -301,68 +288,46 @@ function FindPageInner() {
         </div>
       )}
 
-      {/* Filter chips — aligned with Fix page */}
-      <div className="mb-4 space-y-2.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
-            Severity
-          </span>
-          {SEVERITIES.map((s) => {
-            const color = s === 'all' ? undefined : severityColor(s);
-            return (
-              <FilterChip
-                key={s}
-                active={sevFilter === s}
-                onClick={() => setSevFilter(s)}
-                color={color}
-                count={s === 'all' ? undefined : (sevCounts[s] || 0)}
-              >
-                {s !== 'all' && <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} aria-hidden />}
-                {s === 'all' ? 'All' : severityLabel(s)}
-              </FilterChip>
-            );
-          })}
-        </div>
+      {/* Filter rail — Severity + Module as compact dropdowns, aligned with Fix */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <FilterDropdown
+            value={sevFilter}
+            onChange={(v) => setSevFilter(v as typeof SEVERITIES[number])}
+            label="Severity"
+            options={[
+              { value: 'all', label: `All severities (${totalAll})` },
+              ...(SEVERITIES.filter((s) => s !== 'all') as Array<'critical' | 'high' | 'medium' | 'low'>).map((s) => ({
+                value: s,
+                label: `${severityLabel(s)} (${sevCounts[s] || 0})`,
+              })),
+            ]}
+          />
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
-            Module
-          </span>
-          <FilterChip active={moduleFilter === 'all'} onClick={() => setModuleFilter('all')} count={totalAll}>
-            All
-          </FilterChip>
-          {buckets.map((b) => {
-            const tint = b.index >= 0 ? MODULE_TINTS[b.index] : null;
-            return (
-              <FilterChip
-                key={b.name}
-                active={moduleFilter === b.name}
-                onClick={() => setModuleFilter(moduleFilter === b.name ? 'all' : b.name)}
-                color={tint?.dot}
-                count={b.groups.length}
-              >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint?.dot || 'var(--m-muted)' }} aria-hidden />
-                {b.name}
-              </FilterChip>
-            );
-          })}
-        </div>
+          <FilterDropdown
+            value={moduleFilter}
+            onChange={setModuleFilter}
+            label="Module"
+            options={[
+              { value: 'all', label: 'All modules' },
+              ...buckets.map((b) => ({ value: b.name, label: `${b.name} (${b.groups.length})` })),
+            ]}
+          />
 
-        {hasActive && (
-          <div className="flex items-center gap-2 text-[11.5px]">
+          {hasActive && (
             <button
               onClick={() => { setModuleFilter('all'); setSevFilter('all'); }}
-              className="hover:underline"
-              style={{ color: 'var(--m-muted)' }}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11.5px] font-medium"
+              style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink-2)' }}
             >
-              Clear filters
+              <X size={11} /> Clear
             </button>
-            <span style={{ color: 'var(--m-muted)' }}>·</span>
-            <span style={{ color: 'var(--m-muted)' }}>
-              {totalOpen} of {totalAll} findings
-            </span>
-          </div>
-        )}
+          )}
+
+          <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
+            {totalOpen} of {totalAll} findings
+          </span>
+        </div>
       </div>
 
       {totalOpen === 0 ? (
