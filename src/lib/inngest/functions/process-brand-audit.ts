@@ -47,13 +47,24 @@ function getDb() {
   return createServiceSupabase()
 }
 
-async function setStatus(auditId: string, status: string) {
+async function setStatus(auditId: string, status: string, progressPercent?: number) {
+  const db = getDb()
+  const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() }
+  if (typeof progressPercent === 'number') update.progress_percent = progressPercent
+  const { error } = await db
+    .from('audits')
+    .update(update as any)
+    .eq('id', auditId)
+  if (error) throw new Error(`Failed to update status: ${error.message}`)
+}
+
+async function setProgress(auditId: string, progressPercent: number) {
   const db = getDb()
   const { error } = await db
     .from('audits')
-    .update({ status, updated_at: new Date().toISOString() } as any)
+    .update({ progress_percent: progressPercent, updated_at: new Date().toISOString() } as any)
     .eq('id', auditId)
-  if (error) throw new Error(`Failed to update status: ${error.message}`)
+  if (error) console.error(`[inngest:brand] progress update error:`, error.message)
 }
 
 async function auditLog(
@@ -216,7 +227,7 @@ export const processBrandAuditFn = inngest.createFunction(
       // STEP 3: Extract content from all files
       // ────────────────────────────────────────────────────────
       const extractedFiles = await step.run('extract-files', async () => {
-        await setStatus(auditId, 'crawling') // Reusing crawling status = "processing files"
+        await setStatus(auditId, 'crawling', 10) // Reusing crawling status = "processing files"
         await auditLog(auditId, 'extract_started', 'info',
           `Extracting content from ${auditDetails.files.length} file(s)`)
 
@@ -252,7 +263,7 @@ export const processBrandAuditFn = inngest.createFunction(
       // STEP 4: AI analysis across all 7 brand categories
       // ────────────────────────────────────────────────────────
       const categoryResults = await step.run('analyze-categories', async () => {
-        await setStatus(auditId, 'analysing')
+        await setStatus(auditId, 'analysing', 25)
         await auditLog(auditId, 'analysis_started', 'info',
           `Analyzing ${BRAND_AUDIT_CATEGORIES.length} brand categories`)
 
@@ -303,6 +314,9 @@ export const processBrandAuditFn = inngest.createFunction(
         await auditLog(auditId, 'findings_stored', 'info',
           `Stored ${sortOrder} raw brand findings for pipeline processing`)
       })
+
+      // Update progress after analysis + store
+      await step.run('progress-after-analysis', async () => { await setProgress(auditId, 55) })
 
       // ────────────────────────────────────────────────────────
       // PROPRIETARY PIPELINE: Deduplicate findings
@@ -427,7 +441,7 @@ export const processBrandAuditFn = inngest.createFunction(
       // (Uses cleaned findings after pipeline processing)
       // ────────────────────────────────────────────────────────
       const report = await step.run('generate-report', async () => {
-        await setStatus(auditId, 'generating_report')
+        await setStatus(auditId, 'generating_report', 75)
 
         const { executiveSummary, topRecommendations } = await generateBrandExecutiveSummary(
           categoryResults as BrandCategoryResult[],
@@ -541,6 +555,7 @@ export const processBrandAuditFn = inngest.createFunction(
 
         await db.from('audits').update({
           status: 'completed',
+          progress_percent: 100,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as any).eq('id', auditId)

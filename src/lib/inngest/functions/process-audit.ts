@@ -49,13 +49,24 @@ function getDb() {
   return createServiceSupabase()
 }
 
-async function setStatus(auditId: string, status: string) {
+async function setStatus(auditId: string, status: string, progressPercent?: number) {
+  const db = getDb()
+  const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() }
+  if (typeof progressPercent === 'number') update.progress_percent = progressPercent
+  const { error } = await db
+    .from('audits')
+    .update(update as any)
+    .eq('id', auditId)
+  if (error) throw new Error(`Failed to update status: ${error.message}`)
+}
+
+async function setProgress(auditId: string, progressPercent: number) {
   const db = getDb()
   const { error } = await db
     .from('audits')
-    .update({ status, updated_at: new Date().toISOString() } as any)
+    .update({ progress_percent: progressPercent, updated_at: new Date().toISOString() } as any)
     .eq('id', auditId)
-  if (error) throw new Error(`Failed to update status: ${error.message}`)
+  if (error) console.error(`[inngest] progress update error:`, error.message)
 }
 
 async function auditLog(
@@ -196,7 +207,7 @@ export const processAuditFn = inngest.createFunction(
     // STEP 2: Crawl pages
     // ──────────────────────────────────────────────────────────
     const crawlResult = await step.run('crawl-pages', async () => {
-      await setStatus(auditId, 'crawling')
+      await setStatus(auditId, 'crawling', 5)
       await auditLog(auditId, 'crawl_started', 'info', `Crawling ${auditDetails.productUrl}`)
 
       const maxPages = auditDetails.plan === 'free_preview' ? 5 : auditDetails.plan === 'starter' ? 8 : 25
@@ -307,6 +318,9 @@ export const processAuditFn = inngest.createFunction(
         description: `We analysed ${crawlResult.pageCount} pages on this website. Some sites limit crawling or have few public pages. The audit covers what was accessible, but deeper pages may contain additional issues.`,
       })
     }
+
+    // Update progress after crawl
+    await step.run('progress-after-crawl', async () => { await setProgress(auditId, 15) })
 
     // ──────────────────────────────────────────────────────────
     // STEP 2b: Responsive design check (Puppeteer)
@@ -853,7 +867,7 @@ export const processAuditFn = inngest.createFunction(
     // on /about" prevents false positive on homepage)
     // ──────────────────────────────────────────────────────────
     const siteContext = await step.run('build-site-context', async () => {
-      await setStatus(auditId, 'analysing')
+      await setStatus(auditId, 'analysing', 30)
 
       // Build a structured map of what each page contains
       const lines: string[] = []
@@ -1506,6 +1520,9 @@ RULES FOR RE-AUDIT:
       }
     }
 
+    // Update progress after analysis
+    await step.run('progress-after-analysis', async () => { await setProgress(auditId, 65) })
+
     // ──────────────────────────────────────────────────────────
     // Deduplicate findings — remove near-duplicate findings
     // that were flagged across multiple categories
@@ -1658,6 +1675,9 @@ RULES FOR RE-AUDIT:
       }
     })
 
+    // Update progress after pipeline quality gates
+    await step.run('progress-after-quality', async () => { await setProgress(auditId, 75) })
+
     // ──────────────────────────────────────────────────────────
     // STEP 8: Capture screenshots — page overviews + highlighted findings
     // Uses /api/screenshot endpoint so each capture gets its own
@@ -1751,7 +1771,7 @@ RULES FOR RE-AUDIT:
     // STEP 9: Generate report
     // ──────────────────────────────────────────────────────────
     await step.run('generate-report', async () => {
-      await setStatus(auditId, 'generating_report')
+      await setStatus(auditId, 'generating_report', 85)
 
       const db = getDb()
 
@@ -2188,7 +2208,7 @@ RULES FOR RE-AUDIT:
     await step.run('complete', async () => {
       const db = getDb()
 
-      await setStatus(auditId, 'completed')
+      await setStatus(auditId, 'completed', 100)
       await db
         .from('audits')
         .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
