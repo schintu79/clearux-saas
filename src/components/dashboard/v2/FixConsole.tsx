@@ -28,8 +28,19 @@ import {
   HelpCircle,
   Upload,
   X,
+  Server,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import type { AuditFinding, FindingStatus } from '@/types/database';
+
+export interface FtpConnectionForDeploy {
+  id: string;
+  label: string;
+  protocol: string;
+  host: string;
+  remote_path: string;
+}
 
 type FixType =
   | 'copy'
@@ -89,6 +100,18 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'fix';
 }
 
+/** Map a finding's page_url to a likely server file path. */
+function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string): string {
+  if (!pageUrl) return '';
+  let pathname: string;
+  try { pathname = new URL(pageUrl).pathname; } catch { return ''; }
+  const root = remoteRoot.replace(/\/+$/, '') || '';
+  if (/\.\w{2,5}$/.test(pathname)) return `${root}${pathname}`;
+  const clean = pathname.replace(/\/+$/, '') || '';
+  if (!clean || clean === '/') return `${root}/index.html`;
+  return `${root}${clean}/index.html`;
+}
+
 function downloadFile(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -106,6 +129,7 @@ export default function FixConsole({
   onApproveLocal,
   onStatus,
   pending,
+  ftpConnections = [],
 }: {
   finding: AuditFinding;
   /** Called when user clicks "Approve & mark fixed" — wires into existing status flow. */
@@ -113,12 +137,15 @@ export default function FixConsole({
   /** Optional: status pill clicks. When omitted the status row is hidden. */
   onStatus?: (status: FindingStatus) => void;
   pending: boolean;
+  /** Brand-scoped FTP connections — when present, enables inline deploy. */
+  ftpConnections?: FtpConnectionForDeploy[];
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
   const [copied, setCopied] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
+  const [showDeploy, setShowDeploy] = useState(false);
   const [instruction, setInstruction] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -128,6 +155,30 @@ export default function FixConsole({
   const [explainError, setExplainError] = useState<string | null>(null);
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
+
+  // Inline deploy state
+  const [deployConnectionId, setDeployConnectionId] = useState<string>(
+    ftpConnections.length === 1 ? ftpConnections[0].id : '',
+  );
+  const [deployPath, setDeployPath] = useState<string>('');
+  const [deploying, setDeploying] = useState(false);
+  const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  // Auto-suggest deploy path when connection changes
+  const selectedConn = useMemo(
+    () => ftpConnections.find((c) => c.id === deployConnectionId),
+    [ftpConnections, deployConnectionId],
+  );
+
+  // Populate suggested path when deploy panel opens or connection changes
+  React.useEffect(() => {
+    if (!showDeploy || deployPath) return;
+    const root = selectedConn?.remote_path || '';
+    const suggested = suggestRemotePath(finding.page_url, root);
+    if (suggested) setDeployPath(suggested);
+  }, [showDeploy, selectedConn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const hasFtp = ftpConnections.length > 0;
 
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const aiApplicable = useMemo(
@@ -373,15 +424,34 @@ export default function FixConsole({
 
         <span className="flex-1" />
 
-        <Link
-          href={`/dashboard/deploy?findingId=${encodeURIComponent(finding.id)}`}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-          style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-          aria-label="Open guided deploy for this fix"
-        >
-          <Upload size={11} />
-          Push
-        </Link>
+        {hasFtp ? (
+          <button
+            type="button"
+            onClick={() => setShowDeploy((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+            style={{
+              background: showDeploy ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent',
+              border: `1px solid ${showDeploy ? 'var(--signal)' : 'var(--rule)'}`,
+              color: showDeploy ? 'var(--signal)' : 'var(--ink)',
+            }}
+            aria-expanded={showDeploy}
+            aria-label="Toggle deploy panel"
+          >
+            <Upload size={11} />
+            Push live
+            {showDeploy ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+          </button>
+        ) : (
+          <Link
+            href="/dashboard/connect"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+            style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+            aria-label="Connect FTP to enable deploy"
+          >
+            <Server size={11} />
+            Connect FTP to push
+          </Link>
+        )}
         <button
           type="button"
           onClick={onApproveLocal}
@@ -486,6 +556,139 @@ export default function FixConsole({
               {explainText}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Inline deploy panel — only when FTP is connected to this brand */}
+      {showDeploy && hasFtp && (
+        <div
+          className="mt-2 px-3 py-2.5 rounded-md"
+          style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+        >
+          <div className="flex items-center gap-2 mb-2.5">
+            <Upload size={12} style={{ color: 'var(--signal)' }} aria-hidden />
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+              Deploy to server
+            </span>
+            <button
+              onClick={() => { setShowDeploy(false); setDeployResult(null); }}
+              className="ml-auto text-[var(--m-muted)] hover:text-[var(--ink)]"
+              aria-label="Close deploy panel"
+            >
+              <X size={12} />
+            </button>
+          </div>
+
+          <div className="space-y-2.5">
+            {/* Connection selector */}
+            {ftpConnections.length > 1 && (
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Server
+                </label>
+                <select
+                  value={deployConnectionId}
+                  onChange={(e) => {
+                    setDeployConnectionId(e.target.value);
+                    setDeployPath(''); // Reset path so auto-suggest re-fires
+                  }}
+                  className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                  style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                >
+                  <option value="">Select a target…</option>
+                  {ftpConnections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label} ({c.protocol.toUpperCase()} · {c.host})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Remote file path — auto-suggested from crawled page URL */}
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                Remote file path
+              </label>
+              <input
+                type="text"
+                value={deployPath}
+                onChange={(e) => setDeployPath(e.target.value)}
+                placeholder="/path/to/file.html"
+                className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              />
+              {finding.page_url && deployPath && (
+                <p className="mt-1 text-[10px]" style={{ color: 'var(--signal)' }}>
+                  Suggested from crawled page: {finding.page_url}
+                </p>
+              )}
+            </div>
+
+            {/* Deploy result */}
+            {deployResult && (
+              <div
+                className="flex items-start gap-1.5 text-[11px] px-2.5 py-1.5 rounded-md"
+                style={{
+                  background: deployResult.ok
+                    ? 'color-mix(in srgb, var(--ok) 8%, transparent)'
+                    : 'color-mix(in srgb, var(--warn) 8%, transparent)',
+                  color: deployResult.ok ? 'var(--ok)' : 'var(--warn)',
+                }}
+              >
+                {deployResult.ok ? <Check size={11} className="mt-px flex-shrink-0" /> : <AlertCircle size={11} className="mt-px flex-shrink-0" />}
+                <span>{deployResult.msg}</span>
+              </div>
+            )}
+
+            {/* Deploy action */}
+            <div className="flex items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
+                  setDeploying(true);
+                  setDeployResult(null);
+                  try {
+                    const res = await fetch('/api/ftp', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'write',
+                        connectionId: deployConnectionId,
+                        filePath: deployPath.trim(),
+                        content: patch,
+                        auditId: finding.audit_id,
+                        findingId: finding.id,
+                        createBackup: true,
+                      }),
+                    });
+                    const data = await res.json().catch(() => ({} as any));
+                    if (!res.ok) {
+                      setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
+                      return;
+                    }
+                    setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.' });
+                    // Auto-mark as fixed
+                    onApproveLocal();
+                  } catch (err: any) {
+                    setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
+                  } finally {
+                    setDeploying(false);
+                  }
+                }}
+                disabled={deploying || !deployConnectionId || !deployPath.trim() || !patch.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              >
+                {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
+              </button>
+              <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                Backs up the existing file before overwriting.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </section>

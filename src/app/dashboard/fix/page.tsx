@@ -126,6 +126,7 @@ function FixRow({
   onStatus,
   onDismiss,
   pending,
+  ftpConnections,
 }: {
   group: GroupedFinding;
   expanded: boolean;
@@ -133,6 +134,7 @@ function FixRow({
   onStatus: (id: string, status: FindingStatus) => void;
   onDismiss: (id: string, reason: string) => void;
   pending: boolean;
+  ftpConnections: FtpConnectionSummary[];
 }) {
   const finding = group.primary;
   const [showDismiss, setShowDismiss] = useState(false);
@@ -361,6 +363,7 @@ function FixRow({
                   onApproveLocal={() => onStatus(finding.id, 'fixed')}
                   onStatus={(s) => onStatus(finding.id, s)}
                   pending={pending}
+                  ftpConnections={ftpConnections}
                 />
               </div>
             </div>
@@ -404,6 +407,15 @@ function fixPriority(f: AuditFinding): number {
   return SEVERITY_RANK[f.severity] || 0;
 }
 
+interface FtpConnectionSummary {
+  id: string;
+  label: string;
+  protocol: string;
+  host: string;
+  remote_path: string;
+  brand_identity_id: string | null;
+}
+
 function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
@@ -417,6 +429,10 @@ function FixPageInner() {
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [sevFilter, setSevFilter] = useState<typeof SEVERITIES[number]>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus>('all');
+
+  // Brand-scoped FTP connections for inline deploy
+  const [ftpConnections, setFtpConnections] = useState<FtpConnectionSummary[]>([]);
+  const [ftpLoaded, setFtpLoaded] = useState(false);
 
   // Hydrate filters from URL so deep links from Overview & category cards
   // land on the right slice of the queue.
@@ -445,6 +461,21 @@ function FixPageInner() {
       .then(setBundle)
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, [authLoading, user, ready, selection]);
+
+  // Load brand-scoped FTP connections so FixConsole can offer inline deploy
+  useEffect(() => {
+    if (authLoading || !user || !ready) return;
+    const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+    const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+    fetch(url)
+      .then(async (res) => {
+        if (res.status === 503) { setFtpConnections([]); return; }
+        const data = await res.json().catch(() => ({} as any));
+        setFtpConnections(data?.connections || []);
+      })
+      .catch(() => setFtpConnections([]))
+      .finally(() => setFtpLoaded(true));
   }, [authLoading, user, ready, selection]);
 
   // Auto-expand and scroll to the finding referenced by URL hash —
@@ -720,6 +751,7 @@ function FixPageInner() {
               onStatus={handleStatus}
               onDismiss={handleDismiss}
               pending={!!pending[g.primary.id]}
+              ftpConnections={ftpConnections}
             />
           ))}
         </ul>

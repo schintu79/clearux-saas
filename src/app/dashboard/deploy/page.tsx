@@ -89,6 +89,45 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'fix';
 }
 
+/**
+ * Derive a suggested remote file path from a finding's page_url and the
+ * FTP connection's document root. Since we crawled the site, we already
+ * know which URL has the issue — map it to the likely server file path.
+ *
+ * Examples:
+ *   pageUrl="https://acme.com/"           root="/public_html" → "/public_html/index.html"
+ *   pageUrl="https://acme.com/about"      root="/public_html" → "/public_html/about/index.html"
+ *   pageUrl="https://acme.com/about.html" root="/public_html" → "/public_html/about.html"
+ *   pageUrl="https://acme.com/blog/post"  root="/"            → "/blog/post/index.html"
+ */
+function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string): string {
+  if (!pageUrl) return '';
+  let pathname: string;
+  try {
+    pathname = new URL(pageUrl).pathname;
+  } catch {
+    return '';
+  }
+  // Normalise root — strip trailing slash
+  const root = remoteRoot.replace(/\/+$/, '') || '';
+
+  // If pathname already has a file extension, use it directly
+  if (/\.\w{2,5}$/.test(pathname)) {
+    return `${root}${pathname}`;
+  }
+
+  // Normalise pathname — strip trailing slash
+  const clean = pathname.replace(/\/+$/, '') || '';
+
+  // Root path → index.html
+  if (!clean || clean === '/') {
+    return `${root}/index.html`;
+  }
+
+  // Path without extension → path/index.html (most common for clean URLs)
+  return `${root}${clean}/index.html`;
+}
+
 function downloadFile(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -189,6 +228,19 @@ function DeployPageInner() {
       .catch(() => setConnections([]))
       .finally(() => setConnectionsLoaded(true));
   }, [authLoading, user, ready, selection]);
+
+  /* ── Auto-suggest remote path when finding + connection are known ── */
+  useEffect(() => {
+    // Only auto-fill if the user hasn't manually typed anything yet
+    if (remotePath) return;
+    const pageUrl = guided?.page_url;
+    if (!pageUrl) return;
+    // Find the selected (or sole) connection's remote_path
+    const conn = connections.find((c) => c.id === connectionId);
+    const root = conn?.remote_path || '';
+    const suggested = suggestRemotePath(pageUrl, root);
+    if (suggested) setRemotePath(suggested);
+  }, [guided, connectionId, connections]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Default mode: audit bundle ────────────────────────────── */
   useEffect(() => {
@@ -587,6 +639,11 @@ function DeployPageInner() {
                         className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
                         style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                       />
+                      {guided?.page_url && remotePath && (
+                        <p className="mt-1 text-[10.5px]" style={{ color: 'var(--signal)' }}>
+                          Suggested from crawled page: {guided.page_url}
+                        </p>
+                      )}
                       <p className="mt-1 text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
                         We back up the existing file before overwriting it.
                       </p>
