@@ -15,17 +15,18 @@
  */
 
 import React, { useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   Copy,
   Check,
   Download,
   Sparkles,
-  Lock,
   Send,
   RotateCcw,
   AlertCircle,
   Loader2,
   HelpCircle,
+  Upload,
   X,
 } from 'lucide-react';
 import type { AuditFinding, FindingStatus } from '@/types/database';
@@ -125,7 +126,6 @@ export default function FixConsole({
   const [explainBusy, setExplainBusy] = useState(false);
   const [explainText, setExplainText] = useState<string | null>(null);
   const [explainError, setExplainError] = useState<string | null>(null);
-  const [showPushNotice, setShowPushNotice] = useState(false);
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
 
@@ -373,17 +373,15 @@ export default function FixConsole({
 
         <span className="flex-1" />
 
-        <button
-          type="button"
-          onClick={() => setShowPushNotice((v) => !v)}
+        <Link
+          href={`/dashboard/deploy?findingId=${encodeURIComponent(finding.id)}`}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-          style={{ background: 'transparent', border: '1px dashed var(--rule)', color: 'var(--m-muted)' }}
-          aria-expanded={showPushNotice}
-          aria-label="Push fix to site (deployment target required)"
+          style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+          aria-label="Open guided deploy for this fix"
         >
-          <Lock size={11} />
+          <Upload size={11} />
           Push
-        </button>
+        </Link>
         <button
           type="button"
           onClick={onApproveLocal}
@@ -396,34 +394,6 @@ export default function FixConsole({
           Approve
         </button>
       </div>
-
-      {/* Safety / push notice */}
-      {showPushNotice && (
-        <div
-          className="mt-2 px-3 py-2 rounded-md text-[11.5px] flex items-start gap-2"
-          style={{
-            background: 'color-mix(in srgb, var(--warn) 6%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
-            color: 'var(--ink-2)',
-          }}
-          role="status"
-        >
-          <Lock size={12} className="mt-px flex-shrink-0" style={{ color: 'var(--warn)' }} />
-          <div className="flex-1">
-            <p className="font-semibold mb-0.5" style={{ color: 'var(--ink)' }}>Deployment target not connected</p>
-            <p style={{ color: 'var(--m-muted)' }}>
-              Direct push isn&apos;t available yet. Connect WordPress, a CMS, or an FTP target from{' '}
-              <strong style={{ color: 'var(--ink)' }}>Connect site</strong> to enable one-click push. Until then, use{' '}
-              <strong style={{ color: 'var(--ink)' }}>Copy</strong> or{' '}
-              <strong style={{ color: 'var(--ink)' }}>Download</strong> and hand the snippet to your team — nothing
-              is pushed without your explicit approval.
-            </p>
-          </div>
-          <button onClick={() => setShowPushNotice(false)} aria-label="Dismiss notice" className="text-[var(--m-muted)] hover:text-[var(--ink)]">
-            <X size={12} />
-          </button>
-        </div>
-      )}
 
       {/* AI suggest panel */}
       {showAi && aiApplicable && (
