@@ -64,6 +64,7 @@ import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import {
   loadLatestAuditBundle,
   moduleScoresFromReport,
+  isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
@@ -202,6 +203,50 @@ function OverviewInner() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
+
+  /* ── Poll in-progress audit until it reaches a terminal state ──
+   *
+   * When the bundle has an in-progress audit for this selection, we
+   * poll its status row every ~7s. When the status flips to
+   * `completed` or `failed`, we refetch the full bundle so the
+   * populated dashboard (or failed-state UI) appears without a
+   * manual reload. We only poll while a non-terminal audit exists —
+   * the interval auto-cancels on unmount, on selection change, or
+   * once the audit terminates.
+   */
+  const inProgressAuditId = bundle?.inProgressAudit?.id || null;
+  useEffect(() => {
+    if (!user || !inProgressAuditId) return;
+    let cancelled = false;
+    const supabase = createBrowserSupabase();
+
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const { data } = await supabase
+          .from('audits')
+          .select('status')
+          .eq('id', inProgressAuditId)
+          .maybeSingle();
+        const status = (data as any)?.status as string | undefined;
+        if (cancelled) return;
+        if (status && !isInProgressAuditStatus(status)) {
+          // Terminal — refetch the whole bundle so the populated
+          // dashboard or the failed-state UI takes over.
+          const next = await loadLatestAuditBundle(user.id, selection);
+          if (!cancelled) setBundle(next);
+        }
+      } catch {
+        /* swallow — next tick will retry */
+      }
+    };
+
+    const interval = setInterval(tick, 7000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user, inProgressAuditId, selection]);
 
   useEffect(() => {
     if (!user || selection?.kind !== 'brand') {
@@ -389,6 +434,47 @@ function OverviewInner() {
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-72 rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
         </div>
       </div>
+    );
+  }
+
+  /* ── In-progress state ────────────────────────────────
+   *
+   * An audit exists for the selected brand/site and is still
+   * crawling/analysing/generating. We MUST NOT show the no-audit
+   * run-audit form here — the user just kicked off this audit and
+   * needs to see calm "we're on it" status, not another form.
+   *
+   * This branch fires when there is no completed audit yet for this
+   * selection but there is a non-terminal one. While the user is on
+   * this view, a separate effect polls every ~7s for status updates
+   * and re-fetches the bundle when the audit reaches a terminal
+   * state, so the populated dashboard appears without a manual
+   * reload.
+   */
+  if ((!bundle?.audit || !bundle.report) && bundle?.inProgressAudit) {
+    return (
+      <InProgressOverview
+        audit={bundle.inProgressAudit}
+        brandName={brandName}
+        selection={selection}
+      />
+    );
+  }
+
+  /* ── Failed state ─────────────────────────────────────
+   *
+   * No completed audit, no audit currently running — but the most
+   * recent attempt failed. Show a clear retry CTA instead of the
+   * generic no-audit form so the user understands the previous run
+   * did not complete and can act on it.
+   */
+  if ((!bundle?.audit || !bundle.report) && bundle?.failedAudit) {
+    return (
+      <FailedAuditOverview
+        audit={bundle.failedAudit}
+        brandName={brandName}
+        selection={selection}
+      />
     );
   }
 
@@ -638,6 +724,11 @@ function OverviewInner() {
           </div>
         </div>
       </div>
+
+      {/* ── In-progress re-audit banner (non-blocking) ──── */}
+      {bundle.inProgressAudit && (
+        <RunningAuditBanner audit={bundle.inProgressAudit} />
+      )}
 
       {/* ── Alert / executive summary slot ───────────────── */}
       <AlertOrSummary
@@ -1992,6 +2083,334 @@ function AlertOrSummary({
         Latest audit completed {formatDate(completedAt)} ·{' '}
         <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Brand Health Score
       </p>
+    </div>
+  );
+}
+
+/* ── Running audit banner (shown above populated dashboard) ──
+ *
+ * When a completed audit already exists and a new audit is currently
+ * running for the same selection (e.g. user clicked Re-audit), show
+ * a calm non-blocking banner. The populated dashboard still renders
+ * underneath; the parent component polls and re-fetches the bundle
+ * when the running audit terminates so the user sees fresh data
+ * without reloading.
+ */
+function RunningAuditBanner({ audit }: { audit: Audit }) {
+  const meta = statusMeta[audit.status] || statusMeta.payment_received;
+  const StatusIcon = meta.icon;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mb-4 px-4 py-2.5 rounded-xl flex items-center gap-3"
+      style={{
+        background: 'color-mix(in srgb, var(--signal) 6%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)',
+      }}
+    >
+      <span
+        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+      >
+        <StatusIcon size={13} className="animate-pulse" />
+      </span>
+      <p className="text-[12px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+        <span className="font-semibold">New audit running</span>
+        <span className="mx-1.5" style={{ color: 'var(--rule)' }}>·</span>
+        <span style={{ color: 'var(--m-muted)' }}>{meta.label}. We will refresh this page when it is ready.</span>
+      </p>
+      <Link
+        href={`/dashboard/audits/${audit.id}`}
+        className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-medium hover:underline"
+        style={{ color: 'var(--ink)' }}
+      >
+        View progress <ChevronRight size={11} />
+      </Link>
+    </div>
+  );
+}
+
+/* ── In-progress overview ─────────────────────────────────
+ *
+ * Shown when the selected brand/site has an audit currently
+ * crawling / analysing / generating but no completed audit yet.
+ * This replaces the no-audit run-audit form for that state — the
+ * user just kicked the audit off, so we need calm "we're on it"
+ * status with skeleton cards in the populated-dashboard shape, not
+ * another form. The parent component polls the audit row every ~7s
+ * and re-fetches the bundle as soon as the audit terminates, so
+ * this view auto-flips to the populated dashboard (or the failed
+ * state) without a manual reload.
+ */
+function InProgressOverview({
+  audit,
+  brandName,
+  selection,
+}: {
+  audit: Audit;
+  brandName: string | null;
+  selection: ReturnType<typeof useBrandSelection>['selection'];
+}) {
+  let domain: string | null = null;
+  try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
+  const displayTitle = selection?.kind === 'brand' && brandName
+    ? brandName
+    : (domain || 'Your website');
+  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const meta = statusMeta[audit.status] || statusMeta.payment_received;
+  const StatusIcon = meta.icon;
+
+  return (
+    <div className="w-full">
+      {/* Identity header — mirrors populated overview header but
+          without the action buttons that depend on a completed
+          audit (Report, Share, Re-audit, More). */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
+              {displayTitle}
+            </h1>
+          </div>
+          <p className="text-muted text-xs">Auditing your website</p>
+        </div>
+      </div>
+
+      {/* Status banner */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        style={{
+          background: 'color-mix(in srgb, var(--signal) 7%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--signal) 22%, transparent)',
+        }}
+      >
+        <span
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+        >
+          <StatusIcon size={16} className="animate-pulse" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+            {meta.label}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            We are working on your audit. This page will update automatically when it is ready — usually a few minutes.
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/audits/${audit.id}`}
+          className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
+        >
+          View progress <ChevronRight size={12} />
+        </Link>
+      </div>
+
+      {/* Skeleton row 1 — mirrors Brand Health, Score Over Time, Heuristic Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
+        <SkeletonCard title="Brand Health Score" subtitle="Calculating…" icon={Heart} />
+        <SkeletonCard title="Score Over Time" subtitle="Trend will appear after this audit" icon={TrendingUp} />
+        <SkeletonCard title="Heuristic Breakdown" subtitle="Radar populates when the audit completes" icon={Target} />
+      </div>
+
+      {/* Skeleton row 2 — mirrors Categories grid */}
+      <div className="mb-2 flex items-center gap-2">
+        <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+        <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
+        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>· populating</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+        {PILLAR_NAMES.map((name, i) => {
+          const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
+          const PIcon = PILLAR_ICONS[i] || Scale;
+          return (
+            <div
+              key={name}
+              className="rounded-xl overflow-hidden flex flex-col"
+              style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+            >
+              <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${tint.dot}15` }}
+                >
+                  <PIcon size={14} style={{ color: tint.dot }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className="font-sans font-semibold text-[12.5px] leading-tight truncate"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {name}
+                  </h3>
+                  <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Auditing…
+                  </p>
+                </div>
+              </div>
+              <div className="px-3 pb-3 pt-1">
+                <div
+                  className="h-5 w-12 rounded-md animate-pulse"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Monitoring / AI X-Ray */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+        <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
+        <SkeletonCard title="Benchmarks" subtitle="Competitor comparison" icon={LineChart} />
+        <SkeletonCard title="AI Monitoring" subtitle="AI readability across pages" icon={Brain} />
+        <SkeletonCard title="AI X-Ray" subtitle="What AI models say about you" icon={Sparkles} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Skeleton card used by InProgressOverview ────────── */
+function SkeletonCard({
+  title,
+  subtitle,
+  icon: Icon,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-hidden
+    >
+      <div className="flex items-start gap-2 mb-3">
+        <span
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+        >
+          <Icon size={14} />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>{title}</h3>
+          <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+        </div>
+      </div>
+      <div className="flex-1 min-h-[120px] flex flex-col gap-2 justify-center">
+        <div
+          className="h-4 w-3/4 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+        <div
+          className="h-4 w-1/2 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+        <div
+          className="h-4 w-2/3 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── Failed audit overview ────────────────────────────
+ *
+ * Shown when no completed audit exists for the selected brand/site
+ * and the most recent attempt for this selection failed. Surfaces a
+ * clear retry CTA instead of the generic no-audit form — the user
+ * needs to understand the previous run did not complete.
+ */
+function FailedAuditOverview({
+  audit,
+  brandName,
+  selection,
+}: {
+  audit: Audit;
+  brandName: string | null;
+  selection: ReturnType<typeof useBrandSelection>['selection'];
+}) {
+  let domain: string | null = null;
+  try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
+  const displayTitle = selection?.kind === 'brand' && brandName
+    ? brandName
+    : (domain || 'Your website');
+  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
+  const retryHref = productUrl
+    ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`
+    : '/dashboard/new-audit';
+
+  return (
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
+              {displayTitle}
+            </h1>
+          </div>
+          <p className="text-muted text-xs">Last audit did not complete</p>
+        </div>
+      </div>
+
+      <div
+        role="alert"
+        className="rounded-xl p-6 flex flex-col items-start gap-4"
+        style={{
+          background: 'color-mix(in srgb, var(--severe) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--severe) 22%, transparent)',
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)', color: 'var(--severe)' }}
+          >
+            <AlertTriangle size={18} />
+          </span>
+          <div>
+            <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+              The last audit failed
+            </h2>
+            <p className="text-[13px] mt-1.5 max-w-[520px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              We were not able to finish auditing {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'your website'}.
+              You can retry the audit, or open the previous run to see the error details.
+            </p>
+            {audit.crawl_error && (
+              <p
+                className="text-[11px] mt-2 px-2.5 py-1.5 rounded-md font-mono"
+                style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}
+              >
+                {audit.crawl_error.slice(0, 200)}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={retryHref}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <RefreshCw size={13} />
+            Retry audit
+          </Link>
+          <Link
+            href={`/dashboard/audits/${audit.id}`}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+          >
+            View details <ChevronRight size={12} />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
