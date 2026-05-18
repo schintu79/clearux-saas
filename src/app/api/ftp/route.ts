@@ -136,7 +136,7 @@ async function handleTest(body: any) {
     remotePath: remotePath || '/',
   };
 
-  const client = createFtpClient(creds);
+  const client = await createFtpClient(creds);
   try {
     await client.connect();
     const files = await client.list(creds.remotePath);
@@ -242,7 +242,7 @@ async function handleList(body: any, userId: string) {
   const creds = await getCredentials(connectionId, userId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
-  const client = createFtpClient(creds);
+  const client = await createFtpClient(creds);
   try {
     await client.connect();
     const path = dirPath || creds.remotePath;
@@ -267,7 +267,7 @@ async function handleRead(body: any, userId: string) {
   const creds = await getCredentials(connectionId, userId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
-  const client = createFtpClient(creds);
+  const client = await createFtpClient(creds);
   try {
     await client.connect();
     const content = await client.read(filePath);
@@ -286,7 +286,7 @@ async function handleWrite(body: any, userId: string) {
   const creds = await getCredentials(connectionId, userId);
   if (!creds) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
 
-  const client = createFtpClient(creds);
+  const client = await createFtpClient(creds);
   const db = createServiceSupabase();
   let backupContent: string | null = null;
 

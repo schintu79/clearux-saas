@@ -32,6 +32,45 @@ export interface FtpClientWrapper {
   disconnect(): Promise<void>;
 }
 
+/* ── Error normalisation ───────────────────────────────────── */
+function normalizeSshError(err: Error & { code?: string; level?: string }, creds: FtpCredentials): Error {
+  const raw = err?.message || String(err);
+  const code = err?.code || '';
+  const lvl = err?.level || '';
+  let hint = raw;
+  if (code === 'ENOTFOUND' || /getaddrinfo/i.test(raw)) {
+    hint = `Host not found: ${creds.host}. Check the hostname.`;
+  } else if (code === 'ECONNREFUSED') {
+    hint = `Connection refused on ${creds.host}:${creds.port}. Check host, port, and firewall.`;
+  } else if (code === 'ETIMEDOUT' || /timed?\s*out/i.test(raw)) {
+    hint = `Connection to ${creds.host}:${creds.port} timed out. The server may be unreachable or blocking your IP.`;
+  } else if (lvl === 'client-authentication' || /authentication|all configured authentication methods failed/i.test(raw)) {
+    hint = 'Authentication failed. Check username and password.';
+  } else if (/handshake/i.test(raw)) {
+    hint = `SSH handshake failed with ${creds.host}. The server may not support our SSH algorithms.`;
+  }
+  const out = new Error(hint);
+  return out;
+}
+
+function normalizeFtpError(err: Error & { code?: string | number }, creds: FtpCredentials): Error {
+  const raw = err?.message || String(err);
+  const code = err?.code;
+  let hint = raw;
+  if (code === 'ENOTFOUND' || /getaddrinfo/i.test(raw)) {
+    hint = `Host not found: ${creds.host}. Check the hostname.`;
+  } else if (code === 'ECONNREFUSED') {
+    hint = `Connection refused on ${creds.host}:${creds.port}. Check host, port, and firewall.`;
+  } else if (code === 'ETIMEDOUT' || /timed?\s*out/i.test(raw)) {
+    hint = `Connection to ${creds.host}:${creds.port} timed out. The server may be unreachable.`;
+  } else if (/530|login|authentication|incorrect/i.test(raw)) {
+    hint = 'Authentication failed. Check username and password.';
+  } else if (/ssl|tls|certificate/i.test(raw)) {
+    hint = `TLS error connecting to ${creds.host}. If using FTPS, make sure the server supports it.`;
+  }
+  return new Error(hint);
+}
+
 /* ── SFTP via ssh2 ─────────────────────────────────────────── */
 async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper> {
   const { Client } = await import('ssh2');
@@ -43,24 +82,35 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     async connect() {
       return new Promise<void>((resolve, reject) => {
         conn = new Client();
+        let settled = false;
+        const done = (err: Error | null) => {
+          if (settled) return;
+          settled = true;
+          if (err) reject(normalizeSshError(err, creds));
+          else resolve();
+        };
         conn.on('ready', () => {
           conn!.sftp((err: Error | undefined, sftpStream: any) => {
-            if (err) return reject(err);
+            if (err) return done(err);
             sftp = sftpStream;
-            resolve();
+            done(null);
           });
         });
-        conn.on('error', reject);
-        conn.connect({
-          host: creds.host,
-          port: creds.port,
-          username: creds.username,
-          password: creds.password,
-          readyTimeout: 10000,
-          algorithms: {
-            kex: ['ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1'],
-          },
-        });
+        conn.on('error', (err: Error) => done(err));
+        try {
+          conn.connect({
+            host: creds.host,
+            port: creds.port,
+            username: creds.username,
+            password: creds.password,
+            readyTimeout: 10000,
+            algorithms: {
+              kex: ['ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1'],
+            },
+          });
+        } catch (err) {
+          done(err as Error);
+        }
       });
     },
 
@@ -134,14 +184,18 @@ async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWra
 
   return {
     async connect() {
-      await client.access({
-        host: creds.host,
-        port: creds.port,
-        user: creds.username,
-        password: creds.password,
-        secure: creds.protocol === 'ftps',
-        secureOptions: creds.protocol === 'ftps' ? { rejectUnauthorized: false } : undefined,
-      });
+      try {
+        await client.access({
+          host: creds.host,
+          port: creds.port,
+          user: creds.username,
+          password: creds.password,
+          secure: creds.protocol === 'ftps',
+          secureOptions: creds.protocol === 'ftps' ? { rejectUnauthorized: false } : undefined,
+        });
+      } catch (err) {
+        throw normalizeFtpError(err as Error, creds);
+      }
     },
 
     async list(dirPath: string): Promise<RemoteFile[]> {
@@ -188,7 +242,14 @@ async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWra
 }
 
 /* ── Factory ───────────────────────────────────────────────── */
-export function createFtpClient(creds: FtpCredentials): FtpClientWrapper {
-  if (creds.protocol === 'sftp') return createSftpClient(creds) as unknown as FtpClientWrapper;
-  return createFtpBasicClient(creds) as unknown as FtpClientWrapper;
+/**
+ * Async factory — the underlying transports use dynamic imports, so the
+ * wrapper itself is built asynchronously. Callers MUST `await` this:
+ *
+ *   const client = await createFtpClient(creds);
+ *   await client.connect();
+ */
+export async function createFtpClient(creds: FtpCredentials): Promise<FtpClientWrapper> {
+  if (creds.protocol === 'sftp') return createSftpClient(creds);
+  return createFtpBasicClient(creds);
 }
