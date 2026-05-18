@@ -184,6 +184,14 @@ function scoreColor(s: number): string {
   return 'var(--severe)';
 }
 
+function sevCardBg(sev: string): string {
+  const v = sev === 'critical' ? 'var(--severe)'
+    : sev === 'high' ? 'var(--warn)'
+    : sev === 'low' ? 'var(--ok)'
+    : 'var(--signal)';
+  return `color-mix(in srgb, ${v} 4%, #ffffff)`;
+}
+
 function sevColor(sev: string): string {
   switch (sev) {
     case 'critical': return 'var(--severe)';
@@ -970,17 +978,16 @@ function FindingRow({ finding: f, categoryScores }: { finding: FindingRecord; ca
   };
 
   return (
-    <div style={{ borderBottom: '1px solid var(--rule)' }}>
+    <div style={{ borderBottom: '1px solid var(--rule)', background: sevCardBg(f.severity) }}>
       {/* Row header */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-        style={{ background: open ? 'var(--paper-2)' : 'transparent' }}
+        className="w-full flex items-center gap-3 px-4 text-left transition-colors"
+        style={{ background: open ? 'var(--paper-2)' : 'transparent', paddingTop: '1rem', paddingBottom: '1rem' }}
       >
-        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sevColor(f.severity) }} />
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>{f.title}</p>
-          <div className="flex items-center gap-x-2 mt-0.5 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+          <div className="flex items-center gap-x-2 text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.6rem' }}>
             <span className="font-semibold" style={{ color: sevColor(f.severity) }}>{sevLabel(f.severity)}</span>
             {cat && (
               <>
