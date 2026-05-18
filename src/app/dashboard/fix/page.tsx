@@ -64,6 +64,14 @@ function hostnameOf(url: string | null | undefined): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 
+function severityCardBg(severity: string): string {
+  const v = severity === 'critical' ? 'var(--severe)'
+    : severity === 'high' ? 'var(--warn)'
+    : severity === 'low' ? 'var(--ok)'
+    : 'var(--signal)';
+  return `color-mix(in srgb, ${v} 4%, #ffffff)`;
+}
+
 /** Tiny pill used for module + severity meta on the collapsed row. */
 function MetaChip({ children, color, bg, border }: { children: React.ReactNode; color?: string; bg?: string; border?: string }) {
   return (
@@ -145,7 +153,6 @@ function FixRow({
           className="px-4 py-2.5 flex items-center gap-3 opacity-60"
           style={{ borderTop: '1px solid var(--rule)' }}
         >
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--rule)' }} aria-hidden />
           <span className="text-[12px] line-through flex-1 truncate" style={{ color: 'var(--m-muted)' }}>
             {finding.title}
           </span>
@@ -170,12 +177,9 @@ function FixRow({
 
   return (
     <li id={`finding-${finding.id}`} data-testid="fix-card" data-card>
-      <div style={{ borderTop: '1px solid var(--rule)' }}>
+      <div style={{ borderTop: '1px solid var(--rule)', background: severityCardBg(finding.severity) }}>
         {/* Collapsed row — single flat line, no nested card */}
-        <div className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors">
-          {/* Severity dot */}
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sevColor }} aria-hidden />
-
+        <div className="w-full px-4 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors" style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
           <button
             type="button"
             onClick={() => onToggle(finding.id)}
@@ -188,7 +192,7 @@ function FixRow({
                 {finding.title}
               </h3>
             </div>
-            <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.6rem' }}>
               <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
                 {severityLabel(finding.severity)}
               </span>

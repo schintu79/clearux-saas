@@ -777,40 +777,43 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
   const hasRecommendation = Boolean(finding.recommendation && finding.recommendation.trim());
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
 
+  const sevVar = finding.severity === 'critical' ? 'var(--severe)'
+    : finding.severity === 'high' ? 'var(--warn)'
+    : finding.severity === 'low' ? 'var(--ok)'
+    : 'var(--signal)';
+  const sevCardBg = `color-mix(in srgb, ${sevVar} 4%, #ffffff)`;
+
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={tint
-        ? { background: tint.bg, border: `1px solid ${tint.border}`, borderLeft: `3px solid ${accentColor}` }
-        : { background: '#ffffff', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}
+      style={{ background: sevCardBg, border: '1px solid var(--rule)', borderLeft: `3px solid ${accentColor}` }}
     >
       {/* Header — always visible */}
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 px-4 pt-4 pb-4">
         {/* Main content — clickable to expand */}
         <button
           onClick={() => setOpen(!open)}
           className="flex-1 min-w-0 text-left"
           aria-expanded={open}
         >
+          <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
           {/* Pill row: severity · module · category · verification */}
-          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap" style={{ marginTop: '0.6rem' }}>
             <span
               className={clsx(
-                'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
+                'inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
                 sev.text,
               )}
               style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
               {sev.label}
             </span>
             {pillarName && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full"
+                className="inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full"
                 style={{ background: tint ? `${tint.dot}15` : 'var(--paper-2)', color: tint?.dot || 'var(--m-muted)' }}
                 title={pillarName}
               >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor }} />
                 {pillarName}
               </span>
             )}
@@ -830,7 +833,6 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
               </span>
             )}
           </div>
-          <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
           {finding.page_url && (
             <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate">
               <ExternalLink size={9} className="flex-shrink-0" />
@@ -999,7 +1001,6 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
           {finding.screenshot_url && (
             <div className="border-t border-rule/40">
               <div className="px-4 py-2 flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                 <span className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Visual evidence</span>
                 {finding.page_url && (
                   <span className="text-[10px] text-m-muted/60 ml-auto truncate max-w-[200px]">
