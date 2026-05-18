@@ -7,10 +7,13 @@
  *  - No card-in-card layering. Each finding is a single flat row that
  *    expands inline; the action bar lives flush at the bottom of the
  *    expanded row, not inside a sub-panel.
- *  - Module / severity / status filters render as clickable chips, not
- *    select dropdowns.
- *  - Status / Copy / Download / AI suggest / Explain / Push live on a
- *    single horizontal bar inside FixConsole.
+ *  - Status is a color-coded select dropdown directly on the collapsed
+ *    row, so a finding can be moved through the lifecycle without
+ *    expanding it.
+ *  - Module / severity / status filters render as compact select
+ *    dropdowns. An active dropdown turns dark to signal a filter is on.
+ *  - Dismiss is an action alongside Status, gated on a reason input.
+ *    Dismissed findings collapse to a single strikethrough row.
  *  - Push remains explicitly gated. Nothing is sent to a live site
  *    without user approval and a connected deployment target.
  */
@@ -73,53 +76,38 @@ function MetaChip({ children, color, bg, border }: { children: React.ReactNode; 
   );
 }
 
-/** Clickable filter chip (active vs idle). */
-function FilterChip({
-  active,
-  onClick,
-  color,
-  children,
-  count,
+/** Filter dropdown shared by Status, Severity, Module. Goes dark when active. */
+function FilterDropdown({
+  value,
+  onChange,
+  label,
+  options,
 }: {
-  active: boolean;
-  onClick: () => void;
-  color?: string;
-  children: React.ReactNode;
-  count?: number;
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+  options: { value: string; label: string }[];
 }) {
+  const isActive = value !== 'all';
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-medium transition-colors"
-      style={
-        active
-          ? {
-              background: color ? `color-mix(in srgb, ${color} 14%, transparent)` : 'var(--ink)',
-              color: color || 'var(--paper)',
-              border: `1px solid ${color || 'var(--ink)'}`,
-            }
-          : {
-              background: 'var(--card)',
-              color: 'var(--ink-2)',
-              border: '1px solid var(--rule)',
-            }
-      }
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-signal/30"
+      style={{
+        background: isActive ? 'var(--ink)' : 'var(--card)',
+        color: isActive ? 'var(--paper)' : 'var(--ink)',
+        border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 6px center',
+      }}
+      aria-label={label}
     >
-      {children}
-      {typeof count === 'number' && (
-        <span
-          className="tabular-nums text-[10px] font-semibold px-1.5 rounded-full"
-          style={{
-            background: active ? 'transparent' : 'var(--paper-2)',
-            color: active ? 'inherit' : 'var(--m-muted)',
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </button>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }
 
@@ -135,10 +123,12 @@ function FixRow({
   expanded: boolean;
   onToggle: (id: string) => void;
   onStatus: (id: string, status: FindingStatus) => void;
-  onDismiss: (id: string) => void;
+  onDismiss: (id: string, reason: string) => void;
   pending: boolean;
 }) {
   const finding = group.primary;
+  const [showDismiss, setShowDismiss] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
   const meta = STATUS_META[finding.status] || STATUS_META.open;
   const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
   const multiModule = moduleNames.length > 1;
@@ -147,21 +137,52 @@ function FixRow({
   const sevColor = severityColor(finding.severity);
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
 
+  // Dismissed findings collapse to a single muted, strikethrough row.
+  if (finding.dismissed) {
+    return (
+      <li id={`finding-${finding.id}`} data-testid="fix-card" data-card data-dismissed>
+        <div
+          className="px-4 py-2.5 flex items-center gap-3 opacity-60"
+          style={{ borderTop: '1px solid var(--rule)' }}
+        >
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'var(--rule)' }} aria-hidden />
+          <span className="text-[12px] line-through flex-1 truncate" style={{ color: 'var(--m-muted)' }}>
+            {finding.title}
+          </span>
+          <span
+            className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"
+            style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+          >
+            Dismissed
+          </span>
+        </div>
+      </li>
+    );
+  }
+
+  const handleConfirmDismiss = () => {
+    const r = dismissReason.trim();
+    if (!r) return;
+    onDismiss(finding.id, r);
+    setShowDismiss(false);
+    setDismissReason('');
+  };
+
   return (
     <li id={`finding-${finding.id}`} data-testid="fix-card" data-card>
       <div style={{ borderTop: '1px solid var(--rule)' }}>
         {/* Collapsed row — single flat line, no nested card */}
-        <button
-          type="button"
-          onClick={() => onToggle(finding.id)}
-          className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors"
-          aria-expanded={expanded}
-          aria-controls={`fix-body-${finding.id}`}
-        >
+        <div className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors">
           {/* Severity dot */}
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sevColor }} aria-hidden />
 
-          <div className="flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={() => onToggle(finding.id)}
+            className="flex-1 min-w-0 text-left"
+            aria-expanded={expanded}
+            aria-controls={`fix-body-${finding.id}`}
+          >
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-[13.5px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>
                 {finding.title}
@@ -209,19 +230,92 @@ function FixRow({
                 </>
               )}
             </div>
-          </div>
+          </button>
 
-          <span
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold flex-shrink-0"
-            style={{ background: meta.bg, color: meta.color, border: '1px solid var(--rule)' }}
+          {/* Color-coded status select — change status without expanding */}
+          <select
+            value={finding.status}
+            onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
+            disabled={pending}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[10.5px] font-semibold pl-2 pr-6 py-1 rounded-full outline-none cursor-pointer appearance-none flex-shrink-0 focus-visible:ring-2 focus-visible:ring-signal/30"
+            style={{
+              background: meta.bg,
+              color: meta.color,
+              border: `1px solid ${meta.dot}`,
+              opacity: pending ? 0.6 : 1,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Cpath d='M2.5 3.5L5 6l2.5-2.5'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 5px center',
+            }}
+            aria-label={`Status for ${finding.title}`}
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} aria-hidden />
-            {meta.label}
-          </span>
-          <span className="text-[var(--m-muted)] flex-shrink-0" aria-hidden>
+            {STATUS_KEYS.map((s) => (
+              <option key={s} value={s}>{STATUS_META[s].label}</option>
+            ))}
+          </select>
+
+          {/* Dismiss — visible alongside other actions */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowDismiss((v) => !v); }}
+            disabled={pending}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] font-medium transition-colors hover:bg-paper-2 disabled:opacity-50 flex-shrink-0"
+            style={{ color: showDismiss ? 'var(--severe)' : 'var(--m-muted)', border: '1px solid var(--rule)' }}
+            aria-label="Dismiss this finding with a reason"
+          >
+            <X size={11} />
+            Dismiss
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onToggle(finding.id)}
+            className="text-[var(--m-muted)] flex-shrink-0 p-1"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            aria-expanded={expanded}
+          >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </span>
-        </button>
+          </button>
+        </div>
+
+        {/* Dismiss-with-reason input — sits under the row when open */}
+        {showDismiss && (
+          <div className="px-4 pb-3 flex items-center gap-2" data-testid="fix-dismiss-row">
+            <input
+              type="text"
+              value={dismissReason}
+              onChange={(e) => setDismissReason(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmDismiss(); }}
+              placeholder="Why are you dismissing this?"
+              className="flex-1 px-3 py-1.5 rounded-md text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
+              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              autoFocus
+              aria-label="Dismissal reason"
+            />
+            <button
+              type="button"
+              onClick={handleConfirmDismiss}
+              disabled={!dismissReason.trim() || pending}
+              className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all disabled:opacity-50"
+              style={{
+                background: dismissReason.trim() ? 'var(--severe)' : 'var(--paper-2)',
+                color: dismissReason.trim() ? 'white' : 'var(--m-muted)',
+              }}
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowDismiss(false); setDismissReason(''); }}
+              className="p-1.5 rounded-md hover:bg-paper-2 transition-colors"
+              style={{ color: 'var(--m-muted)' }}
+              aria-label="Cancel dismiss"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        )}
 
         {expanded && (
           <div id={`fix-body-${finding.id}`} className="px-4 pb-4">
@@ -290,17 +384,6 @@ function FixRow({
               </div>
             )}
 
-            {/* Dismiss — secondary action, right-aligned */}
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={() => onDismiss(finding.id)}
-                disabled={pending}
-                className="text-[11px] font-medium px-2 py-1 rounded transition-colors disabled:opacity-50"
-                style={{ color: 'var(--m-muted)' }}
-              >
-                Dismiss
-              </button>
-            </div>
           </div>
         )}
       </div>
@@ -449,17 +532,19 @@ function FixPageInner() {
     }
   };
 
-  const handleDismiss = async (id: string) => {
-    if (!confirm('Dismiss this finding? It will be removed from your fix queue.')) return;
+  const handleDismiss = async (id: string, reason: string) => {
     setPending((p) => ({ ...p, [id]: true }));
+    const trimmed = reason.trim() || 'Dismissed from Fix queue';
     try {
       const res = await fetch(`/api/findings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dismiss: true, dismissal_reason: 'Dismissed from Fix queue' }),
+        body: JSON.stringify({ dismiss: true, dismissal_reason: trimmed }),
       });
-      if (res.ok && bundle) {
-        setBundle({ ...bundle, findings: bundle.findings.filter((f) => f.id !== id) });
+      if (res.ok) {
+        // Keep the finding in the list so the compact strikethrough row renders;
+        // it is excluded from active counts via the `dismissed` flag.
+        updateLocal(id, { dismissed: true, dismissal_reason: trimmed, dismissed_at: new Date().toISOString() });
       }
     } catch {} finally {
       setPending((p) => ({ ...p, [id]: false }));
@@ -510,86 +595,10 @@ function FixPageInner() {
         </p>
       </div>
 
-      {/* Filter rail — chips for status, severity, module, plus search */}
-      <div className="mb-3 space-y-2.5">
-        {/* Status chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
-            Status
-          </span>
-          <FilterChip active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
-            All
-            <span className="tabular-nums text-[10px] font-semibold ml-0.5" style={{ color: statusFilter === 'all' ? 'inherit' : 'var(--m-muted)' }}>
-              {groups.length}
-            </span>
-          </FilterChip>
-          {STATUS_KEYS.map((s) => (
-            <FilterChip
-              key={s}
-              active={statusFilter === s}
-              onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
-              color={STATUS_META[s].color}
-              count={stats[s]}
-            >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_META[s].dot }} aria-hidden />
-              {STATUS_META[s].label}
-            </FilterChip>
-          ))}
-        </div>
-
-        {/* Severity chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
-            Severity
-          </span>
-          {SEVERITIES.map((s) => {
-            const color = s === 'all' ? undefined : severityColor(s);
-            const count = s === 'all' ? groups.length : (sevCounts[s] || 0);
-            return (
-              <FilterChip
-                key={s}
-                active={sevFilter === s}
-                onClick={() => setSevFilter(s)}
-                color={color}
-                count={s === 'all' ? undefined : count}
-              >
-                {s !== 'all' && <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} aria-hidden />}
-                {s === 'all' ? 'All' : severityLabel(s)}
-              </FilterChip>
-            );
-          })}
-        </div>
-
-        {/* Module chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
-            Module
-          </span>
-          <FilterChip active={moduleFilter === 'all'} onClick={() => setModuleFilter('all')}>
-            All
-          </FilterChip>
-          {PHASE1_MODULES.map((m, i) => {
-            const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
-            const n = moduleCounts[m] || 0;
-            if (n === 0 && moduleFilter !== m) return null;
-            return (
-              <FilterChip
-                key={m}
-                active={moduleFilter === m}
-                onClick={() => setModuleFilter(moduleFilter === m ? 'all' : m)}
-                color={tint.dot}
-                count={n}
-              >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint.dot }} aria-hidden />
-                {m}
-              </FilterChip>
-            );
-          })}
-        </div>
-
-        {/* Search + clear */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-md">
+      {/* Filter rail — Status / Severity / Module as compact dropdowns + search */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 max-w-md min-w-[180px]">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
             <input
               type="search"
@@ -601,6 +610,43 @@ function FixPageInner() {
               aria-label="Search fixes"
             />
           </div>
+
+          <FilterDropdown
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v as 'all' | FindingStatus)}
+            label="Status"
+            options={[
+              { value: 'all', label: `All status (${groups.length})` },
+              ...STATUS_KEYS.map((s) => ({ value: s, label: `${STATUS_META[s].label} (${stats[s] || 0})` })),
+            ]}
+          />
+
+          <FilterDropdown
+            value={sevFilter}
+            onChange={(v) => setSevFilter(v as typeof SEVERITIES[number])}
+            label="Severity"
+            options={[
+              { value: 'all', label: 'All severities' },
+              ...(SEVERITIES.filter((s) => s !== 'all') as Array<'critical' | 'high' | 'medium' | 'low'>).map((s) => ({
+                value: s,
+                label: `${severityLabel(s)} (${sevCounts[s] || 0})`,
+              })),
+            ]}
+          />
+
+          <FilterDropdown
+            value={moduleFilter}
+            onChange={setModuleFilter}
+            label="Module"
+            options={[
+              { value: 'all', label: 'All modules' },
+              ...PHASE1_MODULES.filter((m) => moduleCounts[m]).map((m) => ({
+                value: m,
+                label: `${m} (${moduleCounts[m] || 0})`,
+              })),
+            ]}
+          />
+
           {hasActiveFilters && (
             <button
               onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
@@ -610,6 +656,7 @@ function FixPageInner() {
               <X size={11} /> Clear
             </button>
           )}
+
           <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
             {filteredGroups.length} of {groups.length}
           </span>
