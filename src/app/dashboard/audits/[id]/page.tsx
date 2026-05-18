@@ -3869,7 +3869,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           if (successful.length > 0) {
                             lines.push(`Summary: ${accurateCount} correct, ${partialCount} partially correct, ${inaccurateCount} incorrect out of ${successful.length} questions\n`);
                             for (const p of successful) {
-                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Fabricated' : p.accuracy === 'inaccurate' ? 'Incorrect' : p.accuracy === 'no_data' ? 'No data' : 'Pending';
+                              const gradeLabel = p.accuracy === 'accurate' ? 'Correct' : p.accuracy === 'partial' ? 'Partially correct' : p.accuracy === 'hallucinated' ? 'Unverified' : p.accuracy === 'inaccurate' ? 'Incorrect' : p.accuracy === 'no_data' ? 'No data' : 'Pending';
                               lines.push(`Q: ${p.question}`);
                               lines.push(`A: ${p.answer}`);
                               lines.push(`Grade: ${gradeLabel}${p.accuracy_note ? ` — ${p.accuracy_note}` : ''}\n`);
@@ -3891,13 +3891,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     {llmProbeResults.map((probe: any, i: number) => {
                       const accColor = probe.accuracy === 'accurate' ? 'text-ok bg-ok/10'
                         : probe.accuracy === 'partial' ? 'text-warn bg-warn/10'
-                        : probe.accuracy === 'hallucinated' ? 'text-severe bg-severe/10'
+                        : probe.accuracy === 'hallucinated' ? 'text-amber-500 bg-amber-500/10'
                         : probe.accuracy === 'inaccurate' ? 'text-severe bg-severe/10'
                         : probe.accuracy === 'no_data' ? 'text-m-muted bg-paper-2'
                         : 'text-m-muted bg-paper-2';
                       const accLabel = probe.accuracy === 'accurate' ? 'Correct'
                         : probe.accuracy === 'partial' ? 'Partial'
-                        : probe.accuracy === 'hallucinated' ? 'Fabricated'
+                        : probe.accuracy === 'hallucinated' ? 'Unverified'
                         : probe.accuracy === 'inaccurate' ? 'Incorrect'
                         : probe.accuracy === 'no_data' ? 'No data'
                         : 'Pending';
@@ -3921,7 +3921,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               </p>
                               <p className="text-[11px] text-ink-2 leading-relaxed">
                                 {probe.accuracy === 'hallucinated'
-                                  ? 'AI is making up information about your site. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) to provide authoritative facts that AI models will reference instead of guessing.'
+                                  ? 'AI is providing details we could not verify from your website content. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) so AI models have an authoritative source to reference.'
                                   : probe.accuracy === 'inaccurate'
                                   ? 'AI has outdated or wrong information. Update your meta description and page content to clearly state the correct answer. Adding structured data (JSON-LD) gives AI models a machine-readable source of truth that takes priority over inferred content.'
                                   : 'AI has partial knowledge. Expand your content to fully answer this question — add it to your homepage, about page, or FAQ. Structured data and an llms.txt file help AI models find complete, accurate information about your site.'
@@ -4192,7 +4192,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {' '}
                           <span className="text-m-muted">
                             Average accuracy across {probes.length} model{probes.length !== 1 ? 's' : ''} is {avgAccuracy}%
-                            {totalHallucinated > 0 && `, with ${totalHallucinated} fabricated answer${totalHallucinated !== 1 ? 's' : ''}`}.
+                            {totalHallucinated > 0 && `, with ${totalHallucinated} unverified answer${totalHallucinated !== 1 ? 's' : ''}`}.
                           </span>
                         </p>
                       )}
@@ -4228,10 +4228,21 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         {probes.map((probe: any) => {
                           const sc = probe.accuracy_score >= 70 ? 'text-ok' : probe.accuracy_score >= 40 ? 'text-warn' : 'text-severe';
                           const barColor = probe.accuracy_score >= 70 ? 'bg-ok' : probe.accuracy_score >= 40 ? 'bg-warn' : 'bg-severe';
+                          const lbl = String(probe.model_label || '').toLowerCase();
+                          const iconSrc = lbl.includes('claude') ? '/icons/claude-ai-icon.svg'
+                            : lbl.includes('gemini') ? '/icons/google-gemini-icon.svg'
+                            : lbl.includes('perplexity') ? '/icons/perplexity-ai-icon.svg'
+                            : (lbl.includes('gpt') || lbl.includes('openai') || lbl.includes('chatgpt')) ? '/icons/chatgpt-icon.svg'
+                            : null;
                           return (
                             <div key={probe.id} className="rounded-lg border border-rule bg-paper p-4">
                               <div className="flex items-center justify-between mb-2.5">
-                                <span className="text-[13px] font-semibold text-ink">{probe.model_label}</span>
+                                <span className="flex items-center gap-2 text-[13px] font-semibold text-ink">
+                                  {iconSrc && (
+                                    <img src={iconSrc} alt="" aria-hidden width={16} height={16} className="flex-shrink-0" />
+                                  )}
+                                  {probe.model_label}
+                                </span>
                                 <span className={`text-[18px] font-bold ${sc}`}>{probe.accuracy_score}%</span>
                               </div>
                               <div className="w-full h-1 rounded-full bg-paper-2 mb-3 overflow-hidden">
@@ -4240,8 +4251,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-m-muted">
                                 {probe.accurate_count > 0 && <span><span className="font-semibold text-ink">{probe.accurate_count}</span> correct</span>}
                                 {probe.partial_count > 0 && <span><span className="font-semibold text-ink">{probe.partial_count}</span> partial</span>}
-                                {((probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)) > 0 && (
-                                  <span><span className="font-semibold text-ink">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)}</span> wrong</span>
+                                {(probe.inaccurate_count || 0) > 0 && (
+                                  <span><span className="font-semibold text-ink">{probe.inaccurate_count}</span> wrong</span>
+                                )}
+                                {(probe.hallucinated_count || 0) > 0 && (
+                                  <span><span className="font-semibold text-ink">{probe.hallucinated_count}</span> unverified</span>
                                 )}
                               </div>
                               {probe.results_json?.length > 0 && (
@@ -4249,8 +4263,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                   <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
                                   <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
                                     {probe.results_json.map((r: any, j: number) => {
-                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
-                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' || r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
+                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Unverified' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
+                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' ? 'text-amber-500' : r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
                                       return (
                                         <div key={j} className="text-[11px]">
                                           <p className="font-medium text-ink">{r.question}</p>
@@ -4273,7 +4287,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           <p className="text-[12px] font-semibold text-ink mb-2">What this means and what to do</p>
                           <p className="text-[12px] text-m-muted leading-relaxed mb-3">
                             {totalHallucinated > 0
-                              ? 'AI assistants are fabricating answers about your site. Users asking ChatGPT or similar about you will get wrong information.'
+                              ? 'AI models are providing answers about your site that we could not verify from your website content. This may mean your site lacks the structured data AI needs to represent you accurately.'
                               : 'AI models lack reliable information about your site. Users relying on AI for research will not learn about you accurately.'}
                           </p>
                           <ol className="space-y-1.5 text-[12px] text-ink-2 leading-relaxed list-decimal list-inside">

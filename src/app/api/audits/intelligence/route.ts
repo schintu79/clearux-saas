@@ -73,16 +73,6 @@ export async function GET(req: NextRequest) {
 
       try {
         benchmarkPosition = await getUserBenchmarkPosition(db, score, industry)
-
-        // Freeze this snapshot so future loads are stable
-        if (benchmarkPosition) {
-          const existingRawJson = rawJson || {}
-          const updatedRawJson = { ...existingRawJson, _industryBenchmarkSnapshot: benchmarkPosition }
-          await db
-            .from('reports')
-            .update({ raw_json: updatedRawJson })
-            .eq('audit_id', auditId)
-        }
       } catch (err) {
         console.error('[intelligence-api] Benchmark position error:', err)
       }
