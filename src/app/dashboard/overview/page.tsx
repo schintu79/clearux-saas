@@ -167,12 +167,6 @@ function OverviewInner() {
   const [shareEnabled, setShareEnabled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
-  // Progressive disclosure: hide secondary deep-dive cards by default to
-  // keep the first screen focused on status / score / top issues / next
-  // action. Categories grid, Benchmarks/AI cards, and Checkpoint health
-  // are heavy and live under this single toggle so the operator opens
-  // them when they actually want to dig.
-  const [showDetails, setShowDetails] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -870,11 +864,79 @@ function OverviewInner() {
 
       </div>
 
-      {/* ── Top issues — kept on first screen alongside score ───────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 auto-rows-fr">
+      {/* ── Row 2: Category module cards — clean by default, expand for breakdown ── */}
+      {pillarScores.length > 0 && (
+        <div className="mb-2 flex items-center gap-2">
+          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+          <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
+          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
+          </p>
+        </div>
+      )}
+      {pillarScores.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+          {pillarScores.map((p) => {
+            const pillarIdx = PILLAR_NAMES.indexOf(p.name);
+            if (pillarIdx < 0) return null;
+            const [start, end] = PILLAR_RANGES[pillarIdx];
+            const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+            const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
+            const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
+            const findingCount = findingsByPillarName[p.name]?.length || 0;
+            return (
+              <CategoryModuleCard
+                key={p.name}
+                name={p.name}
+                score={p.score}
+                tint={tint}
+                Icon={PIcon}
+                findingCount={findingCount}
+                breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
+                  name: cat.name,
+                  score: cat.score,
+                  Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
+                }))}
+                href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Row 3: Issues · Benchmarks · AI Monitoring · AI X-Ray ─ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
+        />
+        <BenchmarksSummaryCard
+          overallScore={overallScore}
+          competitors={competitors}
+          detecting={detectingCompetitors}
+          onBenchmark={handleBenchmark}
+          hidden={hideBenchmarks}
+        />
+        <AiMonitoringCard
+          avgAi={avgAi}
+          aiBuckets={aiBuckets}
+          aiPagesScored={aiPagesScored.length}
+          totalPages={auditPages.length}
+        />
+        <AIXRayCard
+          probes={modelProbes}
+          auditId={latestCompleted?.id || null}
+          onRefreshed={handleXRayRefreshed}
+        />
+      </div>
+
+      {/* ── Row 4: Checkpoint Health + Audit History ───── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <CheckpointHealthCard
+          categoryScores={categoryScores}
+          pillarScores={pillarScores}
+          findings={openFindings}
+          auditId={audit.id}
         />
         <AuditHistoryCard
           history={bundle.history}
@@ -885,107 +947,6 @@ function OverviewInner() {
           onDeleted={handleAuditDeleted}
         />
       </div>
-
-      {/* ── Show details disclosure — heavier analysis lives behind a
-          single toggle so first screen stays focused on status, score,
-          top issues, and next action. ─────────────────────────────── */}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
-          <h2 className="text-[14px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
-            Detailed analysis
-          </h2>
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            Categories, benchmarks, AI readability, and checkpoint health
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowDetails((v) => !v)}
-          aria-expanded={showDetails}
-          className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-black/[0.04]"
-          style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-        >
-          {showDetails ? 'Hide details' : 'Show details'}
-          <ChevronDown size={12} className={showDetails ? 'rotate-180 transition-transform' : 'transition-transform'} />
-        </button>
-      </div>
-
-      {showDetails && (
-        <>
-          {/* ── Categories: per-module scores + sub-checkpoints ───── */}
-          {pillarScores.length > 0 && (
-            <div className="mb-2 flex items-center gap-2">
-              <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
-              <h3 className="text-[13px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h3>
-              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
-              </p>
-            </div>
-          )}
-          {pillarScores.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
-              {pillarScores.map((p) => {
-                const pillarIdx = PILLAR_NAMES.indexOf(p.name);
-                if (pillarIdx < 0) return null;
-                const [start, end] = PILLAR_RANGES[pillarIdx];
-                const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
-                const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
-                const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
-                const findingCount = findingsByPillarName[p.name]?.length || 0;
-                return (
-                  <CategoryModuleCard
-                    key={p.name}
-                    name={p.name}
-                    score={p.score}
-                    tint={tint}
-                    Icon={PIcon}
-                    findingCount={findingCount}
-                    breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
-                      name: cat.name,
-                      score: cat.score,
-                      Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
-                    }))}
-                    href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── Benchmarks · AI Monitoring · AI X-Ray ────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
-            <BenchmarksSummaryCard
-              overallScore={overallScore}
-              competitors={competitors}
-              detecting={detectingCompetitors}
-              onBenchmark={handleBenchmark}
-              hidden={hideBenchmarks}
-            />
-            <AiMonitoringCard
-              avgAi={avgAi}
-              aiBuckets={aiBuckets}
-              aiPagesScored={aiPagesScored.length}
-              totalPages={auditPages.length}
-            />
-            <AIXRayCard
-              probes={modelProbes}
-              auditId={latestCompleted?.id || null}
-              onRefreshed={handleXRayRefreshed}
-            />
-          </div>
-
-          {/* ── Checkpoint Health (full list) ───────────────────── */}
-          <div className="grid grid-cols-1 gap-4 mb-6">
-            <CheckpointHealthCard
-              categoryScores={categoryScores}
-              pillarScores={pillarScores}
-              findings={openFindings}
-              auditId={audit.id}
-            />
-          </div>
-        </>
-      )}
 
       {headerDeleteOpen && (
         <ConfirmDeleteAuditModal
