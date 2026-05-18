@@ -38,6 +38,7 @@ import {
   Upload,
   Loader2,
   ClipboardPaste,
+  Wand2,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
@@ -49,6 +50,8 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { AuditFinding, FindingStatus } from '@/types/database';
+import DiffPreview from '@/components/dashboard/v2/DiffPreview';
+import type { SurgicalFixResult } from '@/lib/surgical-fix';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
@@ -199,6 +202,11 @@ function DeployPageInner() {
   const [deploying, setDeploying] = useState(false);
   const [lastDeployLogId, setLastDeployLogId] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+
+  // Surgical fix state
+  const [surgicalLoading, setSurgicalLoading] = useState(false);
+  const [surgicalResult, setSurgicalResult] = useState<SurgicalFixResult | null>(null);
+  const [surgicalError, setSurgicalError] = useState<string | null>(null);
 
   const handleRollback = async () => {
     if (!lastDeployLogId || restoring) return;
@@ -493,6 +501,72 @@ function DeployPageInner() {
     }
   };
 
+  const handleSurgicalFix = async () => {
+    if (!guided || !connectionId || !remotePath.trim() || !patch.trim()) return;
+    setSurgicalLoading(true);
+    setSurgicalError(null);
+    setSurgicalResult(null);
+    try {
+      const res = await fetch('/api/surgical-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          connectionId,
+          filePath: remotePath.trim(),
+          recommendation: patch,
+          findingId: guided.id,
+          findingTitle: guided.title,
+          findingDescription: guided.description || '',
+          findingCategory: '',
+          pageUrl: guided.page_url || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        setSurgicalError(data?.error || `Surgical fix failed (${res.status}).`);
+        return;
+      }
+      setSurgicalResult(data as SurgicalFixResult);
+    } catch (err: any) {
+      setSurgicalError(err?.message || 'Network error generating surgical fix.');
+    } finally {
+      setSurgicalLoading(false);
+    }
+  };
+
+  const handleSurgicalDeploy = async (finalContent: string) => {
+    if (!guided || !connectionId || !remotePath.trim()) return;
+    setDeploying(true);
+    try {
+      const res = await fetch('/api/ftp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'write',
+          connectionId,
+          filePath: remotePath.trim(),
+          content: finalContent,
+          auditId: guided.audit_id,
+          findingId: guided.id,
+          createBackup: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        pushToast('warn', data?.error || `Deploy failed (${res.status}).`);
+        return;
+      }
+      pushToast('ok', data?.hadBackup ? 'Deployed (backup captured).' : 'Deployed successfully.');
+      if (data?.deployLogId) setLastDeployLogId(data.deployLogId);
+      setSurgicalResult(null);
+      await handleStatus(guided.id, 'fixed');
+    } catch (err: any) {
+      pushToast('warn', err?.message || 'Network error during deploy.');
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   const pendingCount = useMemo(() => tree.reduce((s, n) => s + n.findings.length, 0), [tree]);
 
   if (authLoading || (!findingId && loading) || !ready) {
@@ -733,16 +807,30 @@ function DeployPageInner() {
                     </button>
                   )}
                   <span className="flex-1" />
-                  <button
-                    type="button"
-                    onClick={handleDeploy}
-                    disabled={deploying || restoring || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
-                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                  >
-                    {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                    {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
-                  </button>
+                  {!surgicalResult && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleSurgicalFix}
+                        disabled={surgicalLoading || deploying || restoring || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                      >
+                        {surgicalLoading ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
+                        {surgicalLoading ? 'Generating fix…' : 'Generate surgical fix'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeploy}
+                        disabled={deploying || restoring || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                        style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                      >
+                        {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                        {deploying ? 'Deploying…' : 'Deploy snippet as-is'}
+                      </button>
+                    </>
+                  )}
                   {lastDeployLogId && (
                     <button
                       type="button"
@@ -757,9 +845,40 @@ function DeployPageInner() {
                   )}
                 </div>
 
+                {/* Surgical fix error */}
+                {surgicalError && (
+                  <div
+                    className="flex items-start gap-1.5 text-[11px] px-2.5 py-1.5 rounded-md"
+                    style={{
+                      background: 'color-mix(in srgb, var(--warn) 8%, transparent)',
+                      color: 'var(--warn)',
+                    }}
+                  >
+                    <AlertTriangle size={11} className="mt-px flex-shrink-0" />
+                    <span>{surgicalError}</span>
+                  </div>
+                )}
+
+                {/* Surgical diff preview */}
+                {surgicalResult && (
+                  <DiffPreview
+                    filePath={remotePath.trim()}
+                    operation={surgicalResult.operation}
+                    originalContent={surgicalResult.originalContent}
+                    patchedContent={surgicalResult.patchedContent}
+                    changes={surgicalResult.changes}
+                    confidence={surgicalResult.confidence}
+                    aiExplanation={surgicalResult.aiExplanation}
+                    warning={surgicalResult.warning}
+                    onApprove={handleSurgicalDeploy}
+                    onCancel={() => setSurgicalResult(null)}
+                    deploying={deploying}
+                  />
+                )}
+
                 <p className="text-[10.5px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
                   <Lock size={10} />
-                  Safe mode — nothing is pushed until you click Deploy.
+                  Surgical fix reads the live file and merges your fix safely.
                 </p>
               </div>
             </div>

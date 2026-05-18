@@ -31,8 +31,11 @@ import {
   Server,
   ChevronDown,
   ChevronUp,
+  Wand2,
 } from 'lucide-react';
 import type { AuditFinding, FindingStatus } from '@/types/database';
+import DiffPreview from './DiffPreview';
+import type { SurgicalFixResult } from '@/lib/surgical-fix';
 
 export interface FtpConnectionForDeploy {
   id: string;
@@ -165,6 +168,11 @@ export default function FixConsole({
   const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string; deployLogId?: string } | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [lastDeployId, setLastDeployId] = useState<string | null>(null);
+
+  // Surgical fix state
+  const [surgicalLoading, setSurgicalLoading] = useState(false);
+  const [surgicalResult, setSurgicalResult] = useState<SurgicalFixResult | null>(null);
+  const [surgicalError, setSurgicalError] = useState<string | null>(null);
 
   // Load most recent deploy log for this finding (so Undo works across page reloads)
   React.useEffect(() => {
@@ -312,6 +320,73 @@ export default function FixConsole({
     setPatch(initialPatch);
     setAiNote(null);
     setAiError(null);
+  };
+
+  const handleSurgicalFix = async () => {
+    if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
+    setSurgicalLoading(true);
+    setSurgicalError(null);
+    setSurgicalResult(null);
+    try {
+      const res = await fetch('/api/surgical-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          connectionId: deployConnectionId,
+          filePath: deployPath.trim(),
+          recommendation: patch,
+          findingId: finding.id,
+          findingTitle: finding.title,
+          findingDescription: finding.description || '',
+          findingCategory: '',
+          pageUrl: finding.page_url || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        setSurgicalError(data?.error || `Surgical fix failed (${res.status}).`);
+        return;
+      }
+      setSurgicalResult(data as SurgicalFixResult);
+    } catch (err: any) {
+      setSurgicalError(err?.message || 'Network error generating surgical fix.');
+    } finally {
+      setSurgicalLoading(false);
+    }
+  };
+
+  const handleSurgicalDeploy = async (finalContent: string) => {
+    if (!deployConnectionId || !deployPath.trim()) return;
+    setDeploying(true);
+    setDeployResult(null);
+    try {
+      const res = await fetch('/api/ftp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'write',
+          connectionId: deployConnectionId,
+          filePath: deployPath.trim(),
+          content: finalContent,
+          auditId: finding.audit_id,
+          findingId: finding.id,
+          createBackup: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
+        return;
+      }
+      setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
+      if (data?.deployLogId) setLastDeployId(data.deployLogId);
+      setSurgicalResult(null);
+      onApproveLocal();
+    } catch (err: any) {
+      setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
+    } finally {
+      setDeploying(false);
+    }
   };
 
   return (
@@ -700,55 +775,98 @@ export default function FixConsole({
               </div>
             )}
 
-            {/* Deploy action */}
-            <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
-                  setDeploying(true);
-                  setDeployResult(null);
-                  try {
-                    const res = await fetch('/api/ftp', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        action: 'write',
-                        connectionId: deployConnectionId,
-                        filePath: deployPath.trim(),
-                        content: patch,
-                        auditId: finding.audit_id,
-                        findingId: finding.id,
-                        createBackup: true,
-                      }),
-                    });
-                    const data = await res.json().catch(() => ({} as any));
-                    if (!res.ok) {
-                      setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
-                      return;
-                    }
-                    setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
-                    if (data?.deployLogId) setLastDeployId(data.deployLogId);
-                    // Auto-mark as fixed
-                    onApproveLocal();
-                  } catch (err: any) {
-                    setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
-                  } finally {
-                    setDeploying(false);
-                  }
+            {/* Surgical fix error */}
+            {surgicalError && (
+              <div
+                className="flex items-start gap-1.5 text-[11px] px-2.5 py-1.5 rounded-md"
+                style={{
+                  background: 'color-mix(in srgb, var(--warn) 8%, transparent)',
+                  color: 'var(--warn)',
                 }}
-                disabled={deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
-                {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
-              </button>
+                <AlertCircle size={11} className="mt-px flex-shrink-0" />
+                <span>{surgicalError}</span>
+              </div>
+            )}
 
-              <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
-                Backs up the existing file before overwriting.
-              </p>
-            </div>
+            {/* Surgical diff preview */}
+            {surgicalResult && !deployResult?.ok && (
+              <DiffPreview
+                filePath={deployPath.trim()}
+                operation={surgicalResult.operation}
+                originalContent={surgicalResult.originalContent}
+                patchedContent={surgicalResult.patchedContent}
+                changes={surgicalResult.changes}
+                confidence={surgicalResult.confidence}
+                aiExplanation={surgicalResult.aiExplanation}
+                warning={surgicalResult.warning}
+                onApprove={handleSurgicalDeploy}
+                onCancel={() => setSurgicalResult(null)}
+                deploying={deploying}
+              />
+            )}
+
+            {/* Deploy actions */}
+            {!surgicalResult && (
+              <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleSurgicalFix}
+                  disabled={surgicalLoading || deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                >
+                  {surgicalLoading ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
+                  {surgicalLoading ? 'Generating fix…' : 'Generate surgical fix'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
+                    setDeploying(true);
+                    setDeployResult(null);
+                    try {
+                      const res = await fetch('/api/ftp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'write',
+                          connectionId: deployConnectionId,
+                          filePath: deployPath.trim(),
+                          content: patch,
+                          auditId: finding.audit_id,
+                          findingId: finding.id,
+                          createBackup: true,
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({} as any));
+                      if (!res.ok) {
+                        setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
+                        return;
+                      }
+                      setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
+                      if (data?.deployLogId) setLastDeployId(data.deployLogId);
+                      onApproveLocal();
+                    } catch (err: any) {
+                      setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
+                    } finally {
+                      setDeploying(false);
+                    }
+                  }}
+                  disabled={deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
+                  style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                >
+                  {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                  {deploying ? 'Deploying…' : 'Deploy snippet as-is'}
+                </button>
+
+                <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
+                  Surgical fix reads the live file and merges your fix safely.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
