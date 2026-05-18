@@ -59,17 +59,24 @@ export async function GET(request: NextRequest) {
 
     const brandId = request.nextUrl.searchParams.get('brandId');
 
-    const db = createServiceSupabase();
-    let query = db
-      .from('ftp_connections')
-      .select('id, label, protocol, host, port, username, remote_path, brand_identity_id, last_connected_at, is_active, created_at, updated_at')
-      .eq('user_id', user.id);
-
-    if (brandId) {
-      query = query.eq('brand_identity_id', brandId);
+    // Brand scoping: connections are per-brand, never global.
+    // Without a brandId, return an empty list so connections from
+    // one brand never leak into another brand's dashboard.
+    if (!brandId) {
+      return NextResponse.json({
+        connections: [],
+        provisioned: true,
+        configured: !!process.env.FTP_ENCRYPTION_KEY,
+      });
     }
 
-    const { data: connections, error } = await query.order('created_at', { ascending: false });
+    const db = createServiceSupabase();
+    const { data: connections, error } = await db
+      .from('ftp_connections')
+      .select('id, label, protocol, host, port, username, remote_path, brand_identity_id, last_connected_at, is_active, created_at, updated_at')
+      .eq('user_id', user.id)
+      .eq('brand_identity_id', brandId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       if (isMissingTable(error)) return notProvisionedResponse();
