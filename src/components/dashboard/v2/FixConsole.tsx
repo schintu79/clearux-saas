@@ -164,6 +164,24 @@ export default function FixConsole({
   const [deploying, setDeploying] = useState(false);
   const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string; deployLogId?: string } | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [lastDeployId, setLastDeployId] = useState<string | null>(null);
+
+  // Load most recent deploy log for this finding (so Undo works across page reloads)
+  React.useEffect(() => {
+    if (!finding.id || ftpConnections.length === 0) return;
+    fetch('/api/ftp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deploy-history', findingId: finding.id, limit: 1 }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.entries?.[0]?.id && data.entries[0].hasBackup) {
+          setLastDeployId(data.entries[0].id);
+        }
+      })
+      .catch(() => {});
+  }, [finding.id, ftpConnections.length]);
 
   // Auto-suggest deploy path when connection changes
   const selectedConn = useMemo(
@@ -427,11 +445,12 @@ export default function FixConsole({
 
         {hasFtp ? (
           <>
-            {deployResult?.ok && deployResult.deployLogId && (
+            {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
               <button
                 type="button"
                 onClick={async () => {
-                  if (restoring) return;
+                  const logId = deployResult?.deployLogId || lastDeployId;
+                  if (!logId || restoring) return;
                   setRestoring(true);
                   try {
                     const res = await fetch('/api/ftp', {
@@ -439,7 +458,7 @@ export default function FixConsole({
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         action: 'restore',
-                        deployLogId: deployResult.deployLogId,
+                        deployLogId: logId,
                         connectionId: deployConnectionId,
                       }),
                     });
@@ -448,6 +467,7 @@ export default function FixConsole({
                       setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
                     } else {
                       setDeployResult({ ok: true, msg: 'Original file restored.' });
+                      setLastDeployId(null);
                     }
                   } catch (err: any) {
                     setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
@@ -708,6 +728,7 @@ export default function FixConsole({
                       return;
                     }
                     setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
+                    if (data?.deployLogId) setLastDeployId(data.deployLogId);
                     // Auto-mark as fixed
                     onApproveLocal();
                   } catch (err: any) {
