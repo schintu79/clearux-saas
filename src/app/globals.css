@@ -595,8 +595,11 @@ p, li, td, th, label, span, a {
   line-height: 1.7;
 }
 
-/* Readable line lengths — 65ch ≈ 650px at 16px, within 50–75 char range */
-article, .prose {
+/* Readable line lengths — 65ch ≈ 650px at 16px, within 50–75 char range.
+   Long-form content (resources, audit detail, brand-dna) benefits from this cap.
+   Card-style <article> elements opt out via [data-card] so they fill the dashboard width;
+   readable line lengths are then enforced internally with max-w-prose on text blocks. */
+article:not([data-card]), .prose:not([data-card]) {
   max-width: 65ch;
 }
 

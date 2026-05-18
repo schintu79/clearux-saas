@@ -96,6 +96,7 @@ function FixCard({
         className="rounded-xl overflow-hidden transition-shadow"
         style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         data-testid="fix-card"
+        data-card
       >
         {/* Top context strip — only renders when there's something to show */}
         {(multiModule || grouped) && (
