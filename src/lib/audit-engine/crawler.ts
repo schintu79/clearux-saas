@@ -61,6 +61,8 @@ export interface CrawledPage {
   linksFound: number
   statusCode: number | null
   crawledAt: string
+  /** Time-to-first-byte + body download in milliseconds */
+  loadTimeMs?: number | null
 }
 
 /* ── HTML parsing helpers ──────────────────────────────────── */
@@ -361,6 +363,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
 
   try {
     const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+    const fetchStart = Date.now()
 
     const response = await fetch(url, {
       headers: {
@@ -384,6 +387,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
     })
 
     const html = await response.text()
+    const loadTimeMs = Date.now() - fetchStart
 
     // Check if we got blocked
     if (!response.ok || isBlockedResponse(html, response.status)) {
@@ -416,6 +420,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       linksFound,
       statusCode: response.status,
       crawledAt: new Date().toISOString(),
+      loadTimeMs,
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

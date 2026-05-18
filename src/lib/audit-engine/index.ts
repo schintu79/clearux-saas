@@ -7,9 +7,11 @@ import { crawlPages } from './crawler'
 import { runFullAnalysis, generateReport } from './analyzer'
 import { generatePdfReport } from './pdf'
 import { sendAuditComplete } from './email'
-import { captureAuditScreenshots } from './screenshots'
+// import { captureAuditScreenshots } from './screenshots' // removed — screenshots disabled for speed
 import { extractAllBrandFiles } from './brand-file-extractor'
 import { checkResponsiveDesign } from './responsive-checker'
+import { runTechnicalChecks } from '../pipeline/technical-checks'
+import type { TechnicalAudit } from '../pipeline/technical-checks'
 import type { AuditFinding } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -41,12 +43,26 @@ async function setStatus(
   db: Supabase,
   auditId: string,
   status: string,
+  progressPercent?: number,
 ) {
+  const update: any = { status, updated_at: new Date().toISOString() }
+  if (typeof progressPercent === 'number') update.progress_percent = progressPercent
   const { error } = await db
     .from('audits')
-    .update({ status, updated_at: new Date().toISOString() } as any)
+    .update(update)
     .eq('id', auditId)
   if (error) throw new Error(`Failed to update status: ${error.message}`)
+}
+
+async function setProgress(
+  db: Supabase,
+  auditId: string,
+  progressPercent: number,
+) {
+  await db
+    .from('audits')
+    .update({ progress_percent: progressPercent, updated_at: new Date().toISOString() } as any)
+    .eq('id', auditId)
 }
 
 /* ── Timeout helper ────────────────────────────────────────── */
@@ -93,7 +109,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     console.log(`[audit-engine] Language: ${language}, Plan: ${plan}`)
 
     // 2. CRAWLING
-    await setStatus(db, auditId, 'crawling')
+    await setStatus(db, auditId, 'crawling', 5)
     await log(db, auditId, 'crawl_started', 'info', `Crawling ${productUrl}`)
 
     // Crawl more pages — deeper crawl for better coverage
@@ -113,25 +129,40 @@ async function _processAuditInner(auditId: string): Promise<void> {
       )
     }
 
-    // Store pages
+    // 2a. TECHNICAL HEALTH CHECKS — deterministic, zero LLM calls
+    const technicalAudits: Map<string, TechnicalAudit> = new Map()
     for (const page of crawledPages) {
-      await db.from('audit_pages').insert({
-        audit_id: auditId,
-        url: page.url,
-        title: page.title,
-        h1: page.h1,
-        meta_description: page.metaDescription,
-        content_text: page.contentText,
-        links_found: page.linksFound,
-        broken_links: [],
-        has_structured_data: false,
-        structured_data: null,
-        status_code: page.statusCode,
-        load_time_ms: null,
-        is_mobile_friendly: null,
-        viewport_meta: null,
-        crawled_at: page.crawledAt,
-      } as any)
+      if (page.rawHtml) {
+        try {
+          const techResult = runTechnicalChecks(page.rawHtml, page.loadTimeMs ?? null, page.url)
+          technicalAudits.set(page.url, techResult)
+        } catch (techErr) {
+          console.error(`[audit-engine] Technical check error for ${page.url}:`, techErr)
+        }
+      }
+    }
+
+    // Store pages — batch insert for speed
+    const pageRows = crawledPages.map((page) => ({
+      audit_id: auditId,
+      url: page.url,
+      title: page.title,
+      h1: page.h1,
+      meta_description: page.metaDescription,
+      content_text: page.contentText,
+      links_found: page.linksFound,
+      broken_links: [],
+      has_structured_data: false,
+      structured_data: null,
+      status_code: page.statusCode,
+      load_time_ms: page.loadTimeMs ?? null,
+      is_mobile_friendly: null,
+      viewport_meta: null,
+      crawled_at: page.crawledAt,
+      technical_audit: technicalAudits.get(page.url) ?? null,
+    }))
+    if (pageRows.length > 0) {
+      await db.from('audit_pages').insert(pageRows as any)
     }
 
     await db
@@ -139,7 +170,9 @@ async function _processAuditInner(auditId: string): Promise<void> {
       .update({ pages_crawled: crawledPages.length, updated_at: new Date().toISOString() } as any)
       .eq('id', auditId)
 
-    await log(db, auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
+    const techCheckedCount = technicalAudits.size
+    await setProgress(db, auditId, 25)
+    await log(db, auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s), technical checks on ${techCheckedCount}`)
 
     // 2b. RESPONSIVE CHECK — update audit_pages with mobile-friendly data
     try {
@@ -160,10 +193,10 @@ async function _processAuditInner(auditId: string): Promise<void> {
           .eq('url', r.url)
       }
 
-      // Store responsive findings as audit findings
-      let sortOrderResp = 0
-      for (const finding of responsiveResult.findings) {
-        await db.from('audit_findings').insert({
+      // Store responsive findings — batch insert
+      if (responsiveResult.findings.length > 0) {
+        let sortOrderResp = 0
+        const respRows = responsiveResult.findings.map((finding: any) => ({
           audit_id: auditId,
           checklist_item_id: null,
           severity: finding.severity,
@@ -176,7 +209,8 @@ async function _processAuditInner(auditId: string): Promise<void> {
           target_element: finding.targetElement || null,
           screenshot_url: null,
           sort_order: sortOrderResp++,
-        } as any)
+        }))
+        await db.from('audit_findings').insert(respRows as any)
       }
 
       await log(db, auditId, 'responsive_check_completed', 'success',
@@ -187,7 +221,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     }
 
     // 3. ANALYSING
-    await setStatus(db, auditId, 'analysing')
+    await setStatus(db, auditId, 'analysing', 35)
 
     const pageContent = crawledPages
       .map((p) => {
@@ -197,9 +231,28 @@ async function _processAuditInner(auditId: string): Promise<void> {
         if (p.h1) {
           block += `H1: ${p.h1}\n`
         } else {
-          block += `H1: [not captured ��� may exist in JS-rendered or streamed content]\n`
+          block += `H1: [not captured — may exist in JS-rendered or streamed content]\n`
         }
         if (p.metaDescription) block += `Meta Description: ${p.metaDescription}\n`
+
+        // Inject measured technical data so LLM findings are grounded in facts
+        const tech = technicalAudits.get(p.url)
+        if (tech) {
+          block += `\n[MEASURED TECHNICAL DATA]\n`
+          block += `Load time: ${tech.loadTimeMs ? `${tech.loadTimeMs}ms` : 'not measured'}\n`
+          block += `DOM elements: ${tech.domElementCount} | HTML size: ${Math.round(tech.htmlSizeBytes / 1024)}KB\n`
+          block += `Scripts: ${tech.scriptCount} | Stylesheets: ${tech.stylesheetCount} | Inline styles: ${tech.inlineStyleCount}\n`
+          block += `Images: ${tech.totalImages} total, ${tech.imagesWithAlt} with alt, ${tech.imagesWithDimensions} with dimensions, ${tech.modernFormatImages} modern format\n`
+          block += `Headings: ${tech.headings.length} total, ${tech.headings.filter(h => h.level === 1).length} H1s\n`
+          if (tech.headingIssues.length > 0) block += `Heading issues: ${tech.headingIssues.map(i => i.description).join('; ')}\n`
+          block += `Accessibility: lang=${tech.hasLangAttribute}, skipLink=${tech.hasSkipLink}, landmarks=${tech.landmarkCount}, ariaRoles=${tech.ariaRoleCount}\n`
+          if (tech.accessibilityIssues.length > 0) block += `A11y issues: ${tech.accessibilityIssues.map(i => i.description).join('; ')}\n`
+          block += `Links: ${tech.totalLinks} total (${tech.internalLinks} internal, ${tech.externalLinks} external)\n`
+          if (tech.linkIssues.length > 0) block += `Link issues: ${tech.linkIssues.slice(0, 5).map(i => i.description).join('; ')}\n`
+          block += `Scores: Performance ${tech.performanceScore}/100 | Images ${tech.imageScore}/100 | Headings ${tech.headingScore}/100 | Accessibility ${tech.accessibilityScore}/100 | Overall ${tech.overallScore}/100\n`
+          block += `[/MEASURED TECHNICAL DATA]\n`
+        }
+
         if (p.contentText) block += `Content:\n${p.contentText}\n`
         return block
       })
@@ -256,76 +309,36 @@ async function _processAuditInner(auditId: string): Promise<void> {
     // Use brand-enriched content for analysis so brand consistency categories get brand context
     const findings = await runFullAnalysis(brandContent, audit as any, userFocus, language)
 
-    for (const finding of findings) {
+    // Batch-insert all findings in one DB call for speed
+    const findingRows = findings.map((finding) => ({
+      audit_id: auditId,
+      checklist_item_id: null,
+      severity: finding.severity,
+      title: finding.title,
+      description: finding.description,
+      evidence: null,
+      page_url: finding.pageUrl || crawledPages[0]?.url || null,
+      recommendation: finding.recommendation,
+      estimated_impact: finding.estimatedImpact || null,
+      target_element: finding.targetElement || null,
+      screenshot_url: null,
+      sort_order: sortOrder++,
+      category_index: finding.categoryIndex ?? null,
+    }))
+
+    if (findingRows.length > 0) {
       const { data: inserted } = await db
         .from('audit_findings')
-        .insert({
-          audit_id: auditId,
-          checklist_item_id: null,
-          severity: finding.severity,
-          title: finding.title,
-          description: finding.description,
-          evidence: null,
-          page_url: finding.pageUrl || crawledPages[0]?.url || null,
-          recommendation: finding.recommendation,
-          estimated_impact: finding.estimatedImpact || null,
-          target_element: finding.targetElement || null,
-          screenshot_url: null,
-          sort_order: sortOrder++,
-        } as any)
+        .insert(findingRows as any)
         .select()
-        .single()
-
-      if (inserted) allFindings.push(inserted as any)
+      if (inserted) allFindings.push(...(inserted as any[]))
     }
 
+    await setProgress(db, auditId, 80)
     await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
 
-    // 4. CAPTURE SCREENSHOTS — pages + highlighted findings (non-fatal)
-    try {
-      await log(db, auditId, 'screenshots_started', 'info', 'Capturing screenshots')
-
-      const findingsForScreenshots = allFindings.map((f) => ({
-        id: f.id,
-        title: f.title,
-        severity: f.severity,
-        targetElement: f.target_element,
-        pageUrl: f.page_url,
-      }))
-
-      const { pageScreenshots, findingScreenshots } = await captureAuditScreenshots(
-        findingsForScreenshots,
-        crawledPages[0]?.url || productUrl,
-        auditId,
-        10,
-      )
-
-      // Update pages
-      for (const [url, screenshotUrl] of pageScreenshots) {
-        const { data: pages } = await db
-          .from('audit_pages')
-          .select('id')
-          .eq('audit_id', auditId)
-          .eq('url', url)
-          .limit(1)
-        if (pages && pages.length > 0) {
-          await db.from('audit_pages').update({ screenshot_url: screenshotUrl } as any).eq('id', (pages[0] as any).id)
-        }
-      }
-
-      // Update findings
-      for (const [findingId, screenshotUrl] of findingScreenshots) {
-        await db.from('audit_findings').update({ screenshot_url: screenshotUrl } as any).eq('id', findingId)
-      }
-
-      await log(db, auditId, 'screenshots_completed', 'success', `${pageScreenshots.size} page + ${findingScreenshots.size} finding screenshots`)
-    } catch (err) {
-      console.error('[audit-engine] Screenshot capture error (non-fatal):', err)
-      await log(db, auditId, 'screenshots_error', 'warning', 'Screenshot capture failed')
-    }
-
-    // 5. GENERATING REPORT
-    await setStatus(db, auditId, 'generating_report')
+    // 4. GENERATING REPORT (screenshots removed — not user-facing)
+    await setStatus(db, auditId, 'generating_report', 85)
 
     const reportData = await generateReport(allFindings, audit as any, pageContent, userFocus, language)
 
@@ -378,7 +391,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     })
 
     // 5. COMPLETED
-    await setStatus(db, auditId, 'completed')
+    await setStatus(db, auditId, 'completed', 100)
     await db
       .from('audits')
       .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
