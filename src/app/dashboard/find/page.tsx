@@ -448,7 +448,7 @@ function FindPageInner() {
                               aria-hidden
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[12.5px] font-medium leading-snug" style={{ color: 'var(--ink)' }}>
+                              <p className="text-[14px] font-medium leading-snug tracking-normal" style={{ color: 'var(--ink)', fontSize: '14px', fontWeight: 500, letterSpacing: '0' }}>
                                 {f.title}
                               </p>
                               <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)' }}>
