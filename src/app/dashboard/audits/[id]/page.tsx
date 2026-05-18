@@ -47,7 +47,7 @@ import {
   X,
   Info,
   Activity,
-  Image,
+  Image as ImageIcon,
   Heading1,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -69,7 +69,7 @@ import { type CockpitSeverity, type ModuleScore } from '@/components/dashboard/A
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
-import { writeSelection } from '@/lib/dashboard/brand-selection';
+import { readSelection, writeSelection } from '@/lib/dashboard/brand-selection';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -162,7 +162,6 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-severe',
       text: 'text-severe',
       impactBg: 'bg-severe/5',
-      cardBg: 'color-mix(in srgb, var(--severe) 4%, #ffffff)',
     },
     high: {
       badge: 'failed' as const,
@@ -172,7 +171,6 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-warn',
       text: 'text-warn',
       impactBg: 'bg-warn/5',
-      cardBg: 'color-mix(in srgb, var(--warn) 4%, #ffffff)',
     },
     medium: {
       badge: 'pending' as const,
@@ -182,7 +180,6 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-signal',
       text: 'text-signal',
       impactBg: 'bg-signal/5',
-      cardBg: 'color-mix(in srgb, var(--signal) 4%, #ffffff)',
     },
     low: {
       badge: 'active' as const,
@@ -192,7 +189,6 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-ok',
       text: 'text-ok',
       impactBg: 'bg-ok/5',
-      cardBg: 'color-mix(in srgb, var(--ok) 4%, #ffffff)',
     },
   };
 }
@@ -222,16 +218,6 @@ function buildStatusMeta(L: UILabels): Record<
     completed: { label: L.statusCompleted, color: 'completed', icon: CheckCircle2, description: L.descCompleted },
     failed: { label: L.statusFailed, color: 'failed', icon: AlertTriangle, description: L.descFailed },
   };
-}
-
-function buildProgressSteps(L: UILabels) {
-  return [
-    { key: 'payment_received', label: L.stepPayment },
-    { key: 'crawling', label: L.stepCrawling },
-    { key: 'analysing', label: L.stepAnalysing },
-    { key: 'generating_report', label: L.stepReport },
-    { key: 'completed', label: L.stepDone },
-  ];
 }
 
 /* ── Rotating checkpoint labels ─────────────────────────── */
@@ -294,10 +280,6 @@ const auditCheckpoints = [
   'Checking progressive disclosure patterns',
 ];
 
-function getStepIndex(status: string, steps: ReturnType<typeof buildProgressSteps>) {
-  return steps.findIndex((s) => s.key === status);
-}
-
 /* ── Rotating checkpoint text ─────────────────────────────── */
 function RotatingCheckpoints() {
   const [idx, setIdx] = useState(0);
@@ -323,6 +305,133 @@ function RotatingCheckpoints() {
       >
         {auditCheckpoints[idx]}...
       </p>
+    </div>
+  );
+}
+
+/* ── Audit progress loader — minimal ring + segmented scan ─────── */
+function AuditProgressLoader({
+  status,
+  percent,
+}: {
+  status: string;
+  percent: number | null | undefined;
+}) {
+  // Smooth stage fallbacks if no DB percent is available yet.
+  const stageFallback: Record<string, number> = {
+    payment_received: 5,
+    crawling: 25,
+    analysing: 50,
+    generating_report: 85,
+    completed: 100,
+  };
+  const target = Math.max(
+    0,
+    Math.min(100, typeof percent === 'number' ? percent : stageFallback[status] ?? 0),
+  );
+
+  // Animate the displayed percent towards the target so the ring eases instead of jumping.
+  const [display, setDisplay] = useState<number>(target);
+  useEffect(() => {
+    let raf: number;
+    const tick = () => {
+      setDisplay((cur) => {
+        const diff = target - cur;
+        if (Math.abs(diff) < 0.3) return target;
+        const next = cur + diff * 0.08;
+        raf = requestAnimationFrame(tick);
+        return next;
+      });
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+
+  const RING_SIZE = 156;
+  const STROKE = 2;
+  const radius = (RING_SIZE - STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - display / 100);
+
+  return (
+    <div className="flex flex-col items-center justify-center py-8">
+      <div
+        className="relative"
+        style={{ width: RING_SIZE, height: RING_SIZE }}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(display)}
+        aria-label="Audit progress"
+      >
+        {/* Soft pulse halo — subtle */}
+        <div
+          aria-hidden
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle at center, rgba(99,102,241,0.10), transparent 65%)',
+            animation: 'audit-pulse 3.2s ease-in-out infinite',
+          }}
+        />
+
+        {/* Thin progress ring */}
+        <svg
+          width={RING_SIZE}
+          height={RING_SIZE}
+          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          className="absolute inset-0"
+          aria-hidden
+        >
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--rule, rgba(0,0,0,0.08))"
+            strokeWidth={STROKE}
+          />
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--signal, #6366F1)"
+            strokeWidth={STROKE}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+            style={{ transition: 'stroke-dashoffset 280ms cubic-bezier(0.22,1,0.36,1)' }}
+          />
+        </svg>
+
+        {/* Percent label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-semibold text-ink tabular-nums tracking-tight">
+            {Math.round(display)}
+            <span className="text-xl text-m-muted ml-0.5">%</span>
+          </span>
+          <span className="text-[10px] font-medium tracking-[0.14em] uppercase text-m-muted mt-1.5">
+            Running audit
+          </span>
+        </div>
+      </div>
+
+      {/* Slim segmented scan bar */}
+      <div className="mt-7 w-full max-w-[280px]">
+        <div className="relative h-[2px] rounded-full bg-rule/60 overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-y-0 left-0 w-1/3 rounded-full"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent, var(--signal, #6366F1), transparent)',
+              animation: 'audit-scan 2.4s cubic-bezier(0.4,0,0.6,1) infinite',
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -668,10 +777,16 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
   const hasRecommendation = Boolean(finding.recommendation && finding.recommendation.trim());
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
 
+  const sevVar = finding.severity === 'critical' ? 'var(--severe)'
+    : finding.severity === 'high' ? 'var(--warn)'
+    : finding.severity === 'low' ? 'var(--ok)'
+    : 'var(--signal)';
+  const sevCardBg = `color-mix(in srgb, ${sevVar} 4%, #ffffff)`;
+
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={{ background: sev.cardBg, border: '1px solid var(--rule)', borderLeft: `3px solid ${accentColor}` }}
+      style={{ background: sevCardBg, border: '1px solid var(--rule)', borderLeft: `3px solid ${accentColor}` }}
     >
       {/* Header — always visible */}
       <div className="flex items-start gap-3 px-4 pt-4 pb-4">
@@ -681,13 +796,12 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
           className="flex-1 min-w-0 text-left"
           aria-expanded={open}
         >
-          {/* Title */}
           <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
           {/* Pill row: severity · module · category · verification */}
           <div className="flex items-center gap-1.5 flex-wrap" style={{ marginTop: '0.6rem' }}>
             <span
               className={clsx(
-                'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
+                'inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
                 sev.text,
               )}
               style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
@@ -1317,12 +1431,24 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         // audit while the selector is on clearux.ai would leave the
         // selector on clearux.ai and the audit body on supabase.com —
         // the divergence reported in the bug.
+        //
+        // Prefer brand selection when the audit is tied to a brand
+        // identity (regardless of audit_type) so a website audit
+        // captured under a brand workspace doesn't overwrite the brand
+        // selection with a site selection. Skip writes when the
+        // persisted selection already matches the resolved identity.
         try {
-          if ((auditData as any).audit_type === 'brand_identity' && (auditData as any).brand_identity_id) {
-            writeSelection({ kind: 'brand', brandId: (auditData as any).brand_identity_id });
+          const current = readSelection();
+          if ((auditData as any).brand_identity_id) {
+            const brandId = (auditData as any).brand_identity_id as string;
+            if (!(current?.kind === 'brand' && current.brandId === brandId)) {
+              writeSelection({ kind: 'brand', brandId });
+            }
           } else if (auditData.product_url) {
             const host = new URL(auditData.product_url).hostname.replace(/^www\./, '');
-            if (host) writeSelection({ kind: 'site', host });
+            if (host && !(current?.kind === 'site' && current.host === host)) {
+              writeSelection({ kind: 'site', host });
+            }
           }
         } catch {}
 
@@ -1682,14 +1808,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const PILLAR_CONFIG = buildPillarConfig(auditLang);
   const severityConfig = buildSeverityConfig(L);
   const statusMeta = buildStatusMeta(L);
-  // progressSteps removed — replaced by animated loader with real-time %
 
   const meta = statusMeta[audit.status] || statusMeta.pending_payment;
   const StatusIcon = meta.icon;
   const isCompleted = audit.status === 'completed';
   const isInProgress = ['crawling', 'analysing', 'generating_report', 'payment_received'].includes(audit.status);
-  // Delete is available on all audit statuses (dropdown menu + failed card)
-  // currentStepIdx removed — replaced by progress_percent from backend
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
@@ -1850,13 +1973,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </div>
       )}
 
-      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
+      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise back to Overview */}
       <Link
-        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/audits'}
+        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/overview'}
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Audits'}
+        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Overview'}
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}
@@ -1991,88 +2114,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </Card>
       )}
 
-      {/* ── In progress: animated loader ──────────────────── */}
+      {/* ── In progress: animated loader ─────────────────── */}
       {isInProgress && !verifying && (
         <Card className="mb-6">
-          <div className="flex flex-col items-center py-6">
-            {/* Geometric animation with progress ring */}
-            <div className="relative w-40 h-40 mb-6">
-              {/* Outer progress ring — driven by real backend % */}
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
-                <circle cx="80" cy="80" r="72" fill="none" stroke="var(--rule)" strokeWidth="3" opacity="0.4" />
-                <circle
-                  cx="80" cy="80" r="72"
-                  fill="none"
-                  stroke="var(--signal)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 72}`}
-                  strokeDashoffset={`${2 * Math.PI * 72 * (1 - ((audit as any).progress_percent || 0) / 100)}`}
-                  className="transition-all duration-1000 ease-out"
-                />
-              </svg>
-
-              {/* Orbiting dots — 3 dots at different speeds */}
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="absolute inset-0"
-                  style={{
-                    animation: `audit-orbit ${3 + i * 1.5}s linear infinite`,
-                    animationDelay: `${i * -0.8}s`,
-                  }}
-                >
-                  <div
-                    className="absolute rounded-full"
-                    style={{
-                      width: `${8 - i * 2}px`,
-                      height: `${8 - i * 2}px`,
-                      background: `var(--signal)`,
-                      opacity: 1 - i * 0.25,
-                      top: `${4 + i * 4}px`,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-                </div>
-              ))}
-
-              {/* Inner morphing shape */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="w-16 h-16 rounded-2xl"
-                  style={{
-                    background: 'var(--signal)',
-                    opacity: 0.08,
-                    animation: 'audit-morph 4s ease-in-out infinite',
-                  }}
-                />
-              </div>
-
-              {/* Center percentage */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold tabular-nums" style={{ color: 'var(--ink)' }}>
-                  {(audit as any).progress_percent || 0}
-                </span>
-                <span className="text-xs font-medium" style={{ color: 'var(--m-muted)' }}>percent</span>
-              </div>
+          <div className="flex items-center gap-3 mb-2">
+            <StatusIcon size={20} className="text-signal" />
+            <div>
+              <p className="font-medium text-ink">
+                {audit.status === 'payment_received' ? 'Starting audit' : meta.label}
+              </p>
+              <p className="text-sm text-m-muted">
+                {audit.status === 'payment_received'
+                  ? 'Preparing your audit. This will only take a moment.'
+                  : meta.description}
+              </p>
             </div>
-
-            {/* Status label */}
-            <p className="font-semibold text-ink text-base mb-1">{meta.label}</p>
-            <p className="text-sm text-m-muted mb-5">{meta.description}</p>
-
-            {/* Rotating checkpoint messages */}
-            <RotatingCheckpoints />
-
-            <p className="text-xs text-m-muted mt-4">
-              Updates automatically
-            </p>
+            <Loader2 size={16} className="text-signal animate-spin ml-auto" />
           </div>
+
+          <AuditProgressLoader
+            status={audit.status}
+            percent={(audit as any).progress_percent}
+          />
+
+          <RotatingCheckpoints />
+          <p className="text-sm text-m-muted mt-2 text-center">
+            This page updates automatically. No need to refresh.
+          </p>
 
           {/* Restart button if stuck */}
           {audit.updated_at && (Date.now() - new Date(audit.updated_at).getTime() > 3 * 60 * 1000) && (
-            <div className="mt-2 pt-3 border-t border-rule flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-rule flex items-center justify-between">
               <p className="text-xs text-m-muted">Taking longer than expected?</p>
               <button
                 onClick={handleRestart}
@@ -2082,12 +2154,11 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 {restarting ? (
                   <><Loader2 size={13} className="animate-spin" /> Restarting...</>
                 ) : (
-                  <><Zap size={13} /> Restart audit</>
+                  <><Zap size={13} /> Restart Audit</>
                 )}
               </button>
             </div>
           )}
-
         </Card>
       )}
 
@@ -2262,16 +2333,18 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
                   : tab === 'responsive' ? 'Responsive'
-                  : tab === 'technical_health' ? 'Tech health'
+                  : tab === 'technical_health' ? 'Technical'
                   : tab === 'ai_xray' ? 'AI Readability'
                   : 'Benchmark';
                 const responsiveFindings = findings.filter((f: any) => {
                   const t = (f.title || '').toLowerCase();
                   return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
                 });
+                const pagesWithTechnical = auditPages.filter((p: any) => p.technical_audit).length;
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
                   : tab === 'responsive' ? responsiveFindings.length
+                  : tab === 'technical_health' ? pagesWithTechnical
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
@@ -3219,374 +3292,232 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             );
           })()}
 
-          {/* ── TAB: Technical Health ──────────────────────── */}
+          {/* ── TAB: Technical Health ────────────────────────── */}
           {activeTab === 'technical_health' && (() => {
-            // Aggregate technical audit data from all pages
-            const techPages = auditPages
-              .filter((p: any) => p.technical_audit)
-              .map((p: any) => ({ url: p.url, tech: p.technical_audit as any }));
+            const pagesWithTechnical = auditPages.filter((p: any) => p.technical_audit);
 
-            if (techPages.length === 0) {
+            if (pagesWithTechnical.length === 0) {
               return (
-                <div className="text-center py-16">
-                  <Activity size={32} className="mx-auto text-m-muted mb-3" strokeWidth={1.5} />
-                  <p className="text-[13px] font-medium text-ink">No technical health data yet</p>
-                  <p className="text-[12px] text-m-muted mt-1 max-w-sm mx-auto">
-                    Technical health checks run automatically during the audit. Re-audit this site to generate technical health data.
-                  </p>
+                <div className="rounded-xl border border-rule bg-card p-6">
+                  <div className="flex items-start gap-3">
+                    <Info size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[14px] font-semibold text-ink mb-1">No technical-audit data yet</p>
+                      <p className="text-[12px] text-m-muted leading-relaxed">
+                        Re-run this audit after the technical-checks pipeline is deployed to see per-page performance, image, heading, accessibility and link diagnostics.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               );
             }
 
-            // Aggregate: use the first page as primary, average scores across all
-            const avgScore = (key: string) => {
-              const scores = techPages.map((p: any) => p.tech[key] as number).filter((s: number) => typeof s === 'number');
-              return scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
-            };
-            const overallAvg = avgScore('overallScore');
-            const perfAvg = avgScore('performanceScore');
-            const imgAvg = avgScore('imageScore');
-            const headAvg = avgScore('headingScore');
-            const a11yAvg = avgScore('accessibilityScore');
+            // Aggregate across pages for the summary cards
+            const loadTimes = pagesWithTechnical
+              .map((p: any) => p.technical_audit?.performance?.loadTimeMs)
+              .filter((n: any) => typeof n === 'number') as number[];
+            const avgLoad = loadTimes.length > 0
+              ? Math.round(loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length)
+              : null;
+            const slowPages = pagesWithTechnical.filter((p: any) => p.technical_audit?.performance?.rating === 'slow').length;
+            const totalImages = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.images?.total || 0), 0);
+            const totalMissingAlt = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.images?.missingAlt || 0), 0);
+            const totalHeadingIssues = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.headings?.issues?.length || 0), 0);
+            const totalA11yIssues = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.accessibility?.issues?.length || 0), 0);
+            const totalLinks = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.total || 0), 0);
+            const totalNonDescriptive = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.nonDescriptive || 0), 0);
 
-            const scoreColor = (s: number) => s >= 80 ? 'text-ok' : s >= 50 ? 'text-warn' : 'text-crit';
-            const scoreBg = (s: number) => s >= 80 ? 'bg-ok/10' : s >= 50 ? 'bg-warn/10' : 'bg-crit/10';
-            const scoreLabel = (s: number) => s >= 80 ? 'Good' : s >= 50 ? 'Needs work' : 'Poor';
-
-            // Collect all issues across pages
-            const allPerfIssues = techPages.flatMap((p: any) => (p.tech.performanceIssues || []).map((i: any) => ({ ...i, pageUrl: p.url })));
-            const allImgIssues = techPages.flatMap((p: any) => (p.tech.imageIssues || []).map((i: any) => ({ ...i, pageUrl: p.url })));
-            const allHeadIssues = techPages.flatMap((p: any) => (p.tech.headingIssues || []).map((i: any) => ({ ...i, pageUrl: p.url })));
-            const allA11yIssues = techPages.flatMap((p: any) => (p.tech.accessibilityIssues || []).map((i: any) => ({ ...i, pageUrl: p.url })));
-            const allLinkIssues = techPages.flatMap((p: any) => (p.tech.linkIssues || []).map((i: any) => ({ ...i, pageUrl: p.url })));
-
-            // Helper: severity badge
-            const SeverityDot = ({ sev }: { sev: string }) => (
-              <span className={`inline-block w-2 h-2 rounded-full mr-1.5 flex-shrink-0 ${sev === 'high' || sev === 'critical' ? 'bg-crit' : sev === 'medium' ? 'bg-warn' : 'bg-m-muted'}`} />
-            );
+            const ratingClass = (rating: string) =>
+              rating === 'good' ? 'text-ok' : rating === 'needs_improvement' ? 'text-warn' : rating === 'slow' ? 'text-err' : 'text-m-muted';
+            const ratingLabel = (rating: string) =>
+              rating === 'good' ? 'Good' : rating === 'needs_improvement' ? 'Needs improvement' : rating === 'slow' ? 'Slow' : 'Unknown';
 
             return (
-              <div className="space-y-6">
-                {/* Overall score card */}
-                <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-rule/40 flex items-center gap-2">
-                    <Activity size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Technical health score</h3>
-                    <span className="ml-auto text-xs text-m-muted">{techPages.length} page(s) analysed</span>
-                  </div>
-                  <div className="px-5 py-5">
-                    <div className="flex items-center gap-6 mb-5">
-                      <div className="flex-shrink-0">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold ${scoreBg(overallAvg)} ${scoreColor(overallAvg)}`}>
-                          {overallAvg}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-ink">{scoreLabel(overallAvg)}</p>
-                        <p className="text-xs text-m-muted mt-0.5">Weighted average across performance (25%), images (20%), headings (15%), and accessibility (40%)</p>
-                      </div>
+              <div className="space-y-5">
+                {/* Summary header */}
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Activity size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[14px] font-heading font-semibold text-ink mb-0.5">Technical health</h3>
+                      <p className="text-[12px] text-m-muted leading-relaxed">
+                        Measured technical diagnostics across {pagesWithTechnical.length} crawled page{pagesWithTechnical.length !== 1 ? 's' : ''}.
+                      </p>
                     </div>
-
-                    {/* Score breakdown */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {[
-                        { label: 'Performance', score: perfAvg, icon: Zap },
-                        { label: 'Images', score: imgAvg, icon: Image },
-                        { label: 'Headings', score: headAvg, icon: Heading1 },
-                        { label: 'Accessibility', score: a11yAvg, icon: Accessibility },
-                      ].map(({ label, score, icon: Icon }) => (
-                        <div key={label} className="rounded-lg border border-rule bg-paper p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon size={14} className="text-m-muted" strokeWidth={1.75} />
-                            <span className="text-[11px] font-medium text-m-muted uppercase tracking-wide">{label}</span>
-                          </div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className={`text-xl font-bold ${scoreColor(score)}`}>{score}</span>
-                            <span className="text-[11px] text-m-muted">/100</span>
-                          </div>
-                          <div className="mt-2 h-1.5 rounded-full bg-paper-2 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${score >= 80 ? 'bg-ok' : score >= 50 ? 'bg-warn' : 'bg-crit'}`}
-                              style={{ width: `${score}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Avg load time</p>
+                      <p className="text-[18px] font-bold text-ink mt-1">{avgLoad != null ? `${avgLoad}ms` : '—'}</p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Slow pages</p>
+                      <p className={`text-[18px] font-bold mt-1 ${slowPages > 0 ? 'text-warn' : 'text-ink'}`}>{slowPages}<span className="text-[12px] font-medium text-m-muted">/{pagesWithTechnical.length}</span></p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Images missing alt</p>
+                      <p className={`text-[18px] font-bold mt-1 ${totalMissingAlt > 0 ? 'text-warn' : 'text-ink'}`}>{totalMissingAlt}<span className="text-[12px] font-medium text-m-muted">/{totalImages}</span></p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">A11y issues</p>
+                      <p className={`text-[18px] font-bold mt-1 ${totalA11yIssues > 0 ? 'text-warn' : 'text-ink'}`}>{totalA11yIssues}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Performance section */}
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                    <Zap size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Performance</h3>
-                    <span className={`ml-auto text-xs font-semibold ${scoreColor(perfAvg)}`}>{perfAvg}/100</span>
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Gauge size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Performance</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{pagesWithTechnical.length} pages</span>
                   </div>
-                  <div className="px-5 py-4">
-                    {/* Key metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      {techPages.slice(0, 1).map((p: any) => (
-                        <React.Fragment key={p.url}>
-                          <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                            <span className="text-[10px] text-m-muted uppercase tracking-wide block">Load time</span>
-                            <span className="text-sm font-bold text-ink">{p.tech.loadTimeMs ? `${(p.tech.loadTimeMs / 1000).toFixed(1)}s` : 'N/A'}</span>
-                          </div>
-                          <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                            <span className="text-[10px] text-m-muted uppercase tracking-wide block">DOM elements</span>
-                            <span className="text-sm font-bold text-ink">{(p.tech.domElementCount || 0).toLocaleString()}</span>
-                          </div>
-                          <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                            <span className="text-[10px] text-m-muted uppercase tracking-wide block">HTML size</span>
-                            <span className="text-sm font-bold text-ink">{Math.round((p.tech.htmlSizeBytes || 0) / 1024)}KB</span>
-                          </div>
-                          <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                            <span className="text-[10px] text-m-muted uppercase tracking-wide block">Scripts</span>
-                            <span className="text-sm font-bold text-ink">{p.tech.scriptCount || 0}</span>
-                          </div>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                    {allPerfIssues.length > 0 ? (
-                      <div className="space-y-2">
-                        {allPerfIssues.map((issue: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-2 px-3 rounded-lg bg-paper border border-rule/40">
-                            <SeverityDot sev={issue.severity} />
-                            <span className="text-[12px] text-ink flex-1">{issue.description}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[12px] text-m-muted">No performance issues detected.</p>
-                    )}
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const perf = page.technical_audit?.performance || {};
+                      return (
+                        <div key={i} className="px-5 py-3 flex items-center gap-3">
+                          <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className="text-[11px] text-m-muted">
+                            {perf.htmlBytes != null ? `${Math.round(perf.htmlBytes / 1024)}kb` : '—'}
+                          </span>
+                          <span className="text-[12px] font-semibold text-ink min-w-[70px] text-right">
+                            {perf.loadTimeMs != null ? `${perf.loadTimeMs}ms` : '—'}
+                          </span>
+                          <span className={`text-[11px] font-semibold min-w-[120px] text-right ${ratingClass(perf.rating)}`}>
+                            {ratingLabel(perf.rating)}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Images section */}
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                    <Image size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Images</h3>
-                    <span className={`ml-auto text-xs font-semibold ${scoreColor(imgAvg)}`}>{imgAvg}/100</span>
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <ImageIcon size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Images</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalImages} total · {totalMissingAlt} missing alt</span>
                   </div>
-                  <div className="px-5 py-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      {(() => {
-                        const totImg = techPages.reduce((s: number, p: any) => s + (p.tech.totalImages || 0), 0);
-                        const withAlt = techPages.reduce((s: number, p: any) => s + (p.tech.imagesWithAlt || 0), 0);
-                        const withDims = techPages.reduce((s: number, p: any) => s + (p.tech.imagesWithDimensions || 0), 0);
-                        const modern = techPages.reduce((s: number, p: any) => s + (p.tech.modernFormatImages || 0), 0);
-                        return (
-                          <>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Total images</span>
-                              <span className="text-sm font-bold text-ink">{totImg}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">With alt text</span>
-                              <span className={`text-sm font-bold ${totImg > 0 && withAlt < totImg ? 'text-warn' : 'text-ok'}`}>{withAlt}/{totImg}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">With dimensions</span>
-                              <span className="text-sm font-bold text-ink">{withDims}/{totImg}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Modern format</span>
-                              <span className="text-sm font-bold text-ink">{modern}/{totImg}</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    {allImgIssues.length > 0 ? (
-                      <div className="space-y-2">
-                        <p className="text-[11px] font-medium text-m-muted mb-1">{allImgIssues.length} image(s) with issues</p>
-                        {allImgIssues.slice(0, 10).map((img: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-2 px-3 rounded-lg bg-paper border border-rule/40">
-                            <SeverityDot sev={img.missingAlt ? 'high' : 'medium'} />
-                            <div className="flex-1 min-w-0">
-                              <span className="text-[12px] text-ink truncate block">{img.src || 'Unknown source'}</span>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {img.missingAlt && <span className="text-[10px] px-1.5 py-0.5 rounded bg-crit/10 text-crit font-medium">Missing alt</span>}
-                                {img.missingDimensions && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warn/10 text-warn font-medium">No dimensions</span>}
-                                {img.isLegacyFormat && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warn/10 text-warn font-medium">Legacy format</span>}
-                                {img.missingLazyLoading && <span className="text-[10px] px-1.5 py-0.5 rounded bg-paper-2 text-m-muted font-medium">No lazy loading</span>}
-                              </div>
-                            </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const img = page.technical_audit?.images || {};
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className="text-[11px] text-m-muted">{img.total || 0} images</span>
+                            <span className={`text-[11px] font-semibold min-w-[90px] text-right ${(img.missingAlt || 0) > 0 ? 'text-warn' : 'text-ok'}`}>
+                              {img.missingAlt || 0} missing alt
+                            </span>
                           </div>
-                        ))}
-                        {allImgIssues.length > 10 && (
-                          <p className="text-[11px] text-m-muted text-center pt-1">+ {allImgIssues.length - 10} more</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-[12px] text-m-muted">All images pass checks.</p>
-                    )}
+                          {Array.isArray(img.samplesMissingAlt) && img.samplesMissingAlt.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {img.samplesMissingAlt.slice(0, 3).map((src: string, j: number) => (
+                                <li key={j} className="text-[11px] text-m-muted truncate">• {src}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Headings section */}
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                    <Heading1 size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Heading hierarchy</h3>
-                    <span className={`ml-auto text-xs font-semibold ${scoreColor(headAvg)}`}>{headAvg}/100</span>
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Heading1 size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Headings</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalHeadingIssues} issue{totalHeadingIssues !== 1 ? 's' : ''}</span>
                   </div>
-                  <div className="px-5 py-4">
-                    {/* Show heading tree for first page */}
-                    {techPages.slice(0, 1).map((p: any) => (
-                      <div key={p.url} className="mb-4">
-                        <div className="rounded-lg bg-paper border border-rule/60 p-3 space-y-1">
-                          {(p.tech.headings || []).slice(0, 20).map((h: any, i: number) => (
-                            <div key={i} className="flex items-center" style={{ paddingLeft: `${(h.level - 1) * 16}px` }}>
-                              <span className={`text-[10px] font-bold uppercase mr-2 min-w-[24px] ${h.level === 1 ? 'text-signal' : 'text-m-muted'}`}>H{h.level}</span>
-                              <span className="text-[12px] text-ink truncate">{h.text || '(empty)'}</span>
-                            </div>
-                          ))}
-                          {(p.tech.headings || []).length > 20 && (
-                            <p className="text-[11px] text-m-muted pl-4 pt-1">+ {(p.tech.headings || []).length - 20} more headings</p>
-                          )}
-                          {(p.tech.headings || []).length === 0 && (
-                            <p className="text-[12px] text-m-muted">No headings found on this page.</p>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const h = page.technical_audit?.headings || {};
+                      const issues: string[] = h.issues || [];
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className="text-[11px] text-m-muted">h1: {h.h1Count ?? 0} · h2: {h.h2Count ?? 0} · h3: {h.h3Count ?? 0}</span>
+                          </div>
+                          {issues.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {issues.map((issue, j) => (
+                                <li key={j} className="text-[11px] text-warn">• {issue}</li>
+                              ))}
+                            </ul>
                           )}
                         </div>
-                      </div>
-                    ))}
-                    {allHeadIssues.length > 0 && (
-                      <div className="space-y-2">
-                        {allHeadIssues.map((issue: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-2 px-3 rounded-lg bg-paper border border-rule/40">
-                            <SeverityDot sev={issue.type === 'missing_h1' ? 'high' : 'medium'} />
-                            <span className="text-[12px] text-ink flex-1">{issue.description}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Accessibility section */}
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                    <Accessibility size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Accessibility</h3>
-                    <span className={`ml-auto text-xs font-semibold ${scoreColor(a11yAvg)}`}>{a11yAvg}/100</span>
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Accessibility size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Accessibility</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalA11yIssues} issue{totalA11yIssues !== 1 ? 's' : ''}</span>
                   </div>
-                  <div className="px-5 py-4">
-                    {/* Quick checks grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      {(() => {
-                        const primary = techPages[0]?.tech;
-                        if (!primary) return null;
-                        return (
-                          <>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Lang attribute</span>
-                              <span className={`text-sm font-bold ${primary.hasLangAttribute ? 'text-ok' : 'text-crit'}`}>
-                                {primary.hasLangAttribute ? 'Present' : 'Missing'}
-                              </span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Skip link</span>
-                              <span className={`text-sm font-bold ${primary.hasSkipLink ? 'text-ok' : 'text-warn'}`}>
-                                {primary.hasSkipLink ? 'Present' : 'Missing'}
-                              </span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Landmarks</span>
-                              <span className="text-sm font-bold text-ink">{primary.landmarkCount || 0}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">ARIA attributes</span>
-                              <span className="text-sm font-bold text-ink">{primary.ariaRoleCount || 0}</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    {allA11yIssues.length > 0 ? (
-                      <div className="space-y-2">
-                        {allA11yIssues.map((issue: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-2 px-3 rounded-lg bg-paper border border-rule/40">
-                            <SeverityDot sev={issue.severity} />
-                            <span className="text-[12px] text-ink flex-1">{issue.description}</span>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const a = page.technical_audit?.accessibility || {};
+                      const issues: string[] = a.issues || [];
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className={`text-[11px] font-semibold min-w-[70px] text-right ${issues.length === 0 ? 'text-ok' : 'text-warn'}`}>
+                              {issues.length === 0 ? 'OK' : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[12px] text-m-muted">No accessibility issues detected.</p>
-                    )}
+                          <div className="mt-2 ml-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-m-muted">
+                            <span>lang: {a.hasLangAttribute ? 'yes' : 'no'}</span>
+                            <span>viewport: {a.hasViewportMeta ? 'yes' : 'no'}</span>
+                            <span>main: {a.hasMainLandmark ? 'yes' : 'no'}</span>
+                            <span>skip-link: {a.hasSkipLink ? 'yes' : 'no'}</span>
+                            <span>aria-labels: {a.ariaLabelCount ?? 0}</span>
+                          </div>
+                          {issues.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {issues.map((issue, j) => (
+                                <li key={j} className="text-[11px] text-warn">• {issue}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Links section */}
                 <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                  <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                    <LinkIcon size={14} className="text-signal" strokeWidth={1.75} />
-                    <h3 className="text-sm font-heading font-semibold text-ink">Links</h3>
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <LinkIcon size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Links</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalLinks} total · {totalNonDescriptive} non-descriptive</span>
                   </div>
-                  <div className="px-5 py-4">
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      {(() => {
-                        const totLinks = techPages.reduce((s: number, p: any) => s + (p.tech.totalLinks || 0), 0);
-                        const intLinks = techPages.reduce((s: number, p: any) => s + (p.tech.internalLinks || 0), 0);
-                        const extLinks = techPages.reduce((s: number, p: any) => s + (p.tech.externalLinks || 0), 0);
-                        return (
-                          <>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Total links</span>
-                              <span className="text-sm font-bold text-ink">{totLinks}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">Internal</span>
-                              <span className="text-sm font-bold text-ink">{intLinks}</span>
-                            </div>
-                            <div className="rounded-lg bg-paper border border-rule/60 p-2.5">
-                              <span className="text-[10px] text-m-muted uppercase tracking-wide block">External</span>
-                              <span className="text-sm font-bold text-ink">{extLinks}</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    {allLinkIssues.length > 0 ? (
-                      <div className="space-y-2">
-                        {allLinkIssues.slice(0, 15).map((issue: any, i: number) => (
-                          <div key={i} className="flex items-start gap-2 py-2 px-3 rounded-lg bg-paper border border-rule/40">
-                            <SeverityDot sev="medium" />
-                            <span className="text-[12px] text-ink flex-1">{issue.description}</span>
-                          </div>
-                        ))}
-                        {allLinkIssues.length > 15 && (
-                          <p className="text-[11px] text-m-muted text-center pt-1">+ {allLinkIssues.length - 15} more</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-[12px] text-m-muted">No link issues detected.</p>
-                    )}
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const l = page.technical_audit?.links || {};
+                      return (
+                        <div key={i} className="px-5 py-3 flex items-center gap-3">
+                          <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className="text-[11px] text-m-muted">
+                            {l.internal ?? 0} internal · {l.external ?? 0} external · {l.nofollow ?? 0} nofollow
+                          </span>
+                          <span className={`text-[11px] font-semibold min-w-[110px] text-right ${(l.nonDescriptive || 0) > 0 ? 'text-warn' : 'text-ok'}`}>
+                            {(l.nonDescriptive || 0)} non-descriptive
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-
-                {/* Per-page breakdown */}
-                {techPages.length > 1 && (
-                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                    <div className="px-5 py-3 border-b border-rule/40 flex items-center gap-2">
-                      <Globe size={14} className="text-signal" strokeWidth={1.75} />
-                      <h3 className="text-sm font-heading font-semibold text-ink">Per-page scores</h3>
-                    </div>
-                    <div className="divide-y divide-rule/40">
-                      {techPages.map((p: any, i: number) => (
-                        <div key={i} className="px-5 py-3 flex items-center gap-3">
-                          <span className="text-[12px] text-ink flex-1 truncate">{p.url}</span>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <span className={`text-[11px] font-semibold ${scoreColor(p.tech.overallScore)}`}>{p.tech.overallScore}</span>
-                            <span className="text-[10px] text-m-muted">overall</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })()}
@@ -4197,44 +4128,55 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
             const hasAny = hasProbes || recs.length > 0 || bench;
 
+            const heroScore = typeof bench?.userScore === 'number' ? bench.userScore : (report?.overall_score ?? null);
+            const peerAvg = typeof bench?.benchmark?.avgScore === 'number' ? bench.benchmark.avgScore : null;
+            const heroDelta = (heroScore != null && peerAvg != null) ? heroScore - peerAvg : null;
+
             return (
               <div className="space-y-5">
+                {/* Score hero */}
+                {heroScore != null && (
+                  <div className="rounded-xl border border-rule bg-card p-6 flex flex-col items-center text-center">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-m-muted mb-2">Your score</span>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className="text-[64px] font-bold leading-none tabular-nums text-ink">{heroScore}</span>
+                      <span className="text-[16px] font-medium text-m-muted">/100</span>
+                    </div>
+                    {heroDelta != null && (
+                      heroDelta > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                          style={{ color: 'var(--ok)', background: 'color-mix(in srgb, var(--ok) 12%, transparent)' }}
+                        >
+                          <TrendingUp size={12} /> Ahead of peers · +{heroDelta}
+                        </span>
+                      ) : heroDelta < 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                          style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}
+                        >
+                          <TrendingUp size={12} className="rotate-180" /> Behind peers · {heroDelta}
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full text-m-muted"
+                          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                        >
+                          At industry average
+                        </span>
+                      )
+                    )}
+                  </div>
+                )}
+
                 {/* Compact intro */}
                 <div className="rounded-xl border border-rule bg-card p-4 flex items-start gap-3">
                   <Sparkles size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">Benchmark console</h3>
-                    <p className="text-[12px] text-m-muted leading-relaxed">Your score, how AI models represent your site, how you compare to your industry, and what to do next.</p>
+                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">Benchmark console.</h3>
+                    <p className="text-[12px] text-m-muted leading-relaxed">How AI models represent your site, how you compare to your industry, and the actions most likely to move your score.</p>
                   </div>
                 </div>
-
-                {/* ── Score hero ── */}
-                {bench && (
-                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
-                    <div className="flex flex-col items-center justify-center py-8 px-6">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className={`text-[56px] font-bold leading-none tracking-tight ${scoreColor(bench.userScore)}`}>{bench.userScore}</span>
-                        <span className="text-[20px] font-semibold text-m-muted">/100</span>
-                      </div>
-                      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-m-muted mt-2">Your score</span>
-                      {bench.deltaFromAvg !== 0 && (
-                        <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.04em] ${
-                          bench.deltaFromAvg > 0
-                            ? 'bg-ok/10 text-ok border border-ok/20'
-                            : 'bg-severe/10 text-severe border border-severe/20'
-                        }`}>
-                          <TrendingUp size={12} className={bench.deltaFromAvg < 0 ? 'rotate-180' : ''} />
-                          {bench.deltaFromAvg > 0 ? 'Ahead of peers' : 'Behind peers'} · {bench.deltaFromAvg > 0 ? '+' : ''}{bench.deltaFromAvg}
-                        </div>
-                      )}
-                      {bench.deltaFromAvg === 0 && (
-                        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.04em] bg-paper-2 text-m-muted border border-rule">
-                          At industry average
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* Bottom line — synthesized verdict + next move (only when data supports it) */}
                 {hasAny && (accuracyVerdict || bench || recs.length > 0) && (
@@ -4250,7 +4192,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {' '}
                           <span className="text-m-muted">
                             Average accuracy across {probes.length} model{probes.length !== 1 ? 's' : ''} is {avgAccuracy}%
-                            {totalHallucinated > 0 && `, with ${totalHallucinated} unverified answer${totalHallucinated !== 1 ? 's' : ''}`}.
+                            {totalHallucinated > 0 && `, with ${totalHallucinated} fabricated answer${totalHallucinated !== 1 ? 's' : ''}`}.
                           </span>
                         </p>
                       )}
@@ -4298,38 +4240,27 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-m-muted">
                                 {probe.accurate_count > 0 && <span><span className="font-semibold text-ink">{probe.accurate_count}</span> correct</span>}
                                 {probe.partial_count > 0 && <span><span className="font-semibold text-ink">{probe.partial_count}</span> partial</span>}
-                                {(probe.inaccurate_count || 0) > 0 && (
-                                  <span><span className="font-semibold text-ink">{probe.inaccurate_count}</span> inaccurate</span>
-                                )}
-                                {(probe.hallucinated_count || 0) > 0 && (
-                                  <span><span className="font-semibold text-ink">{probe.hallucinated_count}</span> unverified</span>
+                                {((probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)) > 0 && (
+                                  <span><span className="font-semibold text-ink">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)}</span> wrong</span>
                                 )}
                               </div>
                               {probe.results_json?.length > 0 && (
-                                <div className="mt-3 space-y-2">
-                                  {probe.results_json.map((r: any, j: number) => {
-                                    const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Unverified' : r.accuracy === 'inaccurate' ? 'Inaccurate' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
-                                    const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' ? 'text-amber-500' : r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
-                                    const bgTone = r.accuracy === 'accurate' ? 'bg-ok/5' : r.accuracy === 'partial' ? 'bg-warn/5' : r.accuracy === 'hallucinated' ? 'bg-amber-500/5' : r.accuracy === 'inaccurate' ? 'bg-severe/5' : 'bg-paper-2/50';
-                                    return (
-                                      <details key={j} className={`group rounded-md border border-rule/40 ${bgTone} overflow-hidden`}>
-                                        <summary className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-paper-2/40 transition-colors">
-                                          <span className="text-[11px] font-medium text-ink flex-1 min-w-0 pr-2 truncate">{r.question}</span>
-                                          <div className="flex items-center gap-2 flex-shrink-0">
-                                            <span className={`text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
-                                            <ChevronDown size={12} className="text-m-muted transition-transform group-open:rotate-180" />
-                                          </div>
-                                        </summary>
-                                        <div className="px-3 pb-3 pt-1 border-t border-rule/20">
-                                          <p className="text-[12px] text-ink leading-relaxed whitespace-pre-wrap">{r.answer}</p>
-                                          {r.accuracyNote && r.accuracyNote !== 'Grading unavailable' && (
-                                            <p className="text-[10px] text-m-muted mt-2 italic">{r.accuracyNote}</p>
-                                          )}
+                                <details className="mt-3">
+                                  <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
+                                  <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
+                                    {probe.results_json.map((r: any, j: number) => {
+                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
+                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' || r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
+                                      return (
+                                        <div key={j} className="text-[11px]">
+                                          <p className="font-medium text-ink">{r.question}</p>
+                                          <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
+                                          <span className={`inline-block mt-1 text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
                                         </div>
-                                      </details>
-                                    );
-                                  })}
-                                </div>
+                                      );
+                                    })}
+                                  </div>
+                                </details>
                               )}
                             </div>
                           );
@@ -4342,7 +4273,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           <p className="text-[12px] font-semibold text-ink mb-2">What this means and what to do</p>
                           <p className="text-[12px] text-m-muted leading-relaxed mb-3">
                             {totalHallucinated > 0
-                              ? 'AI models are providing answers about your site that we could not verify from your website content. This may mean your site lacks the structured data AI needs to represent you accurately.'
+                              ? 'AI assistants are fabricating answers about your site. Users asking ChatGPT or similar about you will get wrong information.'
                               : 'AI models lack reliable information about your site. Users relying on AI for research will not learn about you accurately.'}
                           </p>
                           <ol className="space-y-1.5 text-[12px] text-ink-2 leading-relaxed list-decimal list-inside">

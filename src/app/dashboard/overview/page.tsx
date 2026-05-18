@@ -31,11 +31,9 @@ import {
   Share2,
   MoreVertical,
   Link as LinkIcon,
-  Wrench,
   LineChart,
   Check,
   Trash2,
-  Lightbulb,
   ListChecks,
   Info,
   TrendingUp,
@@ -56,16 +54,22 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
+import {
+  buildProviderRows,
+  summarizeCoverage,
+  coverageCaption,
+} from '@/lib/ai-xray/provider-status';
 import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
-  BenchmarksSection,
 } from '@/components/dashboard/AuditDashboard';
 import ScoreRing from '@/components/ui/ScoreRing';
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints';
 import {
   loadLatestAuditBundle,
   moduleScoresFromReport,
+  isInProgressAuditStatus,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
@@ -155,6 +159,7 @@ function OverviewInner() {
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [auditPages, setAuditPages] = useState<AuditPage[]>([]);
   const [brandName, setBrandName] = useState<string | null>(null);
+  const [modelProbes, setModelProbes] = useState<Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>>([]);
 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -187,6 +192,14 @@ function OverviewInner() {
     return () => clearTimeout(t);
   }, [searchParams]);
 
+  // Strip post-Stripe-redirect params once seen. The running-audit
+  // banner driven by bundle.inProgressAudit conveys the actual state;
+  // we just clean the URL so a reload doesn't re-trigger anything.
+  useEffect(() => {
+    if (!searchParams.get('payment') && !searchParams.get('audit')) return;
+    window.history.replaceState({}, '', '/dashboard/overview');
+  }, [searchParams]);
+
   useEffect(() => {
     if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
@@ -203,6 +216,50 @@ function OverviewInner() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
+
+  /* ── Poll in-progress audit until it reaches a terminal state ──
+   *
+   * When the bundle has an in-progress audit for this selection, we
+   * poll its status row every ~7s. When the status flips to
+   * `completed` or `failed`, we refetch the full bundle so the
+   * populated dashboard (or failed-state UI) appears without a
+   * manual reload. We only poll while a non-terminal audit exists —
+   * the interval auto-cancels on unmount, on selection change, or
+   * once the audit terminates.
+   */
+  const inProgressAuditId = bundle?.inProgressAudit?.id || null;
+  useEffect(() => {
+    if (!user || !inProgressAuditId) return;
+    let cancelled = false;
+    const supabase = createBrowserSupabase();
+
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const { data } = await supabase
+          .from('audits')
+          .select('status')
+          .eq('id', inProgressAuditId)
+          .maybeSingle();
+        const status = (data as any)?.status as string | undefined;
+        if (cancelled) return;
+        if (status && !isInProgressAuditStatus(status)) {
+          // Terminal — refetch the whole bundle so the populated
+          // dashboard or the failed-state UI takes over.
+          const next = await loadLatestAuditBundle(user.id, selection);
+          if (!cancelled) setBundle(next);
+        }
+      } catch {
+        /* swallow — next tick will retry */
+      }
+    };
+
+    const interval = setInterval(tick, 7000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user, inProgressAuditId, selection]);
 
   useEffect(() => {
     if (!user || selection?.kind !== 'brand') {
@@ -227,13 +284,23 @@ function OverviewInner() {
   // visit and the loader returned the globally-most-recent audit), write
   // the resolved audit's identity back to the selection store so the
   // sidebar selector + topbar "Viewing X" agree with what the body is
-  // showing. Guarded by an equality check to avoid loops with the
-  // subscribe-driven mirror in DashboardShell.
+  // showing.
+  //
+  // CRITICAL: this only fires when the selection is null/missing. We
+  // must NEVER overwrite a real brand selection with a derived site
+  // selection — that was the brand-selection loop bug. When the user
+  // picked a brand and the loader returned a website-type audit that
+  // belongs to that brand (joined via brand_identity_id), the previous
+  // implementation flipped the selection from {brand:B} to {site:H},
+  // which then made the sidebar visibly switch to the site even though
+  // the user had just picked the brand. Guard against that by only
+  // syncing when the selection is null.
   useEffect(() => {
+    if (selection) return;
     const resolved = bundle?.audit;
     if (!resolved) return;
     let resolvedSel: { kind: 'brand'; brandId: string } | { kind: 'site'; host: string } | null = null;
-    if ((resolved as any).audit_type === 'brand_identity' && (resolved as any).brand_identity_id) {
+    if ((resolved as any).brand_identity_id) {
       resolvedSel = { kind: 'brand', brandId: (resolved as any).brand_identity_id };
     } else if (resolved.product_url) {
       try {
@@ -241,11 +308,7 @@ function OverviewInner() {
         if (host) resolvedSel = { kind: 'site', host };
       } catch {}
     }
-    if (!resolvedSel) return;
-    const matches =
-      (selection?.kind === 'site' && resolvedSel.kind === 'site' && selection.host === resolvedSel.host) ||
-      (selection?.kind === 'brand' && resolvedSel.kind === 'brand' && selection.brandId === resolvedSel.brandId);
-    if (!matches) writeSelection(resolvedSel);
+    if (resolvedSel) writeSelection(resolvedSel);
   }, [bundle, selection]);
 
   const latestCompleted = bundle?.audit && bundle.report ? bundle.audit : null;
@@ -291,7 +354,26 @@ function OverviewInner() {
         .then(d => { if (d.competitors && d.competitors.length > 0) setCompetitors(d.competitors); })
         .catch(() => {});
     }
+
+    // AI X-Ray: pull multi-model probes (Claude / GPT-4o=ChatGPT /
+    // Gemini / Perplexity) for the latest audit.
+    setModelProbes([]);
+    void refreshModelProbes(latestCompleted.id);
   }, [latestCompleted, bundle]);
+
+  const refreshModelProbes = useCallback(async (auditId: string) => {
+    try {
+      const r = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>;
+      setModelProbes(probes);
+    } catch {}
+  }, []);
+
+  const handleXRayRefreshed = useCallback(() => {
+    if (latestCompleted?.id) void refreshModelProbes(latestCompleted.id);
+  }, [latestCompleted, refreshModelProbes]);
 
   const handleBenchmark = useCallback((mode: 'auto' | 'manual', domains?: string[]) => {
     if (!latestCompleted?.product_url) return;
@@ -309,7 +391,10 @@ function OverviewInner() {
 
   const handleStatCardClick = useCallback((filter: string) => {
     if (!latestCompleted || filter === 'passed') return;
-    router.push(`/dashboard/audits/${latestCompleted.id}?tab=findings&severity=${filter}`);
+    // Severity tiles route into Fix (the action view) with a severity
+    // prefilter. Fix is where triage status lives; Find is discovery
+    // and doesn't currently support a severity prefilter via URL.
+    router.push(`/dashboard/fix?severity=${filter}`);
   }, [latestCompleted, router]);
 
   useEffect(() => {
@@ -349,6 +434,40 @@ function OverviewInner() {
     } catch {}
   }, [latestCompleted]);
 
+  // Reload the bundle after a delete from the history card. If the deleted
+  // audit was the one currently displayed at the top of Overview, the card
+  // itself routes us away — otherwise we just refetch so the row vanishes.
+  const handleAuditDeleted = useCallback((deletedAuditId: string) => {
+    if (!user) return;
+    if (bundle?.audit?.id === deletedAuditId) return;
+    loadLatestAuditBundle(user.id, selection).then(setBundle).catch(() => {});
+  }, [user, selection, bundle?.audit?.id]);
+
+  // Quick action "Delete this audit" — the destructive option in the
+  // header dropdown. Surfaced via a small inline confirmation modal so the
+  // user explicitly confirms before the API call.
+  const [headerDeleteOpen, setHeaderDeleteOpen] = useState(false);
+  const [headerDeleting, setHeaderDeleting] = useState(false);
+  const [headerDeleteError, setHeaderDeleteError] = useState<string | null>(null);
+  const handleHeaderDeleteConfirm = useCallback(async () => {
+    if (!latestCompleted) return;
+    setHeaderDeleting(true);
+    setHeaderDeleteError(null);
+    try {
+      const res = await fetch(`/api/audits/${latestCompleted.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Delete failed');
+      }
+      setHeaderDeleteOpen(false);
+      router.push('/dashboard');
+    } catch (e: any) {
+      setHeaderDeleteError(e?.message || 'Delete failed');
+    } finally {
+      setHeaderDeleting(false);
+    }
+  }, [latestCompleted, router]);
+
   /* ── Loading skeleton ─────────────────────────────────── */
   if (authLoading || loading || !ready) {
     return (
@@ -362,6 +481,47 @@ function OverviewInner() {
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-72 rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
         </div>
       </div>
+    );
+  }
+
+  /* ── In-progress state ────────────────────────────────
+   *
+   * An audit exists for the selected brand/site and is still
+   * crawling/analysing/generating. We MUST NOT show the no-audit
+   * run-audit form here — the user just kicked off this audit and
+   * needs to see calm "we're on it" status, not another form.
+   *
+   * This branch fires when there is no completed audit yet for this
+   * selection but there is a non-terminal one. While the user is on
+   * this view, a separate effect polls every ~7s for status updates
+   * and re-fetches the bundle when the audit reaches a terminal
+   * state, so the populated dashboard appears without a manual
+   * reload.
+   */
+  if ((!bundle?.audit || !bundle.report) && bundle?.inProgressAudit) {
+    return (
+      <InProgressOverview
+        audit={bundle.inProgressAudit}
+        brandName={brandName}
+        selection={selection}
+      />
+    );
+  }
+
+  /* ── Failed state ─────────────────────────────────────
+   *
+   * No completed audit, no audit currently running — but the most
+   * recent attempt failed. Show a clear retry CTA instead of the
+   * generic no-audit form so the user understands the previous run
+   * did not complete and can act on it.
+   */
+  if ((!bundle?.audit || !bundle.report) && bundle?.failedAudit) {
+    return (
+      <FailedAuditOverview
+        audit={bundle.failedAudit}
+        brandName={brandName}
+        selection={selection}
+      />
     );
   }
 
@@ -454,30 +614,9 @@ function OverviewInner() {
 
   const hideBenchmarks = (audit as any).audit_type === 'brand_identity' || selection?.kind === 'brand';
 
-  // Priority recommendations.
-  const rawJson = (report.raw_json || null) as any;
-  const recommendationsFromRaw: string[] = Array.isArray(rawJson?.topRecommendations)
-    ? rawJson.topRecommendations.filter((r: any) => typeof r === 'string' && r.trim().length > 0).slice(0, 3)
-    : [];
-  const recommendationsFromKey: string[] = !recommendationsFromRaw.length && report.key_recommendation
-    ? [report.key_recommendation]
-    : [];
-  const recommendationsFromFindings: string[] = !recommendationsFromRaw.length && !recommendationsFromKey.length
-    ? openFindings
-        .filter((f) => (f.severity === 'critical' || f.severity === 'high') && f.recommendation)
-        .slice(0, 3)
-        .map((f) => f.recommendation as string)
-    : [];
-  const priorityRecs = recommendationsFromRaw.length
-    ? recommendationsFromRaw
-    : recommendationsFromKey.length
-      ? recommendationsFromKey
-      : recommendationsFromFindings;
-
-  const alertCritical = severityCounts.critical > 0;
   const execSummary = (report.executive_summary || '').trim();
 
-  // AI readability summary (Row 1, card 4).
+  // AI readability summary (Row 3, AI monitoring card).
   const aiPagesScored = auditPages.filter(p => (p as any).ai_readability?.overallScore != null);
   const avgAi = aiPagesScored.length > 0
     ? Math.round(aiPagesScored.reduce((s, p) => s + ((p as any).ai_readability.overallScore || 0), 0) / aiPagesScored.length)
@@ -487,10 +626,6 @@ function OverviewInner() {
     amber: aiPagesScored.filter(p => (p as any).ai_readability?.status === 'amber' || ((p as any).ai_readability?.overallScore >= 40 && (p as any).ai_readability?.overallScore < 70)).length,
     red:   aiPagesScored.filter(p => (p as any).ai_readability?.status === 'red'   || (p as any).ai_readability?.overallScore < 40).length,
   };
-
-  // History toggle
-  const HISTORY_PREVIEW = 8;
-  const showingAll = showAllHistory || auditCount <= HISTORY_PREVIEW;
 
   return (
     <div className="w-full">
@@ -611,31 +746,25 @@ function OverviewInner() {
                   </button>
                 )}
                 <div className="my-1 h-px" style={{ background: 'var(--rule)' }} />
-                <Link
-                  href="/dashboard/audits"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  <FileSearch size={13} className="text-m-muted" />
-                  View all audits
-                </Link>
                 <button
                   type="button"
-                  disabled
-                  title="Coming soon — audit deletion is not available yet."
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs opacity-50 cursor-not-allowed text-left"
-                  style={{ color: 'var(--m-muted)' }}
+                  onClick={() => { setMenuOpen(false); setHeaderDeleteError(null); setHeaderDeleteOpen(true); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
+                  style={{ color: 'var(--severe)' }}
                 >
                   <Trash2 size={13} />
-                  Delete audit
-                  <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>
+                  Delete this audit
                 </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* ── In-progress re-audit banner (non-blocking) ──── */}
+      {bundle.inProgressAudit && (
+        <RunningAuditBanner audit={bundle.inProgressAudit} />
+      )}
 
       {/* ── Alert / executive summary slot ───────────────── */}
       <AlertOrSummary
@@ -646,20 +775,21 @@ function OverviewInner() {
         completedAt={audit.completed_at || audit.created_at}
       />
 
-      {/* ── Row 1: 4 cards ─────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      {/* ── Row 1: 3 equal summary cards ─────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         {/* 1) Brand Health Score + module dots */}
         <DashboardCard
           title="Brand Health Score"
           subtitle="Latest audit"
           rightLabel={audit.completed_at ? formatDate(audit.completed_at) : null}
+          icon={Heart}
           titleSize="lg"
         >
-          <div className="flex flex-col items-center justify-center pt-1 pb-2">
-            <ScoreRing score={overallScore} size={130} strokeWidth={9} />
-            <p className="text-[11px] mt-2" style={{ color: 'var(--m-muted)' }}>/100</p>
+          <div className="flex flex-col items-center justify-center">
+            <ScoreRing score={overallScore} size={120} strokeWidth={9} />
+            <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>/100</p>
             <span
-              className="text-[11px] font-medium mt-2 px-3 py-0.5 rounded-full"
+              className="text-[11px] font-medium mt-1.5 px-3 py-0.5 rounded-full"
               style={{
                 color: scoreColorVar(overallScore),
                 background: `color-mix(in srgb, ${scoreColorVar(overallScore)} 10%, transparent)`,
@@ -693,6 +823,7 @@ function OverviewInner() {
         <DashboardCard
           title="Score Over Time"
           subtitle={scoreTrend.length >= 2 ? `${scoreTrend.length} audits` : 'Trend appears after next audit'}
+          icon={TrendingUp}
           titleSize="lg"
         >
           {scoreTrend.length >= 2 ? (
@@ -716,6 +847,7 @@ function OverviewInner() {
         <DashboardCard
           title="Heuristic Breakdown"
           subtitle={pillarScores.length >= 3 ? 'Hover a point for the category' : 'Not enough data for radar'}
+          icon={Target}
           titleSize="lg"
         >
           {pillarScores.length >= 3 ? (
@@ -730,59 +862,18 @@ function OverviewInner() {
           )}
         </DashboardCard>
 
-        {/* 4) AI view of this page */}
-        <DashboardCard
-          title="AI view of this page"
-          subtitle={avgAi != null ? `${aiPagesScored.length} of ${auditPages.length || aiPagesScored.length} pages scored` : 'No AI readability data yet'}
-          titleSize="lg"
-        >
-          {avgAi != null ? (
-            <div className="flex flex-col items-center justify-center pt-1">
-              <div className="flex items-baseline gap-1">
-                <span className={`text-[40px] font-bold leading-none tabular-nums ${scoreColor(avgAi)}`}>{avgAi}</span>
-                <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>%</span>
-              </div>
-              <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1" style={{ color: 'var(--m-muted)' }}>
-                Avg readability
-              </p>
-              <div className="mt-3 w-full flex items-center gap-3 text-[11px] justify-center">
-                <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }} /> {aiBuckets.green} green
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--warn)' }} /> {aiBuckets.amber} amber
-                </span>
-                <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--severe)' }} /> {aiBuckets.red} red
-                </span>
-              </div>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-4 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Brain size={26} style={{ color: 'var(--m-muted)', opacity: 0.4 }} className="mb-2" />
-              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                AI readability data appears here after a deeper audit.
-              </p>
-              <Link
-                href={`/dashboard/audits/${audit.id}#ai_xray`}
-                className="text-[11px] font-medium mt-2 hover:underline inline-flex items-center gap-1"
-                style={{ color: 'var(--ink)' }}
-              >
-                Open AI Readability <ChevronRight size={11} />
-              </Link>
-            </div>
-          )}
-        </DashboardCard>
       </div>
 
-      {/* ── Row 2: Audit-style category/module cards (compact 6-col row on wide screens) ── */}
+      {/* ── Row 2: Category module cards — clean by default, expand for breakdown ── */}
+      {pillarScores.length > 0 && (
+        <div className="mb-2 flex items-center gap-2">
+          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+          <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
+          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
+          </p>
+        </div>
+      )}
       {pillarScores.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
           {pillarScores.map((p) => {
@@ -794,158 +885,78 @@ function OverviewInner() {
             const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
             const findingCount = findingsByPillarName[p.name]?.length || 0;
             return (
-              <Link
+              <CategoryModuleCard
                 key={p.name}
-                href={`/dashboard/audits/${audit.id}?tab=findings`}
-                className="text-left rounded-xl overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 group flex flex-col"
-                style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
-              >
-                <div className="flex items-start gap-2 px-3 pt-3 pb-2">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${tint.dot}15` }}
-                  >
-                    <PIcon size={14} style={{ color: tint.dot }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-sans font-medium text-[12px] leading-tight truncate" style={{ color: 'var(--ink)' }} title={p.name}>{p.name}</h3>
-                    <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                      {findingCount} finding{findingCount !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="px-3 pb-2 flex items-baseline gap-1">
-                  <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(p.score)}`}>{p.score}</span>
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
-                </div>
-
-                {pillarCats.length > 0 && (
-                  <div className="px-3 pb-2 pt-2 space-y-1.5 flex-1" style={{ borderTop: `1px solid ${tint.border}` }}>
-                    {pillarCats.slice(0, 4).map((cat, relIdx) => {
-                      const CIcon = CATEGORY_ICONS[start + relIdx] || Sparkles;
-                      return (
-                        <div key={relIdx} className="flex items-center gap-1.5">
-                          <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
-                          <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>{cat.name}</span>
-                          <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div
-                  className="px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium group-hover:gap-2 transition-all mt-auto"
-                  style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
-                >
-                  <span>View findings</span>
-                  <ArrowRight size={10} />
-                </div>
-              </Link>
+                name={p.name}
+                score={p.score}
+                tint={tint}
+                Icon={PIcon}
+                findingCount={findingCount}
+                breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
+                  name: cat.name,
+                  score: cat.score,
+                  Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
+                }))}
+                href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
+              />
             );
           })}
         </div>
       )}
 
-      {/* ── Row 3: Issues · Checkpoint Health · Benchmarks ─ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      {/* ── Row 3: Issues · Benchmarks · AI Monitoring · AI X-Ray ─ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
         />
+        <BenchmarksSummaryCard
+          overallScore={overallScore}
+          competitors={competitors}
+          detecting={detectingCompetitors}
+          onBenchmark={handleBenchmark}
+          hidden={hideBenchmarks}
+        />
+        <AiMonitoringCard
+          avgAi={avgAi}
+          aiBuckets={aiBuckets}
+          aiPagesScored={aiPagesScored.length}
+          totalPages={auditPages.length}
+        />
+        <AIXRayCard
+          probes={modelProbes}
+          auditId={latestCompleted?.id || null}
+          onRefreshed={handleXRayRefreshed}
+        />
+      </div>
+
+      {/* ── Row 4: Checkpoint Health + Audit History ───── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <CheckpointHealthCard
           categoryScores={categoryScores}
           pillarScores={pillarScores}
           findings={openFindings}
           auditId={audit.id}
         />
-        <BenchmarksColumn
-          overallScore={overallScore}
-          pillarScores={pillarScores}
-          competitors={competitors}
-          detecting={detectingCompetitors}
-          onBenchmark={handleBenchmark}
-          hidden={hideBenchmarks}
+        <AuditHistoryCard
+          history={bundle.history}
+          auditCount={auditCount}
+          showAllHistory={showAllHistory}
+          onToggleAll={() => setShowAllHistory((v) => !v)}
+          currentAuditId={audit.id}
+          onDeleted={handleAuditDeleted}
         />
       </div>
 
-      {/* ── Row 3.5: Find/Fix/Track + Priority Recommendations ─ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <FindFixTrackCard severityCounts={severityCounts} />
-        <PriorityRecommendations
-          recs={priorityRecs}
-          findings={openFindings}
-          auditId={audit.id}
+      {headerDeleteOpen && (
+        <ConfirmDeleteAuditModal
+          deleting={headerDeleting}
+          error={headerDeleteError}
+          onCancel={() => { if (!headerDeleting) { setHeaderDeleteOpen(false); setHeaderDeleteError(null); } }}
+          onConfirm={handleHeaderDeleteConfirm}
         />
-      </div>
+      )}
 
-      {/* ── Row 4: Audit history ───────────────────────── */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Audit history</h2>
-        <div className="flex items-center gap-2">
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            {showingAll ? `${auditCount} total` : `Latest ${Math.min(HISTORY_PREVIEW, auditCount)} of ${auditCount}`}
-          </p>
-          {auditCount > HISTORY_PREVIEW && (
-            <button
-              type="button"
-              onClick={() => setShowAllHistory((v) => !v)}
-              className="text-[11px] font-medium hover:underline"
-              style={{ color: 'var(--ink)' }}
-              aria-expanded={showingAll}
-            >
-              {showingAll ? 'Show less' : 'View all'}
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}>
-        <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
-          {(showingAll ? bundle.history : bundle.history.slice(0, HISTORY_PREVIEW)).map((h) => {
-            const a = h.audit;
-            const r = h.report;
-            const meta = statusMeta[a.status] || statusMeta.pending_payment;
-            const Icon = meta.icon;
-            const done = a.status === 'completed';
-            const aLang = langCode((a as any).language);
-            return (
-              <Link
-                key={a.id}
-                href={`/dashboard/audits/${a.id}`}
-                className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row"
-              >
-                <div className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-[11px] text-muted flex-1 min-w-0 flex-wrap">
-                    <span className="text-text font-medium" style={{ color: 'var(--ink)' }}>
-                      {formatDate(a.completed_at || a.created_at)}
-                    </span>
-                    <span className="text-border">·</span>
-                    <span className="flex items-center gap-0.5"><Icon size={10} />{meta.label}</span>
-                    <span className="text-border">·</span>
-                    <span
-                      className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-                      style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}
-                    >
-                      {aLang}
-                    </span>
-                    {done && r?.overall_score != null && (
-                      <>
-                        <span className="text-border">·</span>
-                        <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
-                      </>
-                    )}
-                    {(a as any).depth_mode === 'deep' && (
-                      <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">Deep</span>
-                    )}
-                  </div>
-                  <ChevronRight size={12} className="text-muted/40 group-hover/row:text-brand transition-colors flex-shrink-0" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -976,28 +987,40 @@ function DashboardCard({
   subtitle,
   rightLabel,
   children,
-  titleSize = 'md',
+  icon: Icon,
+  titleSize = 'lg',
 }: {
   title: string;
   subtitle?: string | null;
   rightLabel?: string | null;
   children: React.ReactNode;
+  icon?: React.ElementType;
   titleSize?: 'md' | 'lg';
 }) {
   const titleCls = titleSize === 'lg'
-    ? 'text-[15px] font-semibold leading-tight'
+    ? 'text-[15px] font-semibold leading-tight tracking-[-0.005em]'
     : 'text-[13px] font-semibold leading-tight';
   return (
     <div
-      className="rounded-xl p-4 sm:p-5 flex flex-col"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0">
-          <h3 className={titleCls} style={{ color: 'var(--ink)' }}>{title}</h3>
-          {subtitle && (
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+        <div className="min-w-0 flex items-start gap-2">
+          {Icon && (
+            <span
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+            >
+              <Icon size={14} />
+            </span>
           )}
+          <div className="min-w-0">
+            <h3 className={titleCls} style={{ color: 'var(--ink)' }}>{title}</h3>
+            {subtitle && (
+              <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+            )}
+          </div>
         </div>
         {rightLabel && (
           <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{rightLabel}</span>
@@ -1008,7 +1031,378 @@ function DashboardCard({
   );
 }
 
-/* ── Row 3 — Issues by importance (colored urgency cards) ── */
+/* ── Row 1 — AI monitoring card (clean, responsive, layered click-through) ── */
+function AiMonitoringCard({
+  avgAi,
+  aiBuckets,
+  aiPagesScored,
+  totalPages,
+}: {
+  avgAi: number | null;
+  aiBuckets: { green: number; amber: number; red: number };
+  aiPagesScored: number;
+  totalPages: number;
+}) {
+  const hasData = avgAi != null;
+  const coverageDenom = totalPages || aiPagesScored;
+  const status: { label: string; colorVar: string } = !hasData
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : (avgAi as number) >= 70
+      ? { label: 'Readable to AI', colorVar: '--ok' }
+      : (avgAi as number) >= 40
+        ? { label: 'Partial readability', colorVar: '--warn' }
+        : { label: 'Hard for AI to read', colorVar: '--severe' };
+  const totalBucket = aiBuckets.green + aiBuckets.amber + aiBuckets.red;
+  const pct = (n: number) => (totalBucket > 0 ? (n / totalBucket) * 100 : 0);
+
+  return (
+    <Link
+      href="/dashboard/ai-readability"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open AI Readability deep-dive"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Brain size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI Monitoring</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              Can AI crawlers parse and extract from your pages?
+            </p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
+          style={{ color: 'var(--m-muted)' }}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {hasData ? (
+          <>
+            <div className="flex items-end gap-3">
+              <div className="flex items-baseline gap-1">
+                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avgAi as number)}`}>
+                  {avgAi}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+              </div>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+                style={{
+                  color: `var(${status.colorVar})`,
+                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+                }}
+              >
+                {status.label}
+              </span>
+            </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+              Avg AI readability
+            </p>
+
+            {/* Stacked coverage bar */}
+            {totalBucket > 0 && (
+              <div className="mt-4">
+                <div
+                  className="h-1.5 w-full rounded-full overflow-hidden flex"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+                >
+                  {aiBuckets.green > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.green)}%`, background: 'var(--ok)' }} />
+                  )}
+                  {aiBuckets.amber > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.amber)}%`, background: 'var(--warn)' }} />
+                  )}
+                  {aiBuckets.red > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.red)}%`, background: 'var(--severe)' }} />
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                  <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ok)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.green}</span> good
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.amber}</span> ok
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--severe)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.red}</span> poor
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] mt-auto pt-3" style={{ color: 'var(--m-muted)' }}>
+              Coverage: {aiPagesScored} of {coverageDenom} page{coverageDenom === 1 ? '' : 's'} scored
+            </p>
+          </>
+        ) : (
+          <div className="flex flex-col items-start gap-2 py-2">
+            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+              We check what AI crawlers can actually parse and extract from each page — headings, metadata, structured data, and machine-readable signals.
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Run a deeper audit to populate this view.
+            </p>
+            <span
+              className="text-[11px] font-semibold mt-2 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              Open AI Readability <ChevronRight size={11} />
+            </span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+/* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Gemini, Perplexity) ──
+ *
+ * Surfaces multi-model probes from /api/audits/intelligence. Per-provider
+ * status, error labels (incl. quota/billing), and the coverage-aware
+ * average are computed by the shared helper so this card and the full
+ * /dashboard/ai-readability section stay in lock-step.
+ */
+function AIXRayCard({
+  probes,
+  auditId,
+  onRefreshed,
+}: {
+  probes: Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>;
+  auditId: string | null;
+  onRefreshed?: () => void;
+}) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [refreshOk, setRefreshOk] = useState(false);
+
+  const handleRefresh = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!auditId || refreshing) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    setRefreshOk(false);
+    try {
+      const res = await fetch(`/api/audits/${auditId}/rescan-xray`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRefreshError(typeof data?.error === 'string' ? data.error : 'Re-scan failed');
+      } else {
+        setRefreshOk(true);
+        onRefreshed?.();
+        setTimeout(() => setRefreshOk(false), 2500);
+      }
+    } catch {
+      setRefreshError('Re-scan failed');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [auditId, refreshing, onRefreshed]);
+
+  const rows = buildProviderRows(probes);
+  const coverage = summarizeCoverage(rows);
+  const avg = coverage.average;
+  const coverageNote = coverageCaption(coverage);
+  const status: { label: string; colorVar: string } = avg == null
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : avg >= 70
+      ? { label: 'AI knows you', colorVar: '--ok' }
+      : avg >= 40
+        ? { label: 'Partial visibility', colorVar: '--warn' }
+        : { label: 'Invisible to AI', colorVar: '--severe' };
+
+  return (
+    <Link
+      href="/dashboard/ai-readability#x-ray"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open AI X-Ray"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Sparkles size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              What Claude, ChatGPT, Gemini &amp; Perplexity currently say about you
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={!auditId || refreshing}
+            className="p-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: 'var(--m-muted)' }}
+            aria-label={refreshing ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray'}
+            title={
+              refreshing
+                ? 'Re-scanning…'
+                : refreshOk
+                  ? 'Re-scan complete'
+                  : refreshError
+                    ? refreshError
+                    : coverage.hasQuotaError
+                      ? `Re-scan AI X-Ray. Note: ${coverage.quotaBlockedProviderLabels.join(', ')} will keep failing until provider quota/billing is restored.`
+                      : 'Re-scan AI X-Ray (probes models only)'
+            }
+          >
+            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <ChevronRight
+            size={14}
+            className="mt-1 transition-transform group-hover:translate-x-0.5"
+            style={{ color: 'var(--m-muted)' }}
+          />
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {avg != null ? (
+          <div className="flex items-end gap-3">
+            <div className="flex items-baseline gap-1">
+              <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avg)}`}>
+                {avg}
+              </span>
+              <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+            </div>
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+              style={{
+                color: `var(${status.colorVar})`,
+                background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+              }}
+            >
+              {status.label}
+            </span>
+          </div>
+        ) : (
+          <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+            We ask each AI model what it knows about your brand and score the answer.
+          </p>
+        )}
+
+        {avg != null && (
+          <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+            Avg accuracy across {coverage.measuredCount} of {coverage.totalCount} models
+          </p>
+        )}
+        {coverageNote && avg != null && (
+          <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            {coverageNote}
+          </p>
+        )}
+
+        {/* Per-platform rows */}
+        <ul className="mt-4 space-y-1.5">
+          {rows.map((r) => {
+            const measuredRow = r.score != null;
+            const colorVar = !measuredRow
+              ? '--m-muted'
+              : (r.score as number) >= 70
+                ? '--ok'
+                : (r.score as number) >= 40
+                  ? '--warn'
+                  : '--severe';
+            const iconKey = providerKeyToIcon(r.key);
+            return (
+              <li key={r.key} className="flex items-center gap-2 text-[11px]">
+                <span
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
+                  style={{
+                    background: 'var(--paper)',
+                    border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)',
+                  }}
+                  aria-hidden
+                >
+                  {iconKey ? <AIProviderIcon provider={iconKey} size={20} /> : null}
+                </span>
+                <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
+                  {r.label}
+                </span>
+                {measuredRow ? (
+                  <>
+                    <span
+                      className="h-1.5 rounded-full overflow-hidden flex-shrink-0"
+                      style={{ width: 56, background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+                    >
+                      <span
+                        className="block h-full"
+                        style={{ width: `${r.score}%`, background: `var(${colorVar})` }}
+                      />
+                    </span>
+                    <span
+                      className="tabular-nums font-semibold w-7 text-right"
+                      style={{ color: `var(${colorVar})` }}
+                    >
+                      {r.score}
+                    </span>
+                  </>
+                ) : (
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{
+                      color: r.status === 'error' ? 'var(--severe)' : 'var(--m-muted)',
+                    }}
+                    title={r.statusTooltip}
+                  >
+                    {r.statusLabel}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+
+        {(refreshing || refreshError || refreshOk) && (
+          <p
+            className="text-[10px] mt-2"
+            style={{ color: refreshError ? 'var(--severe)' : refreshOk ? 'var(--ok)' : 'var(--m-muted)' }}
+          >
+            {refreshing ? 'Re-scanning model probes…' : refreshError ? refreshError : 'Re-scan complete'}
+          </p>
+        )}
+
+        {coverage.hasQuotaError && !refreshing && (
+          <p className="text-[10px] mt-2" style={{ color: 'var(--warn)' }}>
+            {coverage.quotaBlockedProviderLabels.join(', ')} quota exceeded — Re-scan will keep failing until provider billing is restored.
+          </p>
+        )}
+
+        <span
+          className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
+          style={{ color: 'var(--ink)' }}
+        >
+          {avg != null ? 'Open AI X-Ray' : 'Run an audit to populate'} <ChevronRight size={11} />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+/* ── Row 3 — Issues by importance: 2×2 grid of soft tinted cards (dot + label, big number, helper, chevron) ── */
 function IssuesByImportance({
   severityCounts,
   onCardClick,
@@ -1018,16 +1412,30 @@ function IssuesByImportance({
 }) {
   const total =
     severityCounts.critical + severityCounts.high + severityCounts.medium + severityCounts.low;
-  const rows: Array<{ key: string; label: string; count: number; colorVar: string }> = [
-    { key: 'critical', label: 'Critical', count: severityCounts.critical, colorVar: '--severe' },
-    { key: 'high', label: 'High', count: severityCounts.high, colorVar: '--warn' },
-    { key: 'medium', label: 'Medium', count: severityCounts.medium, colorVar: '--signal' },
-    { key: 'low', label: 'Low', count: severityCounts.low, colorVar: '--ok' },
+  // Passed checks proxy: when nothing is flagged we still show a positive count tile.
+  // We use the open severity counts only; the right-most "Passed" tile mirrors the
+  // audit page stat-card layout, using a simple derived value (total of low-impact
+  // improvements already handled inline). Here we expose Critical / High / Medium / Low
+  // so all four severities have a clear discoverable home in 2×2.
+  const tiles: Array<{
+    key: string;
+    label: string;
+    count: number;
+    helper: string;
+    colorVar: string;
+    clickable: boolean;
+  }> = [
+    { key: 'critical', label: 'Critical', count: severityCounts.critical, helper: 'Needs immediate attention', colorVar: '--severe', clickable: severityCounts.critical > 0 },
+    { key: 'high',     label: 'High',     count: severityCounts.high,     helper: 'High impact issues to fix',  colorVar: '--warn',   clickable: severityCounts.high > 0 },
+    { key: 'medium',   label: 'Medium',   count: severityCounts.medium,   helper: 'Should improve soon',        colorVar: '--signal', clickable: severityCounts.medium > 0 },
+    { key: 'low',      label: 'Low',      count: severityCounts.low,      helper: 'Low impact improvements',    colorVar: '--ok',     clickable: severityCounts.low > 0 },
   ];
+
   return (
     <DashboardCard
       title="Issues by importance"
       subtitle={total === 0 ? 'No open issues — nice.' : `${total} open issue${total === 1 ? '' : 's'}`}
+      icon={AlertTriangle}
       titleSize="lg"
     >
       {total === 0 ? (
@@ -1041,110 +1449,419 @@ function IssuesByImportance({
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>All clear at the moment.</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {rows.map((r) => (
-            <li key={r.key}>
-              <button
-                type="button"
-                onClick={() => onCardClick?.(r.key)}
-                className="w-full text-left rounded-lg px-3 py-2.5 transition-colors flex items-center gap-3 hover:shadow-sm"
+        <div className="grid grid-cols-2 gap-2.5">
+          {tiles.map((t) => {
+            const interactive = t.clickable && !!onCardClick;
+            const Tag: any = interactive ? 'button' : 'div';
+            return (
+              <Tag
+                key={t.key}
+                {...(interactive
+                  ? {
+                      type: 'button',
+                      onClick: () => onCardClick?.(t.key),
+                      'aria-label': `${t.count} ${t.label.toLowerCase()} severity issues — open in Fix`,
+                    }
+                  : {})}
+                className={`text-left rounded-xl px-3 py-3 flex flex-col gap-1 transition-all ${
+                  interactive ? 'hover:shadow-sm hover:-translate-y-0.5 cursor-pointer group' : 'opacity-90'
+                }`}
                 style={{
-                  background: `color-mix(in srgb, var(${r.colorVar}) 6%, transparent)`,
-                  border: `1px solid color-mix(in srgb, var(${r.colorVar}) 18%, transparent)`,
-                  color: `var(${r.colorVar})`,
+                  background: `color-mix(in srgb, var(${t.colorVar}) 7%, transparent)`,
+                  border: `1px solid color-mix(in srgb, var(${t.colorVar}) 20%, transparent)`,
                 }}
-                aria-label={`${r.count} ${r.label.toLowerCase()} severity issues`}
               >
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: `var(${r.colorVar})` }}
-                />
-                <span className="text-[12px] font-semibold flex-1" style={{ color: `var(${r.colorVar})` }}>{r.label}</span>
-                <span className="text-[16px] font-bold tabular-nums" style={{ color: `var(${r.colorVar})` }}>
-                  {r.count}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: `var(${t.colorVar})` }}
+                  />
+                  <span
+                    className="text-[11px] font-semibold tracking-tight truncate"
+                    style={{ color: `var(${t.colorVar})` }}
+                  >
+                    {t.label} Issues
+                  </span>
+                </div>
+                <p
+                  className="text-[28px] leading-none font-bold tabular-nums mt-0.5"
+                  style={{ color: `var(${t.colorVar})` }}
+                >
+                  {t.count}
+                </p>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <p
+                    className="text-[10px] leading-snug truncate"
+                    style={{ color: 'var(--m-muted)' }}
+                    title={t.helper}
+                  >
+                    {t.helper}
+                  </p>
+                  {interactive && (
+                    <ChevronRight
+                      size={12}
+                      className="flex-shrink-0 transition-transform group-hover:translate-x-0.5"
+                      style={{ color: `color-mix(in srgb, var(${t.colorVar}) 65%, transparent)` }}
+                    />
+                  )}
+                </div>
+              </Tag>
+            );
+          })}
+        </div>
       )}
     </DashboardCard>
   );
 }
 
 /* ── Row 3 — Priority recommendations ────────────────── */
-function PriorityRecommendations({
-  recs,
-  findings,
-  auditId,
+/* ── Row 2 — Category module card with collapsible breakdown ── */
+function CategoryModuleCard({
+  name,
+  score,
+  tint,
+  Icon,
+  findingCount,
+  breakdown,
+  href,
 }: {
-  recs: string[];
-  findings: AuditFinding[];
-  auditId: string;
+  name: string;
+  score: number;
+  tint: { dot: string; bg: string; border: string };
+  Icon: React.ElementType;
+  findingCount: number;
+  breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
+  href: string;
 }) {
-  const topFindings = findings
-    .filter((f) => (f.severity === 'critical' || f.severity === 'high') && f.recommendation)
-    .slice(0, 3);
-
+  const [expanded, setExpanded] = useState(false);
   return (
-    <DashboardCard
-      title="Priority recommendations"
-      subtitle={recs.length > 0 ? `Top ${recs.length} action${recs.length === 1 ? '' : 's'}` : 'Nothing flagged'}
-      titleSize="lg"
+    <div
+      className="rounded-xl overflow-hidden flex flex-col"
+      style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
     >
-      {recs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <Lightbulb size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2" />
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            No priority recommendations from the latest audit.
+      <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: `${tint.dot}15` }}
+        >
+          <Icon size={14} style={{ color: tint.dot }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3
+            className="font-sans font-semibold text-[12.5px] leading-tight truncate"
+            style={{ color: 'var(--ink)' }}
+            title={name}
+          >
+            {name}
+          </h3>
+          <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+            {findingCount} finding{findingCount !== 1 ? 's' : ''}
           </p>
         </div>
-      ) : (
-        <ul className="space-y-2">
-          {recs.slice(0, 3).map((rec, i) => {
-            const linkedFinding = topFindings[i];
+      </div>
+
+      <div className="px-3 pb-2 flex items-baseline gap-1">
+        <span className={`text-[22px] font-bold leading-none tabular-nums ${scoreColor(score)}`}>{score}</span>
+        <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>/100</span>
+      </div>
+
+      {breakdown.length > 0 && expanded && (
+        <div className="px-3 pb-2 pt-2 space-y-1.5" style={{ borderTop: `1px solid ${tint.border}` }}>
+          {breakdown.map((cat, i) => {
+            const CIcon = cat.Icon;
             return (
-              <li
-                key={i}
-                className="rounded-lg p-3"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-              >
-                <div className="flex items-start gap-2">
-                  <span
-                    className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-semibold"
-                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                    aria-hidden="true"
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="text-[12px] leading-snug line-clamp-3"
-                      style={{ color: 'var(--ink)' }}
-                    >
-                      {rec}
-                    </p>
-                    {linkedFinding && (
-                      <Link
-                        href={`/dashboard/audits/${auditId}?finding=${linkedFinding.id}`}
-                        className="text-[10px] mt-1.5 inline-flex items-center gap-0.5 hover:underline"
-                        style={{ color: 'var(--m-muted)' }}
-                      >
-                        View finding <ChevronRight size={10} />
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </li>
+              <div key={i} className="flex items-center gap-1.5">
+                <CIcon size={10} className="flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+                <span className="flex-1 text-[10px] truncate" style={{ color: 'var(--ink)' }} title={cat.name}>
+                  {cat.name}
+                </span>
+                <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreColor(cat.score)}`}>{cat.score}</span>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
-    </DashboardCard>
+
+      <div
+        className="mt-auto px-3 py-1.5 flex items-center justify-between gap-1 text-[10px] font-medium"
+        style={{ borderTop: `1px solid ${tint.border}`, color: tint.dot }}
+      >
+        <Link href={href} className="inline-flex items-center gap-1 hover:gap-1.5 transition-all">
+          <span>View findings</span>
+          <ArrowRight size={10} />
+        </Link>
+        {breakdown.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="inline-flex items-center gap-0.5 hover:opacity-80 transition-opacity"
+            aria-expanded={expanded}
+            aria-label={expanded ? `Hide ${name} breakdown` : `Show ${name} breakdown`}
+          >
+            <span>{expanded ? 'Hide' : 'Breakdown'}</span>
+            <ChevronDown
+              size={10}
+              className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
-/* ── Row 3 — Checkpoint Health: full list with expandable rows ── */
+/* ── Row 4 — Audit history card ───────────────────────── */
+function AuditHistoryCard({
+  history,
+  auditCount,
+  showAllHistory,
+  onToggleAll,
+  currentAuditId,
+  onDeleted,
+}: {
+  history: LatestAuditBundle['history'];
+  auditCount: number;
+  showAllHistory: boolean;
+  onToggleAll: () => void;
+  currentAuditId: string;
+  onDeleted: (deletedAuditId: string) => void;
+}) {
+  const router = useRouter();
+  const PREVIEW = 8;
+  const showingAll = showAllHistory || auditCount <= PREVIEW;
+  const rows = showingAll ? history : history.slice(0, PREVIEW);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/audits/${pendingDeleteId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Delete failed');
+      }
+      const deletedId = pendingDeleteId;
+      setPendingDeleteId(null);
+      onDeleted(deletedId);
+      // If the user just deleted the audit currently displayed on Overview,
+      // bounce them to the dashboard root so we don't render stale state.
+      if (deletedId === currentAuditId) {
+        router.push('/dashboard');
+      } else {
+        router.refresh();
+      }
+    } catch (e: any) {
+      setDeleteError(e?.message || 'Delete failed');
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDeleteId, onDeleted, currentAuditId, router]);
+
+  return (
+    <section
+      className="rounded-xl flex flex-col overflow-hidden h-full"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-labelledby="audit-history-heading"
+    >
+      <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <Clock size={14} />
+          </span>
+          <div className="min-w-0">
+            <h2
+              id="audit-history-heading"
+              className="text-[15px] font-semibold leading-tight tracking-[-0.005em]"
+              style={{ color: 'var(--ink)' }}
+            >
+              Audit history
+            </h2>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              {showingAll
+                ? `${auditCount} total audit${auditCount === 1 ? '' : 's'}`
+                : `Latest ${Math.min(PREVIEW, auditCount)} of ${auditCount}`}
+            </p>
+          </div>
+        </div>
+        {auditCount > PREVIEW && (
+          <button
+            type="button"
+            onClick={onToggleAll}
+            className="text-[11px] font-medium hover:underline"
+            style={{ color: 'var(--ink)' }}
+            aria-expanded={showingAll}
+          >
+            {showingAll ? 'Show less' : 'View all'}
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-[520px] overflow-y-auto divide-y" style={{ borderColor: 'var(--rule)' }}>
+        {rows.map((h) => {
+          const a = h.audit;
+          const r = h.report;
+          const meta = statusMeta[a.status] || statusMeta.pending_payment;
+          const Icon = meta.icon;
+          const done = a.status === 'completed';
+          const aLang = langCode((a as any).language);
+          return (
+            <div
+              key={a.id}
+              className="flex items-center hover:bg-black/[0.02] transition-colors group/row"
+            >
+              <Link
+                href={`/dashboard/audits/${a.id}`}
+                className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3"
+              >
+                <div className="flex items-center gap-2 text-[11px] flex-1 min-w-0 flex-wrap">
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>
+                    {formatDate(a.completed_at || a.created_at)}
+                  </span>
+                  <span style={{ color: 'var(--rule)' }}>·</span>
+                  <span className="flex items-center gap-0.5" style={{ color: 'var(--m-muted)' }}>
+                    <Icon size={10} />
+                    {meta.label}
+                  </span>
+                  <span style={{ color: 'var(--rule)' }}>·</span>
+                  <span
+                    className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+                    style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}
+                  >
+                    {aLang}
+                  </span>
+                  {done && r?.overall_score != null && (
+                    <>
+                      <span style={{ color: 'var(--rule)' }}>·</span>
+                      <span className={`font-medium ${scoreColor(r.overall_score)}`}>{r.overall_score} pts</span>
+                    </>
+                  )}
+                  {(a as any).depth_mode === 'deep' && (
+                    <span className="text-[10px] font-semibold text-brand bg-brand/10 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                      Deep
+                    </span>
+                  )}
+                </div>
+                <ChevronRight
+                  size={12}
+                  className="group-hover/row:text-brand transition-colors flex-shrink-0"
+                  style={{ color: 'var(--m-muted)', opacity: 0.5 }}
+                />
+              </Link>
+              <button
+                type="button"
+                onClick={() => { setDeleteError(null); setPendingDeleteId(a.id); }}
+                title="Delete this audit"
+                aria-label={`Delete audit from ${formatDate(a.completed_at || a.created_at)}`}
+                className="flex-shrink-0 mr-3 ml-1 w-7 h-7 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/40 opacity-60 hover:opacity-100"
+                style={{ color: 'var(--m-muted)' }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {pendingDeleteId && (
+        <ConfirmDeleteAuditModal
+          deleting={deleting}
+          error={deleteError}
+          onCancel={() => { if (!deleting) { setPendingDeleteId(null); setDeleteError(null); } }}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+    </section>
+  );
+}
+
+/* ── Reusable confirm delete modal ────────────────────── */
+function ConfirmDeleteAuditModal({
+  deleting,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  deleting: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !deleting) onCancel(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onCancel, deleting]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-audit-heading"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: 'rgba(20,19,15,0.45)' }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !deleting) onCancel(); }}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl shadow-xl"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <div className="flex items-start gap-3">
+            <span
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--severe) 10%, transparent)', color: 'var(--severe)' }}
+            >
+              <Trash2 size={16} />
+            </span>
+            <div className="min-w-0">
+              <h3 id="delete-audit-heading" className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                Delete this audit?
+              </h3>
+              <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                This permanently removes the audit, its report, findings, and crawled pages. This cannot be undone.
+              </p>
+            </div>
+          </div>
+          {error && (
+            <p className="text-[12px] mt-3 px-3 py-2 rounded-md" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 8%, transparent)' }}>
+              {error}
+            </p>
+          )}
+        </div>
+        <div className="px-5 pb-5 pt-2 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+            className="text-[12px] font-medium px-3 py-2 rounded-lg hover:bg-black/[0.04] transition-colors disabled:opacity-50"
+            style={{ color: 'var(--ink)' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="text-[12px] font-semibold px-3 py-2 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-1.5"
+            style={{ background: 'var(--severe)', color: '#ffffff' }}
+          >
+            <Trash2 size={12} />
+            {deleting ? 'Deleting…' : 'Delete audit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Row 4 — Checkpoint Health: full list with expandable rows ── */
 function CheckpointHealthCard({
   categoryScores,
   pillarScores,
@@ -1191,17 +1908,25 @@ function CheckpointHealthCard({
 
   return (
     <div
-      className="rounded-xl flex flex-col overflow-hidden"
+      className="rounded-xl flex flex-col overflow-hidden h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
     >
       <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>Checkpoint health</h3>
-          {totalCategories > 0 && (
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              {totalCategories * 4} checkpoints across {totalCategories} categories
-            </p>
-          )}
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <ListChecks size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Checkpoint health</h3>
+            {totalCategories > 0 && (
+              <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+                {totalCategories * 4} checkpoints across {totalCategories} categories
+              </p>
+            )}
+          </div>
         </div>
         {totalIssues > 0 && (
           <span className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: 'var(--m-muted)' }}>
@@ -1277,7 +2002,7 @@ function CheckpointHealthCard({
                             </p>
                             {finding && (
                               <Link
-                                href={`/dashboard/audits/${auditId}?finding=${finding.id}`}
+                                href={`/dashboard/fix#finding-${finding.id}`}
                                 className="text-[11px] mt-0.5 line-clamp-1 hover:underline"
                                 style={{ color: 'var(--m-muted)' }}
                               >
@@ -1305,17 +2030,15 @@ function CheckpointHealthCard({
   );
 }
 
-/* ── Row 3 — Benchmarks column ────────────────────────── */
-function BenchmarksColumn({
+/* ── Row 3 — Benchmarks summary card (layered: clean summary → deep-dive on click) ── */
+function BenchmarksSummaryCard({
   overallScore,
-  pillarScores,
   competitors,
   detecting,
   onBenchmark,
   hidden,
 }: {
   overallScore: number;
-  pillarScores: Array<{ name: string; score: number }>;
   competitors: Array<{ domain: string; score: number; pillarScores?: Array<{ name: string; score: number }> }>;
   detecting: boolean;
   onBenchmark: (mode: 'auto' | 'manual', domains?: string[]) => void;
@@ -1326,6 +2049,7 @@ function BenchmarksColumn({
       <DashboardCard
         title="Benchmarks"
         subtitle="Not available for brand audits"
+        icon={LineChart}
         titleSize="lg"
       >
         <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -1337,108 +2061,141 @@ function BenchmarksColumn({
       </DashboardCard>
     );
   }
-  return (
-    <div className="[&>div]:mb-0 [&>div]:h-full">
-      <BenchmarksSection
-        overallScore={overallScore}
-        pillarScores={pillarScores}
-        competitors={competitors}
-        detecting={detecting}
-        onBenchmark={onBenchmark}
-      />
-    </div>
-  );
-}
 
-/* ── Row 3.5 — Find / Fix / Track grouped card ─────────── */
-function FindFixTrackCard({
-  severityCounts,
-}: {
-  severityCounts: { critical: number; high: number; medium: number; low: number };
-}) {
-  const topPainCount = severityCounts.critical + severityCounts.high;
-  const items: Array<{
-    href: string;
-    title: string;
-    subtitle: string;
-    body: string;
-    icon: React.ElementType;
-    accentVar: string;
-  }> = [
-    {
-      href: '/dashboard/find',
-      title: 'Find',
-      subtitle: 'Identify issues',
-      body: topPainCount > 0
-        ? `${topPainCount} high-impact issue${topPainCount === 1 ? '' : 's'} waiting to be triaged.`
-        : 'See every open issue, ranked by impact on your score.',
-      icon: Search,
-      accentVar: 'var(--severe)',
-    },
-    {
-      href: '/dashboard/fix',
-      title: 'Fix',
-      subtitle: 'Take action',
-      body: 'Work through recommended fixes with copy-paste guidance and snippets.',
-      icon: Wrench,
-      accentVar: 'var(--warn)',
-    },
-    {
-      href: '/dashboard/track',
-      title: 'Track',
-      subtitle: 'Monitor improvement',
-      body: 'Watch your Brand Health Score move as you ship fixes over time.',
-      icon: LineChart,
-      accentVar: 'var(--ok)',
-    },
-  ];
+  const top = competitors.slice(0, 5);
+  const hasCompetitors = top.length > 0;
+  const compScores = top.map(c => c.score);
+  const avgCompetitor = compScores.length > 0
+    ? Math.round(compScores.reduce((s, n) => s + n, 0) / compScores.length)
+    : null;
+  const delta = avgCompetitor != null ? overallScore - avgCompetitor : null;
+  const status: { label: string; colorVar: string } = !hasCompetitors
+    ? { label: 'Awaiting data', colorVar: '--m-muted' }
+    : delta == null
+      ? { label: 'Tracking', colorVar: '--m-muted' }
+      : delta >= 5
+        ? { label: 'Ahead of peers', colorVar: '--ok' }
+        : delta <= -5
+          ? { label: 'Behind peers', colorVar: '--severe' }
+          : { label: 'On par', colorVar: '--warn' };
+
   return (
-    <DashboardCard
-      title="Find · Fix · Track"
-      subtitle="Your remediation workflow"
-      titleSize="lg"
+    <Link
+      href="/dashboard/intelligence"
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-label="Open competitive benchmarks"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {items.map((it) => {
-          const Icon = it.icon;
-          return (
-            <Link
-              key={it.title}
-              href={it.href}
-              className="group rounded-xl p-3 transition-all hover:shadow-sm flex flex-col gap-2 relative overflow-hidden"
-              style={{
-                background: 'var(--card)',
-                border: '1px solid var(--rule)',
-                borderLeft: `3px solid ${it.accentVar}`,
-              }}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: `color-mix(in srgb, ${it.accentVar} 12%, transparent)`,
-                    color: it.accentVar,
-                  }}
-                >
-                  <Icon size={13} strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>{it.title}</p>
-                  <p
-                    className="text-[9px] font-semibold uppercase tracking-[0.05em] leading-tight mt-0.5"
-                    style={{ color: it.accentVar }}
-                  >
-                    {it.subtitle}
-                  </p>
-                </div>
-                <ChevronRight size={12} className="ml-auto group-hover:translate-x-0.5 transition-transform" style={{ color: 'var(--m-muted)' }} />
-              </div>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>{it.body}</p>
-            </Link>
-          );
-        })}
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0 flex items-start gap-2">
+          <span
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <LineChart size={14} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
+            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
+              {hasCompetitors
+                ? `vs. ${top.length} competitor${top.length === 1 ? '' : 's'}`
+                : 'Compare against competitors'}
+            </p>
+          </div>
+        </div>
+        <ChevronRight
+          size={14}
+          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
+          style={{ color: 'var(--m-muted)' }}
+        />
       </div>
-    </DashboardCard>
+
+      {/* Body */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {detecting ? (
+          <div className="flex flex-col items-center justify-center text-center py-4 flex-1">
+            <Sparkles size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2 animate-pulse" />
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Analysing competitors…</p>
+          </div>
+        ) : hasCompetitors ? (
+          <>
+            <div className="flex items-end gap-3">
+              <div className="flex items-baseline gap-1">
+                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(overallScore)}`}>
+                  {overallScore}
+                </span>
+                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+              </div>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
+                style={{
+                  color: `var(${status.colorVar})`,
+                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
+                }}
+              >
+                {status.label}
+                {delta != null && delta !== 0 && (
+                  <> · {delta > 0 ? '+' : ''}{delta}</>
+                )}
+              </span>
+            </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+              Your score
+            </p>
+
+            {/* Compact competitor rows */}
+            <ul className="mt-4 space-y-1.5">
+              {top.map((c) => {
+                const cDelta = overallScore - c.score;
+                return (
+                  <li key={c.domain} className="flex items-center gap-2 text-[11px]">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: 'var(--m-muted)', opacity: 0.5 }}
+                    />
+                    <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }} title={c.domain}>
+                      {c.domain}
+                    </span>
+                    <span className={`tabular-nums font-semibold ${scoreColor(c.score)}`}>{c.score}</span>
+                    <span
+                      className="tabular-nums text-[10px] w-9 text-right"
+                      style={{
+                        color: cDelta > 0 ? 'var(--ok)' : cDelta < 0 ? 'var(--severe)' : 'var(--m-muted)',
+                      }}
+                    >
+                      {cDelta > 0 ? `+${cDelta}` : cDelta}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <span
+              className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              Open benchmarks <ChevronRight size={11} />
+            </span>
+          </>
+        ) : (
+          <div className="flex flex-col items-start gap-2 py-2">
+            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+              No competitors configured yet.
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Add up to 5 competitor domains, or auto-detect suggestions. You stay in control.
+            </p>
+            <span
+              className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
+            >
+              Configure benchmarks <ChevronRight size={11} />
+            </span>
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 
@@ -1476,7 +2233,7 @@ function AlertOrSummary({
           </p>
         </div>
         <Link
-          href={`/dashboard/audits/${latestAuditId}?tab=findings&severity=critical`}
+          href={`/dashboard/fix?severity=critical`}
           className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg"
           style={{ background: 'var(--severe)', color: '#fff' }}
         >
@@ -1515,6 +2272,334 @@ function AlertOrSummary({
         Latest audit completed {formatDate(completedAt)} ·{' '}
         <span className="font-semibold" style={{ color: 'var(--ink)' }}>{overallScore}/100</span> Brand Health Score
       </p>
+    </div>
+  );
+}
+
+/* ── Running audit banner (shown above populated dashboard) ──
+ *
+ * When a completed audit already exists and a new audit is currently
+ * running for the same selection (e.g. user clicked Re-audit), show
+ * a calm non-blocking banner. The populated dashboard still renders
+ * underneath; the parent component polls and re-fetches the bundle
+ * when the running audit terminates so the user sees fresh data
+ * without reloading.
+ */
+function RunningAuditBanner({ audit }: { audit: Audit }) {
+  const meta = statusMeta[audit.status] || statusMeta.payment_received;
+  const StatusIcon = meta.icon;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="mb-4 px-4 py-2.5 rounded-xl flex items-center gap-3"
+      style={{
+        background: 'color-mix(in srgb, var(--signal) 6%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)',
+      }}
+    >
+      <span
+        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+      >
+        <StatusIcon size={13} className="animate-pulse" />
+      </span>
+      <p className="text-[12px] flex-1 min-w-0" style={{ color: 'var(--ink)' }}>
+        <span className="font-semibold">New audit running</span>
+        <span className="mx-1.5" style={{ color: 'var(--rule)' }}>·</span>
+        <span style={{ color: 'var(--m-muted)' }}>{meta.label}. We will refresh this page when it is ready.</span>
+      </p>
+      <Link
+        href={`/dashboard/audits/${audit.id}`}
+        className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-medium hover:underline"
+        style={{ color: 'var(--ink)' }}
+      >
+        View progress <ChevronRight size={11} />
+      </Link>
+    </div>
+  );
+}
+
+/* ── In-progress overview ─────────────────────────────────
+ *
+ * Shown when the selected brand/site has an audit currently
+ * crawling / analysing / generating but no completed audit yet.
+ * This replaces the no-audit run-audit form for that state — the
+ * user just kicked the audit off, so we need calm "we're on it"
+ * status with skeleton cards in the populated-dashboard shape, not
+ * another form. The parent component polls the audit row every ~7s
+ * and re-fetches the bundle as soon as the audit terminates, so
+ * this view auto-flips to the populated dashboard (or the failed
+ * state) without a manual reload.
+ */
+function InProgressOverview({
+  audit,
+  brandName,
+  selection,
+}: {
+  audit: Audit;
+  brandName: string | null;
+  selection: ReturnType<typeof useBrandSelection>['selection'];
+}) {
+  let domain: string | null = null;
+  try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
+  const displayTitle = selection?.kind === 'brand' && brandName
+    ? brandName
+    : (domain || 'Your website');
+  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const meta = statusMeta[audit.status] || statusMeta.payment_received;
+  const StatusIcon = meta.icon;
+
+  return (
+    <div className="w-full">
+      {/* Identity header — mirrors populated overview header but
+          without the action buttons that depend on a completed
+          audit (Report, Share, Re-audit, More). */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
+              {displayTitle}
+            </h1>
+          </div>
+          <p className="text-muted text-xs">Auditing your website</p>
+        </div>
+      </div>
+
+      {/* Status banner */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="mb-4 px-4 py-3 rounded-xl flex items-start gap-3"
+        style={{
+          background: 'color-mix(in srgb, var(--signal) 7%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--signal) 22%, transparent)',
+        }}
+      >
+        <span
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--signal) 14%, transparent)', color: 'var(--signal)' }}
+        >
+          <StatusIcon size={16} className="animate-pulse" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+            {meta.label}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            We are working on your audit. This page will update automatically when it is ready — usually a few minutes.
+          </p>
+        </div>
+        <Link
+          href={`/dashboard/audits/${audit.id}`}
+          className="flex-shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg border border-border text-text hover:bg-surface-alt transition-colors"
+        >
+          View progress <ChevronRight size={12} />
+        </Link>
+      </div>
+
+      {/* Skeleton row 1 — mirrors Brand Health, Score Over Time, Heuristic Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 auto-rows-fr">
+        <SkeletonCard title="Brand Health Score" subtitle="Calculating…" icon={Heart} />
+        <SkeletonCard title="Score Over Time" subtitle="Trend will appear after this audit" icon={TrendingUp} />
+        <SkeletonCard title="Heuristic Breakdown" subtitle="Radar populates when the audit completes" icon={Target} />
+      </div>
+
+      {/* Skeleton row 2 — mirrors Categories grid */}
+      <div className="mb-2 flex items-center gap-2">
+        <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+        <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
+        <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>· populating</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+        {PILLAR_NAMES.map((name, i) => {
+          const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
+          const PIcon = PILLAR_ICONS[i] || Scale;
+          return (
+            <div
+              key={name}
+              className="rounded-xl overflow-hidden flex flex-col"
+              style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+            >
+              <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `${tint.dot}15` }}
+                >
+                  <PIcon size={14} style={{ color: tint.dot }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className="font-sans font-semibold text-[12.5px] leading-tight truncate"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {name}
+                  </h3>
+                  <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                    Auditing…
+                  </p>
+                </div>
+              </div>
+              <div className="px-3 pb-3 pt-1">
+                <div
+                  className="h-5 w-12 rounded-md animate-pulse"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Monitoring / AI X-Ray */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+        <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
+        <SkeletonCard title="Benchmarks" subtitle="Competitor comparison" icon={LineChart} />
+        <SkeletonCard title="AI Monitoring" subtitle="AI readability across pages" icon={Brain} />
+        <SkeletonCard title="AI X-Ray" subtitle="What AI models say about you" icon={Sparkles} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Skeleton card used by InProgressOverview ────────── */
+function SkeletonCard({
+  title,
+  subtitle,
+  icon: Icon,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div
+      className="rounded-xl p-4 sm:p-5 flex flex-col h-full"
+      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      aria-hidden
+    >
+      <div className="flex items-start gap-2 mb-3">
+        <span
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+        >
+          <Icon size={14} />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>{title}</h3>
+          <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>{subtitle}</p>
+        </div>
+      </div>
+      <div className="flex-1 min-h-[120px] flex flex-col gap-2 justify-center">
+        <div
+          className="h-4 w-3/4 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+        <div
+          className="h-4 w-1/2 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+        <div
+          className="h-4 w-2/3 rounded animate-pulse"
+          style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── Failed audit overview ────────────────────────────
+ *
+ * Shown when no completed audit exists for the selected brand/site
+ * and the most recent attempt for this selection failed. Surfaces a
+ * clear retry CTA instead of the generic no-audit form — the user
+ * needs to understand the previous run did not complete.
+ */
+function FailedAuditOverview({
+  audit,
+  brandName,
+  selection,
+}: {
+  audit: Audit;
+  brandName: string | null;
+  selection: ReturnType<typeof useBrandSelection>['selection'];
+}) {
+  let domain: string | null = null;
+  try { domain = new URL(audit.product_url || '').hostname.replace(/^www\./, ''); } catch {}
+  const displayTitle = selection?.kind === 'brand' && brandName
+    ? brandName
+    : (domain || 'Your website');
+  const HeaderIcon = selection?.kind === 'brand' ? Fingerprint : Globe;
+  const productUrl = audit.product_url || (domain ? `https://${domain}` : '');
+  const retryHref = productUrl
+    ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}`
+    : '/dashboard/new-audit';
+
+  return (
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <HeaderIcon size={20} className="text-muted flex-shrink-0" />
+            <h1 className="text-2xl font-medium font-sans text-text truncate" style={{ color: 'var(--ink)' }}>
+              {displayTitle}
+            </h1>
+          </div>
+          <p className="text-muted text-xs">Last audit did not complete</p>
+        </div>
+      </div>
+
+      <div
+        role="alert"
+        className="rounded-xl p-6 flex flex-col items-start gap-4"
+        style={{
+          background: 'color-mix(in srgb, var(--severe) 6%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--severe) 22%, transparent)',
+        }}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)', color: 'var(--severe)' }}
+          >
+            <AlertTriangle size={18} />
+          </span>
+          <div>
+            <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+              The last audit failed
+            </h2>
+            <p className="text-[13px] mt-1.5 max-w-[520px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              We were not able to finish auditing {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'your website'}.
+              You can retry the audit, or open the previous run to see the error details.
+            </p>
+            {audit.crawl_error && (
+              <p
+                className="text-[11px] mt-2 px-2.5 py-1.5 rounded-md font-mono"
+                style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}
+              >
+                {audit.crawl_error.slice(0, 200)}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={retryHref}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <RefreshCw size={13} />
+            Retry audit
+          </Link>
+          <Link
+            href={`/dashboard/audits/${audit.id}`}
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+          >
+            View details <ChevronRight size={12} />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

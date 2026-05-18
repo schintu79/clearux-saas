@@ -79,6 +79,7 @@ export interface Audit {
   plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | 'free_preview' | null
   language:          string | null
   pages_crawled:     number
+  progress_percent:  number | null
   crawl_error:       string | null
   delivery_deadline: string | null
   completed_at:      string | null
@@ -300,7 +301,9 @@ export interface ModelBenchmarksSummary {
   insight: string
 }
 
-export type AIModelId = 'claude' | 'gpt4o' | 'gemini'
+export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
+
+export type MultiModelProbeStatus = 'measured' | 'skipped' | 'error'
 
 export interface MultiModelProbe {
   id:                string
@@ -315,6 +318,8 @@ export interface MultiModelProbe {
   no_data_count:     number
   total_questions:   number
   results_json:      Record<string, unknown>[]
+  status:            MultiModelProbeStatus
+  error_message:     string | null
   created_at:        string
 }
 
@@ -517,6 +522,44 @@ export interface FindingWithCategory extends AuditFinding {
 export interface ReportWithFindings extends Report {
   findings: FindingWithCategory[]
   audit: Audit
+}
+
+// ── FTP / SFTP deployment ──────────────────────────────────────
+
+export type FtpProtocol = 'ftp' | 'ftps' | 'sftp'
+export type DeployAction = 'create' | 'update' | 'delete' | 'backup'
+export type DeployStatus = 'success' | 'failed' | 'rolled_back'
+
+export interface FtpConnection {
+  id:                 string
+  user_id:            string
+  brand_identity_id:  string | null
+  label:              string
+  protocol:           FtpProtocol
+  host:               string
+  port:               number
+  username:           string
+  password_encrypted: string
+  remote_path:        string
+  last_connected_at:  string | null
+  is_active:          boolean
+  created_at:         string
+  updated_at:         string
+}
+
+export interface FtpDeployLog {
+  id:             string
+  connection_id:  string
+  user_id:        string
+  audit_id:       string | null
+  finding_id:     string | null
+  file_path:      string
+  action:         DeployAction
+  backup_content: string | null
+  new_content:    string | null
+  status:         DeployStatus
+  error_message:  string | null
+  created_at:     string
 }
 
 // ── SUPABASE DATABASE TYPE MAP ────────────────────────────────

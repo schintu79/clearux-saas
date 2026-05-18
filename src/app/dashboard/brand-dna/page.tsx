@@ -52,6 +52,7 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { BRAND_AUDIT_CATEGORIES } from '@/lib/brand-audit-modules';
 import ScoreRing from '@/components/ui/ScoreRing';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import clsx from 'clsx';
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -183,6 +184,14 @@ function scoreColor(s: number): string {
   return 'var(--severe)';
 }
 
+function sevCardBg(sev: string): string {
+  const v = sev === 'critical' ? 'var(--severe)'
+    : sev === 'high' ? 'var(--warn)'
+    : sev === 'low' ? 'var(--ok)'
+    : 'var(--signal)';
+  return `color-mix(in srgb, ${v} 4%, #ffffff)`;
+}
+
 function sevColor(sev: string): string {
   switch (sev) {
     case 'critical': return 'var(--severe)';
@@ -194,15 +203,6 @@ function sevColor(sev: string): string {
 
 function sevLabel(sev: string): string {
   return sev.charAt(0).toUpperCase() + sev.slice(1);
-}
-
-function sevCardBg(sev: string): string {
-  switch (sev) {
-    case 'critical': return 'color-mix(in srgb, var(--severe) 4%, #ffffff)';
-    case 'high':     return 'color-mix(in srgb, var(--warn) 4%, #ffffff)';
-    case 'medium':   return 'color-mix(in srgb, var(--signal) 4%, #ffffff)';
-    default:         return 'color-mix(in srgb, var(--ok) 4%, #ffffff)';
-  }
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -507,6 +507,7 @@ export default function BrandDnaPage() {
   if (authLoading || loading || !ready) {
     return (
       <div>
+        <OverviewBreadcrumb current="Brand DNA" />
         <div className="h-7 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
         <div className="h-4 w-72 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
         <div className="space-y-3">
@@ -890,6 +891,7 @@ export default function BrandDnaPage() {
 function Header({ label }: { label: string | null }) {
   return (
     <div className="mb-5">
+      <OverviewBreadcrumb current="Brand DNA" />
       <h1 className="text-[20px] font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Brand DNA</h1>
       <p className="text-[13px] mt-0.5 max-w-[600px]" style={{ color: 'var(--m-muted)' }}>
         {label
@@ -981,7 +983,7 @@ function FindingRow({ finding: f, categoryScores }: { finding: FindingRecord; ca
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-3 px-4 text-left transition-colors"
-        style={{ paddingTop: '1rem', paddingBottom: '1rem', background: open ? 'color-mix(in srgb, var(--paper-2) 60%, transparent)' : 'transparent' }}
+        style={{ background: open ? 'var(--paper-2)' : 'transparent', paddingTop: '1rem', paddingBottom: '1rem' }}
       >
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>{f.title}</p>

@@ -1,9 +1,33 @@
 // ============================================================
 // FTP/SFTP client wrapper
 // Supports SFTP (ssh2), FTP, and FTPS (basic-ftp)
+//
+// The factory is synchronous — dynamic imports of the underlying
+// transports happen lazily inside connect(). Callers can do:
+//
+//   const client = createFtpClient(creds);
+//   await client.connect();
+//
+// IMPORTANT (Next.js 16 / Turbopack):
+//   We load `ssh2` and `basic-ftp` through a Node `createRequire`
+//   that is built from an opaque string. This prevents Turbopack
+//   from statically tracing the dependency graph into ssh2's native
+//   binding files (e.g. `ssh2/lib/protocol/crypto.js`) which fail to
+//   build as ESM chunks. The runtime is still pure Node — these
+//   packages are also listed in `next.config.mjs`
+//   `serverExternalPackages` so they are never bundled.
 // ============================================================
 
+import 'server-only';
 import type { FtpProtocol } from '@/types/database';
+
+const dynamicNodeRequire = (id: string): any => {
+  // Hide require() behind an opaque function expression so neither
+  // webpack nor Turbopack can statically resolve the module graph.
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+  const req = new Function('id', 'return require(id)') as (id: string) => any;
+  return req(id);
+};
 
 export interface FtpCredentials {
   protocol: FtpProtocol;
@@ -32,35 +56,84 @@ export interface FtpClientWrapper {
   disconnect(): Promise<void>;
 }
 
+/* ── Error normalisation ───────────────────────────────────── */
+function normalizeSshError(err: Error & { code?: string; level?: string }, creds: FtpCredentials): Error {
+  const raw = err?.message || String(err);
+  const code = err?.code || '';
+  const lvl = err?.level || '';
+  let hint = raw;
+  if (code === 'ENOTFOUND' || /getaddrinfo/i.test(raw)) {
+    hint = `Host not found: ${creds.host}. Check the hostname.`;
+  } else if (code === 'ECONNREFUSED') {
+    hint = `Connection refused on ${creds.host}:${creds.port}. Check host, port, and firewall.`;
+  } else if (code === 'ETIMEDOUT' || /timed?\s*out/i.test(raw)) {
+    hint = `Connection to ${creds.host}:${creds.port} timed out. The server may be unreachable or blocking your IP.`;
+  } else if (lvl === 'client-authentication' || /authentication|all configured authentication methods failed/i.test(raw)) {
+    hint = 'Authentication failed. Check username and password.';
+  } else if (/handshake/i.test(raw)) {
+    hint = `SSH handshake failed with ${creds.host}. The server may not support our SSH algorithms.`;
+  }
+  return new Error(hint);
+}
+
+function normalizeFtpError(err: Error & { code?: string | number }, creds: FtpCredentials): Error {
+  const raw = err?.message || String(err);
+  const code = err?.code;
+  let hint = raw;
+  if (code === 'ENOTFOUND' || /getaddrinfo/i.test(raw)) {
+    hint = `Host not found: ${creds.host}. Check the hostname.`;
+  } else if (code === 'ECONNREFUSED') {
+    hint = `Connection refused on ${creds.host}:${creds.port}. Check host, port, and firewall.`;
+  } else if (code === 'ETIMEDOUT' || /timed?\s*out/i.test(raw)) {
+    hint = `Connection to ${creds.host}:${creds.port} timed out. The server may be unreachable.`;
+  } else if (/530|login|authentication|incorrect/i.test(raw)) {
+    hint = 'Authentication failed. Check username and password.';
+  } else if (/ssl|tls|certificate/i.test(raw)) {
+    hint = `TLS error connecting to ${creds.host}. If using FTPS, make sure the server supports it.`;
+  }
+  return new Error(hint);
+}
+
 /* ── SFTP via ssh2 ─────────────────────────────────────────── */
 function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
-  // Dynamic import happens inside connect() so the factory stays synchronous
+  // Dynamic import happens inside connect() so the factory stays synchronous.
   let conn: any = null;
   let sftp: any = null;
 
   return {
     async connect() {
-      const { Client } = await import('ssh2');
+      const { Client } = dynamicNodeRequire('ssh2');
       return new Promise<void>((resolve, reject) => {
         conn = new Client();
+        let settled = false;
+        const done = (err: Error | null) => {
+          if (settled) return;
+          settled = true;
+          if (err) reject(normalizeSshError(err, creds));
+          else resolve();
+        };
         conn.on('ready', () => {
           conn!.sftp((err: Error | undefined, sftpStream: any) => {
-            if (err) return reject(err);
+            if (err) return done(err);
             sftp = sftpStream;
-            resolve();
+            done(null);
           });
         });
-        conn.on('error', reject);
-        conn.connect({
-          host: creds.host,
-          port: creds.port,
-          username: creds.username,
-          password: creds.password,
-          readyTimeout: 10000,
-          algorithms: {
-            kex: ['ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1'],
-          },
-        });
+        conn.on('error', (err: Error) => done(err));
+        try {
+          conn.connect({
+            host: creds.host,
+            port: creds.port,
+            username: creds.username,
+            password: creds.password,
+            readyTimeout: 10000,
+            algorithms: {
+              kex: ['ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1'],
+            },
+          });
+        } catch (err) {
+          done(err as Error);
+        }
       });
     },
 
@@ -134,22 +207,26 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
 
 /* ── FTP/FTPS via basic-ftp ────────────────────────────────── */
 function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
-  // Dynamic import happens inside connect() so the factory stays synchronous
+  // Dynamic import happens inside connect() so the factory stays synchronous.
   let client: any = null;
 
   return {
     async connect() {
-      const basicFtp = await import('basic-ftp');
+      const basicFtp = dynamicNodeRequire('basic-ftp');
       client = new basicFtp.Client();
       client.ftp.verbose = false;
-      await client.access({
-        host: creds.host,
-        port: creds.port,
-        user: creds.username,
-        password: creds.password,
-        secure: creds.protocol === 'ftps',
-        secureOptions: creds.protocol === 'ftps' ? { rejectUnauthorized: false } : undefined,
-      });
+      try {
+        await client.access({
+          host: creds.host,
+          port: creds.port,
+          user: creds.username,
+          password: creds.password,
+          secure: creds.protocol === 'ftps',
+          secureOptions: creds.protocol === 'ftps' ? { rejectUnauthorized: false } : undefined,
+        });
+      } catch (err) {
+        throw normalizeFtpError(err as Error, creds);
+      }
     },
 
     async list(dirPath: string): Promise<RemoteFile[]> {
@@ -202,6 +279,14 @@ function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
 }
 
 /* ── Factory ───────────────────────────────────────────────── */
+/**
+ * Synchronous factory. The underlying transports are dynamically imported
+ * inside connect(), so the wrapper itself is built synchronously and
+ * callers do not need to await this call.
+ *
+ *   const client = createFtpClient(creds);
+ *   await client.connect();
+ */
 export function createFtpClient(creds: FtpCredentials): FtpClientWrapper {
   if (creds.protocol === 'sftp') return createSftpClient(creds);
   return createFtpBasicClient(creds);

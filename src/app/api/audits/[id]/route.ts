@@ -4,7 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabase-server'
+import { createServerSupabase, createServiceSupabase } from '@/lib/supabase-server'
 
 /**
  * GET /api/audits/[id]
@@ -115,6 +115,77 @@ export async function GET(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('Error in GET /api/audits/[id]:', message)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    )
+  }
+}
+
+/**
+ * DELETE /api/audits/[id]
+ * Permanently delete an audit owned by the current user. Related rows
+ * (report, findings, pages, payments, intelligence) are removed via the
+ * `ON DELETE CASCADE` foreign keys defined in the initial schema.
+ *
+ * Auth model:
+ *  - User session is required (via createServerSupabase).
+ *  - We verify the audit belongs to the user before deleting.
+ *  - The actual delete uses the service-role client because RLS has no
+ *    DELETE policy on `audits`. This keeps deletion safe without a schema
+ *    migration: ownership is enforced in code, then the privileged client
+ *    performs the delete + cascade.
+ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: auditId } = await params
+
+    const supabase = await createServerSupabase()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: audit, error: auditError } = await supabase
+      .from('audits')
+      .select('id, user_id')
+      .eq('id', auditId)
+      .single()
+
+    if (auditError || !audit) {
+      return NextResponse.json({ error: 'Audit not found' }, { status: 404 })
+    }
+
+    if (audit.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const service = createServiceSupabase()
+    const { error: delError } = await service
+      .from('audits')
+      .delete()
+      .eq('id', auditId)
+      .eq('user_id', user.id)
+
+    if (delError) {
+      console.error('Error deleting audit:', delError)
+      return NextResponse.json(
+        { error: 'Failed to delete audit' },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('Error in DELETE /api/audits/[id]:', message)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

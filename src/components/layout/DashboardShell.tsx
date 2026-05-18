@@ -25,8 +25,8 @@ import {
   Search,
   Wrench,
   LineChart,
-  FileSearch,
-  Upload,
+  Server,
+  Rocket,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -332,9 +332,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         { label: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
         { label: 'Find', href: '/dashboard/find', icon: Search, matchPaths: ['/dashboard/audits'] },
         { label: 'Fix', href: '/dashboard/fix', icon: Wrench },
+        { label: 'Deploy', href: '/dashboard/deploy', icon: Rocket },
         { label: 'Track', href: '/dashboard/track', icon: LineChart },
         { label: 'Brand DNA', href: '/dashboard/brand-dna', icon: Fingerprint, matchPaths: ['/dashboard/brand-identity'] },
-        { label: 'Deploy', href: '/dashboard/deploy', icon: Upload, matchPaths: ['/dashboard/connect'] },
+        { label: 'Connect site', href: '/dashboard/connect', icon: Server },
       ],
     },
   ];
@@ -445,39 +446,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             />
             {!collapsed && <span className="truncate">Dashboard</span>}
           </Link>
-        </div>
-
-        {/* My Audits — parent-level destination listing all audits across
-            brands/sites. Lives at parent level (next to Dashboard), NOT inside
-            the audit workspace, so audit workflow nav stays clean. */}
-        <div className={clsx('pb-1', collapsed ? 'px-1.5' : 'px-2')}>
-          {(() => {
-            const myAuditsActive = pathname === '/dashboard/audits';
-            return (
-              <Link
-                href="/dashboard/audits"
-                onClick={() => setSidebarOpen(false)}
-                title={collapsed ? 'My Audits' : undefined}
-                aria-current={myAuditsActive ? 'page' : undefined}
-                className={clsx(
-                  'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
-                  collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
-                  myAuditsActive ? 'font-semibold' : 'hover:bg-black/[0.04]',
-                )}
-                style={{
-                  color: myAuditsActive ? 'var(--ink)' : 'var(--ink-2)',
-                  background: myAuditsActive ? '#ffffff' : undefined,
-                }}
-              >
-                <FileSearch
-                  size={collapsed ? 17 : 15}
-                  strokeWidth={1.75}
-                  style={{ color: myAuditsActive ? 'var(--ink)' : 'var(--m-muted)' }}
-                />
-                {!collapsed && <span className="truncate">My Audits</span>}
-              </Link>
-            );
-          })()}
         </div>
 
         {/* Brand/site selector — BIGGER and more prominent */}
@@ -797,8 +765,9 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     : currentHash === 'findings' ? 'Findings'
                     : currentHash === 'pages' ? 'Pages'
                     : currentHash === 'responsive' ? 'Responsive'
+                    : currentHash === 'technical_health' ? 'Technical health'
                     : currentHash === 'ai_xray' ? 'AI Readability'
-                    : currentHash === 'intelligence' ? 'Intelligence'
+                    : currentHash === 'intelligence' ? 'Benchmark'
                     : null;
                   return featureLabel ? (
                     <>

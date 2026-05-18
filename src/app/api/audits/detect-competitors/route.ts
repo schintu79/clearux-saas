@@ -5,8 +5,16 @@
 //   → Load stored benchmarks for this domain
 //
 // POST /api/audits/detect-competitors
-//   body: { url: string, mode: 'auto' | 'manual', competitors?: string[] }
-//   → Run benchmark (auto-detect or manual), store results, return them
+//   body: { url, mode: 'auto' | 'manual' | 'save', competitors?: ... }
+//   - 'auto'   → LLM detects competitors, scores them, stores results
+//   - 'manual' → caller supplies domains; we score them and store
+//   - 'save'   → caller supplies the full edited list (name/domain/
+//                category/note); we replace stored rows WITHOUT
+//                re-scoring. Existing rows keep their scores when
+//                domain matches; brand-new manual rows start at 0.
+//
+// DELETE /api/audits/detect-competitors?url=xxx&competitor=yyy
+//   → Remove a single competitor row for this user+domain.
 //
 // Scoring fetches each competitor's real HTML and uses Claude to
 // produce differentiated, content-aware UX scores.
@@ -122,10 +130,10 @@ async function detectCompetitorDomains(signals: SiteSignals, domain: string): Pr
 
   const resp = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 600,
+    max_tokens: 800,
     messages: [{
       role: 'user',
-      content: `Identify the industry and top 3 direct competitors for this website.
+      content: `Identify the industry and top 5 direct competitors for this website.
 
 Domain: ${domain}
 Title: ${signals.title}
@@ -136,7 +144,7 @@ JSON only:
 {"industry":"e.g. Online Trading","competitors":[{"domain":"example.com","name":"Example"}]}
 
 Rules:
-- 3 competitors, direct alternatives in the same market
+- 5 competitors, direct alternatives in the same market
 - Use main domain only (no www)
 - Must be real, well-known sites`,
     }],
@@ -269,6 +277,9 @@ export async function GET(request: NextRequest) {
       name: r.competitor_name || r.competitor_domain,
       score: r.overall_score,
       pillarScores: r.pillar_scores || [],
+      category: r.category || '',
+      note: r.note || '',
+      source: r.source || 'auto',
     }))
 
     return NextResponse.json({
@@ -292,10 +303,9 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { url, mode, competitors: manualDomains } = body as {
+    const { url, mode } = body as {
       url: string
-      mode: 'auto' | 'manual'
-      competitors?: string[]
+      mode: 'auto' | 'manual' | 'save'
     }
 
     if (!url) return NextResponse.json({ error: 'url required' }, { status: 400 })
@@ -306,15 +316,108 @@ export async function POST(request: NextRequest) {
     }
 
     const fullUrl = url.startsWith('http') ? url : `https://${url}`
+    const db = createServiceSupabase()
 
+    /* ── 'save' — replace stored list with the user's edits ── */
+    if (mode === 'save') {
+      const rawList = Array.isArray((body as any).competitors) ? (body as any).competitors : []
+      const cleaned = rawList
+        .map((c: any) => {
+          if (!c) return null
+          const rawDomain = typeof c.domain === 'string' ? c.domain : ''
+          const clean = rawDomain
+            .replace(/^https?:\/\//, '')
+            .replace(/^www\./, '')
+            .replace(/\/.*$/, '')
+            .trim()
+            .toLowerCase()
+          if (!clean) return null
+          return {
+            domain: clean,
+            name: (typeof c.name === 'string' && c.name.trim()) ? c.name.trim() : clean,
+            category: typeof c.category === 'string' ? c.category.trim().slice(0, 80) : '',
+            note: typeof c.note === 'string' ? c.note.trim().slice(0, 280) : '',
+          }
+        })
+        .filter(Boolean) as Array<{ domain: string; name: string; category: string; note: string }>
+
+      // De-dupe by domain
+      const seen = new Set<string>()
+      const unique = cleaned.filter(c => {
+        if (seen.has(c.domain)) return false
+        seen.add(c.domain)
+        return true
+      }).slice(0, 5)
+
+      // Pull existing rows so we keep their scores for unchanged domains
+      const { data: existing } = await db
+        .from('competitor_benchmarks')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('domain', domain)
+      const prior = new Map<string, any>()
+      ;(existing || []).forEach((r: any) => prior.set(r.competitor_domain, r))
+      const industryFromExisting = existing?.[0]?.industry || ''
+
+      await db
+        .from('competitor_benchmarks')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('domain', domain)
+
+      const inserts = unique.map(c => {
+        const before = prior.get(c.domain)
+        return {
+          user_id: user.id,
+          domain,
+          competitor_domain: c.domain,
+          competitor_name: c.name,
+          overall_score: before?.overall_score ?? 0,
+          pillar_scores: before?.pillar_scores ?? [],
+          industry: before?.industry || industryFromExisting,
+          category: c.category || null,
+          note: c.note || null,
+          source: before?.source || 'manual',
+        }
+      })
+
+      if (inserts.length > 0) {
+        await db.from('competitor_benchmarks').insert(inserts)
+      }
+
+      return NextResponse.json({
+        domain,
+        industry: industryFromExisting,
+        competitors: inserts.map(r => ({
+          domain: r.competitor_domain,
+          name: r.competitor_name,
+          score: r.overall_score,
+          pillarScores: r.pillar_scores,
+          category: r.category || '',
+          note: r.note || '',
+          source: r.source,
+        })),
+      })
+    }
+
+    /* ── 'auto' or 'manual' — fetch and score competitors ── */
     let competitorDomains: Array<{ domain: string; name: string }>
     let industry = ''
 
-    if (mode === 'manual' && manualDomains && manualDomains.length > 0) {
-      competitorDomains = manualDomains.slice(0, 3).map(d => {
-        const clean = d.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')
-        return { domain: clean, name: clean }
-      })
+    if (mode === 'manual') {
+      const manualList = (body as any).competitors
+      if (!Array.isArray(manualList) || manualList.length === 0) {
+        return NextResponse.json({ error: 'competitors required for manual mode' }, { status: 400 })
+      }
+      competitorDomains = manualList
+        .slice(0, 5)
+        .map((d: any) => {
+          const raw = typeof d === 'string' ? d : (d?.domain || '')
+          const name = typeof d === 'string' ? '' : (d?.name || '')
+          const clean = raw.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim().toLowerCase()
+          return clean ? { domain: clean, name: name || clean } : null
+        })
+        .filter(Boolean) as Array<{ domain: string; name: string }>
     } else {
       const siteSignals = await fetchSiteSignals(fullUrl)
       const detection = await detectCompetitorDomains(siteSignals, domain)
@@ -344,8 +447,14 @@ export async function POST(request: NextRequest) {
       })
     )
 
-    // Store results — delete old benchmarks for this domain, insert new ones
-    const db = createServiceSupabase()
+    // Preserve manual category/note when re-scoring known domains
+    const { data: prior } = await db
+      .from('competitor_benchmarks')
+      .select('competitor_domain, category, note')
+      .eq('user_id', user.id)
+      .eq('domain', domain)
+    const meta = new Map<string, { category: string | null; note: string | null }>()
+    ;(prior || []).forEach((r: any) => meta.set(r.competitor_domain, { category: r.category, note: r.note }))
 
     await db
       .from('competitor_benchmarks')
@@ -353,25 +462,77 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('domain', domain)
 
-    const inserts = results.map(r => ({
-      user_id: user.id,
-      domain,
-      competitor_domain: r.domain,
-      competitor_name: r.name,
-      overall_score: r.score,
-      pillar_scores: r.pillarScores,
-      industry,
-    }))
+    const inserts = results.map(r => {
+      const m = meta.get(r.domain) || { category: null, note: null }
+      return {
+        user_id: user.id,
+        domain,
+        competitor_domain: r.domain,
+        competitor_name: r.name,
+        overall_score: r.score,
+        pillar_scores: r.pillarScores,
+        industry,
+        category: m.category,
+        note: m.note,
+        source: mode === 'manual' ? 'manual' : 'auto',
+      }
+    })
 
     await db.from('competitor_benchmarks').insert(inserts)
 
     return NextResponse.json({
       domain,
       industry,
-      competitors: results,
+      competitors: results.map(r => {
+        const m = meta.get(r.domain) || { category: null, note: null }
+        return {
+          ...r,
+          category: m.category || '',
+          note: m.note || '',
+          source: mode === 'manual' ? 'manual' : 'auto',
+        }
+      }),
     })
   } catch (err) {
     console.error('POST /api/audits/detect-competitors error:', err)
     return NextResponse.json({ error: 'Failed to benchmark competitors' }, { status: 500 })
+  }
+}
+
+/* ── DELETE: Remove a single competitor row ───────────────── */
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const url = request.nextUrl.searchParams.get('url')
+    const competitor = request.nextUrl.searchParams.get('competitor')
+    if (!url || !competitor) {
+      return NextResponse.json({ error: 'url and competitor required' }, { status: 400 })
+    }
+
+    let domain: string
+    let competitorDomain: string
+    try {
+      domain = normalizeDomain(url)
+      competitorDomain = competitor.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim().toLowerCase()
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
+    }
+
+    const db = createServiceSupabase()
+    await db
+      .from('competitor_benchmarks')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('domain', domain)
+      .eq('competitor_domain', competitorDomain)
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('DELETE /api/audits/detect-competitors error:', err)
+    return NextResponse.json({ error: 'Failed to delete competitor' }, { status: 500 })
   }
 }

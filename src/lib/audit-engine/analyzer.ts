@@ -823,6 +823,7 @@ export async function runFullAnalysis(
   userFocus?: string | null,
   language: string = 'en',
   depthMode: 'deep' | 'baseline' = 'deep',
+  onProgress?: (done: number, total: number, categoryName: string) => void | Promise<void>,
 ): Promise<AnalysisFinding[]> {
   const allFindings: AnalysisFinding[] = []
 
@@ -864,38 +865,39 @@ export async function runFullAnalysis(
   }
   console.log(`[runFullAnalysis] Analyzing ${categoriesToAnalyze.length}/${UX_CATEGORIES.length} categories`)
 
-  // Process categories in parallel batches of 6 for ~4x speed improvement.
-  // Each category analysis is fully independent (same read-only inputs,
-  // different prompts) so parallelism is safe.
-  const BATCH_SIZE = 6
-  for (let batchStart = 0; batchStart < categoriesToAnalyze.length; batchStart += BATCH_SIZE) {
-    const batch = categoriesToAnalyze.slice(batchStart, batchStart + BATCH_SIZE)
-    console.log(`[runFullAnalysis] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(categoriesToAnalyze.length / BATCH_SIZE)} — categories: ${batch.map(b => b.category.name).join(', ')}`)
+  for (let ci = 0; ci < categoriesToAnalyze.length; ci++) {
+    const { category, originalIndex } = categoriesToAnalyze[ci]
+    console.log(`[runFullAnalysis] Category ${ci + 1}/${categoriesToAnalyze.length}: ${category.name} (index ${originalIndex})`)
 
-    const batchResults = await Promise.all(
-      batch.map(async ({ category, originalIndex }) => {
-        const findings = await analyzeCategory(
-          pageContent,
-          category.name,
-          category.items.map((item) => ({
-            title: item,
-            description: item,
-            whatToCheck: item,
-          })),
-          userFocus,
-          language,
-          depthMode,
-        )
-        // Stamp each finding with its explicit category index
-        for (const f of findings) {
-          f.categoryIndex = originalIndex
-        }
-        return findings
-      })
+    const findings = await analyzeCategory(
+      pageContent,
+      category.name,
+      category.items.map((item) => ({
+        title: item,
+        description: item,
+        whatToCheck: item,
+      })),
+      userFocus,
+      language,
+      depthMode,
     )
 
-    for (const findings of batchResults) {
-      allFindings.push(...findings)
+    // Stamp each finding with its explicit category index — no more keyword-matching inference
+    for (const f of findings) {
+      f.categoryIndex = originalIndex
+    }
+
+    allFindings.push(...findings)
+
+    if (onProgress) {
+      try {
+        await onProgress(ci + 1, categoriesToAnalyze.length, category.name)
+      } catch {}
+    }
+
+    // Brief pause between categories to avoid rate limits
+    if (ci < categoriesToAnalyze.length - 1) {
+      await new Promise((r) => setTimeout(r, 500))
     }
   }
 

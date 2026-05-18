@@ -1,45 +1,58 @@
 'use client';
 
 /**
- * Deploy — Compact file browser + one-click fix deployment.
+ * Deploy — compact deploy console.
  *
- * Clean, functional console. File tree left, editor right.
- * No bloat, no repetition.
+ * Two modes:
+ *  - Default: tight 240px file/page tree on the left, snippet editor on the
+ *    right (compact deploy queue browsing).
+ *  - Guided (?findingId=…): focused single-finding deployment flow with a
+ *    context banner (title + severity + recommendation), an editable code
+ *    snippet, and a Push action that writes via the FTP API and marks the
+ *    finding as fixed on success.
+ *
+ * Safety contract: nothing is pushed to a live site without an explicit
+ * user click on Push/Save. Mark fixed only fires after a successful FTP
+ * write, which then triggers the report score recalculation server-side.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  FolderOpen,
-  File,
-  FileCode,
-  FileText,
-  Image as ImageIcon,
-  ChevronRight,
-  Save,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Server,
-  Wrench,
-  RotateCcw,
-  Copy,
-  FolderUp,
-  Check,
-  X,
-} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import {
+  Copy,
+  Check,
+  Download,
+  Send,
+  Lock,
+  RotateCcw,
+  AlertTriangle,
+  X,
+  FileText,
+  Globe,
+  Rocket,
+  ChevronRight,
+  ChevronDown,
+  ArrowLeft,
+  Upload,
+  Loader2,
+  ClipboardPaste,
+} from 'lucide-react';
+import {
+  loadLatestAuditBundle,
+  severityColor,
+  severityLabel,
+  type LatestAuditBundle,
+} from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
+import type { AuditFinding, FindingStatus } from '@/types/database';
 
-interface RemoteFile {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  size: number;
-  modifiedAt: string | null;
-}
+const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
-interface Connection {
+interface FtpConnectionSummary {
   id: string;
   label: string;
   protocol: string;
@@ -47,646 +60,936 @@ interface Connection {
   port: number;
   username: string;
   remote_path: string;
+  brand_identity_id: string | null;
 }
 
-interface PendingFix {
-  findingId: string;
-  title: string;
-  filePath: string;
-  originalContent: string;
-  fixedContent: string;
-  description: string;
-}
-
-interface FindingContext {
+interface GuidedFinding {
   id: string;
+  audit_id: string;
   title: string;
   description: string;
   severity: string;
+  status: FindingStatus;
   recommendation: string;
+  estimated_impact: string | null;
   page_url: string | null;
-  codeSnippet: string | null;
 }
 
-function fileIcon(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase();
-  if (['html', 'htm', 'php', 'js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'json', 'xml', 'svg'].includes(ext || ''))
-    return FileCode;
-  if (['md', 'txt', 'log', 'env', 'htaccess', 'conf', 'yaml', 'yml', 'toml'].includes(ext || ''))
-    return FileText;
-  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp'].includes(ext || ''))
-    return ImageIcon;
-  return File;
+function hostnameOf(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function pathOf(url: string | null | undefined): string {
+  if (!url) return '(no URL)';
+  try { return new URL(url).pathname || '/'; } catch { return url; }
 }
 
-function isTextFile(name: string): boolean {
-  const ext = name.split('.').pop()?.toLowerCase();
-  const textExts = ['html', 'htm', 'php', 'js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'json', 'xml', 'svg', 'md', 'txt', 'log', 'env', 'htaccess', 'conf', 'yaml', 'yml', 'toml', 'csv', 'sql', 'py', 'rb', 'sh', 'bat'];
-  return textExts.includes(ext || '');
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'fix';
 }
 
-export default function DeployPage() {
-  const { user } = useAuth();
-  const { selection } = useBrandSelection();
+function downloadFile(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
-  const [currentPath, setCurrentPath] = useState('/');
-  const [files, setFiles] = useState<RemoteFile[]>([]);
+function looksLikeJson(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (!(t.startsWith('{') || t.startsWith('['))) return false;
+  try { JSON.parse(t); return true; } catch { return false; }
+}
+
+/**
+ * Best-effort extraction of a fenced ``` code block from a recommendation.
+ * Returns null if no clearly-marked block is present. Plain prose stays in
+ * the editor; only an explicit ``` block becomes the "apply snippet" payload.
+ */
+function extractCodeBlock(text: string): string | null {
+  if (!text) return null;
+  const fenced = text.match(/```[a-zA-Z0-9_-]*\n([\s\S]*?)```/);
+  if (fenced && fenced[1]) return fenced[1].trim();
+  return null;
+}
+
+type Toast = { id: number; tone: 'info' | 'ok' | 'warn'; message: string };
+
+interface PageNode {
+  key: string;          // URL or "__no_url"
+  host: string | null;
+  path: string;
+  findings: AuditFinding[];
+}
+
+function DeployPageInner() {
+  const { user, loading: authLoading } = useAuth();
+  const { selection, ready } = useBrandSelection();
+  const searchParams = useSearchParams();
+  const findingId = searchParams.get('findingId');
+
+  const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
-  const [browsing, setBrowsing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [openFile, setOpenFile] = useState<{ path: string; content: string } | null>(null);
-  const [editedContent, setEditedContent] = useState('');
-  const [fileLoading, setFileLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [patches, setPatches] = useState<Record<string, string>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
-  const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
-  const [findingContext, setFindingContext] = useState<FindingContext | null>(null);
-  const [findingLoading, setFindingLoading] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+  // Guided-mode state
+  const [guided, setGuided] = useState<GuidedFinding | null>(null);
+  const [guidedLoading, setGuidedLoading] = useState(false);
+  const [guidedError, setGuidedError] = useState<string | null>(null);
 
-  // Fetch connections — scoped to current brand
+  // FTP target state
+  const [connections, setConnections] = useState<FtpConnectionSummary[]>([]);
+  const [connectionId, setConnectionId] = useState<string>('');
+  const [connectionsLoaded, setConnectionsLoaded] = useState(false);
+  const [provisioned, setProvisioned] = useState<boolean>(true);
+
+  // Deploy form state (guided mode)
+  const [remotePath, setRemotePath] = useState('');
+  const [deploying, setDeploying] = useState(false);
+
+  const pushToast = useCallback((tone: Toast['tone'], message: string) => {
+    const id = Date.now() + Math.random();
+    setToasts((t) => [...t, { id, tone, message }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500);
+  }, []);
+
+  const dismissToast = (id: number) => setToasts((t) => t.filter((x) => x.id !== id));
+
+  /* ── Brand-scoped FTP connections ──────────────────────────── */
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const url = brandId ? `/api/ftp?brandId=${brandId}` : '/api/ftp';
-        const res = await fetch(url);
-        const data = await res.json();
-        setConnections(data.connections || []);
-        if (data.connections?.length > 0 && !selectedConnection) {
-          setSelectedConnection(data.connections[0]);
+    if (authLoading || !user || !ready) return;
+    const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+    const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+    fetch(url)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({} as any));
+        if (res.status === 503) {
+          setProvisioned(false);
+          setConnections([]);
+          return;
         }
-      } catch {}
-      setLoading(false);
-    })();
-  }, [user, brandId]);
+        setProvisioned(true);
+        const list: FtpConnectionSummary[] = data?.connections || [];
+        setConnections(list);
+        // Auto-select if exactly one
+        if (list.length === 1) setConnectionId(list[0].id);
+      })
+      .catch(() => setConnections([]))
+      .finally(() => setConnectionsLoaded(true));
+  }, [authLoading, user, ready, selection]);
 
-  // Load pending fixes from URL params OR fetch finding by ID
+  /* ── Default mode: audit bundle ────────────────────────────── */
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
+    if (authLoading || !user || !ready) {
+      if (!authLoading) setLoading(false);
+      return;
+    }
+    setLoading(true);
+    loadLatestAuditBundle(user.id, selection)
+      .then(setBundle)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [authLoading, user, ready, selection]);
 
-    // Legacy: full fix JSON in URL
-    const fixesParam = params.get('fixes');
-    if (fixesParam) {
-      try { setPendingFixes(JSON.parse(decodeURIComponent(fixesParam))); } catch {}
+  /* ── Guided mode: fetch the targeted finding ───────────────── */
+  useEffect(() => {
+    if (!findingId) {
+      setGuided(null);
+      setGuidedError(null);
+      return;
+    }
+    setGuidedLoading(true);
+    setGuidedError(null);
+    fetch(`/api/findings/${findingId}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({} as any));
+        if (!res.ok) {
+          setGuidedError(data?.error || `Could not load finding (${res.status}).`);
+          setGuided(null);
+          return;
+        }
+        const f = data.finding as GuidedFinding | undefined;
+        if (!f) {
+          setGuidedError('Finding not found.');
+          return;
+        }
+        setGuided(f);
+        // Seed the patch with the recommendation so the editor isn't empty
+        setPatches((p) => (p[f.id] === undefined
+          ? { ...p, [f.id]: (f.recommendation || '').trim() }
+          : p));
+      })
+      .catch(() => setGuidedError('Network error loading finding.'))
+      .finally(() => setGuidedLoading(false));
+  }, [findingId]);
+
+  // Build the "file tree": each unique page URL is a folder, each
+  // finding is a leaf. Findings without a URL bucket into "(no URL)".
+  const tree = useMemo<PageNode[]>(() => {
+    if (!bundle) return [];
+    const pendingItems = bundle.findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
+    const byKey = new Map<string, PageNode>();
+    for (const f of pendingItems) {
+      const key = f.page_url || '__no_url';
+      let node = byKey.get(key);
+      if (!node) {
+        node = {
+          key,
+          host: hostnameOf(f.page_url),
+          path: f.page_url ? pathOf(f.page_url) : '(no URL)',
+          findings: [],
+        };
+        byKey.set(key, node);
+      }
+      node.findings.push(f);
+    }
+    const out = Array.from(byKey.values());
+    out.sort((a, b) => a.path.localeCompare(b.path));
+    for (const n of out) {
+      n.findings.sort((a, b) => (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0));
+    }
+    return out;
+  }, [bundle]);
+
+  // Default-select the first finding so the editor isn't empty on first load.
+  useEffect(() => {
+    if (findingId || activeId) return;
+    const first = tree[0]?.findings[0];
+    if (first) setActiveId(first.id);
+  }, [tree, activeId, findingId]);
+
+  const active = useMemo<AuditFinding | GuidedFinding | null>(() => {
+    if (guided) return guided;
+    if (!activeId || !bundle) return null;
+    return bundle.findings.find((f) => f.id === activeId) || null;
+  }, [activeId, bundle, guided]);
+
+  const initialPatch = ((active as any)?.recommendation || '').trim();
+  const patch = active ? (patches[active.id] ?? initialPatch) : '';
+  const dirty = active ? patch !== initialPatch : false;
+  const isJson = active ? looksLikeJson(patch) : false;
+  const codeBlock = useMemo(
+    () => (active ? extractCodeBlock(initialPatch) : null),
+    [active, initialPatch],
+  );
+
+  const setActivePatch = (v: string) => {
+    if (!active) return;
+    setPatches((p) => ({ ...p, [active.id]: v }));
+  };
+
+  const updateLocal = (id: string, patchObj: Partial<AuditFinding>) => {
+    setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patchObj } : f) } : b);
+    setGuided((g) => (g && g.id === id ? { ...g, ...(patchObj as Partial<GuidedFinding>) } : g));
+  };
+
+  const handleStatus = async (id: string, status: FindingStatus) => {
+    const prev = bundle?.findings.find((f) => f.id === id)?.status || guided?.status;
+    setPending((p) => ({ ...p, [id]: true }));
+    updateLocal(id, { status });
+    try {
+      const res = await fetch(`/api/findings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        if (prev) updateLocal(id, { status: prev });
+        pushToast('warn', 'Could not update status. Try again.');
+      } else if (status === 'fixed') {
+        pushToast('ok', 'Marked as fixed.');
+      }
+    } catch {
+      if (prev) updateLocal(id, { status: prev });
+      pushToast('warn', 'Network error. Status not saved.');
+    } finally {
+      setPending((p) => ({ ...p, [id]: false }));
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!patch.trim()) return;
+    try {
+      await navigator.clipboard.writeText(patch);
+      setCopied(true);
+      pushToast('ok', 'Copied to clipboard.');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      pushToast('warn', 'Copy failed.');
+    }
+  };
+
+  const handleApplySnippet = () => {
+    if (!codeBlock) return;
+    setActivePatch(codeBlock);
+    pushToast('ok', 'Snippet applied to editor.');
+  };
+
+  const handleDownload = () => {
+    if (!active || !patch.trim()) return;
+    const base = slugify(active.title);
+    if (isJson) {
+      downloadFile(`${base}.json`, patch, 'application/json');
+      pushToast('ok', `Downloaded ${base}.json`);
+      return;
+    }
+    const md = [
+      `# ${active.title}`,
+      '',
+      `## Finding`,
+      active.description || '(no description)',
+      '',
+      `## Recommended fix`,
+      patch,
+      '',
+    ].join('\n');
+    downloadFile(`${base}.md`, md, 'text/markdown');
+    pushToast('ok', `Downloaded ${base}.md`);
+  };
+
+  const handleReset = () => {
+    if (!active) return;
+    setPatches((p) => {
+      const next = { ...p };
+      delete next[active.id];
+      return next;
+    });
+  };
+
+  /** Guided-mode push: write via FTP API, then auto-mark the finding fixed. */
+  const handleDeploy = async () => {
+    if (!guided) return;
+    if (!connectionId) {
+      pushToast('warn', 'Pick an FTP target first.');
+      return;
+    }
+    if (!remotePath.trim()) {
+      pushToast('warn', 'Enter a remote path.');
+      return;
+    }
+    if (!patch.trim()) {
+      pushToast('warn', 'Nothing to deploy — editor is empty.');
       return;
     }
 
-    // New: findingId — fetch finding details and build context
-    const findingId = params.get('findingId');
-    if (findingId) {
-      setFindingLoading(true);
-      fetch(`/api/findings/${findingId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.finding) {
-            const f = data.finding;
-            // Extract code snippet from recommendation (```...``` blocks)
-            let codeSnippet: string | null = null;
-            const rec = f.recommendation || '';
-            const m = rec.match(/```[a-zA-Z]*\n?([\s\S]+?)```/);
-            if (m && m[1].trim().length > 0) codeSnippet = m[1].trim();
-            setFindingContext({
-              id: f.id,
-              title: f.title,
-              description: f.description,
-              severity: f.severity,
-              recommendation: f.recommendation,
-              page_url: f.page_url,
-              codeSnippet,
-            });
-          }
-        })
-        .catch(() => {})
-        .finally(() => setFindingLoading(false));
-    }
-  }, []);
-
-  const browse = useCallback(async (conn: Connection, dirPath: string) => {
-    setBrowsing(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/ftp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list', connectionId: conn.id, dirPath }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to list files');
-      setFiles(data.files || []);
-      setCurrentPath(data.currentPath || dirPath);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to browse');
-      setFiles([]);
-    } finally {
-      setBrowsing(false);
-    }
-  }, []);
-
-  const navigateTo = (dirPath: string) => {
-    if (!selectedConnection) return;
-    setOpenFile(null);
-    setSaveResult(null);
-    browse(selectedConnection, dirPath);
-  };
-
-  const goUp = () => {
-    const parent = currentPath.split('/').slice(0, -1).join('/') || '/';
-    navigateTo(parent);
-  };
-
-  const openRemoteFile = async (filePath: string) => {
-    if (!selectedConnection) return;
-    setFileLoading(true);
-    setSaveResult(null);
-    try {
-      const res = await fetch('/api/ftp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'read', connectionId: selectedConnection.id, filePath }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to read file');
-      setOpenFile({ path: filePath, content: data.content });
-      setEditedContent(data.content);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to open file');
-    } finally {
-      setFileLoading(false);
-    }
-  };
-
-  const saveFile = async () => {
-    if (!selectedConnection || !openFile) return;
-    setSaving(true);
-    setSaveResult(null);
+    setDeploying(true);
     try {
       const res = await fetch('/api/ftp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'write', connectionId: selectedConnection.id,
-          filePath: openFile.path, content: editedContent, createBackup: true,
-          findingId: findingContext?.id || undefined,
+          action: 'write',
+          connectionId,
+          filePath: remotePath.trim(),
+          content: patch,
+          auditId: guided.audit_id,
+          findingId: guided.id,
+          createBackup: true,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to save');
-      setSaveResult({ success: true, message: 'Saved' });
-      setOpenFile({ ...openFile, content: editedContent });
-      // If deploying from a finding context, mark finding as fixed
-      if (findingContext) {
-        await markFindingFixed(findingContext.id);
-        setSaveResult({ success: true, message: `Deployed and marked "${findingContext.title}" as fixed` });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        pushToast('warn', data?.error || `Deploy failed (${res.status}).`);
+        return;
       }
+      pushToast('ok', data?.hadBackup ? 'Deployed (backup captured).' : 'Deployed successfully.');
+
+      // Auto-mark fixed — triggers score recalculation server-side
+      await handleStatus(guided.id, 'fixed');
     } catch (err: any) {
-      setSaveResult({ success: false, message: err?.message || 'Save failed' });
+      pushToast('warn', err?.message || 'Network error during deploy.');
     } finally {
-      setSaving(false);
+      setDeploying(false);
     }
   };
 
-  const applyFix = async (fix: PendingFix) => {
-    if (!selectedConnection) return;
-    setSaving(true);
-    setSaveResult(null);
-    try {
-      const res = await fetch('/api/ftp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'write', connectionId: selectedConnection.id,
-          filePath: fix.filePath, content: fix.fixedContent,
-          findingId: fix.findingId, createBackup: true,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to apply fix');
-      setSaveResult({ success: true, message: `Applied: ${fix.title}` });
-      setPendingFixes((prev) => prev.filter((f) => f.findingId !== fix.findingId));
-    } catch (err: any) {
-      setSaveResult({ success: false, message: err?.message || 'Fix failed' });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const pendingCount = useMemo(() => tree.reduce((s, n) => s + n.findings.length, 0), [tree]);
 
-  // Apply a code snippet from finding context into the editor
-  const applySnippetToEditor = () => {
-    if (!findingContext?.codeSnippet || !openFile) return;
-    setEditedContent(findingContext.codeSnippet);
-  };
-
-  // Mark finding as fixed after successful deploy
-  const markFindingFixed = async (findingId: string) => {
-    try {
-      await fetch(`/api/findings/${findingId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'fixed', note: 'Deployed via FTP' }),
-      });
-    } catch {}
-  };
-
-  useEffect(() => {
-    if (selectedConnection) browse(selectedConnection, selectedConnection.remote_path);
-  }, [selectedConnection, browse]);
-
-  const pathParts = currentPath.split('/').filter(Boolean);
-  const hasChanges = openFile && editedContent !== openFile.content;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(editedContent).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }).catch(() => {});
-  };
-
-  /* ── Loading ── */
-  if (loading) {
+  if (authLoading || (!findingId && loading) || !ready) {
     return (
       <div>
-        <div className="h-7 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-4 w-64 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-[400px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
+        <div className="h-7 w-32 rounded-md animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
+        <div className="h-5 w-80 rounded animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
+        <div className="h-[420px] rounded-lg animate-pulse" style={{ background: 'var(--paper-2)' }} />
       </div>
     );
   }
 
-  /* ── No connections ── */
-  if (connections.length === 0) {
+  /* ── Guided mode UI ──────────────────────────────────────── */
+  if (findingId) {
     return (
-      <div className="py-12 text-center">
-        <Server size={24} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
-        <h1 className="text-[16px] font-semibold" style={{ color: 'var(--ink)' }}>Connect your server</h1>
-        <p className="text-[12px] mt-1 mb-5 max-w-xs mx-auto" style={{ color: 'var(--m-muted)' }}>
-          Add FTP or SFTP credentials to browse files and deploy fixes.
-        </p>
-        <Link
-          href="/dashboard/connect"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold"
-          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-        >
-          <Server size={13} /> Add connection
-        </Link>
+      <div>
+        <OverviewBreadcrumb current="Deploy" />
+        <div className="mb-3 flex items-center gap-2">
+          <Link
+            href="/dashboard/fix"
+            className="inline-flex items-center gap-1 text-[11.5px] font-medium hover:underline"
+            style={{ color: 'var(--m-muted)' }}
+          >
+            <ArrowLeft size={12} />
+            Back to Fix
+          </Link>
+        </div>
+        <div className="mb-4">
+          <h1 className="text-[20px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+            Deploy fix
+          </h1>
+          <p className="text-[12.5px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            Push this fix to a connected FTP target. Nothing is sent until you click Deploy.
+          </p>
+        </div>
+
+        {guidedLoading && (
+          <div className="rounded-md p-6 text-[12.5px]" style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+            Loading finding…
+          </div>
+        )}
+
+        {!guidedLoading && guidedError && (
+          <div
+            className="rounded-md p-4 text-[12.5px] flex items-start gap-2"
+            style={{
+              background: 'color-mix(in srgb, var(--warn) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
+              color: 'var(--ink-2)',
+            }}
+          >
+            <AlertTriangle size={14} style={{ color: 'var(--warn)' }} />
+            <span>{guidedError}</span>
+          </div>
+        )}
+
+        {!guidedLoading && guided && (
+          <>
+            {/* Context banner */}
+            <div
+              className="rounded-md p-3 mb-3"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-semibold uppercase tracking-[0.04em]"
+                  style={{
+                    background: `color-mix(in srgb, ${severityColor(guided.severity)} 12%, transparent)`,
+                    color: severityColor(guided.severity),
+                  }}
+                >
+                  {severityLabel(guided.severity)}
+                </span>
+                <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  {guided.title}
+                </span>
+                {guided.page_url && (
+                  <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
+                    {hostnameOf(guided.page_url) || pathOf(guided.page_url)}
+                  </span>
+                )}
+              </div>
+              {guided.description && (
+                <p className="mt-2 text-[12px] leading-[1.6]" style={{ color: 'var(--ink-2)' }}>
+                  {guided.description}
+                </p>
+              )}
+              {guided.recommendation && (
+                <div className="mt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--signal)' }}>
+                    Recommended fix
+                  </p>
+                  <p className="text-[12px] leading-[1.6] whitespace-pre-wrap" style={{ color: 'var(--ink-2)' }}>
+                    {guided.recommendation}
+                  </p>
+                  {codeBlock && (
+                    <button
+                      type="button"
+                      onClick={handleApplySnippet}
+                      className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                      style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    >
+                      <ClipboardPaste size={11} />
+                      Apply code snippet to editor
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Deploy form */}
+            <div
+              className="rounded-md overflow-hidden"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="px-3 py-2 flex items-center gap-2" style={{ background: 'var(--paper-2)', borderBottom: '1px solid var(--rule)' }}>
+                <Upload size={12} style={{ color: 'var(--signal)' }} />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                  Deploy target
+                </span>
+              </div>
+
+              <div className="p-3 space-y-3">
+                {!provisioned ? (
+                  <div className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                    FTP is not provisioned for this workspace yet.{' '}
+                    <Link href="/dashboard/connect" className="underline" style={{ color: 'var(--ink)' }}>
+                      Go to Connect site
+                    </Link>{' '}
+                    to set it up.
+                  </div>
+                ) : connectionsLoaded && connections.length === 0 ? (
+                  <div className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                    No FTP connections for this brand yet.{' '}
+                    <Link href="/dashboard/connect" className="underline" style={{ color: 'var(--ink)' }}>
+                      Connect a target
+                    </Link>{' '}
+                    to enable deploy.
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                        FTP connection
+                      </label>
+                      <select
+                        value={connectionId}
+                        onChange={(e) => setConnectionId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      >
+                        <option value="">Select a target…</option>
+                        {connections.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} ({c.protocol.toUpperCase()} · {c.host})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                        Remote file path
+                      </label>
+                      <input
+                        type="text"
+                        value={remotePath}
+                        onChange={(e) => setRemotePath(e.target.value)}
+                        placeholder="/path/to/file.html"
+                        className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      />
+                      <p className="mt-1 text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+                        We back up the existing file before overwriting it.
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                    Content to deploy
+                  </label>
+                  <textarea
+                    value={patch}
+                    onChange={(e) => setActivePatch(e.target.value)}
+                    spellCheck={false}
+                    className="w-full min-h-[200px] px-3 py-2 text-[12px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono rounded-md"
+                    style={{
+                      background: 'var(--paper-2)',
+                      border: '1px solid var(--rule)',
+                      color: 'var(--ink)',
+                      resize: 'vertical',
+                    }}
+                    aria-label="File content"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{
+                      background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--paper-2)',
+                      border: '1px solid var(--rule)',
+                      color: copied ? 'var(--ok)' : 'var(--ink)',
+                    }}
+                  >
+                    {copied ? <Check size={11} /> : <Copy size={11} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  >
+                    <Download size={11} />
+                    {isJson ? '.json' : '.md'}
+                  </button>
+                  {dirty && (
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                      style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                    >
+                      <RotateCcw size={11} />
+                      Reset
+                    </button>
+                  )}
+                  <span className="flex-1" />
+                  <button
+                    type="button"
+                    onClick={handleDeploy}
+                    disabled={deploying || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                    {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
+                  </button>
+                </div>
+
+                <p className="text-[10.5px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
+                  <Lock size={10} />
+                  Safe mode — nothing is pushed until you click Deploy.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Toasts */}
+        <ToastStack toasts={toasts} dismissToast={dismissToast} />
+      </div>
+    );
+  }
+
+  /* ── Default mode UI ─────────────────────────────────────── */
+  if (!bundle?.audit) {
+    return (
+      <div>
+        <OverviewBreadcrumb current="Deploy" />
+        <div className="mb-5">
+          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Deploy</h1>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            {selection ? 'No audit for this brand yet.' : 'Run an audit to populate the deploy queue.'}
+          </p>
+        </div>
+        <EmptyAudit
+          title="No fixes to deploy"
+          body="Run your first audit to surface fixes you can ship from this console."
+        />
       </div>
     );
   }
 
   return (
     <div>
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div>
-          <h1 className="text-[20px] font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Deploy</h1>
-          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-            Browse files and apply fixes.
-            {selectedConnection && (
-              <span> Connected to <span className="font-medium" style={{ color: 'var(--ink)' }}>{selectedConnection.host}</span></span>
-            )}
+      <OverviewBreadcrumb current="Deploy" />
+      <div className="mb-4">
+        <h1 className="text-[20px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Deploy</h1>
+        <p className="text-[12.5px] mt-1" style={{ color: 'var(--m-muted)' }}>
+          Compact console for shipping fixes. Pick a page, review the snippet, copy or download — push stays gated until you connect a target.
+        </p>
+      </div>
+
+      {/* Minimal pending-fixes bar */}
+      <div
+        className="rounded-md px-3 py-1.5 mb-2 flex items-center gap-3 text-[11.5px]"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink-2)' }}
+      >
+        <Rocket size={12} style={{ color: 'var(--signal)' }} aria-hidden />
+        <span className="font-semibold" style={{ color: 'var(--ink)' }}>
+          {pendingCount} {pendingCount === 1 ? 'fix' : 'fixes'} pending
+        </span>
+        <span style={{ color: 'var(--m-muted)' }}>across {tree.length} {tree.length === 1 ? 'page' : 'pages'}</span>
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+          <Lock size={10} aria-hidden />
+          Safe mode · No silent changes
+        </span>
+      </div>
+
+      {pendingCount === 0 ? (
+        <div
+          className="rounded-md p-6 text-center"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>Nothing to deploy</p>
+          <p className="text-[11.5px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+            Every fix from the latest audit is marked as fixed or backlog.
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {connections.length > 1 && (
-            <select
-              value={selectedConnection?.id || ''}
-              onChange={(e) => {
-                const conn = connections.find((c) => c.id === e.target.value);
-                if (conn) setSelectedConnection(conn);
-              }}
-              className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg outline-none"
-              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-            >
-              {connections.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
-            </select>
-          )}
           <Link
-            href="/dashboard/connect"
-            className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-colors hover:bg-paper-2"
-            style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+            href="/dashboard/find"
+            className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-md text-[12px] font-semibold"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
-            Settings
+            Back to Find
           </Link>
         </div>
-      </div>
-
-      {/* ── Pending fixes bar ── */}
-      {pendingFixes.length > 0 && (
+      ) : (
         <div
-          className="mb-4 rounded-lg px-4 py-2.5"
-          style={{ background: 'color-mix(in srgb, var(--ok) 6%, var(--card))', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}
+          className="grid rounded-md overflow-hidden"
+          style={{ gridTemplateColumns: '240px 1fr', background: 'var(--card)', border: '1px solid var(--rule)', minHeight: 520 }}
         >
-          <div className="flex items-center gap-2 mb-2">
-            <Wrench size={12} style={{ color: 'var(--ok)' }} />
-            <span className="text-[11px] font-semibold" style={{ color: 'var(--ok)' }}>{pendingFixes.length} fix{pendingFixes.length > 1 ? 'es' : ''} ready</span>
-          </div>
-          <div className="space-y-1">
-            {pendingFixes.map((fix) => (
-              <div key={fix.findingId} className="flex items-center justify-between gap-2 py-1">
-                <div className="min-w-0">
-                  <span className="text-[12px] font-medium truncate block" style={{ color: 'var(--ink)' }}>{fix.title}</span>
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>{fix.filePath}</span>
-                </div>
-                <button
-                  onClick={() => applyFix(fix)}
-                  disabled={saving}
-                  className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md transition-colors disabled:opacity-40"
-                  style={{ background: 'color-mix(in srgb, var(--ok) 12%, transparent)', color: 'var(--ok)' }}
-                >
-                  {saving ? <Loader2 size={9} className="animate-spin" /> : <CheckCircle2 size={9} />}
-                  Apply
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Finding context banner ── */}
-      {findingLoading && (
-        <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-lg" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
-          <Loader2 size={12} className="animate-spin" style={{ color: 'var(--signal)' }} />
-          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Loading finding details...</span>
-        </div>
-      )}
-      {findingContext && (
-        <div
-          className="mb-4 rounded-lg px-4 py-3"
-          style={{ background: 'color-mix(in srgb, var(--signal) 6%, var(--card))', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
-        >
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Wrench size={12} style={{ color: 'var(--signal)' }} />
-                <span className="text-[11px] font-semibold" style={{ color: 'var(--signal)' }}>Fix to deploy</span>
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase"
-                  style={{
-                    color: findingContext.severity === 'critical' ? 'var(--severe)' : findingContext.severity === 'high' ? 'var(--warn)' : 'var(--m-muted)',
-                    background: findingContext.severity === 'critical' ? 'color-mix(in srgb, var(--severe) 12%, transparent)' : findingContext.severity === 'high' ? 'color-mix(in srgb, var(--warn) 12%, transparent)' : 'var(--paper-2)',
-                  }}
-                >
-                  {findingContext.severity}
-                </span>
-              </div>
-              <p className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{findingContext.title}</p>
-              <p className="text-[11px] mt-0.5 line-clamp-3" style={{ color: 'var(--m-muted)' }}>{findingContext.description}</p>
-            </div>
-            <button
-              onClick={() => setFindingContext(null)}
-              className="p-1 rounded hover:opacity-70 flex-shrink-0"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              <X size={12} />
-            </button>
-          </div>
-          {/* Recommended fix text */}
-          {findingContext.recommendation && (
-            <details className="mt-2">
-              <summary className="text-[10px] font-medium cursor-pointer" style={{ color: 'var(--signal)' }}>View recommended fix</summary>
-              <pre className="text-[11px] mt-1.5 p-2.5 rounded-md leading-relaxed whitespace-pre-wrap font-body overflow-x-auto" style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}>{findingContext.recommendation}</pre>
-            </details>
-          )}
-          {findingContext.codeSnippet && openFile && (
-            <button
-              onClick={applySnippetToEditor}
-              className="inline-flex items-center gap-1 px-2.5 py-1 mt-2 text-[10px] font-semibold rounded-md transition-colors"
-              style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)', color: 'var(--signal)' }}
-            >
-              <CheckCircle2 size={9} />
-              Apply code snippet to editor
-            </button>
-          )}
-          {findingContext.codeSnippet && !openFile && (
-            <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>
-              Open the target file to apply the code snippet.
-              {findingContext.page_url && <> Affected page: <span className="font-medium">{findingContext.page_url}</span></>}
-            </p>
-          )}
-          {/* Suggested file path based on finding's page URL */}
-          {findingContext.page_url && (() => {
-            try {
-              const u = new URL(findingContext.page_url);
-              const pathname = u.pathname === '/' ? '/index.html' : u.pathname;
-              const suggested = pathname.endsWith('/') ? `${pathname}index.html` : pathname;
-              return (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Suggested file:</span>
-                  <button
-                    onClick={() => {
-                      if (!selectedConnection) return;
-                      // Try to open the file at the suggested path relative to remote_path
-                      const base = selectedConnection.remote_path.replace(/\/$/, '');
-                      const fullPath = `${base}${suggested}`;
-                      openRemoteFile(fullPath);
-                    }}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
-                    style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
-                  >
-                    <FileCode size={9} />
-                    {suggested}
-                  </button>
-                </div>
-              );
-            } catch { return null; }
-          })()}
-        </div>
-      )}
-
-      {/* ── Feedback toast ── */}
-      {saveResult && (
-        <div
-          className="mb-3 flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-[11px]"
-          style={{
-            background: saveResult.success ? 'color-mix(in srgb, var(--ok) 8%, var(--card))' : 'color-mix(in srgb, var(--severe) 8%, var(--card))',
-            color: saveResult.success ? 'var(--ok)' : 'var(--severe)',
-            border: `1px solid ${saveResult.success ? 'color-mix(in srgb, var(--ok) 20%, transparent)' : 'color-mix(in srgb, var(--severe) 20%, transparent)'}`,
-          }}
-        >
-          <div className="flex items-center gap-1.5">
-            {saveResult.success ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-            <span>{saveResult.message}</span>
-          </div>
-          <button onClick={() => setSaveResult(null)} className="p-0.5 rounded hover:opacity-70">
-            <X size={10} />
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div
-          className="mb-3 flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px]"
-          style={{ background: 'color-mix(in srgb, var(--severe) 8%, var(--card))', color: 'var(--severe)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}
-        >
-          <AlertCircle size={12} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* ── Console: file tree + editor ── */}
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ border: '1px solid var(--rule)', background: 'var(--card)' }}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr]" style={{ minHeight: '420px' }}>
-          {/* ── File tree ── */}
-          <div style={{ borderRight: '1px solid var(--rule)' }}>
-            {/* Breadcrumb */}
+          {/* File / page tree */}
+          <aside
+            className="overflow-y-auto"
+            style={{ borderRight: '1px solid var(--rule)', maxHeight: 720 }}
+          >
             <div
-              className="flex items-center gap-0.5 px-3 py-1.5 overflow-x-auto text-[10px]"
-              style={{ borderBottom: '1px solid var(--rule)', background: 'var(--paper-2)' }}
+              className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] sticky top-0"
+              style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}
             >
-              <button onClick={() => navigateTo('/')} className="hover:underline" style={{ color: 'var(--m-muted)' }}>/</button>
-              {pathParts.map((part, i) => (
-                <React.Fragment key={i}>
-                  <ChevronRight size={8} style={{ color: 'var(--rule)' }} className="flex-shrink-0" />
-                  <button
-                    onClick={() => navigateTo('/' + pathParts.slice(0, i + 1).join('/'))}
-                    className="hover:underline flex-shrink-0"
-                    style={{ color: i === pathParts.length - 1 ? 'var(--ink)' : 'var(--m-muted)' }}
-                  >
-                    {part}
-                  </button>
-                </React.Fragment>
-              ))}
-              {browsing && <Loader2 size={9} className="animate-spin ml-auto flex-shrink-0" style={{ color: 'var(--signal)' }} />}
+              Pages
             </div>
-
-            {/* File list */}
-            <div className="overflow-y-auto" style={{ maxHeight: '388px' }}>
-              {currentPath !== '/' && (
-                <button
-                  onClick={goUp}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-paper-2/40"
-                  style={{ borderBottom: '1px solid color-mix(in srgb, var(--rule) 40%, transparent)' }}
-                >
-                  <FolderUp size={12} style={{ color: 'var(--m-muted)' }} />
-                  <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>..</span>
-                </button>
-              )}
-              {files
-                .sort((a, b) => {
-                  if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
-                  return a.name.localeCompare(b.name);
-                })
-                .map((file) => {
-                  const Icon = file.type === 'directory' ? FolderOpen : fileIcon(file.name);
-                  const isClickable = file.type === 'directory' || isTextFile(file.name);
-                  const isActive = openFile?.path === file.path;
-                  return (
+            <ul className="text-[12px]">
+              {tree.map((node) => {
+                const isCollapsed = !!collapsed[node.key];
+                return (
+                  <li key={node.key}>
                     <button
-                      key={file.path}
-                      onClick={() => {
-                        if (file.type === 'directory') navigateTo(file.path);
-                        else if (isTextFile(file.name)) openRemoteFile(file.path);
-                      }}
-                      disabled={!isClickable}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors"
-                      style={{
-                        borderBottom: '1px solid color-mix(in srgb, var(--rule) 40%, transparent)',
-                        background: isActive ? 'color-mix(in srgb, var(--signal) 8%, transparent)' : 'transparent',
-                        opacity: isClickable ? 1 : 0.4,
-                        cursor: isClickable ? 'pointer' : 'default',
-                      }}
+                      type="button"
+                      onClick={() => setCollapsed((c) => ({ ...c, [node.key]: !c[node.key] }))}
+                      className="w-full px-2.5 py-1.5 flex items-center gap-1.5 text-left hover:bg-[color:var(--paper-2)]/60 transition-colors"
+                      style={{ color: 'var(--ink-2)' }}
+                      aria-expanded={!isCollapsed}
                     >
-                      <Icon size={12} style={{ color: file.type === 'directory' ? 'var(--signal)' : 'var(--m-muted)' }} />
-                      <span className="text-[11px] truncate flex-1" style={{ color: isActive ? 'var(--signal)' : 'var(--ink)' }}>{file.name}</span>
-                      {file.type === 'file' && (
-                        <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--m-muted)' }}>{formatSize(file.size)}</span>
-                      )}
+                      {isCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+                      <Globe size={11} style={{ color: 'var(--m-muted)' }} aria-hidden />
+                      <span className="truncate flex-1" title={node.path}>
+                        {node.path === '/' ? (node.host || '/') : node.path}
+                      </span>
+                      <span className="tabular-nums text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                        {node.findings.length}
+                      </span>
                     </button>
-                  );
-                })}
-              {files.length === 0 && !browsing && (
-                <div className="px-3 py-6 text-center">
-                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Empty</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ── Editor ── */}
-          <div className="flex flex-col">
-            {fileLoading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 size={18} className="animate-spin" style={{ color: 'var(--signal)' }} />
-              </div>
-            ) : openFile ? (
-              <>
-                {/* Toolbar */}
-                <div
-                  className="flex items-center justify-between px-3 py-1.5"
-                  style={{ borderBottom: '1px solid var(--rule)', background: 'var(--paper-2)' }}
-                >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <FileCode size={11} style={{ color: 'var(--m-muted)' }} />
-                    <span className="text-[11px] truncate" style={{ color: 'var(--ink)' }}>{openFile.path.split('/').pop()}</span>
-                    {hasChanges && (
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--warn)' }} />
+                    {!isCollapsed && (
+                      <ul>
+                        {node.findings.map((f) => {
+                          const isActive = activeId === f.id;
+                          return (
+                            <li key={f.id}>
+                              <button
+                                type="button"
+                                onClick={() => setActiveId(f.id)}
+                                className="w-full pl-7 pr-2.5 py-1.5 flex items-center gap-1.5 text-left transition-colors"
+                                style={{
+                                  background: isActive ? 'color-mix(in srgb, var(--signal) 8%, transparent)' : 'transparent',
+                                  color: isActive ? 'var(--ink)' : 'var(--ink-2)',
+                                  borderLeft: isActive ? '2px solid var(--signal)' : '2px solid transparent',
+                                }}
+                                aria-current={isActive ? 'true' : undefined}
+                              >
+                                <FileText size={10} style={{ color: severityColor(f.severity) }} aria-hidden />
+                                <span className="truncate flex-1 text-[11.5px]" title={f.title}>
+                                  {f.title}
+                                </span>
+                                <span
+                                  className="text-[9px] font-semibold uppercase tracking-[0.04em] flex-shrink-0"
+                                  style={{ color: severityColor(f.severity) }}
+                                >
+                                  {f.severity[0]}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
-                  </div>
-                  <div className="flex items-center gap-1">
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+
+          {/* Editor */}
+          <main className="flex flex-col">
+            {active ? (
+              <>
+                {/* Editor header */}
+                <header
+                  className="px-3 py-2 flex items-center gap-2 flex-wrap"
+                  style={{ background: 'var(--paper-2)', borderBottom: '1px solid var(--rule)' }}
+                >
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-semibold uppercase tracking-[0.04em]"
+                    style={{
+                      background: `color-mix(in srgb, ${severityColor((active as any).severity)} 12%, transparent)`,
+                      color: severityColor((active as any).severity),
+                    }}
+                  >
+                    {severityLabel((active as any).severity)}
+                  </span>
+                  <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                    {active.title}
+                  </span>
+                  {dirty && (
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--warn)' }}>
+                      Edited
+                    </span>
+                  )}
+                  <span className="ml-auto text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>
+                    {hostnameOf((active as any).page_url) || pathOf((active as any).page_url)}
+                  </span>
+                </header>
+
+                {/* Editor body */}
+                <div className="p-3 flex-1 min-h-0">
+                  <textarea
+                    value={patch}
+                    onChange={(e) => setActivePatch(e.target.value)}
+                    spellCheck
+                    className="w-full h-full min-h-[280px] px-3 py-2 text-[12px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono"
+                    style={{
+                      background: 'var(--paper-2)',
+                      border: '1px solid var(--rule)',
+                      borderRadius: '6px',
+                      color: 'var(--ink)',
+                      resize: 'vertical',
+                    }}
+                    placeholder={
+                      initialPatch ? undefined : 'No recommendation captured — draft the snippet here.'
+                    }
+                    aria-label="Editable fix snippet"
+                  />
+                </div>
+
+                {/* Action bar */}
+                <footer
+                  className="px-3 py-2 flex items-center gap-1.5 flex-wrap"
+                  style={{ background: 'var(--paper-2)', borderTop: '1px solid var(--rule)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{
+                      background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--card)',
+                      border: '1px solid var(--rule)',
+                      color: copied ? 'var(--ok)' : 'var(--ink)',
+                    }}
+                    aria-label="Copy snippet to clipboard"
+                  >
+                    {copied ? <Check size={11} /> : <Copy size={11} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    aria-label={isJson ? 'Download as JSON' : 'Download as Markdown'}
+                  >
+                    <Download size={11} />
+                    {isJson ? '.json' : '.md'}
+                  </button>
+                  {dirty && (
                     <button
-                      onClick={() => setEditedContent(openFile.content)}
-                      className="p-1 rounded transition-colors hover:bg-paper-2"
-                      style={{ color: 'var(--m-muted)' }}
-                      title="Revert"
+                      type="button"
+                      onClick={handleReset}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                      style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                      aria-label="Reset snippet to original recommendation"
                     >
                       <RotateCcw size={11} />
+                      Reset
                     </button>
-                    <button
-                      onClick={handleCopy}
-                      className="p-1 rounded transition-colors hover:bg-paper-2"
-                      style={{ color: copied ? 'var(--ok)' : 'var(--m-muted)' }}
-                      title="Copy"
-                    >
-                      {copied ? <Check size={11} /> : <Copy size={11} />}
-                    </button>
-                    <button
-                      onClick={saveFile}
-                      disabled={saving || !hasChanges}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all disabled:opacity-30"
-                      style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                    >
-                      {saving ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
-                      Save
-                    </button>
-                  </div>
-                </div>
-                {/* Code area */}
-                <textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="flex-1 w-full px-3 py-2.5 text-[11px] leading-relaxed font-mono resize-none focus:outline-none"
-                  style={{ background: 'var(--card)', color: 'var(--ink)', minHeight: '360px' }}
-                  spellCheck={false}
-                />
+                  )}
+                  <span className="flex-1" />
+                  <Link
+                    href={`/dashboard/deploy?findingId=${encodeURIComponent(active.id)}`}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                    style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    aria-label="Open guided deploy"
+                  >
+                    <Upload size={11} />
+                    Open guided deploy
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleStatus(active.id, 'fixed')}
+                    disabled={!!pending[active.id]}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                    style={{ background: 'var(--ok)', color: 'var(--paper)' }}
+                    aria-label="Approve and mark fixed"
+                  >
+                    <Send size={11} />
+                    Approve
+                  </button>
+                </footer>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <FileCode size={20} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-2" />
-                  <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>Select a file to edit</p>
-                </div>
+              <div className="flex-1 grid place-items-center p-6 text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                Select a fix from the left to start.
               </div>
             )}
-          </div>
+          </main>
         </div>
-      </div>
+      )}
+
+      {/* Toasts */}
+      <ToastStack toasts={toasts} dismissToast={dismissToast} />
     </div>
+  );
+}
+
+function ToastStack({ toasts, dismissToast }: { toasts: Toast[]; dismissToast: (id: number) => void }) {
+  return (
+    <div className="fixed bottom-4 right-4 z-50 space-y-1.5 max-w-[320px]">
+      {toasts.map((t) => {
+        const tone =
+          t.tone === 'ok' ? { bg: 'color-mix(in srgb, var(--ok) 10%, transparent)', border: 'var(--ok)', icon: <Check size={12} /> } :
+          t.tone === 'warn' ? { bg: 'color-mix(in srgb, var(--warn) 10%, transparent)', border: 'var(--warn)', icon: <AlertTriangle size={12} /> } :
+          { bg: 'var(--card)', border: 'var(--rule)', icon: <Rocket size={12} /> };
+        return (
+          <div
+            key={t.id}
+            role="status"
+            className="px-3 py-2 rounded-md text-[12px] flex items-start gap-2 shadow-sm"
+            style={{ background: tone.bg, border: `1px solid ${tone.border}`, color: 'var(--ink)' }}
+          >
+            <span className="flex-shrink-0 mt-px" style={{ color: tone.border }}>{tone.icon}</span>
+            <span className="flex-1">{t.message}</span>
+            <button
+              onClick={() => dismissToast(t.id)}
+              aria-label="Dismiss"
+              className="text-[var(--m-muted)] hover:text-[var(--ink)] flex-shrink-0"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function DeployPage() {
+  return (
+    <Suspense
+      fallback={
+        <div>
+          <div className="h-7 w-32 rounded-md animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
+          <div className="h-5 w-80 rounded animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
+        </div>
+      }
+    >
+      <DeployPageInner />
+    </Suspense>
   );
 }

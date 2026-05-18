@@ -15,6 +15,26 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr'
 import type { Audit, AuditFinding, Report } from '@/types/database'
 import type { BrandSelection } from '@/lib/dashboard/brand-selection'
 
+/**
+ * Non-terminal audit statuses — an audit in any of these states is
+ * actively being processed. Surfaced separately on Overview so the
+ * "no audit yet" form is NEVER shown while an audit is running.
+ */
+export const IN_PROGRESS_AUDIT_STATUSES = [
+  'pending_payment',
+  'payment_received',
+  'crawling',
+  'analysing',
+  'generating_report',
+] as const
+
+export type InProgressAuditStatus = (typeof IN_PROGRESS_AUDIT_STATUSES)[number]
+
+export function isInProgressAuditStatus(s: string | null | undefined): boolean {
+  if (!s) return false
+  return (IN_PROGRESS_AUDIT_STATUSES as readonly string[]).includes(s)
+}
+
 export interface LatestAuditBundle {
   audit: Audit | null
   report: Report | null
@@ -23,6 +43,22 @@ export interface LatestAuditBundle {
   prior: { audit: Audit; report: Report | null } | null
   /** Completed audits matching the selection (newest first), used for trend. */
   history: Array<{ audit: Audit; report: Report | null }>
+  /**
+   * The most recent non-terminal audit for this selection, if any.
+   * Lets Overview show an in-progress dashboard ("Auditing your
+   * website…") instead of the no-audit form while a fresh audit is
+   * still crawling/analysing. May coexist with `audit` (a prior
+   * completed audit exists and a new one is currently running) — in
+   * that case Overview can choose to show the running banner on top
+   * of the populated dashboard.
+   */
+  inProgressAudit: Audit | null
+  /**
+   * The most recent failed audit for this selection, surfaced only
+   * when there is no completed audit yet (so the user sees a clear
+   * retry CTA instead of the no-audit form).
+   */
+  failedAudit: Audit | null
   /**
    * Echoed selection used for the query. When `selection` is set but
    * `audit` is null, the caller should render an empty state for that
@@ -42,6 +78,21 @@ export async function loadLatestAuditBundle(
 ): Promise<LatestAuditBundle> {
   const supabase = createBrowserSupabase()
 
+  // When a brand is selected, resolve its website host so we can include
+  // legacy audits that were created before brand_identity_id linking. A
+  // brand "owns" any of this user's audits whose product_url host matches
+  // the brand's website_url host — keeping selected-brand scoping while
+  // surfacing the full history.
+  let brandHost: string | null = null
+  if (selection?.kind === 'brand') {
+    const { data: brandRow } = await supabase
+      .from('brand_identities')
+      .select('website_url')
+      .eq('id', selection.brandId)
+      .maybeSingle()
+    brandHost = hostnameOf((brandRow as { website_url: string | null } | null)?.website_url)
+  }
+
   let query = supabase
     .from('audits')
     .select('*')
@@ -49,23 +100,52 @@ export async function loadLatestAuditBundle(
     .eq('status', 'completed')
     .or('audit_type.is.null,audit_type.eq.website')
     .order('completed_at', { ascending: false })
-    .limit(25)
+    .limit(50)
 
-  // Brand selection scopes server-side; site selection filters client-side
-  // because hostname is derived from product_url (no indexed column).
-  if (selection?.kind === 'brand') {
+  // Brand selection: when the brand has no website host, fall back to the
+  // strict brand_identity_id filter. Otherwise we union brand_identity_id
+  // matches with legacy audits matching the website host client-side
+  // (Supabase can't compare a derived host server-side).
+  if (selection?.kind === 'brand' && !brandHost) {
     query = query.eq('brand_identity_id', selection.brandId)
   }
 
   const { data: audits } = await query
   let auditRows = (audits || []) as Audit[]
 
+  if (selection?.kind === 'brand' && brandHost) {
+    auditRows = auditRows.filter(
+      (a) => a.brand_identity_id === selection.brandId || hostnameOf(a.product_url) === brandHost,
+    )
+  }
+
   if (selection?.kind === 'site') {
     auditRows = auditRows.filter((a) => hostnameOf(a.product_url) === selection.host)
   }
 
+  auditRows = auditRows.slice(0, 25)
+
+  // Separately fetch the most recent non-terminal audit (in-progress)
+  // and the most recent failed audit for this selection. Surfaced so
+  // Overview can show a calm "Auditing your website…" or a clear
+  // retry state instead of the no-audit form. We only need the
+  // top-most row of each, so cap small.
+  const [inProgressAudit, failedAudit] = await Promise.all([
+    fetchLatestAuditByStatus(supabase, userId, selection, [...IN_PROGRESS_AUDIT_STATUSES], brandHost),
+    fetchLatestAuditByStatus(supabase, userId, selection, ['failed'], brandHost),
+  ])
+
   if (auditRows.length === 0) {
-    return { audit: null, report: null, findings: [], prior: null, history: [], selection }
+    return {
+      audit: null,
+      report: null,
+      findings: [],
+      prior: null,
+      history: [],
+      inProgressAudit,
+      failedAudit,
+      selection,
+    }
   }
 
   const auditIds = auditRows.map((a) => a.id)
@@ -84,7 +164,10 @@ export async function loadLatestAuditBundle(
   // site selection or no selection, match by hostname for backwards-
   // compatible "previous audit for this site" semantics.
   const prior = selection?.kind === 'brand'
-    ? (history[1] || null)
+    ? (history.slice(1).find((h) =>
+        h.audit.brand_identity_id === selection.brandId ||
+        (brandHost != null && hostnameOf(h.audit.product_url) === brandHost),
+      ) || null)
     : (history.slice(1).find((h) => hostnameOf(h.audit.product_url) === hostnameOf(latest.audit.product_url)) || null)
 
   const { data: findings } = await supabase
@@ -99,8 +182,59 @@ export async function loadLatestAuditBundle(
     findings: ((findings || []) as AuditFinding[]).filter((f) => !f.dismissed),
     prior,
     history,
+    inProgressAudit,
+    failedAudit,
     selection,
   }
+}
+
+/**
+ * Fetch the most recent audit row for the given user + selection that
+ * is in one of the supplied statuses. Returns null if none.
+ *
+ * Uses the same selection scoping rules as the main bundle query
+ * (brand scoped server-side, site filtered client-side by hostname).
+ */
+async function fetchLatestAuditByStatus(
+  supabase: ReturnType<typeof createBrowserSupabase>,
+  userId: string,
+  selection: BrandSelection,
+  statuses: string[],
+  brandHost: string | null,
+): Promise<Audit | null> {
+  let q = supabase
+    .from('audits')
+    .select('*')
+    .eq('user_id', userId)
+    .in('status', statuses)
+    .or('audit_type.is.null,audit_type.eq.website')
+    .order('created_at', { ascending: false })
+    .limit(25)
+
+  // Fall back to strict brand_identity_id filter only when we can't widen
+  // by host. With a known brandHost we filter client-side so legacy audits
+  // linked only by URL still surface.
+  if (selection?.kind === 'brand' && !brandHost) {
+    q = q.eq('brand_identity_id', selection.brandId)
+  }
+
+  const { data } = await q
+  const rows = (data || []) as Audit[]
+  if (rows.length === 0) return null
+
+  if (selection?.kind === 'brand' && brandHost) {
+    const match = rows.find(
+      (a) => a.brand_identity_id === selection.brandId || hostnameOf(a.product_url) === brandHost,
+    )
+    return match || null
+  }
+
+  if (selection?.kind === 'site') {
+    const match = rows.find((a) => hostnameOf(a.product_url) === selection.host)
+    return match || null
+  }
+
+  return rows[0]
 }
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 }
@@ -153,6 +287,21 @@ export function moduleNameForFinding(f: AuditFinding): string {
   const names = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure', 'Brand Consistency']
   return names[moduleIdx] || 'General'
 }
+
+export function moduleIndexForFinding(f: AuditFinding): number {
+  const idx = f.category_index
+  if (idx == null) return -1
+  return Math.max(0, Math.min(5, Math.floor(idx / 4)))
+}
+
+export const MODULE_TINTS = [
+  { dot: '#3B82F6', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.18)' },  // Foundation
+  { dot: '#EC4899', bg: 'rgba(236, 72, 153, 0.08)', border: 'rgba(236, 72, 153, 0.18)' },  // Human Experience
+  { dot: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.08)', border: 'rgba(139, 92, 246, 0.18)' },  // Inclusive Design
+  { dot: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.18)' },  // Future Readiness
+  { dot: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.18)' },  // SEO Structure
+  { dot: '#06B6D4', bg: 'rgba(6, 182, 212, 0.08)', border: 'rgba(6, 182, 212, 0.18)' },    // Brand Consistency
+] as const
 
 export const PHASE1_MODULES = [
   'Foundation',

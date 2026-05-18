@@ -816,7 +816,10 @@ export const processAuditFn = inngest.createFunction(
 
         const comparison = await runMultiModelBenchmark(domain, groundTruth)
 
-        // Store individual model benchmarks
+        // Store individual model benchmarks. We always insert one row
+        // per provider — including skipped/error — so the dashboard
+        // can render an explicit status badge instead of silently
+        // showing "Not yet measured".
         for (const b of comparison.benchmarks) {
           await db.from('multi_model_probes').insert({
             audit_id: auditId,
@@ -830,6 +833,8 @@ export const processAuditFn = inngest.createFunction(
             no_data_count: b.noDataCount,
             total_questions: b.totalQuestions,
             results_json: b.results as any,
+            status: b.status,
+            error_message: b.errorMessage,
           } as any)
         }
 

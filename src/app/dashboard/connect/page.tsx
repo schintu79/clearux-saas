@@ -3,13 +3,9 @@
 /**
  * Connect — FTP/SFTP settings page.
  *
- * Scoped to the current brand selection. Each brand has its own
- * set of server connections.
- *
- * Fixes:
- * - Password show/hide toggle works correctly
- * - Test connection always available (uses stored password when editing)
- * - Connections scoped to current brand, not global
+ * Lets users add, test, and manage FTP/SFTP connections for their
+ * brand's website. Used for one-click deployment of audit fixes
+ * on static sites without a dev team.
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -26,10 +22,10 @@ import {
   Wifi,
   WifiOff,
   Shield,
-  X,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 interface SavedConnection {
   id: string;
@@ -66,7 +62,7 @@ const DEFAULT_FORM: FormState = {
 
 export default function ConnectPage() {
   const { user } = useAuth();
-  const { selection, ready } = useBrandSelection();
+  const { selection } = useBrandSelection();
 
   const [connections, setConnections] = useState<SavedConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,26 +73,38 @@ export default function ConnectPage() {
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-
-  // Get brand ID for scoping
-  const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+  const [provisioning, setProvisioning] = useState<{ provisioned: boolean; configured: boolean; error?: string } | null>(null);
 
   const fetchConnections = useCallback(async () => {
     try {
-      const url = brandId ? `/api/ftp?brandId=${brandId}` : '/api/ftp';
+      const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+      const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
       const res = await fetch(url);
       const data = await res.json();
+      if (res.status === 503) {
+        setProvisioning({
+          provisioned: data.provisioned !== false,
+          configured: data.configured !== false,
+          error: data.error,
+        });
+        setConnections([]);
+        return;
+      }
+      setProvisioning({
+        provisioned: data.provisioned !== false,
+        configured: data.configured !== false,
+      });
       setConnections(data.connections || []);
     } catch {
       // Silently fail
     } finally {
       setLoading(false);
     }
-  }, [brandId]);
+  }, [selection]);
 
   useEffect(() => {
-    if (user && ready) fetchConnections();
-  }, [user, ready, fetchConnections]);
+    if (user) fetchConnections();
+  }, [user, fetchConnections]);
 
   const handleProtocolChange = (protocol: 'sftp' | 'ftp' | 'ftps') => {
     setForm((prev) => ({
@@ -110,20 +118,23 @@ export default function ConnectPage() {
     setTesting(true);
     setTestResult(null);
     try {
+      const payload: Record<string, any> = {
+        action: 'test',
+        protocol: form.protocol,
+        host: form.host,
+        port: parseInt(form.port) || (form.protocol === 'sftp' ? 22 : 21),
+        username: form.username,
+        remotePath: form.remotePath,
+      };
+      // Only include password if user typed one. When editing, an empty
+      // password means "use the stored one" and the API will look it up.
+      if (form.password) payload.password = form.password;
+      if (editingId) payload.connectionId = editingId;
+
       const res = await fetch('/api/ftp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'test',
-          protocol: form.protocol,
-          host: form.host,
-          port: parseInt(form.port) || (form.protocol === 'sftp' ? 22 : 21),
-          username: form.username,
-          password: form.password || undefined,
-          remotePath: form.remotePath,
-          // Pass connectionId so API can use stored password when editing
-          connectionId: editingId || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       setTestResult({
@@ -142,6 +153,7 @@ export default function ConnectPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const brandIdentityId = selection?.kind === 'brand' ? selection.brandId : null;
       const payload: any = {
         action: editingId ? 'update' : 'save',
         label: form.label,
@@ -151,7 +163,7 @@ export default function ConnectPage() {
         username: form.username,
         password: form.password,
         remotePath: form.remotePath,
-        brandIdentityId: brandId,
+        brandIdentityId,
       };
       if (editingId) payload.connectionId = editingId;
 
@@ -166,7 +178,6 @@ export default function ConnectPage() {
         setEditingId(null);
         setForm(DEFAULT_FORM);
         setTestResult(null);
-        setShowPassword(false);
         fetchConnections();
       } else {
         setTestResult({ success: false, message: data.error || 'Save failed' });
@@ -199,181 +210,183 @@ export default function ConnectPage() {
       host: conn.host,
       port: String(conn.port),
       username: conn.username,
-      password: '',
+      password: '', // Never pre-fill password
       remotePath: conn.remote_path,
     });
     setEditingId(conn.id);
     setShowForm(true);
     setTestResult(null);
-    setShowPassword(false);
   };
 
-  const cancelForm = () => {
-    setShowForm(false);
-    setEditingId(null);
-    setForm(DEFAULT_FORM);
-    setTestResult(null);
-    setShowPassword(false);
-  };
-
-  // Can test: need host + username, and either a password or an existing connection (stored password)
-  const canTest = !!form.host && !!form.username && (!!form.password || !!editingId);
-  // Can save: need host + username, and for new connections need password
-  const canSave = !!form.host && !!form.username && (!!form.password || !!editingId);
-
-  if (loading || !ready) {
+  // Loading skeleton
+  if (loading) {
     return (
-      <div>
-        <div className="h-7 w-48 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-4 w-64 rounded-md animate-pulse mb-6" style={{ background: 'var(--paper-2)' }} />
-        <div className="h-40 rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />
+      <div className="max-w-2xl mx-auto py-6 px-4 space-y-4">
+        <div className="h-7 w-48 bg-off rounded animate-pulse" />
+        <div className="h-40 bg-off rounded-xl animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl">
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 mb-5">
+    <div className="max-w-2xl mx-auto py-4 px-4">
+      <OverviewBreadcrumb current="Connect site" />
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-            Server connections
-          </h1>
-          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-            Connect via FTP/SFTP to deploy fixes directly.
-            {brandId && <span> Connections are scoped to this brand.</span>}
+          <div className="flex items-center gap-2 mb-1">
+            <Server size={18} className="text-muted" />
+            <h1 className="text-lg font-medium text-text">Server connections</h1>
+          </div>
+          <p className="text-muted text-xs">
+            Connect your website via FTP/SFTP to deploy fixes directly from your audit results.
           </p>
         </div>
         {!showForm && (
           <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(DEFAULT_FORM); setTestResult(null); setShowPassword(false); }}
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            onClick={() => { setShowForm(true); setEditingId(null); setForm(DEFAULT_FORM); setTestResult(null); }}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Plus size={13} /> Add connection
           </button>
         )}
       </div>
 
-      {/* ── Form ── */}
-      {showForm && (
-        <div
-          className="rounded-xl p-5 mb-5"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
-              {editingId ? 'Edit connection' : 'New connection'}
-            </h2>
-            <button onClick={cancelForm} className="p-1 rounded-md hover:bg-paper-2 transition-colors">
-              <X size={14} style={{ color: 'var(--m-muted)' }} />
-            </button>
+      {/* Provisioning notice — surfaces missing migration / env clearly */}
+      {provisioning && (!provisioning.provisioned || !provisioning.configured) && (
+        <div className="mb-5 rounded-xl border border-border bg-off/60 p-4 flex items-start gap-2.5">
+          <AlertCircle size={15} className="text-muted flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-text">
+            {!provisioning.provisioned ? (
+              <>
+                <p className="font-medium mb-0.5">FTP feature not yet provisioned</p>
+                <p className="text-muted">
+                  The <code className="px-1 rounded bg-card border border-border">ftp_connections</code> table is missing.
+                  Apply migration <code className="px-1 rounded bg-card border border-border">032_ftp_connections.sql</code> in Supabase to enable.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium mb-0.5">Encryption key not configured</p>
+                <p className="text-muted">
+                  Set <code className="px-1 rounded bg-card border border-border">FTP_ENCRYPTION_KEY</code> in your deployment env.
+                  You can still test a connection below — credentials cannot be saved until the key is set.
+                </p>
+              </>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* Connection Form */}
+      {showForm && (
+        <div className="rounded-xl border border-border bg-card p-5 mb-6">
+          <h2 className="text-sm font-medium text-text mb-4">
+            {editingId ? 'Edit connection' : 'New connection'}
+          </h2>
 
           <div className="space-y-4">
             {/* Label */}
             <div>
-              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Connection name</label>
+              <label className="block text-xs text-muted mb-1">Connection name</label>
               <input
                 type="text"
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
-                className="w-full px-3 py-2 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
                 placeholder="e.g. Production server"
               />
             </div>
 
-            {/* Protocol */}
+            {/* Protocol selector */}
             <div>
-              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Protocol</label>
-              <div className="flex gap-1.5">
+              <label className="block text-xs text-muted mb-1">Protocol</label>
+              <div className="flex gap-2">
                 {(['sftp', 'ftps', 'ftp'] as const).map((p) => (
                   <button
                     key={p}
-                    type="button"
                     onClick={() => handleProtocolChange(p)}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-all"
-                    style={{
-                      background: form.protocol === p ? 'var(--ink)' : 'var(--paper-2)',
-                      color: form.protocol === p ? 'var(--paper)' : 'var(--m-muted)',
-                      border: form.protocol === p ? '1px solid var(--ink)' : '1px solid var(--rule)',
-                    }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                      form.protocol === p
+                        ? 'border-brand bg-brand/10 text-brand'
+                        : 'border-border text-muted hover:text-text hover:border-text/20'
+                    }`}
                   >
-                    {p === 'sftp' && <Shield size={9} className="inline mr-1 -mt-px" />}
+                    {p === 'sftp' && <Shield size={10} className="inline mr-1" />}
                     {p.toUpperCase()}
                   </button>
                 ))}
               </div>
               {form.protocol === 'sftp' && (
-                <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>Recommended. Uses SSH encryption.</p>
+                <p className="text-[11px] text-muted mt-1.5">Recommended. Uses SSH encryption for secure transfers.</p>
               )}
             </div>
 
             {/* Host + Port */}
-            <div className="grid grid-cols-[1fr_80px] gap-3">
-              <div>
-                <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Host</label>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="block text-xs text-muted mb-1">Host</label>
                 <input
                   type="text"
                   value={form.host}
                   onChange={(e) => setForm({ ...form, host: e.target.value })}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
                   placeholder="ftp.yoursite.com"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Port</label>
+                <label className="block text-xs text-muted mb-1">Port</label>
                 <input
                   type="text"
                   value={form.port}
                   onChange={(e) => setForm({ ...form, port: e.target.value })}
-                  className="w-full px-3 py-2 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
+                  placeholder="22"
                 />
               </div>
             </div>
 
             {/* Username */}
             <div>
-              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Username</label>
+              <label className="block text-xs text-muted mb-1">Username</label>
               <input
                 type="text"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-3 py-2 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
                 placeholder="your-ftp-username"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>
-                Password{editingId ? ' (leave blank to keep existing)' : ''}
+              <label className="block text-xs text-muted mb-1">
+                Password {editingId && <span className="text-muted/60">(leave blank to keep existing)</span>}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="w-full px-3 py-2 pr-10 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                  style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-                  placeholder={editingId ? 'Enter new password or leave blank' : 'Your password'}
-                  autoComplete="off"
+                  className="w-full px-3 py-2 pr-9 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
+                  placeholder={editingId ? '•••••••• (unchanged)' : '••••••••'}
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onMouseDown={(e) => {
+                    // Prevent the input from losing focus / from any wrapping
+                    // form attempting a submit on click.
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setShowPassword((prev) => !prev);
+                    setShowPassword((v) => !v);
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors hover:bg-paper-2"
-                  style={{ color: 'var(--m-muted)', zIndex: 10 }}
-                  tabIndex={-1}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded text-muted hover:text-text focus:outline-none focus:ring-1 focus:ring-brand"
                 >
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
@@ -382,60 +395,70 @@ export default function ConnectPage() {
 
             {/* Remote path */}
             <div>
-              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--m-muted)' }}>Remote path (document root)</label>
+              <label className="block text-xs text-muted mb-1">Remote path (document root)</label>
               <input
                 type="text"
                 value={form.remotePath}
                 onChange={(e) => setForm({ ...form, remotePath: e.target.value })}
-                className="w-full px-3 py-2 text-[13px] rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
                 placeholder="/public_html or /var/www/html"
               />
-              <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>The folder where your website files live on the server.</p>
+              <p className="text-[11px] text-muted mt-1">The folder where your website files live on the server.</p>
             </div>
 
             {/* Test result */}
             {testResult && (
               <div
-                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[12px]"
-                style={{
-                  background: testResult.success ? 'color-mix(in srgb, var(--ok) 8%, var(--card))' : 'color-mix(in srgb, var(--severe) 8%, var(--card))',
-                  color: testResult.success ? 'var(--ok)' : 'var(--severe)',
-                  border: `1px solid ${testResult.success ? 'color-mix(in srgb, var(--ok) 20%, transparent)' : 'color-mix(in srgb, var(--severe) 20%, transparent)'}`,
-                }}
+                className={`flex items-start gap-2 p-3 rounded-lg text-xs ${
+                  testResult.success
+                    ? 'bg-ok/10 text-ok border border-ok/20'
+                    : 'bg-severe/10 text-severe border border-severe/20'
+                }`}
               >
-                {testResult.success ? <CheckCircle2 size={13} className="flex-shrink-0" /> : <AlertCircle size={13} className="flex-shrink-0" />}
+                {testResult.success ? <CheckCircle2 size={14} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />}
                 <span>{testResult.message}</span>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2 pt-2">
               <button
-                type="button"
                 onClick={handleTest}
-                disabled={testing || !canTest}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium rounded-lg transition-all disabled:opacity-30"
-                style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                disabled={
+                  testing ||
+                  !form.host ||
+                  !form.username ||
+                  // When editing an existing connection, password may be blank
+                  // (the API will fall back to the stored encrypted password).
+                  (!editingId && !form.password)
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-border text-text hover:bg-off transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {testing ? <Loader2 size={12} className="animate-spin" /> : <Wifi size={12} />}
                 Test connection
               </button>
               <button
-                type="button"
                 onClick={handleSave}
-                disabled={saving || !canSave}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-semibold rounded-lg transition-all hover:brightness-110 disabled:opacity-30"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                disabled={
+                  saving ||
+                  !form.host ||
+                  !form.username ||
+                  (!form.password && !editingId) ||
+                  (provisioning ? !provisioning.provisioned || !provisioning.configured : false)
+                }
+                title={
+                  provisioning && (!provisioning.provisioned || !provisioning.configured)
+                    ? 'Provisioning required — see banner above'
+                    : undefined
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-brand text-surface hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-                {editingId ? 'Update' : 'Save'}
+                {editingId ? 'Update' : 'Save connection'}
               </button>
               <button
-                type="button"
-                onClick={cancelForm}
-                className="px-3 py-2 text-[12px] transition-colors hover:bg-paper-2 rounded-lg"
-                style={{ color: 'var(--m-muted)' }}
+                onClick={() => { setShowForm(false); setEditingId(null); setTestResult(null); }}
+                className="px-3 py-2 text-xs text-muted hover:text-text transition-colors"
               >
                 Cancel
               </button>
@@ -444,62 +467,55 @@ export default function ConnectPage() {
         </div>
       )}
 
-      {/* ── Saved connections ── */}
+      {/* Saved Connections */}
       {connections.length === 0 && !showForm ? (
-        <div
-          className="text-center py-14 rounded-xl"
-          style={{ border: '1px dashed var(--rule)' }}
-        >
-          <WifiOff size={22} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
-          <h2 className="text-[14px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>No connections yet</h2>
-          <p className="text-[12px] mb-4 max-w-xs mx-auto" style={{ color: 'var(--m-muted)' }}>
+        <div className="text-center py-16 border border-dashed border-border rounded-xl">
+          <WifiOff size={24} className="text-muted mx-auto mb-3" />
+          <h2 className="text-sm font-medium text-text mb-1">No connections yet</h2>
+          <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
             Add your FTP or SFTP credentials to deploy audit fixes directly to your website.
           </p>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg transition-all hover:brightness-110"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-4 py-2 rounded-lg transition-all hover:brightness-110"
           >
             <Plus size={13} /> Add connection
           </button>
         </div>
-      ) : connections.length > 0 && (
-        <div>
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: 'var(--m-muted)' }}>
-            Saved connections{brandId ? ' for this brand' : ''}
-          </h2>
-          <div className="space-y-2">
+      ) : (
+        connections.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xs font-medium text-muted uppercase tracking-wide">Saved connections</h2>
             {connections.map((conn) => (
               <div
                 key={conn.id}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
-                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+                className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-text/10 transition-colors"
               >
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'var(--paper-2)' }}
-                >
-                  <Server size={13} style={{ color: 'var(--m-muted)' }} />
+                <div className="w-8 h-8 rounded-lg bg-off flex items-center justify-center flex-shrink-0">
+                  <Server size={14} className="text-muted" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{conn.label}</p>
-                  <p className="text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>
+                  <p className="text-sm font-medium text-text truncate">{conn.label}</p>
+                  <p className="text-[11px] text-muted truncate">
                     {conn.protocol.toUpperCase()} · {conn.username}@{conn.host}:{conn.port} · {conn.remote_path}
                   </p>
+                  {conn.last_connected_at && (
+                    <p className="text-[10px] text-muted/60 mt-0.5">
+                      Last connected: {new Date(conn.last_connected_at).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleEdit(conn)}
-                    className="p-1.5 rounded-md transition-colors hover:bg-paper-2"
-                    style={{ color: 'var(--m-muted)' }}
+                    className="p-2 text-muted hover:text-text transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={12} />
                   </button>
                   <button
                     onClick={() => handleDelete(conn.id)}
-                    className="p-1.5 rounded-md transition-colors hover:bg-paper-2"
-                    style={{ color: 'var(--m-muted)' }}
+                    className="p-2 text-muted hover:text-red-500 transition-colors"
                     title="Remove"
                   >
                     <Trash2 size={12} />
@@ -508,21 +524,18 @@ export default function ConnectPage() {
               </div>
             ))}
           </div>
-        </div>
+        )
       )}
 
-      {/* ── Security note ── */}
-      <div
-        className="mt-6 px-4 py-3 rounded-xl"
-        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-      >
+      {/* Security note */}
+      <div className="mt-8 p-4 rounded-xl border border-border bg-off/50">
         <div className="flex items-start gap-2">
-          <Shield size={13} style={{ color: 'var(--m-muted)' }} className="flex-shrink-0 mt-0.5" />
+          <Shield size={14} className="text-muted flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-[12px] font-semibold" style={{ color: 'var(--ink)' }}>Your credentials are encrypted</p>
-            <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: 'var(--m-muted)' }}>
+            <p className="text-xs font-medium text-text mb-1">Your credentials are encrypted</p>
+            <p className="text-[11px] text-muted leading-relaxed">
               Passwords are encrypted with AES-256-GCM before storage and never logged in plaintext.
-              We recommend using SFTP (SSH) for the most secure connection.
+              We recommend using SFTP (SSH) for the most secure connection. You can revoke access at any time.
             </p>
           </div>
         </div>

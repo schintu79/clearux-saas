@@ -54,7 +54,8 @@ export async function GET(req: NextRequest) {
 
   // Get industry benchmark position — prefer frozen snapshot from report
   // so scores stay stable across audits. Fall back to live computation
-  // for older audits that don't have a snapshot yet.
+  // for older audits that don't have a snapshot yet, and freeze the
+  // result so subsequent loads return the same numbers.
   let benchmarkPosition = null
   if (report.data) {
     const rawJson = (report.data as any).raw_json as Record<string, any> | null
@@ -84,6 +85,25 @@ export async function GET(req: NextRequest) {
         }
       } catch (err) {
         console.error('[intelligence-api] Benchmark position error:', err)
+      }
+
+      // Persist the computed snapshot back to the report so future loads
+      // return stable numbers. Only writes when the snapshot was missing
+      // and we just computed a usable result.
+      if (
+        benchmarkPosition &&
+        (benchmarkPosition as any).benchmark &&
+        typeof (benchmarkPosition as any).userScore === 'number'
+      ) {
+        try {
+          const nextRawJson = { ...(rawJson || {}), _industryBenchmarkSnapshot: benchmarkPosition }
+          await db
+            .from('reports')
+            .update({ raw_json: nextRawJson })
+            .eq('audit_id', auditId)
+        } catch (err) {
+          console.error('[intelligence-api] Snapshot write-back error:', err)
+        }
       }
     }
   }

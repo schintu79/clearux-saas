@@ -47,6 +47,7 @@ export async function POST(
     // Parse multipart form data
     const formData = await request.formData()
     const file = formData.get('file') as File | null
+    const asLogo = formData.get('as_logo') === 'true'
 
     if (!file)
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -56,6 +57,9 @@ export async function POST(
 
     if (!ALLOWED_TYPES.includes(file.type))
       return NextResponse.json({ error: 'File type not allowed' }, { status: 400 })
+
+    if (asLogo && !file.type.startsWith('image/'))
+      return NextResponse.json({ error: 'Logo must be an image file' }, { status: 400 })
 
     // Upload to Supabase storage using service role (bypasses RLS)
     const ext = file.name.split('.').pop() || 'bin'
@@ -109,7 +113,16 @@ export async function POST(
 
     if (error) throw error
 
-    return NextResponse.json({ file: data }, { status: 201 })
+    // If caller asked to set this asset as the brand logo, update logo_url
+    // on the parent brand identity in the same request.
+    if (asLogo) {
+      await db
+        .from('brand_identities')
+        .update({ logo_url: urlData.publicUrl, updated_at: new Date().toISOString() } as any)
+        .eq('id', brandIdentityId)
+    }
+
+    return NextResponse.json({ file: data, logo_url: asLogo ? urlData.publicUrl : null }, { status: 201 })
   } catch (err) {
     console.error('POST /api/brand-identities/[id]/upload error:', err)
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
