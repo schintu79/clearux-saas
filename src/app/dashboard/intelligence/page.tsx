@@ -45,12 +45,13 @@ type Competitor = {
 type DraftCompetitor = {
   id: string;             // local-only id for keying
   domain: string;
-  name: string;
-  category: string;
-  note: string;
   score: number | null;   // null = unscored (new manual entry)
   source: 'auto' | 'manual';
   pillarScores?: Array<{ name: string; score: number }>;
+  // Preserved server metadata (not edited in UI) so saves don't drop existing values.
+  name?: string;
+  category?: string;
+  note?: string;
 };
 
 type BenchmarkPosition = {
@@ -75,12 +76,12 @@ function fromServer(c: Competitor): DraftCompetitor {
   return {
     id: makeDraftId(),
     domain: c.domain,
-    name: c.name || c.domain,
-    category: c.category || '',
-    note: c.note || '',
     score: typeof c.score === 'number' ? c.score : null,
     source: (c.source === 'manual' ? 'manual' : 'auto'),
     pillarScores: c.pillarScores,
+    name: c.name,
+    category: c.category,
+    note: c.note,
   };
 }
 
@@ -154,7 +155,7 @@ export default function IntelligencePage() {
 
   const isDirty = useMemo(() => {
     if (drafts.length !== serverSnapshot.length) return true;
-    const key = (c: DraftCompetitor) => `${c.domain}|${c.name}|${c.category}|${c.note}`;
+    const key = (c: DraftCompetitor) => c.domain;
     const a = drafts.map(key).sort();
     const b = serverSnapshot.map(key).sort();
     return a.some((v, i) => v !== b[i]);
@@ -170,9 +171,6 @@ export default function IntelligencePage() {
     setDrafts(prev => [...prev, {
       id: makeDraftId(),
       domain: '',
-      name: '',
-      category: '',
-      note: '',
       score: null,
       source: 'manual',
     }]);
@@ -207,7 +205,7 @@ export default function IntelligencePage() {
         return { ok: false, message: `"${dom}" is listed twice. Remove duplicates.` };
       }
       seen.add(dom);
-      cleaned.push({ ...d, domain: dom, name: d.name.trim() || dom });
+      cleaned.push({ ...d, domain: dom });
     }
     return { ok: true, cleaned };
   };
@@ -228,9 +226,9 @@ export default function IntelligencePage() {
           mode: 'save',
           competitors: v.cleaned.map(c => ({
             domain: c.domain,
-            name: c.name,
-            category: c.category,
-            note: c.note,
+            ...(c.name ? { name: c.name } : {}),
+            ...(c.category ? { category: c.category } : {}),
+            ...(c.note ? { note: c.note } : {}),
           })),
         }),
       });
@@ -301,7 +299,7 @@ export default function IntelligencePage() {
           mode: 'manual',
           competitors: drafts.map(d => ({
             domain: normalizeDomainInput(d.domain),
-            name: d.name,
+            ...(d.name ? { name: d.name } : {}),
           })),
         }),
       });
@@ -549,91 +547,34 @@ export default function IntelligencePage() {
                         border: '1px solid var(--rule)',
                       }}
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-                        <div className="md:col-span-3">
-                          <label className="block text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                            Name
-                          </label>
-                          <input
-                            type="text"
-                            value={c.name}
-                            placeholder="Display name"
-                            onChange={(e) => updateRow(c.id, { name: e.target.value })}
-                            className="w-full text-[12px] px-2 py-1.5 rounded-md outline-none"
-                            style={{
-                              background: 'var(--card)',
-                              border: '1px solid var(--rule)',
-                              color: 'var(--ink)',
-                            }}
-                          />
-                        </div>
-                        <div className="md:col-span-3">
-                          <label className="block text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                            Domain
-                          </label>
-                          <input
-                            type="text"
-                            value={c.domain}
-                            placeholder="example.com"
-                            onChange={(e) => updateRow(c.id, { domain: e.target.value })}
-                            className="w-full text-[12px] px-2 py-1.5 rounded-md outline-none"
-                            style={{
-                              background: 'var(--card)',
-                              border: '1px solid var(--rule)',
-                              color: 'var(--ink)',
-                            }}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                            Category
-                          </label>
-                          <input
-                            type="text"
-                            value={c.category}
-                            placeholder="Optional"
-                            onChange={(e) => updateRow(c.id, { category: e.target.value })}
-                            className="w-full text-[12px] px-2 py-1.5 rounded-md outline-none"
-                            style={{
-                              background: 'var(--card)',
-                              border: '1px solid var(--rule)',
-                              color: 'var(--ink)',
-                            }}
-                          />
-                        </div>
-                        <div className="md:col-span-3">
-                          <label className="block text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                            Note
-                          </label>
-                          <input
-                            type="text"
-                            value={c.note}
-                            placeholder="Optional"
-                            onChange={(e) => updateRow(c.id, { note: e.target.value })}
-                            className="w-full text-[12px] px-2 py-1.5 rounded-md outline-none"
-                            style={{
-                              background: 'var(--card)',
-                              border: '1px solid var(--rule)',
-                              color: 'var(--ink)',
-                            }}
-                          />
-                        </div>
-                        <div className="md:col-span-1 flex md:justify-end items-end">
-                          <button
-                            type="button"
-                            onClick={() => removeRow(c.id)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:opacity-80"
-                            style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 8%, transparent)' }}
-                            aria-label={`Remove ${c.domain}`}
-                            title="Remove"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={c.domain}
+                          placeholder="example.com"
+                          onChange={(e) => updateRow(c.id, { domain: e.target.value })}
+                          className="flex-1 min-w-0 text-[13px] px-3 py-2 rounded-md outline-none"
+                          style={{
+                            background: 'var(--card)',
+                            border: '1px solid var(--rule)',
+                            color: 'var(--ink)',
+                          }}
+                          aria-label="Competitor domain"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeRow(c.id)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:opacity-80 flex-shrink-0"
+                          style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 8%, transparent)' }}
+                          aria-label={`Remove ${c.domain || 'competitor'}`}
+                          title="Remove"
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       </div>
 
                       {/* Score row */}
-                      <div className="flex items-center gap-3 mt-3 pt-3" style={{ borderTop: '1px dashed var(--rule)' }}>
+                      <div className="flex items-center gap-3 mt-2.5 pt-2.5" style={{ borderTop: '1px dashed var(--rule)' }}>
                         <span
                           className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full"
                           style={{
