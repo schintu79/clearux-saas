@@ -22,6 +22,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 function hostnameOf(url: string | null): string | null {
   if (!url) return null;
@@ -111,6 +112,7 @@ export default function TrackPage() {
   if (!bundle?.audit) {
     return (
       <div>
+        <OverviewBreadcrumb current="Track" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -144,6 +146,7 @@ export default function TrackPage() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Track" />
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>

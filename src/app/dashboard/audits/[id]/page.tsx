@@ -1996,13 +1996,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </div>
       )}
 
-      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
+      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise back to Overview */}
       <Link
-        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/audits'}
+        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/overview'}
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Audits'}
+        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Overview'}
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}

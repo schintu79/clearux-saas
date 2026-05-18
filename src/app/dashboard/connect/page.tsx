@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 interface SavedConnection {
   id: string;
@@ -222,6 +223,7 @@ export default function ConnectPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-4 px-4">
+      <OverviewBreadcrumb current="Connect site" />
       {/* Header */}
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
