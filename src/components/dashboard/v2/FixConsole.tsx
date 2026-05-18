@@ -426,22 +426,60 @@ export default function FixConsole({
         <span className="flex-1" />
 
         {hasFtp ? (
-          <button
-            type="button"
-            onClick={() => setShowDeploy((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-            style={{
-              background: showDeploy ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent',
-              border: `1px solid ${showDeploy ? 'var(--signal)' : 'var(--rule)'}`,
-              color: showDeploy ? 'var(--signal)' : 'var(--ink)',
-            }}
-            aria-expanded={showDeploy}
-            aria-label="Toggle deploy panel"
-          >
-            <Upload size={11} />
-            Push live
-            {showDeploy ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-          </button>
+          <>
+            {deployResult?.ok && deployResult.deployLogId && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (restoring) return;
+                  setRestoring(true);
+                  try {
+                    const res = await fetch('/api/ftp', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'restore',
+                        deployLogId: deployResult.deployLogId,
+                        connectionId: deployConnectionId,
+                      }),
+                    });
+                    const data = await res.json().catch(() => ({} as any));
+                    if (!res.ok) {
+                      setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
+                    } else {
+                      setDeployResult({ ok: true, msg: 'Original file restored.' });
+                    }
+                  } catch (err: any) {
+                    setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
+                  } finally {
+                    setRestoring(false);
+                  }
+                }}
+                disabled={restoring}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+              >
+                {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                {restoring ? 'Restoring…' : 'Undo deploy'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowDeploy((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+              style={{
+                background: showDeploy ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent',
+                border: `1px solid ${showDeploy ? 'var(--signal)' : 'var(--rule)'}`,
+                color: showDeploy ? 'var(--signal)' : 'var(--ink)',
+              }}
+              aria-expanded={showDeploy}
+              aria-label="Toggle deploy panel"
+            >
+              <Upload size={11} />
+              Push live
+              {showDeploy ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+            </button>
+          </>
         ) : (
           <Link
             href="/dashboard/connect"
@@ -572,7 +610,7 @@ export default function FixConsole({
               Deploy to server
             </span>
             <button
-              onClick={() => { setShowDeploy(false); setDeployResult(null); }}
+              onClick={() => { setShowDeploy(false); }}
               className="ml-auto text-[var(--m-muted)] hover:text-[var(--ink)]"
               aria-label="Close deploy panel"
             >
@@ -685,44 +723,6 @@ export default function FixConsole({
                 {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
                 {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
               </button>
-
-              {/* Rollback button — appears after successful deploy */}
-              {deployResult?.ok && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (restoring) return;
-                    setRestoring(true);
-                    try {
-                      const res = await fetch('/api/ftp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          action: 'restore',
-                          deployLogId: deployResult.deployLogId,
-                          connectionId: deployConnectionId,
-                        }),
-                      });
-                      const data = await res.json().catch(() => ({} as any));
-                      if (!res.ok) {
-                        setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
-                      } else {
-                        setDeployResult({ ok: true, msg: 'Original file restored successfully.' });
-                      }
-                    } catch (err: any) {
-                      setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
-                    } finally {
-                      setRestoring(false);
-                    }
-                  }}
-                  disabled={restoring}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
-                  style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
-                >
-                  {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
-                  {restoring ? 'Restoring…' : 'Rollback'}
-                </button>
-              )}
 
               <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
                 Backs up the existing file before overwriting.
