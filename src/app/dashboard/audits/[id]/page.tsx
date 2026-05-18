@@ -4252,29 +4252,37 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                                 {probe.accurate_count > 0 && <span><span className="font-semibold text-ink">{probe.accurate_count}</span> correct</span>}
                                 {probe.partial_count > 0 && <span><span className="font-semibold text-ink">{probe.partial_count}</span> partial</span>}
                                 {(probe.inaccurate_count || 0) > 0 && (
-                                  <span><span className="font-semibold text-ink">{probe.inaccurate_count}</span> wrong</span>
+                                  <span><span className="font-semibold text-ink">{probe.inaccurate_count}</span> inaccurate</span>
                                 )}
                                 {(probe.hallucinated_count || 0) > 0 && (
                                   <span><span className="font-semibold text-ink">{probe.hallucinated_count}</span> unverified</span>
                                 )}
                               </div>
                               {probe.results_json?.length > 0 && (
-                                <details className="mt-3">
-                                  <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
-                                  <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
-                                    {probe.results_json.map((r: any, j: number) => {
-                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Unverified' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
-                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' ? 'text-amber-500' : r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
-                                      return (
-                                        <div key={j} className="text-[11px]">
-                                          <p className="font-medium text-ink">{r.question}</p>
-                                          <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
-                                          <span className={`inline-block mt-1 text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
+                                <div className="mt-3 space-y-2">
+                                  {probe.results_json.map((r: any, j: number) => {
+                                    const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Unverified' : r.accuracy === 'inaccurate' ? 'Inaccurate' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
+                                    const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' ? 'text-amber-500' : r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
+                                    const bgTone = r.accuracy === 'accurate' ? 'bg-ok/5' : r.accuracy === 'partial' ? 'bg-warn/5' : r.accuracy === 'hallucinated' ? 'bg-amber-500/5' : r.accuracy === 'inaccurate' ? 'bg-severe/5' : 'bg-paper-2/50';
+                                    return (
+                                      <details key={j} className={`group rounded-md border border-rule/40 ${bgTone} overflow-hidden`}>
+                                        <summary className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-paper-2/40 transition-colors">
+                                          <span className="text-[11px] font-medium text-ink flex-1 min-w-0 pr-2 truncate">{r.question}</span>
+                                          <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className={`text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
+                                            <ChevronDown size={12} className="text-m-muted transition-transform group-open:rotate-180" />
+                                          </div>
+                                        </summary>
+                                        <div className="px-3 pb-3 pt-1 border-t border-rule/20">
+                                          <p className="text-[12px] text-ink leading-relaxed whitespace-pre-wrap">{r.answer}</p>
+                                          {r.accuracyNote && r.accuracyNote !== 'Grading unavailable' && (
+                                            <p className="text-[10px] text-m-muted mt-2 italic">{r.accuracyNote}</p>
+                                          )}
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                </details>
+                                      </details>
+                                    );
+                                  })}
+                                </div>
                               )}
                             </div>
                           );
