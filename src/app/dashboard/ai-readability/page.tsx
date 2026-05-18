@@ -43,6 +43,7 @@ import {
   summarizeCoverage,
   coverageCaption,
 } from '@/lib/ai-xray/provider-status';
+import AIXRayComparison from '@/components/dashboard/AIXRayComparison';
 
 type AIPageReadability = {
   extractable?: string[];
@@ -59,6 +60,13 @@ type AuditPageRow = {
   ai_readability: AIPageReadability | null;
 };
 
+type ProbeResultRow = {
+  question?: string;
+  answer?: string;
+  accuracy?: 'accurate' | 'partial' | 'inaccurate' | 'hallucinated' | 'no_data' | string | null;
+  accuracy_note?: string | null;
+};
+
 type ModelProbe = {
   model_id: string;
   model_label: string;
@@ -66,6 +74,7 @@ type ModelProbe = {
   status?: 'measured' | 'skipped' | 'error' | null;
   error_message?: string | null;
   created_at?: string | null;
+  results_json?: ProbeResultRow[] | null;
 };
 
 function scoreColor(s: number | null): string {
@@ -443,6 +452,41 @@ function AIReadabilityBody({
           </p>
         )}
       </section>
+
+      {/* ── AI X-Ray comparison: top user questions × every model ──
+         Surfaces the *reason* behind the score: a brand can look
+         "invisible to AI" because models say no_data, hallucinate, or
+         disagree. The score alone doesn't explain that — this card does. */}
+      {probes.some((p) => Array.isArray(p.results_json) && p.results_json.length > 0) ? (
+        <AIXRayComparison probes={probes} topN={5} />
+      ) : (
+        <section
+          className="rounded-xl px-5 py-6 mb-4 flex items-start gap-3"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <Info size={16} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+          <div className="min-w-0">
+            <h3 className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              No per-question detail yet
+            </h3>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              We probe each model with typical user questions and grade their
+              answers — but this audit doesn&apos;t have those question-level
+              results yet. Re-scan to populate the comparison.
+            </p>
+            <button
+              type="button"
+              onClick={handleRescan}
+              disabled={rescanning}
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 mt-3 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+            >
+              <RefreshCw size={11} className={rescanning ? 'animate-spin' : ''} />
+              {rescanning ? 'Re-scanning' : 'Re-scan AI X-Ray'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* ── Per-page AI readability ───────────────────────────── */}
       <section className="rounded-xl overflow-hidden mb-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>

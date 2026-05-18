@@ -77,10 +77,11 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
     try {
       const supabase = createBrowserSupabase();
 
-      // Fetch brand identities matching this name
+      // Fetch brand identities matching this name (need website_url too so
+      // we can surface legacy audits linked only by URL — see below).
       const { data: brands } = await supabase
         .from('brand_identities')
-        .select('id, name')
+        .select('id, name, website_url')
         .eq('user_id', userId)
         .ilike('name', brandName);
 
@@ -92,30 +93,53 @@ export default function BrandAuditsPage({ params }: { params: Promise<{ name: st
 
       const brandIds = brands.map(b => b.id);
 
+      // Resolve the brand's website host so we can include legacy audits
+      // whose product_url matches the brand even when brand_identity_id
+      // was never set. This is what makes "audit history" show the full
+      // story for a brand instead of just the two recently linked rows.
+      const hostnameOf = (url: string | null | undefined): string | null => {
+        if (!url) return null;
+        try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
+      };
+      const brandHosts = Array.from(
+        new Set(brands.map((b: any) => hostnameOf(b.website_url)).filter(Boolean) as string[]),
+      );
+
       // Sync the sidebar selector + topbar to this brand so the body, the
       // selector, and the "Viewing X" topbar agree. Without this they
       // would diverge when the user opened a brand from a list while a
       // different selection was persisted.
       if (brandIds[0]) writeSelection({ kind: 'brand', brandId: brandIds[0] });
 
-      // Fetch audits for these brand identities
+      // Fetch this user's audits and keep ones that either link to one of
+      // the brand identities OR whose product_url host matches the brand's
+      // website host. Selected-brand scoping is preserved (we never show
+      // audits for a different brand) while pre-link audits remain visible.
       const { data: rows, error: fetchError } = await supabase
         .from('audits')
         .select('*')
         .eq('user_id', userId)
-        .in('brand_identity_id', brandIds)
-        .order('created_at', { ascending: false });
+        .or('audit_type.is.null,audit_type.eq.website,audit_type.eq.brand_identity')
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (fetchError) throw fetchError;
 
-      const completedIds = (rows || []).filter((a: any) => a.status === 'completed').map((a: any) => a.id);
+      const filtered = (rows || []).filter((a: any) => {
+        if (a.brand_identity_id && brandIds.includes(a.brand_identity_id)) return true;
+        if (brandHosts.length === 0) return false;
+        const host = hostnameOf(a.product_url);
+        return host != null && brandHosts.includes(host);
+      });
+
+      const completedIds = filtered.filter((a: any) => a.status === 'completed').map((a: any) => a.id);
       let reportsMap: Record<string, Report> = {};
       if (completedIds.length > 0) {
         const { data: reports, error: repErr } = await supabase.from('reports').select('*').in('audit_id', completedIds);
         if (!repErr && reports) reportsMap = Object.fromEntries(reports.map((r: any) => [r.audit_id, r]));
       }
 
-      const enrichedAudits = (rows || []).map((a: any) => ({
+      const enrichedAudits = filtered.map((a: any) => ({
         ...a,
         report: reportsMap[a.id] || null,
         brandIdentityId: a.brand_identity_id,
