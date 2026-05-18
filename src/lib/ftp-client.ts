@@ -7,26 +7,9 @@
 //
 //   const client = createFtpClient(creds);
 //   await client.connect();
-//
-// IMPORTANT (Next.js 16 / Turbopack):
-//   We load `ssh2` and `basic-ftp` through a Node `createRequire`
-//   that is built from an opaque string. This prevents Turbopack
-//   from statically tracing the dependency graph into ssh2's native
-//   binding files (e.g. `ssh2/lib/protocol/crypto.js`) which fail to
-//   build as ESM chunks. The runtime is still pure Node — these
-//   packages are also listed in `next.config.mjs`
-//   `serverExternalPackages` so they are never bundled.
 // ============================================================
 
 import type { FtpProtocol } from '@/types/database';
-
-const dynamicNodeRequire = (id: string): any => {
-  // Hide require() behind an opaque function expression so neither
-  // webpack nor Turbopack can statically resolve the module graph.
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  const req = new Function('id', 'return require(id)') as (id: string) => any;
-  return req(id);
-};
 
 export interface FtpCredentials {
   protocol: FtpProtocol;
@@ -101,7 +84,7 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
 
   return {
     async connect() {
-      const { Client } = dynamicNodeRequire('ssh2');
+      const { Client } = await import('ssh2');
       return new Promise<void>((resolve, reject) => {
         conn = new Client();
         let settled = false;
@@ -211,7 +194,7 @@ function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
 
   return {
     async connect() {
-      const basicFtp = dynamicNodeRequire('basic-ftp');
+      const basicFtp = await import('basic-ftp');
       client = new basicFtp.Client();
       client.ftp.verbose = false;
       try {
