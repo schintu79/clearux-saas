@@ -299,7 +299,7 @@ export default function FixConsole({
 
       {/* ── Safety strip ─────────────────────────────────────────── */}
       <div
-        className="px-4 py-2 flex items-start gap-2 text-[11px]"
+        className="px-4 py-2.5 flex items-start gap-2 text-[11px]"
         style={{
           background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
           borderBottom: '1px solid var(--rule)',
@@ -308,14 +308,21 @@ export default function FixConsole({
       >
         <ShieldCheck size={12} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--signal)' }} aria-hidden />
         <span>
-          Edit freely below. Copy or download the result for your team — nothing reaches your site until you
-          explicitly approve and push.
+          Three steps: <strong style={{ color: 'var(--ink)' }}>review &amp; edit</strong> the suggested fix,{' '}
+          <strong style={{ color: 'var(--ink)' }}>copy or download</strong> for your team, then{' '}
+          <strong style={{ color: 'var(--ink)' }}>approve</strong>. Nothing is pushed to your site without your
+          explicit approval.
         </span>
       </div>
 
       {/* ── Zone 1 · Prepare fix ─────────────────────────────────── */}
-      <div className="px-4 pt-3 pb-3" style={{ background: 'var(--card)' }}>
-        <ZoneHeader icon={FileEdit} label="Prepare fix" hint="Edit the snippet your team will ship" />
+      <div className="px-4 pt-4 pb-3" style={{ background: 'var(--card)' }}>
+        <ZoneHeader
+          step={1}
+          icon={FileEdit}
+          label="Review & edit the fix"
+          hint="This is the recommended snippet — edit anything before you ship it"
+        />
         <textarea
           id={`patch-${finding.id}`}
           value={patch}
@@ -350,8 +357,8 @@ export default function FixConsole({
         >
           <ZoneHeader
             icon={Sparkles}
-            label="AI copy help"
-            hint='Optional — ask for a refinement like "make this clearer" or "tighten this"'
+            label="Refine with AI"
+            hint='Ask for a tweak like "make this clearer" or "tighten this"'
             optional
           />
           <div className="flex items-stretch gap-2 flex-col sm:flex-row">
@@ -428,9 +435,10 @@ export default function FixConsole({
         }}
       >
         <ZoneHeader
+          step={2}
           icon={PackageCheck}
-          label="Export"
-          hint="Hand the snippet to your team — copy or download for handoff"
+          label="Copy or download"
+          hint="Hand the snippet to whoever ships the change"
         />
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -484,54 +492,53 @@ export default function FixConsole({
 
       {/* ── Zone 4 · Approve & deploy ────────────────────────────── */}
       <div
-        className="px-4 py-3 flex items-center gap-3 flex-wrap"
+        className="px-4 pt-4 pb-4"
         style={{
           background: 'color-mix(in srgb, var(--ink) 4%, transparent)',
           borderTop: '1px solid var(--rule)',
         }}
       >
-        <div className="flex items-start gap-2 flex-1 min-w-[220px]">
-          <Rocket size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} aria-hidden />
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
-              Approve &amp; deploy
-            </p>
-            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Direct push is gated until a deployment target is connected. Until then, mark as fixed once your team
-              ships the snippet.
-            </p>
-          </div>
+        <ZoneHeader
+          step={3}
+          icon={Rocket}
+          label="Approve & deploy"
+          hint="Mark this fix as shipped, or push it to a connected target"
+        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={onApproveLocal}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
+            style={{
+              background: 'var(--ok)',
+              color: 'var(--paper)',
+            }}
+            aria-label="Approve fix and mark as fixed"
+          >
+            <Send size={12} />
+            Approve &amp; mark fixed
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPushNotice((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium"
+            style={{
+              background: 'transparent',
+              border: '1px dashed var(--rule)',
+              color: 'var(--m-muted)',
+              cursor: 'pointer',
+            }}
+            aria-expanded={showPushNotice}
+            aria-label="Push fix to site (deployment target required)"
+          >
+            <Lock size={12} />
+            Push to site
+          </button>
+          <span className="text-[11px] ml-1" style={{ color: 'var(--m-muted)' }}>
+            Direct push requires a connected deployment target.
+          </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowPushNotice((v) => !v)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium"
-          style={{
-            background: 'transparent',
-            border: '1px dashed var(--rule)',
-            color: 'var(--m-muted)',
-            cursor: 'pointer',
-          }}
-          aria-expanded={showPushNotice}
-          aria-label="Push fix to site (deployment target required)"
-        >
-          <Lock size={12} />
-          Push to site
-        </button>
-        <button
-          type="button"
-          onClick={onApproveLocal}
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-opacity disabled:opacity-50"
-          style={{
-            background: 'var(--ok)',
-            color: 'var(--paper)',
-          }}
-          aria-label="Approve fix and mark as fixed"
-        >
-          <Send size={12} />
-          Approve &amp; mark fixed
-        </button>
       </div>
 
       {showPushNotice && (
@@ -573,22 +580,37 @@ export default function FixConsole({
  * labelled with the same rhythm so the user can scan top-to-bottom.
  */
 function ZoneHeader({
+  step,
   icon: Icon,
   label,
   hint,
   optional,
 }: {
+  step?: number;
   icon: React.ElementType;
   label: string;
   hint?: string;
   optional?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-2 flex-wrap">
-      <Icon size={12} style={{ color: 'var(--m-muted)' }} aria-hidden />
+    <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+      {typeof step === 'number' ? (
+        <span
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold tabular-nums"
+          style={{
+            background: 'var(--ink)',
+            color: 'var(--paper)',
+          }}
+          aria-hidden
+        >
+          {step}
+        </span>
+      ) : (
+        <Icon size={12} style={{ color: 'var(--m-muted)' }} aria-hidden />
+      )}
       <span
-        className="text-[10px] font-semibold uppercase tracking-[0.06em]"
-        style={{ color: 'var(--m-muted)' }}
+        className="text-[11px] font-semibold uppercase tracking-[0.06em]"
+        style={{ color: 'var(--ink)' }}
       >
         {label}
       </span>

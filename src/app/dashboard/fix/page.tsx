@@ -42,6 +42,7 @@ import {
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import FixConsole from '@/components/dashboard/v2/FixConsole';
+import FindingText from '@/components/dashboard/v2/FindingText';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
@@ -194,101 +195,95 @@ function FixCard({
             {/* AI vs Human (only when both present) */}
             {hasAIvsHuman && (
               <div
-                className="grid grid-cols-1 md:grid-cols-2"
+                className="grid grid-cols-1 lg:grid-cols-2"
                 style={{ borderBottom: '1px solid var(--rule)' }}
               >
                 <div
-                  className="p-4"
-                  style={{ borderBottom: '1px solid var(--rule)' }}
+                  className="p-5 lg:p-6"
+                  style={{ borderRight: '1px solid var(--rule)' }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Brain size={12} style={{ color: 'var(--signal)' }} />
+                  <div className="flex items-center gap-2 mb-3">
+                    <Brain size={13} style={{ color: 'var(--signal)' }} />
                     <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
                       How AI reads this
                     </p>
                   </div>
-                  <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--ink-2)' }}>
-                    {finding.ai_interpretation}
-                  </p>
+                  <div className="max-w-prose">
+                    <FindingText text={finding.ai_interpretation} />
+                  </div>
                 </div>
-                <div
-                  className="p-4"
-                  style={{ borderBottom: '1px solid var(--rule)' }}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users size={12} style={{ color: 'var(--ok)' }} />
+                <div className="p-5 lg:p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users size={13} style={{ color: 'var(--ok)' }} />
                     <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
                       How a human sees this
                     </p>
                   </div>
-                  <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--ink-2)' }}>
-                    {finding.human_interpretation}
-                  </p>
+                  <div className="max-w-prose">
+                    <FindingText text={finding.human_interpretation} />
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Finding / Fix / Impact — clearly sectioned */}
+            {/* Fix — featured callout, full width, top of the body */}
             <div
-              className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.06em]"
-              style={{ color: 'var(--m-muted)' }}
+              className="p-5 lg:p-6"
+              style={{
+                background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
+                borderBottom: '1px solid var(--rule)',
+                borderLeft: '3px solid var(--signal)',
+              }}
             >
-              Overview
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb size={14} style={{ color: 'var(--signal)' }} />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--signal)' }}>
+                  Recommended fix
+                </p>
+              </div>
+              <div className="max-w-[72ch]">
+                <FindingText
+                  text={finding.recommendation || 'Manual review required — open the audit detail for full context.'}
+                  tone="fix"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3">
-              <div
-                className="p-4"
-                style={{ borderRight: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={12} style={{ color: severityColor(finding.severity) }} />
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    Finding
-                  </p>
-                </div>
-                <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--ink-2)' }}>
-                  {finding.description}
-                </p>
-              </div>
 
+            {/* Finding + Impact — readable 2-column on wide, stacked on narrow */}
+            <div
+              className="grid grid-cols-1 lg:grid-cols-2"
+              style={{ borderBottom: '1px solid var(--rule)' }}
+            >
               <div
-                className="p-4"
-                style={{
-                  background: 'color-mix(in srgb, var(--signal) 4%, transparent)',
-                  borderRight: '1px solid var(--rule)',
-                  borderBottom: '1px solid var(--rule)',
-                }}
+                className="p-5 lg:p-6"
+                style={{ borderRight: '1px solid var(--rule)' }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb size={12} style={{ color: 'var(--signal)' }} />
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--signal)' }}>
-                    Fix
-                  </p>
-                </div>
-                <p className="text-[13px] leading-[1.65] font-medium whitespace-pre-wrap" style={{ color: 'var(--ink)' }}>
-                  {finding.recommendation || 'Manual review required — open the audit detail for full context.'}
-                </p>
-              </div>
-
-              <div
-                className="p-4"
-                style={{ borderBottom: '1px solid var(--rule)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp size={12} style={{ color: 'var(--ok)' }} />
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle size={13} style={{ color: severityColor(finding.severity) }} />
                   <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    Impact
+                    What we found
                   </p>
                 </div>
-                {hasImpact ? (
-                  <p className="text-[13px] leading-[1.65]" style={{ color: 'var(--ink-2)' }}>
-                    {finding.estimated_impact}
+                <div className="max-w-prose">
+                  <FindingText text={finding.description} />
+                </div>
+              </div>
+              <div className="p-5 lg:p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp size={13} style={{ color: 'var(--ok)' }} />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                    Why it matters
                   </p>
-                ) : (
-                  <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
-                    Business impact not captured for this finding.
-                  </p>
-                )}
+                </div>
+                <div className="max-w-prose">
+                  {hasImpact ? (
+                    <FindingText text={finding.estimated_impact} />
+                  ) : (
+                    <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
+                      Business impact not captured for this finding.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
