@@ -446,6 +446,42 @@ export interface BrandAuditFileSnapshot {
   created_at:    string
 }
 
+export type FtpProtocol = 'ftp' | 'ftps' | 'sftp'
+export type DeployAction = 'create' | 'update' | 'delete' | 'backup'
+export type DeployStatus = 'success' | 'failed' | 'rolled_back'
+
+export interface FtpConnection {
+  id:                 string
+  user_id:            string
+  brand_identity_id:  string | null
+  label:              string
+  protocol:           FtpProtocol
+  host:               string
+  port:               number
+  username:           string
+  password_encrypted: string
+  remote_path:        string
+  last_connected_at:  string | null
+  is_active:          boolean
+  created_at:         string
+  updated_at:         string
+}
+
+export interface FtpDeployLog {
+  id:             string
+  connection_id:  string
+  user_id:        string
+  audit_id:       string | null
+  finding_id:     string | null
+  file_path:      string
+  action:         DeployAction
+  backup_content: string | null
+  new_content:    string | null
+  status:         DeployStatus
+  error_message:  string | null
+  created_at:     string
+}
+
 // ── VIEW TYPES ───────────────────────────────────────────────
 
 export interface AuditOverview {
