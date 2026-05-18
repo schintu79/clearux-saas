@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
+import { AIProviderIcon, providerKeyToIcon, providerBrandColor } from '@/components/ui/AIProviderIcon';
 import {
   loadLatestAuditBundle,
   type LatestAuditBundle,
@@ -57,6 +57,9 @@ type ModelProbe = {
   model_id: string;
   model_label: string;
   accuracy_score: number;
+  status?: 'measured' | 'skipped' | 'error' | null;
+  error_message?: string | null;
+  created_at?: string | null;
 };
 
 const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string; note: string }> = [
@@ -203,13 +206,29 @@ function AIReadabilityBody({
   };
 
   const byId = useMemo(() => new Map(probes.map(p => [p.model_id, p])), [probes]);
+  // Most-recent created_at across probes — used as "last scan" timestamp.
+  const lastScan = useMemo(() => {
+    const stamps = probes
+      .map((p) => p.created_at ? new Date(p.created_at).getTime() : 0)
+      .filter((t) => t > 0);
+    return stamps.length > 0 ? new Date(Math.max(...stamps)) : null;
+  }, [probes]);
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
+    // Legacy probe rows (pre-status column) treat presence-of-row as
+    // "measured" so existing audits keep rendering correctly.
+    const status: 'measured' | 'skipped' | 'error' | 'unmeasured' = probe
+      ? (probe.status ?? 'measured')
+      : 'unmeasured';
     return {
       key: p.key,
       label: p.label,
       note: p.note,
-      score: probe ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score))) : null,
+      status,
+      errorMessage: probe?.error_message || null,
+      score: probe && status === 'measured'
+        ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score)))
+        : null,
     };
   });
   const measured = rows.filter(r => r.score != null) as Array<typeof rows[number] & { score: number }>;
@@ -305,9 +324,34 @@ function AIReadabilityBody({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {rows.map((r) => {
-            const measuredRow = r.score != null;
-            const color = scoreColor(r.score ?? null);
             const iconKey = providerKeyToIcon(r.key);
+            // Always render the icon in its brand color so the row is
+            // unambiguously "the Claude card" or "the Gemini card" at a
+            // glance, even when the provider was skipped or errored.
+            const brandColor = iconKey ? providerBrandColor(iconKey) : 'var(--m-muted)';
+            const scoreCol = scoreColor(r.score ?? null);
+
+            const statusBadge: { label: string; varName: string; tooltip?: string } | null =
+              r.status === 'measured'
+                ? null
+                : r.status === 'skipped'
+                  ? {
+                      label: 'Not configured',
+                      varName: '--m-muted',
+                      tooltip: r.errorMessage || 'Provider API key not set in this environment.',
+                    }
+                  : r.status === 'error'
+                    ? {
+                        label: 'Probe failed',
+                        varName: '--severe',
+                        tooltip: r.errorMessage || 'The provider responded with an error.',
+                      }
+                    : {
+                        label: 'Not yet measured',
+                        varName: '--m-muted',
+                        tooltip: 'Re-scan to probe this provider for the current brand.',
+                      };
+
             return (
               <div
                 key={r.key}
@@ -321,22 +365,33 @@ function AIReadabilityBody({
                   <span
                     className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0"
                     style={{
-                      background: `color-mix(in srgb, ${color} 12%, transparent)`,
-                      color,
+                      background: `color-mix(in srgb, ${brandColor} 14%, transparent)`,
                     }}
                     aria-hidden
                   >
-                    {iconKey ? <AIProviderIcon provider={iconKey} size={15} /> : null}
+                    {iconKey ? <AIProviderIcon provider={iconKey} size={15} tone="brand" /> : null}
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{r.label}</p>
                     <p className="text-[10px] truncate" style={{ color: 'var(--m-muted)' }}>{r.note}</p>
                   </div>
+                  {statusBadge && (
+                    <span
+                      className="text-[9px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded flex-shrink-0"
+                      style={{
+                        color: `var(${statusBadge.varName})`,
+                        background: `color-mix(in srgb, var(${statusBadge.varName}) 10%, transparent)`,
+                      }}
+                      title={statusBadge.tooltip}
+                    >
+                      {statusBadge.label}
+                    </span>
+                  )}
                 </div>
-                {measuredRow ? (
+                {r.status === 'measured' && r.score != null ? (
                   <>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[22px] font-bold leading-none tabular-nums" style={{ color }}>
+                      <span className="text-[22px] font-bold leading-none tabular-nums" style={{ color: scoreCol }}>
                         {r.score}
                       </span>
                       <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
@@ -347,25 +402,36 @@ function AIReadabilityBody({
                     >
                       <span
                         className="block h-full"
-                        style={{ width: `${r.score}%`, background: color }}
+                        style={{ width: `${r.score}%`, background: scoreCol }}
                       />
                     </div>
                   </>
+                ) : r.status === 'error' ? (
+                  <p className="text-[11px] leading-snug" style={{ color: 'var(--severe)' }}>
+                    {r.errorMessage || 'Probe failed for all questions.'}
+                  </p>
+                ) : r.status === 'skipped' ? (
+                  <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                    {r.errorMessage || 'Provider API key is not set in this environment.'}
+                  </p>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                      Not yet measured for this brand.
-                    </p>
-                  </div>
+                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                    Re-scan to measure this provider.
+                  </p>
                 )}
               </div>
             );
           })}
         </div>
 
-        {avg == null && (
-          <p className="text-[11px] mt-3" style={{ color: 'var(--m-muted)' }}>
-            Multi-model probes will populate after your next audit.
+        {(avg == null || lastScan) && (
+          <p className="text-[11px] mt-3 flex items-center gap-2" style={{ color: 'var(--m-muted)' }}>
+            {avg == null && <span>Multi-model probes will populate after your next audit.</span>}
+            {lastScan && (
+              <span className="ml-auto">
+                Last scan {lastScan.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+              </span>
+            )}
           </p>
         )}
       </section>

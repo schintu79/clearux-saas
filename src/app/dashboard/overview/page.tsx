@@ -54,7 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
+import { AIProviderIcon, providerKeyToIcon, providerBrandColor } from '@/components/ui/AIProviderIcon';
 import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
@@ -153,7 +153,7 @@ function OverviewInner() {
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [auditPages, setAuditPages] = useState<AuditPage[]>([]);
   const [brandName, setBrandName] = useState<string | null>(null);
-  const [modelProbes, setModelProbes] = useState<Array<{ model_id: string; model_label: string; accuracy_score: number }>>([]);
+  const [modelProbes, setModelProbes] = useState<Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>>([]);
 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
@@ -308,7 +308,7 @@ function OverviewInner() {
       const r = await fetch(`/api/audits/intelligence?audit_id=${auditId}`);
       if (!r.ok) return;
       const d = await r.json();
-      const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+      const probes = (d?.modelProbes || []) as Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>;
       setModelProbes(probes);
     } catch {}
   }, []);
@@ -1052,7 +1052,7 @@ function AIXRayCard({
   auditId,
   onRefreshed,
 }: {
-  probes: Array<{ model_id: string; model_label: string; accuracy_score: number }>;
+  probes: Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>;
   auditId: string | null;
   onRefreshed?: () => void;
 }) {
@@ -1087,13 +1087,22 @@ function AIXRayCard({
   const byId = new Map(probes.map(p => [p.model_id, p]));
   const rows = AI_PLATFORMS.map((p) => {
     const probe = byId.get(p.key);
+    // Legacy probe rows (pre-status column) treat presence-of-row as
+    // "measured" so existing audits keep rendering scores.
+    const status: 'measured' | 'skipped' | 'error' | 'unmeasured' = probe
+      ? (probe.status ?? 'measured')
+      : 'unmeasured';
     return {
       key: p.key,
       label: p.label,
-      score: probe ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score))) : null,
+      status,
+      errorMessage: probe?.error_message || null,
+      score: probe && status === 'measured'
+        ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score)))
+        : null,
     };
   });
-  const measured = rows.filter(r => r.score != null) as Array<{ key: string; label: string; score: number }>;
+  const measured = rows.filter(r => r.score != null) as Array<{ key: string; label: string; status: string; errorMessage: string | null; score: number }>;
   const avg = measured.length > 0
     ? Math.round(measured.reduce((s, r) => s + r.score, 0) / measured.length)
     : null;
@@ -1183,8 +1192,8 @@ function AIXRayCard({
         {/* Per-platform rows */}
         <ul className="mt-4 space-y-1.5">
           {rows.map((r) => {
-            const measured = r.score != null;
-            const colorVar = !measured
+            const measuredRow = r.score != null;
+            const colorVar = !measuredRow
               ? '--m-muted'
               : (r.score as number) >= 70
                 ? '--ok'
@@ -1192,22 +1201,30 @@ function AIXRayCard({
                   ? '--warn'
                   : '--severe';
             const iconKey = providerKeyToIcon(r.key);
+            // Brand color for the icon chip so users can recognize each
+            // provider at a glance — Claude orange, Gemini blue, etc.
+            const brandColor = iconKey ? providerBrandColor(iconKey) : 'var(--m-muted)';
+            const unmeasuredLabel =
+              r.status === 'error'
+                ? 'Probe failed'
+                : r.status === 'skipped'
+                  ? 'Not configured'
+                  : 'Not yet measured';
             return (
               <li key={r.key} className="flex items-center gap-2 text-[11px]">
                 <span
                   className="inline-flex items-center justify-center w-6 h-6 rounded-md flex-shrink-0"
                   style={{
-                    background: `color-mix(in srgb, var(${colorVar}) 10%, transparent)`,
-                    color: `var(${colorVar})`,
+                    background: `color-mix(in srgb, ${brandColor} 14%, transparent)`,
                   }}
                   aria-hidden
                 >
-                  {iconKey ? <AIProviderIcon provider={iconKey} size={13} /> : null}
+                  {iconKey ? <AIProviderIcon provider={iconKey} size={13} tone="brand" /> : null}
                 </span>
                 <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
                   {r.label}
                 </span>
-                {measured ? (
+                {measuredRow ? (
                   <>
                     <span
                       className="h-1.5 rounded-full overflow-hidden flex-shrink-0"
@@ -1228,9 +1245,12 @@ function AIXRayCard({
                 ) : (
                   <span
                     className="text-[10px]"
-                    style={{ color: 'var(--m-muted)' }}
+                    style={{
+                      color: r.status === 'error' ? 'var(--severe)' : 'var(--m-muted)',
+                    }}
+                    title={r.errorMessage || undefined}
                   >
-                    Not yet measured
+                    {unmeasuredLabel}
                   </span>
                 )}
               </li>

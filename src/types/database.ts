@@ -302,6 +302,8 @@ export interface ModelBenchmarksSummary {
 
 export type AIModelId = 'claude' | 'gpt4o' | 'gemini' | 'perplexity'
 
+export type MultiModelProbeStatus = 'measured' | 'skipped' | 'error'
+
 export interface MultiModelProbe {
   id:                string
   audit_id:          string
@@ -315,6 +317,8 @@ export interface MultiModelProbe {
   no_data_count:     number
   total_questions:   number
   results_json:      Record<string, unknown>[]
+  status:            MultiModelProbeStatus
+  error_message:     string | null
   created_at:        string
 }
 

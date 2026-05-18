@@ -92,6 +92,10 @@ export async function POST(
   }
 
   // Replace existing probe rows for this audit so the latest scan wins.
+  // We always persist one row per provider — including `skipped`
+  // (no API key) and `error` (HTTP/timeout) — so the UI can render
+  // an explicit status badge instead of silently showing "Not yet
+  // measured", which used to look identical to a brand-new audit.
   await db.from('multi_model_probes').delete().eq('audit_id', auditId)
 
   for (const b of comparison.benchmarks) {
@@ -107,13 +111,31 @@ export async function POST(
       no_data_count: b.noDataCount,
       total_questions: b.totalQuestions,
       results_json: b.results as any,
+      status: b.status,
+      error_message: b.errorMessage,
     } as any)
   }
+
+  const measured = comparison.benchmarks.filter((b) => b.status === 'measured')
+  const skipped = comparison.benchmarks.filter((b) => b.status === 'skipped')
+  const errored = comparison.benchmarks.filter((b) => b.status === 'error')
 
   return NextResponse.json({
     ok: true,
     averageAccuracy: comparison.averageAccuracy,
     bestModel: comparison.bestModel,
-    modelsScored: comparison.benchmarks.length,
+    modelsScored: measured.length,
+    providers: comparison.benchmarks.map((b) => ({
+      modelId: b.modelId,
+      modelLabel: b.modelLabel,
+      status: b.status,
+      accuracyScore: b.status === 'measured' ? b.accuracyScore : null,
+      errorMessage: b.errorMessage,
+    })),
+    skippedProviders: skipped.map((b) => b.modelId),
+    erroredProviders: errored.map((b) => ({
+      modelId: b.modelId,
+      errorMessage: b.errorMessage,
+    })),
   })
 }
