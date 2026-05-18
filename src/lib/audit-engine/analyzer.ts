@@ -823,6 +823,7 @@ export async function runFullAnalysis(
   userFocus?: string | null,
   language: string = 'en',
   depthMode: 'deep' | 'baseline' = 'deep',
+  onProgress?: (done: number, total: number, categoryName: string) => void | Promise<void>,
 ): Promise<AnalysisFinding[]> {
   const allFindings: AnalysisFinding[] = []
 
@@ -887,6 +888,12 @@ export async function runFullAnalysis(
     }
 
     allFindings.push(...findings)
+
+    if (onProgress) {
+      try {
+        await onProgress(ci + 1, categoriesToAnalyze.length, category.name)
+      } catch {}
+    }
 
     // Brief pause between categories to avoid rate limits
     if (ci < categoriesToAnalyze.length - 1) {

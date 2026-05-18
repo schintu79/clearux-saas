@@ -90,6 +90,20 @@ export async function processAudit(auditId: string): Promise<void> {
 async function _processAuditInner(auditId: string): Promise<void> {
   const db = createServiceSupabase()
 
+  const stageStart: Record<string, number> = {}
+  const tStart = Date.now()
+  const stage = (label: string) => {
+    const prev = Object.keys(stageStart).pop()
+    const now = Date.now()
+    if (prev) console.log(`[audit-timing] ${prev}: ${((now - stageStart[prev]) / 1000).toFixed(1)}s`)
+    stageStart[label] = now
+  }
+  const stageDone = () => {
+    const prev = Object.keys(stageStart).pop()
+    if (prev) console.log(`[audit-timing] ${prev}: ${((Date.now() - stageStart[prev]) / 1000).toFixed(1)}s`)
+    console.log(`[audit-timing] TOTAL: ${((Date.now() - tStart) / 1000).toFixed(1)}s`)
+  }
+
   try {
     console.log(`[audit-engine] Starting audit ${auditId}`)
 
@@ -114,6 +128,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     // 2. CRAWLING
     await setStatus(db, auditId, 'crawling')
+    stage('crawl')
     await log(db, auditId, 'crawl_started', 'info', `Crawling ${productUrl}`)
 
     // Crawl more pages — deeper crawl for better coverage
@@ -181,6 +196,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     await log(db, auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
     await setProgress(db, auditId, 25)
+    stage('responsive')
 
     // 2b. RESPONSIVE CHECK — update audit_pages with mobile-friendly data
     try {
@@ -230,6 +246,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     // 3. ANALYSING
     await setStatus(db, auditId, 'analysing')
     await setProgress(db, auditId, 35)
+    stage('analyse')
 
     const pageContent = crawledPages
       .map((p) => {
@@ -300,7 +317,19 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     console.log('[audit-engine] Running built-in 24-category analysis')
     // Use brand-enriched content for analysis so brand consistency categories get brand context
-    const findings = await runFullAnalysis(brandContent, audit as any, userFocus, language)
+    // Stream incremental progress per category so the loader doesn't sit at 35% for minutes
+    const findings = await runFullAnalysis(
+      brandContent,
+      audit as any,
+      userFocus,
+      language,
+      'deep',
+      async (done, total) => {
+        // Map per-category completion to 35 → 78
+        const pct = 35 + Math.round((done / total) * 43)
+        await setProgress(db, auditId, pct)
+      },
+    )
 
     for (const finding of findings) {
       const { data: inserted } = await db
@@ -327,6 +356,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
     await setProgress(db, auditId, 80)
+    stage('screenshots')
 
     // 4. CAPTURE SCREENSHOTS — pages + highlighted findings (non-fatal)
     try {
@@ -374,6 +404,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     // 5. GENERATING REPORT
     await setStatus(db, auditId, 'generating_report')
     await setProgress(db, auditId, 85)
+    stage('report')
 
     const reportData = await generateReport(allFindings, audit as any, pageContent, userFocus, language)
 
@@ -392,6 +423,8 @@ async function _processAuditInner(auditId: string): Promise<void> {
       console.error('[audit-engine] PDF generation error (non-fatal):', pdfErr)
       await log(db, auditId, 'pdf_error', 'warning', 'PDF generation failed — report is still available in dashboard')
     }
+
+    await setProgress(db, auditId, 95)
 
     // Insert report
     await db
@@ -444,6 +477,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     await log(db, auditId, 'audit_completed', 'success', 'Audit completed')
     console.log(`[audit-engine] Audit ${auditId} completed — ${allFindings.length} findings`)
+    stageDone()
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error(`[audit-engine] Audit ${auditId} FAILED:`, message)
