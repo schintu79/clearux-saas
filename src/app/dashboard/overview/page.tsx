@@ -54,7 +54,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import { AIProviderIcon, providerKeyToIcon, providerBrandColor } from '@/components/ui/AIProviderIcon';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
@@ -1292,9 +1292,6 @@ function AIXRayCard({
                   ? '--warn'
                   : '--severe';
             const iconKey = providerKeyToIcon(r.key);
-            // Brand color for the icon chip so users can recognize each
-            // provider at a glance — Claude orange, Gemini blue, etc.
-            const brandColor = iconKey ? providerBrandColor(iconKey) : 'var(--m-muted)';
             const unmeasuredLabel =
               r.status === 'error'
                 ? 'Probe failed'
@@ -1304,13 +1301,14 @@ function AIXRayCard({
             return (
               <li key={r.key} className="flex items-center gap-2 text-[11px]">
                 <span
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md flex-shrink-0"
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
                   style={{
-                    background: `color-mix(in srgb, ${brandColor} 14%, transparent)`,
+                    background: 'var(--paper)',
+                    border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)',
                   }}
                   aria-hidden
                 >
-                  {iconKey ? <AIProviderIcon provider={iconKey} size={13} tone="brand" /> : null}
+                  {iconKey ? <AIProviderIcon provider={iconKey} size={20} /> : null}
                 </span>
                 <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
                   {r.label}

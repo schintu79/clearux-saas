@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
-import { AIProviderIcon, providerKeyToIcon, providerBrandColor } from '@/components/ui/AIProviderIcon';
+import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
   loadLatestAuditBundle,
   type LatestAuditBundle,
@@ -325,10 +325,6 @@ function AIReadabilityBody({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {rows.map((r) => {
             const iconKey = providerKeyToIcon(r.key);
-            // Always render the icon in its brand color so the row is
-            // unambiguously "the Claude card" or "the Gemini card" at a
-            // glance, even when the provider was skipped or errored.
-            const brandColor = iconKey ? providerBrandColor(iconKey) : 'var(--m-muted)';
             const scoreCol = scoreColor(r.score ?? null);
 
             const statusBadge: { label: string; varName: string; tooltip?: string } | null =
@@ -363,13 +359,14 @@ function AIReadabilityBody({
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-md overflow-hidden flex-shrink-0"
                     style={{
-                      background: `color-mix(in srgb, ${brandColor} 14%, transparent)`,
+                      background: 'var(--paper)',
+                      border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)',
                     }}
                     aria-hidden
                   >
-                    {iconKey ? <AIProviderIcon provider={iconKey} size={15} tone="brand" /> : null}
+                    {iconKey ? <AIProviderIcon provider={iconKey} size={24} /> : null}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>{r.label}</p>
