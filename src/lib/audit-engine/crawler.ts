@@ -63,8 +63,6 @@ export interface CrawledPage {
   /** Wall-clock time spent fetching the page in milliseconds. Null when not measured. */
   loadTimeMs: number | null
   crawledAt: string
-  /** Time-to-first-byte + body download in milliseconds */
-  loadTimeMs?: number | null
 }
 
 /* ── HTML parsing helpers ──────────────────────────────────── */
@@ -367,7 +365,6 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
     const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
     const fetchStart = Date.now()
 
-    const fetchStart = Date.now()
     const response = await fetch(url, {
       headers: {
         'User-Agent': ua,
@@ -424,7 +421,6 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       statusCode: response.status,
       loadTimeMs,
       crawledAt: new Date().toISOString(),
-      loadTimeMs,
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

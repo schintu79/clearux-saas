@@ -18,7 +18,6 @@
 //   `serverExternalPackages` so they are never bundled.
 // ============================================================
 
-import 'server-only';
 import type { FtpProtocol } from '@/types/database';
 
 const dynamicNodeRequire = (id: string): any => {
