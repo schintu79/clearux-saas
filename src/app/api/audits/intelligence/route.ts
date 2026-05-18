@@ -65,13 +65,24 @@ export async function GET(req: NextRequest) {
       // Use frozen snapshot — same numbers every time
       benchmarkPosition = snapshot
     } else {
-      // Fallback: live computation for legacy audits
+      // Fallback: live computation for legacy audits — compute once, then
+      // freeze the snapshot into the report so it never fluctuates again.
       const aiVis = (report.data as any).ai_visibility_breakdown as { overall?: number } | null
       const score = aiVis?.overall || (report.data as any).overall_score || 0
       const industry = (audit as any).detected_industry || 'General'
 
       try {
         benchmarkPosition = await getUserBenchmarkPosition(db, score, industry)
+
+        // Freeze this snapshot so future loads are stable
+        if (benchmarkPosition) {
+          const existingRawJson = rawJson || {}
+          const updatedRawJson = { ...existingRawJson, _industryBenchmarkSnapshot: benchmarkPosition }
+          await db
+            .from('reports')
+            .update({ raw_json: updatedRawJson })
+            .eq('audit_id', auditId)
+        }
       } catch (err) {
         console.error('[intelligence-api] Benchmark position error:', err)
       }

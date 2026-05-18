@@ -363,8 +363,8 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
 
   try {
     const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
-
     const fetchStart = Date.now()
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': ua,
