@@ -24,6 +24,7 @@ import {
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120 // 2 minutes — AI call with large files needs time
 
 export async function POST(request: NextRequest) {
   try {

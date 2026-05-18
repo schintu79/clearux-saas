@@ -19,6 +19,7 @@ import {
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import Logo, { Iconmark } from '@/components/ui/Logo';
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -109,13 +110,11 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
       >
         {/* Logo */}
         <div className={clsx('h-14 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5 justify-between')} style={{ borderBottom: '1px solid var(--rule)' }}>
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <svg width={28} height={28} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
-              <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
-              <circle cx="16" cy="16" r="5.5" fill="currentColor" />
-            </svg>
-            {!collapsed && (
-              <span className="font-sans font-semibold text-[18px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>Fixpath</span>
+          <Link href="/admin" className="flex items-center">
+            {collapsed ? (
+              <Iconmark size={28} />
+            ) : (
+              <Logo height={28} />
             )}
           </Link>
           {!collapsed && (
@@ -252,11 +251,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             {sidebarOpen ? <X size={18} style={{ color: 'var(--ink)' }} /> : <Menu size={18} style={{ color: 'var(--ink)' }} />}
           </button>
           <span className="flex items-center gap-1.5">
-            <svg width={20} height={20} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
-              <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
-              <circle cx="16" cy="16" r="5.5" fill="currentColor" />
-            </svg>
-            <span className="font-sans font-semibold text-[16px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>Fixpath</span>
+            <Logo height={22} />
             <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full ml-1" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
               Admin
             </span>

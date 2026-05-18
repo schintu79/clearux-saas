@@ -32,6 +32,7 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import Logo, { Iconmark } from '@/components/ui/Logo';
 import {
   readSelection,
   writeSelection,
@@ -359,15 +360,11 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
       className={clsx('h-14 flex items-center', collapsed ? 'px-2 justify-between' : 'px-4 justify-between')}
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
-      <Link href="/dashboard" className="flex items-center gap-2 min-w-0" aria-label="Fixpath home">
-        <svg width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
-          <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
-          <circle cx="16" cy="16" r="5.5" fill="currentColor" />
-        </svg>
-        {!collapsed && (
-          <span className="font-sans font-semibold text-[16px] leading-none tracking-[-0.02em] truncate" style={{ color: 'var(--ink)' }}>
-            Fixpath
-          </span>
+      <Link href="/dashboard" className="flex items-center min-w-0" aria-label="Fixpath home">
+        {collapsed ? (
+          <Iconmark size={28} />
+        ) : (
+          <Logo height={28} />
         )}
       </Link>
       <button
@@ -747,12 +744,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             >
               {sidebarOpen ? <X size={17} style={{ color: 'var(--ink)' }} /> : <Menu size={17} style={{ color: 'var(--ink)' }} />}
             </button>
-            <span className="md:hidden flex items-center gap-1.5">
-              <svg width={18} height={18} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-signal block shrink-0">
-                <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.5" fill="none" />
-                <circle cx="16" cy="16" r="5.5" fill="currentColor" />
-              </svg>
-              <span className="font-sans font-semibold text-[14px] leading-none tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>Fixpath</span>
+            <span className="md:hidden flex items-center">
+              <Logo height={22} />
             </span>
             {selectedSite && (
               <div className="hidden md:flex items-center gap-1.5 min-w-0">
