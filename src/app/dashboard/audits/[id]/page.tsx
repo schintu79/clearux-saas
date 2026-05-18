@@ -1836,7 +1836,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const StatusIcon = meta.icon;
   const isCompleted = audit.status === 'completed';
   const isInProgress = ['crawling', 'analysing', 'generating_report', 'payment_received'].includes(audit.status);
-  const canDelete = audit.status === 'pending_payment';
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
