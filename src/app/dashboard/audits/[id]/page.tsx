@@ -162,6 +162,7 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-severe',
       text: 'text-severe',
       impactBg: 'bg-severe/5',
+      cardBg: 'color-mix(in srgb, var(--severe) 4%, #ffffff)',
     },
     high: {
       badge: 'failed' as const,
@@ -171,6 +172,7 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-warn',
       text: 'text-warn',
       impactBg: 'bg-warn/5',
+      cardBg: 'color-mix(in srgb, var(--warn) 4%, #ffffff)',
     },
     medium: {
       badge: 'pending' as const,
@@ -180,6 +182,7 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-signal',
       text: 'text-signal',
       impactBg: 'bg-signal/5',
+      cardBg: 'color-mix(in srgb, var(--signal) 4%, #ffffff)',
     },
     low: {
       badge: 'active' as const,
@@ -189,6 +192,7 @@ function buildSeverityConfig(L: UILabels) {
       dot: 'bg-ok',
       text: 'text-ok',
       impactBg: 'bg-ok/5',
+      cardBg: 'color-mix(in srgb, var(--ok) 4%, #ffffff)',
     },
   };
 }
@@ -667,20 +671,20 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
   return (
     <div
       className="rounded-xl overflow-hidden transition-all"
-      style={tint
-        ? { background: tint.bg, border: `1px solid ${tint.border}`, borderLeft: `3px solid ${accentColor}` }
-        : { background: '#ffffff', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}
+      style={{ background: sev.cardBg, border: '1px solid var(--rule)', borderLeft: `3px solid ${accentColor}` }}
     >
       {/* Header — always visible */}
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 px-4 pt-4 pb-4">
         {/* Main content — clickable to expand */}
         <button
           onClick={() => setOpen(!open)}
           className="flex-1 min-w-0 text-left"
           aria-expanded={open}
         >
+          {/* Title */}
+          <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
           {/* Pill row: severity · module · category · verification */}
-          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap" style={{ marginTop: '0.6rem' }}>
             <span
               className={clsx(
                 'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full',
@@ -688,16 +692,14 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
               )}
               style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
               {sev.label}
             </span>
             {pillarName && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full"
+                className="inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded-full"
                 style={{ background: tint ? `${tint.dot}15` : 'var(--paper-2)', color: tint?.dot || 'var(--m-muted)' }}
                 title={pillarName}
               >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor }} />
                 {pillarName}
               </span>
             )}
@@ -717,7 +719,6 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
               </span>
             )}
           </div>
-          <h4 className="font-sans font-medium text-ink text-[14px] leading-[1.45]">{finding.title}</h4>
           {finding.page_url && (
             <span className="inline-flex items-center gap-1 text-[11px] text-m-muted mt-1 max-w-full truncate">
               <ExternalLink size={9} className="flex-shrink-0" />
@@ -886,7 +887,6 @@ function FindingCard({ finding, pillarColor, categoryName, pillarName, pillarInd
           {finding.screenshot_url && (
             <div className="border-t border-rule/40">
               <div className="px-4 py-2 flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${sev.dot}`} />
                 <span className="text-[10px] font-semibold text-m-muted tracking-[0.04em] uppercase">Visual evidence</span>
                 {finding.page_url && (
                   <span className="text-[10px] text-m-muted/60 ml-auto truncate max-w-[200px]">
@@ -2264,7 +2264,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   : tab === 'responsive' ? 'Responsive'
                   : tab === 'technical_health' ? 'Tech health'
                   : tab === 'ai_xray' ? 'AI Readability'
-                  : 'Intelligence';
+                  : 'Benchmark';
                 const responsiveFindings = findings.filter((f: any) => {
                   const t = (f.title || '').toLowerCase();
                   return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
@@ -2323,7 +2323,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               responsive: { icon: Smartphone, title: 'Responsive' },
               technical_health: { icon: Activity, title: 'Technical health' },
               ai_xray: { icon: Brain, title: 'AI Readability' },
-              intelligence: { icon: Sparkles, title: 'Intelligence' },
+              intelligence: { icon: Sparkles, title: 'Benchmark' },
             };
             const meta = tabMeta[activeTab];
             if (!meta) return null;
@@ -4203,10 +4203,38 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 <div className="rounded-xl border border-rule bg-card p-4 flex items-start gap-3">
                   <Sparkles size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">AI & competitive intelligence</h3>
-                    <p className="text-[12px] text-m-muted leading-relaxed">How AI models represent your site, how you compare to your industry, and the actions most likely to move your score.</p>
+                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">Benchmark console</h3>
+                    <p className="text-[12px] text-m-muted leading-relaxed">Your score, how AI models represent your site, how you compare to your industry, and what to do next.</p>
                   </div>
                 </div>
+
+                {/* ── Score hero ── */}
+                {bench && (
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="flex flex-col items-center justify-center py-8 px-6">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-[56px] font-bold leading-none tracking-tight ${scoreColor(bench.userScore)}`}>{bench.userScore}</span>
+                        <span className="text-[20px] font-semibold text-m-muted">/100</span>
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-m-muted mt-2">Your score</span>
+                      {bench.deltaFromAvg !== 0 && (
+                        <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.04em] ${
+                          bench.deltaFromAvg > 0
+                            ? 'bg-ok/10 text-ok border border-ok/20'
+                            : 'bg-severe/10 text-severe border border-severe/20'
+                        }`}>
+                          <TrendingUp size={12} className={bench.deltaFromAvg < 0 ? 'rotate-180' : ''} />
+                          {bench.deltaFromAvg > 0 ? 'Ahead of peers' : 'Behind peers'} · {bench.deltaFromAvg > 0 ? '+' : ''}{bench.deltaFromAvg}
+                        </div>
+                      )}
+                      {bench.deltaFromAvg === 0 && (
+                        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-[0.04em] bg-paper-2 text-m-muted border border-rule">
+                          At industry average
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Bottom line — synthesized verdict + next move (only when data supports it) */}
                 {hasAny && (accuracyVerdict || bench || recs.length > 0) && (
@@ -4222,7 +4250,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           {' '}
                           <span className="text-m-muted">
                             Average accuracy across {probes.length} model{probes.length !== 1 ? 's' : ''} is {avgAccuracy}%
-                            {totalHallucinated > 0 && `, with ${totalHallucinated} fabricated answer${totalHallucinated !== 1 ? 's' : ''}`}.
+                            {totalHallucinated > 0 && `, with ${totalHallucinated} unverified answer${totalHallucinated !== 1 ? 's' : ''}`}.
                           </span>
                         </p>
                       )}
@@ -4270,27 +4298,38 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-m-muted">
                                 {probe.accurate_count > 0 && <span><span className="font-semibold text-ink">{probe.accurate_count}</span> correct</span>}
                                 {probe.partial_count > 0 && <span><span className="font-semibold text-ink">{probe.partial_count}</span> partial</span>}
-                                {((probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)) > 0 && (
-                                  <span><span className="font-semibold text-ink">{(probe.inaccurate_count || 0) + (probe.hallucinated_count || 0)}</span> wrong</span>
+                                {(probe.inaccurate_count || 0) > 0 && (
+                                  <span><span className="font-semibold text-ink">{probe.inaccurate_count}</span> inaccurate</span>
+                                )}
+                                {(probe.hallucinated_count || 0) > 0 && (
+                                  <span><span className="font-semibold text-ink">{probe.hallucinated_count}</span> unverified</span>
                                 )}
                               </div>
                               {probe.results_json?.length > 0 && (
-                                <details className="mt-3">
-                                  <summary className="text-[11px] text-m-muted cursor-pointer hover:text-ink font-medium">View questions and answers</summary>
-                                  <div className="mt-2 space-y-3 pt-2 border-t border-rule/30">
-                                    {probe.results_json.map((r: any, j: number) => {
-                                      const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Fabricated' : r.accuracy === 'inaccurate' ? 'Wrong' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
-                                      const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' || r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
-                                      return (
-                                        <div key={j} className="text-[11px]">
-                                          <p className="font-medium text-ink">{r.question}</p>
-                                          <p className="text-m-muted mt-1 leading-relaxed">{r.answer}</p>
-                                          <span className={`inline-block mt-1 text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
+                                <div className="mt-3 space-y-2">
+                                  {probe.results_json.map((r: any, j: number) => {
+                                    const label = r.accuracy === 'accurate' ? 'Correct' : r.accuracy === 'partial' ? 'Partial' : r.accuracy === 'hallucinated' ? 'Unverified' : r.accuracy === 'inaccurate' ? 'Inaccurate' : r.accuracy === 'no_data' ? 'No data' : 'Pending';
+                                    const tone = r.accuracy === 'accurate' ? 'text-ok' : r.accuracy === 'partial' ? 'text-warn' : r.accuracy === 'hallucinated' ? 'text-amber-500' : r.accuracy === 'inaccurate' ? 'text-severe' : 'text-m-muted';
+                                    const bgTone = r.accuracy === 'accurate' ? 'bg-ok/5' : r.accuracy === 'partial' ? 'bg-warn/5' : r.accuracy === 'hallucinated' ? 'bg-amber-500/5' : r.accuracy === 'inaccurate' ? 'bg-severe/5' : 'bg-paper-2/50';
+                                    return (
+                                      <details key={j} className={`group rounded-md border border-rule/40 ${bgTone} overflow-hidden`}>
+                                        <summary className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-paper-2/40 transition-colors">
+                                          <span className="text-[11px] font-medium text-ink flex-1 min-w-0 pr-2 truncate">{r.question}</span>
+                                          <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className={`text-[10px] font-semibold uppercase tracking-[0.03em] ${tone}`}>{label}</span>
+                                            <ChevronDown size={12} className="text-m-muted transition-transform group-open:rotate-180" />
+                                          </div>
+                                        </summary>
+                                        <div className="px-3 pb-3 pt-1 border-t border-rule/20">
+                                          <p className="text-[12px] text-ink leading-relaxed whitespace-pre-wrap">{r.answer}</p>
+                                          {r.accuracyNote && r.accuracyNote !== 'Grading unavailable' && (
+                                            <p className="text-[10px] text-m-muted mt-2 italic">{r.accuracyNote}</p>
+                                          )}
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                </details>
+                                      </details>
+                                    );
+                                  })}
+                                </div>
                               )}
                             </div>
                           );
@@ -4303,7 +4342,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                           <p className="text-[12px] font-semibold text-ink mb-2">What this means and what to do</p>
                           <p className="text-[12px] text-m-muted leading-relaxed mb-3">
                             {totalHallucinated > 0
-                              ? 'AI assistants are fabricating answers about your site. Users asking ChatGPT or similar about you will get wrong information.'
+                              ? 'AI models are providing answers about your site that we could not verify from your website content. This may mean your site lacks the structured data AI needs to represent you accurately.'
                               : 'AI models lack reliable information about your site. Users relying on AI for research will not learn about you accurately.'}
                           </p>
                           <ol className="space-y-1.5 text-[12px] text-ink-2 leading-relaxed list-decimal list-inside">

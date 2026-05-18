@@ -58,6 +58,16 @@ interface PendingFix {
   description: string;
 }
 
+interface FindingContext {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  recommendation: string;
+  page_url: string | null;
+  codeSnippet: string | null;
+}
+
 function fileIcon(name: string) {
   const ext = name.split('.').pop()?.toLowerCase();
   if (['html', 'htm', 'php', 'js', 'ts', 'jsx', 'tsx', 'css', 'scss', 'json', 'xml', 'svg'].includes(ext || ''))
@@ -100,13 +110,18 @@ export default function DeployPage() {
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [pendingFixes, setPendingFixes] = useState<PendingFix[]>([]);
+  const [findingContext, setFindingContext] = useState<FindingContext | null>(null);
+  const [findingLoading, setFindingLoading] = useState(false);
 
-  // Fetch connections
+  const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+
+  // Fetch connections — scoped to current brand
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const res = await fetch('/api/ftp');
+        const url = brandId ? `/api/ftp?brandId=${brandId}` : '/api/ftp';
+        const res = await fetch(url);
         const data = await res.json();
         setConnections(data.connections || []);
         if (data.connections?.length > 0 && !selectedConnection) {
@@ -115,15 +130,47 @@ export default function DeployPage() {
       } catch {}
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, brandId]);
 
-  // Load pending fixes from URL params
+  // Load pending fixes from URL params OR fetch finding by ID
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+
+    // Legacy: full fix JSON in URL
     const fixesParam = params.get('fixes');
     if (fixesParam) {
       try { setPendingFixes(JSON.parse(decodeURIComponent(fixesParam))); } catch {}
+      return;
+    }
+
+    // New: findingId — fetch finding details and build context
+    const findingId = params.get('findingId');
+    if (findingId) {
+      setFindingLoading(true);
+      fetch(`/api/findings/${findingId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.finding) {
+            const f = data.finding;
+            // Extract code snippet from recommendation (```...``` blocks)
+            let codeSnippet: string | null = null;
+            const rec = f.recommendation || '';
+            const m = rec.match(/```[a-zA-Z]*\n?([\s\S]+?)```/);
+            if (m && m[1].trim().length > 0) codeSnippet = m[1].trim();
+            setFindingContext({
+              id: f.id,
+              title: f.title,
+              description: f.description,
+              severity: f.severity,
+              recommendation: f.recommendation,
+              page_url: f.page_url,
+              codeSnippet,
+            });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setFindingLoading(false));
     }
   }, []);
 
@@ -192,12 +239,18 @@ export default function DeployPage() {
         body: JSON.stringify({
           action: 'write', connectionId: selectedConnection.id,
           filePath: openFile.path, content: editedContent, createBackup: true,
+          findingId: findingContext?.id || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       setSaveResult({ success: true, message: 'Saved' });
       setOpenFile({ ...openFile, content: editedContent });
+      // If deploying from a finding context, mark finding as fixed
+      if (findingContext) {
+        await markFindingFixed(findingContext.id);
+        setSaveResult({ success: true, message: `Deployed and marked "${findingContext.title}" as fixed` });
+      }
     } catch (err: any) {
       setSaveResult({ success: false, message: err?.message || 'Save failed' });
     } finally {
@@ -228,6 +281,23 @@ export default function DeployPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Apply a code snippet from finding context into the editor
+  const applySnippetToEditor = () => {
+    if (!findingContext?.codeSnippet || !openFile) return;
+    setEditedContent(findingContext.codeSnippet);
+  };
+
+  // Mark finding as fixed after successful deploy
+  const markFindingFixed = async (findingId: string) => {
+    try {
+      await fetch(`/api/findings/${findingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'fixed', note: 'Deployed via FTP' }),
+      });
+    } catch {}
   };
 
   useEffect(() => {
@@ -343,6 +413,97 @@ export default function DeployPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Finding context banner ── */}
+      {findingLoading && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-lg" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+          <Loader2 size={12} className="animate-spin" style={{ color: 'var(--signal)' }} />
+          <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>Loading finding details...</span>
+        </div>
+      )}
+      {findingContext && (
+        <div
+          className="mb-4 rounded-lg px-4 py-3"
+          style={{ background: 'color-mix(in srgb, var(--signal) 6%, var(--card))', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
+        >
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Wrench size={12} style={{ color: 'var(--signal)' }} />
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--signal)' }}>Fix to deploy</span>
+                <span
+                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full uppercase"
+                  style={{
+                    color: findingContext.severity === 'critical' ? 'var(--severe)' : findingContext.severity === 'high' ? 'var(--warn)' : 'var(--m-muted)',
+                    background: findingContext.severity === 'critical' ? 'color-mix(in srgb, var(--severe) 12%, transparent)' : findingContext.severity === 'high' ? 'color-mix(in srgb, var(--warn) 12%, transparent)' : 'var(--paper-2)',
+                  }}
+                >
+                  {findingContext.severity}
+                </span>
+              </div>
+              <p className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>{findingContext.title}</p>
+              <p className="text-[11px] mt-0.5 line-clamp-3" style={{ color: 'var(--m-muted)' }}>{findingContext.description}</p>
+            </div>
+            <button
+              onClick={() => setFindingContext(null)}
+              className="p-1 rounded hover:opacity-70 flex-shrink-0"
+              style={{ color: 'var(--m-muted)' }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+          {/* Recommended fix text */}
+          {findingContext.recommendation && (
+            <details className="mt-2">
+              <summary className="text-[10px] font-medium cursor-pointer" style={{ color: 'var(--signal)' }}>View recommended fix</summary>
+              <pre className="text-[11px] mt-1.5 p-2.5 rounded-md leading-relaxed whitespace-pre-wrap font-body overflow-x-auto" style={{ background: 'var(--paper-2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}>{findingContext.recommendation}</pre>
+            </details>
+          )}
+          {findingContext.codeSnippet && openFile && (
+            <button
+              onClick={applySnippetToEditor}
+              className="inline-flex items-center gap-1 px-2.5 py-1 mt-2 text-[10px] font-semibold rounded-md transition-colors"
+              style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)', color: 'var(--signal)' }}
+            >
+              <CheckCircle2 size={9} />
+              Apply code snippet to editor
+            </button>
+          )}
+          {findingContext.codeSnippet && !openFile && (
+            <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>
+              Open the target file to apply the code snippet.
+              {findingContext.page_url && <> Affected page: <span className="font-medium">{findingContext.page_url}</span></>}
+            </p>
+          )}
+          {/* Suggested file path based on finding's page URL */}
+          {findingContext.page_url && (() => {
+            try {
+              const u = new URL(findingContext.page_url);
+              const pathname = u.pathname === '/' ? '/index.html' : u.pathname;
+              const suggested = pathname.endsWith('/') ? `${pathname}index.html` : pathname;
+              return (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>Suggested file:</span>
+                  <button
+                    onClick={() => {
+                      if (!selectedConnection) return;
+                      // Try to open the file at the suggested path relative to remote_path
+                      const base = selectedConnection.remote_path.replace(/\/$/, '');
+                      const fullPath = `${base}${suggested}`;
+                      openRemoteFile(fullPath);
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
+                    style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)', border: '1px solid color-mix(in srgb, var(--signal) 20%, transparent)' }}
+                  >
+                    <FileCode size={9} />
+                    {suggested}
+                  </button>
+                </div>
+              );
+            } catch { return null; }
+          })()}
         </div>
       )}
 

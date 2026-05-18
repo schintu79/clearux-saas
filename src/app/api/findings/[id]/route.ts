@@ -187,6 +187,42 @@ async function recalculateFromFindings(
   }
 }
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: findingId } = await params
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const db = createServiceSupabase()
+    const { data: finding } = await db
+      .from('audit_findings')
+      .select('id, audit_id, title, description, severity, recommendation, page_url, status, evidence, target_element, estimated_impact')
+      .eq('id', findingId)
+      .single()
+
+    if (!finding) return NextResponse.json({ error: 'Finding not found' }, { status: 404 })
+
+    // Verify ownership
+    const { data: audit } = await db
+      .from('audits')
+      .select('user_id')
+      .eq('id', (finding as any).audit_id)
+      .single()
+
+    if (!audit || (audit as any).user_id !== user.id)
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+
+    return NextResponse.json({ finding })
+  } catch (err) {
+    console.error('GET /api/findings error:', err)
+    return NextResponse.json({ error: 'Failed to fetch finding' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

@@ -55,6 +55,16 @@ const STATUS_META: Record<FindingStatus, { label: string; color: string; bg: str
 
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low'] as const;
 
+function severityCardBg(sev: string): string {
+  switch (sev) {
+    case 'critical': return 'color-mix(in srgb, var(--severe) 4%, #ffffff)';
+    case 'high':     return 'color-mix(in srgb, var(--warn) 4%, #ffffff)';
+    case 'medium':   return 'color-mix(in srgb, var(--signal) 4%, #ffffff)';
+    case 'low':      return 'color-mix(in srgb, var(--ok) 4%, #ffffff)';
+    default:         return '#ffffff';
+  }
+}
+
 /* ── Helpers ──────────────────────────────────────────── */
 
 function fixPriority(f: AuditFinding): number {
@@ -172,16 +182,20 @@ function AiSuggestionBox({ finding, onCopy }: { finding: AuditFinding; onCopy: (
 function FixRow({
   finding,
   onStatus,
+  onDismiss,
   pending,
   onCopySnippet,
 }: {
   finding: AuditFinding;
   onStatus: (id: string, status: FindingStatus) => void;
+  onDismiss: (id: string, reason: string) => void;
   pending: boolean;
   onCopySnippet: (text: string) => void;
 }) {
   const [showHelper, setShowHelper] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const [showDismiss, setShowDismiss] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
   const [copiedRec, setCopiedRec] = useState(false);
   const meta = STATUS_META[finding.status] || STATUS_META.open;
   const snippet = extractSnippet(finding.recommendation);
@@ -207,27 +221,53 @@ function FixRow({
     URL.revokeObjectURL(url);
   };
 
+  const handleDismiss = () => {
+    if (!dismissReason.trim()) return;
+    onDismiss(finding.id, dismissReason.trim());
+    setShowDismiss(false);
+    setDismissReason('');
+  };
+
+  // If dismissed, show compact row
+  if (finding.dismissed) {
+    return (
+      <div
+        className="px-4 sm:px-5 py-2.5 flex items-center gap-3 opacity-50"
+        style={{ borderBottom: '1px solid var(--rule)' }}
+        id={`finding-${finding.id}`}
+      >
+        <span className="text-[12px] line-through flex-1 truncate" style={{ color: 'var(--m-muted)' }}>{finding.title}</span>
+        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}>Dismissed</span>
+      </div>
+    );
+  }
+
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div
       className="group"
       style={{ borderBottom: '1px solid var(--rule)' }}
       id={`finding-${finding.id}`}
     >
-      {/* ── Main row ── */}
-      <div className="px-4 sm:px-5 py-3.5 flex items-start gap-3">
-        {/* Severity dot */}
-        <span
-          className="w-2 h-2 rounded-full mt-[7px] flex-shrink-0"
-          style={{ background: severityColor(finding.severity) }}
-          aria-hidden
-        />
-
-        {/* Content */}
+      {/* ── Title header — severity-colored background ── */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left px-4 sm:px-5 flex items-start gap-3 cursor-pointer"
+        style={{ paddingTop: '1rem', paddingBottom: '1rem', background: severityCardBg(finding.severity), borderLeft: `3px solid ${severityColor(finding.severity)}` }}
+      >
         <div className="flex-1 min-w-0">
-          <h3 className="text-[13px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
-            {finding.title}
-          </h3>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-[13px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
+              {finding.title}
+            </h3>
+            <ChevronDown
+              size={14}
+              className="flex-shrink-0 mt-0.5 transition-transform"
+              style={{ color: 'var(--m-muted)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.6rem' }}>
             <span className="font-semibold" style={{ color: severityColor(finding.severity) }}>
               {severityLabel(finding.severity)}
             </span>
@@ -238,23 +278,52 @@ function FixRow({
             {finding.page_url && (
               <>
                 <span style={{ color: 'var(--rule)' }}>|</span>
-                <a
-                  href={finding.page_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 hover:underline truncate max-w-[200px]"
+                <span
+                  className="inline-flex items-center gap-0.5 truncate max-w-[200px]"
                   style={{ color: 'var(--m-muted)' }}
                 >
-                  {new URL(finding.page_url).pathname || '/'}
+                  {(() => { try { return new URL(finding.page_url).pathname || '/'; } catch { return finding.page_url; } })()}
                   <ExternalLink size={8} />
-                </a>
+                </span>
               </>
             )}
           </div>
+        </div>
+      </button>
 
-          {/* ── Action bar: all controls in one clean line ── */}
-          <div className="flex items-center gap-1 mt-2.5 flex-wrap">
-            {/* Status */}
+      {/* ── Expanded content — white background ── */}
+      {isOpen && (
+        <div className="px-4 sm:px-5 pb-4" style={{ background: '#ffffff' }}>
+          {/* What we found + Why it matters side by side */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            {finding.description && (
+              <div className="rounded-lg p-3.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.08em] block mb-1.5" style={{ color: 'var(--m-muted)' }}>What we found</span>
+                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>{finding.description}</p>
+              </div>
+            )}
+            {finding.estimated_impact && (
+              <div className="rounded-lg p-3.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.08em] block mb-1.5" style={{ color: 'var(--m-muted)' }}>Why it matters</span>
+                <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ink)' }}>{finding.estimated_impact}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Recommended fix */}
+          {finding.recommendation && (
+            <div className="mt-3 rounded-lg p-3.5" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+              <span className="text-[9px] font-bold uppercase tracking-[0.08em] block mb-1.5" style={{ color: 'var(--m-muted)' }}>Recommended fix</span>
+              <pre
+                className="text-[12px] leading-relaxed whitespace-pre-wrap font-body"
+                style={{ color: 'var(--ink)' }}
+              >{finding.recommendation}</pre>
+            </div>
+          )}
+
+          {/* ── Action bar ── */}
+          <div className="flex items-center gap-1 mt-3 flex-wrap">
+            {/* Status dropdown */}
             <select
               value={finding.status}
               onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
@@ -298,7 +367,7 @@ function FixRow({
                 title="Download fix snippet"
               >
                 <Download size={10} />
-                Download
+                .md
               </button>
             )}
 
@@ -313,7 +382,7 @@ function FixRow({
                 }}
               >
                 <Sparkles size={10} />
-                Suggestion
+                AI suggest
               </button>
             )}
 
@@ -341,23 +410,120 @@ function FixRow({
               <Upload size={10} />
               Push
             </Link>
+
+            {/* Approve (mark as fixed) */}
+            {finding.status !== 'fixed' && (
+              <button
+                onClick={() => onStatus(finding.id, 'fixed')}
+                disabled={pending}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors"
+                style={{ background: 'color-mix(in srgb, var(--ok) 10%, transparent)', color: 'var(--ok)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}
+              >
+                <CheckCircle2 size={10} />
+                Approve
+              </button>
+            )}
+
+            <div className="flex-1" />
+
+            {/* Dismiss */}
+            <button
+              onClick={() => setShowDismiss(!showDismiss)}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors hover:bg-paper-2"
+              style={{ color: showDismiss ? 'var(--severe)' : 'var(--m-muted)' }}
+              title="Dismiss this finding with a reason"
+            >
+              <X size={10} />
+              Dismiss
+            </button>
           </div>
-        </div>
-      </div>
 
-      {/* ── Expandable panels ── */}
-      {showSuggestion && canSuggest && (
-        <div className="px-4 sm:px-5 pb-3.5">
-          <AiSuggestionBox finding={finding} onCopy={onCopySnippet} />
-        </div>
-      )}
+          {/* Dismiss reason input */}
+          {showDismiss && (
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                value={dismissReason}
+                onChange={(e) => setDismissReason(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleDismiss()}
+                placeholder="Why are you dismissing this?"
+                className="flex-1 px-3 py-1.5 rounded-md text-[12px] outline-none"
+                style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                autoFocus
+              />
+              <button
+                onClick={handleDismiss}
+                disabled={!dismissReason.trim() || pending}
+                className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                style={{
+                  background: dismissReason.trim() ? 'var(--severe)' : 'var(--paper-2)',
+                  color: dismissReason.trim() ? 'white' : 'var(--m-muted)',
+                  opacity: pending ? 0.6 : 1,
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => { setShowDismiss(false); setDismissReason(''); }}
+                className="p-1.5 rounded-md hover:bg-paper-2 transition-colors"
+                style={{ color: 'var(--m-muted)' }}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
 
-      {showHelper && (
-        <div className="px-4 sm:px-5 pb-3.5">
-          <AiHelperPanel finding={finding} onClose={() => setShowHelper(false)} />
+          {/* ── Expandable panels ── */}
+          {showSuggestion && canSuggest && (
+            <div className="mt-3">
+              <AiSuggestionBox finding={finding} onCopy={onCopySnippet} />
+            </div>
+          )}
+
+          {showHelper && (
+            <div className="mt-3">
+              <AiHelperPanel finding={finding} onClose={() => setShowHelper(false)} />
+            </div>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+/* ── Filter Dropdown ─────────────────────────────────── */
+
+function FilterDropdown({
+  value,
+  onChange,
+  label,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+  options: { value: string; label: string }[];
+}) {
+  const isActive = value !== 'all';
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="text-[12px] font-medium pl-3 pr-7 py-2 rounded-lg outline-none cursor-pointer appearance-none"
+      style={{
+        background: isActive ? 'var(--ink)' : 'var(--card)',
+        color: isActive ? 'var(--paper)' : 'var(--ink)',
+        border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 6px center',
+      }}
+      aria-label={label}
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }
 
@@ -463,6 +629,25 @@ export default function FixPage() {
     }
   };
 
+  const handleDismiss = async (id: string, reason: string) => {
+    setPending((p) => ({ ...p, [id]: true }));
+    try {
+      const res = await fetch(`/api/findings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dismiss: true, dismissal_reason: reason }),
+      });
+      if (res.ok && bundle) {
+        setBundle({
+          ...bundle,
+          findings: bundle.findings.map((f) => f.id === id ? { ...f, dismissed: true, dismissal_reason: reason } : f),
+        });
+      }
+    } catch {} finally {
+      setPending((p) => ({ ...p, [id]: false }));
+    }
+  };
+
   /* ── Loading ── */
   if (authLoading || loading || !ready) {
     return (
@@ -506,10 +691,10 @@ export default function FixPage() {
         </p>
       </div>
 
-      {/* ── Filter bar: search + chips ── */}
-      <div className="mb-4">
+      {/* ── Filter bar: search + 3 dropdowns ── */}
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
         {/* Search */}
-        <div className="relative mb-3">
+        <div className="relative flex-1 min-w-[180px]">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
           <input
             type="search"
@@ -522,92 +707,58 @@ export default function FixPage() {
           />
         </div>
 
-        {/* Filter chips row */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Module chips */}
+        {/* Status dropdown */}
+        <FilterDropdown
+          value={statusFilter}
+          onChange={setStatusFilter}
+          label="Status"
+          options={[
+            { value: 'all', label: `All (${queue.length})` },
+            ...(Object.keys(STATUS_META) as FindingStatus[]).map(s => ({
+              value: s,
+              label: `${STATUS_META[s].label} (${stats[s] || 0})`,
+            })),
+          ]}
+        />
+
+        {/* Severity dropdown */}
+        <FilterDropdown
+          value={sevFilter}
+          onChange={setSevFilter}
+          label="Severity"
+          options={[
+            { value: 'all', label: 'All severities' },
+            ...SEVERITY_ORDER.map(s => ({
+              value: s,
+              label: `${severityLabel(s)} (${queue.filter(f => f.severity === s).length})`,
+            })),
+          ]}
+        />
+
+        {/* Module dropdown */}
+        <FilterDropdown
+          value={moduleFilter}
+          onChange={setModuleFilter}
+          label="Module"
+          options={[
+            { value: 'all', label: 'All modules' },
+            ...PHASE1_MODULES.filter(m => moduleCounts[m]).map(m => ({
+              value: m,
+              label: `${m} (${moduleCounts[m]})`,
+            })),
+          ]}
+        />
+
+        {/* Clear */}
+        {(moduleFilter !== 'all' || sevFilter !== 'all' || statusFilter !== 'all' || query) && (
           <button
-            onClick={() => setModuleFilter('all')}
-            className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-            style={{
-              background: moduleFilter === 'all' ? 'var(--ink)' : 'var(--paper-2)',
-              color: moduleFilter === 'all' ? 'var(--paper)' : 'var(--m-muted)',
-              border: moduleFilter === 'all' ? '1px solid var(--ink)' : '1px solid var(--rule)',
-            }}
+            onClick={() => { setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); setQuery(''); }}
+            className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-all hover:bg-paper-2"
+            style={{ color: 'var(--m-muted)' }}
           >
-            All ({queue.length})
+            <X size={10} /> Clear
           </button>
-          {PHASE1_MODULES.filter(m => moduleCounts[m]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setModuleFilter(moduleFilter === m ? 'all' : m)}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-              style={{
-                background: moduleFilter === m ? 'var(--ink)' : 'var(--paper-2)',
-                color: moduleFilter === m ? 'var(--paper)' : 'var(--m-muted)',
-                border: moduleFilter === m ? '1px solid var(--ink)' : '1px solid var(--rule)',
-              }}
-            >
-              {m} ({moduleCounts[m]})
-            </button>
-          ))}
-
-          {/* Spacer */}
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--rule)' }} />
-
-          {/* Severity chips */}
-          {SEVERITY_ORDER.map((s) => {
-            const count = queue.filter(f => f.severity === s).length;
-            if (!count) return null;
-            return (
-              <button
-                key={s}
-                onClick={() => setSevFilter(sevFilter === s ? 'all' : s)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                style={{
-                  background: sevFilter === s ? severityColor(s) : 'transparent',
-                  color: sevFilter === s ? 'white' : severityColor(s),
-                  border: `1px solid ${sevFilter === s ? severityColor(s) : 'var(--rule)'}`,
-                }}
-              >
-                {severityLabel(s)} ({count})
-              </button>
-            );
-          })}
-
-          {/* Spacer */}
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--rule)' }} />
-
-          {/* Status chips */}
-          {(Object.keys(STATUS_META) as FindingStatus[]).map((s) => {
-            if (!stats[s]) return null;
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                style={{
-                  background: statusFilter === s ? STATUS_META[s].color : 'transparent',
-                  color: statusFilter === s ? 'white' : STATUS_META[s].color,
-                  border: `1px solid ${statusFilter === s ? STATUS_META[s].color : 'var(--rule)'}`,
-                }}
-              >
-                {STATUS_META[s].label} ({stats[s]})
-              </button>
-            );
-          })}
-
-          {/* Clear all */}
-          {(moduleFilter !== 'all' || sevFilter !== 'all' || statusFilter !== 'all' || query) && (
-            <button
-              onClick={() => { setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); setQuery(''); }}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all hover:bg-paper-2"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              <X size={10} className="inline -mt-px mr-0.5" />
-              Clear
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* ── Results count ── */}
@@ -661,6 +812,7 @@ export default function FixPage() {
               key={f.id}
               finding={f}
               onStatus={handleStatus}
+              onDismiss={handleDismiss}
               pending={!!pending[f.id]}
               onCopySnippet={handleCopySnippet}
             />

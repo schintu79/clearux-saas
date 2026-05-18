@@ -23,6 +23,30 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low'] as const;
 
+function FindFilterDropdown({ value, onChange, label, options }: { value: string; onChange: (v: string) => void; label: string; options: { value: string; label: string }[] }) {
+  const isActive = value !== 'all';
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="text-[12px] font-medium pl-3 pr-7 py-2 rounded-lg outline-none cursor-pointer appearance-none"
+      style={{
+        background: isActive ? 'var(--ink)' : 'var(--card)',
+        color: isActive ? 'var(--paper)' : 'var(--ink)',
+        border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 6px center',
+      }}
+      aria-label={label}
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
 export default function FindPage() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
@@ -123,9 +147,10 @@ export default function FindPage() {
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
-      <div className="mb-4">
-        <div className="relative mb-3">
+      {/* ── Filter bar: search + 2 dropdowns ── */}
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[180px]">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
           <input
             type="search"
@@ -138,67 +163,44 @@ export default function FindPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Module chips */}
+        {/* Severity dropdown */}
+        <FindFilterDropdown
+          value={sevFilter}
+          onChange={setSevFilter}
+          label="Severity"
+          options={[
+            { value: 'all', label: 'All severities' },
+            ...SEVERITY_ORDER.map(s => ({
+              value: s,
+              label: `${severityLabel(s)} (${findings.filter(f => f.severity === s).length})`,
+            })),
+          ]}
+        />
+
+        {/* Module dropdown */}
+        <FindFilterDropdown
+          value={moduleFilter}
+          onChange={setModuleFilter}
+          label="Module"
+          options={[
+            { value: 'all', label: 'All modules' },
+            ...PHASE1_MODULES.filter(m => moduleCounts[m]).map(m => ({
+              value: m,
+              label: `${m} (${moduleCounts[m]})`,
+            })),
+          ]}
+        />
+
+        {/* Clear */}
+        {hasFilters && (
           <button
-            onClick={() => setModuleFilter('all')}
-            className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-            style={{
-              background: moduleFilter === 'all' ? 'var(--ink)' : 'var(--paper-2)',
-              color: moduleFilter === 'all' ? 'var(--paper)' : 'var(--m-muted)',
-              border: moduleFilter === 'all' ? '1px solid var(--ink)' : '1px solid var(--rule)',
-            }}
+            onClick={() => { setModuleFilter('all'); setSevFilter('all'); setQuery(''); }}
+            className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-[11px] font-medium transition-all hover:bg-paper-2"
+            style={{ color: 'var(--m-muted)' }}
           >
-            All ({findings.length})
+            <X size={10} /> Clear
           </button>
-          {PHASE1_MODULES.filter(m => moduleCounts[m]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setModuleFilter(moduleFilter === m ? 'all' : m)}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-              style={{
-                background: moduleFilter === m ? 'var(--ink)' : 'var(--paper-2)',
-                color: moduleFilter === m ? 'var(--paper)' : 'var(--m-muted)',
-                border: moduleFilter === m ? '1px solid var(--ink)' : '1px solid var(--rule)',
-              }}
-            >
-              {m} ({moduleCounts[m]})
-            </button>
-          ))}
-
-          <div className="w-px h-4 mx-1" style={{ background: 'var(--rule)' }} />
-
-          {/* Severity chips */}
-          {SEVERITY_ORDER.map((s) => {
-            const count = findings.filter(f => f.severity === s).length;
-            if (!count) return null;
-            return (
-              <button
-                key={s}
-                onClick={() => setSevFilter(sevFilter === s ? 'all' : s)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                style={{
-                  background: sevFilter === s ? severityColor(s) : 'transparent',
-                  color: sevFilter === s ? 'white' : severityColor(s),
-                  border: `1px solid ${sevFilter === s ? severityColor(s) : 'var(--rule)'}`,
-                }}
-              >
-                {severityLabel(s)} ({count})
-              </button>
-            );
-          })}
-
-          {hasFilters && (
-            <button
-              onClick={() => { setModuleFilter('all'); setSevFilter('all'); setQuery(''); }}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all hover:bg-paper-2"
-              style={{ color: 'var(--m-muted)' }}
-            >
-              <X size={10} className="inline -mt-px mr-0.5" />
-              Clear
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* ── Count ── */}

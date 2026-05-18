@@ -183,7 +183,7 @@ async function probeGemini(
   for (const q of questions) {
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -199,16 +199,51 @@ async function probeGemini(
       )
 
       if (!resp.ok) {
+        const errBody = await resp.text().catch(() => 'no body')
+        console.error(`[gemini-probe] HTTP ${resp.status} for "${q.slice(0, 60)}": ${errBody.slice(0, 300)}`)
         results.push({ question: q, answer: `[Gemini probe failed: HTTP ${resp.status}]` })
         continue
       }
 
       const data = (await resp.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> }
+          finishReason?: string
+        }>
+        promptFeedback?: { blockReason?: string }
+        error?: { message?: string; code?: number }
       }
-      const answer = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '[No response]'
+
+      // Check for API-level error
+      if (data.error) {
+        console.error(`[gemini-probe] API error for "${q.slice(0, 60)}": ${data.error.message} (code ${data.error.code})`)
+        results.push({ question: q, answer: `[Gemini API error: ${data.error.message}]` })
+        continue
+      }
+
+      // Check for prompt blocked by safety filters
+      if (data.promptFeedback?.blockReason) {
+        console.warn(`[gemini-probe] Prompt blocked: ${data.promptFeedback.blockReason}`)
+        results.push({ question: q, answer: `[Gemini blocked: ${data.promptFeedback.blockReason}]` })
+        continue
+      }
+
+      // Check for empty candidates (safety filter on response)
+      if (!data.candidates || data.candidates.length === 0) {
+        console.warn(`[gemini-probe] No candidates returned for "${q.slice(0, 60)}" — response: ${JSON.stringify(data).slice(0, 300)}`)
+        results.push({ question: q, answer: '[Gemini returned no candidates]' })
+        continue
+      }
+
+      const candidate = data.candidates[0]
+      if (candidate.finishReason && candidate.finishReason !== 'STOP' && candidate.finishReason !== 'MAX_TOKENS') {
+        console.warn(`[gemini-probe] Unusual finishReason: ${candidate.finishReason}`)
+      }
+
+      const answer = candidate.content?.parts?.[0]?.text?.trim() || '[No response text]'
       results.push({ question: q, answer })
-    } catch {
+    } catch (err) {
+      console.error(`[gemini-probe] Exception for "${q.slice(0, 60)}":`, err)
       results.push({ question: q, answer: '[Gemini probe timed out]' })
     }
   }
@@ -234,20 +269,23 @@ async function gradeModelAnswers(
 
   const gradingPrompt = `Grade how accurately "${modelLabel}" answered questions about ${domain}.
 
-GROUND TRUTH (from actual website):
+WEBSITE CONTENT (scraped from the actual site — this is NOT the only source of truth):
 ${truthParts.join('\n')}
 
 ANSWERS:
 ${answers.map((a, i) => `Q${i + 1}: ${a.question}\nA${i + 1}: ${a.answer}`).join('\n\n')}
 
 GRADING RULES:
-- "accurate": Factually correct, matches ground truth.
+- "accurate": Answer is factually correct. It matches the website content, OR it provides plausible, specific details that are consistent with what the site describes (AI models have training data beyond what's on the site — don't penalize correct knowledge).
 - "partial": Some correct info but incomplete or slightly off.
-- "inaccurate": Wrong info OR the AI refused/hedged when ground truth clearly has the answer.
-- "hallucinated": Made up specific details not on the site.
-- "no_data": ONLY if ground truth itself has no relevant info AND AI correctly said so.
+- "inaccurate": Clearly wrong information that contradicts the website content, OR the AI refused/hedged when the website clearly has the answer.
+- "hallucinated": Made up specific details that CONTRADICT the website (e.g., wrong pricing, wrong product names, invented features that don't exist). Only use this if the answer is demonstrably false — not just "not found on the site."
+- "no_data": The website itself has no relevant info AND the AI correctly acknowledged uncertainty.
 
-CRITICAL: If the AI refused to answer or said "I don't have information" but the ground truth DOES contain the answer, grade as "inaccurate". Unnecessary refusals are failures.
+IMPORTANT DISTINCTIONS:
+- If the AI provides extra details beyond what's on the site but those details are plausible and consistent, grade as "accurate" or "partial" — NOT "hallucinated."
+- "hallucinated" means PROVABLY WRONG, not merely "not on the website."
+- If the AI refused to answer but the website clearly has the answer, grade as "inaccurate."
 
 Respond with a JSON array:
 [{"accuracy": "accurate|partial|inaccurate|hallucinated|no_data", "note": "1 sentence why"}]`
@@ -399,7 +437,7 @@ export async function runMultiModelBenchmark(
     const hallucinatedTotal = activeBenchmarks.reduce((s, b) => s + b.hallucinatedCount, 0)
     const inaccurateTotal = activeBenchmarks.reduce((s, b) => s + b.inaccurateCount, 0)
     if (hallucinatedTotal > inaccurateTotal) {
-      insight = `AI models are fabricating information about your site — none have accurate knowledge. This means users asking AI about you get wrong answers. Adding structured data (JSON-LD), a clear meta description, and an llms.txt file will give AI models correct facts to reference.`
+      insight = `AI models are providing information about your site that we couldn't verify from your website content. Adding structured data (JSON-LD), a clear meta description, and an llms.txt file will help AI models represent you accurately.`
     } else {
       insight = `AI models don't have reliable information about your site yet. This is common for newer or niche products. To get AI models to represent you accurately, add structured data (JSON-LD Organization + WebSite), clear homepage content, and an llms.txt file.`
     }
