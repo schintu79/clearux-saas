@@ -192,6 +192,14 @@ function OverviewInner() {
     return () => clearTimeout(t);
   }, [searchParams]);
 
+  // Strip post-Stripe-redirect params once seen. The running-audit
+  // banner driven by bundle.inProgressAudit conveys the actual state;
+  // we just clean the URL so a reload doesn't re-trigger anything.
+  useEffect(() => {
+    if (!searchParams.get('payment') && !searchParams.get('audit')) return;
+    window.history.replaceState({}, '', '/dashboard/overview');
+  }, [searchParams]);
+
   useEffect(() => {
     if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);

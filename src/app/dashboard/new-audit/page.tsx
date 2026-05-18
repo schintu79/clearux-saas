@@ -9,6 +9,7 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/languages';
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules';
 import AllAuditsInclude from '@/components/ui/AllAuditsInclude';
+import { writeSelection } from '@/lib/dashboard/brand-selection';
 
 type AuditType = 'website' | 'brand_identity' | 'design';
 
@@ -293,6 +294,20 @@ const NewAuditInner: React.FC = () => {
     }
   };
 
+  // Persist the brand/site the user just audited so Overview opens
+  // scoped to it after redirect (post-credit or post-Stripe).
+  const persistAuditSelection = () => {
+    if (auditType === 'brand_identity' && selectedBrandId) {
+      writeSelection({ kind: 'brand', brandId: selectedBrandId });
+    } else if (auditType === 'website') {
+      try {
+        const productUrl = url.startsWith('http') ? url : `https://${url}`;
+        const host = new URL(productUrl).hostname.replace(/^www\./, '');
+        if (host) writeSelection({ kind: 'site', host });
+      } catch {}
+    }
+  };
+
   const handleSubmit = async () => {
     // Validation per audit type
     if (auditType === 'website') {
@@ -346,12 +361,14 @@ const NewAuditInner: React.FC = () => {
           if (hasCredits) {
             const creditRes = await fetch('/api/credits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id, is_free_first: firstAuditFree }) });
             if (!creditRes.ok) throw new Error('Failed to apply credit');
-            router.push(`/dashboard/audits/${audit.id}?payment=success`);
+            writeSelection({ kind: 'brand', brandId: newId });
+            router.push('/dashboard/overview');
             return;
           }
           const checkoutRes = await fetch('/api/stripe/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ audit_id: audit.id }) });
           const checkoutData = await checkoutRes.json();
           if (!checkoutRes.ok || !checkoutData.url) throw new Error(checkoutData.error || 'Failed to create checkout');
+          writeSelection({ kind: 'brand', brandId: newId });
           window.location.href = checkoutData.url;
           return;
         } catch (err) {
@@ -436,7 +453,8 @@ const NewAuditInner: React.FC = () => {
         if (!creditRes.ok) {
           throw new Error(creditData.error || 'Failed to apply credit');
         }
-        router.push(`/dashboard/audits/${audit.id}?payment=success`);
+        persistAuditSelection();
+        router.push('/dashboard/overview');
         return;
       }
 
@@ -450,6 +468,7 @@ const NewAuditInner: React.FC = () => {
       if (!checkoutRes.ok || !checkoutData.url) {
         throw new Error(checkoutData.error || 'Failed to create checkout session');
       }
+      persistAuditSelection();
       window.location.href = checkoutData.url;
     } catch (err) {
       console.error('Error creating audit:', err);

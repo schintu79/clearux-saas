@@ -188,8 +188,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         type: 'single_audit',
       },
-      success_url: `${appUrl}/dashboard/audits/${audit_id}?payment=success`,
-      cancel_url: `${appUrl}/dashboard/audits/${audit_id}?payment=cancelled`,
+      success_url: `${appUrl}/dashboard/overview?payment=success&audit=${audit_id}`,
+      cancel_url: `${appUrl}/dashboard/new-audit?payment=cancelled&audit=${audit_id}`,
     })
 
     if (!session.url) throw new Error('Failed to create checkout session')
