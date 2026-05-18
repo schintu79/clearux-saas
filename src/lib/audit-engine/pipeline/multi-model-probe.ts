@@ -317,9 +317,39 @@ async function probeGemini(
           // 404 = model not available on this key's tier; try next fallback.
           // 400/403/429 etc = surface the error but stop trying other models
           // (auth/quota issues won't change between models).
-          const body = await resp.text().catch(() => '')
-          lastError = `HTTP ${resp.status}${body ? ` ${body.slice(0, 160)}` : ''}`
-          console.error(`[multi-model] Gemini ${model} failed: ${lastError}`)
+          // Try to parse the structured Google API error envelope first so
+          // we log the real reason (INVALID_ARGUMENT, PERMISSION_DENIED,
+          // RESOURCE_EXHAUSTED, NOT_FOUND…) instead of just "HTTP 400".
+          const raw = await resp.text().catch(() => '')
+          let apiErrorMessage: string | null = null
+          let apiErrorStatus: string | null = null
+          let apiErrorCode: number | null = null
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw) as {
+                error?: { code?: number; message?: string; status?: string }
+              }
+              if (parsed?.error) {
+                apiErrorCode = typeof parsed.error.code === 'number' ? parsed.error.code : null
+                apiErrorStatus = parsed.error.status || null
+                apiErrorMessage = parsed.error.message || null
+              }
+            } catch {
+              // Non-JSON body; fall back to a truncated raw snippet.
+            }
+          }
+          const detail = apiErrorMessage
+            ? `${apiErrorStatus || 'error'}: ${apiErrorMessage}`
+            : (raw ? raw.slice(0, 160) : '')
+          lastError = `HTTP ${resp.status}${detail ? ` ${detail}` : ''}`
+          console.error('[multi-model] Gemini non-OK response', {
+            provider: 'gemini',
+            model,
+            httpStatus: resp.status,
+            apiErrorCode,
+            apiErrorStatus,
+            apiErrorMessage,
+          })
           if (resp.status === 404 && !workingModel) continue
           break
         }
@@ -328,26 +358,85 @@ async function probeGemini(
           candidates?: Array<{
             content?: { parts?: Array<{ text?: string }> }
             finishReason?: string
+            safetyRatings?: unknown
           }>
-          promptFeedback?: { blockReason?: string }
+          promptFeedback?: { blockReason?: string; safetyRatings?: unknown }
+          error?: { code?: number; message?: string; status?: string }
+        }
+
+        // Some Google API errors come back with HTTP 200 plus an `error`
+        // envelope in the body (rare, but documented). Treat the same as
+        // a non-OK response so it isn't silently swallowed.
+        if (data.error) {
+          lastError = `API ${data.error.status || 'error'}${data.error.code ? ` (${data.error.code})` : ''}${data.error.message ? `: ${data.error.message}` : ''}`
+          console.error('[multi-model] Gemini API error in 200 body', {
+            provider: 'gemini',
+            model,
+            apiErrorCode: data.error.code ?? null,
+            apiErrorStatus: data.error.status ?? null,
+            apiErrorMessage: data.error.message ?? null,
+          })
+          break
         }
 
         if (data.promptFeedback?.blockReason) {
           // Safety block — counts as a successful call (we got a real
           // response from Gemini), just one we can't grade. Don't mark
-          // the whole provider as `error` for this.
+          // the whole provider as `error` for this. Logged at warn level
+          // so operators can see safety filters tripping on real prompts.
+          console.warn('[multi-model] Gemini prompt blocked by safety filter', {
+            provider: 'gemini',
+            model,
+            blockReason: data.promptFeedback.blockReason,
+            candidatesCount: data.candidates?.length ?? 0,
+          })
           answer = `[Gemini blocked: ${data.promptFeedback.blockReason}]`
           blocked = true
+        } else if (!data.candidates || data.candidates.length === 0) {
+          // Newer Gemini models can return `{ candidates: [] }` (no
+          // promptFeedback) when content is filtered. Previously this
+          // silently became "[No response]". Surface it as an empty-result
+          // failure so the operator can see it in logs and the grader can
+          // mark it `no_data` rather than treating it as a real answer.
+          console.warn('[multi-model] Gemini returned zero candidates', {
+            provider: 'gemini',
+            model,
+            hasPromptFeedback: Boolean(data.promptFeedback),
+          })
+          lastError = 'Empty candidates array (response filtered)'
+          answer = '[Gemini returned no candidates]'
+          blocked = true
         } else {
-          const parts = data.candidates?.[0]?.content?.parts || []
+          const parts = data.candidates[0]?.content?.parts || []
           const text = parts.map((p) => p?.text || '').join('').trim()
-          answer = text || '[No response]'
+          if (!text) {
+            const finishReason = data.candidates[0]?.finishReason || null
+            console.warn('[multi-model] Gemini candidate had no text parts', {
+              provider: 'gemini',
+              model,
+              finishReason,
+              partsCount: parts.length,
+            })
+            answer = finishReason
+              ? `[Gemini returned no text (finishReason: ${finishReason})]`
+              : '[No response]'
+            blocked = true
+          } else {
+            answer = text
+          }
         }
         workingModel = model
         break
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err)
-        console.error(`[multi-model] Gemini ${model} threw: ${lastError}`)
+        const isAbort = err instanceof Error && err.name === 'AbortError'
+        console.error('[multi-model] Gemini fetch threw', {
+          provider: 'gemini',
+          model,
+          errorName: err instanceof Error ? err.name : 'unknown',
+          errorMessage: lastError,
+          aborted: isAbort,
+        })
         // Network errors / timeouts: don't churn through every fallback.
         break
       }
