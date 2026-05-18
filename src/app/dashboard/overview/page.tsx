@@ -56,6 +56,11 @@ import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import {
+  buildProviderRows,
+  summarizeCoverage,
+  coverageCaption,
+} from '@/lib/ai-xray/provider-status';
+import {
   ScoreOverTimeChart,
   HeuristicRadarChart,
 } from '@/components/dashboard/AuditDashboard';
@@ -1124,20 +1129,11 @@ function AiMonitoringCard({
 
 /* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Gemini, Perplexity) ──
  *
- * Surfaces multi-model probes from /api/audits/intelligence. We probe
- * Claude (Anthropic), GPT-4o (rendered as ChatGPT), Gemini (Google's
- * model — labeled "Gemini" because that's the product users recognize),
- * and Perplexity (sonar). Each row shows "Not yet measured" until a
- * probe row exists; if the provider's API key is missing, the probe
- * runs but is filtered out as inactive so the row stays unmeasured.
+ * Surfaces multi-model probes from /api/audits/intelligence. Per-provider
+ * status, error labels (incl. quota/billing), and the coverage-aware
+ * average are computed by the shared helper so this card and the full
+ * /dashboard/ai-readability section stay in lock-step.
  */
-const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string }> = [
-  { key: 'claude',     label: 'Claude' },
-  { key: 'gpt4o',      label: 'ChatGPT' },
-  { key: 'gemini',     label: 'Gemini' },
-  { key: 'perplexity', label: 'Perplexity' },
-];
-
 function AIXRayCard({
   probes,
   auditId,
@@ -1175,28 +1171,10 @@ function AIXRayCard({
     }
   }, [auditId, refreshing, onRefreshed]);
 
-  const byId = new Map(probes.map(p => [p.model_id, p]));
-  const rows = AI_PLATFORMS.map((p) => {
-    const probe = byId.get(p.key);
-    // Legacy probe rows (pre-status column) treat presence-of-row as
-    // "measured" so existing audits keep rendering scores.
-    const status: 'measured' | 'skipped' | 'error' | 'unmeasured' = probe
-      ? (probe.status ?? 'measured')
-      : 'unmeasured';
-    return {
-      key: p.key,
-      label: p.label,
-      status,
-      errorMessage: probe?.error_message || null,
-      score: probe && status === 'measured'
-        ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score)))
-        : null,
-    };
-  });
-  const measured = rows.filter(r => r.score != null) as Array<{ key: string; label: string; status: string; errorMessage: string | null; score: number }>;
-  const avg = measured.length > 0
-    ? Math.round(measured.reduce((s, r) => s + r.score, 0) / measured.length)
-    : null;
+  const rows = buildProviderRows(probes);
+  const coverage = summarizeCoverage(rows);
+  const avg = coverage.average;
+  const coverageNote = coverageCaption(coverage);
   const status: { label: string; colorVar: string } = avg == null
     ? { label: 'Awaiting data', colorVar: '--m-muted' }
     : avg >= 70
@@ -1236,7 +1214,17 @@ function AIXRayCard({
             className="p-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ color: 'var(--m-muted)' }}
             aria-label={refreshing ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray'}
-            title={refreshing ? 'Re-scanning…' : refreshOk ? 'Re-scan complete' : refreshError ? refreshError : 'Re-scan AI X-Ray (probes models only)'}
+            title={
+              refreshing
+                ? 'Re-scanning…'
+                : refreshOk
+                  ? 'Re-scan complete'
+                  : refreshError
+                    ? refreshError
+                    : coverage.hasQuotaError
+                      ? `Re-scan AI X-Ray. Note: ${coverage.quotaBlockedProviderLabels.join(', ')} will keep failing until provider quota/billing is restored.`
+                      : 'Re-scan AI X-Ray (probes models only)'
+            }
           >
             <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -1276,7 +1264,12 @@ function AIXRayCard({
 
         {avg != null && (
           <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-            Avg accuracy across models
+            Avg accuracy across {coverage.measuredCount} of {coverage.totalCount} models
+          </p>
+        )}
+        {coverageNote && avg != null && (
+          <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            {coverageNote}
           </p>
         )}
 
@@ -1292,12 +1285,6 @@ function AIXRayCard({
                   ? '--warn'
                   : '--severe';
             const iconKey = providerKeyToIcon(r.key);
-            const unmeasuredLabel =
-              r.status === 'error'
-                ? 'Probe failed'
-                : r.status === 'skipped'
-                  ? 'Not configured'
-                  : 'Not yet measured';
             return (
               <li key={r.key} className="flex items-center gap-2 text-[11px]">
                 <span
@@ -1333,13 +1320,13 @@ function AIXRayCard({
                   </>
                 ) : (
                   <span
-                    className="text-[10px]"
+                    className="text-[10px] font-medium"
                     style={{
                       color: r.status === 'error' ? 'var(--severe)' : 'var(--m-muted)',
                     }}
-                    title={r.errorMessage || undefined}
+                    title={r.statusTooltip}
                   >
-                    {unmeasuredLabel}
+                    {r.statusLabel}
                   </span>
                 )}
               </li>
@@ -1353,6 +1340,12 @@ function AIXRayCard({
             style={{ color: refreshError ? 'var(--severe)' : refreshOk ? 'var(--ok)' : 'var(--m-muted)' }}
           >
             {refreshing ? 'Re-scanning model probes…' : refreshError ? refreshError : 'Re-scan complete'}
+          </p>
+        )}
+
+        {coverage.hasQuotaError && !refreshing && (
+          <p className="text-[10px] mt-2" style={{ color: 'var(--warn)' }}>
+            {coverage.quotaBlockedProviderLabels.join(', ')} quota exceeded — Re-scan will keep failing until provider billing is restored.
           </p>
         )}
 
