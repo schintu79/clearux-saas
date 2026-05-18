@@ -2335,7 +2335,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   : tab === 'responsive' ? 'Responsive'
                   : tab === 'technical_health' ? 'Technical'
                   : tab === 'ai_xray' ? 'AI Readability'
-                  : 'Intelligence';
+                  : 'Benchmark';
                 const responsiveFindings = findings.filter((f: any) => {
                   const t = (f.title || '').toLowerCase();
                   return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
@@ -2396,7 +2396,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               responsive: { icon: Smartphone, title: 'Responsive' },
               technical_health: { icon: Activity, title: 'Technical health' },
               ai_xray: { icon: Brain, title: 'AI Readability' },
-              intelligence: { icon: Sparkles, title: 'Intelligence' },
+              intelligence: { icon: Sparkles, title: 'Benchmark' },
             };
             const meta = tabMeta[activeTab];
             if (!meta) return null;
@@ -4128,13 +4128,52 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
             const hasAny = hasProbes || recs.length > 0 || bench;
 
+            const heroScore = typeof bench?.userScore === 'number' ? bench.userScore : (report?.overall_score ?? null);
+            const peerAvg = typeof bench?.benchmark?.avgScore === 'number' ? bench.benchmark.avgScore : null;
+            const heroDelta = (heroScore != null && peerAvg != null) ? heroScore - peerAvg : null;
+
             return (
               <div className="space-y-5">
+                {/* Score hero */}
+                {heroScore != null && (
+                  <div className="rounded-xl border border-rule bg-card p-6 flex flex-col items-center text-center">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-m-muted mb-2">Your score</span>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className="text-[64px] font-bold leading-none tabular-nums text-ink">{heroScore}</span>
+                      <span className="text-[16px] font-medium text-m-muted">/100</span>
+                    </div>
+                    {heroDelta != null && (
+                      heroDelta > 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                          style={{ color: 'var(--ok)', background: 'color-mix(in srgb, var(--ok) 12%, transparent)' }}
+                        >
+                          <TrendingUp size={12} /> Ahead of peers · +{heroDelta}
+                        </span>
+                      ) : heroDelta < 0 ? (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                          style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 12%, transparent)' }}
+                        >
+                          <TrendingUp size={12} className="rotate-180" /> Behind peers · {heroDelta}
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full text-m-muted"
+                          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                        >
+                          At industry average
+                        </span>
+                      )
+                    )}
+                  </div>
+                )}
+
                 {/* Compact intro */}
                 <div className="rounded-xl border border-rule bg-card p-4 flex items-start gap-3">
                   <Sparkles size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">AI & competitive intelligence</h3>
+                    <h3 className="text-[13px] font-semibold text-ink mb-0.5">Benchmark console.</h3>
                     <p className="text-[12px] text-m-muted leading-relaxed">How AI models represent your site, how you compare to your industry, and the actions most likely to move your score.</p>
                   </div>
                 </div>

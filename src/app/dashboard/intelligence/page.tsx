@@ -336,7 +336,7 @@ export default function IntelligencePage() {
         <OverviewBreadcrumb current="Benchmark Console" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-            Intelligence
+            Benchmark
           </h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
             {selection ? 'No audit for this brand yet.' : 'Pick a brand or run an audit to see how it benchmarks.'}
