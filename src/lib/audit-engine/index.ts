@@ -50,6 +50,23 @@ async function setStatus(
   if (error) throw new Error(`Failed to update status: ${error.message}`)
 }
 
+async function setProgress(
+  db: Supabase,
+  auditId: string,
+  percent: number,
+) {
+  const clamped = Math.max(0, Math.min(100, Math.round(percent)))
+  try {
+    await db
+      .from('audits')
+      .update({ progress_percent: clamped, updated_at: new Date().toISOString() } as any)
+      .eq('id', auditId)
+  } catch (err) {
+    // Progress is best-effort — never fail the audit because of it.
+    console.error('[audit-engine] setProgress error:', err)
+  }
+}
+
 /* ── Timeout helper ────────────────────────────────────────── */
 
 const AUDIT_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes max (deep crawls + AI analysis)
@@ -92,6 +109,8 @@ async function _processAuditInner(auditId: string): Promise<void> {
     const language = ((audit as any).language as string) || 'en'
 
     console.log(`[audit-engine] Language: ${language}, Plan: ${plan}`)
+
+    await setProgress(db, auditId, 5)
 
     // 2. CRAWLING
     await setStatus(db, auditId, 'crawling')
@@ -161,6 +180,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
       .eq('id', auditId)
 
     await log(db, auditId, 'crawl_completed', 'success', `Crawled ${crawledPages.length} page(s)`)
+    await setProgress(db, auditId, 25)
 
     // 2b. RESPONSIVE CHECK — update audit_pages with mobile-friendly data
     try {
@@ -209,6 +229,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     // 3. ANALYSING
     await setStatus(db, auditId, 'analysing')
+    await setProgress(db, auditId, 35)
 
     const pageContent = crawledPages
       .map((p) => {
@@ -305,6 +326,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     }
 
     await log(db, auditId, 'full_analysis_completed', 'success', `Built-in analysis: ${allFindings.length} findings`)
+    await setProgress(db, auditId, 80)
 
     // 4. CAPTURE SCREENSHOTS — pages + highlighted findings (non-fatal)
     try {
@@ -351,6 +373,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
 
     // 5. GENERATING REPORT
     await setStatus(db, auditId, 'generating_report')
+    await setProgress(db, auditId, 85)
 
     const reportData = await generateReport(allFindings, audit as any, pageContent, userFocus, language)
 
@@ -408,6 +431,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
       .from('audits')
       .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
       .eq('id', auditId)
+    await setProgress(db, auditId, 100)
 
     // Send email
     if (userEmail) {

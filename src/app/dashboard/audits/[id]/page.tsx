@@ -220,16 +220,6 @@ function buildStatusMeta(L: UILabels): Record<
   };
 }
 
-function buildProgressSteps(L: UILabels) {
-  return [
-    { key: 'payment_received', label: L.stepPayment },
-    { key: 'crawling', label: L.stepCrawling },
-    { key: 'analysing', label: L.stepAnalysing },
-    { key: 'generating_report', label: L.stepReport },
-    { key: 'completed', label: L.stepDone },
-  ];
-}
-
 /* ── Rotating checkpoint labels ─────────────────────────── */
 const auditCheckpoints = [
   'Checking navigation clarity & structure',
@@ -290,10 +280,6 @@ const auditCheckpoints = [
   'Checking progressive disclosure patterns',
 ];
 
-function getStepIndex(status: string, steps: ReturnType<typeof buildProgressSteps>) {
-  return steps.findIndex((s) => s.key === status);
-}
-
 /* ── Rotating checkpoint text ─────────────────────────────── */
 function RotatingCheckpoints() {
   const [idx, setIdx] = useState(0);
@@ -319,6 +305,157 @@ function RotatingCheckpoints() {
       >
         {auditCheckpoints[idx]}...
       </p>
+    </div>
+  );
+}
+
+/* ── Audit progress loader — morphing blob + orbiting dots + ring ─ */
+function AuditProgressLoader({
+  status,
+  percent,
+}: {
+  status: string;
+  percent: number | null | undefined;
+}) {
+  // Smooth stage fallbacks if no DB percent is available yet.
+  const stageFallback: Record<string, number> = {
+    payment_received: 5,
+    crawling: 25,
+    analysing: 50,
+    generating_report: 85,
+    completed: 100,
+  };
+  const target = Math.max(
+    0,
+    Math.min(100, typeof percent === 'number' ? percent : stageFallback[status] ?? 0),
+  );
+
+  // Animate the displayed percent towards the target so the ring eases instead of jumping.
+  const [display, setDisplay] = useState<number>(target);
+  useEffect(() => {
+    let raf: number;
+    const tick = () => {
+      setDisplay((cur) => {
+        const diff = target - cur;
+        if (Math.abs(diff) < 0.4) return target;
+        const next = cur + diff * 0.12;
+        raf = requestAnimationFrame(tick);
+        return next;
+      });
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+
+  const RING_SIZE = 168;
+  const STROKE = 4;
+  const radius = (RING_SIZE - STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - display / 100);
+
+  return (
+    <div className="flex items-center justify-center py-6">
+      <div
+        className="relative"
+        style={{ width: RING_SIZE, height: RING_SIZE }}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(display)}
+        aria-label="Audit progress"
+      >
+        {/* Morphing blob */}
+        <div
+          aria-hidden
+          className="absolute inset-6"
+          style={{
+            background: 'var(--gradient-brand, linear-gradient(135deg,#6366F1,#8B5CF6))',
+            opacity: 0.18,
+            animation: 'audit-morph 9s ease-in-out infinite',
+            filter: 'blur(6px)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-10"
+          style={{
+            background: 'var(--gradient-brand, linear-gradient(135deg,#6366F1,#8B5CF6))',
+            opacity: 0.35,
+            animation: 'audit-morph 7s ease-in-out infinite reverse',
+          }}
+        />
+
+        {/* Circular progress ring */}
+        <svg
+          width={RING_SIZE}
+          height={RING_SIZE}
+          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          className="absolute inset-0"
+          aria-hidden
+        >
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--rule, rgba(0,0,0,0.08))"
+            strokeWidth={STROKE}
+          />
+          <circle
+            cx={RING_SIZE / 2}
+            cy={RING_SIZE / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--signal, #6366F1)"
+            strokeWidth={STROKE}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+            style={{ transition: 'stroke-dashoffset 200ms linear' }}
+          />
+        </svg>
+
+        {/* Orbiting dots */}
+        <div
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ animation: 'spin 6s linear infinite' }}
+        >
+          <span
+            className="absolute block rounded-full"
+            style={{
+              width: 8,
+              height: 8,
+              background: 'var(--signal, #6366F1)',
+              boxShadow: '0 0 12px rgba(99,102,241,0.6)',
+              ['--orbit-radius' as any]: '64px',
+              animation: 'audit-orbit 3.2s linear infinite',
+            }}
+          />
+          <span
+            className="absolute block rounded-full"
+            style={{
+              width: 5,
+              height: 5,
+              background: 'var(--signal, #8B5CF6)',
+              opacity: 0.7,
+              ['--orbit-radius' as any]: '64px',
+              animation: 'audit-orbit 4.6s linear infinite reverse',
+            }}
+          />
+        </div>
+
+        {/* Percent label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-3xl font-semibold text-ink tabular-nums">
+            {Math.round(display)}%
+          </span>
+          <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-m-muted mt-1">
+            Running
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1694,14 +1831,12 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const PILLAR_CONFIG = buildPillarConfig(auditLang);
   const severityConfig = buildSeverityConfig(L);
   const statusMeta = buildStatusMeta(L);
-  const progressSteps = buildProgressSteps(L);
 
   const meta = statusMeta[audit.status] || statusMeta.pending_payment;
   const StatusIcon = meta.icon;
   const isCompleted = audit.status === 'completed';
   const isInProgress = ['crawling', 'analysing', 'generating_report', 'payment_received'].includes(audit.status);
   const canDelete = audit.status === 'pending_payment';
-  const currentStepIdx = getStepIndex(audit.status, progressSteps);
 
   // Parse category scores from report
   const rawJson = report?.raw_json as any;
@@ -2003,10 +2138,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </Card>
       )}
 
-      {/* ── In progress: progress bar ──────────────────────── */}
+      {/* ── In progress: animated loader ─────────────────── */}
       {isInProgress && !verifying && (
         <Card className="mb-6">
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-2">
             <StatusIcon size={20} className="text-signal" />
             <div>
               <p className="font-medium text-ink">{meta.label}</p>
@@ -2015,29 +2150,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
             <Loader2 size={16} className="text-signal animate-spin ml-auto" />
           </div>
 
-          {/* Progress steps */}
-          <div className="flex items-center gap-1">
-            {progressSteps.map((step, idx) => {
-              const isActive = idx <= currentStepIdx;
-              const isCurrent = idx === currentStepIdx;
-              return (
-                <React.Fragment key={step.key}>
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className={clsx(
-                        'w-full h-2 rounded-full transition-colors',
-                        isActive ? 'bg-signal' : 'bg-paper-2',
-                        isCurrent && 'animate-pulse',
-                      )}
-                    />
-                    <p className={clsx('text-xs font-medium mt-1.5', isActive ? 'text-signal' : 'text-m-muted')}>
-                      {step.label}
-                    </p>
-                  </div>
-                </React.Fragment>
-              );
-            })}
-          </div>
+          <AuditProgressLoader
+            status={audit.status}
+            percent={(audit as any).progress_percent}
+          />
 
           <RotatingCheckpoints />
           <p className="text-sm text-m-muted mt-2 text-center">

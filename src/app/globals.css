@@ -1082,3 +1082,32 @@ main > section:nth-child(even) {
   border-color: var(--paper);
   color: var(--ink);
 }
+
+/* ============================================================
+   Audit loader animations — morphing blob + orbiting dots
+   Used by the in-progress audit page detail loader.
+   ============================================================ */
+@keyframes audit-morph {
+  0%, 100% {
+    border-radius: 42% 58% 56% 44% / 48% 42% 58% 52%;
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    border-radius: 58% 42% 48% 52% / 42% 58% 42% 58%;
+    transform: rotate(90deg) scale(1.04);
+  }
+  50% {
+    border-radius: 50% 50% 38% 62% / 60% 38% 62% 40%;
+    transform: rotate(180deg) scale(0.98);
+  }
+  75% {
+    border-radius: 38% 62% 56% 44% / 56% 60% 40% 44%;
+    transform: rotate(270deg) scale(1.03);
+  }
+}
+
+@keyframes audit-orbit {
+  0%   { transform: rotate(0deg)   translateX(var(--orbit-radius, 56px)) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(var(--orbit-radius, 56px)) rotate(-360deg); }
+}
+

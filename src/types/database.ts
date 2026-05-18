@@ -79,6 +79,7 @@ export interface Audit {
   plan:              'quick_scan' | 'full_audit' | 'agency_pro' | 'agency_scale' | 'free_preview' | null
   language:          string | null
   pages_crawled:     number
+  progress_percent:  number | null
   crawl_error:       string | null
   delivery_deadline: string | null
   completed_at:      string | null
