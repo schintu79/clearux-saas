@@ -16,6 +16,7 @@ import {
   classifyOperation,
   buildPrompt,
   callSurgicalAI,
+  applyPatch,
   computeDiff,
   validatePatch,
   type SurgicalFixRequest,
@@ -24,7 +25,7 @@ import {
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // 2 minutes — AI call with large files needs time
+export const maxDuration = 30 // Haiku is fast — 30s is plenty
 
 export async function POST(request: NextRequest) {
   try {
@@ -134,38 +135,54 @@ export async function POST(request: NextRequest) {
       const result: SurgicalFixResult = {
         operation,
         originalContent,
-        patchedContent: originalContent, // unchanged
+        patchedContent: originalContent,
         changes: [],
         confidence: 'low',
         aiExplanation: '',
-        warning: `Could not automatically locate the fix point: ${aiResult.failReason || 'unknown reason'}. You can apply the fix manually using the editor.`,
+        warning: `Could not locate the fix point: ${aiResult.failReason || 'unknown reason'}. You can apply the fix manually.`,
       }
       return NextResponse.json(result)
     }
 
-    // ── Validate the patch ──────────────────────────────────
-    const validation = validatePatch(originalContent, aiResult.patchedContent, operation)
+    // ── Apply the patch programmatically ────────────────────
+    const { patchedContent, applied, warning: patchWarning } = applyPatch(
+      originalContent,
+      aiResult.patch!,
+    )
 
-    // ── Compute diff ────────────────────────────────────────
-    const changes = computeDiff(originalContent, aiResult.patchedContent)
+    if (!applied) {
+      const result: SurgicalFixResult = {
+        operation,
+        originalContent,
+        patchedContent: originalContent,
+        changes: [],
+        confidence: 'low',
+        aiExplanation: aiResult.explanation,
+        warning: patchWarning || 'Patch could not be applied. The target code was not found in the file.',
+      }
+      return NextResponse.json(result)
+    }
 
-    // ── Determine confidence ────────────────────────────────
+    // ── Validate and diff ───────────────────────────────────
+    const validation = validatePatch(originalContent, patchedContent, operation)
+    const changes = computeDiff(originalContent, patchedContent)
+
     let confidence: 'high' | 'medium' | 'low' = 'high'
     if (validation.warnings.length > 0) confidence = 'medium'
     if (!validation.valid) confidence = 'low'
-    if (changes.length === 0) confidence = 'low' // No changes detected
+    if (changes.length === 0) confidence = 'low'
 
     const result: SurgicalFixResult = {
       operation,
       originalContent,
-      patchedContent: aiResult.patchedContent,
+      patchedContent,
       changes,
       confidence,
       aiExplanation: aiResult.explanation,
       warning: validation.warnings.length > 0
         ? validation.warnings.join(' ')
         : changes.length === 0
-          ? 'No changes detected — the AI may not have been able to apply the fix. Try editing manually.'
+          ? 'No changes detected. Try editing manually.'
           : undefined,
     }
 
