@@ -25,7 +25,6 @@ import {
   Search,
   Wrench,
   LineChart,
-  FileSearch,
   Server,
   Rocket,
 } from 'lucide-react';
@@ -447,39 +446,6 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             />
             {!collapsed && <span className="truncate">Dashboard</span>}
           </Link>
-        </div>
-
-        {/* My Audits — parent-level destination listing all audits across
-            brands/sites. Lives at parent level (next to Dashboard), NOT inside
-            the audit workspace, so audit workflow nav stays clean. */}
-        <div className={clsx('pb-1', collapsed ? 'px-1.5' : 'px-2')}>
-          {(() => {
-            const myAuditsActive = pathname === '/dashboard/audits';
-            return (
-              <Link
-                href="/dashboard/audits"
-                onClick={() => setSidebarOpen(false)}
-                title={collapsed ? 'My Audits' : undefined}
-                aria-current={myAuditsActive ? 'page' : undefined}
-                className={clsx(
-                  'flex items-center rounded-lg transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
-                  collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-2.5 py-[8px]',
-                  myAuditsActive ? 'font-semibold' : 'hover:bg-black/[0.04]',
-                )}
-                style={{
-                  color: myAuditsActive ? 'var(--ink)' : 'var(--ink-2)',
-                  background: myAuditsActive ? '#ffffff' : undefined,
-                }}
-              >
-                <FileSearch
-                  size={collapsed ? 17 : 15}
-                  strokeWidth={1.75}
-                  style={{ color: myAuditsActive ? 'var(--ink)' : 'var(--m-muted)' }}
-                />
-                {!collapsed && <span className="truncate">My Audits</span>}
-              </Link>
-            );
-          })()}
         </div>
 
         {/* Brand/site selector — BIGGER and more prominent */}

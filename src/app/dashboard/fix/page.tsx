@@ -39,6 +39,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import FixConsole from '@/components/dashboard/v2/FixConsole';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -482,6 +483,7 @@ function FixPageInner() {
   if (!bundle?.audit) {
     return (
       <div>
+        <OverviewBreadcrumb current="Fix" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -500,6 +502,7 @@ function FixPageInner() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Fix" />
       <div className="mb-5">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>

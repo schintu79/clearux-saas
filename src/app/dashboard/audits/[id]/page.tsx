@@ -309,7 +309,7 @@ function RotatingCheckpoints() {
   );
 }
 
-/* ── Audit progress loader — morphing blob + orbiting dots + ring ─ */
+/* ── Audit progress loader — minimal ring + segmented scan ─────── */
 function AuditProgressLoader({
   status,
   percent,
@@ -337,8 +337,8 @@ function AuditProgressLoader({
     const tick = () => {
       setDisplay((cur) => {
         const diff = target - cur;
-        if (Math.abs(diff) < 0.4) return target;
-        const next = cur + diff * 0.12;
+        if (Math.abs(diff) < 0.3) return target;
+        const next = cur + diff * 0.08;
         raf = requestAnimationFrame(tick);
         return next;
       });
@@ -347,14 +347,14 @@ function AuditProgressLoader({
     return () => cancelAnimationFrame(raf);
   }, [target]);
 
-  const RING_SIZE = 168;
-  const STROKE = 4;
+  const RING_SIZE = 156;
+  const STROKE = 2;
   const radius = (RING_SIZE - STROKE) / 2;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - display / 100);
 
   return (
-    <div className="flex items-center justify-center py-6">
+    <div className="flex flex-col items-center justify-center py-8">
       <div
         className="relative"
         style={{ width: RING_SIZE, height: RING_SIZE }}
@@ -364,28 +364,18 @@ function AuditProgressLoader({
         aria-valuenow={Math.round(display)}
         aria-label="Audit progress"
       >
-        {/* Morphing blob */}
+        {/* Soft pulse halo — subtle */}
         <div
           aria-hidden
-          className="absolute inset-6"
+          className="absolute inset-0 rounded-full"
           style={{
-            background: 'var(--gradient-brand, linear-gradient(135deg,#6366F1,#8B5CF6))',
-            opacity: 0.18,
-            animation: 'audit-morph 9s ease-in-out infinite',
-            filter: 'blur(6px)',
-          }}
-        />
-        <div
-          aria-hidden
-          className="absolute inset-10"
-          style={{
-            background: 'var(--gradient-brand, linear-gradient(135deg,#6366F1,#8B5CF6))',
-            opacity: 0.35,
-            animation: 'audit-morph 7s ease-in-out infinite reverse',
+            background:
+              'radial-gradient(circle at center, rgba(99,102,241,0.10), transparent 65%)',
+            animation: 'audit-pulse 3.2s ease-in-out infinite',
           }}
         />
 
-        {/* Circular progress ring */}
+        {/* Thin progress ring */}
         <svg
           width={RING_SIZE}
           height={RING_SIZE}
@@ -412,48 +402,34 @@ function AuditProgressLoader({
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-            style={{ transition: 'stroke-dashoffset 200ms linear' }}
+            style={{ transition: 'stroke-dashoffset 280ms cubic-bezier(0.22,1,0.36,1)' }}
           />
         </svg>
 
-        {/* Orbiting dots */}
-        <div
-          aria-hidden
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ animation: 'spin 6s linear infinite' }}
-        >
-          <span
-            className="absolute block rounded-full"
-            style={{
-              width: 8,
-              height: 8,
-              background: 'var(--signal, #6366F1)',
-              boxShadow: '0 0 12px rgba(99,102,241,0.6)',
-              ['--orbit-radius' as any]: '64px',
-              animation: 'audit-orbit 3.2s linear infinite',
-            }}
-          />
-          <span
-            className="absolute block rounded-full"
-            style={{
-              width: 5,
-              height: 5,
-              background: 'var(--signal, #8B5CF6)',
-              opacity: 0.7,
-              ['--orbit-radius' as any]: '64px',
-              animation: 'audit-orbit 4.6s linear infinite reverse',
-            }}
-          />
-        </div>
-
         {/* Percent label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-semibold text-ink tabular-nums">
-            {Math.round(display)}%
+          <span className="text-4xl font-semibold text-ink tabular-nums tracking-tight">
+            {Math.round(display)}
+            <span className="text-xl text-m-muted ml-0.5">%</span>
           </span>
-          <span className="text-[11px] font-medium tracking-[0.04em] uppercase text-m-muted mt-1">
-            Running
+          <span className="text-[10px] font-medium tracking-[0.14em] uppercase text-m-muted mt-1.5">
+            Running audit
           </span>
+        </div>
+      </div>
+
+      {/* Slim segmented scan bar */}
+      <div className="mt-7 w-full max-w-[280px]">
+        <div className="relative h-[2px] rounded-full bg-rule/60 overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-y-0 left-0 w-1/3 rounded-full"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent, var(--signal, #6366F1), transparent)',
+              animation: 'audit-scan 2.4s cubic-bezier(0.4,0,0.6,1) infinite',
+            }}
+          />
         </div>
       </div>
     </div>
@@ -1996,13 +1972,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </div>
       )}
 
-      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise just back to list */}
+      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise back to Overview */}
       <Link
-        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/audits'}
+        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/overview'}
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Audits'}
+        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Overview'}
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}
@@ -2143,8 +2119,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="flex items-center gap-3 mb-2">
             <StatusIcon size={20} className="text-signal" />
             <div>
-              <p className="font-medium text-ink">{meta.label}</p>
-              <p className="text-sm text-m-muted">{meta.description}</p>
+              <p className="font-medium text-ink">
+                {audit.status === 'payment_received' ? 'Starting audit' : meta.label}
+              </p>
+              <p className="text-sm text-m-muted">
+                {audit.status === 'payment_received'
+                  ? 'Preparing your audit. This will only take a moment.'
+                  : meta.description}
+              </p>
             </div>
             <Loader2 size={16} className="text-signal animate-spin ml-auto" />
           </div>

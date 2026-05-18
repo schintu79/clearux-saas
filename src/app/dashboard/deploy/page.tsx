@@ -40,6 +40,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -255,6 +256,7 @@ function DeployPageInner() {
   if (!bundle?.audit) {
     return (
       <div>
+        <OverviewBreadcrumb current="Deploy" />
         <div className="mb-5">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Deploy</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -271,6 +273,7 @@ function DeployPageInner() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Deploy" />
       <div className="mb-4">
         <h1 className="text-[20px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Deploy</h1>
         <p className="text-[12.5px] mt-1" style={{ color: 'var(--m-muted)' }}>

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 interface SavedConnection {
   id: string;
@@ -76,7 +77,9 @@ export default function ConnectPage() {
 
   const fetchConnections = useCallback(async () => {
     try {
-      const res = await fetch('/api/ftp');
+      const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+      const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+      const res = await fetch(url);
       const data = await res.json();
       if (res.status === 503) {
         setProvisioning({
@@ -97,7 +100,7 @@ export default function ConnectPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selection]);
 
   useEffect(() => {
     if (user) fetchConnections();
@@ -115,18 +118,23 @@ export default function ConnectPage() {
     setTesting(true);
     setTestResult(null);
     try {
+      const payload: Record<string, any> = {
+        action: 'test',
+        protocol: form.protocol,
+        host: form.host,
+        port: parseInt(form.port) || (form.protocol === 'sftp' ? 22 : 21),
+        username: form.username,
+        remotePath: form.remotePath,
+      };
+      // Only include password if user typed one. When editing, an empty
+      // password means "use the stored one" and the API will look it up.
+      if (form.password) payload.password = form.password;
+      if (editingId) payload.connectionId = editingId;
+
       const res = await fetch('/api/ftp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'test',
-          protocol: form.protocol,
-          host: form.host,
-          port: parseInt(form.port) || (form.protocol === 'sftp' ? 22 : 21),
-          username: form.username,
-          password: form.password,
-          remotePath: form.remotePath,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       setTestResult({
@@ -222,6 +230,7 @@ export default function ConnectPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-4 px-4">
+      <OverviewBreadcrumb current="Connect site" />
       {/* Header */}
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
@@ -360,12 +369,24 @@ export default function ConnectPage() {
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full px-3 py-2 pr-9 text-sm rounded-lg border border-border bg-surface text-text focus:outline-none focus:ring-1 focus:ring-brand"
-                  placeholder="••••••••"
+                  placeholder={editingId ? '•••••••• (unchanged)' : '••••••••'}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-text"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onMouseDown={(e) => {
+                    // Prevent the input from losing focus / from any wrapping
+                    // form attempting a submit on click.
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowPassword((v) => !v);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded text-muted hover:text-text focus:outline-none focus:ring-1 focus:ring-brand"
                 >
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
@@ -403,7 +424,14 @@ export default function ConnectPage() {
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={handleTest}
-                disabled={testing || !form.host || !form.username || !form.password}
+                disabled={
+                  testing ||
+                  !form.host ||
+                  !form.username ||
+                  // When editing an existing connection, password may be blank
+                  // (the API will fall back to the stored encrypted password).
+                  (!editingId && !form.password)
+                }
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-border text-text hover:bg-off transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {testing ? <Loader2 size={12} className="animate-spin" /> : <Wifi size={12} />}

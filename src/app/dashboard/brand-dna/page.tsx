@@ -36,6 +36,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 interface BrandFile {
   id: string;
@@ -271,6 +272,7 @@ export default function BrandDnaPage() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Brand DNA" />
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Brand DNA</h1>

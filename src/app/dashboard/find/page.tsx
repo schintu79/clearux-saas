@@ -40,6 +40,7 @@ import {
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -259,6 +260,7 @@ function FindPageInner() {
   if (!bundle?.audit) {
     return (
       <div>
+        <OverviewBreadcrumb current="Find" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Find</h1>
           <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
@@ -277,6 +279,7 @@ function FindPageInner() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Find" />
       <div className="mb-5">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Find</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>

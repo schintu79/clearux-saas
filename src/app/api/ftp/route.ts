@@ -50,19 +50,26 @@ function encryptionMissingResponse() {
 }
 
 /* ── GET — list user's saved connections ─────────────────── */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabase();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const brandId = request.nextUrl.searchParams.get('brandId');
+
     const db = createServiceSupabase();
-    const { data: connections, error } = await db
+    let query = db
       .from('ftp_connections')
       .select('id, label, protocol, host, port, username, remote_path, brand_identity_id, last_connected_at, is_active, created_at, updated_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .eq('user_id', user.id);
+
+    if (brandId) {
+      query = query.eq('brand_identity_id', brandId);
+    }
+
+    const { data: connections, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       if (isMissingTable(error)) return notProvisionedResponse();
@@ -94,8 +101,10 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'test':
-        // Test never touches the DB — no provisioning gate required.
-        return handleTest(body);
+        // Test never touches the DB unless a connectionId is provided
+        // to look up stored credentials — no provisioning gate required
+        // for ad-hoc tests against new credentials.
+        return handleTest(body, user.id);
       case 'save':
       case 'update': {
         const enc = !process.env.FTP_ENCRYPTION_KEY;
@@ -122,19 +131,37 @@ export async function POST(request: NextRequest) {
 
 /* ── Handlers ────────────────────────────────────────────── */
 
-async function handleTest(body: any) {
-  const { protocol, host, port, username, password, remotePath } = body;
-  if (!host || !username || !password)
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+async function handleTest(body: any, userId: string) {
+  const { connectionId, protocol, host, port, username, password, remotePath } = body;
 
-  const creds: FtpCredentials = {
-    protocol: protocol || 'sftp',
-    host,
-    port: port || (protocol === 'sftp' ? 22 : 21),
-    username,
-    password,
-    remotePath: remotePath || '/',
-  };
+  // When testing an existing connection, fall back to the stored encrypted
+  // password if the form password is blank. This lets users re-test a saved
+  // connection without re-entering credentials.
+  let creds: FtpCredentials | null = null;
+
+  if (connectionId) {
+    const stored = await getCredentials(connectionId, userId);
+    if (!stored) return NextResponse.json({ error: 'Connection not found' }, { status: 404 });
+    creds = {
+      protocol: protocol || stored.protocol,
+      host: host || stored.host,
+      port: port || stored.port,
+      username: username || stored.username,
+      password: password || stored.password,
+      remotePath: remotePath || stored.remotePath,
+    };
+  } else {
+    if (!host || !username || !password)
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    creds = {
+      protocol: protocol || 'sftp',
+      host,
+      port: port || (protocol === 'sftp' ? 22 : 21),
+      username,
+      password,
+      remotePath: remotePath || '/',
+    };
+  }
 
   const client = await createFtpClient(creds);
   try {
