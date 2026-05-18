@@ -46,6 +46,9 @@ import {
   MoreVertical,
   X,
   Info,
+  Activity,
+  Image as ImageIcon,
+  Heading1,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -1135,7 +1138,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
-  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; viewport_meta: string | null; content_text: string | null; ai_readability: any | null }>>([]);
+  const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; viewport_meta: string | null; content_text: string | null; ai_readability: any | null; technical_audit: any | null }>>([]);
   const [siblingCount, setSiblingCount] = useState(0); // other audits for same domain
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1143,8 +1146,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
-  const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
+  type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'technical_health' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
+  const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'technical_health', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
   const initialTabFromHash = ((): AuditTab => {
     if (typeof window === 'undefined') return 'overview';
     const h = (window.location.hash || '').replace(/^#/, '');
@@ -2226,26 +2229,30 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               role="tablist"
               aria-label="Audit sections"
             >
-              {(['overview', 'findings', 'pages', 'responsive', 'ai_xray', 'intelligence'] as const).map((tab) => {
+              {(['overview', 'findings', 'pages', 'responsive', 'technical_health', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
                   : tab === 'responsive' ? 'Responsive'
+                  : tab === 'technical_health' ? 'Technical'
                   : tab === 'ai_xray' ? 'AI Readability'
                   : 'Intelligence';
                 const responsiveFindings = findings.filter((f: any) => {
                   const t = (f.title || '').toLowerCase();
                   return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
                 });
+                const pagesWithTechnical = auditPages.filter((p: any) => p.technical_audit).length;
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
                   : tab === 'responsive' ? responsiveFindings.length
+                  : tab === 'technical_health' ? pagesWithTechnical
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
                   : tab === 'pages' ? Globe
                   : tab === 'responsive' ? Smartphone
+                  : tab === 'technical_health' ? Activity
                   : tab === 'ai_xray' ? Brain
                   : Sparkles;
                 return (
@@ -2289,6 +2296,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               findings: { icon: AlertTriangle, title: 'Findings' },
               pages: { icon: Globe, title: 'Pages' },
               responsive: { icon: Smartphone, title: 'Responsive' },
+              technical_health: { icon: Activity, title: 'Technical health' },
               ai_xray: { icon: Brain, title: 'AI Readability' },
               intelligence: { icon: Sparkles, title: 'Intelligence' },
             };
@@ -3182,6 +3190,236 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                   </div>
                 )}
+              </div>
+            );
+          })()}
+
+          {/* ── TAB: Technical Health ────────────────────────── */}
+          {activeTab === 'technical_health' && (() => {
+            const pagesWithTechnical = auditPages.filter((p: any) => p.technical_audit);
+
+            if (pagesWithTechnical.length === 0) {
+              return (
+                <div className="rounded-xl border border-rule bg-card p-6">
+                  <div className="flex items-start gap-3">
+                    <Info size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[14px] font-semibold text-ink mb-1">No technical-audit data yet</p>
+                      <p className="text-[12px] text-m-muted leading-relaxed">
+                        Re-run this audit after the technical-checks pipeline is deployed to see per-page performance, image, heading, accessibility and link diagnostics.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Aggregate across pages for the summary cards
+            const loadTimes = pagesWithTechnical
+              .map((p: any) => p.technical_audit?.performance?.loadTimeMs)
+              .filter((n: any) => typeof n === 'number') as number[];
+            const avgLoad = loadTimes.length > 0
+              ? Math.round(loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length)
+              : null;
+            const slowPages = pagesWithTechnical.filter((p: any) => p.technical_audit?.performance?.rating === 'slow').length;
+            const totalImages = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.images?.total || 0), 0);
+            const totalMissingAlt = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.images?.missingAlt || 0), 0);
+            const totalHeadingIssues = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.headings?.issues?.length || 0), 0);
+            const totalA11yIssues = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.accessibility?.issues?.length || 0), 0);
+            const totalLinks = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.total || 0), 0);
+            const totalNonDescriptive = pagesWithTechnical.reduce((sum: number, p: any) => sum + (p.technical_audit?.links?.nonDescriptive || 0), 0);
+
+            const ratingClass = (rating: string) =>
+              rating === 'good' ? 'text-ok' : rating === 'needs_improvement' ? 'text-warn' : rating === 'slow' ? 'text-err' : 'text-m-muted';
+            const ratingLabel = (rating: string) =>
+              rating === 'good' ? 'Good' : rating === 'needs_improvement' ? 'Needs improvement' : rating === 'slow' ? 'Slow' : 'Unknown';
+
+            return (
+              <div className="space-y-5">
+                {/* Summary header */}
+                <div className="rounded-xl border border-rule bg-card p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Activity size={16} className="text-m-muted flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[14px] font-heading font-semibold text-ink mb-0.5">Technical health</h3>
+                      <p className="text-[12px] text-m-muted leading-relaxed">
+                        Measured technical diagnostics across {pagesWithTechnical.length} crawled page{pagesWithTechnical.length !== 1 ? 's' : ''}.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Avg load time</p>
+                      <p className="text-[18px] font-bold text-ink mt-1">{avgLoad != null ? `${avgLoad}ms` : '—'}</p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Slow pages</p>
+                      <p className={`text-[18px] font-bold mt-1 ${slowPages > 0 ? 'text-warn' : 'text-ink'}`}>{slowPages}<span className="text-[12px] font-medium text-m-muted">/{pagesWithTechnical.length}</span></p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">Images missing alt</p>
+                      <p className={`text-[18px] font-bold mt-1 ${totalMissingAlt > 0 ? 'text-warn' : 'text-ink'}`}>{totalMissingAlt}<span className="text-[12px] font-medium text-m-muted">/{totalImages}</span></p>
+                    </div>
+                    <div className="p-3 rounded-lg border border-rule/60 bg-paper">
+                      <p className="text-[10px] font-semibold tracking-[0.04em] uppercase text-m-muted">A11y issues</p>
+                      <p className={`text-[18px] font-bold mt-1 ${totalA11yIssues > 0 ? 'text-warn' : 'text-ink'}`}>{totalA11yIssues}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance section */}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Gauge size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Performance</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{pagesWithTechnical.length} pages</span>
+                  </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const perf = page.technical_audit?.performance || {};
+                      return (
+                        <div key={i} className="px-5 py-3 flex items-center gap-3">
+                          <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className="text-[11px] text-m-muted">
+                            {perf.htmlBytes != null ? `${Math.round(perf.htmlBytes / 1024)}kb` : '—'}
+                          </span>
+                          <span className="text-[12px] font-semibold text-ink min-w-[70px] text-right">
+                            {perf.loadTimeMs != null ? `${perf.loadTimeMs}ms` : '—'}
+                          </span>
+                          <span className={`text-[11px] font-semibold min-w-[120px] text-right ${ratingClass(perf.rating)}`}>
+                            {ratingLabel(perf.rating)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Images section */}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <ImageIcon size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Images</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalImages} total · {totalMissingAlt} missing alt</span>
+                  </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const img = page.technical_audit?.images || {};
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className="text-[11px] text-m-muted">{img.total || 0} images</span>
+                            <span className={`text-[11px] font-semibold min-w-[90px] text-right ${(img.missingAlt || 0) > 0 ? 'text-warn' : 'text-ok'}`}>
+                              {img.missingAlt || 0} missing alt
+                            </span>
+                          </div>
+                          {Array.isArray(img.samplesMissingAlt) && img.samplesMissingAlt.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {img.samplesMissingAlt.slice(0, 3).map((src: string, j: number) => (
+                                <li key={j} className="text-[11px] text-m-muted truncate">• {src}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Headings section */}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Heading1 size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Headings</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalHeadingIssues} issue{totalHeadingIssues !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const h = page.technical_audit?.headings || {};
+                      const issues: string[] = h.issues || [];
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className="text-[11px] text-m-muted">h1: {h.h1Count ?? 0} · h2: {h.h2Count ?? 0} · h3: {h.h3Count ?? 0}</span>
+                          </div>
+                          {issues.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {issues.map((issue, j) => (
+                                <li key={j} className="text-[11px] text-warn">• {issue}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Accessibility section */}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <Accessibility size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Accessibility</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalA11yIssues} issue{totalA11yIssues !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const a = page.technical_audit?.accessibility || {};
+                      const issues: string[] = a.issues || [];
+                      return (
+                        <div key={i} className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                            <span className={`text-[11px] font-semibold min-w-[70px] text-right ${issues.length === 0 ? 'text-ok' : 'text-warn'}`}>
+                              {issues.length === 0 ? 'OK' : `${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
+                            </span>
+                          </div>
+                          <div className="mt-2 ml-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-m-muted">
+                            <span>lang: {a.hasLangAttribute ? 'yes' : 'no'}</span>
+                            <span>viewport: {a.hasViewportMeta ? 'yes' : 'no'}</span>
+                            <span>main: {a.hasMainLandmark ? 'yes' : 'no'}</span>
+                            <span>skip-link: {a.hasSkipLink ? 'yes' : 'no'}</span>
+                            <span>aria-labels: {a.ariaLabelCount ?? 0}</span>
+                          </div>
+                          {issues.length > 0 && (
+                            <ul className="mt-2 ml-3 space-y-1">
+                              {issues.map((issue, j) => (
+                                <li key={j} className="text-[11px] text-warn">• {issue}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Links section */}
+                <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                  <div className="px-5 py-3.5 border-b border-rule/40 flex items-center gap-2">
+                    <LinkIcon size={15} className="text-m-muted" />
+                    <h3 className="text-[13px] font-semibold text-ink">Links</h3>
+                    <span className="ml-auto text-[11px] text-m-muted font-medium">{totalLinks} total · {totalNonDescriptive} non-descriptive</span>
+                  </div>
+                  <div className="divide-y divide-rule/30">
+                    {pagesWithTechnical.map((page: any, i: number) => {
+                      const l = page.technical_audit?.links || {};
+                      return (
+                        <div key={i} className="px-5 py-3 flex items-center gap-3">
+                          <span className="text-[12px] text-ink flex-1 truncate">{page.url}</span>
+                          <span className="text-[11px] text-m-muted">
+                            {l.internal ?? 0} internal · {l.external ?? 0} external · {l.nofollow ?? 0} nofollow
+                          </span>
+                          <span className={`text-[11px] font-semibold min-w-[110px] text-right ${(l.nonDescriptive || 0) > 0 ? 'text-warn' : 'text-ok'}`}>
+                            {(l.nonDescriptive || 0)} non-descriptive
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             );
           })()}

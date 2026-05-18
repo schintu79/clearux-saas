@@ -60,6 +60,8 @@ export interface CrawledPage {
   discoveredUrls?: string[]
   linksFound: number
   statusCode: number | null
+  /** Wall-clock time spent fetching the page in milliseconds. Null when not measured. */
+  loadTimeMs: number | null
   crawledAt: string
 }
 
@@ -362,6 +364,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
   try {
     const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
 
+    const fetchStart = Date.now()
     const response = await fetch(url, {
       headers: {
         'User-Agent': ua,
@@ -384,6 +387,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
     })
 
     const html = await response.text()
+    const loadTimeMs = Date.now() - fetchStart
 
     // Check if we got blocked
     if (!response.ok || isBlockedResponse(html, response.status)) {
@@ -415,6 +419,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
       headTags,
       linksFound,
       statusCode: response.status,
+      loadTimeMs,
       crawledAt: new Date().toISOString(),
     }
   } catch (err) {
@@ -431,6 +436,7 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
 async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const fetchStart = Date.now()
 
   try {
     const jinaUrl = `https://r.jina.ai/${url}`
@@ -531,6 +537,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
       discoveredUrls,
       linksFound: discoveredUrls.length,
       statusCode: 200,
+      loadTimeMs: Date.now() - fetchStart,
       crawledAt: new Date().toISOString(),
     }
   } catch (err) {
@@ -547,6 +554,7 @@ async function jinaFetch(url: string, timeoutMs: number = 30000): Promise<Crawle
 async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 15000)
+  const fetchStart = Date.now()
 
   try {
     const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`
@@ -578,6 +586,7 @@ async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
       headTags: extractHeadTags(html),
       linksFound: 0,
       statusCode: 200,
+      loadTimeMs: Date.now() - fetchStart,
       crawledAt: new Date().toISOString(),
     }
   } catch {
@@ -621,6 +630,7 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
     contentText: null,
     linksFound: 0,
     statusCode: null,
+    loadTimeMs: null,
     crawledAt: new Date().toISOString(),
   }
 }
@@ -1199,11 +1209,13 @@ export async function crawlPages(
 
     console.log(`[crawler] Finished: ${pages.length} pages crawled for ${url}`)
 
-    // Strip internal fields before returning
-    return pages.map(({ rawHtml, discoveredUrls, ...rest }) => rest)
+    // Strip internal fields before returning. rawHtml is kept so downstream
+    // technical checks can inspect markup; consumers that don't need it
+    // should treat it as optional and drop it before persistence.
+    return pages.map(({ discoveredUrls, ...rest }) => rest)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[crawler] Error in crawlPages:', message)
-    return pages.map(({ rawHtml, ...rest }) => rest)
+    return pages.map(({ discoveredUrls, ...rest }) => rest)
   }
 }
