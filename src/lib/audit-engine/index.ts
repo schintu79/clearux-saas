@@ -10,6 +10,7 @@ import { sendAuditComplete } from './email'
 import { captureAuditScreenshots } from './screenshots'
 import { extractAllBrandFiles } from './brand-file-extractor'
 import { checkResponsiveDesign } from './responsive-checker'
+import { runTechnicalChecks, formatTechnicalAuditForPrompt, type TechnicalCheckResult } from '@/lib/pipeline/technical-checks'
 import type { AuditFinding } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -113,8 +114,27 @@ async function _processAuditInner(auditId: string): Promise<void> {
       )
     }
 
+    // Run technical checks on every crawled page so the results can be
+    // persisted alongside the page record and surfaced in the "Technical
+    // health" tab. Failures are non-fatal per page.
+    const technicalAuditByUrl = new Map<string, TechnicalCheckResult>()
+    for (const page of crawledPages) {
+      try {
+        const result = runTechnicalChecks({
+          url: page.url,
+          html: page.rawHtml ?? null,
+          loadTimeMs: page.loadTimeMs,
+          statusCode: page.statusCode,
+        })
+        technicalAuditByUrl.set(page.url, result)
+      } catch (techErr) {
+        console.error(`[audit-engine] Technical checks failed for ${page.url}:`, techErr)
+      }
+    }
+
     // Store pages
     for (const page of crawledPages) {
+      const technicalAudit = technicalAuditByUrl.get(page.url) ?? null
       await db.from('audit_pages').insert({
         audit_id: auditId,
         url: page.url,
@@ -127,9 +147,10 @@ async function _processAuditInner(auditId: string): Promise<void> {
         has_structured_data: false,
         structured_data: null,
         status_code: page.statusCode,
-        load_time_ms: null,
+        load_time_ms: page.loadTimeMs,
         is_mobile_friendly: null,
         viewport_meta: null,
+        technical_audit: technicalAudit,
         crawled_at: page.crawledAt,
       } as any)
     }
@@ -201,6 +222,10 @@ async function _processAuditInner(auditId: string): Promise<void> {
         }
         if (p.metaDescription) block += `Meta Description: ${p.metaDescription}\n`
         if (p.contentText) block += `Content:\n${p.contentText}\n`
+        const tech = technicalAuditByUrl.get(p.url)
+        if (tech) {
+          block += `Technical audit:\n${formatTechnicalAuditForPrompt(tech)}\n`
+        }
         return block
       })
       .join('\n---\n')
