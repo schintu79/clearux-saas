@@ -1,14 +1,18 @@
 'use client';
 
 /**
- * Fix — actionable remediation workspace. Each finding is a collapsed
- * card that expands to show Why it matters / Recommended fix / Business
- * impact, plus AI vs Human context when present. Grouped duplicate
- * findings collapse into one card with a "similar findings grouped"
- * chip. Multi-module impact is surfaced as module chips in the header.
+ * Fix — flat, full-width action workspace.
  *
- * Filtering + search + status tracking live here (moved out of Find)
- * because this is the action queue.
+ * Visual rules (redesign):
+ *  - No card-in-card layering. Each finding is a single flat row that
+ *    expands inline; the action bar lives flush at the bottom of the
+ *    expanded row, not inside a sub-panel.
+ *  - Module / severity / status filters render as clickable chips, not
+ *    select dropdowns.
+ *  - Status / Copy / Download / AI suggest / Explain / Push live on a
+ *    single horizontal bar inside FixConsole.
+ *  - Push remains explicitly gated. Nothing is sent to a live site
+ *    without user approval and a connected deployment target.
  */
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
@@ -22,18 +26,12 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  AlertTriangle,
-  Lightbulb,
-  TrendingUp,
-  Brain,
-  Users,
   X,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
   severityColor,
   severityLabel,
-  moduleNameForFinding,
   moduleIndexForFinding,
   MODULE_TINTS,
   PHASE1_MODULES,
@@ -54,9 +52,7 @@ const STATUS_META: Record<FindingStatus, { label: string; color: string; bg: str
 };
 
 const STATUS_KEYS: FindingStatus[] = ['open', 'in_progress', 'fixed', 'backlog'];
-
 const SEVERITIES: Array<'all' | 'critical' | 'high' | 'medium' | 'low'> = ['all', 'critical', 'high', 'medium', 'low'];
-
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 
 function hostnameOf(url: string | null | undefined): string | null {
@@ -64,7 +60,69 @@ function hostnameOf(url: string | null | undefined): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
 }
 
-function FixCard({
+/** Tiny pill used for module + severity meta on the collapsed row. */
+function MetaChip({ children, color, bg, border }: { children: React.ReactNode; color?: string; bg?: string; border?: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium normal-case tracking-normal"
+      style={{ background: bg || 'var(--paper-2)', color: color || 'var(--m-muted)', border: border || '1px solid var(--rule)' }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Clickable filter chip (active vs idle). */
+function FilterChip({
+  active,
+  onClick,
+  color,
+  children,
+  count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  color?: string;
+  children: React.ReactNode;
+  count?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-medium transition-colors"
+      style={
+        active
+          ? {
+              background: color ? `color-mix(in srgb, ${color} 14%, transparent)` : 'var(--ink)',
+              color: color || 'var(--paper)',
+              border: `1px solid ${color || 'var(--ink)'}`,
+            }
+          : {
+              background: 'var(--card)',
+              color: 'var(--ink-2)',
+              border: '1px solid var(--rule)',
+            }
+      }
+    >
+      {children}
+      {typeof count === 'number' && (
+        <span
+          className="tabular-nums text-[10px] font-semibold px-1.5 rounded-full"
+          style={{
+            background: active ? 'transparent' : 'var(--paper-2)',
+            color: active ? 'inherit' : 'var(--m-muted)',
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function FixRow({
   group,
   expanded,
   onToggle,
@@ -81,201 +139,103 @@ function FixCard({
 }) {
   const finding = group.primary;
   const meta = STATUS_META[finding.status] || STATUS_META.open;
-  const moduleNames = group.affectedModuleIndices
-    .filter((i) => i >= 0)
-    .map((i) => PHASE1_MODULES[i]);
+  const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
   const multiModule = moduleNames.length > 1;
   const grouped = group.isConsolidated;
   const host = hostnameOf(finding.page_url);
-  const hasAIvsHuman = Boolean(finding.ai_interpretation && finding.human_interpretation);
+  const sevColor = severityColor(finding.severity);
   const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
 
   return (
-    <li id={`finding-${finding.id}`}>
-      <article
-        className="rounded-xl overflow-hidden transition-shadow"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        data-testid="fix-card"
-        data-card
-      >
-        {/* Top context strip — only renders when there's something to show */}
-        {(multiModule || grouped) && (
-          <div
-            className="flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.06em]"
-            style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', borderBottom: '1px solid var(--rule)' }}
-          >
-            <div className="flex items-center gap-3 flex-wrap">
-              {multiModule && (
-                <>
-                  <span>Affects {moduleNames.length} modules</span>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {group.affectedModuleIndices.filter((i) => i >= 0).map((i) => {
-                      const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
-                      return (
-                        <span
-                          key={i}
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold normal-case tracking-normal"
-                          style={{ background: tint.bg, color: 'var(--ink)', border: `1px solid ${tint.border}` }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint.dot }} aria-hidden />
-                          {PHASE1_MODULES[i]}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-            {grouped && (
-              <span>{group.members.length} similar findings grouped</span>
-            )}
-          </div>
-        )}
-
-        {/* Header — entirely clickable to expand */}
+    <li id={`finding-${finding.id}`} data-testid="fix-card" data-card>
+      <div style={{ borderTop: '1px solid var(--rule)' }}>
+        {/* Collapsed row — single flat line, no nested card */}
         <button
           type="button"
           onClick={() => onToggle(finding.id)}
-          className="w-full text-left p-4 flex items-start gap-3 hover:bg-[color:var(--paper-2)]/30 transition-colors"
+          className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors"
           aria-expanded={expanded}
           aria-controls={`fix-body-${finding.id}`}
         >
+          {/* Severity dot */}
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: sevColor }} aria-hidden />
+
           <div className="flex-1 min-w-0">
-            <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.04em]"
-              style={{
-                background: `color-mix(in srgb, ${severityColor(finding.severity)} 12%, transparent)`,
-                color: severityColor(finding.severity),
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: severityColor(finding.severity) }} aria-hidden />
-              {severityLabel(finding.severity)}
-            </span>
-            <h3 className="text-[15px] font-semibold leading-snug mt-2" style={{ color: 'var(--ink)' }}>
-              {finding.title}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-[13.5px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>
+                {finding.title}
+              </h3>
+            </div>
             <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              {!multiModule && moduleNames[0] && (
-                <span>{moduleNames[0]}</span>
+              <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
+                {severityLabel(finding.severity)}
+              </span>
+              {moduleNames.slice(0, multiModule ? 3 : 1).map((m, i) => {
+                const idx = group.affectedModuleIndices.filter((x) => x >= 0)[i];
+                const tint = idx != null ? MODULE_TINTS[idx] : null;
+                return (
+                  <React.Fragment key={`${m}-${i}`}>
+                    <span aria-hidden>·</span>
+                    <MetaChip color="var(--ink)" bg={tint?.bg} border={`1px solid ${tint?.border || 'var(--rule)'}`}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint?.dot || 'var(--m-muted)' }} aria-hidden />
+                      {m}
+                    </MetaChip>
+                  </React.Fragment>
+                );
+              })}
+              {multiModule && moduleNames.length > 3 && (
+                <span>+{moduleNames.length - 3}</span>
               )}
-              {!multiModule && moduleNames[0] && (host || finding.page_url) && (
-                <span aria-hidden>·</span>
+              {grouped && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{group.members.length} similar</span>
+                </>
               )}
-              {finding.page_url ? (
-                <a
-                  href={finding.page_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 hover:underline truncate max-w-[320px]"
-                >
-                  <ExternalLink size={10} />
-                  {host || finding.page_url}
-                </a>
-              ) : null}
+              {finding.page_url && (
+                <>
+                  <span aria-hidden>·</span>
+                  <a
+                    href={finding.page_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 hover:underline truncate max-w-[280px]"
+                  >
+                    <ExternalLink size={10} />
+                    {host || finding.page_url}
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
           <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold flex-shrink-0"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-semibold flex-shrink-0"
             style={{ background: meta.bg, color: meta.color, border: '1px solid var(--rule)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} aria-hidden />
             {meta.label}
           </span>
-          <span className="ml-1 flex-shrink-0 text-[var(--m-muted)]" aria-hidden>
+          <span className="text-[var(--m-muted)] flex-shrink-0" aria-hidden>
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </span>
         </button>
 
         {expanded && (
-          <div
-            id={`fix-body-${finding.id}`}
-            style={{ borderTop: '1px solid var(--rule)' }}
-          >
-            {/* AI vs Human (only when both present) */}
-            {hasAIvsHuman && (
-              <div
-                className="grid grid-cols-1 lg:grid-cols-2"
-                style={{ borderBottom: '1px solid var(--rule)' }}
-              >
-                <div
-                  className="p-5 lg:p-6"
-                  style={{ borderRight: '1px solid var(--rule)' }}
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Brain size={13} style={{ color: 'var(--signal)' }} />
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                      How AI reads this
-                    </p>
-                  </div>
-                  <div className="max-w-prose">
-                    <FindingText text={finding.ai_interpretation} />
-                  </div>
-                </div>
-                <div className="p-5 lg:p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users size={13} style={{ color: 'var(--ok)' }} />
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                      How a human sees this
-                    </p>
-                  </div>
-                  <div className="max-w-prose">
-                    <FindingText text={finding.human_interpretation} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Fix — featured callout, full width, top of the body */}
-            <div
-              className="p-5 lg:p-6"
-              style={{
-                background: 'color-mix(in srgb, var(--signal) 5%, transparent)',
-                borderBottom: '1px solid var(--rule)',
-                borderLeft: '3px solid var(--signal)',
-              }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb size={14} style={{ color: 'var(--signal)' }} />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--signal)' }}>
-                  Recommended fix
+          <div id={`fix-body-${finding.id}`} className="px-4 pb-4">
+            {/* What we found + Why it matters — plain text, no inner cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3 mt-1 mb-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                  What we found
                 </p>
+                <div className="max-w-prose"><FindingText text={finding.description} /></div>
               </div>
-              <div className="max-w-[72ch]">
-                <FindingText
-                  text={finding.recommendation || 'Manual review required — open the audit detail for full context.'}
-                  tone="fix"
-                />
-              </div>
-            </div>
-
-            {/* Finding + Impact — readable 2-column on wide, stacked on narrow */}
-            <div
-              className="grid grid-cols-1 lg:grid-cols-2"
-              style={{ borderBottom: '1px solid var(--rule)' }}
-            >
-              <div
-                className="p-5 lg:p-6"
-                style={{ borderRight: '1px solid var(--rule)' }}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={13} style={{ color: severityColor(finding.severity) }} />
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    What we found
-                  </p>
-                </div>
-                <div className="max-w-prose">
-                  <FindingText text={finding.description} />
-                </div>
-              </div>
-              <div className="p-5 lg:p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp size={13} style={{ color: 'var(--ok)' }} />
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                    Why it matters
-                  </p>
-                </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Why it matters
+                </p>
                 <div className="max-w-prose">
                   {hasImpact ? (
                     <FindingText text={finding.estimated_impact} />
@@ -288,65 +248,23 @@ function FixCard({
               </div>
             </div>
 
-            {/* Fix Console — editable patch, copy/download, AI helper, gated push */}
+            {/* Recommended fix label sits flush above the editor */}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--signal)' }}>
+              Recommended fix
+            </p>
+
+            {/* Action bar lives inside FixConsole, flush in the row */}
             <FixConsole
               finding={finding}
               onApproveLocal={() => onStatus(finding.id, 'fixed')}
+              onStatus={(s) => onStatus(finding.id, s)}
               pending={pending}
             />
 
-            {/* Status row — matches screenshot footer */}
-            <div className="px-4 py-3 flex items-center gap-3 flex-wrap" style={{ background: 'var(--paper-2)' }}>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-                Status
-              </span>
-              <div className="flex items-center gap-1 flex-wrap">
-                {STATUS_KEYS.map((s) => {
-                  const active = finding.status === s;
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => onStatus(finding.id, s)}
-                      disabled={pending}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-50"
-                      style={
-                        active
-                          ? {
-                              background: STATUS_META[s].bg,
-                              color: STATUS_META[s].color,
-                              border: `1px solid ${STATUS_META[s].color}`,
-                            }
-                          : {
-                              background: 'transparent',
-                              color: 'var(--m-muted)',
-                              border: '1px solid transparent',
-                            }
-                      }
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: active ? STATUS_META[s].dot : 'var(--rule)' }}
-                        aria-hidden
-                      />
-                      {STATUS_META[s].label}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                onClick={() => onDismiss(finding.id)}
-                disabled={pending}
-                className="ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors disabled:opacity-50"
-                style={{ color: 'var(--m-muted)' }}
-              >
-                Dismiss
-              </button>
-            </div>
-
-            {/* Affected pages, when grouped finding spans multiple pages */}
+            {/* Affected pages — compact, no extra panel */}
             {group.affectedPages.length > 1 && (
-              <div className="px-4 py-2.5 text-[11px]" style={{ background: 'var(--card)', borderTop: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
-                <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages affected</span>
+              <div className="mt-3 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages</span>
                 <span className="inline-flex items-center gap-1 flex-wrap">
                   {group.affectedPages.slice(0, 5).map((p) => {
                     const h = hostnameOf(p);
@@ -370,9 +288,21 @@ function FixCard({
                 </span>
               </div>
             )}
+
+            {/* Dismiss — secondary action, right-aligned */}
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => onDismiss(finding.id)}
+                disabled={pending}
+                className="text-[11px] font-medium px-2 py-1 rounded transition-colors disabled:opacity-50"
+                style={{ color: 'var(--m-muted)' }}
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
-      </article>
+      </div>
     </li>
   );
 }
@@ -395,9 +325,8 @@ function FixPageInner() {
   const [sevFilter, setSevFilter] = useState<typeof SEVERITIES[number]>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus>('all');
 
-  // Hydrate filters from URL params so Overview's severity tiles and the
-  // category-card links land prefiltered. Only runs on mount + when params
-  // actually change so user edits don't get clobbered.
+  // Hydrate filters from URL so deep links from Overview & category cards
+  // land on the right slice of the queue.
   useEffect(() => {
     const sev = searchParams.get('severity');
     if (sev && (SEVERITIES as readonly string[]).includes(sev)) {
@@ -427,9 +356,6 @@ function FixPageInner() {
 
   // Auto-expand and scroll to the finding referenced by URL hash —
   // preserves the /dashboard/fix#finding-<id> deep link from Find.
-  // Depends on `bundle` so the effect re-fires after the findings list
-  // mounts (otherwise the target DOM node doesn't exist yet on a fresh
-  // client-side nav from Find).
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const apply = () => {
@@ -438,10 +364,6 @@ function FixPageInner() {
       if (!m) return;
       const id = m[1];
       setExpanded((e) => (e[id] ? e : { ...e, [id]: true }));
-      // Wait one paint so the expanded body renders before we scroll —
-      // otherwise the scroll target moves as the card grows. Run twice
-      // (rAF + setTimeout) to cover both list mount and re-renders from
-      // the loading bundle.
       requestAnimationFrame(() => {
         const el = document.getElementById(`finding-${id}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -468,15 +390,31 @@ function FixPageInner() {
     return s;
   }, [groups]);
 
+  const sevCounts = useMemo(() => {
+    const out: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const g of groups) {
+      const s = g.primary.severity as keyof typeof out;
+      if (out[s] != null) out[s]++;
+    }
+    return out;
+  }, [groups]);
+
+  const moduleCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const g of groups) {
+      const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
+      for (const n of names) out[n] = (out[n] || 0) + 1;
+    }
+    return out;
+  }, [groups]);
+
   const filteredGroups = useMemo(() => {
     return groups.filter((g) => {
       const f = g.primary;
       if (statusFilter !== 'all' && f.status !== statusFilter) return false;
       if (sevFilter !== 'all' && f.severity !== sevFilter) return false;
       if (moduleFilter !== 'all') {
-        const names = g.affectedModuleIndices
-          .filter((i) => i >= 0)
-          .map((i) => PHASE1_MODULES[i]);
+        const names = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
         if (!names.includes(moduleFilter as (typeof PHASE1_MODULES)[number])) return false;
       }
       if (query.trim()) {
@@ -535,7 +473,7 @@ function FixPageInner() {
         <div className="h-8 w-32 rounded-lg animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
         <div className="h-5 w-80 rounded-md animate-pulse mb-8" style={{ background: 'var(--paper-2)' }} />
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => <div key={i} className="h-[88px] rounded-xl animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-[64px] rounded-md animate-pulse" style={{ background: 'var(--paper-2)' }} />)}
         </div>
       </div>
     );
@@ -562,100 +500,133 @@ function FixPageInner() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Your action workspace. Click a card to expand it and see why it matters, the recommended fix, and the business impact. Update status as you go.
+          Your action queue. Click a row to expand, then review the fix, copy or download the snippet, and approve. Nothing is pushed without your approval.
         </p>
       </div>
 
-      {/* Status counters */}
-      <div
-        className="rounded-xl px-4 py-3 mb-3 grid grid-cols-2 sm:grid-cols-4 gap-3"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      >
-        {STATUS_KEYS.map((s) => {
-          const active = statusFilter === s;
-          return (
-            <button
+      {/* Filter rail — chips for status, severity, module, plus search */}
+      <div className="mb-3 space-y-2.5">
+        {/* Status chips */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
+            Status
+          </span>
+          <FilterChip active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
+            All
+            <span className="tabular-nums text-[10px] font-semibold ml-0.5" style={{ color: statusFilter === 'all' ? 'inherit' : 'var(--m-muted)' }}>
+              {groups.length}
+            </span>
+          </FilterChip>
+          {STATUS_KEYS.map((s) => (
+            <FilterChip
               key={s}
-              onClick={() => setStatusFilter(active ? 'all' : s)}
-              className="flex items-center gap-2 rounded-md px-1.5 py-0.5 text-left transition-colors"
-              style={active ? { background: STATUS_META[s].bg } : {}}
-              aria-pressed={active}
+              active={statusFilter === s}
+              onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
+              color={STATUS_META[s].color}
+              count={stats[s]}
             >
-              <span className="w-2 h-2 rounded-full" style={{ background: STATUS_META[s].dot }} aria-hidden />
-              <span className="text-[12px]" style={{ color: 'var(--m-muted)' }}>{STATUS_META[s].label}</span>
-              <span className="text-[12px] font-semibold tabular-nums ml-auto" style={{ color: 'var(--ink)' }}>{stats[s]}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filter bar */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-2 mb-3">
-        <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
-          <input
-            type="search"
-            placeholder="Search fixes..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 rounded-lg text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-            aria-label="Search fixes"
-          />
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_META[s].dot }} aria-hidden />
+              {STATUS_META[s].label}
+            </FilterChip>
+          ))}
         </div>
-        <select
-          value={moduleFilter}
-          onChange={(e) => setModuleFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-          aria-label="Filter by module"
-        >
-          <option value="all">All modules</option>
-          {PHASE1_MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select
-          value={sevFilter}
-          onChange={(e) => setSevFilter(e.target.value as typeof SEVERITIES[number])}
-          className="px-3 py-2 rounded-lg text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-          aria-label="Filter by severity"
-        >
-          {SEVERITIES.map((s) => <option key={s} value={s}>{s === 'all' ? 'All severities' : severityLabel(s)}</option>)}
-        </select>
-        {hasActiveFilters && (
-          <button
-            onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[12px] font-medium"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink-2)' }}
-          >
-            <X size={12} /> Clear
-          </button>
-        )}
-      </div>
 
-      <div className="mb-2 text-[12px]" style={{ color: 'var(--m-muted)' }}>
-        {filteredGroups.length} of {groups.length} fixes
+        {/* Severity chips */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
+            Severity
+          </span>
+          {SEVERITIES.map((s) => {
+            const color = s === 'all' ? undefined : severityColor(s);
+            const count = s === 'all' ? groups.length : (sevCounts[s] || 0);
+            return (
+              <FilterChip
+                key={s}
+                active={sevFilter === s}
+                onClick={() => setSevFilter(s)}
+                color={color}
+                count={s === 'all' ? undefined : count}
+              >
+                {s !== 'all' && <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} aria-hidden />}
+                {s === 'all' ? 'All' : severityLabel(s)}
+              </FilterChip>
+            );
+          })}
+        </div>
+
+        {/* Module chips */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mr-1" style={{ color: 'var(--m-muted)' }}>
+            Module
+          </span>
+          <FilterChip active={moduleFilter === 'all'} onClick={() => setModuleFilter('all')}>
+            All
+          </FilterChip>
+          {PHASE1_MODULES.map((m, i) => {
+            const tint = MODULE_TINTS[i] || MODULE_TINTS[0];
+            const n = moduleCounts[m] || 0;
+            if (n === 0 && moduleFilter !== m) return null;
+            return (
+              <FilterChip
+                key={m}
+                active={moduleFilter === m}
+                onClick={() => setModuleFilter(moduleFilter === m ? 'all' : m)}
+                color={tint.dot}
+                count={n}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint.dot }} aria-hidden />
+                {m}
+              </FilterChip>
+            );
+          })}
+        </div>
+
+        {/* Search + clear */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
+            <input
+              type="search"
+              placeholder="Search fixes..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-md text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              aria-label="Search fixes"
+            />
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11.5px] font-medium"
+              style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink-2)' }}
+            >
+              <X size={11} /> Clear
+            </button>
+          )}
+          <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
+            {filteredGroups.length} of {groups.length}
+          </span>
+        </div>
       </div>
 
       {groups.length === 0 ? (
         <div
-          className="rounded-xl p-8 text-center"
+          className="rounded-lg p-8 text-center"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
           data-testid="fix-empty"
         >
           <CheckCircle2 size={24} style={{ color: 'var(--ok)' }} className="mx-auto mb-3" />
-          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
-            Nothing to fix right now
-          </p>
+          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>Nothing to fix right now</p>
           <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
             Re-audit to surface new findings and confirm your fixes landed.
           </p>
           <Link
             href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg text-[13px] font-semibold"
+            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
             Run re-audit
@@ -664,24 +635,25 @@ function FixPageInner() {
         </div>
       ) : filteredGroups.length === 0 ? (
         <div
-          className="rounded-xl p-8 text-center"
+          className="rounded-lg p-8 text-center"
           style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
         >
-          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
-            No fixes match these filters
-          </p>
+          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>No fixes match these filters</p>
           <button
             onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg text-[13px] font-semibold"
+            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
             style={{ background: 'var(--ink)', color: 'var(--paper)' }}
           >
             Clear filters
           </button>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul
+          className="rounded-lg overflow-hidden"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)', borderTop: 'none' }}
+        >
           {filteredGroups.map((g) => (
-            <FixCard
+            <FixRow
               key={g.primary.id}
               group={g}
               expanded={!!expanded[g.primary.id]}
