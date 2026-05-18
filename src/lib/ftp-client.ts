@@ -1,6 +1,12 @@
 // ============================================================
 // FTP/SFTP client wrapper
 // Supports SFTP (ssh2), FTP, and FTPS (basic-ftp)
+//
+// The factory is synchronous — dynamic imports of the underlying
+// transports happen lazily inside connect(). Callers can do:
+//
+//   const client = createFtpClient(creds);
+//   await client.connect();
 // ============================================================
 
 import type { FtpProtocol } from '@/types/database';
@@ -49,8 +55,7 @@ function normalizeSshError(err: Error & { code?: string; level?: string }, creds
   } else if (/handshake/i.test(raw)) {
     hint = `SSH handshake failed with ${creds.host}. The server may not support our SSH algorithms.`;
   }
-  const out = new Error(hint);
-  return out;
+  return new Error(hint);
 }
 
 function normalizeFtpError(err: Error & { code?: string | number }, creds: FtpCredentials): Error {
@@ -72,14 +77,14 @@ function normalizeFtpError(err: Error & { code?: string | number }, creds: FtpCr
 }
 
 /* ── SFTP via ssh2 ─────────────────────────────────────────── */
-async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper> {
-  const { Client } = await import('ssh2');
-
-  let conn: InstanceType<typeof Client> | null = null;
+function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
+  // Dynamic import happens inside connect() so the factory stays synchronous.
+  let conn: any = null;
   let sftp: any = null;
 
   return {
     async connect() {
+      const { Client } = await import('ssh2');
       return new Promise<void>((resolve, reject) => {
         conn = new Client();
         let settled = false;
@@ -115,6 +120,7 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     },
 
     async list(dirPath: string): Promise<RemoteFile[]> {
+      if (!sftp) throw new Error('Not connected — call connect() first');
       return new Promise((resolve, reject) => {
         sftp.readdir(dirPath, (err: Error | null, list: any[]) => {
           if (err) return reject(err);
@@ -133,6 +139,7 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     },
 
     async read(filePath: string): Promise<string> {
+      if (!sftp) throw new Error('Not connected — call connect() first');
       return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
         const stream = sftp.createReadStream(filePath);
@@ -143,6 +150,7 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     },
 
     async write(filePath: string, content: string): Promise<void> {
+      if (!sftp) throw new Error('Not connected — call connect() first');
       return new Promise((resolve, reject) => {
         const stream = sftp.createWriteStream(filePath);
         stream.on('close', () => resolve());
@@ -152,6 +160,7 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     },
 
     async mkdir(dirPath: string): Promise<void> {
+      if (!sftp) throw new Error('Not connected — call connect() first');
       return new Promise((resolve, reject) => {
         sftp.mkdir(dirPath, (err: Error | null) => {
           if (err && (err as any).code !== 4) return reject(err); // 4 = already exists
@@ -161,6 +170,7 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
     },
 
     async delete(filePath: string): Promise<void> {
+      if (!sftp) throw new Error('Not connected — call connect() first');
       return new Promise((resolve, reject) => {
         sftp.unlink(filePath, (err: Error | null) => {
           if (err) return reject(err);
@@ -171,19 +181,22 @@ async function createSftpClient(creds: FtpCredentials): Promise<FtpClientWrapper
 
     async disconnect() {
       if (conn) conn.end();
+      conn = null;
+      sftp = null;
     },
   };
 }
 
 /* ── FTP/FTPS via basic-ftp ────────────────────────────────── */
-async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWrapper> {
-  const { Client } = await import('basic-ftp');
-
-  const client = new Client();
-  client.ftp.verbose = false;
+function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
+  // Dynamic import happens inside connect() so the factory stays synchronous.
+  let client: any = null;
 
   return {
     async connect() {
+      const basicFtp = await import('basic-ftp');
+      client = new basicFtp.Client();
+      client.ftp.verbose = false;
       try {
         await client.access({
           host: creds.host,
@@ -199,10 +212,11 @@ async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWra
     },
 
     async list(dirPath: string): Promise<RemoteFile[]> {
+      if (!client) throw new Error('Not connected — call connect() first');
       const list = await client.list(dirPath);
       return list
-        .filter((f) => f.name !== '.' && f.name !== '..')
-        .map((f) => ({
+        .filter((f: any) => f.name !== '.' && f.name !== '..')
+        .map((f: any) => ({
           name: f.name,
           path: `${dirPath === '/' ? '' : dirPath}/${f.name}`,
           type: f.isDirectory ? 'directory' : 'file',
@@ -212,6 +226,7 @@ async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWra
     },
 
     async read(filePath: string): Promise<string> {
+      if (!client) throw new Error('Not connected — call connect() first');
       const { Writable } = await import('stream');
       const chunks: Buffer[] = [];
       const writable = new Writable({
@@ -222,34 +237,39 @@ async function createFtpBasicClient(creds: FtpCredentials): Promise<FtpClientWra
     },
 
     async write(filePath: string, content: string): Promise<void> {
+      if (!client) throw new Error('Not connected — call connect() first');
       const { Readable } = await import('stream');
       const readable = Readable.from(Buffer.from(content, 'utf8'));
       await client.uploadFrom(readable, filePath);
     },
 
     async mkdir(dirPath: string): Promise<void> {
+      if (!client) throw new Error('Not connected — call connect() first');
       await client.ensureDir(dirPath);
     },
 
     async delete(filePath: string): Promise<void> {
+      if (!client) throw new Error('Not connected — call connect() first');
       await client.remove(filePath);
     },
 
     async disconnect() {
-      client.close();
+      if (client) client.close();
+      client = null;
     },
   };
 }
 
 /* ── Factory ───────────────────────────────────────────────── */
 /**
- * Async factory — the underlying transports use dynamic imports, so the
- * wrapper itself is built asynchronously. Callers MUST `await` this:
+ * Synchronous factory. The underlying transports are dynamically imported
+ * inside connect(), so the wrapper itself is built synchronously and
+ * callers do not need to await this call.
  *
- *   const client = await createFtpClient(creds);
+ *   const client = createFtpClient(creds);
  *   await client.connect();
  */
-export async function createFtpClient(creds: FtpCredentials): Promise<FtpClientWrapper> {
+export function createFtpClient(creds: FtpCredentials): FtpClientWrapper {
   if (creds.protocol === 'sftp') return createSftpClient(creds);
   return createFtpBasicClient(creds);
 }

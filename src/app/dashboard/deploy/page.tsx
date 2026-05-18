@@ -3,19 +3,22 @@
 /**
  * Deploy — compact deploy console.
  *
- * Layout: tight 240px file/page tree on the left, snippet editor on the
- * right. Smaller typography than the Find/Fix tabs because this is a
- * working surface, not a reading surface. A thin pending-fixes bar at
- * the top surfaces the queue without competing for screen space.
+ * Two modes:
+ *  - Default: tight 240px file/page tree on the left, snippet editor on the
+ *    right (compact deploy queue browsing).
+ *  - Guided (?findingId=…): focused single-finding deployment flow with a
+ *    context banner (title + severity + recommendation), an editable code
+ *    snippet, and a Push action that writes via the FTP API and marks the
+ *    finding as fixed on success.
  *
- * Safety contract: nothing is pushed to a live site without explicit
- * user approval. The Push action stays gated behind a connected
- * deployment target. Approve / Mark fixed updates only the local
- * finding status — same flow as the Fix tab.
+ * Safety contract: nothing is pushed to a live site without an explicit
+ * user click on Push/Save. Mark fixed only fires after a successful FTP
+ * write, which then triggers the report score recalculation server-side.
  */
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   Copy,
@@ -31,6 +34,10 @@ import {
   Rocket,
   ChevronRight,
   ChevronDown,
+  ArrowLeft,
+  Upload,
+  Loader2,
+  ClipboardPaste,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
@@ -44,6 +51,29 @@ import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+
+interface FtpConnectionSummary {
+  id: string;
+  label: string;
+  protocol: string;
+  host: string;
+  port: number;
+  username: string;
+  remote_path: string;
+  brand_identity_id: string | null;
+}
+
+interface GuidedFinding {
+  id: string;
+  audit_id: string;
+  title: string;
+  description: string;
+  severity: string;
+  status: FindingStatus;
+  recommendation: string;
+  estimated_impact: string | null;
+  page_url: string | null;
+}
 
 function hostnameOf(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -78,6 +108,18 @@ function looksLikeJson(text: string): boolean {
   try { JSON.parse(t); return true; } catch { return false; }
 }
 
+/**
+ * Best-effort extraction of a fenced ``` code block from a recommendation.
+ * Returns null if no clearly-marked block is present. Plain prose stays in
+ * the editor; only an explicit ``` block becomes the "apply snippet" payload.
+ */
+function extractCodeBlock(text: string): string | null {
+  if (!text) return null;
+  const fenced = text.match(/```[a-zA-Z0-9_-]*\n([\s\S]*?)```/);
+  if (fenced && fenced[1]) return fenced[1].trim();
+  return null;
+}
+
 type Toast = { id: number; tone: 'info' | 'ok' | 'warn'; message: string };
 
 interface PageNode {
@@ -90,6 +132,9 @@ interface PageNode {
 function DeployPageInner() {
   const { user, loading: authLoading } = useAuth();
   const { selection, ready } = useBrandSelection();
+  const searchParams = useSearchParams();
+  const findingId = searchParams.get('findingId');
+
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Record<string, boolean>>({});
@@ -97,17 +142,55 @@ function DeployPageInner() {
   const [patches, setPatches] = useState<Record<string, string>>({});
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
-  const [showPushNotice, setShowPushNotice] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const pushToast = (tone: Toast['tone'], message: string) => {
+  // Guided-mode state
+  const [guided, setGuided] = useState<GuidedFinding | null>(null);
+  const [guidedLoading, setGuidedLoading] = useState(false);
+  const [guidedError, setGuidedError] = useState<string | null>(null);
+
+  // FTP target state
+  const [connections, setConnections] = useState<FtpConnectionSummary[]>([]);
+  const [connectionId, setConnectionId] = useState<string>('');
+  const [connectionsLoaded, setConnectionsLoaded] = useState(false);
+  const [provisioned, setProvisioned] = useState<boolean>(true);
+
+  // Deploy form state (guided mode)
+  const [remotePath, setRemotePath] = useState('');
+  const [deploying, setDeploying] = useState(false);
+
+  const pushToast = useCallback((tone: Toast['tone'], message: string) => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, tone, message }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500);
-  };
+  }, []);
 
   const dismissToast = (id: number) => setToasts((t) => t.filter((x) => x.id !== id));
 
+  /* ── Brand-scoped FTP connections ──────────────────────────── */
+  useEffect(() => {
+    if (authLoading || !user || !ready) return;
+    const brandId = selection?.kind === 'brand' ? selection.brandId : null;
+    const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+    fetch(url)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({} as any));
+        if (res.status === 503) {
+          setProvisioned(false);
+          setConnections([]);
+          return;
+        }
+        setProvisioned(true);
+        const list: FtpConnectionSummary[] = data?.connections || [];
+        setConnections(list);
+        // Auto-select if exactly one
+        if (list.length === 1) setConnectionId(list[0].id);
+      })
+      .catch(() => setConnections([]))
+      .finally(() => setConnectionsLoaded(true));
+  }, [authLoading, user, ready, selection]);
+
+  /* ── Default mode: audit bundle ────────────────────────────── */
   useEffect(() => {
     if (authLoading || !user || !ready) {
       if (!authLoading) setLoading(false);
@@ -120,13 +203,45 @@ function DeployPageInner() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
+  /* ── Guided mode: fetch the targeted finding ───────────────── */
+  useEffect(() => {
+    if (!findingId) {
+      setGuided(null);
+      setGuidedError(null);
+      return;
+    }
+    setGuidedLoading(true);
+    setGuidedError(null);
+    fetch(`/api/findings/${findingId}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({} as any));
+        if (!res.ok) {
+          setGuidedError(data?.error || `Could not load finding (${res.status}).`);
+          setGuided(null);
+          return;
+        }
+        const f = data.finding as GuidedFinding | undefined;
+        if (!f) {
+          setGuidedError('Finding not found.');
+          return;
+        }
+        setGuided(f);
+        // Seed the patch with the recommendation so the editor isn't empty
+        setPatches((p) => (p[f.id] === undefined
+          ? { ...p, [f.id]: (f.recommendation || '').trim() }
+          : p));
+      })
+      .catch(() => setGuidedError('Network error loading finding.'))
+      .finally(() => setGuidedLoading(false));
+  }, [findingId]);
+
   // Build the "file tree": each unique page URL is a folder, each
   // finding is a leaf. Findings without a URL bucket into "(no URL)".
   const tree = useMemo<PageNode[]>(() => {
     if (!bundle) return [];
-    const pending = bundle.findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
+    const pendingItems = bundle.findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
     const byKey = new Map<string, PageNode>();
-    for (const f of pending) {
+    for (const f of pendingItems) {
       const key = f.page_url || '__no_url';
       let node = byKey.get(key);
       if (!node) {
@@ -150,32 +265,38 @@ function DeployPageInner() {
 
   // Default-select the first finding so the editor isn't empty on first load.
   useEffect(() => {
-    if (activeId) return;
+    if (findingId || activeId) return;
     const first = tree[0]?.findings[0];
     if (first) setActiveId(first.id);
-  }, [tree, activeId]);
+  }, [tree, activeId, findingId]);
 
-  const active = useMemo<AuditFinding | null>(() => {
+  const active = useMemo<AuditFinding | GuidedFinding | null>(() => {
+    if (guided) return guided;
     if (!activeId || !bundle) return null;
     return bundle.findings.find((f) => f.id === activeId) || null;
-  }, [activeId, bundle]);
+  }, [activeId, bundle, guided]);
 
-  const initialPatch = (active?.recommendation || '').trim();
+  const initialPatch = ((active as any)?.recommendation || '').trim();
   const patch = active ? (patches[active.id] ?? initialPatch) : '';
   const dirty = active ? patch !== initialPatch : false;
   const isJson = active ? looksLikeJson(patch) : false;
+  const codeBlock = useMemo(
+    () => (active ? extractCodeBlock(initialPatch) : null),
+    [active, initialPatch],
+  );
 
   const setActivePatch = (v: string) => {
     if (!active) return;
     setPatches((p) => ({ ...p, [active.id]: v }));
   };
 
-  const updateLocal = (id: string, patch: Partial<AuditFinding>) => {
-    setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patch } : f) } : b);
+  const updateLocal = (id: string, patchObj: Partial<AuditFinding>) => {
+    setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patchObj } : f) } : b);
+    setGuided((g) => (g && g.id === id ? { ...g, ...(patchObj as Partial<GuidedFinding>) } : g));
   };
 
   const handleStatus = async (id: string, status: FindingStatus) => {
-    const prev = bundle?.findings.find((f) => f.id === id)?.status;
+    const prev = bundle?.findings.find((f) => f.id === id)?.status || guided?.status;
     setPending((p) => ({ ...p, [id]: true }));
     updateLocal(id, { status });
     try {
@@ -210,6 +331,12 @@ function DeployPageInner() {
     }
   };
 
+  const handleApplySnippet = () => {
+    if (!codeBlock) return;
+    setActivePatch(codeBlock);
+    pushToast('ok', 'Snippet applied to editor.');
+  };
+
   const handleDownload = () => {
     if (!active || !patch.trim()) return;
     const base = slugify(active.title);
@@ -241,9 +368,56 @@ function DeployPageInner() {
     });
   };
 
+  /** Guided-mode push: write via FTP API, then auto-mark the finding fixed. */
+  const handleDeploy = async () => {
+    if (!guided) return;
+    if (!connectionId) {
+      pushToast('warn', 'Pick an FTP target first.');
+      return;
+    }
+    if (!remotePath.trim()) {
+      pushToast('warn', 'Enter a remote path.');
+      return;
+    }
+    if (!patch.trim()) {
+      pushToast('warn', 'Nothing to deploy — editor is empty.');
+      return;
+    }
+
+    setDeploying(true);
+    try {
+      const res = await fetch('/api/ftp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'write',
+          connectionId,
+          filePath: remotePath.trim(),
+          content: patch,
+          auditId: guided.audit_id,
+          findingId: guided.id,
+          createBackup: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        pushToast('warn', data?.error || `Deploy failed (${res.status}).`);
+        return;
+      }
+      pushToast('ok', data?.hadBackup ? 'Deployed (backup captured).' : 'Deployed successfully.');
+
+      // Auto-mark fixed — triggers score recalculation server-side
+      await handleStatus(guided.id, 'fixed');
+    } catch (err: any) {
+      pushToast('warn', err?.message || 'Network error during deploy.');
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   const pendingCount = useMemo(() => tree.reduce((s, n) => s + n.findings.length, 0), [tree]);
 
-  if (authLoading || loading || !ready) {
+  if (authLoading || (!findingId && loading) || !ready) {
     return (
       <div>
         <div className="h-7 w-32 rounded-md animate-pulse mb-2" style={{ background: 'var(--paper-2)' }} />
@@ -253,6 +427,257 @@ function DeployPageInner() {
     );
   }
 
+  /* ── Guided mode UI ──────────────────────────────────────── */
+  if (findingId) {
+    return (
+      <div>
+        <OverviewBreadcrumb current="Deploy" />
+        <div className="mb-3 flex items-center gap-2">
+          <Link
+            href="/dashboard/fix"
+            className="inline-flex items-center gap-1 text-[11.5px] font-medium hover:underline"
+            style={{ color: 'var(--m-muted)' }}
+          >
+            <ArrowLeft size={12} />
+            Back to Fix
+          </Link>
+        </div>
+        <div className="mb-4">
+          <h1 className="text-[20px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+            Deploy fix
+          </h1>
+          <p className="text-[12.5px] mt-1" style={{ color: 'var(--m-muted)' }}>
+            Push this fix to a connected FTP target. Nothing is sent until you click Deploy.
+          </p>
+        </div>
+
+        {guidedLoading && (
+          <div className="rounded-md p-6 text-[12.5px]" style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}>
+            Loading finding…
+          </div>
+        )}
+
+        {!guidedLoading && guidedError && (
+          <div
+            className="rounded-md p-4 text-[12.5px] flex items-start gap-2"
+            style={{
+              background: 'color-mix(in srgb, var(--warn) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
+              color: 'var(--ink-2)',
+            }}
+          >
+            <AlertTriangle size={14} style={{ color: 'var(--warn)' }} />
+            <span>{guidedError}</span>
+          </div>
+        )}
+
+        {!guidedLoading && guided && (
+          <>
+            {/* Context banner */}
+            <div
+              className="rounded-md p-3 mb-3"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-semibold uppercase tracking-[0.04em]"
+                  style={{
+                    background: `color-mix(in srgb, ${severityColor(guided.severity)} 12%, transparent)`,
+                    color: severityColor(guided.severity),
+                  }}
+                >
+                  {severityLabel(guided.severity)}
+                </span>
+                <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+                  {guided.title}
+                </span>
+                {guided.page_url && (
+                  <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
+                    {hostnameOf(guided.page_url) || pathOf(guided.page_url)}
+                  </span>
+                )}
+              </div>
+              {guided.description && (
+                <p className="mt-2 text-[12px] leading-[1.6]" style={{ color: 'var(--ink-2)' }}>
+                  {guided.description}
+                </p>
+              )}
+              {guided.recommendation && (
+                <div className="mt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--signal)' }}>
+                    Recommended fix
+                  </p>
+                  <p className="text-[12px] leading-[1.6] whitespace-pre-wrap" style={{ color: 'var(--ink-2)' }}>
+                    {guided.recommendation}
+                  </p>
+                  {codeBlock && (
+                    <button
+                      type="button"
+                      onClick={handleApplySnippet}
+                      className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                      style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    >
+                      <ClipboardPaste size={11} />
+                      Apply code snippet to editor
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Deploy form */}
+            <div
+              className="rounded-md overflow-hidden"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              <div className="px-3 py-2 flex items-center gap-2" style={{ background: 'var(--paper-2)', borderBottom: '1px solid var(--rule)' }}>
+                <Upload size={12} style={{ color: 'var(--signal)' }} />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                  Deploy target
+                </span>
+              </div>
+
+              <div className="p-3 space-y-3">
+                {!provisioned ? (
+                  <div className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                    FTP is not provisioned for this workspace yet.{' '}
+                    <Link href="/dashboard/connect" className="underline" style={{ color: 'var(--ink)' }}>
+                      Go to Connect site
+                    </Link>{' '}
+                    to set it up.
+                  </div>
+                ) : connectionsLoaded && connections.length === 0 ? (
+                  <div className="text-[12px]" style={{ color: 'var(--m-muted)' }}>
+                    No FTP connections for this brand yet.{' '}
+                    <Link href="/dashboard/connect" className="underline" style={{ color: 'var(--ink)' }}>
+                      Connect a target
+                    </Link>{' '}
+                    to enable deploy.
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                        FTP connection
+                      </label>
+                      <select
+                        value={connectionId}
+                        onChange={(e) => setConnectionId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      >
+                        <option value="">Select a target…</option>
+                        {connections.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label} ({c.protocol.toUpperCase()} · {c.host})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                        Remote file path
+                      </label>
+                      <input
+                        type="text"
+                        value={remotePath}
+                        onChange={(e) => setRemotePath(e.target.value)}
+                        placeholder="/path/to/file.html"
+                        className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      />
+                      <p className="mt-1 text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+                        We back up the existing file before overwriting it.
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="block text-[10.5px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                    Content to deploy
+                  </label>
+                  <textarea
+                    value={patch}
+                    onChange={(e) => setActivePatch(e.target.value)}
+                    spellCheck={false}
+                    className="w-full min-h-[200px] px-3 py-2 text-[12px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono rounded-md"
+                    style={{
+                      background: 'var(--paper-2)',
+                      border: '1px solid var(--rule)',
+                      color: 'var(--ink)',
+                      resize: 'vertical',
+                    }}
+                    aria-label="File content"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{
+                      background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--paper-2)',
+                      border: '1px solid var(--rule)',
+                      color: copied ? 'var(--ok)' : 'var(--ink)',
+                    }}
+                  >
+                    {copied ? <Check size={11} /> : <Copy size={11} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={!patch.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  >
+                    <Download size={11} />
+                    {isJson ? '.json' : '.md'}
+                  </button>
+                  {dirty && (
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+                      style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                    >
+                      <RotateCcw size={11} />
+                      Reset
+                    </button>
+                  )}
+                  <span className="flex-1" />
+                  <button
+                    type="button"
+                    onClick={handleDeploy}
+                    disabled={deploying || !connectionId || !remotePath.trim() || !patch.trim() || !provisioned}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                    {deploying ? 'Deploying…' : 'Deploy & mark fixed'}
+                  </button>
+                </div>
+
+                <p className="text-[10.5px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
+                  <Lock size={10} />
+                  Safe mode — nothing is pushed until you click Deploy.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Toasts */}
+        <ToastStack toasts={toasts} dismissToast={dismissToast} />
+      </div>
+    );
+  }
+
+  /* ── Default mode UI ─────────────────────────────────────── */
   if (!bundle?.audit) {
     return (
       <div>
@@ -402,11 +827,11 @@ function DeployPageInner() {
                   <span
                     className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-semibold uppercase tracking-[0.04em]"
                     style={{
-                      background: `color-mix(in srgb, ${severityColor(active.severity)} 12%, transparent)`,
-                      color: severityColor(active.severity),
+                      background: `color-mix(in srgb, ${severityColor((active as any).severity)} 12%, transparent)`,
+                      color: severityColor((active as any).severity),
                     }}
                   >
-                    {severityLabel(active.severity)}
+                    {severityLabel((active as any).severity)}
                   </span>
                   <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
                     {active.title}
@@ -417,7 +842,7 @@ function DeployPageInner() {
                     </span>
                   )}
                   <span className="ml-auto text-[11px] truncate" style={{ color: 'var(--m-muted)' }}>
-                    {hostnameOf(active.page_url) || pathOf(active.page_url)}
+                    {hostnameOf((active as any).page_url) || pathOf((active as any).page_url)}
                   </span>
                 </header>
 
@@ -486,17 +911,15 @@ function DeployPageInner() {
                     </button>
                   )}
                   <span className="flex-1" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPushNotice((v) => !v)}
+                  <Link
+                    href={`/dashboard/deploy?findingId=${encodeURIComponent(active.id)}`}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-                    style={{ background: 'transparent', border: '1px dashed var(--rule)', color: 'var(--m-muted)' }}
-                    aria-expanded={showPushNotice}
-                    aria-label="Push to site (deployment target required)"
+                    style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    aria-label="Open guided deploy"
                   >
-                    <Lock size={11} />
-                    Push
-                  </button>
+                    <Upload size={11} />
+                    Open guided deploy
+                  </Link>
                   <button
                     type="button"
                     onClick={() => handleStatus(active.id, 'fixed')}
@@ -509,33 +932,6 @@ function DeployPageInner() {
                     Approve
                   </button>
                 </footer>
-
-                {showPushNotice && (
-                  <div
-                    className="mx-3 mb-3 px-3 py-2 rounded-md text-[11.5px] flex items-start gap-2"
-                    style={{
-                      background: 'color-mix(in srgb, var(--warn) 6%, transparent)',
-                      border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
-                      color: 'var(--ink-2)',
-                    }}
-                    role="status"
-                  >
-                    <Lock size={12} className="mt-px flex-shrink-0" style={{ color: 'var(--warn)' }} />
-                    <div className="flex-1">
-                      <p className="font-semibold mb-0.5" style={{ color: 'var(--ink)' }}>Deployment target not connected</p>
-                      <p style={{ color: 'var(--m-muted)' }}>
-                        Connect WordPress, a CMS, or an FTP target from{' '}
-                        <Link href="/dashboard/connect" className="underline" style={{ color: 'var(--ink)' }}>
-                          Connect site
-                        </Link>{' '}
-                        to enable one-click push. Until then, copy or download the snippet — nothing is pushed without your explicit approval.
-                      </p>
-                    </div>
-                    <button onClick={() => setShowPushNotice(false)} aria-label="Dismiss notice" className="text-[var(--m-muted)] hover:text-[var(--ink)]">
-                      <X size={12} />
-                    </button>
-                  </div>
-                )}
               </>
             ) : (
               <div className="flex-1 grid place-items-center p-6 text-[12px]" style={{ color: 'var(--m-muted)' }}>
@@ -546,33 +942,39 @@ function DeployPageInner() {
         </div>
       )}
 
-      {/* Toasts — bottom-right, dismissable */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-1.5 max-w-[320px]">
-        {toasts.map((t) => {
-          const tone =
-            t.tone === 'ok' ? { bg: 'color-mix(in srgb, var(--ok) 10%, transparent)', border: 'var(--ok)', icon: <Check size={12} /> } :
-            t.tone === 'warn' ? { bg: 'color-mix(in srgb, var(--warn) 10%, transparent)', border: 'var(--warn)', icon: <AlertTriangle size={12} /> } :
-            { bg: 'var(--card)', border: 'var(--rule)', icon: <Rocket size={12} /> };
-          return (
-            <div
-              key={t.id}
-              role="status"
-              className="px-3 py-2 rounded-md text-[12px] flex items-start gap-2 shadow-sm"
-              style={{ background: tone.bg, border: `1px solid ${tone.border}`, color: 'var(--ink)' }}
+      {/* Toasts */}
+      <ToastStack toasts={toasts} dismissToast={dismissToast} />
+    </div>
+  );
+}
+
+function ToastStack({ toasts, dismissToast }: { toasts: Toast[]; dismissToast: (id: number) => void }) {
+  return (
+    <div className="fixed bottom-4 right-4 z-50 space-y-1.5 max-w-[320px]">
+      {toasts.map((t) => {
+        const tone =
+          t.tone === 'ok' ? { bg: 'color-mix(in srgb, var(--ok) 10%, transparent)', border: 'var(--ok)', icon: <Check size={12} /> } :
+          t.tone === 'warn' ? { bg: 'color-mix(in srgb, var(--warn) 10%, transparent)', border: 'var(--warn)', icon: <AlertTriangle size={12} /> } :
+          { bg: 'var(--card)', border: 'var(--rule)', icon: <Rocket size={12} /> };
+        return (
+          <div
+            key={t.id}
+            role="status"
+            className="px-3 py-2 rounded-md text-[12px] flex items-start gap-2 shadow-sm"
+            style={{ background: tone.bg, border: `1px solid ${tone.border}`, color: 'var(--ink)' }}
+          >
+            <span className="flex-shrink-0 mt-px" style={{ color: tone.border }}>{tone.icon}</span>
+            <span className="flex-1">{t.message}</span>
+            <button
+              onClick={() => dismissToast(t.id)}
+              aria-label="Dismiss"
+              className="text-[var(--m-muted)] hover:text-[var(--ink)] flex-shrink-0"
             >
-              <span className="flex-shrink-0 mt-px" style={{ color: tone.border }}>{tone.icon}</span>
-              <span className="flex-1">{t.message}</span>
-              <button
-                onClick={() => dismissToast(t.id)}
-                aria-label="Dismiss"
-                className="text-[var(--m-muted)] hover:text-[var(--ink)] flex-shrink-0"
-              >
-                <X size={11} />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+              <X size={11} />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -187,6 +187,54 @@ async function recalculateFromFindings(
   }
 }
 
+/* ── GET — fetch a single finding for the deploy console ─── */
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: findingId } = await params
+    const supabase = await createServerSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const db = createServiceSupabase()
+
+    const { data: finding, error } = await db
+      .from('audit_findings')
+      .select('id, audit_id, title, description, severity, status, recommendation, estimated_impact, page_url, sort_order, dismissed, dismissal_reason')
+      .eq('id', findingId)
+      .single()
+
+    if (error || !finding) {
+      return NextResponse.json({ error: 'Finding not found' }, { status: 404 })
+    }
+
+    // Verify the user owns the parent audit
+    const { data: audit } = await db
+      .from('audits')
+      .select('user_id, product_url, brand_identity_id')
+      .eq('id', (finding as any).audit_id)
+      .single()
+
+    if (!audit || (audit as any).user_id !== user.id) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
+
+    return NextResponse.json({
+      finding,
+      audit: {
+        id: (finding as any).audit_id,
+        product_url: (audit as any).product_url,
+        brand_identity_id: (audit as any).brand_identity_id,
+      },
+    })
+  } catch (err) {
+    console.error('GET /api/findings/[id] error:', err)
+    return NextResponse.json({ error: 'Failed to fetch finding' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
