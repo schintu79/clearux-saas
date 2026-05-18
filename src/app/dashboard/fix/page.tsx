@@ -177,9 +177,12 @@ function FixRow({
 
   return (
     <li id={`finding-${finding.id}`} data-testid="fix-card" data-card>
-      <div style={{ borderTop: '1px solid var(--rule)', background: severityCardBg(finding.severity) }}>
-        {/* Collapsed row — single flat line, no nested card */}
-        <div className="w-full px-4 flex items-center gap-3 hover:bg-[color:var(--paper-2)]/50 transition-colors" style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
+      <div style={{ borderTop: '1px solid var(--rule)' }}>
+        {/* Collapsed header — severity-tinted strip */}
+        <div
+          className="w-full px-4 flex items-center gap-3 transition-colors"
+          style={{ paddingTop: '1rem', paddingBottom: '1rem', background: severityCardBg(finding.severity), borderLeft: `3px solid ${sevColor}` }}
+        >
           <button
             type="button"
             onClick={() => onToggle(finding.id)}
@@ -322,47 +325,49 @@ function FixRow({
         )}
 
         {expanded && (
-          <div id={`fix-body-${finding.id}`} className="px-4 pb-4">
-            {/* What we found + Why it matters — plain text, no inner cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3 mt-1 mb-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                  What we found
-                </p>
-                <div className="max-w-prose"><FindingText text={finding.description} /></div>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                  Why it matters
-                </p>
-                <div className="max-w-prose">
-                  {hasImpact ? (
-                    <FindingText text={finding.estimated_impact} />
-                  ) : (
-                    <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
-                      Business impact not captured for this finding.
-                    </p>
-                  )}
+          <div id={`fix-body-${finding.id}`} style={{ background: '#ffffff', borderTop: '1px solid var(--rule)' }}>
+            <div className="px-5 py-5 space-y-4">
+              {/* What we found + Why it matters — side-by-side cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: sevColor }}>
+                    What we found
+                  </p>
+                  <div className="max-w-prose"><FindingText text={finding.description} /></div>
                 </div>
+                <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--warn)' }}>
+                    Why it matters
+                  </p>
+                  <div className="max-w-prose">
+                    {hasImpact ? (
+                      <FindingText text={finding.estimated_impact} />
+                    ) : (
+                      <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
+                        Business impact not captured for this finding.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommended fix — full-width card with accent border */}
+              <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--signal)' }}>
+                  Recommended fix
+                </p>
+                <FixConsole
+                  finding={finding}
+                  onApproveLocal={() => onStatus(finding.id, 'fixed')}
+                  onStatus={(s) => onStatus(finding.id, s)}
+                  pending={pending}
+                />
               </div>
             </div>
 
-            {/* Recommended fix label sits flush above the editor */}
-            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5" style={{ color: 'var(--signal)' }}>
-              Recommended fix
-            </p>
-
-            {/* Action bar lives inside FixConsole, flush in the row */}
-            <FixConsole
-              finding={finding}
-              onApproveLocal={() => onStatus(finding.id, 'fixed')}
-              onStatus={(s) => onStatus(finding.id, s)}
-              pending={pending}
-            />
-
-            {/* Affected pages — compact, no extra panel */}
+            {/* Affected pages — compact, inside white body */}
             {group.affectedPages.length > 1 && (
-              <div className="mt-3 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              <div className="px-5 pb-4 text-[11px]" style={{ color: 'var(--m-muted)' }}>
                 <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages</span>
                 <span className="inline-flex items-center gap-1 flex-wrap">
                   {group.affectedPages.slice(0, 5).map((p) => {
