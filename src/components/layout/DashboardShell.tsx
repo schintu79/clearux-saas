@@ -357,14 +357,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
   const SidebarLogo = (
     <div
-      className={clsx('h-14 flex items-center', collapsed ? 'px-2 justify-between' : 'px-4 justify-between')}
+      className={clsx('h-20 flex items-center', collapsed ? 'px-2 justify-between' : 'px-4 justify-between')}
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
       <Link href="/dashboard" className="flex items-center min-w-0" aria-label="Fixpath home">
         {collapsed ? (
-          <Iconmark size={28} />
+          <Iconmark size={48} />
         ) : (
-          <Logo height={28} />
+          <Logo height={84} />
         )}
       </Link>
       <button
@@ -732,7 +732,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {/* Top bar — visible on every dashboard page. Hosts mobile menu trigger
             and the always-visible notifications bell. */}
         <div
-          className="h-12 flex items-center justify-between px-3 md:px-5 gap-3"
+          className="h-20 flex items-center justify-between px-3 md:px-5 gap-3"
           style={{ background: 'var(--card)', borderBottom: '1px solid var(--rule)' }}
         >
           <div className="flex items-center gap-2 min-w-0">
@@ -745,7 +745,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               {sidebarOpen ? <X size={17} style={{ color: 'var(--ink)' }} /> : <Menu size={17} style={{ color: 'var(--ink)' }} />}
             </button>
             <span className="md:hidden flex items-center">
-              <Logo height={22} />
+              <Logo height={66} />
             </span>
             {selectedSite && (
               <div className="hidden md:flex items-center gap-1.5 min-w-0">

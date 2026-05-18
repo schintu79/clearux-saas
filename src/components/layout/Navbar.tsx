@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <div className="flex justify-between items-center h-[84px]">
           {/* Logo */}
-          <Logo size={84} />
+          <Logo height={84} />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-7">

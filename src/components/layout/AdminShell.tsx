@@ -109,12 +109,12 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)' }}
       >
         {/* Logo */}
-        <div className={clsx('h-14 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5 justify-between')} style={{ borderBottom: '1px solid var(--rule)' }}>
+        <div className={clsx('h-20 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5 justify-between')} style={{ borderBottom: '1px solid var(--rule)' }}>
           <Link href="/admin" className="flex items-center">
             {collapsed ? (
-              <Iconmark size={28} />
+              <Iconmark size={48} />
             ) : (
-              <Logo height={28} />
+              <Logo height={84} />
             )}
           </Link>
           {!collapsed && (
@@ -241,7 +241,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden h-14 flex items-center justify-between px-4" style={{ background: 'var(--card)', borderBottom: '1px solid var(--rule)' }}>
+        <div className="md:hidden h-20 flex items-center justify-between px-4" style={{ background: 'var(--card)', borderBottom: '1px solid var(--rule)' }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="w-9 h-9 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.04]"
@@ -251,7 +251,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             {sidebarOpen ? <X size={18} style={{ color: 'var(--ink)' }} /> : <Menu size={18} style={{ color: 'var(--ink)' }} />}
           </button>
           <span className="flex items-center gap-1.5">
-            <Logo height={22} />
+            <Logo height={66} />
             <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full ml-1" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
               Admin
             </span>

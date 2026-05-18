@@ -25,7 +25,7 @@ export function Footer() {
       <div className="max-w-mkt mx-auto px-8 max-sm:px-5">
         <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-10 pb-9 border-b border-rule max-md:grid-cols-2 max-sm:grid-cols-1">
           <div>
-            <Logo className="mb-[18px]" />
+            <Logo height={72} className="mb-[18px]" />
             <p className="text-[14px] text-m-muted max-w-[320px] leading-[1.6] font-sans">
               Full clarity, at your fingertips. 360 UX audits across 6 modules, 96 checkpoints. Senior rigor, in minutes.
             </p>
