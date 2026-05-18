@@ -1,11 +1,13 @@
 'use client';
 
 /**
- * Intelligence — workspace view for the selected brand/site.
+ * Benchmark — workspace view for the selected brand/site.
  *
  * Hosts the Benchmark Console: an always-editable list of competitors
  * (auto-detected suggestions or manually added) that can be reviewed,
- * edited, removed, and re-scored. Industry position sits below.
+ * edited, removed, and re-scored. Industry position sits below. Route
+ * path is /dashboard/intelligence for backwards-compatibility with
+ * existing deep links; the UI and labels are all "Benchmark".
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -333,7 +335,7 @@ export default function IntelligencePage() {
   if (!bundle?.audit || !bundle.report) {
     return (
       <div>
-        <OverviewBreadcrumb current="Benchmark Console" />
+        <OverviewBreadcrumb current="Benchmark" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
             Benchmark
@@ -360,13 +362,13 @@ export default function IntelligencePage() {
 
   return (
     <div>
-      <OverviewBreadcrumb current="Benchmark Console" />
+      <OverviewBreadcrumb current="Benchmark" />
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-          Intelligence
+          Benchmark
         </h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Benchmark Console — review and edit the competitors you compare against.
+          Review and edit the competitors you compare against. Auto-detect suggests; you stay in control.
         </p>
       </div>
 

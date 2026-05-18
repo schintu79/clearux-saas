@@ -16,8 +16,8 @@
  * probes and render one row per question, one column per model.
  */
 
-import React, { useMemo } from 'react';
-import { MessageSquareQuote, CheckCircle2, AlertTriangle, XCircle, HelpCircle, MinusCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { MessageSquareQuote, CheckCircle2, AlertTriangle, XCircle, HelpCircle, MinusCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import { AI_PLATFORMS, type ProviderKey } from '@/lib/ai-xray/provider-status';
 
@@ -55,8 +55,11 @@ interface AIXRayComparisonProps {
 const ACCURACY_META: Record<string, { label: string; tone: string; icon: React.ElementType }> = {
   accurate:     { label: 'Accurate',    tone: '--ok',       icon: CheckCircle2 },
   partial:      { label: 'Partial',     tone: '--warn',     icon: AlertTriangle },
-  inaccurate:   { label: 'Inaccurate',  tone: '--severe',   icon: XCircle },
-  hallucinated: { label: 'Fabricated',  tone: '--severe',   icon: XCircle },
+  inaccurate:   { label: 'Incorrect',   tone: '--severe',   icon: XCircle },
+  // "Unverified" reads fairer than "Fabricated" when the underlying signal
+  // is "the model produced an answer we could not verify" — only call it
+  // out as Incorrect if the audit was able to prove it wrong.
+  hallucinated: { label: 'Unverified',  tone: '--warn',     icon: AlertTriangle },
   no_data:      { label: 'No data',     tone: '--m-muted',  icon: MinusCircle },
 };
 
@@ -69,12 +72,53 @@ function normalizeQuestion(q: string): string {
   return q.trim().replace(/\s+/g, ' ').toLowerCase().replace(/[?.!]+$/g, '');
 }
 
-/** Short excerpt of a model answer for the comparison cell. */
-function answerExcerpt(answer: string | undefined, maxLen = 220): string {
+const EXCERPT_LEN = 220;
+
+/** Short excerpt of a model answer for the collapsed comparison cell. */
+function answerExcerpt(answer: string | undefined, maxLen = EXCERPT_LEN): string {
   if (!answer) return '';
   const trimmed = answer.trim().replace(/\s+/g, ' ');
   if (trimmed.length <= maxLen) return trimmed;
   return `${trimmed.slice(0, maxLen - 1).trimEnd()}…`;
+}
+
+function ProbeAnswerBody({ answer, note }: { answer: string; note: string | null }) {
+  const [expanded, setExpanded] = useState(false);
+  const trimmed = (answer || '').trim().replace(/\s+/g, ' ');
+  const canExpand = trimmed.length > EXCERPT_LEN || (note && note.length > 120);
+  return (
+    <>
+      <p
+        className="text-[11px] leading-relaxed whitespace-pre-wrap"
+        style={{ color: 'var(--ink)' }}
+      >
+        {expanded ? trimmed : answerExcerpt(trimmed)}
+      </p>
+      {note && (
+        <p
+          className="text-[10.5px] leading-snug pt-1.5 border-t"
+          style={{
+            color: 'var(--m-muted)',
+            borderColor: 'color-mix(in srgb, var(--rule) 50%, transparent)',
+          }}
+        >
+          <span className="font-semibold" style={{ color: 'var(--ink)' }}>Why: </span>
+          {note}
+        </p>
+      )}
+      {canExpand && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="inline-flex items-center gap-1 text-[10.5px] font-semibold mt-0.5 hover:underline"
+          style={{ color: 'var(--ink)' }}
+          aria-expanded={expanded}
+        >
+          {expanded ? <><ChevronUp size={11} /> Show less</> : <><ChevronDown size={11} /> Show full answer</>}
+        </button>
+      )}
+    </>
+  );
 }
 
 export function AIXRayComparison({ probes, topN = 5 }: AIXRayComparisonProps) {
@@ -210,33 +254,22 @@ export function AIXRayComparison({ probes, topN = 5 }: AIXRayComparisonProps) {
                     </div>
 
                     {result ? (
-                      <>
-                        <p
-                          className="text-[11px] leading-relaxed"
-                          style={{ color: 'var(--ink)' }}
-                        >
-                          {answerExcerpt(result.answer) || (
-                            <span style={{ color: 'var(--m-muted)' }}>
-                              No answer recorded.
-                            </span>
-                          )}
+                      result.answer ? (
+                        <ProbeAnswerBody
+                          answer={result.answer}
+                          note={result.accuracy_note || null}
+                        />
+                      ) : (
+                        <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                          No answer recorded.
+                          {result.accuracy_note ? <><br /><span className="font-semibold" style={{ color: 'var(--ink)' }}>Why: </span>{result.accuracy_note}</> : null}
                         </p>
-                        {result.accuracy_note && (
-                          <p
-                            className="text-[10.5px] leading-snug pt-1.5 border-t"
-                            style={{
-                              color: 'var(--m-muted)',
-                              borderColor: 'color-mix(in srgb, var(--rule) 50%, transparent)',
-                            }}
-                          >
-                            <span className="font-semibold" style={{ color: 'var(--ink)' }}>Why: </span>
-                            {result.accuracy_note}
-                          </p>
-                        )}
-                      </>
+                      )
                     ) : status === 'error' ? (
                       <p className="text-[11px] leading-snug" style={{ color: 'var(--severe)' }}>
-                        Probe failed for this model — re-scan to retry.
+                        {probe.error_message
+                          ? <>Probe failed: {probe.error_message}</>
+                          : <>Probe failed for this model — re-scan to retry.</>}
                       </p>
                     ) : status === 'skipped' ? (
                       <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
