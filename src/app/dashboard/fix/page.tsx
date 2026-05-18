@@ -184,7 +184,7 @@ function FixRow({
             aria-controls={`fix-body-${finding.id}`}
           >
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-[13.5px] font-semibold leading-snug truncate" style={{ color: 'var(--ink)' }}>
+              <h3 className="text-[14px] font-medium leading-snug truncate tracking-normal" style={{ color: 'var(--ink)', fontSize: '14px', fontWeight: 500, letterSpacing: '0' }}>
                 {finding.title}
               </h3>
             </div>
