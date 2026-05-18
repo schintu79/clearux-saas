@@ -167,6 +167,12 @@ function OverviewInner() {
   const [shareEnabled, setShareEnabled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  // Progressive disclosure: hide secondary deep-dive cards by default to
+  // keep the first screen focused on status / score / top issues / next
+  // action. Categories grid, Benchmarks/AI cards, and Checkpoint health
+  // are heavy and live under this single toggle so the operator opens
+  // them when they actually want to dig.
+  const [showDetails, setShowDetails] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -433,6 +439,40 @@ function OverviewInner() {
       setShareEnabled(false);
     } catch {}
   }, [latestCompleted]);
+
+  // Reload the bundle after a delete from the history card. If the deleted
+  // audit was the one currently displayed at the top of Overview, the card
+  // itself routes us away — otherwise we just refetch so the row vanishes.
+  const handleAuditDeleted = useCallback((deletedAuditId: string) => {
+    if (!user) return;
+    if (bundle?.audit?.id === deletedAuditId) return;
+    loadLatestAuditBundle(user.id, selection).then(setBundle).catch(() => {});
+  }, [user, selection, bundle?.audit?.id]);
+
+  // Quick action "Delete this audit" — the destructive option in the
+  // header dropdown. Surfaced via a small inline confirmation modal so the
+  // user explicitly confirms before the API call.
+  const [headerDeleteOpen, setHeaderDeleteOpen] = useState(false);
+  const [headerDeleting, setHeaderDeleting] = useState(false);
+  const [headerDeleteError, setHeaderDeleteError] = useState<string | null>(null);
+  const handleHeaderDeleteConfirm = useCallback(async () => {
+    if (!latestCompleted) return;
+    setHeaderDeleting(true);
+    setHeaderDeleteError(null);
+    try {
+      const res = await fetch(`/api/audits/${latestCompleted.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Delete failed');
+      }
+      setHeaderDeleteOpen(false);
+      router.push('/dashboard');
+    } catch (e: any) {
+      setHeaderDeleteError(e?.message || 'Delete failed');
+    } finally {
+      setHeaderDeleting(false);
+    }
+  }, [latestCompleted, router]);
 
   /* ── Loading skeleton ─────────────────────────────────── */
   if (authLoading || loading || !ready) {
@@ -712,25 +752,14 @@ function OverviewInner() {
                   </button>
                 )}
                 <div className="my-1 h-px" style={{ background: 'var(--rule)' }} />
-                <Link
-                  href="/dashboard/audits"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  <FileSearch size={13} className="text-m-muted" />
-                  View all audits
-                </Link>
                 <button
                   type="button"
-                  disabled
-                  title="Coming soon — audit deletion is not available yet."
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs opacity-50 cursor-not-allowed text-left"
-                  style={{ color: 'var(--m-muted)' }}
+                  onClick={() => { setMenuOpen(false); setHeaderDeleteError(null); setHeaderDeleteOpen(true); }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-red-50 transition-colors text-left"
+                  style={{ color: 'var(--severe)' }}
                 >
                   <Trash2 size={13} />
-                  Delete audit
-                  <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>
+                  Delete this audit
                 </button>
               </div>
             )}
@@ -841,87 +870,131 @@ function OverviewInner() {
 
       </div>
 
-      {/* ── Row 2: Category module cards — clean by default, expand for breakdown ── */}
-      {pillarScores.length > 0 && (
-        <div className="mb-2 flex items-center gap-2">
-          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
-          <h2 className="text-[15px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h2>
-          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
-          </p>
-        </div>
-      )}
-      {pillarScores.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
-          {pillarScores.map((p) => {
-            const pillarIdx = PILLAR_NAMES.indexOf(p.name);
-            if (pillarIdx < 0) return null;
-            const [start, end] = PILLAR_RANGES[pillarIdx];
-            const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
-            const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
-            const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
-            const findingCount = findingsByPillarName[p.name]?.length || 0;
-            return (
-              <CategoryModuleCard
-                key={p.name}
-                name={p.name}
-                score={p.score}
-                tint={tint}
-                Icon={PIcon}
-                findingCount={findingCount}
-                breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
-                  name: cat.name,
-                  score: cat.score,
-                  Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
-                }))}
-                href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Row 3: Issues · Benchmarks · AI Monitoring · AI X-Ray ─ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+      {/* ── Top issues — kept on first screen alongside score ───────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
-        />
-        <BenchmarksSummaryCard
-          overallScore={overallScore}
-          competitors={competitors}
-          detecting={detectingCompetitors}
-          onBenchmark={handleBenchmark}
-          hidden={hideBenchmarks}
-        />
-        <AiMonitoringCard
-          avgAi={avgAi}
-          aiBuckets={aiBuckets}
-          aiPagesScored={aiPagesScored.length}
-          totalPages={auditPages.length}
-        />
-        <AIXRayCard
-          probes={modelProbes}
-          auditId={latestCompleted?.id || null}
-          onRefreshed={handleXRayRefreshed}
-        />
-      </div>
-
-      {/* ── Row 4: Checkpoint Health + Audit History ───── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <CheckpointHealthCard
-          categoryScores={categoryScores}
-          pillarScores={pillarScores}
-          findings={openFindings}
-          auditId={audit.id}
         />
         <AuditHistoryCard
           history={bundle.history}
           auditCount={auditCount}
           showAllHistory={showAllHistory}
           onToggleAll={() => setShowAllHistory((v) => !v)}
+          currentAuditId={audit.id}
+          onDeleted={handleAuditDeleted}
         />
       </div>
+
+      {/* ── Show details disclosure — heavier analysis lives behind a
+          single toggle so first screen stays focused on status, score,
+          top issues, and next action. ─────────────────────────────── */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+          <h2 className="text-[14px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
+            Detailed analysis
+          </h2>
+          <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            Categories, benchmarks, AI readability, and checkpoint health
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDetails((v) => !v)}
+          aria-expanded={showDetails}
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-black/[0.04]"
+          style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
+        >
+          {showDetails ? 'Hide details' : 'Show details'}
+          <ChevronDown size={12} className={showDetails ? 'rotate-180 transition-transform' : 'transition-transform'} />
+        </button>
+      </div>
+
+      {showDetails && (
+        <>
+          {/* ── Categories: per-module scores + sub-checkpoints ───── */}
+          {pillarScores.length > 0 && (
+            <div className="mb-2 flex items-center gap-2">
+              <ListChecks size={14} style={{ color: 'var(--m-muted)' }} />
+              <h3 className="text-[13px] font-semibold tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Categories</h3>
+              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                · {pillarScores.length} module{pillarScores.length === 1 ? '' : 's'} · expand for sub-checkpoints
+              </p>
+            </div>
+          )}
+          {pillarScores.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+              {pillarScores.map((p) => {
+                const pillarIdx = PILLAR_NAMES.indexOf(p.name);
+                if (pillarIdx < 0) return null;
+                const [start, end] = PILLAR_RANGES[pillarIdx];
+                const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+                const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
+                const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
+                const findingCount = findingsByPillarName[p.name]?.length || 0;
+                return (
+                  <CategoryModuleCard
+                    key={p.name}
+                    name={p.name}
+                    score={p.score}
+                    tint={tint}
+                    Icon={PIcon}
+                    findingCount={findingCount}
+                    breakdown={pillarCats.slice(0, 4).map((cat, relIdx) => ({
+                      name: cat.name,
+                      score: cat.score,
+                      Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
+                    }))}
+                    href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Benchmarks · AI Monitoring · AI X-Ray ────────────── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
+            <BenchmarksSummaryCard
+              overallScore={overallScore}
+              competitors={competitors}
+              detecting={detectingCompetitors}
+              onBenchmark={handleBenchmark}
+              hidden={hideBenchmarks}
+            />
+            <AiMonitoringCard
+              avgAi={avgAi}
+              aiBuckets={aiBuckets}
+              aiPagesScored={aiPagesScored.length}
+              totalPages={auditPages.length}
+            />
+            <AIXRayCard
+              probes={modelProbes}
+              auditId={latestCompleted?.id || null}
+              onRefreshed={handleXRayRefreshed}
+            />
+          </div>
+
+          {/* ── Checkpoint Health (full list) ───────────────────── */}
+          <div className="grid grid-cols-1 gap-4 mb-6">
+            <CheckpointHealthCard
+              categoryScores={categoryScores}
+              pillarScores={pillarScores}
+              findings={openFindings}
+              auditId={audit.id}
+            />
+          </div>
+        </>
+      )}
+
+      {headerDeleteOpen && (
+        <ConfirmDeleteAuditModal
+          deleting={headerDeleting}
+          error={headerDeleteError}
+          onCancel={() => { if (!headerDeleting) { setHeaderDeleteOpen(false); setHeaderDeleteError(null); } }}
+          onConfirm={handleHeaderDeleteConfirm}
+        />
+      )}
 
     </div>
   );
@@ -1582,15 +1655,50 @@ function AuditHistoryCard({
   auditCount,
   showAllHistory,
   onToggleAll,
+  currentAuditId,
+  onDeleted,
 }: {
   history: LatestAuditBundle['history'];
   auditCount: number;
   showAllHistory: boolean;
   onToggleAll: () => void;
+  currentAuditId: string;
+  onDeleted: (deletedAuditId: string) => void;
 }) {
+  const router = useRouter();
   const PREVIEW = 8;
   const showingAll = showAllHistory || auditCount <= PREVIEW;
   const rows = showingAll ? history : history.slice(0, PREVIEW);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/audits/${pendingDeleteId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Delete failed');
+      }
+      const deletedId = pendingDeleteId;
+      setPendingDeleteId(null);
+      onDeleted(deletedId);
+      // If the user just deleted the audit currently displayed on Overview,
+      // bounce them to the dashboard root so we don't render stale state.
+      if (deletedId === currentAuditId) {
+        router.push('/dashboard');
+      } else {
+        router.refresh();
+      }
+    } catch (e: any) {
+      setDeleteError(e?.message || 'Delete failed');
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDeleteId, onDeleted, currentAuditId, router]);
 
   return (
     <section
@@ -1643,12 +1751,14 @@ function AuditHistoryCard({
           const done = a.status === 'completed';
           const aLang = langCode((a as any).language);
           return (
-            <Link
+            <div
               key={a.id}
-              href={`/dashboard/audits/${a.id}`}
-              className="flex items-center gap-2 hover:bg-black/[0.02] transition-colors group/row"
+              className="flex items-center hover:bg-black/[0.02] transition-colors group/row"
             >
-              <div className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3">
+              <Link
+                href={`/dashboard/audits/${a.id}`}
+                className="flex-1 min-w-0 px-4 py-2.5 flex items-center gap-3"
+              >
                 <div className="flex items-center gap-2 text-[11px] flex-1 min-w-0 flex-wrap">
                   <span className="font-medium" style={{ color: 'var(--ink)' }}>
                     {formatDate(a.completed_at || a.created_at)}
@@ -1682,12 +1792,111 @@ function AuditHistoryCard({
                   className="group-hover/row:text-brand transition-colors flex-shrink-0"
                   style={{ color: 'var(--m-muted)', opacity: 0.5 }}
                 />
-              </div>
-            </Link>
+              </Link>
+              <button
+                type="button"
+                onClick={() => { setDeleteError(null); setPendingDeleteId(a.id); }}
+                title="Delete this audit"
+                aria-label={`Delete audit from ${formatDate(a.completed_at || a.created_at)}`}
+                className="flex-shrink-0 mr-3 ml-1 w-7 h-7 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/40 opacity-60 hover:opacity-100"
+                style={{ color: 'var(--m-muted)' }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
           );
         })}
       </div>
+
+      {pendingDeleteId && (
+        <ConfirmDeleteAuditModal
+          deleting={deleting}
+          error={deleteError}
+          onCancel={() => { if (!deleting) { setPendingDeleteId(null); setDeleteError(null); } }}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </section>
+  );
+}
+
+/* ── Reusable confirm delete modal ────────────────────── */
+function ConfirmDeleteAuditModal({
+  deleting,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  deleting: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !deleting) onCancel(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onCancel, deleting]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-audit-heading"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: 'rgba(20,19,15,0.45)' }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !deleting) onCancel(); }}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl shadow-xl"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <div className="flex items-start gap-3">
+            <span
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--severe) 10%, transparent)', color: 'var(--severe)' }}
+            >
+              <Trash2 size={16} />
+            </span>
+            <div className="min-w-0">
+              <h3 id="delete-audit-heading" className="text-[15px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>
+                Delete this audit?
+              </h3>
+              <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+                This permanently removes the audit, its report, findings, and crawled pages. This cannot be undone.
+              </p>
+            </div>
+          </div>
+          {error && (
+            <p className="text-[12px] mt-3 px-3 py-2 rounded-md" style={{ color: 'var(--severe)', background: 'color-mix(in srgb, var(--severe) 8%, transparent)' }}>
+              {error}
+            </p>
+          )}
+        </div>
+        <div className="px-5 pb-5 pt-2 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={deleting}
+            className="text-[12px] font-medium px-3 py-2 rounded-lg hover:bg-black/[0.04] transition-colors disabled:opacity-50"
+            style={{ color: 'var(--ink)' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="text-[12px] font-semibold px-3 py-2 rounded-lg transition-opacity hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-1.5"
+            style={{ background: 'var(--severe)', color: '#ffffff' }}
+          >
+            <Trash2 size={12} />
+            {deleting ? 'Deleting…' : 'Delete audit'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

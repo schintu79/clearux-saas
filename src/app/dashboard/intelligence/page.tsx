@@ -31,6 +31,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 type Competitor = {
   domain: string;
@@ -332,6 +333,7 @@ export default function IntelligencePage() {
   if (!bundle?.audit || !bundle.report) {
     return (
       <div>
+        <OverviewBreadcrumb current="Benchmark Console" />
         <div className="mb-6">
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
             Intelligence
@@ -358,6 +360,7 @@ export default function IntelligencePage() {
 
   return (
     <div>
+      <OverviewBreadcrumb current="Benchmark Console" />
       <div className="mb-6">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
           Intelligence
