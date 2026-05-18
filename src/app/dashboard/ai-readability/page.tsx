@@ -37,6 +37,11 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import {
+  buildProviderRows,
+  summarizeCoverage,
+  coverageCaption,
+} from '@/lib/ai-xray/provider-status';
 
 type AIPageReadability = {
   extractable?: string[];
@@ -61,13 +66,6 @@ type ModelProbe = {
   error_message?: string | null;
   created_at?: string | null;
 };
-
-const AI_PLATFORMS: Array<{ key: 'claude' | 'gpt4o' | 'gemini' | 'perplexity'; label: string; note: string }> = [
-  { key: 'claude',     label: 'Claude',     note: 'Anthropic Claude' },
-  { key: 'gpt4o',      label: 'ChatGPT',    note: 'OpenAI GPT-4o' },
-  { key: 'gemini',     label: 'Gemini',     note: 'Google Gemini' },
-  { key: 'perplexity', label: 'Perplexity', note: 'Perplexity Sonar' },
-];
 
 function scoreColor(s: number | null): string {
   if (s == null) return 'var(--m-muted)';
@@ -205,7 +203,6 @@ function AIReadabilityBody({
     }
   };
 
-  const byId = useMemo(() => new Map(probes.map(p => [p.model_id, p])), [probes]);
   // Most-recent created_at across probes — used as "last scan" timestamp.
   const lastScan = useMemo(() => {
     const stamps = probes
@@ -213,28 +210,10 @@ function AIReadabilityBody({
       .filter((t) => t > 0);
     return stamps.length > 0 ? new Date(Math.max(...stamps)) : null;
   }, [probes]);
-  const rows = AI_PLATFORMS.map((p) => {
-    const probe = byId.get(p.key);
-    // Legacy probe rows (pre-status column) treat presence-of-row as
-    // "measured" so existing audits keep rendering correctly.
-    const status: 'measured' | 'skipped' | 'error' | 'unmeasured' = probe
-      ? (probe.status ?? 'measured')
-      : 'unmeasured';
-    return {
-      key: p.key,
-      label: p.label,
-      note: p.note,
-      status,
-      errorMessage: probe?.error_message || null,
-      score: probe && status === 'measured'
-        ? Math.max(0, Math.min(100, Math.round(probe.accuracy_score)))
-        : null,
-    };
-  });
-  const measured = rows.filter(r => r.score != null) as Array<typeof rows[number] & { score: number }>;
-  const avg = measured.length > 0
-    ? Math.round(measured.reduce((s, r) => s + r.score, 0) / measured.length)
-    : null;
+  const rows = useMemo(() => buildProviderRows(probes), [probes]);
+  const coverage = useMemo(() => summarizeCoverage(rows), [rows]);
+  const avg = coverage.average;
+  const coverageNote = coverageCaption(coverage);
 
   const pagesScored = pages.filter(p => p.ai_readability?.overallScore != null);
   const avgPageScore = pagesScored.length > 0
@@ -300,11 +279,16 @@ function AIReadabilityBody({
               {rescanning ? 'Re-scanning' : 'Re-scan'}
             </button>
             {avg != null && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
-                  {avg}
+              <div className="flex flex-col items-end">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
+                    {avg}
+                  </span>
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
+                </div>
+                <span className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                  {coverage.measuredCount} of {coverage.totalCount} models measured
                 </span>
-                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
               </div>
             )}
           </div>
@@ -322,6 +306,47 @@ function AIReadabilityBody({
           </div>
         )}
 
+        {coverage.hasQuotaError && !rescanError && (
+          <div
+            className="text-[11px] mb-3 px-3 py-2 rounded-md flex items-start gap-2"
+            style={{
+              color: 'var(--ink)',
+              background: 'color-mix(in srgb, var(--warn) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--warn) 35%, transparent)',
+            }}
+          >
+            <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--warn)' }} />
+            <span>
+              <strong>{coverage.quotaBlockedProviderLabels.join(', ')} quota exceeded.</strong>{' '}
+              The average above is calculated from the {coverage.measuredCount} of {coverage.totalCount} models that did respond — failures are not counted as zero.
+              Re-scan will keep failing for {coverage.quotaBlockedProviderLabels.length === 1 ? 'this provider' : 'these providers'} until the API quota or billing is restored.
+            </span>
+          </div>
+        )}
+
+        {coverage.hasErrors && !coverage.hasQuotaError && (
+          <div
+            className="text-[11px] mb-3 px-3 py-2 rounded-md flex items-start gap-2"
+            style={{
+              color: 'var(--ink)',
+              background: 'color-mix(in srgb, var(--m-muted) 10%, transparent)',
+              border: '1px solid var(--rule)',
+            }}
+          >
+            <Info size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--m-muted)' }} />
+            <span>
+              The average above is calculated from {coverage.measuredCount} of {coverage.totalCount} models —
+              {' '}{coverage.erroredProviderLabels.join(', ')} returned an error and {coverage.erroredProviderLabels.length === 1 ? 'is' : 'are'} excluded from the score. Re-scan to retry.
+            </span>
+          </div>
+        )}
+
+        {coverageNote && !coverage.hasErrors && avg != null && (
+          <p className="text-[11px] mb-3" style={{ color: 'var(--m-muted)' }}>
+            {coverageNote}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {rows.map((r) => {
             const iconKey = providerKeyToIcon(r.key);
@@ -330,23 +355,11 @@ function AIReadabilityBody({
             const statusBadge: { label: string; varName: string; tooltip?: string } | null =
               r.status === 'measured'
                 ? null
-                : r.status === 'skipped'
-                  ? {
-                      label: 'Not configured',
-                      varName: '--m-muted',
-                      tooltip: r.errorMessage || 'Provider API key not set in this environment.',
-                    }
-                  : r.status === 'error'
-                    ? {
-                        label: 'Probe failed',
-                        varName: '--severe',
-                        tooltip: r.errorMessage || 'The provider responded with an error.',
-                      }
-                    : {
-                        label: 'Not yet measured',
-                        varName: '--m-muted',
-                        tooltip: 'Re-scan to probe this provider for the current brand.',
-                      };
+                : {
+                    label: r.statusLabel,
+                    varName: r.status === 'error' ? '--severe' : '--m-muted',
+                    tooltip: r.statusTooltip,
+                  };
 
             return (
               <div
@@ -403,17 +416,12 @@ function AIReadabilityBody({
                       />
                     </div>
                   </>
-                ) : r.status === 'error' ? (
-                  <p className="text-[11px] leading-snug" style={{ color: 'var(--severe)' }}>
-                    {r.errorMessage || 'Probe failed for all questions.'}
-                  </p>
-                ) : r.status === 'skipped' ? (
-                  <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
-                    {r.errorMessage || 'Provider API key is not set in this environment.'}
-                  </p>
                 ) : (
-                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                    Re-scan to measure this provider.
+                  <p
+                    className="text-[11px] leading-snug"
+                    style={{ color: r.status === 'error' ? 'var(--severe)' : 'var(--m-muted)' }}
+                  >
+                    {r.statusTooltip}
                   </p>
                 )}
               </div>
