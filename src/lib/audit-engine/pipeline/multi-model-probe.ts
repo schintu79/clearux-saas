@@ -28,6 +28,20 @@ export interface ModelProbeResult {
   accuracyNote: string
 }
 
+/**
+ * Lifecycle state for a provider's benchmark row.
+ *
+ *  - `measured` — the provider answered at least one question. Real
+ *    accuracy data, score is meaningful.
+ *  - `skipped`  — the provider's API key is not configured. The probe
+ *    never ran. Not an error; just unconfigured.
+ *  - `error`    — the provider was configured but every probe call
+ *    failed (HTTP error, timeout, content blocked, model deprecated).
+ *    The UI shows this as a real failure so it's visible to operators
+ *    instead of silently looking like "Not yet measured".
+ */
+export type ModelBenchmarkStatus = 'measured' | 'skipped' | 'error'
+
 export interface ModelBenchmark {
   modelId: AIModelId
   modelLabel: string
@@ -39,6 +53,8 @@ export interface ModelBenchmark {
   noDataCount: number
   totalQuestions: number
   results: ModelProbeResult[]
+  status: ModelBenchmarkStatus
+  errorMessage: string | null
 }
 
 export interface MultiModelComparison {
@@ -74,14 +90,35 @@ function getClient(): Anthropic {
 /* ── Model probers ─────────────────────────────────────────── */
 
 /**
+ * Output of every individual model probe. Carries enough metadata for
+ * the engine to decide whether the provider was `measured`, `skipped`,
+ * or had a real `error`, instead of guessing from the answer strings.
+ */
+interface ProbeRun {
+  answers: Array<{ question: string; answer: string }>
+  status: ModelBenchmarkStatus
+  errorMessage: string | null
+}
+
+/**
  * Probe using Claude — direct Anthropic SDK call.
  */
 async function probeClaude(
   domain: string,
   questions: string[],
-): Promise<Array<{ question: string; answer: string }>> {
+): Promise<ProbeRun> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      answers: questions.map((q) => ({ question: q, answer: '[Anthropic API key not configured — skipped]' })),
+      status: 'skipped',
+      errorMessage: 'ANTHROPIC_API_KEY is not set',
+    }
+  }
+
   const client = getClient()
-  const results: Array<{ question: string; answer: string }> = []
+  const answers: Array<{ question: string; answer: string }> = []
+  let lastError: string | null = null
+  let anySuccess = false
 
   for (const q of questions) {
     try {
@@ -96,12 +133,18 @@ async function probeClaude(
         .map((b) => b.text)
         .join('\n')
         .trim()
-      results.push({ question: q, answer })
-    } catch {
-      results.push({ question: q, answer: '[Probe failed]' })
+      answers.push({ question: q, answer })
+      anySuccess = true
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err)
+      answers.push({ question: q, answer: `[Claude probe failed: ${lastError}]` })
     }
   }
-  return results
+  return {
+    answers,
+    status: anySuccess ? 'measured' : 'error',
+    errorMessage: anySuccess ? null : (lastError || 'Claude probe failed'),
+  }
 }
 
 /**
@@ -111,16 +154,22 @@ async function probeClaude(
 async function probeOpenAI(
   domain: string,
   questions: string[],
-): Promise<Array<{ question: string; answer: string }>> {
+): Promise<ProbeRun> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    return questions.map((q) => ({
-      question: q,
-      answer: '[OpenAI API key not configured — skipped]',
-    }))
+    return {
+      answers: questions.map((q) => ({
+        question: q,
+        answer: '[OpenAI API key not configured — skipped]',
+      })),
+      status: 'skipped',
+      errorMessage: 'OPENAI_API_KEY is not set',
+    }
   }
 
-  const results: Array<{ question: string; answer: string }> = []
+  const answers: Array<{ question: string; answer: string }> = []
+  let lastError: string | null = null
+  let anySuccess = false
 
   for (const q of questions) {
     try {
@@ -146,7 +195,8 @@ async function probeOpenAI(
       })
 
       if (!resp.ok) {
-        results.push({ question: q, answer: `[GPT-4o probe failed: HTTP ${resp.status}]` })
+        lastError = `HTTP ${resp.status}`
+        answers.push({ question: q, answer: `[GPT-4o probe failed: HTTP ${resp.status}]` })
         continue
       }
 
@@ -154,12 +204,18 @@ async function probeOpenAI(
         choices?: Array<{ message?: { content?: string } }>
       }
       const answer = data.choices?.[0]?.message?.content?.trim() || '[No response]'
-      results.push({ question: q, answer })
-    } catch {
-      results.push({ question: q, answer: '[GPT-4o probe timed out]' })
+      answers.push({ question: q, answer })
+      anySuccess = true
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err)
+      answers.push({ question: q, answer: `[GPT-4o probe failed: ${lastError}]` })
     }
   }
-  return results
+  return {
+    answers,
+    status: anySuccess ? 'measured' : 'error',
+    errorMessage: anySuccess ? null : (lastError || 'GPT-4o probe failed'),
+  }
 }
 
 /**
@@ -210,16 +266,23 @@ const GEMINI_MODEL_FALLBACKS = [
 async function probeGemini(
   domain: string,
   questions: string[],
-): Promise<Array<{ question: string; answer: string }>> {
+): Promise<ProbeRun> {
   const apiKey = resolveGeminiApiKey()
   if (!apiKey) {
-    return questions.map((q) => ({
-      question: q,
-      answer: '[Gemini API key not configured — skipped]',
-    }))
+    return {
+      answers: questions.map((q) => ({
+        question: q,
+        answer: '[Gemini API key not configured — skipped]',
+      })),
+      status: 'skipped',
+      errorMessage:
+        'No Gemini API key found. Set GEMINI_API_KEY (preferred), GOOGLE_AI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or GOOGLE_API_KEY.',
+    }
   }
 
-  const results: Array<{ question: string; answer: string }> = []
+  const answers: Array<{ question: string; answer: string }> = []
+  let anySuccess = false
+  let firstError: string | null = null
   // Remember which model actually worked so we don't re-probe fallbacks
   // for every question once we've found a live one.
   let workingModel: string | null = null
@@ -230,6 +293,7 @@ async function probeGemini(
       : GEMINI_MODEL_FALLBACKS
     let answer: string | null = null
     let lastError: string | null = null
+    let blocked = false
 
     for (const model of modelsToTry) {
       try {
@@ -269,7 +333,11 @@ async function probeGemini(
         }
 
         if (data.promptFeedback?.blockReason) {
+          // Safety block — counts as a successful call (we got a real
+          // response from Gemini), just one we can't grade. Don't mark
+          // the whole provider as `error` for this.
           answer = `[Gemini blocked: ${data.promptFeedback.blockReason}]`
+          blocked = true
         } else {
           const parts = data.candidates?.[0]?.content?.parts || []
           const text = parts.map((p) => p?.text || '').join('').trim()
@@ -285,12 +353,19 @@ async function probeGemini(
       }
     }
 
-    results.push({
+    if (answer != null && !blocked) anySuccess = true
+    if (!firstError && lastError) firstError = lastError
+    answers.push({
       question: q,
       answer: answer ?? `[Gemini probe failed: ${lastError || 'unknown error'}]`,
     })
   }
-  return results
+
+  return {
+    answers,
+    status: anySuccess ? 'measured' : 'error',
+    errorMessage: anySuccess ? null : (firstError || 'Gemini probe failed for all questions'),
+  }
 }
 
 /**
@@ -306,16 +381,22 @@ async function probeGemini(
 async function probePerplexity(
   domain: string,
   questions: string[],
-): Promise<Array<{ question: string; answer: string }>> {
+): Promise<ProbeRun> {
   const apiKey = process.env.PERPLEXITY_API_KEY
   if (!apiKey) {
-    return questions.map((q) => ({
-      question: q,
-      answer: '[Perplexity API key not configured — skipped]',
-    }))
+    return {
+      answers: questions.map((q) => ({
+        question: q,
+        answer: '[Perplexity API key not configured — skipped]',
+      })),
+      status: 'skipped',
+      errorMessage: 'PERPLEXITY_API_KEY is not set',
+    }
   }
 
-  const results: Array<{ question: string; answer: string }> = []
+  const answers: Array<{ question: string; answer: string }> = []
+  let lastError: string | null = null
+  let anySuccess = false
 
   for (const q of questions) {
     try {
@@ -341,7 +422,8 @@ async function probePerplexity(
       })
 
       if (!resp.ok) {
-        results.push({ question: q, answer: `[Perplexity probe failed: HTTP ${resp.status}]` })
+        lastError = `HTTP ${resp.status}`
+        answers.push({ question: q, answer: `[Perplexity probe failed: HTTP ${resp.status}]` })
         continue
       }
 
@@ -349,12 +431,18 @@ async function probePerplexity(
         choices?: Array<{ message?: { content?: string } }>
       }
       const answer = data.choices?.[0]?.message?.content?.trim() || '[No response]'
-      results.push({ question: q, answer })
-    } catch {
-      results.push({ question: q, answer: '[Perplexity probe timed out]' })
+      answers.push({ question: q, answer })
+      anySuccess = true
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err)
+      answers.push({ question: q, answer: `[Perplexity probe failed: ${lastError}]` })
     }
   }
-  return results
+  return {
+    answers,
+    status: anySuccess ? 'measured' : 'error',
+    errorMessage: anySuccess ? null : (lastError || 'Perplexity probe failed'),
+  }
 }
 
 /* ── Grading ───────────────────────────────────────────────── */
@@ -456,6 +544,8 @@ function buildBenchmark(
   modelId: AIModelId,
   modelLabel: string,
   results: ModelProbeResult[],
+  status: ModelBenchmarkStatus,
+  errorMessage: string | null,
 ): ModelBenchmark {
   const counts = { accurate: 0, partial: 0, inaccurate: 0, hallucinated: 0, noData: 0 }
   for (const r of results) {
@@ -467,7 +557,10 @@ function buildBenchmark(
   }
 
   const total = results.length
-  const score = total > 0
+  // Score is only meaningful for `measured` benchmarks. Skipped/errored
+  // providers stay at 0 — the UI checks `status` first so this 0 never
+  // gets displayed as "0/100".
+  const score = status === 'measured' && total > 0
     ? Math.round(((counts.accurate * 100 + counts.partial * 50 + counts.noData * 25) / (total * 100)) * 100)
     : 0
 
@@ -482,14 +575,27 @@ function buildBenchmark(
     noDataCount: counts.noData,
     totalQuestions: total,
     results,
+    status,
+    errorMessage,
   }
 }
 
 /* ── Main engine ───────────────────────────────────────────── */
 
 /**
- * Run multi-model benchmarking: probe Claude, GPT-4o, and Gemini
- * about the same domain, grade all answers, and compare.
+ * Run multi-model benchmarking: probe Claude, GPT-4o, Gemini, and
+ * Perplexity about the same domain, grade all answers, and compare.
+ *
+ * Every provider always returns a benchmark row — even when it was
+ * skipped (no API key) or errored (HTTP/timeout) — so the rescan
+ * endpoint can persist an explicit status per provider rather than
+ * silently dropping providers and leaving the UI showing "Not yet
+ * measured" (which used to look identical to a brand-new audit).
+ *
+ * Only `measured` benchmarks count toward averages, best/worst, and
+ * the natural-language insight; skipped/errored rows are surfaced via
+ * `status` and `errorMessage` so the dashboard can render a clear
+ * "Not configured" or "Probe failed" badge instead of a fake score.
  */
 export async function runMultiModelBenchmark(
   domain: string,
@@ -498,51 +604,66 @@ export async function runMultiModelBenchmark(
   const questions = BENCHMARK_QUESTIONS.map((q) => q.replace('{domain}', domain))
 
   // Probe all models in parallel
-  const [claudeAnswers, gptAnswers, geminiAnswers, perplexityAnswers] = await Promise.all([
+  const [claudeRun, gptRun, geminiRun, perplexityRun] = await Promise.all([
     probeClaude(domain, questions),
     probeOpenAI(domain, questions),
     probeGemini(domain, questions),
     probePerplexity(domain, questions),
   ])
 
-  // Grade all answers in parallel
+  // Grade only the providers that actually got real answers. Grading a
+  // run of "[Gemini probe failed: HTTP 403]" strings just wastes a
+  // Claude call and produces meaningless grades.
+  const gradeIfMeasured = async (
+    label: string,
+    run: ProbeRun,
+    modelId: AIModelId,
+  ): Promise<ModelProbeResult[]> => {
+    if (run.status !== 'measured') {
+      return run.answers.map((a) => ({
+        modelId,
+        modelLabel: label,
+        question: a.question,
+        answer: a.answer,
+        accuracy: 'no_data' as LlmProbeAccuracy,
+        accuracyNote: run.status === 'skipped' ? 'Provider not configured' : (run.errorMessage || 'Probe failed'),
+      }))
+    }
+    return gradeModelAnswers(domain, label, run.answers, groundTruth)
+  }
+
   const [claudeGrades, gptGrades, geminiGrades, perplexityGrades] = await Promise.all([
-    gradeModelAnswers(domain, 'Claude', claudeAnswers, groundTruth),
-    gradeModelAnswers(domain, 'GPT-4o', gptAnswers, groundTruth),
-    gradeModelAnswers(domain, 'Gemini', geminiAnswers, groundTruth),
-    gradeModelAnswers(domain, 'Perplexity', perplexityAnswers, groundTruth),
+    gradeIfMeasured('Claude', claudeRun, 'claude'),
+    gradeIfMeasured('GPT-4o', gptRun, 'gpt4o'),
+    gradeIfMeasured('Gemini', geminiRun, 'gemini'),
+    gradeIfMeasured('Perplexity', perplexityRun, 'perplexity'),
   ])
 
-  // Build benchmarks
   const benchmarks: ModelBenchmark[] = [
-    buildBenchmark('claude', 'Claude', claudeGrades),
-    buildBenchmark('gpt4o', 'GPT-4o', gptGrades),
-    buildBenchmark('gemini', 'Gemini', geminiGrades),
-    buildBenchmark('perplexity', 'Perplexity', perplexityGrades),
+    buildBenchmark('claude', 'Claude', claudeGrades, claudeRun.status, claudeRun.errorMessage),
+    buildBenchmark('gpt4o', 'GPT-4o', gptGrades, gptRun.status, gptRun.errorMessage),
+    buildBenchmark('gemini', 'Gemini', geminiGrades, geminiRun.status, geminiRun.errorMessage),
+    buildBenchmark('perplexity', 'Perplexity', perplexityGrades, perplexityRun.status, perplexityRun.errorMessage),
   ]
 
-  // Filter out models that returned all skipped/failed
-  const activeBenchmarks = benchmarks.filter(
-    (b) => !b.results.every((r) => r.answer.startsWith('[') && r.answer.endsWith(']')),
-  )
-
-  // Find best and worst
-  const sorted = [...activeBenchmarks].sort((a, b) => b.accuracyScore - a.accuracyScore)
+  // Averages / best / worst / insight only consider `measured` rows.
+  const measured = benchmarks.filter((b) => b.status === 'measured')
+  const sorted = [...measured].sort((a, b) => b.accuracyScore - a.accuracyScore)
   const bestModel = sorted[0]?.modelId || 'claude'
   const worstModel = sorted[sorted.length - 1]?.modelId || 'claude'
 
-  const avgAccuracy = activeBenchmarks.length > 0
-    ? Math.round(activeBenchmarks.reduce((s, b) => s + b.accuracyScore, 0) / activeBenchmarks.length)
+  const avgAccuracy = measured.length > 0
+    ? Math.round(measured.reduce((s, b) => s + b.accuracyScore, 0) / measured.length)
     : 0
 
-  // Generate insight — handle low-accuracy and new/unknown sites
   let insight: string
-  if (activeBenchmarks.length <= 1) {
-    insight = `AI knowledge benchmarked with ${sorted[0]?.modelLabel || 'one model'}. Multi-model comparison available when additional AI providers are configured.`
+  if (measured.length === 0) {
+    insight = 'No AI providers responded — check API key configuration in your environment (Gemini, OpenAI, Perplexity).'
+  } else if (measured.length === 1) {
+    insight = `AI knowledge benchmarked with ${sorted[0].modelLabel}. Multi-model comparison available when additional AI providers are configured.`
   } else if (avgAccuracy <= 15) {
-    // All models know very little — site is new/niche or lacks structured data
-    const hallucinatedTotal = activeBenchmarks.reduce((s, b) => s + b.hallucinatedCount, 0)
-    const inaccurateTotal = activeBenchmarks.reduce((s, b) => s + b.inaccurateCount, 0)
+    const hallucinatedTotal = measured.reduce((s, b) => s + b.hallucinatedCount, 0)
+    const inaccurateTotal = measured.reduce((s, b) => s + b.inaccurateCount, 0)
     if (hallucinatedTotal > inaccurateTotal) {
       insight = `AI models are fabricating information about your site — none have accurate knowledge. This means users asking AI about you get wrong answers. Adding structured data (JSON-LD), a clear meta description, and an llms.txt file will give AI models correct facts to reference.`
     } else {
@@ -563,7 +684,7 @@ export async function runMultiModelBenchmark(
 
   return {
     domain,
-    benchmarks: activeBenchmarks.length > 0 ? activeBenchmarks : benchmarks,
+    benchmarks,
     bestModel,
     worstModel,
     averageAccuracy: avgAccuracy,

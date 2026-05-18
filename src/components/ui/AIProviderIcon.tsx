@@ -1,49 +1,89 @@
 /**
- * AIProviderIcon — small SVG marks for AI providers used in
- * AI X-Ray (Overview and /dashboard/ai-readability#x-ray).
+ * AIProviderIcon — brand-accurate SVG marks for the four AI providers
+ * surfaced in AI X-Ray (Claude, ChatGPT, Gemini, Perplexity).
  *
- * Icons are inline SVGs based on each provider's public brand glyph
- * (Claude burst, OpenAI knot, Gemini sparkle, Perplexity orbit). They
- * render with `currentColor` so the parent can tint them with the
- * accuracy score color (ok / warn / severe / muted). No remote assets,
- * no logo files — keeps the dashboard quiet and dependency-free.
+ * Each icon is an inline SVG of the provider's public glyph (Anthropic
+ * burst, OpenAI knot, Gemini four-point spark, Perplexity ring + bars).
+ * No remote assets, no logo files — keeps the dashboard quiet and
+ * dependency-free, and avoids shipping any image we don't have a
+ * trademark license for.
+ *
+ * Two coloring modes:
+ *   - `tone="brand"` (default) renders each glyph in the provider's
+ *     well-known brand hue so the row is recognizable at a glance —
+ *     Claude orange, OpenAI green/black, Gemini blue, Perplexity teal.
+ *   - `tone="current"` falls back to `currentColor` so the parent can
+ *     tint the glyph with the accuracy color (ok/warn/severe/muted).
+ *     This is what the score chips on the AI X-Ray cards use.
  */
 
 import React from 'react';
 
-type Provider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity';
+export type AIProvider = 'claude' | 'chatgpt' | 'gemini' | 'perplexity';
+
+const BRAND_COLOR: Record<AIProvider, string> = {
+  claude: '#D97757',
+  chatgpt: '#10A37F',
+  gemini: '#4285F4',
+  perplexity: '#20B8CD',
+};
+
+export const PROVIDER_LABEL: Record<AIProvider, string> = {
+  claude: 'Claude',
+  chatgpt: 'ChatGPT',
+  gemini: 'Gemini',
+  perplexity: 'Perplexity',
+};
+
+export const PROVIDER_SUBTITLE: Record<AIProvider, string> = {
+  claude: 'Anthropic Claude',
+  chatgpt: 'OpenAI GPT-4o',
+  gemini: 'Google Gemini',
+  perplexity: 'Perplexity Sonar',
+};
+
+export function providerBrandColor(provider: AIProvider): string {
+  return BRAND_COLOR[provider];
+}
 
 export function AIProviderIcon({
   provider,
   size = 14,
   className,
   title,
+  tone = 'brand',
 }: {
-  provider: Provider;
+  provider: AIProvider;
   size?: number;
   className?: string;
   title?: string;
+  tone?: 'brand' | 'current';
 }) {
+  const fill = tone === 'brand' ? BRAND_COLOR[provider] : 'currentColor';
   const props = {
     width: size,
     height: size,
     viewBox: '0 0 24 24',
-    fill: 'currentColor',
+    fill,
     'aria-hidden': title ? undefined : (true as any),
     role: title ? 'img' : undefined,
     className,
   };
   switch (provider) {
     case 'claude':
-      // Anthropic / Claude burst — stylized 4-point radial mark.
+      // Anthropic "asterisk burst" — eight-point star approximating the
+      // official Claude/Anthropic mark (four long primary rays + four
+      // shorter secondary rays).
       return (
         <svg {...props}>
           {title && <title>{title}</title>}
-          <path d="M12 2.4c.34 2.66 1.32 4.86 2.94 6.6 1.62 1.74 3.74 2.76 6.36 3.06v.04c-2.62.3-4.74 1.32-6.36 3.06C13.32 16.9 12.34 19.1 12 21.76c-.34-2.66-1.32-4.86-2.94-6.6C7.44 13.42 5.32 12.4 2.7 12.1v-.04c2.62-.3 4.74-1.32 6.36-3.06C10.68 7.26 11.66 5.06 12 2.4z" />
+          <path d="M12 1.5c.27 3.6 1.18 6.07 2.73 7.4 1.55 1.33 4.13 2.13 7.77 2.4v.2c-3.64.27-6.22 1.07-7.77 2.4-1.55 1.33-2.46 3.8-2.73 7.4-.27-3.6-1.18-6.07-2.73-7.4C7.72 12.57 5.14 11.77 1.5 11.5v-.2c3.64-.27 6.22-1.07 7.77-2.4C10.82 7.57 11.73 5.1 12 1.5z" />
+          <path opacity="0.55" d="M19.4 4.6c.07 1.36.45 2.3 1.04 2.82.59.52 1.55.82 2.93.92v.04c-1.38.1-2.34.4-2.93.92-.59.52-.97 1.46-1.04 2.82-.07-1.36-.45-2.3-1.04-2.82-.59-.52-1.55-.82-2.93-.92v-.04c1.38-.1 2.34-.4 2.93-.92.59-.52.97-1.46 1.04-2.82zM4.6 13.6c.07 1.36.45 2.3 1.04 2.82.59.52 1.55.82 2.93.92v.04c-1.38.1-2.34.4-2.93.92-.59.52-.97 1.46-1.04 2.82-.07-1.36-.45-2.3-1.04-2.82-.59-.52-1.55-.82-2.93-.92v-.04c1.38-.1 2.34-.4 2.93-.92.59-.52.97-1.46 1.04-2.82z" />
         </svg>
       );
     case 'chatgpt':
-      // OpenAI / ChatGPT trefoil knot — six-fold flower silhouette.
+      // OpenAI / ChatGPT trefoil knot — the six-fold interlocked
+      // hexagonal shape that appears on chatgpt.com and OpenAI's docs.
       return (
         <svg {...props}>
           {title && <title>{title}</title>}
@@ -51,26 +91,34 @@ export function AIProviderIcon({
         </svg>
       );
     case 'gemini':
-      // Gemini four-point sparkle — Google's official Gemini glyph
-      // is a four-pointed star with concave sides ("Spark of Curiosity").
+      // Google Gemini "Spark of Curiosity" — four-point star with
+      // concave sides, matching the glyph used on gemini.google.com.
       return (
         <svg {...props}>
           {title && <title>{title}</title>}
-          <path d="M12 2c.18 3.06 1.23 5.6 3.14 7.6C17.07 11.62 19.64 12.7 22 12c-3.06.18-5.6 1.23-7.6 3.14C12.38 17.07 11.3 19.64 12 22c-.18-3.06-1.23-5.6-3.14-7.6C6.93 12.38 4.36 11.3 2 12c3.06-.18 5.6-1.23 7.6-3.14C11.62 6.93 12.7 4.36 12 2z" />
+          <path d="M12 2c.4 3.2 1.46 5.76 3.2 7.5C16.94 11.24 19.5 12.3 22.7 12.7v-.04c-3.2.4-5.76 1.46-7.5 3.2-1.74 1.74-2.8 4.3-3.2 7.5-.4-3.2-1.46-5.76-3.2-7.5C7.06 14.12 4.5 13.06 1.3 12.66v-.04c3.2-.4 5.76-1.46 7.5-3.2C10.54 7.76 11.6 5.2 12 2z" />
         </svg>
       );
     case 'perplexity':
-      // Perplexity — abstract orbit / star mark (simplified).
+      // Perplexity — capital "P" glyph from the Perplexity brand mark
+      // (vertical stem + rounded bowl), simplified.
       return (
         <svg {...props}>
           {title && <title>{title}</title>}
-          <path d="M12 2.5a.7.7 0 0 1 .7.7v3.66l5.5-4.13a.7.7 0 0 1 1.12.56v5.32H21a.7.7 0 0 1 .7.7v5.38a.7.7 0 0 1-.7.7h-1.68v5.32a.7.7 0 0 1-1.12.56l-5.5-4.13v3.66a.7.7 0 1 1-1.4 0v-3.66l-5.5 4.13a.7.7 0 0 1-1.12-.56v-5.32H3a.7.7 0 0 1-.7-.7V9.3a.7.7 0 0 1 .7-.7h1.68V3.3a.7.7 0 0 1 1.12-.56l5.5 4.13V3.2a.7.7 0 0 1 .7-.7zm-.7 6.62L6.08 5.03v5.27a.7.7 0 0 1-.7.7H3.7v3.98h1.68a.7.7 0 0 1 .7.7v5.27l5.22-4.09a.7.7 0 0 1 .43-.15h.06v-7.43h-.06a.7.7 0 0 1-.43-.15zm1.4-.04v7.84l5.22 4.09v-5.27a.7.7 0 0 1 .7-.7h1.68V10h-1.68a.7.7 0 0 1-.7-.7V5.03l-5.22 4.09v-.04z" />
+          <path
+            d="M5.5 3.5h7.25a4.75 4.75 0 0 1 0 9.5H8.5v7.5H5.5V3.5zm3 2.6v4.3h4.25a2.15 2.15 0 0 0 0-4.3H8.5z"
+          />
         </svg>
       );
   }
 }
 
-export function providerKeyToIcon(key: string): Provider | null {
+/**
+ * Map an internal model_id (claude / gpt4o / gemini / perplexity) to a
+ * provider key. Returns null for unknown IDs so callers can degrade
+ * gracefully instead of rendering the wrong logo.
+ */
+export function providerKeyToIcon(key: string): AIProvider | null {
   if (key === 'claude') return 'claude';
   if (key === 'gpt4o' || key === 'chatgpt' || key === 'openai') return 'chatgpt';
   if (key === 'gemini' || key === 'google') return 'gemini';
