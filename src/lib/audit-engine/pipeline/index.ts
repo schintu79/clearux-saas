@@ -84,7 +84,19 @@ export {
   DUPLICATE_PREVENTION,
   QUALITY_SELF_CHECK,
   HIGH_VALUE_GUIDANCE,
+  SITE_TYPE_SCOPE_FILTER,
+  FINDING_TYPE_CLASSIFICATION,
 } from './prompt-rules'
+
+// ── Step 3b: Finding Classifier ─────────────────────────────
+export {
+  classifyFinding,
+  classifyFindings,
+  validateFixableRecommendation,
+  isSimpleSite,
+  filterSimpleSiteFindings,
+} from './finding-classifier'
+export type { ClassifiableFinding } from './finding-classifier'
 
 // ── Step 4: Relevance Scorer ────────────────────────────────
 export {

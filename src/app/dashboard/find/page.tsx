@@ -28,6 +28,7 @@ import {
   Brain,
   FileSearch,
   Eye,
+  Lightbulb,
   X,
 } from 'lucide-react';
 import {
@@ -134,9 +135,20 @@ function FindPageInner() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
+  // Strategic observations — shown in a separate section below fixable findings
+  const strategicFindings = useMemo(() => {
+    if (!bundle) return [];
+    return bundle.findings.filter(
+      (f) => (f as any).finding_type === 'strategic' && f.status !== 'fixed' && !f.dismissed,
+    );
+  }, [bundle]);
+
   const buckets = useMemo<ModuleBucket[]>(() => {
     if (!bundle) return [];
-    const open = bundle.findings.filter((f) => f.status === 'open' || f.status === 'in_progress');
+    // Only fixable findings go into the module buckets
+    const open = bundle.findings.filter(
+      (f) => (f.status === 'open' || f.status === 'in_progress') && (f as any).finding_type !== 'strategic',
+    );
     const grouped = groupFindingsForDisplay(open, (f) => moduleIndexForFinding(f));
 
     const byModule = new Map<number, GroupedFinding[]>();
@@ -497,6 +509,88 @@ function FindPageInner() {
               </section>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Strategic observations ─────────────────────────────── */}
+      {strategicFindings.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span
+              className="w-7 h-7 rounded-md flex items-center justify-center"
+              style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
+            >
+              <Lightbulb size={14} style={{ color: 'var(--signal)' }} />
+            </span>
+            <div>
+              <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
+                Strategic observations
+              </h2>
+              <p className="text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
+                Broader insights that require strategy, redesign, or judgment — not console-fixable.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="rounded-lg overflow-hidden"
+            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+          >
+            <ul>
+              {strategicFindings.map((f, i) => {
+                const host = hostnameOf(f.page_url);
+                return (
+                  <li
+                    key={f.id}
+                    style={{ borderBottom: i < strategicFindings.length - 1 ? '1px solid var(--rule)' : 'none' }}
+                  >
+                    <div className="px-4 py-3 flex items-start gap-3">
+                      <span
+                        className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                        style={{ background: severityColor(f.severity) }}
+                        aria-hidden
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-[14px] font-medium leading-snug tracking-normal"
+                          style={{ color: 'var(--ink)' }}
+                        >
+                          {f.title}
+                        </p>
+                        <p className="text-[12.5px] mt-1 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                          {f.description}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                          <span className="font-semibold" style={{ color: severityColor(f.severity) }}>
+                            {severityLabel(f.severity)}
+                          </span>
+                          <span aria-hidden>·</span>
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                            style={{
+                              background: 'color-mix(in srgb, var(--signal) 10%, transparent)',
+                              color: 'var(--signal)',
+                            }}
+                          >
+                            Strategic
+                          </span>
+                          {host && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span className="inline-flex items-center gap-1 truncate max-w-[280px]">
+                                <ExternalLink size={9} />
+                                {host}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       )}
     </div>

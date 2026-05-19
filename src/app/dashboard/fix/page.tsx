@@ -511,7 +511,9 @@ function FixPageInner() {
 
   const groups = useMemo<GroupedFinding[]>(() => {
     if (!bundle) return [];
-    const grouped = groupFindingsForDisplay(bundle.findings, (f) => moduleIndexForFinding(f));
+    // Only show fixable findings in the Fix Console — strategic observations live on the Find tab
+    const fixable = bundle.findings.filter((f) => (f as any).finding_type !== 'strategic');
+    const grouped = groupFindingsForDisplay(fixable, (f) => moduleIndexForFinding(f));
     return [...grouped].sort((a, b) => fixPriority(b.primary) - fixPriority(a.primary));
   }, [bundle]);
 

@@ -216,11 +216,38 @@ export interface SiteNote {
   updated_at:  string
 }
 
+/**
+ * Finding type — separates concrete, deployable fixes from broader observations.
+ *
+ * 'fixable'   — Concrete, actionable issue with a clear implementation path.
+ *               Shown in the Fix Console. Must be deployable: HTML, schema,
+ *               metadata, copy, or file changes the user can push from the console.
+ *
+ * 'strategic' — Broader observation that requires redesign, strategy, or judgment.
+ *               Shown under "Strategic observations" on the Find tab.
+ *               NOT shown in the Fix Console. Useful context but not deployable.
+ */
+export type FindingType = 'fixable' | 'strategic'
+
+/**
+ * Fix type — for fixable findings, describes the deployment mechanism.
+ *
+ * 'html'     — Edit existing HTML (heading structure, alt text, semantic tags)
+ * 'meta'     — Add or change meta tags, OG tags, canonical, title tags
+ * 'schema'   — Add or fix JSON-LD structured data
+ * 'copy'     — Rewrite or improve text content (headlines, CTAs, descriptions)
+ * 'file'     — Add a new file (robots.txt, sitemap.xml, llms.txt, etc.)
+ * 'config'   — Server or platform config (redirects, headers, etc.)
+ */
+export type FixType = 'html' | 'meta' | 'schema' | 'copy' | 'file' | 'config' | null
+
 export interface AuditFinding {
   id:                string
   audit_id:          string
   checklist_item_id: string | null
   category_index:    number | null       // 0-23 explicit category assignment (kills keyword-matching inference)
+  finding_type:      FindingType          // 'fixable' or 'strategic'
+  fix_type:          FixType              // deployment mechanism for fixable findings
   severity:          FindingSeverity
   title:             string
   description:       string

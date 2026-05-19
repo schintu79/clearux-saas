@@ -205,6 +205,70 @@ DO flag these high-value findings:
 - Performance bottlenecks that directly harm user retention
 `.trim()
 
+// ── Site-type scope filter ───────────────────────────────────
+// Prevents abstract or out-of-scope findings on simple sites.
+
+export const SITE_TYPE_SCOPE_FILTER = `
+CRITICAL — SITE-TYPE SCOPE FILTER:
+Before generating ANY finding, determine the website type from the crawled content:
+- Does the site have signup/login flows? Pricing pages? Subscription plans? E-commerce? Forms with sensitive data?
+- A "business-card" site (portfolio, brochure, agency landing, simple service page) with NO signup, NO pricing, NO subscription, NO checkout flow should NEVER receive findings about:
+  * Pricing transparency, hidden costs, or pricing friction
+  * Forced selections, dark patterns, or confirmshaming (there is nothing to force-select)
+  * Psychological friction in checkout or signup flows (there is no checkout or signup)
+  * Responsible design patterns for subscription management (there are no subscriptions)
+  * Cookie consent dark patterns (unless you can actually see manipulative cookie UI in the content)
+  * Cart abandonment, checkout optimization, or payment UX
+- Only flag these types of issues when there is a CONCRETE, VISIBLE, SPECIFIC element on the page that supports the claim. "The site could hypothetically have dark patterns" is not a finding.
+- Generic moral or ethical observations about web design do NOT belong on a site that has no interactive flows to evaluate.
+`.trim()
+
+// ── Finding type classification ─────────────────────────────
+// Separates fixable issues from strategic observations.
+
+export const FINDING_TYPE_CLASSIFICATION = `
+CRITICAL — FINDING TYPE CLASSIFICATION:
+Every finding MUST be classified as either "fixable" or "strategic":
+
+FIXABLE FINDINGS (findingType: "fixable"):
+These appear in the Fix Console and MUST be directly deployable. The user must be able to:
+1. See exactly what is wrong (with quoted evidence)
+2. See exactly where it is wrong (specific page, element, or file)
+3. Understand why it matters (concrete impact)
+4. Get an exact implementation (copy-paste code, text, or config change)
+
+Fixable findings MUST have a fixType:
+- "html" — Edit existing HTML (fix heading structure, add alt text, fix semantic tags, add landmarks)
+- "meta" — Add or change meta tags, OG tags, canonical URLs, title tags, meta descriptions
+- "schema" — Add or fix JSON-LD structured data (Organization, FAQ, Product, Breadcrumb, etc.)
+- "copy" — Rewrite text content (headlines, CTAs, descriptions, button labels, error messages)
+- "file" — Add a new file to the site root (robots.txt, sitemap.xml, llms.txt, .well-known/ai-plugin.json)
+- "config" — Server configuration change (redirects, headers, viewport meta)
+
+Examples of fixable findings:
+- Missing meta description → fixType: "meta", recommendation includes the exact meta tag
+- Weak hero headline → fixType: "copy", recommendation includes the rewritten headline
+- Missing JSON-LD Organization schema → fixType: "schema", recommendation includes the exact JSON-LD block
+- Missing alt text on hero image → fixType: "html", recommendation includes the exact alt attribute
+- No robots.txt → fixType: "file", recommendation includes the exact file content
+- Heading hierarchy broken (H1 → H3) → fixType: "html", recommendation shows correct structure
+
+STRATEGIC FINDINGS (findingType: "strategic"):
+These are broader observations that require redesign, strategic thinking, or human judgment.
+They appear under "Strategic observations" on the Find tab, NOT in the Fix Console.
+They are still valuable but cannot be deployed as a code/content change.
+
+Examples of strategic findings:
+- "Brand positioning feels inconsistent across pages" — requires brand strategy work
+- "Trust story is weak — no social proof or credentials visible" — requires content strategy
+- "Overall design feels dated compared to competitors" — requires design overhaul
+- "Navigation structure doesn't match user mental models" — requires IA restructuring
+- "Emotional tone shifts between pages" — requires content audit and rewrite strategy
+- "No clear conversion funnel from homepage to signup" — requires UX redesign
+
+IF YOU CANNOT SPECIFY AN EXACT CODE/CONTENT CHANGE → IT IS STRATEGIC.
+`.trim()
+
 // ── Compose all rules into a single prompt block ─────────────
 
 export function composePromptRules(): string {
@@ -219,6 +283,8 @@ export function composePromptRules(): string {
     SUBJECTIVE_FILTER,
     FALSE_POSITIVE_WHITELIST,
     HIGH_VALUE_GUIDANCE,
+    SITE_TYPE_SCOPE_FILTER,
+    FINDING_TYPE_CLASSIFICATION,
     DUPLICATE_PREVENTION,
     QUALITY_SELF_CHECK,
   ].join('\n\n')

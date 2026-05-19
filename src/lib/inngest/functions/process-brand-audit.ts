@@ -39,6 +39,8 @@ import {
   recordFindingShown,
   recordAuditStats,
   postAuditLearn,
+  classifyFinding,
+  validateFixableRecommendation,
 } from '@/lib/audit-engine/pipeline'
 
 /* ── DB helpers ── */
@@ -297,6 +299,19 @@ export const processBrandAuditFn = inngest.createFunction(
 
         for (const catResult of reportData.categoryResults) {
           for (const finding of catResult.findings) {
+            const classification = classifyFinding({
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              severity: finding.severity,
+            })
+            const validated = validateFixableRecommendation({
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              severity: finding.severity,
+              ...classification,
+            })
             await db.from('audit_findings').insert({
               audit_id: auditId,
               severity: finding.severity,
@@ -307,6 +322,8 @@ export const processBrandAuditFn = inngest.createFunction(
               page_url: finding.sourceFile || null,
               sort_order: sortOrder++,
               status: 'open',
+              finding_type: validated.findingType,
+              fix_type: validated.fixType,
             } as any)
           }
         }

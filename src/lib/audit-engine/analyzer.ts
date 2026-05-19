@@ -4,7 +4,7 @@
 // ============================================================
 
 import Anthropic from '@anthropic-ai/sdk'
-import type { Audit, FindingSeverity, AuditFinding } from '@/types/database'
+import type { Audit, FindingSeverity, FindingType, FixType, AuditFinding } from '@/types/database'
 import { getLanguagePromptInstruction, getLanguageLabel, getCategoryNames, getBaselineSummary } from '@/lib/languages'
 
 let _anthropic: Anthropic | null = null
@@ -36,6 +36,10 @@ export interface AnalysisFinding {
   targetElement?: string | null
   pageUrl?: string | null
   categoryIndex?: number              // 0-23 explicit category — set by runFullAnalysis
+  /** 'fixable' = concrete, deployable from console. 'strategic' = broader observation. */
+  findingType?: FindingType
+  /** For fixable findings: deployment mechanism (html, meta, schema, copy, file, config). */
+  fixType?: FixType
   /** AI X-Ray: how AI interprets this element vs how a human sees it */
   aiInterpretation?: string | null
   /** AI X-Ray: how a human interprets this element */
@@ -706,12 +710,26 @@ For each issue, assign severity honestly:
 - "medium": Real improvement opportunity that would meaningfully move the needle.
 - "low": Refinement that separates good from great. Still worth doing.
 
+CRITICAL — FINDING CLASSIFICATION:
+Every finding MUST be classified as "fixable" or "strategic":
+- "fixable" = concrete, deployable issue. The user can fix it from the console (HTML, meta, schema, copy, file, or config change). You MUST provide an exact implementation in the recommendation.
+- "strategic" = broader observation requiring redesign, strategy, or judgment. Valuable insight but not directly deployable as a code change.
+If you cannot specify an exact code/content change in the recommendation → it is "strategic".
+
+For "fixable" findings, set fixType to one of: "html", "meta", "schema", "copy", "file", "config".
+For "strategic" findings, set fixType to null.
+
+SITE-TYPE SCOPE FILTER:
+Before generating findings, determine if this is a simple business-card site (no signup, no pricing, no subscription). If so, do NOT generate findings about pricing transparency, forced selections, dark patterns, psychological friction, or responsible design unless there is a concrete, visible, specific element on the page that supports the claim.
+
 Return a JSON array. Each issue:
 {
   "severity": "critical" | "high" | "medium" | "low",
+  "findingType": "fixable" | "strategic",
+  "fixType": "html" | "meta" | "schema" | "copy" | "file" | "config" | null,
   "title": "Clear, specific title (not generic)",
   "description": "Deep analysis referencing actual content. Quote specific text. Explain the psychological or business impact on real users. This should read like a senior consultant's insight, not an automated scan result.",
-  "recommendation": "Concrete, implementable fix with specific details. Include the 'why' — what improvement the client should expect. Reference best practices or data where relevant.",
+  "recommendation": "For FIXABLE: exact implementation — the precise HTML tag, meta tag, JSON-LD block, copy rewrite, or file content the user should deploy. For STRATEGIC: recommended direction and next steps.",
   "estimatedImpact": "Specific expected improvement (e.g., '15-25% increase in CTA clicks', 'Reduces bounce rate for mobile users', 'Eliminates trust barrier for first-time visitors')",
   "targetElement": "A valid CSS selector to locate the element on the page. Use simple, reliable selectors: tag names ('nav', 'header', 'footer', 'main'), class selectors ('.hero', '.cta-button', '.pricing'), ID selectors ('#checkout', '#signup'), or combined ('section.features', 'form.contact', 'nav > ul'). Must be a real CSS selector, NOT a description. Set to null if the issue is page-wide.",
   "pageUrl": "REQUIRED — Copy-paste the exact full URL from the AVAILABLE PAGE URLs list where this issue was found. Must be one of the URLs listed. NEVER use just the domain.",

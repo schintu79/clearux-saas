@@ -27,6 +27,10 @@ import {
   recordFindingShown,
   recordAuditStats,
   postAuditLearn,
+  classifyFinding,
+  validateFixableRecommendation,
+  isSimpleSite,
+  filterSimpleSiteFindings,
 } from '@/lib/audit-engine/pipeline'
 import { identifyStarvedCategories, generateFindingsForStarvedCategories } from '@/lib/audit-engine/pipeline/minimum-findings'
 import { AUDIT_MODULES, COMPLETE_AUDIT_SLUGS } from '@/lib/audit-modules'
@@ -348,10 +352,13 @@ export const processAuditFn = inngest.createFunction(
           let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
 
           for (const finding of result.findings) {
+            const cls = classifyFinding({ title: finding.title, description: finding.description, recommendation: finding.recommendation, severity: finding.severity, categoryIndex: finding.categoryIndex ?? null })
             await db.from('audit_findings').insert({
               audit_id: auditId,
               checklist_item_id: null,
               category_index: finding.categoryIndex ?? null,
+              finding_type: cls.findingType,
+              fix_type: cls.fixType,
               severity: finding.severity,
               title: finding.title,
               description: finding.description,
@@ -462,6 +469,21 @@ export const processAuditFn = inngest.createFunction(
               .limit(1)
             let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
             for (const finding of result.findings) {
+              // Structured data findings are always fixable (schema type)
+              const classification = classifyFinding({
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+                categoryIndex: finding.categoryIndex ?? 17,
+              })
+              const validated = validateFixableRecommendation({
+                ...finding, ...classification,
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+              })
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
@@ -477,6 +499,8 @@ export const processAuditFn = inngest.createFunction(
                 sort_order: sortOrder++,
                 status: 'open',
                 dismissed: false,
+                finding_type: validated.findingType,
+                fix_type: validated.fixType,
               } as any)
             }
           }
@@ -1024,6 +1048,7 @@ RULES FOR RE-AUDIT:
             continue
           }
           // Copy [OPEN], [IN PROGRESS], [BACKLOG] findings as-is
+          // Preserve finding_type/fix_type from previous audit if available
           await db.from('audit_findings').insert({
             audit_id: auditId,
             checklist_item_id: null,
@@ -1038,6 +1063,8 @@ RULES FOR RE-AUDIT:
             target_element: pf.target_element || null,
             screenshot_url: null,
             sort_order: sortOrder++,
+            finding_type: (pf as any).finding_type || 'fixable',
+            fix_type: (pf as any).fix_type || null,
           } as any)
           copiedCount++
         }
@@ -1252,6 +1279,22 @@ RULES FOR RE-AUDIT:
             const findings = gapResults[catIdx]
             const originalCatIdx = gapCategoryIndices[catIdx] ?? null
             for (const finding of findings) {
+              const classification = classifyFinding({
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+                findingType: finding.findingType,
+                fixType: finding.fixType,
+                categoryIndex: originalCatIdx,
+              })
+              const validated = validateFixableRecommendation({
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+                ...classification,
+              })
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
@@ -1266,6 +1309,8 @@ RULES FOR RE-AUDIT:
                 target_element: finding.targetElement || null,
                 screenshot_url: null,
                 sort_order: sortOrder++,
+                finding_type: validated.findingType,
+                fix_type: validated.fixType,
               } as any)
               findingsInGap++
             }
@@ -1428,10 +1473,27 @@ RULES FOR RE-AUDIT:
                 }
               }
 
+              // Classify finding as fixable or strategic
+              const rawClassification = classifyFinding({
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+                findingType: finding.findingType,
+                fixType: finding.fixType,
+                categoryIndex: finding.categoryIndex ?? null,
+              })
+              const classification = validateFixableRecommendation({
+                ...finding,
+                findingType: rawClassification.findingType,
+                fixType: rawClassification.fixType,
+              })
               await db.from('audit_findings').insert({
                 audit_id: auditId,
                 checklist_item_id: null,
                 category_index: finding.categoryIndex ?? null,
+                finding_type: classification.findingType,
+                fix_type: classification.fixType,
                 severity: finding.severity,
                 title: finding.title,
                 description: finding.description,
@@ -1986,6 +2048,20 @@ RULES FOR RE-AUDIT:
 
         for (const [categoryIndex, findings] of generated) {
           for (const finding of findings) {
+            const classification = classifyFinding({
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              severity: finding.severity,
+              categoryIndex,
+            })
+            const validated = validateFixableRecommendation({
+              title: finding.title,
+              description: finding.description,
+              recommendation: finding.recommendation,
+              severity: finding.severity,
+              ...classification,
+            })
             await db.from('audit_findings').insert({
               audit_id: auditId,
               checklist_item_id: null,
@@ -2000,6 +2076,8 @@ RULES FOR RE-AUDIT:
               target_element: finding.targetElement || null,
               screenshot_url: null,
               sort_order: sortOrder++,
+              finding_type: validated.findingType,
+              fix_type: validated.fixType,
             } as any)
             totalInserted++
           }
