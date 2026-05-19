@@ -69,7 +69,7 @@ function severityCardBg(severity: string): string {
     : severity === 'high' ? 'var(--warn)'
     : severity === 'low' ? 'var(--ok)'
     : 'var(--signal)';
-  return `color-mix(in srgb, ${v} 4%, #ffffff)`;
+  return `color-mix(in srgb, ${v} 3%, var(--card))`;
 }
 
 /** Tiny pill used for module + severity meta on the collapsed row. */
@@ -183,7 +183,7 @@ function FixRow({
         {/* Collapsed header — severity-tinted strip */}
         <div
           className="w-full px-4 flex items-center gap-3 transition-colors"
-          style={{ paddingTop: '1rem', paddingBottom: '1rem', background: severityCardBg(finding.severity), borderLeft: `3px solid ${sevColor}` }}
+          style={{ paddingTop: '0.65rem', paddingBottom: '0.65rem', background: severityCardBg(finding.severity), borderLeft: `2px solid ${sevColor}` }}
         >
           <button
             type="button"
@@ -193,11 +193,11 @@ function FixRow({
             aria-controls={`fix-body-${finding.id}`}
           >
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-[14px] font-medium leading-snug truncate tracking-normal" style={{ color: 'var(--ink)', fontSize: '14px', fontWeight: 500, letterSpacing: '0' }}>
+              <h3 className="text-[13px] font-medium leading-snug truncate tracking-normal" style={{ color: 'var(--ink)' }}>
                 {finding.title}
               </h3>
             </div>
-            <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.6rem' }}>
+            <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.35rem' }}>
               <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
                 {severityLabel(finding.severity)}
               </span>
@@ -243,7 +243,7 @@ function FixRow({
 
           {/* Passive status badge — not editable, auto-transitions on deploy */}
           <span
-            className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+            className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
             style={{
               background: meta.bg,
               color: meta.color,
