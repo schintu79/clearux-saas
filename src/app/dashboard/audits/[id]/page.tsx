@@ -230,7 +230,43 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 
-/* ── Minimal audit progress bar — black & white, no noise ──── */
+/* ── Coffee cup SVG — subtle steam animation ──────────── */
+function CoffeeCup() {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className="mx-auto"
+    >
+      <style>{`
+        @keyframes steam1 { 0%,100%{opacity:0;transform:translateY(0)} 30%{opacity:.4} 70%{opacity:.2} 100%{transform:translateY(-8px)} }
+        @keyframes steam2 { 0%,100%{opacity:0;transform:translateY(0)} 40%{opacity:.35} 80%{opacity:.15} 100%{transform:translateY(-9px)} }
+        @keyframes steam3 { 0%,100%{opacity:0;transform:translateY(0)} 35%{opacity:.3} 75%{opacity:.1} 100%{transform:translateY(-7px)} }
+        .st1{animation:steam1 2.4s ease-in-out infinite}
+        .st2{animation:steam2 2.8s ease-in-out .4s infinite}
+        .st3{animation:steam3 2.6s ease-in-out .8s infinite}
+      `}</style>
+      {/* Steam wisps */}
+      <path className="st1" d="M18 16c0-3 2-4 0-7" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path className="st2" d="M24 14c0-3 -1.5-4.5 .5-7.5" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path className="st3" d="M30 16c0-3 -2-4 0-7" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* Cup body */}
+      <rect x="10" y="20" width="28" height="20" rx="3" stroke="var(--ink)" strokeWidth="1.5" fill="none" />
+      {/* Handle */}
+      <path d="M38 24c4 0 6 2 6 6s-2 6-6 6" stroke="var(--ink)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      {/* Coffee surface */}
+      <line x1="14" y1="26" x2="34" y2="26" stroke="var(--ink)" strokeWidth="1" opacity=".25" />
+      {/* Saucer */}
+      <ellipse cx="24" cy="42" rx="18" ry="2.5" stroke="var(--ink)" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+/* ── Audit progress loader — coffee animation + deep scan copy ──── */
 function AuditProgressLoader({
   status,
   percent,
@@ -269,15 +305,18 @@ function AuditProgressLoader({
 
   return (
     <div
-      className="py-10 flex flex-col items-center gap-5"
+      className="py-10 px-6 flex flex-col items-center gap-5"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(display)}
       aria-label="Audit progress"
     >
+      {/* Coffee cup animation */}
+      <CoffeeCup />
+
       {/* Percentage */}
-      <span className="text-5xl font-semibold tabular-nums tracking-tight" style={{ color: 'var(--ink)' }}>
+      <span className="text-4xl font-semibold tabular-nums tracking-tight" style={{ color: 'var(--ink)' }}>
         {Math.round(display)}%
       </span>
 
@@ -298,10 +337,33 @@ function AuditProgressLoader({
         </div>
       </div>
 
-      {/* One-line status */}
-      <p className="text-[13px]" style={{ color: 'var(--m-muted)' }}>
+      {/* Stage label */}
+      <p className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
         {label}
       </p>
+
+      {/* Deep scan copy */}
+      <p
+        className="text-[13px] leading-[1.65] text-center max-w-md"
+        style={{ color: 'var(--m-muted)' }}
+      >
+        We&rsquo;re deeply scanning your website — not just skimming the surface.
+        This can take a few minutes, so grab a coffee or explore the Fixpath overview while we work.
+      </p>
+
+      {/* Secondary CTA */}
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-md transition-colors"
+        style={{
+          color: 'var(--ink)',
+          border: '1px solid var(--rule)',
+          background: 'transparent',
+        }}
+      >
+        Explore Fixpath overview
+        <ArrowRight size={11} />
+      </Link>
     </div>
   );
 }
@@ -1996,8 +2058,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           />
 
           <div className="px-5 pb-5 text-center">
-            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Updates automatically
+            <p className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+              This page updates automatically
             </p>
 
             {/* Restart if stuck — only show after 3 minutes */}
@@ -2005,7 +2067,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium px-4 py-2 rounded-md transition-all disabled:opacity-50"
+                className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium px-4 py-2 rounded-md transition-all disabled:opacity-50"
                 style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
                 {restarting ? (
