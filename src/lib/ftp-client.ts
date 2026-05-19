@@ -35,6 +35,8 @@ export interface FtpClientWrapper {
   write(filePath: string, content: string): Promise<void>;
   mkdir(dirPath: string): Promise<void>;
   delete(filePath: string): Promise<void>;
+  /** Soft disconnect — returns the connection to the pool for reuse.
+   *  The pool closes idle connections after 60 seconds automatically. */
   disconnect(): Promise<void>;
 }
 
@@ -84,6 +86,8 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
 
   return {
     async connect() {
+      // If already connected, skip reconnection
+      if (conn && sftp) return;
       const { Client } = await import('ssh2');
       return new Promise<void>((resolve, reject) => {
         conn = new Client();
@@ -91,7 +95,7 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
         const done = (err: Error | null) => {
           if (settled) return;
           settled = true;
-          if (err) reject(normalizeSshError(err, creds));
+          if (err) { conn = null; sftp = null; reject(normalizeSshError(err, creds)); }
           else resolve();
         };
         conn.on('ready', () => {
@@ -101,7 +105,16 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
             done(null);
           });
         });
-        conn.on('error', (err: Error) => done(err));
+        conn.on('error', (err: Error) => {
+          done(err);
+          // Mark connection as dead so reconnect is possible
+          conn = null;
+          sftp = null;
+        });
+        conn.on('close', () => {
+          conn = null;
+          sftp = null;
+        });
         try {
           conn.connect({
             host: creds.host,
@@ -109,6 +122,8 @@ function createSftpClient(creds: FtpCredentials): FtpClientWrapper {
             username: creds.username,
             password: creds.password,
             readyTimeout: 10000,
+            keepaliveInterval: 10000,
+            keepaliveCountMax: 3,
             algorithms: {
               kex: ['ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1'],
             },
@@ -194,6 +209,8 @@ function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
 
   return {
     async connect() {
+      // If already connected, skip reconnection
+      if (client && !client.closed) return;
       const basicFtp = await import('basic-ftp');
       client = new basicFtp.Client();
       client.ftp.verbose = false;
@@ -207,6 +224,7 @@ function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
           secureOptions: creds.protocol === 'ftps' ? { rejectUnauthorized: false } : undefined,
         });
       } catch (err) {
+        client = null;
         throw normalizeFtpError(err as Error, creds);
       }
     },
@@ -260,16 +278,105 @@ function createFtpBasicClient(creds: FtpCredentials): FtpClientWrapper {
   };
 }
 
+/* ── Connection Pool ──────────────────────────────────────── */
+
+interface PoolEntry {
+  wrapper: FtpClientWrapper;
+  /** Hard-close the underlying transport — bypasses the soft-disconnect wrapper. */
+  hardClose: () => Promise<void>;
+  lastUsed: number;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+/** TTL in ms — idle connections are closed after this period. */
+const POOL_TTL = 60_000; // 60 seconds
+
+const pool = new Map<string, PoolEntry>();
+
+function poolKey(creds: FtpCredentials): string {
+  return `${creds.protocol}://${creds.username}@${creds.host}:${creds.port}`;
+}
+
+function releasePoolEntry(key: string) {
+  const entry = pool.get(key);
+  if (!entry) return;
+  clearTimeout(entry.timer);
+  pool.delete(key);
+  entry.hardClose().catch(() => {});
+}
+
 /* ── Factory ───────────────────────────────────────────────── */
 /**
- * Synchronous factory. The underlying transports are dynamically imported
- * inside connect(), so the wrapper itself is built synchronously and
- * callers do not need to await this call.
+ * Returns a pooled FTP/SFTP client wrapper. Connections are kept alive
+ * for 60 seconds after last use, so sequential operations (e.g. read →
+ * review → deploy) reuse the same TCP/SSH connection instead of
+ * reconnecting each time.
+ *
+ * The returned wrapper is safe to call connect() on multiple times —
+ * it's a no-op if already connected.
  *
  *   const client = createFtpClient(creds);
  *   await client.connect();
  */
 export function createFtpClient(creds: FtpCredentials): FtpClientWrapper {
-  if (creds.protocol === 'sftp') return createSftpClient(creds);
-  return createFtpBasicClient(creds);
+  const key = poolKey(creds);
+  const existing = pool.get(key);
+
+  if (existing) {
+    // Refresh the idle timer
+    clearTimeout(existing.timer);
+    existing.lastUsed = Date.now();
+    existing.timer = setTimeout(() => releasePoolEntry(key), POOL_TTL);
+    return existing.wrapper;
+  }
+
+  // Create a new client
+  const raw = creds.protocol === 'sftp' ? createSftpClient(creds) : createFtpBasicClient(creds);
+
+  // Retry helper — if an operation fails with a connection error, reconnect once and retry.
+  async function withRetry<T>(op: () => Promise<T>): Promise<T> {
+    try {
+      return await op();
+    } catch (err: any) {
+      const msg = String(err?.message || '').toLowerCase();
+      const isConnError = msg.includes('not connected') || msg.includes('socket') ||
+        msg.includes('closed') || msg.includes('end of stream') || msg.includes('econnreset');
+      if (!isConnError) throw err;
+      // Reconnect and retry once
+      await raw.connect();
+      return op();
+    }
+  }
+
+  // Wrap methods — disconnect is a soft release (just refreshes the idle timer).
+  // The pool auto-closes the real connection after POOL_TTL of inactivity.
+  const wrapper: FtpClientWrapper = {
+    connect: () => raw.connect(),
+    list: (d) => withRetry(() => raw.list(d)),
+    read: (f) => withRetry(() => raw.read(f)),
+    write: (f, c) => withRetry(() => raw.write(f, c)),
+    mkdir: (d) => withRetry(() => raw.mkdir(d)),
+    delete: (f) => withRetry(() => raw.delete(f)),
+    async disconnect() {
+      // Soft close — just refresh the pool timer so the connection stays
+      // alive for reuse by the next API call. The pool will hard-close it
+      // after POOL_TTL of inactivity.
+      const entry = pool.get(key);
+      if (entry) {
+        clearTimeout(entry.timer);
+        entry.lastUsed = Date.now();
+        entry.timer = setTimeout(() => releasePoolEntry(key), POOL_TTL);
+      }
+    },
+  };
+
+  const entry: PoolEntry = {
+    wrapper,
+    hardClose: () => raw.disconnect(),
+    lastUsed: Date.now(),
+    timer: setTimeout(() => releasePoolEntry(key), POOL_TTL),
+  };
+  pool.set(key, entry);
+
+  return wrapper;
 }
