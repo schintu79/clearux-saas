@@ -63,11 +63,13 @@ export const VISUAL_FIX_TYPES = new Set<FixType>(['copy', 'heading', 'content'])
 
 export function inferFixType(finding: AuditFinding): FixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
+  // Schema/structured-data fixes are code, not design — check first to avoid
+  // false positives when the recommendation mentions "logo" or "image" fields.
+  if (/json|schema\.org|ld\+json|structured data|jsonld/.test(blob)) return 'schema';
+  if (/meta description|og:|open graph|<meta/.test(blob)) return 'meta';
   // Design-type fixes that require custom assets, not code changes
   if (/\b(icon|infographic|illustrat|photograph|image|visual|graphic|logo|banner|hero image|design element|custom art|brand.*visual)\b/.test(blob)
     && /\b(add|create|include|introduce|place|insert|design|produce)\b/.test(blob)) return 'design';
-  if (/json|schema\.org|ld\+json|structured data|jsonld/.test(blob)) return 'schema';
-  if (/meta description|og:|open graph|<meta/.test(blob)) return 'meta';
   if (/heading|h1|h2|h3|title tag/.test(blob)) return 'heading';
   if (/alt text|aria|contrast|wcag|screen reader|accessib/.test(blob)) return 'accessibility';
   if (/faq|paragraph|copy|tagline|wording|message|cta|button text/.test(blob)) return 'copy';
