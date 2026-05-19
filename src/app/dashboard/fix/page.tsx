@@ -241,28 +241,18 @@ function FixRow({
             </div>
           </button>
 
-          {/* Color-coded status select — change status without expanding */}
-          <select
-            value={finding.status}
-            onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
-            disabled={pending}
-            onClick={(e) => e.stopPropagation()}
-            className="text-[10.5px] font-semibold pl-2 pr-6 py-1 rounded-full outline-none cursor-pointer appearance-none flex-shrink-0 focus-visible:ring-2 focus-visible:ring-signal/30"
+          {/* Passive status badge — not editable, auto-transitions on deploy */}
+          <span
+            className="inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
             style={{
               background: meta.bg,
               color: meta.color,
               border: `1px solid ${meta.dot}`,
-              opacity: pending ? 0.6 : 1,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Cpath d='M2.5 3.5L5 6l2.5-2.5'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 5px center',
             }}
-            aria-label={`Status for ${finding.title}`}
           >
-            {STATUS_KEYS.map((s) => (
-              <option key={s} value={s}>{STATUS_META[s].label}</option>
-            ))}
-          </select>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} aria-hidden />
+            {meta.label}
+          </span>
 
           {/* Dismiss — visible alongside other actions */}
           <button
@@ -353,15 +343,14 @@ function FixRow({
                 </div>
               </div>
 
-              {/* Recommended fix — full-width card with accent border */}
+              {/* Resolve this issue — two-path Deploy Console */}
               <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--signal)' }}>
-                  Recommended fix
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: 'var(--signal)' }}>
+                  Resolve this issue
                 </p>
                 <FixConsole
                   finding={finding}
-                  onApproveLocal={() => onStatus(finding.id, 'fixed')}
-                  onStatus={(s) => onStatus(finding.id, s)}
+                  onDeploySuccess={() => onStatus(finding.id, 'fixed')}
                   pending={pending}
                   ftpConnections={ftpConnections}
                 />
@@ -631,7 +620,7 @@ function FixPageInner() {
       <div className="mb-5">
         <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
         <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Your action queue. Click a row to expand, then review the fix, copy or download the snippet, and approve. Nothing is pushed without your approval.
+          Your action queue. Expand a finding, then choose to fix it yourself and deploy directly, or hand it off to your team.
         </p>
       </div>
 

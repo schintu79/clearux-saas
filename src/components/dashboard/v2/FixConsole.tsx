@@ -1,17 +1,15 @@
 'use client';
 
 /**
- * FixConsole — flat, single-row action bar for a single finding.
+ * FixConsole — unified Deploy Console for a single finding.
  *
- * Design intent (Fix tab redesign):
- *  - No card-in-card nesting. The console sits flush inside the parent
- *    finding row with light dividers, not its own framed container.
- *  - One horizontal action bar: status pills, Copy, Download, AI suggest,
- *    Explain, Push. Auxiliary panels (AI / Explain) expand inline below.
- *  - AI suggestion is gated to text/copy-style fixes only.
- *  - Explain helper provides step-by-step guidance.
- *  - Push remains explicitly gated: nothing is sent to a live site
- *    without an explicit user approval and a connected target.
+ * Two resolution paths:
+ *  1. "Fix it yourself" — editable copy form + AI helper (when applicable)
+ *     + inline deploy-to-server console. Successful deploy auto-marks Fixed.
+ *  2. "Let your team handle it" — read-only recommendation + Copy / Download.
+ *     Lightweight handoff, no deploy controls.
+ *
+ * Status is passive feedback managed by the parent — not a primary action here.
  */
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -21,7 +19,6 @@ import {
   Check,
   Download,
   Sparkles,
-  Send,
   RotateCcw,
   AlertCircle,
   Loader2,
@@ -29,9 +26,12 @@ import {
   Upload,
   X,
   Server,
+  Wand2,
+  Wrench,
+  Users,
+  ArrowRight,
   ChevronDown,
   ChevronUp,
-  Wand2,
 } from 'lucide-react';
 import type { AuditFinding, FindingStatus } from '@/types/database';
 import DiffPreview from './DiffPreview';
@@ -54,13 +54,7 @@ type FixType =
   | 'content'
   | 'technical';
 
-const STATUS_META: Record<FindingStatus, { label: string; color: string; bg: string; dot: string }> = {
-  open:        { label: 'Open',        color: 'var(--m-muted)', bg: 'var(--paper-2)',                                       dot: 'var(--m-muted)' },
-  in_progress: { label: 'In Progress', color: 'var(--warn)',    bg: 'color-mix(in srgb, var(--warn) 10%, transparent)',     dot: 'var(--warn)' },
-  fixed:       { label: 'Fixed',       color: 'var(--ok)',      bg: 'color-mix(in srgb, var(--ok) 10%, transparent)',       dot: 'var(--ok)' },
-  backlog:     { label: 'Backlog',     color: 'var(--signal)',  bg: 'color-mix(in srgb, var(--signal) 10%, transparent)',   dot: 'var(--signal)' },
-};
-const STATUS_KEYS: FindingStatus[] = ['open', 'in_progress', 'fixed', 'backlog'];
+type ResolutionPath = 'self' | 'handoff' | null;
 
 function inferFixType(finding: AuditFinding): FixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
@@ -127,28 +121,224 @@ function downloadFile(filename: string, content: string, mime: string) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-export default function FixConsole({
+/* ── Resolution Path Chooser ──────────────────────────────── */
+
+function PathChooser({ onChoose }: { onChoose: (path: ResolutionPath) => void }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <button
+        type="button"
+        onClick={() => onChoose('self')}
+        className="group flex flex-col items-start gap-2 px-4 py-4 rounded-lg text-left transition-all hover:shadow-sm"
+        style={{
+          background: 'var(--paper)',
+          border: '1.5px solid var(--rule)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--signal)';
+          e.currentTarget.style.background = 'color-mix(in srgb, var(--signal) 3%, var(--paper))';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--rule)';
+          e.currentTarget.style.background = 'var(--paper)';
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center"
+            style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
+          >
+            <Wrench size={14} style={{ color: 'var(--signal)' }} />
+          </div>
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+            Fix it yourself
+          </span>
+        </div>
+        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--m-muted)' }}>
+          Edit the recommended copy, refine with AI, then deploy directly to your server.
+        </p>
+        <span
+          className="inline-flex items-center gap-1 text-[11px] font-medium mt-1"
+          style={{ color: 'var(--signal)' }}
+        >
+          Open deploy console <ArrowRight size={10} />
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChoose('handoff')}
+        className="group flex flex-col items-start gap-2 px-4 py-4 rounded-lg text-left transition-all hover:shadow-sm"
+        style={{
+          background: 'var(--paper)',
+          border: '1.5px solid var(--rule)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--ink)';
+          e.currentTarget.style.background = 'color-mix(in srgb, var(--ink) 3%, var(--paper))';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--rule)';
+          e.currentTarget.style.background = 'var(--paper)';
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center"
+            style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}
+          >
+            <Users size={14} style={{ color: 'var(--ink)' }} />
+          </div>
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
+            Let your team handle it
+          </span>
+        </div>
+        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--m-muted)' }}>
+          Copy or download the recommended fix and hand it off to your developer or content team.
+        </p>
+        <span
+          className="inline-flex items-center gap-1 text-[11px] font-medium mt-1"
+          style={{ color: 'var(--m-muted)' }}
+        >
+          View fix details <ArrowRight size={10} />
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/* ── Handoff Panel (read-only + Copy/Download) ────────────── */
+
+function HandoffPanel({
   finding,
-  onApproveLocal,
-  onStatus,
-  pending,
-  ftpConnections = [],
+  patch,
+  fixType,
+  onBack,
 }: {
   finding: AuditFinding;
-  /** Called when user clicks "Approve & mark fixed" — wires into existing status flow. */
-  onApproveLocal: () => void;
-  /** Optional: status pill clicks. When omitted the status row is hidden. */
-  onStatus?: (status: FindingStatus) => void;
-  pending: boolean;
-  /** Brand-scoped FTP connections — when present, enables inline deploy. */
+  patch: string;
+  fixType: FixType;
+  onBack: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const isJson = fixType === 'schema' || looksLikeJson(patch);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(patch);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { setCopied(false); }
+  };
+
+  const handleDownload = () => {
+    const base = slugify(finding.title);
+    if (isJson) {
+      downloadFile(`${base}.json`, patch, 'application/json');
+      return;
+    }
+    const md = [
+      `# ${finding.title}`,
+      '',
+      `## Finding`,
+      finding.description || '(no description)',
+      '',
+      `## Recommended fix`,
+      patch,
+      '',
+      `## Business impact`,
+      finding.estimated_impact || '(not captured)',
+      '',
+    ].join('\n');
+    downloadFile(`${base}.md`, md, 'text/markdown');
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md transition-colors"
+          style={{ color: 'var(--m-muted)', background: 'transparent', border: '1px solid var(--rule)' }}
+        >
+          <RotateCcw size={10} />
+          Back
+        </button>
+        <div className="flex items-center gap-1.5">
+          <Users size={12} style={{ color: 'var(--m-muted)' }} />
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+            Team handoff
+          </span>
+        </div>
+      </div>
+
+      {/* Read-only recommendation */}
+      <div
+        className="px-3 py-3 rounded-lg text-[12.5px] leading-[1.65] whitespace-pre-wrap font-mono"
+        style={{
+          background: 'var(--paper-2)',
+          border: '1px solid var(--rule)',
+          color: 'var(--ink)',
+          minHeight: '80px',
+        }}
+      >
+        {patch || (
+          <span style={{ color: 'var(--m-muted)', fontStyle: 'italic' }}>
+            No recommendation captured for this finding.
+          </span>
+        )}
+      </div>
+
+      {/* Copy / Download bar */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleCopy}
+          disabled={!patch.trim()}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold transition-colors disabled:opacity-50"
+          style={{
+            background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--ink)',
+            color: copied ? 'var(--ok)' : 'var(--paper)',
+            border: copied ? '1px solid var(--ok)' : '1px solid var(--ink)',
+          }}
+        >
+          {copied ? <Check size={11} /> : <Copy size={11} />}
+          {copied ? 'Copied' : 'Copy to clipboard'}
+        </button>
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={!patch.trim()}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium transition-colors disabled:opacity-50"
+          style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+        >
+          <Download size={11} />
+          {isJson ? 'Download .json' : 'Download .md'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Self-Serve Console (edit + AI + deploy) ──────────────── */
+
+function SelfServeConsole({
+  finding,
+  onDeploySuccess,
+  ftpConnections = [],
+  onBack,
+}: {
+  finding: AuditFinding;
+  onDeploySuccess: () => void;
   ftpConnections?: FtpConnectionForDeploy[];
+  onBack: () => void;
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
   const [copied, setCopied] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
-  const [showDeploy, setShowDeploy] = useState(false);
   const [instruction, setInstruction] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -159,7 +349,7 @@ export default function FixConsole({
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
 
-  // Inline deploy state
+  // Deploy state
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
     ftpConnections.length === 1 ? ftpConnections[0].id : '',
   );
@@ -191,22 +381,20 @@ export default function FixConsole({
       .catch(() => {});
   }, [finding.id, ftpConnections.length]);
 
-  // Auto-suggest deploy path when connection changes
   const selectedConn = useMemo(
     () => ftpConnections.find((c) => c.id === deployConnectionId),
     [ftpConnections, deployConnectionId],
   );
 
-  // Populate suggested path when deploy panel opens or connection changes
+  // Auto-suggest deploy path
   React.useEffect(() => {
-    if (!showDeploy || deployPath) return;
+    if (deployPath) return;
     const root = selectedConn?.remote_path || '';
     const suggested = suggestRemotePath(finding.page_url, root);
     if (suggested) setDeployPath(suggested);
-  }, [showDeploy, selectedConn]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedConn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasFtp = ftpConnections.length > 0;
-
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const aiApplicable = useMemo(
     () => isAiHelperApplicable(fixType, finding.recommendation || ''),
@@ -220,31 +408,7 @@ export default function FixConsole({
       await navigator.clipboard.writeText(patch);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  const handleDownload = () => {
-    const base = slugify(finding.title);
-    if (isJson) {
-      downloadFile(`${base}.json`, patch, 'application/json');
-      return;
-    }
-    const md = [
-      `# ${finding.title}`,
-      '',
-      `## Finding`,
-      finding.description || '(no description)',
-      '',
-      `## Recommended fix`,
-      patch,
-      '',
-      `## Business impact`,
-      finding.estimated_impact || '(not captured)',
-      '',
-    ].join('\n');
-    downloadFile(`${base}.md`, md, 'text/markdown');
+    } catch { setCopied(false); }
   };
 
   const handleAiRefine = async () => {
@@ -284,7 +448,7 @@ export default function FixConsole({
   const handleExplain = async () => {
     if (explainBusy) return;
     setShowExplain(true);
-    if (explainText) return; // already loaded
+    if (explainText) return;
     setExplainBusy(true);
     setExplainError(null);
     try {
@@ -298,10 +462,7 @@ export default function FixConsole({
         return;
       }
       const t = typeof data.explanation === 'string' ? data.explanation.trim() : '';
-      if (!t) {
-        setExplainError('No guidance returned.');
-        return;
-      }
+      if (!t) { setExplainError('No guidance returned.'); return; }
       setExplainText(t);
     } catch {
       setExplainError('Network error. Try again.');
@@ -378,10 +539,15 @@ export default function FixConsole({
         setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
         return;
       }
-      setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
+      setDeployResult({
+        ok: true,
+        msg: data?.hadBackup ? 'Deployed successfully — backup captured.' : 'Deployed successfully.',
+        deployLogId: data?.deployLogId,
+      });
       if (data?.deployLogId) setLastDeployId(data.deployLogId);
       setSurgicalResult(null);
-      onApproveLocal();
+      // Auto-mark as fixed on successful deploy
+      onDeploySuccess();
     } catch (err: any) {
       setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
     } finally {
@@ -389,220 +555,152 @@ export default function FixConsole({
     }
   };
 
+  const handleRollback = async () => {
+    const logId = deployResult?.deployLogId || lastDeployId;
+    if (!logId || restoring) return;
+    setRestoring(true);
+    try {
+      const res = await fetch('/api/ftp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'restore',
+          deployLogId: logId,
+          connectionId: deployConnectionId,
+        }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
+      } else {
+        setDeployResult({ ok: true, msg: 'Original file restored.' });
+        setLastDeployId(null);
+      }
+    } catch (err: any) {
+      setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const canDeploy = hasFtp && deployConnectionId && deployPath.trim() && patch.trim();
+
   return (
-    <section aria-label="Fix console" className="text-[12px]">
-      {/* Editable patch */}
-      <textarea
-        id={`patch-${finding.id}`}
-        value={patch}
-        onChange={(e) => setPatch(e.target.value)}
-        spellCheck
-        rows={Math.min(12, Math.max(3, patch.split('\n').length + 1))}
-        className="w-full px-3 py-2.5 text-[12.5px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono"
-        style={{
-          background: 'var(--paper-2)',
-          border: '1px solid var(--rule)',
-          borderRadius: '8px',
-          color: 'var(--ink)',
-          minHeight: '96px',
-          resize: 'vertical',
-        }}
-        placeholder={
-          initialPatch
-            ? undefined
-            : 'No recommendation captured — draft your fix here, or use the AI helper if available.'
-        }
-        aria-label="Editable fix text"
-      />
-
-      {/* Single-line action bar */}
-      <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
-        {onStatus && (
-          <div className="flex items-center gap-1 mr-1" role="group" aria-label="Status">
-            {STATUS_KEYS.map((s) => {
-              const active = finding.status === s;
-              return (
-                <button
-                  key={s}
-                  onClick={() => onStatus(s)}
-                  disabled={pending}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all disabled:opacity-50"
-                  style={
-                    active
-                      ? { background: STATUS_META[s].bg, color: STATUS_META[s].color, border: `1px solid ${STATUS_META[s].color}` }
-                      : { background: 'transparent', color: 'var(--m-muted)', border: '1px solid var(--rule)' }
-                  }
-                  aria-pressed={active}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: active ? STATUS_META[s].dot : 'var(--rule)' }} aria-hidden />
-                  {STATUS_META[s].label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
+    <section aria-label="Self-serve deploy console" className="text-[12px] space-y-3">
+      {/* Back + header */}
+      <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={handleCopy}
-          disabled={!patch.trim()}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors disabled:opacity-50"
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md transition-colors"
+          style={{ color: 'var(--m-muted)', background: 'transparent', border: '1px solid var(--rule)' }}
+        >
+          <RotateCcw size={10} />
+          Back
+        </button>
+        <div className="flex items-center gap-1.5">
+          <Wrench size={12} style={{ color: 'var(--signal)' }} />
+          <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+            Deploy console
+          </span>
+        </div>
+      </div>
+
+      {/* ── Step 1: Edit the copy ──────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
+          1. Review and edit the fix
+        </p>
+        <textarea
+          id={`patch-${finding.id}`}
+          value={patch}
+          onChange={(e) => setPatch(e.target.value)}
+          spellCheck
+          rows={Math.min(12, Math.max(3, patch.split('\n').length + 1))}
+          className="w-full px-3 py-2.5 text-[12.5px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono"
           style={{
-            background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--paper-2)',
+            background: 'var(--paper-2)',
             border: '1px solid var(--rule)',
-            color: copied ? 'var(--ok)' : 'var(--ink)',
+            borderRadius: '8px',
+            color: 'var(--ink)',
+            minHeight: '96px',
+            resize: 'vertical',
           }}
-          aria-label="Copy fix to clipboard"
-        >
-          {copied ? <Check size={11} /> : <Copy size={11} />}
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={!patch.trim()}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors disabled:opacity-50"
-          style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-          aria-label={isJson ? 'Download as JSON' : 'Download as Markdown'}
-        >
-          <Download size={11} />
-          {isJson ? '.json' : '.md'}
-        </button>
+          placeholder={
+            initialPatch
+              ? undefined
+              : 'No recommendation captured — draft your fix here, or use the AI helper if available.'
+          }
+          aria-label="Editable fix text"
+        />
 
-        {aiApplicable && (
-          <button
-            type="button"
-            onClick={() => setShowAi((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors"
-            style={{
-              background: showAi ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'var(--paper-2)',
-              border: `1px solid ${showAi ? 'var(--signal)' : 'var(--rule)'}`,
-              color: showAi ? 'var(--signal)' : 'var(--ink)',
-            }}
-            aria-expanded={showAi}
-            aria-label="Toggle AI suggestion panel"
-          >
-            <Sparkles size={11} />
-            AI suggest
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={handleExplain}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors"
-          style={{
-            background: showExplain ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'var(--paper-2)',
-            border: `1px solid ${showExplain ? 'var(--signal)' : 'var(--rule)'}`,
-            color: showExplain ? 'var(--signal)' : 'var(--ink)',
-          }}
-          aria-expanded={showExplain}
-          aria-label="Explain this fix step-by-step"
-        >
-          <HelpCircle size={11} />
-          Explain
-        </button>
-
-        {dirty && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-            style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
-            aria-label="Reset to original recommendation"
-          >
-            <RotateCcw size={11} />
-            Reset
-          </button>
-        )}
-
-        <span className="flex-1" />
-
-        {hasFtp ? (
-          <>
-            {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const logId = deployResult?.deployLogId || lastDeployId;
-                  if (!logId || restoring) return;
-                  setRestoring(true);
-                  try {
-                    const res = await fetch('/api/ftp', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        action: 'restore',
-                        deployLogId: logId,
-                        connectionId: deployConnectionId,
-                      }),
-                    });
-                    const data = await res.json().catch(() => ({} as any));
-                    if (!res.ok) {
-                      setDeployResult({ ok: false, msg: data?.error || 'Rollback failed.' });
-                    } else {
-                      setDeployResult({ ok: true, msg: 'Original file restored.' });
-                      setLastDeployId(null);
-                    }
-                  } catch (err: any) {
-                    setDeployResult({ ok: false, msg: err?.message || 'Network error during rollback.' });
-                  } finally {
-                    setRestoring(false);
-                  }
-                }}
-                disabled={restoring}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
-                style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
-              >
-                {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
-                {restoring ? 'Restoring…' : 'Undo deploy'}
-              </button>
-            )}
+        {/* Inline action bar: AI suggest, Explain, Copy, Reset */}
+        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          {aiApplicable && (
             <button
               type="button"
-              onClick={() => setShowDeploy((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+              onClick={() => setShowAi((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors"
               style={{
-                background: showDeploy ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent',
-                border: `1px solid ${showDeploy ? 'var(--signal)' : 'var(--rule)'}`,
-                color: showDeploy ? 'var(--signal)' : 'var(--ink)',
+                background: showAi ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'var(--paper-2)',
+                border: `1px solid ${showAi ? 'var(--signal)' : 'var(--rule)'}`,
+                color: showAi ? 'var(--signal)' : 'var(--ink)',
               }}
-              aria-expanded={showDeploy}
-              aria-label="Toggle deploy panel"
+              aria-expanded={showAi}
             >
-              <Upload size={11} />
-              Push live
-              {showDeploy ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              <Sparkles size={11} />
+              AI suggest
             </button>
-          </>
-        ) : (
-          <Link
-            href="/dashboard/connect"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
-            style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
-            aria-label="Connect FTP to enable deploy"
+          )}
+
+          <button
+            type="button"
+            onClick={handleExplain}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors"
+            style={{
+              background: showExplain ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'var(--paper-2)',
+              border: `1px solid ${showExplain ? 'var(--signal)' : 'var(--rule)'}`,
+              color: showExplain ? 'var(--signal)' : 'var(--ink)',
+            }}
+            aria-expanded={showExplain}
           >
-            <Server size={11} />
-            Connect FTP to push
-          </Link>
-        )}
-        <button
-          type="button"
-          onClick={onApproveLocal}
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11.5px] font-semibold transition-opacity disabled:opacity-50"
-          style={{ background: 'var(--ok)', color: 'var(--paper)' }}
-          aria-label="Approve and mark fixed"
-        >
-          <Send size={11} />
-          Approve
-        </button>
+            <HelpCircle size={11} />
+            Explain
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={!patch.trim()}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium transition-colors disabled:opacity-50"
+            style={{
+              background: copied ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'var(--paper-2)',
+              border: '1px solid var(--rule)',
+              color: copied ? 'var(--ok)' : 'var(--ink)',
+            }}
+          >
+            {copied ? <Check size={11} /> : <Copy size={11} />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+
+          {dirty && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium"
+              style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+            >
+              <RotateCcw size={11} />
+              Reset
+            </button>
+          )}
+        </div>
       </div>
 
       {/* AI suggest panel */}
       {showAi && aiApplicable && (
         <div
-          className="mt-2 px-3 py-2.5 rounded-md"
+          className="px-3 py-2.5 rounded-md"
           style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
         >
           <div className="flex items-stretch gap-2 flex-col sm:flex-row">
@@ -625,7 +723,6 @@ export default function FixConsole({
               disabled={aiBusy || !instruction.trim()}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold transition-opacity disabled:opacity-50"
               style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              aria-label="Generate AI suggestion"
             >
               {aiBusy ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
               {aiBusy ? 'Thinking...' : patch.trim() ? 'Suggest' : 'Draft'}
@@ -657,7 +754,7 @@ export default function FixConsole({
       {/* Explain panel */}
       {showExplain && (
         <div
-          className="mt-2 px-3 py-2.5 rounded-md"
+          className="px-3 py-2.5 rounded-md"
           style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
         >
           <div className="flex items-center gap-2 mb-1.5">
@@ -676,7 +773,7 @@ export default function FixConsole({
           {explainBusy && (
             <div className="flex items-center gap-1.5 text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
               <Loader2 size={11} className="animate-spin" />
-              Generating guidance…
+              Generating guidance...
             </div>
           )}
           {explainError && (
@@ -693,27 +790,17 @@ export default function FixConsole({
         </div>
       )}
 
-      {/* Inline deploy panel — only when FTP is connected to this brand */}
-      {showDeploy && hasFtp && (
-        <div
-          className="mt-2 px-3 py-2.5 rounded-md"
-          style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-        >
-          <div className="flex items-center gap-2 mb-2.5">
-            <Upload size={12} style={{ color: 'var(--signal)' }} aria-hidden />
-            <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-              Deploy to server
-            </span>
-            <button
-              onClick={() => { setShowDeploy(false); }}
-              className="ml-auto text-[var(--m-muted)] hover:text-[var(--ink)]"
-              aria-label="Close deploy panel"
-            >
-              <X size={12} />
-            </button>
-          </div>
+      {/* ── Step 2: Deploy to server ───────────────────────── */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
+          2. Deploy to server
+        </p>
 
-          <div className="space-y-2.5">
+        {hasFtp ? (
+          <div
+            className="px-3 py-3 rounded-lg space-y-2.5"
+            style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+          >
             {/* Connection selector */}
             {ftpConnections.length > 1 && (
               <div>
@@ -724,12 +811,12 @@ export default function FixConsole({
                   value={deployConnectionId}
                   onChange={(e) => {
                     setDeployConnectionId(e.target.value);
-                    setDeployPath(''); // Reset path so auto-suggest re-fires
+                    setDeployPath('');
                   }}
                   className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
                   style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 >
-                  <option value="">Select a target…</option>
+                  <option value="">Select a target...</option>
                   {ftpConnections.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.label} ({c.protocol.toUpperCase()} · {c.host})
@@ -739,7 +826,7 @@ export default function FixConsole({
               </div>
             )}
 
-            {/* Remote file path — auto-suggested from crawled page URL */}
+            {/* Remote file path */}
             <div>
               <label className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
                 Remote file path
@@ -808,16 +895,16 @@ export default function FixConsole({
 
             {/* Deploy actions */}
             {!surgicalResult && (
-              <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <button
                   type="button"
                   onClick={handleSurgicalFix}
-                  disabled={surgicalLoading || deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                  disabled={surgicalLoading || deploying || restoring || !canDeploy}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
-                  {surgicalLoading ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
-                  {surgicalLoading ? 'Generating fix…' : 'Generate surgical fix'}
+                  {surgicalLoading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                  {surgicalLoading ? 'Generating fix...' : 'Deploy to server'}
                 </button>
 
                 <button
@@ -845,31 +932,113 @@ export default function FixConsole({
                         setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
                         return;
                       }
-                      setDeployResult({ ok: true, msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.', deployLogId: data?.deployLogId });
+                      setDeployResult({
+                        ok: true,
+                        msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.',
+                        deployLogId: data?.deployLogId,
+                      });
                       if (data?.deployLogId) setLastDeployId(data.deployLogId);
-                      onApproveLocal();
+                      onDeploySuccess();
                     } catch (err: any) {
                       setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
                     } finally {
                       setDeploying(false);
                     }
                   }}
-                  disabled={deploying || restoring || !deployConnectionId || !deployPath.trim() || !patch.trim()}
+                  disabled={deploying || restoring || !canDeploy}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
                   style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
                 >
                   {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                  {deploying ? 'Deploying…' : 'Deploy snippet as-is'}
+                  {deploying ? 'Deploying...' : 'Deploy snippet as-is'}
                 </button>
 
+                {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
+                  <button
+                    type="button"
+                    onClick={handleRollback}
+                    disabled={restoring}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                    style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+                  >
+                    {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                    {restoring ? 'Restoring...' : 'Undo deploy'}
+                  </button>
+                )}
+
                 <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
-                  Surgical fix reads the live file and merges your fix safely.
+                  Reads the live file and merges your fix safely.
                 </p>
               </div>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div
+            className="px-4 py-4 rounded-lg text-center"
+            style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+          >
+            <Server size={20} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-2" />
+            <p className="text-[12px] font-medium mb-1" style={{ color: 'var(--ink)' }}>
+              No server connected
+            </p>
+            <p className="text-[11px] mb-3" style={{ color: 'var(--m-muted)' }}>
+              Connect your FTP/SFTP server to deploy fixes directly.
+            </p>
+            <Link
+              href="/dashboard/connect"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold"
+              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+            >
+              <Server size={11} />
+              Connect server
+            </Link>
+          </div>
+        )}
+      </div>
     </section>
+  );
+}
+
+/* ── Main FixConsole Export ────────────────────────────────── */
+
+export default function FixConsole({
+  finding,
+  onDeploySuccess,
+  pending,
+  ftpConnections = [],
+}: {
+  finding: AuditFinding;
+  /** Called after a successful deploy — parent should mark finding as fixed. */
+  onDeploySuccess: () => void;
+  pending: boolean;
+  /** Site-scoped FTP connections — when present, enables inline deploy. */
+  ftpConnections?: FtpConnectionForDeploy[];
+}) {
+  const [path, setPath] = useState<ResolutionPath>(null);
+  const fixType = useMemo(() => inferFixType(finding), [finding]);
+  const patch = (finding.recommendation || '').trim();
+
+  if (path === null) {
+    return <PathChooser onChoose={setPath} />;
+  }
+
+  if (path === 'handoff') {
+    return (
+      <HandoffPanel
+        finding={finding}
+        patch={patch}
+        fixType={fixType}
+        onBack={() => setPath(null)}
+      />
+    );
+  }
+
+  return (
+    <SelfServeConsole
+      finding={finding}
+      onDeploySuccess={onDeploySuccess}
+      ftpConnections={ftpConnections}
+      onBack={() => setPath(null)}
+    />
   );
 }
