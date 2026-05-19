@@ -220,96 +220,17 @@ function buildStatusMeta(L: UILabels): Record<
   };
 }
 
-/* ── Rotating checkpoint labels ─────────────────────────── */
-const auditCheckpoints = [
-  'Checking navigation clarity & structure',
-  'Evaluating page load performance',
-  'Analysing mobile responsiveness',
-  'Reviewing call-to-action effectiveness',
-  'Assessing visual hierarchy',
-  'Testing colour contrast & accessibility',
-  'Checking form usability & validation',
-  'Evaluating content readability',
-  'Analysing search functionality',
-  'Reviewing error handling & messaging',
-  'Checking image optimisation',
-  'Evaluating link consistency',
-  'Analysing typography & spacing',
-  'Reviewing onboarding experience',
-  'Checking cart & checkout flow',
-  'Evaluating trust signals & social proof',
-  'Analysing breadcrumb navigation',
-  'Reviewing footer content & links',
-  'Checking ARIA labels & screen readers',
-  'Evaluating keyboard navigation',
-  'Analysing page title & meta structure',
-  'Reviewing heading hierarchy (H1–H6)',
-  'Checking button sizing & tap targets',
-  'Evaluating scroll behaviour & anchors',
-  'Analysing 404 & empty state handling',
-  'Reviewing input field labelling',
-  'Checking consistent branding',
-  'Evaluating testimonial & review quality',
-  'Analysing pricing page clarity',
-  'Reviewing signup & login friction',
-  'Checking cookie consent patterns',
-  'Scanning for confirmshaming & dark patterns',
-  'Evaluating urgency & scarcity patterns',
-  'Reviewing cancellation flow transparency',
-  'Checking hidden fee disclosure',
-  'Analysing emotional tone of error messages',
-  'Evaluating psychological safety of checkout',
-  'Reviewing cognitive load & clutter',
-  'Checking neurodiversity-friendly fonts & spacing',
-  'Analysing digital wellbeing patterns',
-  'Reviewing age-inclusive design elements',
-  'Evaluating touch target sizes (44px+)',
-  'Analysing colour contrast ratios (WCAG AA)',
-  'Reviewing structured data & schema markup',
-  'Checking LLM discoverability (AI readiness)',
-  'Evaluating AI agent navigation capability',
-  'Analysing cultural sensitivity of design',
-  'Reviewing RTL & internationalisation readiness',
-  'Checking date & currency localisation',
-  'Evaluating whitespace & layout balance',
-  'Analysing cross-browser compatibility',
-  'Reviewing cookie consent & privacy',
-  'Checking AI discoverability (LLM readiness)',
-  'Evaluating semantic HTML structure',
-  'Analysing internal linking strategy',
-  'Checking progressive disclosure patterns',
-];
+/* ── Stage labels for the minimal progress loader ──────── */
+const STAGE_LABEL: Record<string, string> = {
+  payment_received: 'Starting audit',
+  crawling: 'Crawling pages',
+  analysing: 'Analyzing content',
+  generating_report: 'Generating report',
+  completed: 'Complete',
+};
 
-/* ── Rotating checkpoint text ─────────────────────────────── */
-function RotatingCheckpoints() {
-  const [idx, setIdx] = useState(0);
-  const [fade, setFade] = useState(true);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setIdx((i) => (i + 1) % auditCheckpoints.length);
-        setFade(true);
-      }, 300);
-    }, 2400);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="mt-5 text-center">
-      <p
-        className={`text-sm font-medium text-ink transition-opacity duration-300 ${
-          fade ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        {auditCheckpoints[idx]}...
-      </p>
-    </div>
-  );
-}
-
-/* ── Audit progress loader — minimal ring + segmented scan ─────── */
+/* ── Minimal audit progress bar — black & white, no noise ──── */
 function AuditProgressLoader({
   status,
   percent,
@@ -317,7 +238,6 @@ function AuditProgressLoader({
   status: string;
   percent: number | null | undefined;
 }) {
-  // Smooth stage fallbacks if no DB percent is available yet.
   const stageFallback: Record<string, number> = {
     payment_received: 5,
     crawling: 25,
@@ -330,7 +250,6 @@ function AuditProgressLoader({
     Math.min(100, typeof percent === 'number' ? percent : stageFallback[status] ?? 0),
   );
 
-  // Animate the displayed percent towards the target so the ring eases instead of jumping.
   const [display, setDisplay] = useState<number>(target);
   useEffect(() => {
     let raf: number;
@@ -338,100 +257,51 @@ function AuditProgressLoader({
       setDisplay((cur) => {
         const diff = target - cur;
         if (Math.abs(diff) < 0.3) return target;
-        const next = cur + diff * 0.08;
         raf = requestAnimationFrame(tick);
-        return next;
+        return cur + diff * 0.08;
       });
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [target]);
 
-  const RING_SIZE = 156;
-  const STROKE = 2;
-  const radius = (RING_SIZE - STROKE) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - display / 100);
+  const label = STAGE_LABEL[status] || 'Processing';
 
   return (
-    <div className="flex flex-col items-center justify-center py-8">
-      <div
-        className="relative"
-        style={{ width: RING_SIZE, height: RING_SIZE }}
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(display)}
-        aria-label="Audit progress"
-      >
-        {/* Soft pulse halo — subtle */}
+    <div
+      className="py-10 flex flex-col items-center gap-5"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(display)}
+      aria-label="Audit progress"
+    >
+      {/* Percentage */}
+      <span className="text-5xl font-semibold tabular-nums tracking-tight" style={{ color: 'var(--ink)' }}>
+        {Math.round(display)}%
+      </span>
+
+      {/* Thin progress bar */}
+      <div className="w-full max-w-[320px]">
         <div
-          aria-hidden
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              'radial-gradient(circle at center, rgba(99,102,241,0.10), transparent 65%)',
-            animation: 'audit-pulse 3.2s ease-in-out infinite',
-          }}
-        />
-
-        {/* Thin progress ring */}
-        <svg
-          width={RING_SIZE}
-          height={RING_SIZE}
-          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
-          className="absolute inset-0"
-          aria-hidden
+          className="h-[3px] rounded-full overflow-hidden"
+          style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}
         >
-          <circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={radius}
-            fill="none"
-            stroke="var(--rule, rgba(0,0,0,0.08))"
-            strokeWidth={STROKE}
-          />
-          <circle
-            cx={RING_SIZE / 2}
-            cy={RING_SIZE / 2}
-            r={radius}
-            fill="none"
-            stroke="var(--signal, #6366F1)"
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
-            style={{ transition: 'stroke-dashoffset 280ms cubic-bezier(0.22,1,0.36,1)' }}
-          />
-        </svg>
-
-        {/* Percent label */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-semibold text-ink tabular-nums tracking-tight">
-            {Math.round(display)}
-            <span className="text-xl text-m-muted ml-0.5">%</span>
-          </span>
-          <span className="text-[10px] font-medium tracking-[0.14em] uppercase text-m-muted mt-1.5">
-            Running audit
-          </span>
-        </div>
-      </div>
-
-      {/* Slim segmented scan bar */}
-      <div className="mt-7 w-full max-w-[280px]">
-        <div className="relative h-[2px] rounded-full bg-rule/60 overflow-hidden">
           <div
-            aria-hidden
-            className="absolute inset-y-0 left-0 w-1/3 rounded-full"
+            className="h-full rounded-full"
             style={{
-              background:
-                'linear-gradient(90deg, transparent, var(--signal, #6366F1), transparent)',
-              animation: 'audit-scan 2.4s cubic-bezier(0.4,0,0.6,1) infinite',
+              width: `${display}%`,
+              background: 'var(--ink)',
+              transition: 'width 300ms ease-out',
             }}
           />
         </div>
       </div>
+
+      {/* One-line status */}
+      <p className="text-[13px]" style={{ color: 'var(--m-muted)' }}>
+        {label}
+      </p>
     </div>
   );
 }
@@ -2114,52 +1984,39 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </Card>
       )}
 
-      {/* ── In progress: animated loader ─────────────────── */}
+      {/* ── In progress: minimal loader ──────────────────── */}
       {isInProgress && !verifying && (
-        <Card className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <StatusIcon size={20} className="text-signal" />
-            <div>
-              <p className="font-medium text-ink">
-                {audit.status === 'payment_received' ? 'Starting audit' : meta.label}
-              </p>
-              <p className="text-sm text-m-muted">
-                {audit.status === 'payment_received'
-                  ? 'Preparing your audit. This will only take a moment.'
-                  : meta.description}
-              </p>
-            </div>
-            <Loader2 size={16} className="text-signal animate-spin ml-auto" />
-          </div>
-
+        <div
+          className="mb-6 rounded-lg"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
           <AuditProgressLoader
             status={audit.status}
             percent={(audit as any).progress_percent}
           />
 
-          <RotatingCheckpoints />
-          <p className="text-sm text-m-muted mt-2 text-center">
-            This page updates automatically. No need to refresh.
-          </p>
+          <div className="px-5 pb-5 text-center">
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Updates automatically
+            </p>
 
-          {/* Restart button if stuck */}
-          {audit.updated_at && (Date.now() - new Date(audit.updated_at).getTime() > 3 * 60 * 1000) && (
-            <div className="mt-4 pt-3 border-t border-rule flex items-center justify-between">
-              <p className="text-xs text-m-muted">Taking longer than expected?</p>
+            {/* Restart if stuck — only show after 3 minutes */}
+            {audit.updated_at && (Date.now() - new Date(audit.updated_at).getTime() > 3 * 60 * 1000) && (
               <button
                 onClick={handleRestart}
                 disabled={restarting}
-                className="inline-flex items-center gap-1.5 text-xs font-medium bg-signal text-paper px-4 py-2.5 rounded-lg transition-all disabled:opacity-60 hover:brightness-110"
+                className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium px-4 py-2 rounded-md transition-all disabled:opacity-50"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
               >
                 {restarting ? (
-                  <><Loader2 size={13} className="animate-spin" /> Restarting...</>
+                  <><Loader2 size={12} className="animate-spin" /> Restarting...</>
                 ) : (
-                  <><Zap size={13} /> Restart Audit</>
+                  'Restart audit'
                 )}
               </button>
-            </div>
-          )}
-        </Card>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── Failed state ───────────────────────────────────── */}

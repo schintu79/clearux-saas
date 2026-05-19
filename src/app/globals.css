@@ -1095,17 +1095,4 @@ main > section:nth-child(even) {
   color: var(--ink);
 }
 
-/* ============================================================
-   Audit loader animations — minimal ring pulse + segmented scan
-   Used by the in-progress audit page detail loader.
-   ============================================================ */
-@keyframes audit-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(0.985); }
-  50%      { opacity: 1;    transform: scale(1.015); }
-}
-
-@keyframes audit-scan {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(400%); }
-}
 
