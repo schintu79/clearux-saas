@@ -31,7 +31,6 @@ import {
   Share2,
   MoreVertical,
   Link as LinkIcon,
-  LineChart,
   Check,
   Trash2,
   ListChecks,
@@ -51,6 +50,7 @@ import {
   Gauge,
   MessageSquare,
   Scale,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
@@ -2047,15 +2047,15 @@ function BenchmarksSummaryCard({
   if (hidden) {
     return (
       <DashboardCard
-        title="Benchmarks"
+        title="Benchmark"
         subtitle="Not available for brand audits"
-        icon={LineChart}
+        icon={BarChart3}
         titleSize="lg"
       >
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <LineChart size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2" />
+          <BarChart3 size={20} style={{ color: 'var(--m-muted)', opacity: 0.5 }} className="mb-2" />
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-            Benchmarks compare a live site against competitors. Run a site audit to enable.
+            Benchmark compares a live site against competitors. Run a site audit to enable.
           </p>
         </div>
       </DashboardCard>
@@ -2093,10 +2093,10 @@ function BenchmarksSummaryCard({
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
           >
-            <LineChart size={14} />
+            <BarChart3 size={14} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Benchmarks</h3>
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>Benchmark</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
               {hasCompetitors
                 ? `vs. ${top.length} competitor${top.length === 1 ? '' : 's'}`
@@ -2175,7 +2175,7 @@ function BenchmarksSummaryCard({
               className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
               style={{ color: 'var(--ink)' }}
             >
-              Open benchmarks <ChevronRight size={11} />
+              Open benchmark <ChevronRight size={11} />
             </span>
           </>
         ) : (
@@ -2190,7 +2190,7 @@ function BenchmarksSummaryCard({
               className="text-[11px] font-semibold mt-1 inline-flex items-center gap-1 group-hover:underline"
               style={{ color: 'var(--ink)' }}
             >
-              Configure benchmarks <ChevronRight size={11} />
+              Configure benchmark <ChevronRight size={11} />
             </span>
           </div>
         )}
@@ -2455,7 +2455,7 @@ function InProgressOverview({
       {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Monitoring / AI X-Ray */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
         <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
-        <SkeletonCard title="Benchmarks" subtitle="Competitor comparison" icon={LineChart} />
+        <SkeletonCard title="Benchmark" subtitle="Competitor comparison" icon={BarChart3} />
         <SkeletonCard title="AI Monitoring" subtitle="AI readability across pages" icon={Brain} />
         <SkeletonCard title="AI X-Ray" subtitle="What AI models say about you" icon={Sparkles} />
       </div>

@@ -13,6 +13,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  BarChart3,
   LineChart,
   Sparkles,
   ArrowRight,
@@ -25,6 +26,9 @@ import {
   RefreshCw,
   AlertCircle,
   Info,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -336,7 +340,13 @@ export default function IntelligencePage() {
     return (
       <div>
         <OverviewBreadcrumb current="Benchmark" />
-        <div className="mb-6">
+        <div className="flex items-center gap-2.5 mb-6">
+          <span
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+          >
+            <BarChart3 size={16} />
+          </span>
           <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
             Benchmark
           </h1>
@@ -363,13 +373,20 @@ export default function IntelligencePage() {
   return (
     <div>
       <OverviewBreadcrumb current="Benchmark" />
-      <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-          Benchmark
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Review and edit the competitors you compare against. Auto-detect suggests; you stay in control.
-        </p>
+
+      {/* Page heading with icon */}
+      <div className="flex items-center gap-2.5 mb-6">
+        <span
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
+        >
+          <BarChart3 size={16} />
+        </span>
+        <div>
+          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
+            Benchmark
+          </h1>
+        </div>
       </div>
 
       {isBrandAudit ? (
@@ -398,35 +415,107 @@ export default function IntelligencePage() {
         </div>
       ) : (
         <>
-          {/* Benchmark Console */}
+          {/* ── Score hero + industry position ── */}
           <section
             className="rounded-xl p-5 mb-4"
             style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
           >
-            <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-              <div className="flex items-start gap-2 min-w-0">
-                <span
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
-                >
-                  <LineChart size={14} />
+            <div className="flex flex-wrap items-start gap-6">
+              {/* Your score */}
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Your score
                 </span>
-                <div className="min-w-0">
-                  <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>
-                    Benchmark Console
-                  </h2>
-                  <p className="text-[12px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                    Edit competitors anytime. Auto-detect only suggests — you stay in control.
-                  </p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: scoreColorVar(overallScore) }}>
+                    {overallScore}
+                  </span>
+                  <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
                 </div>
               </div>
-              <div className="flex items-baseline gap-1 flex-shrink-0">
-                <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColorVar(overallScore) }}>
-                  {overallScore}
-                </span>
-                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 you</span>
-              </div>
+
+              {/* Competitor average */}
+              {avgCompetitor != null && (
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                    Competitor avg
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: scoreColorVar(avgCompetitor) }}>
+                      {avgCompetitor}
+                    </span>
+                    <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Delta badge */}
+              {delta != null && (
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                    Difference
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {delta > 0 ? <TrendingUp size={18} style={{ color: 'var(--ok)' }} /> : delta < 0 ? <TrendingDown size={18} style={{ color: 'var(--severe)' }} /> : <Minus size={18} style={{ color: 'var(--m-muted)' }} />}
+                    <span
+                      className="text-[28px] font-bold leading-none tabular-nums"
+                      style={{ color: delta > 0 ? 'var(--ok)' : delta < 0 ? 'var(--severe)' : 'var(--m-muted)' }}
+                    >
+                      {delta > 0 ? `+${delta}` : delta}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Industry position (inline) */}
+              {benchmarkPosition?.benchmark && (
+                <div
+                  className="flex flex-col items-start rounded-lg px-4 py-3"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 3%, transparent)' }}
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                    Industry{industry ? ` — ${industry}` : ''}
+                  </span>
+                  <p className="text-[13px]" style={{ color: 'var(--ink)' }}>
+                    Avg{' '}
+                    <span className="font-semibold tabular-nums">{benchmarkPosition.benchmark.avgScore}</span>
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                    {benchmarkPosition.deltaFromAvg != null && (
+                      <>
+                        {' · '}
+                        <span
+                          className="font-semibold tabular-nums"
+                          style={{ color: benchmarkPosition.deltaFromAvg > 0 ? 'var(--ok)' : benchmarkPosition.deltaFromAvg < 0 ? 'var(--severe)' : 'var(--m-muted)' }}
+                        >
+                          {benchmarkPosition.deltaFromAvg > 0 ? '+' : ''}{benchmarkPosition.deltaFromAvg} vs. industry
+                        </span>
+                      </>
+                    )}
+                  </p>
+                  {benchmarkPosition.benchmark.sampleSize && (
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                      Based on {benchmarkPosition.benchmark.sampleSize} audited sites{benchmarkPosition.comparedAgainst ? ` in ${benchmarkPosition.comparedAgainst}` : ''}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+          </section>
+
+          {/* ── Competitors console ── */}
+          <section
+            className="rounded-xl p-5 mb-4"
+            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+          >
+            <h2 className="text-[14px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              Competitors
+            </h2>
+            <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+              Edit competitors anytime. Auto-detect only suggests — you stay in control.
+            </p>
 
             {/* Action bar */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -511,15 +600,7 @@ export default function IntelligencePage() {
               </p>
             )}
 
-            {drafts.length > 0 && delta != null && (
-              <p className="text-[12px] mb-3" style={{ color: 'var(--ink)' }}>
-                You score{' '}
-                <span className="font-semibold" style={{ color: delta > 0 ? 'var(--ok)' : delta < 0 ? 'var(--severe)' : 'var(--m-muted)' }}>
-                  {delta > 0 ? `+${delta}` : delta}
-                </span>{' '}
-                vs. competitor average ({avgCompetitor}/100).
-              </p>
-            )}
+            {/* delta shown in hero section above */}
 
             {/* Empty state */}
             {drafts.length === 0 && !detecting && (
@@ -626,39 +707,6 @@ export default function IntelligencePage() {
               </ul>
             )}
           </section>
-
-          {/* Industry position */}
-          {benchmarkPosition?.benchmark && (
-            <section className="rounded-xl p-5 mb-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-              <h2 className="text-[14px] font-semibold mb-2" style={{ color: 'var(--ink)' }}>
-                Industry position{industry ? ` — ${industry}` : ''}
-              </h2>
-              <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-                You score{' '}
-                <span className="font-semibold" style={{ color: scoreColorVar(benchmarkPosition.userScore ?? overallScore) }}>
-                  {benchmarkPosition.userScore ?? overallScore}
-                </span>{' '}
-                vs. industry average{' '}
-                <span className="font-semibold">{benchmarkPosition.benchmark.avgScore}</span>
-                {benchmarkPosition.deltaFromAvg != null && (
-                  <>
-                    {' '}
-                    (
-                    <span style={{ color: benchmarkPosition.deltaFromAvg > 0 ? 'var(--ok)' : benchmarkPosition.deltaFromAvg < 0 ? 'var(--severe)' : 'var(--m-muted)' }}>
-                      {benchmarkPosition.deltaFromAvg > 0 ? '+' : ''}{benchmarkPosition.deltaFromAvg}
-                    </span>
-                    )
-                  </>
-                )}
-                .
-              </p>
-              {benchmarkPosition.benchmark.sampleSize && (
-                <p className="text-[11px] mt-1" style={{ color: 'var(--m-muted)' }}>
-                  Based on {benchmarkPosition.benchmark.sampleSize} audited sites{benchmarkPosition.comparedAgainst ? ` in ${benchmarkPosition.comparedAgainst}` : ''}.
-                </p>
-              )}
-            </section>
-          )}
 
           <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
             Want pillar-level breakdowns and the raw competitor analysis?{' '}
