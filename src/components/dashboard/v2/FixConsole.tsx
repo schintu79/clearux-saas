@@ -30,6 +30,7 @@ import {
   Palette,
   ClipboardList,
   ArrowRight,
+  FileText,
 } from 'lucide-react';
 import FixPreviewPanel from './FixPreviewPanel';
 import type { AuditFinding } from '@/types/database';
@@ -371,11 +372,13 @@ function SelfServeConsole({
   ftpConnections = [],
   onStatusChange,
   onPatchChange,
+  affectedPages = [],
 }: {
   finding: AuditFinding;
   ftpConnections?: FtpConnectionForDeploy[];
   onStatusChange?: (status: string) => void;
   onPatchChange?: (patch: string) => void;
+  affectedPages?: string[];
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
@@ -397,20 +400,42 @@ function SelfServeConsole({
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
 
-  // Deploy state
+  // Multi-page support: determine actual pages to deploy
+  const pages = affectedPages.length > 1 ? affectedPages : [finding.page_url || ''];
+  const hasMultiplePages = pages.length > 1;
+  const [activePageIdx, setActivePageIdx] = useState(0);
+
+  // Deploy state — per-page maps keyed by page index
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
     ftpConnections.length === 1 ? ftpConnections[0].id : '',
   );
-  const [deployPath, setDeployPath] = useState<string>('');
+  const [deployPaths, setDeployPaths] = useState<Record<number, string>>({});
+  const [deployResults, setDeployResults] = useState<Record<number, { ok: boolean; msg: string; deployLogId?: string }>>({});
+  const [lastDeployIds, setLastDeployIds] = useState<Record<number, string>>({});
   const [deploying, setDeploying] = useState(false);
-  const [deployResult, setDeployResult] = useState<{ ok: boolean; msg: string; deployLogId?: string } | null>(null);
   const [restoring, setRestoring] = useState(false);
-  const [lastDeployId, setLastDeployId] = useState<string | null>(null);
 
-  // Surgical fix state
+  // Convenience accessors for the active page
+  const deployPath = deployPaths[activePageIdx] || '';
+  const setDeployPath = (val: string) => setDeployPaths((prev) => ({ ...prev, [activePageIdx]: val }));
+  const deployResult = deployResults[activePageIdx] || null;
+  const setDeployResult = (val: { ok: boolean; msg: string; deployLogId?: string } | null) =>
+    val ? setDeployResults((prev) => ({ ...prev, [activePageIdx]: val })) : setDeployResults((prev) => { const n = { ...prev }; delete n[activePageIdx]; return n; });
+  const lastDeployId = lastDeployIds[activePageIdx] || null;
+  const setLastDeployId = (val: string | null) =>
+    val ? setLastDeployIds((prev) => ({ ...prev, [activePageIdx]: val })) : setLastDeployIds((prev) => { const n = { ...prev }; delete n[activePageIdx]; return n; });
+
+  // Surgical fix state — per-page
+  const [surgicalResults, setSurgicalResults] = useState<Record<number, SurgicalFixResult>>({});
+  const [surgicalErrors, setSurgicalErrors] = useState<Record<number, string>>({});
   const [surgicalLoading, setSurgicalLoading] = useState(false);
-  const [surgicalResult, setSurgicalResult] = useState<SurgicalFixResult | null>(null);
-  const [surgicalError, setSurgicalError] = useState<string | null>(null);
+
+  const surgicalResult = surgicalResults[activePageIdx] || null;
+  const setSurgicalResult = (val: SurgicalFixResult | null) =>
+    val ? setSurgicalResults((prev) => ({ ...prev, [activePageIdx]: val })) : setSurgicalResults((prev) => { const n = { ...prev }; delete n[activePageIdx]; return n; });
+  const surgicalError = surgicalErrors[activePageIdx] || null;
+  const setSurgicalError = (val: string | null) =>
+    val ? setSurgicalErrors((prev) => ({ ...prev, [activePageIdx]: val })) : setSurgicalErrors((prev) => { const n = { ...prev }; delete n[activePageIdx]; return n; });
 
   // Load most recent deploy log for this finding (so Undo works across page reloads)
   React.useEffect(() => {
@@ -434,12 +459,19 @@ function SelfServeConsole({
     [ftpConnections, deployConnectionId],
   );
 
-  // Auto-suggest deploy path
+  // Auto-suggest deploy paths — one per affected page
   React.useEffect(() => {
-    if (deployPath) return;
     const root = selectedConn?.remote_path || '';
-    const suggested = suggestRemotePath(finding.page_url, root);
-    if (suggested) setDeployPath(suggested);
+    if (!root && !selectedConn) return;
+    const updates: Record<number, string> = {};
+    pages.forEach((pageUrl, idx) => {
+      if (deployPaths[idx]) return; // don't overwrite user edits
+      const suggested = suggestRemotePath(pageUrl, root);
+      if (suggested) updates[idx] = suggested;
+    });
+    if (Object.keys(updates).length > 0) {
+      setDeployPaths((prev) => ({ ...prev, ...updates }));
+    }
   }, [selectedConn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasFtp = ftpConnections.length > 0;
@@ -548,7 +580,7 @@ function SelfServeConsole({
           findingTitle: finding.title,
           findingDescription: finding.description || '',
           findingCategory: '',
-          pageUrl: finding.page_url || null,
+          pageUrl: pages[activePageIdx] || finding.page_url || null,
         }),
       });
       const data = await res.json().catch(() => ({} as any));
@@ -829,7 +861,46 @@ function SelfServeConsole({
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
           2. Deploy to server
+          {hasMultiplePages && (
+            <span className="ml-2 normal-case tracking-normal font-normal" style={{ color: 'var(--m-muted)' }}>
+              {Object.values(deployResults).filter((r) => r?.ok).length}/{pages.length} pages deployed
+            </span>
+          )}
         </p>
+
+        {/* Page tabs — shown when finding affects 2+ pages */}
+        {hasMultiplePages && (
+          <div className="flex items-center gap-0 mb-2.5 overflow-x-auto" style={{ borderBottom: '1px solid var(--rule)' }}>
+            {pages.map((pageUrl, idx) => {
+              const isActive = idx === activePageIdx;
+              const pageDeployResult = deployResults[idx];
+              const isDone = pageDeployResult?.ok === true;
+              let label: string;
+              try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
+              if (label.length > 30) label = '...' + label.slice(-27);
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActivePageIdx(idx)}
+                  className="relative flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium whitespace-nowrap transition-colors flex-shrink-0"
+                  style={{
+                    color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                    borderBottom: isActive ? '2px solid var(--ink)' : '2px solid transparent',
+                    marginBottom: '-1px',
+                  }}
+                >
+                  {isDone ? (
+                    <Check size={10} style={{ color: 'var(--ok)' }} />
+                  ) : (
+                    <FileText size={10} />
+                  )}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {hasFtp ? (
           <div
@@ -846,7 +917,7 @@ function SelfServeConsole({
                   value={deployConnectionId}
                   onChange={(e) => {
                     setDeployConnectionId(e.target.value);
-                    setDeployPath('');
+                    setDeployPaths({});
                   }}
                   className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
                   style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
@@ -874,9 +945,9 @@ function SelfServeConsole({
                 className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
                 style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
               />
-              {finding.page_url && deployPath && (
+              {(pages[activePageIdx] || finding.page_url) && deployPath && (
                 <p className="mt-1 text-[10px]" style={{ color: 'var(--signal)' }}>
-                  Suggested from crawled page: {finding.page_url}
+                  Suggested from crawled page: {pages[activePageIdx] || finding.page_url}
                 </p>
               )}
             </div>
@@ -896,6 +967,25 @@ function SelfServeConsole({
                 <span>{deployResult.msg}</span>
               </div>
             )}
+
+            {/* Multi-page: nudge to fix remaining pages */}
+            {hasMultiplePages && deployResult?.ok && (() => {
+              const doneCount = Object.values(deployResults).filter((r) => r?.ok).length;
+              const remaining = pages.length - doneCount;
+              if (remaining <= 0) return null;
+              const nextIdx = pages.findIndex((_, i) => !deployResults[i]?.ok);
+              return (
+                <button
+                  type="button"
+                  onClick={() => nextIdx >= 0 && setActivePageIdx(nextIdx)}
+                  className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-colors"
+                  style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
+                >
+                  <ArrowRight size={11} />
+                  Deploy to {remaining} remaining {remaining === 1 ? 'page' : 'pages'}
+                </button>
+              );
+            })()}
 
             {/* Surgical fix error */}
             {surgicalError && (
@@ -994,6 +1084,7 @@ export default function FixConsole({
   pending,
   ftpConnections = [],
   onStatusChange,
+  affectedPages = [],
 }: {
   finding: AuditFinding;
   pending: boolean;
@@ -1001,6 +1092,8 @@ export default function FixConsole({
   ftpConnections?: FtpConnectionForDeploy[];
   /** Called when deploy auto-transitions the finding status (e.g. to 'fixed'). */
   onStatusChange?: (status: string) => void;
+  /** All page URLs affected by this grouped finding. */
+  affectedPages?: string[];
 }) {
   const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
@@ -1024,6 +1117,7 @@ export default function FixConsole({
             ftpConnections={ftpConnections}
             onStatusChange={onStatusChange}
             onPatchChange={setLivePatch}
+            affectedPages={affectedPages}
           />
           {!DESIGN_FIX_TYPES.has(fixType) && (
             <div className="hidden xl:block sticky top-4">

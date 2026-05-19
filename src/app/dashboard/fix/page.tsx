@@ -436,6 +436,7 @@ function ActiveFindingDetail({
               finding={finding}
               pending={pending}
               ftpConnections={ftpConnections}
+              affectedPages={group.affectedPages}
               onStatusChange={(status) => onStatus(finding.id, status as FindingStatus)}
             />
           </div>
