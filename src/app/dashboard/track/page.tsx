@@ -27,6 +27,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { computeAuditDiff, type FindingDiffItem } from '@/lib/audit-engine/audit-diff';
+import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
@@ -93,14 +94,19 @@ export default function TrackPage() {
   // Fetch prior audit findings for diff validation
   useEffect(() => {
     if (!bundle?.prior?.audit?.id) { setPriorFindings([]); return; }
-    const { createBrowserSupabase } = require('@/lib/supabase-ssr');
+    const priorAuditId = bundle.prior.audit.id;
     const supabase = createBrowserSupabase();
-    supabase
-      .from('audit_findings')
-      .select('*')
-      .eq('audit_id', bundle.prior.audit.id)
-      .then(({ data }: any) => setPriorFindings(data || []))
-      .catch(() => setPriorFindings([]));
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('audit_findings')
+          .select('*')
+          .eq('audit_id', priorAuditId);
+        setPriorFindings(data || []);
+      } catch {
+        setPriorFindings([]);
+      }
+    })();
   }, [bundle?.prior?.audit?.id]);
 
   // History returned by loadLatestAuditBundle is already scoped to the

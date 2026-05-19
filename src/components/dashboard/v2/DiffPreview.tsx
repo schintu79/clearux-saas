@@ -56,6 +56,8 @@ export default function DiffPreview({
 }: DiffPreviewProps) {
   const [editMode, setEditMode] = useState(false)
   const [editContent, setEditContent] = useState(patchedContent)
+  const [inlineEdit, setInlineEdit] = useState(false)
+  const [inlinePatch, setInlinePatch] = useState(patchedContent)
 
   const op = OP_META[operation]
   const confColor = CONFIDENCE_COLORS[confidence]
@@ -152,38 +154,84 @@ export default function DiffPreview({
             <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)', borderRight: '1px solid var(--rule)' }}>
               Original
             </div>
-            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)' }}>
-              Patched
+            <div className="px-3 py-1.5 flex items-center justify-between" style={{ background: 'var(--paper-2)' }}>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                {inlineEdit ? 'Patched (editing)' : 'Patched'}
+              </span>
+              <button
+                type="button"
+                onClick={() => { setInlineEdit((v) => !v); if (!inlineEdit) setInlinePatch(patchedContent); }}
+                className="inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded"
+                style={{ color: inlineEdit ? 'var(--signal)' : 'var(--m-muted)', background: inlineEdit ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'transparent' }}
+              >
+                <Pencil size={8} />
+                {inlineEdit ? 'Editing' : 'Edit'}
+              </button>
             </div>
           </div>
-          <div className="max-h-[400px] overflow-auto">
-            {changes.map((hunk, hi) => (
-              <React.Fragment key={hi}>
-                {hi > 0 && (
-                  <div className="grid grid-cols-2 text-center text-[10px] py-1" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)', borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}>
-                    <span style={{ borderRight: '1px solid var(--rule)' }}>...</span>
-                    <span>...</span>
-                  </div>
-                )}
-                {/* Context before */}
-                {hunk.contextBefore.map((line, i) => (
-                  <div key={`ctx-b-${hi}-${i}`} className="grid grid-cols-2">
-                    <DiffLine lineNo={hunk.startLineOriginal - hunk.contextBefore.length + i} text={line} type="context" side="left" />
-                    <DiffLine lineNo={hunk.startLinePatched - hunk.contextBefore.length + i} text={line} type="context" side="right" />
-                  </div>
+          {inlineEdit ? (
+            /* Inline editable patched content */
+            <div className="grid grid-cols-2">
+              <div className="max-h-[400px] overflow-auto" style={{ borderRight: '1px solid var(--rule)' }}>
+                {changes.map((hunk, hi) => (
+                  <React.Fragment key={hi}>
+                    {hunk.contextBefore.map((line, i) => (
+                      <DiffLine key={`ctx-b-${hi}-${i}`} lineNo={hunk.startLineOriginal - hunk.contextBefore.length + i} text={line} type="context" side="left" />
+                    ))}
+                    {hunk.linesRemoved.map((line, i) => (
+                      <DiffLine key={`rem-${hi}-${i}`} lineNo={hunk.startLineOriginal + i} text={line} type="removed" side="left" />
+                    ))}
+                    {hunk.contextAfter.map((line, i) => (
+                      <DiffLine key={`ctx-a-${hi}-${i}`} lineNo={hunk.startLineOriginal + hunk.linesRemoved.length + i} text={line} type="context" side="left" />
+                    ))}
+                  </React.Fragment>
                 ))}
-                {/* Changes */}
-                {renderHunkLines(hunk)}
-                {/* Context after */}
-                {hunk.contextAfter.map((line, i) => (
-                  <div key={`ctx-a-${hi}-${i}`} className="grid grid-cols-2">
-                    <DiffLine lineNo={hunk.startLineOriginal + hunk.linesRemoved.length + i} text={line} type="context" side="left" />
-                    <DiffLine lineNo={hunk.startLinePatched + hunk.linesAdded.length + i} text={line} type="context" side="right" />
-                  </div>
-                ))}
-              </React.Fragment>
-            ))}
-          </div>
+              </div>
+              <textarea
+                value={inlinePatch}
+                onChange={(e) => setInlinePatch(e.target.value)}
+                className="w-full font-mono text-[10.5px] leading-[1.6] p-3 resize-y"
+                style={{
+                  background: 'color-mix(in srgb, var(--ok) 4%, transparent)',
+                  color: 'var(--ink)',
+                  border: 'none',
+                  minHeight: 200,
+                  maxHeight: 400,
+                  outline: 'none',
+                }}
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <div className="max-h-[400px] overflow-auto">
+              {changes.map((hunk, hi) => (
+                <React.Fragment key={hi}>
+                  {hi > 0 && (
+                    <div className="grid grid-cols-2 text-center text-[10px] py-1" style={{ color: 'var(--m-muted)', background: 'var(--paper-2)', borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}>
+                      <span style={{ borderRight: '1px solid var(--rule)' }}>...</span>
+                      <span>...</span>
+                    </div>
+                  )}
+                  {/* Context before */}
+                  {hunk.contextBefore.map((line, i) => (
+                    <div key={`ctx-b-${hi}-${i}`} className="grid grid-cols-2">
+                      <DiffLine lineNo={hunk.startLineOriginal - hunk.contextBefore.length + i} text={line} type="context" side="left" />
+                      <DiffLine lineNo={hunk.startLinePatched - hunk.contextBefore.length + i} text={line} type="context" side="right" />
+                    </div>
+                  ))}
+                  {/* Changes */}
+                  {renderHunkLines(hunk)}
+                  {/* Context after */}
+                  {hunk.contextAfter.map((line, i) => (
+                    <div key={`ctx-a-${hi}-${i}`} className="grid grid-cols-2">
+                      <DiffLine lineNo={hunk.startLineOriginal + hunk.linesRemoved.length + i} text={line} type="context" side="left" />
+                      <DiffLine lineNo={hunk.startLinePatched + hunk.linesAdded.length + i} text={line} type="context" side="right" />
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -198,7 +246,7 @@ export default function DiffPreview({
       <div className="flex items-center gap-2 pt-1">
         <button
           type="button"
-          onClick={() => onApprove(editMode ? editContent : patchedContent)}
+          onClick={() => onApprove(editMode ? editContent : inlineEdit ? inlinePatch : patchedContent)}
           disabled={deploying}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
           style={{ background: 'var(--ink)', color: 'var(--paper)' }}

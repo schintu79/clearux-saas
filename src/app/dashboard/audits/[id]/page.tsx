@@ -353,7 +353,7 @@ function AuditProgressLoader({
 
       {/* Secondary CTA */}
       <Link
-        href="/dashboard"
+        href="/dashboard/overview"
         className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-md transition-colors"
         style={{
           color: 'var(--ink)',
@@ -361,7 +361,7 @@ function AuditProgressLoader({
           background: 'transparent',
         }}
       >
-        Explore Fixpath overview
+        Go to Overview
         <ArrowRight size={11} />
       </Link>
     </div>
@@ -1259,6 +1259,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const completedRef = useRef(false); // Once true, never revert to in-progress UI
   const highestStatusRef = useRef(0); // Track forward-only status progression
+  const wasWaitingRef = useRef(false); // True if user arrived while audit was in-progress
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const [showStickyScore, setShowStickyScore] = useState(false);
 
@@ -1484,11 +1485,15 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       }
 
       if (active && !completedRef.current) {
+        wasWaitingRef.current = true;
         pollRef.current = setInterval(async () => {
           if (!active || completedRef.current) return;
           const s = await fetchAuditDetail(true);
           if (s === 'completed' || s === 'failed') {
             if (pollRef.current) clearInterval(pollRef.current);
+            if (s === 'completed' && wasWaitingRef.current) {
+              router.push('/dashboard/overview');
+            }
           }
         }, 5000);
       }
@@ -1514,6 +1519,9 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
     const inProgress = ['payment_received', 'crawling', 'analysing', 'generating_report'].includes(audit.status);
     if (!inProgress) return;
 
+    // Mark that the user is waiting for this audit to finish — used for auto-redirect
+    wasWaitingRef.current = true;
+
     // Only start polling once, don't restart on status changes
     if (pollRef.current) return;
 
@@ -1525,6 +1533,10 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
       const s = await fetchAuditDetail(true);
       if (s === 'completed' || s === 'failed') {
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+        // Auto-redirect to Overview when audit completes while user was waiting
+        if (s === 'completed' && wasWaitingRef.current) {
+          router.push('/dashboard/overview');
+        }
       }
     }, 4000);
 

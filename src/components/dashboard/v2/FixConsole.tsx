@@ -61,23 +61,9 @@ function inferFixType(finding: AuditFinding): FixType {
   return 'content';
 }
 
-function isAiHelperApplicable(fixType: FixType, recommendation: string): boolean {
-  if (fixType === 'copy' || fixType === 'heading' || fixType === 'meta' || fixType === 'content') return true;
-  const rec = recommendation || '';
-  if (fixType === 'accessibility') {
-    if (/alt text|alt=|aria-label|button text|link text|describe|label/.test(rec.toLowerCase())) return true;
-    return false;
-  }
-  if (fixType === 'schema') {
-    if (/"[^"]{20,}"/.test(rec) || /\{[\s\S]*"/.test(rec)) return true;
-    return false;
-  }
-  if (fixType === 'technical') {
-    if (/"[^"]{20,}"/.test(rec)) return true;
-    if (/(write|rewrite|update|tagline|heading|paragraph|description) /i.test(rec) && rec.length > 80) return true;
-    return false;
-  }
-  return false;
+function isAiHelperApplicable(fixType: FixType, _recommendation: string): boolean {
+  // AI Suggest is strictly for rewriting phrases or headings — nothing else.
+  return fixType === 'copy' || fixType === 'heading';
 }
 
 function looksLikeJson(text: string): boolean {
@@ -287,9 +273,11 @@ function HandoffPanel({
 function SelfServeConsole({
   finding,
   ftpConnections = [],
+  onStatusChange,
 }: {
   finding: AuditFinding;
   ftpConnections?: FtpConnectionForDeploy[];
+  onStatusChange?: (status: string) => void;
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
@@ -500,11 +488,14 @@ function SelfServeConsole({
         ok: true,
         msg: data?.hadBackup
           ? 'Deployed successfully — backup captured. You can undo this at any time.'
-          : 'Deployed successfully. Update the status manually when you’re confident the fix is live.',
+          : 'Deployed successfully.',
         deployLogId: data?.deployLogId,
       });
       if (data?.deployLogId) setLastDeployId(data.deployLogId);
-      setSurgicalResult(null);
+      // Don't clear surgicalResult — the diff preview hides itself via deployResult.ok,
+      // and we need to keep surgicalResult truthy so "Generate surgical fix" button stays hidden.
+      // Auto-set finding status to "fixed" after successful deploy
+      onStatusChange?.('fixed');
     } catch (err: any) {
       setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
     } finally {
@@ -831,8 +822,8 @@ function SelfServeConsole({
               />
             )}
 
-            {/* Deploy actions */}
-            {!surgicalResult && (
+            {/* Deploy actions — hidden after successful surgical deploy */}
+            {!surgicalResult && !deployResult?.ok && (
               <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <button
                   type="button"
@@ -895,11 +886,14 @@ export default function FixConsole({
   finding,
   pending,
   ftpConnections = [],
+  onStatusChange,
 }: {
   finding: AuditFinding;
   pending: boolean;
   /** Site-scoped FTP connections — when present, enables inline deploy. */
   ftpConnections?: FtpConnectionForDeploy[];
+  /** Called when deploy auto-transitions the finding status (e.g. to 'fixed'). */
+  onStatusChange?: (status: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
@@ -919,6 +913,7 @@ export default function FixConsole({
         <SelfServeConsole
           finding={finding}
           ftpConnections={ftpConnections}
+          onStatusChange={onStatusChange}
         />
       )}
     </div>

@@ -242,18 +242,27 @@ function FixRow({
             </div>
           </button>
 
-          {/* Passive status badge — not editable, auto-transitions on deploy */}
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+          {/* Status dropdown — editable, also auto-transitions on deploy */}
+          <select
+            value={finding.status}
+            onChange={(e) => { e.stopPropagation(); onStatus(finding.id, e.target.value as FindingStatus); }}
+            onClick={(e) => e.stopPropagation()}
+            disabled={pending}
+            className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full flex-shrink-0 appearance-none cursor-pointer outline-none disabled:opacity-50"
             style={{
               background: meta.bg,
               color: meta.color,
               border: `1px solid ${meta.dot}`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 6px center',
             }}
+            aria-label="Finding status"
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} aria-hidden />
-            {meta.label}
-          </span>
+            {STATUS_KEYS.map((sk) => (
+              <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
+            ))}
+          </select>
 
           {/* Dismiss toggle */}
           <button
@@ -371,6 +380,7 @@ function FixRow({
                   finding={finding}
                   pending={pending}
                   ftpConnections={ftpConnections}
+                  onStatusChange={(status) => onStatus(finding.id, status as FindingStatus)}
                 />
               </div>
             </div>
