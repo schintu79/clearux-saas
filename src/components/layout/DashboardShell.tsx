@@ -362,7 +362,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {collapsed ? (
           <Iconmark size={36} />
         ) : (
-          <Logo height={64} />
+          <Logo height={52} />
         )}
       </Link>
       <button
@@ -401,7 +401,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         {SidebarLogo}
 
         {/* New audit CTA */}
-        <div className={clsx('pt-2.5 pb-1', collapsed ? 'px-2' : 'px-3')}>
+        <div className={clsx('pt-3 pb-2', collapsed ? 'px-2' : 'px-3')}>
           <Link
             href="/dashboard/new-audit"
             onClick={() => setSidebarOpen(false)}
@@ -418,7 +418,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         </div>
 
         {/* Dashboard link */}
-        <div className={clsx('pb-0.5', collapsed ? 'px-1.5' : 'px-2')}>
+        <div className={clsx('pb-1.5', collapsed ? 'px-1.5' : 'px-2')}>
           <Link
             href="/dashboard"
             onClick={() => setSidebarOpen(false)}
@@ -445,7 +445,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
 
         {/* Brand/site selector */}
         {!collapsed && (
-          <div className="px-3 pt-1.5 pb-2" ref={brandMenuRef}>
+          <div className="px-3 pt-2 pb-3" ref={brandMenuRef}>
             <div className="relative">
               <button
                 onClick={() => setBrandMenuOpen((v) => !v)}
@@ -563,14 +563,14 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               {group.label && collapsed && gi > 0 && (
                 <div className="mx-2 my-2" style={{ borderTop: '1px solid var(--rule)' }} />
               )}
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
                   const onClick = () => setSidebarOpen(false);
                   const linkClass = clsx(
-                    'flex items-center rounded-md transition-colors text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
-                    collapsed ? 'justify-center px-0 py-1.5' : 'gap-2 px-2 py-[6px]',
+                    'flex items-center rounded-md transition-colors text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-signal/40',
+                    collapsed ? 'justify-center px-0 py-1.5' : 'gap-2 px-2 py-[7px]',
                     active ? 'font-medium' : 'hover:bg-black/[0.04]',
                   );
                   const linkStyle = {
@@ -723,7 +723,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
               {sidebarOpen ? <X size={17} style={{ color: 'var(--ink)' }} /> : <Menu size={17} style={{ color: 'var(--ink)' }} />}
             </button>
             <span className="md:hidden flex items-center">
-              <Logo height={48} />
+              <Logo height={38} />
             </span>
             {selectedSite && (
               <div className="hidden md:flex items-center gap-1.5 min-w-0">

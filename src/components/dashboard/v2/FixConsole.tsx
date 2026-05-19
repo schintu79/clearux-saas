@@ -306,10 +306,6 @@ function SelfServeConsole({
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
 
-  // Generate → Approve → Deploy flow
-  const [fixGenerated, setFixGenerated] = useState(!!initialPatch);
-  const [fixApproved, setFixApproved] = useState(false);
-
   // Deploy state
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
     ftpConnections.length === 1 ? ftpConnections[0].id : '',
@@ -547,28 +543,10 @@ function SelfServeConsole({
   const canDeploy = hasFtp && deployConnectionId && deployPath.trim() && patch.trim();
 
   return (
-    <section aria-label="Self-serve deploy console" className="text-[12px] space-y-3 pt-4">
-      {/* ── Step 1: Generate fix ──────────────────────────── */}
-      {!fixGenerated ? (
-        <div className="text-center py-6">
-          <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
-            Generate a code-ready fix based on the finding recommendation.
-          </p>
-          <button
-            type="button"
-            onClick={() => setFixGenerated(true)}
-            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-md text-[12.5px] font-semibold transition-opacity"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            <Sparkles size={12} />
-            Generate fix
-          </button>
-        </div>
-      ) : (
-        <>
-      {/* ── Step 1: Review the generated fix ──────────────── */}
+    <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
+      {/* ── Section 1: Review the fix ─────────────────────── */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
           1. Review the fix
         </p>
         <textarea
@@ -579,7 +557,7 @@ function SelfServeConsole({
           rows={Math.min(12, Math.max(3, patch.split('\n').length + 1))}
           className="w-full px-3 py-2.5 text-[12.5px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono"
           style={{
-            background: 'var(--paper-2)',
+            background: '#ffffff',
             border: '1px solid var(--rule)',
             borderRadius: '8px',
             color: 'var(--ink)',
@@ -674,7 +652,7 @@ function SelfServeConsole({
               placeholder='e.g. "tighten this", "make it warmer", "shorten to one sentence"'
               disabled={aiBusy}
               className="flex-1 rounded-md px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
-              style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+              style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
               aria-label="AI rewrite instruction"
             />
             <button
@@ -750,28 +728,9 @@ function SelfServeConsole({
         </div>
       )}
 
-      {/* ── Step 2: Approve the fix ────────────────────────── */}
-      {!fixApproved ? (
-        <div className="flex items-center gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => setFixApproved(true)}
-            disabled={!patch.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            <Check size={12} />
-            Approve fix
-          </button>
-          <p className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
-            Review the snippet above, then approve to unlock deploy.
-          </p>
-        </div>
-      ) : (
-        <>
-      {/* ── Step 3: Deploy to server ───────────────────────── */}
+      {/* ── Section 2: Deploy to server ─────────────────── */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
           2. Deploy to server
         </p>
 
@@ -793,7 +752,7 @@ function SelfServeConsole({
                     setDeployPath('');
                   }}
                   className="w-full px-2.5 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
-                  style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 >
                   <option value="">Select a target...</option>
                   {ftpConnections.map((c) => (
@@ -816,7 +775,7 @@ function SelfServeConsole({
                 onChange={(e) => setDeployPath(e.target.value)}
                 placeholder="/path/to/file.html"
                 className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
-                style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
               />
               {finding.page_url && deployPath && (
                 <p className="mt-1 text-[10px]" style={{ color: 'var(--signal)' }}>
@@ -882,8 +841,8 @@ function SelfServeConsole({
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                 >
-                  {surgicalLoading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                  {surgicalLoading ? 'Generating fix...' : 'Deploy to server'}
+                  {surgicalLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {surgicalLoading ? 'Generating fix...' : 'Generate surgical fix'}
                 </button>
 
                 {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
@@ -926,10 +885,6 @@ function SelfServeConsole({
           </div>
         )}
       </div>
-        </>
-      )}
-        </>
-      )}
     </section>
   );
 }

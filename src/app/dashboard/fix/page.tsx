@@ -29,6 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Wrench,
   X,
 } from 'lucide-react';
 import {
@@ -361,10 +362,11 @@ function FixRow({
               </div>
 
               {/* Resolve this issue — two-path tabbed console */}
-              <div className="pt-2">
-                <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              <div className="pt-3">
+                <h4 className="flex items-center gap-2 text-[15px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>
+                  <Wrench size={15} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
                   Resolve this issue
-                </p>
+                </h4>
                 <FixConsole
                   finding={finding}
                   pending={pending}
@@ -495,11 +497,11 @@ function FixPageInner() {
       setExpanded((e) => (e[id] ? e : { ...e, [id]: true }));
       requestAnimationFrame(() => {
         const el = document.getElementById(`finding-${id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
       setTimeout(() => {
         const el = document.getElementById(`finding-${id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 250);
     };
     apply();
@@ -596,7 +598,19 @@ function FixPageInner() {
     }
   };
 
-  const toggleExpand = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }));
+  const toggleExpand = (id: string) => {
+    setExpanded((e) => {
+      const willExpand = !e[id];
+      if (willExpand) {
+        // Scroll the card to center of the viewport after expansion renders
+        setTimeout(() => {
+          const el = document.getElementById(`finding-${id}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
+      }
+      return { ...e, [id]: willExpand };
+    });
+  };
 
   if (authLoading || loading || !ready) {
     return (
