@@ -35,7 +35,7 @@ interface SavedConnection {
   port: number;
   username: string;
   remote_path: string;
-  brand_identity_id: string | null;
+  site_host: string | null;
   last_connected_at: string | null;
   created_at: string;
 }
@@ -77,8 +77,8 @@ export default function ConnectPage() {
 
   const fetchConnections = useCallback(async () => {
     try {
-      const brandId = selection?.kind === 'brand' ? selection.brandId : null;
-      const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+      const siteHost = selection?.kind === 'site' ? selection.host : null;
+      const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
       const res = await fetch(url);
       const data = await res.json();
       if (res.status === 503) {
@@ -153,7 +153,7 @@ export default function ConnectPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const brandIdentityId = selection?.kind === 'brand' ? selection.brandId : null;
+      const siteHost = selection?.kind === 'site' ? selection.host : null;
       const payload: any = {
         action: editingId ? 'update' : 'save',
         label: form.label,
@@ -163,7 +163,7 @@ export default function ConnectPage() {
         username: form.username,
         password: form.password,
         remotePath: form.remotePath,
-        brandIdentityId,
+        siteHost,
       };
       if (editingId) payload.connectionId = editingId;
 
@@ -279,13 +279,13 @@ export default function ConnectPage() {
       )}
 
       {/* Brand required notice */}
-      {selection?.kind !== 'brand' && (
+      {selection?.kind !== 'site' && (
         <div className="mb-5 rounded-xl border border-border bg-off/60 p-4 flex items-start gap-2.5">
           <AlertCircle size={15} className="text-muted flex-shrink-0 mt-0.5" />
           <div className="text-xs text-text">
-            <p className="font-medium mb-0.5">Select a brand first</p>
+            <p className="font-medium mb-0.5">Select a website first</p>
             <p className="text-muted">
-              FTP connections are saved per brand. Use the brand dropdown in the sidebar to select which brand this connection belongs to.
+              Server connections are saved per website. Use the dropdown in the sidebar to select which site this connection belongs to.
             </p>
           </div>
         </div>
@@ -458,11 +458,11 @@ export default function ConnectPage() {
                   !form.username ||
                   (!form.password && !editingId) ||
                   (provisioning ? !provisioning.provisioned || !provisioning.configured : false) ||
-                  selection?.kind !== 'brand'
+                  selection?.kind !== 'site'
                 }
                 title={
-                  selection?.kind !== 'brand'
-                    ? 'Select a brand from the sidebar before saving'
+                  selection?.kind !== 'site'
+                    ? 'Select a website from the sidebar before saving'
                     : provisioning && (!provisioning.provisioned || !provisioning.configured)
                       ? 'Provisioning required — see banner above'
                       : undefined

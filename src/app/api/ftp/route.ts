@@ -57,12 +57,12 @@ export async function GET(request: NextRequest) {
     if (authError || !user)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const brandId = request.nextUrl.searchParams.get('brandId');
+    const siteHost = request.nextUrl.searchParams.get('siteHost');
 
-    // Brand scoping: connections are per-brand, never global.
-    // Without a brandId, return an empty list so connections from
-    // one brand never leak into another brand's dashboard.
-    if (!brandId) {
+    // Scoping: connections are per-site (domain), never global.
+    // Without a siteHost, return an empty list so connections from
+    // one site never leak into another site's dashboard.
+    if (!siteHost) {
       return NextResponse.json({
         connections: [],
         provisioned: true,
@@ -73,9 +73,9 @@ export async function GET(request: NextRequest) {
     const db = createServiceSupabase();
     const { data: connections, error } = await db
       .from('ftp_connections')
-      .select('id, label, protocol, host, port, username, remote_path, brand_identity_id, last_connected_at, is_active, created_at, updated_at')
+      .select('id, label, protocol, host, port, username, remote_path, site_host, last_connected_at, is_active, created_at, updated_at')
       .eq('user_id', user.id)
-      .eq('brand_identity_id', brandId)
+      .eq('site_host', siteHost)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -186,18 +186,18 @@ async function handleTest(body: any, userId: string) {
 }
 
 async function handleSave(body: any, userId: string) {
-  const { label, protocol, host, port, username, password, remotePath, brandIdentityId } = body;
+  const { label, protocol, host, port, username, password, remotePath, siteHost } = body;
   if (!host || !username || !password)
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  if (!brandIdentityId)
-    return NextResponse.json({ error: 'A brand must be selected before saving an FTP connection.' }, { status: 400 });
+  if (!siteHost)
+    return NextResponse.json({ error: 'Select a website before saving a connection.' }, { status: 400 });
 
   const db = createServiceSupabase();
   const { data, error } = await db
     .from('ftp_connections')
     .insert({
       user_id: userId,
-      brand_identity_id: brandIdentityId || null,
+      site_host: siteHost,
       label: label || 'My server',
       protocol: protocol || 'sftp',
       host,
@@ -206,7 +206,7 @@ async function handleSave(body: any, userId: string) {
       password_encrypted: encrypt(password),
       remote_path: remotePath || '/',
     } as any)
-    .select('id, label, protocol, host, port, username, remote_path, brand_identity_id, created_at')
+    .select('id, label, protocol, host, port, username, remote_path, site_host, created_at')
     .single();
 
   if (error) {

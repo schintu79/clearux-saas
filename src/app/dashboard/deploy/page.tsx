@@ -239,11 +239,11 @@ function DeployPageInner() {
 
   const dismissToast = (id: number) => setToasts((t) => t.filter((x) => x.id !== id));
 
-  /* ── Brand-scoped FTP connections ──────────────────────────── */
+  /* ── Site-scoped FTP connections ──────────────────────────── */
   useEffect(() => {
     if (authLoading || !user || !ready) return;
-    const brandId = selection?.kind === 'brand' ? selection.brandId : null;
-    const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+    const siteHost = selection?.kind === 'site' ? selection.host : null;
+    const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
     fetch(url)
       .then(async (res) => {
         const data = await res.json().catch(() => ({} as any));

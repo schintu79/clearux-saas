@@ -463,11 +463,11 @@ function FixPageInner() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
-  // Load brand-scoped FTP connections so FixConsole can offer inline deploy
+  // Load site-scoped FTP connections so FixConsole can offer inline deploy
   useEffect(() => {
     if (authLoading || !user || !ready) return;
-    const brandId = selection?.kind === 'brand' ? selection.brandId : null;
-    const url = brandId ? `/api/ftp?brandId=${encodeURIComponent(brandId)}` : '/api/ftp';
+    const siteHost = selection?.kind === 'site' ? selection.host : null;
+    const url = siteHost ? `/api/ftp?siteHost=${encodeURIComponent(siteHost)}` : '/api/ftp';
     fetch(url)
       .then(async (res) => {
         if (res.status === 503) { setFtpConnections([]); return; }
