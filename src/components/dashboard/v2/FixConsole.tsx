@@ -26,14 +26,10 @@ import {
   Upload,
   X,
   Server,
-  Wand2,
   Wrench,
   Users,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
-import type { AuditFinding, FindingStatus } from '@/types/database';
+import type { AuditFinding } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
 
@@ -54,7 +50,6 @@ type FixType =
   | 'content'
   | 'technical';
 
-type ResolutionPath = 'self' | 'handoff' | null;
 
 function inferFixType(finding: AuditFinding): FixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
@@ -121,88 +116,112 @@ function downloadFile(filename: string, content: string, mime: string) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-/* ── Resolution Path Chooser ──────────────────────────────── */
+/* ── Tab Bar (shared between both panels) ────────────────── */
 
-function PathChooser({ onChoose }: { onChoose: (path: ResolutionPath) => void }) {
+function TabBar({
+  active,
+  onSwitch,
+}: {
+  active: 'self' | 'handoff';
+  onSwitch: (tab: 'self' | 'handoff') => void;
+}) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div
+      className="flex items-center gap-0"
+      style={{ borderBottom: '1px solid var(--rule)' }}
+    >
       <button
         type="button"
-        onClick={() => onChoose('self')}
-        className="group flex flex-col items-start gap-2 px-4 py-4 rounded-lg text-left transition-all hover:shadow-sm"
+        onClick={() => onSwitch('self')}
+        className="relative px-4 py-2.5 text-[12.5px] font-medium transition-colors"
         style={{
-          background: 'var(--paper)',
-          border: '1.5px solid var(--rule)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--signal)';
-          e.currentTarget.style.background = 'color-mix(in srgb, var(--signal) 3%, var(--paper))';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--rule)';
-          e.currentTarget.style.background = 'var(--paper)';
+          color: active === 'self' ? 'var(--ink)' : 'var(--m-muted)',
+          background: 'transparent',
         }}
       >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-md flex items-center justify-center"
-            style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
-          >
-            <Wrench size={14} style={{ color: 'var(--signal)' }} />
-          </div>
-          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-            Fix it yourself
-          </span>
-        </div>
-        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--m-muted)' }}>
-          Edit the recommended copy, refine with AI, then deploy directly to your server.
-        </p>
-        <span
-          className="inline-flex items-center gap-1 text-[11px] font-medium mt-1"
-          style={{ color: 'var(--signal)' }}
-        >
-          Open deploy console <ArrowRight size={10} />
+        <span className="flex items-center gap-1.5">
+          <Wrench size={12} />
+          Fix it yourself
         </span>
+        {active === 'self' && (
+          <span
+            className="absolute bottom-0 left-0 right-0 h-[2px]"
+            style={{ background: 'var(--ink)' }}
+          />
+        )}
       </button>
+      <button
+        type="button"
+        onClick={() => onSwitch('handoff')}
+        className="relative px-4 py-2.5 text-[12.5px] font-medium transition-colors"
+        style={{
+          color: active === 'handoff' ? 'var(--ink)' : 'var(--m-muted)',
+          background: 'transparent',
+        }}
+      >
+        <span className="flex items-center gap-1.5">
+          <Users size={12} />
+          Let your team handle it
+        </span>
+        {active === 'handoff' && (
+          <span
+            className="absolute bottom-0 left-0 right-0 h-[2px]"
+            style={{ background: 'var(--ink)' }}
+          />
+        )}
+      </button>
+    </div>
+  );
+}
 
-      <button
-        type="button"
-        onClick={() => onChoose('handoff')}
-        className="group flex flex-col items-start gap-2 px-4 py-4 rounded-lg text-left transition-all hover:shadow-sm"
-        style={{
-          background: 'var(--paper)',
-          border: '1.5px solid var(--rule)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--ink)';
-          e.currentTarget.style.background = 'color-mix(in srgb, var(--ink) 3%, var(--paper))';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--rule)';
-          e.currentTarget.style.background = 'var(--paper)';
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-md flex items-center justify-center"
-            style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}
-          >
-            <Users size={14} style={{ color: 'var(--ink)' }} />
-          </div>
-          <span className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
-            Let your team handle it
-          </span>
-        </div>
-        <p className="text-[11.5px] leading-[1.5]" style={{ color: 'var(--m-muted)' }}>
-          Copy or download the recommended fix and hand it off to your developer or content team.
-        </p>
-        <span
-          className="inline-flex items-center gap-1 text-[11px] font-medium mt-1"
-          style={{ color: 'var(--m-muted)' }}
-        >
-          View fix details <ArrowRight size={10} />
-        </span>
-      </button>
+/* ── Status Tracker ──────────────────────────────────────── */
+
+function StatusTracker({ finding }: { finding: AuditFinding }) {
+  const steps: { key: string; label: string }[] = [
+    { key: 'open', label: 'Open' },
+    { key: 'in_progress', label: 'In progress' },
+    { key: 'fixed', label: 'Fixed' },
+  ];
+  const currentIdx = steps.findIndex((s) => s.key === finding.status);
+
+  return (
+    <div className="flex items-center gap-0 py-3">
+      {steps.map((step, i) => {
+        const done = i <= currentIdx;
+        const isCurrent = i === currentIdx;
+        return (
+          <React.Fragment key={step.key}>
+            {i > 0 && (
+              <div
+                className="flex-1 h-px mx-1"
+                style={{ background: i <= currentIdx ? 'var(--ink)' : 'var(--rule)' }}
+              />
+            )}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                style={{
+                  background: done ? 'var(--ink)' : 'transparent',
+                  color: done ? 'var(--paper)' : 'var(--m-muted)',
+                  border: done ? 'none' : '1.5px solid var(--rule)',
+                }}
+              >
+                {done && i < currentIdx ? (
+                  <Check size={10} />
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: isCurrent ? 'var(--ink)' : done ? 'var(--ink)' : 'var(--m-muted)' }}
+              >
+                {step.label}
+              </span>
+            </div>
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }
@@ -213,12 +232,10 @@ function HandoffPanel({
   finding,
   patch,
   fixType,
-  onBack,
 }: {
   finding: AuditFinding;
   patch: string;
   fixType: FixType;
-  onBack: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const isJson = fixType === 'schema' || looksLikeJson(patch);
@@ -254,24 +271,13 @@ function HandoffPanel({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 mb-1">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md transition-colors"
-          style={{ color: 'var(--m-muted)', background: 'transparent', border: '1px solid var(--rule)' }}
-        >
-          <RotateCcw size={10} />
-          Back
-        </button>
-        <div className="flex items-center gap-1.5">
-          <Users size={12} style={{ color: 'var(--m-muted)' }} />
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-            Team handoff
-          </span>
-        </div>
-      </div>
+    <div className="space-y-4 pt-4">
+      {/* Status tracker */}
+      <StatusTracker finding={finding} />
+
+      <p className="text-[12px] leading-[1.6]" style={{ color: 'var(--m-muted)' }}>
+        Share the recommended fix below with your developer or content team. Once they apply it, mark this issue as fixed.
+      </p>
 
       {/* Read-only recommendation */}
       <div
@@ -327,12 +333,10 @@ function SelfServeConsole({
   finding,
   onDeploySuccess,
   ftpConnections = [],
-  onBack,
 }: {
   finding: AuditFinding;
   onDeploySuccess: () => void;
   ftpConnections?: FtpConnectionForDeploy[];
-  onBack: () => void;
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
@@ -586,25 +590,9 @@ function SelfServeConsole({
   const canDeploy = hasFtp && deployConnectionId && deployPath.trim() && patch.trim();
 
   return (
-    <section aria-label="Self-serve deploy console" className="text-[12px] space-y-3">
-      {/* Back + header */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md transition-colors"
-          style={{ color: 'var(--m-muted)', background: 'transparent', border: '1px solid var(--rule)' }}
-        >
-          <RotateCcw size={10} />
-          Back
-        </button>
-        <div className="flex items-center gap-1.5">
-          <Wrench size={12} style={{ color: 'var(--signal)' }} />
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
-            Deploy console
-          </span>
-        </div>
-      </div>
+    <section aria-label="Self-serve deploy console" className="text-[12px] space-y-3 pt-4">
+      {/* Status tracker */}
+      <StatusTracker finding={finding} />
 
       {/* ── Step 1: Edit the copy ──────────────────────────── */}
       <div>
@@ -907,52 +895,6 @@ function SelfServeConsole({
                   {surgicalLoading ? 'Generating fix...' : 'Deploy to server'}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
-                    setDeploying(true);
-                    setDeployResult(null);
-                    try {
-                      const res = await fetch('/api/ftp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          action: 'write',
-                          connectionId: deployConnectionId,
-                          filePath: deployPath.trim(),
-                          content: patch,
-                          auditId: finding.audit_id,
-                          findingId: finding.id,
-                          createBackup: true,
-                        }),
-                      });
-                      const data = await res.json().catch(() => ({} as any));
-                      if (!res.ok) {
-                        setDeployResult({ ok: false, msg: data?.error || `Deploy failed (${res.status}).` });
-                        return;
-                      }
-                      setDeployResult({
-                        ok: true,
-                        msg: data?.hadBackup ? 'Deployed — backup captured.' : 'Deployed successfully.',
-                        deployLogId: data?.deployLogId,
-                      });
-                      if (data?.deployLogId) setLastDeployId(data.deployLogId);
-                      onDeploySuccess();
-                    } catch (err: any) {
-                      setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
-                    } finally {
-                      setDeploying(false);
-                    }
-                  }}
-                  disabled={deploying || restoring || !canDeploy}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium disabled:opacity-50"
-                  style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
-                >
-                  {deploying ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                  {deploying ? 'Deploying...' : 'Deploy snippet as-is'}
-                </button>
-
                 {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
                   <button
                     type="button"
@@ -1014,31 +956,27 @@ export default function FixConsole({
   /** Site-scoped FTP connections — when present, enables inline deploy. */
   ftpConnections?: FtpConnectionForDeploy[];
 }) {
-  const [path, setPath] = useState<ResolutionPath>(null);
+  const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const patch = (finding.recommendation || '').trim();
 
-  if (path === null) {
-    return <PathChooser onChoose={setPath} />;
-  }
-
-  if (path === 'handoff') {
-    return (
-      <HandoffPanel
-        finding={finding}
-        patch={patch}
-        fixType={fixType}
-        onBack={() => setPath(null)}
-      />
-    );
-  }
-
   return (
-    <SelfServeConsole
-      finding={finding}
-      onDeploySuccess={onDeploySuccess}
-      ftpConnections={ftpConnections}
-      onBack={() => setPath(null)}
-    />
+    <div>
+      <TabBar active={activeTab} onSwitch={setActiveTab} />
+
+      {activeTab === 'handoff' ? (
+        <HandoffPanel
+          finding={finding}
+          patch={patch}
+          fixType={fixType}
+        />
+      ) : (
+        <SelfServeConsole
+          finding={finding}
+          onDeploySuccess={onDeploySuccess}
+          ftpConnections={ftpConnections}
+        />
+      )}
+    </div>
   );
 }

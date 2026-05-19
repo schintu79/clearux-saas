@@ -254,13 +254,17 @@ function FixRow({
             {meta.label}
           </span>
 
-          {/* Dismiss — visible alongside other actions */}
+          {/* Dismiss toggle */}
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setShowDismiss((v) => !v); }}
             disabled={pending}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] font-medium transition-colors hover:bg-paper-2 disabled:opacity-50 flex-shrink-0"
-            style={{ color: showDismiss ? 'var(--severe)' : 'var(--m-muted)', border: '1px solid var(--rule)' }}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] font-medium transition-colors disabled:opacity-50 flex-shrink-0"
+            style={{
+              color: showDismiss ? 'var(--paper)' : 'var(--m-muted)',
+              background: showDismiss ? 'var(--ink)' : 'transparent',
+              border: `1px solid ${showDismiss ? 'var(--ink)' : 'var(--rule)'}`,
+            }}
             aria-label="Dismiss this finding with a reason"
           >
             <X size={11} />
@@ -278,41 +282,54 @@ function FixRow({
           </button>
         </div>
 
-        {/* Dismiss-with-reason input — sits under the row when open */}
+        {/* Dismiss panel — clear title, reversible */}
         {showDismiss && (
-          <div className="px-4 pb-3 flex items-center gap-2" data-testid="fix-dismiss-row">
-            <input
-              type="text"
-              value={dismissReason}
-              onChange={(e) => setDismissReason(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmDismiss(); }}
-              placeholder="Why are you dismissing this?"
-              className="flex-1 px-3 py-1.5 rounded-md text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
-              style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-              autoFocus
-              aria-label="Dismissal reason"
-            />
-            <button
-              type="button"
-              onClick={handleConfirmDismiss}
-              disabled={!dismissReason.trim() || pending}
-              className="px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all disabled:opacity-50"
-              style={{
-                background: dismissReason.trim() ? 'var(--severe)' : 'var(--paper-2)',
-                color: dismissReason.trim() ? 'white' : 'var(--m-muted)',
-              }}
-            >
-              Confirm
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowDismiss(false); setDismissReason(''); }}
-              className="p-1.5 rounded-md hover:bg-paper-2 transition-colors"
-              style={{ color: 'var(--m-muted)' }}
-              aria-label="Cancel dismiss"
-            >
-              <X size={12} />
-            </button>
+          <div
+            className="mx-4 mb-3 px-4 py-3 rounded-lg"
+            style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+            data-testid="fix-dismiss-row"
+          >
+            <p className="text-[12.5px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+              Dismiss this finding
+            </p>
+            <p className="text-[11px] mb-3" style={{ color: 'var(--m-muted)' }}>
+              Add a reason so your team knows why. You can restore dismissed findings anytime.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={dismissReason}
+                onChange={(e) => setDismissReason(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmDismiss(); }}
+                placeholder="e.g. Not relevant to this project, Already addressed..."
+                className="flex-1 px-3 py-1.5 rounded-md text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                autoFocus
+                aria-label="Dismissal reason"
+              />
+              <button
+                type="button"
+                onClick={handleConfirmDismiss}
+                disabled={!dismissReason.trim() || pending}
+                className="px-3 py-1.5 rounded-md text-[11.5px] font-semibold transition-all disabled:opacity-50"
+                style={{
+                  background: dismissReason.trim() ? 'var(--ink)' : 'var(--paper-2)',
+                  color: dismissReason.trim() ? 'var(--paper)' : 'var(--m-muted)',
+                  border: `1px solid ${dismissReason.trim() ? 'var(--ink)' : 'var(--rule)'}`,
+                }}
+              >
+                Dismiss
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDismiss(false); setDismissReason(''); }}
+                className="p-1.5 rounded-md transition-colors"
+                style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+                aria-label="Cancel"
+              >
+                <X size={12} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -343,9 +360,9 @@ function FixRow({
                 </div>
               </div>
 
-              {/* Resolve this issue — two-path Deploy Console */}
-              <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)', borderLeft: '3px solid var(--signal)' }}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-3" style={{ color: 'var(--signal)' }}>
+              {/* Resolve this issue — two-path tabbed console */}
+              <div className="pt-2">
+                <p className="text-[13px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
                   Resolve this issue
                 </p>
                 <FixConsole
