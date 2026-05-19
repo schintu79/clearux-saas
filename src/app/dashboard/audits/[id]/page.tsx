@@ -70,6 +70,7 @@ import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findin
 import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 import { readSelection, writeSelection } from '@/lib/dashboard/brand-selection';
+import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -1192,8 +1193,8 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [retrying, setRetrying] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'technical_health' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
-  const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'technical_health', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
+  type AuditTab = 'overview' | 'summary' | 'findings' | 'pages' | 'responsive' | 'technical_health' | 'wcag' | 'ai_xray' | 'intelligence' | 'brand_identity' | 'brand_audit';
+  const VALID_TABS: AuditTab[] = ['overview', 'summary', 'findings', 'pages', 'responsive', 'technical_health', 'wcag', 'ai_xray', 'intelligence', 'brand_identity', 'brand_audit'];
   const initialTabFromHash = ((): AuditTab => {
     if (typeof window === 'undefined') return 'overview';
     const h = (window.location.hash || '').replace(/^#/, '');
@@ -2258,13 +2259,14 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               role="tablist"
               aria-label="Audit sections"
             >
-              {(['overview', 'findings', 'pages', 'responsive', 'technical_health', 'ai_xray', 'intelligence'] as const).map((tab) => {
+              {(['overview', 'findings', 'pages', 'responsive', 'technical_health', 'wcag', 'ai_xray', 'intelligence'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 const label = tab === 'overview' ? L.tabOverview
                   : tab === 'findings' ? L.tabFindings
                   : tab === 'pages' ? L.tabPages
                   : tab === 'responsive' ? 'Responsive'
                   : tab === 'technical_health' ? 'Technical'
+                  : tab === 'wcag' ? 'WCAG'
                   : tab === 'ai_xray' ? 'AI Readability'
                   : 'Benchmark';
                 const responsiveFindings = findings.filter((f: any) => {
@@ -2272,16 +2274,19 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   return t.includes('viewport') || t.includes('responsive') || t.includes('mobile') || t.includes('touch target') || t.includes('text too small') || t.includes('overflow') || t.includes('navigation not adapted');
                 });
                 const pagesWithTechnical = auditPages.filter((p: any) => p.technical_audit).length;
+                const pagesWithWcag = auditPages.filter((p: any) => p.wcag_checklist).length;
                 const count = tab === 'findings' ? findings.length
                   : tab === 'pages' ? auditPages.length
                   : tab === 'responsive' ? responsiveFindings.length
                   : tab === 'technical_health' ? pagesWithTechnical
+                  : tab === 'wcag' ? pagesWithWcag
                   : null;
                 const TabIcon = tab === 'overview' ? BarChart3
                   : tab === 'findings' ? AlertTriangle
                   : tab === 'pages' ? Globe
                   : tab === 'responsive' ? Smartphone
                   : tab === 'technical_health' ? Activity
+                  : tab === 'wcag' ? Shield
                   : tab === 'ai_xray' ? Brain
                   : Sparkles;
                 return (
@@ -2326,6 +2331,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               pages: { icon: Globe, title: 'Pages' },
               responsive: { icon: Smartphone, title: 'Responsive' },
               technical_health: { icon: Activity, title: 'Technical health' },
+              wcag: { icon: Shield, title: 'WCAG compliance' },
               ai_xray: { icon: Brain, title: 'AI Readability' },
               intelligence: { icon: Sparkles, title: 'Benchmark' },
             };
@@ -3452,6 +3458,17 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
               </div>
             );
           })()}
+
+          {/* ── TAB: WCAG Compliance ─────────────────────── */}
+          {activeTab === 'wcag' && (
+            <WcagOverview
+              pages={auditPages.map((p: any) => ({
+                url: p.url,
+                wcag_checklist: p.wcag_checklist ?? null,
+                wcag_score: p.wcag_score ?? null,
+              }))}
+            />
+          )}
 
           {/* ── TAB: AI X-Ray ──────────────────────────────── */}
           {activeTab === 'ai_xray' && (

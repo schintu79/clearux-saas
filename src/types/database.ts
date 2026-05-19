@@ -178,6 +178,8 @@ export interface AuditPage {
   viewport_meta:       string | null
   screenshot_url:      string | null
   ai_readability:      AIPageReadability | null
+  wcag_checklist:      string | null       // JSON-stringified WcagCheckResult[]
+  wcag_score:          number | null       // 0-100 WCAG conformance score
   crawled_at:          string
 }
 

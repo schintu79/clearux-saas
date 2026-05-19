@@ -140,3 +140,24 @@ export {
   getWorstTopics,
 } from './quality-stats'
 export type { QualitySnapshot } from './quality-stats'
+
+// ── Step 9: WCAG 2.1 AA Checker ────────────────────────────
+export {
+  checkWcagAutomated,
+  buildWcagResults,
+  parseHeuristicResponse,
+  formatWcagForPrompt,
+  buildHeuristicPrompt,
+  WCAG_CRITERIA,
+} from './wcag-checker'
+export type {
+  WcagPrinciple,
+  WcagStatus,
+  WcagCheckMethod,
+  WcagCriterion,
+  WcagCheckResult,
+  WcagIssue,
+  WcagPageResult,
+  WcagFinding,
+  WcagAuditResult,
+} from './wcag-checker'

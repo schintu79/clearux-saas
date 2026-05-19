@@ -45,6 +45,7 @@ import { generateFixPlaybooks } from '@/lib/audit-engine/fix-playbooks'
 import { runMultiModelBenchmark } from '@/lib/audit-engine/pipeline/multi-model-probe'
 import { detectIndustry, getUserBenchmarkPosition } from '@/lib/audit-engine/industry-benchmark'
 import { generatePredictiveRecommendations } from '@/lib/audit-engine/predictive-recommendations'
+import { checkWcagAutomated, buildWcagResults, parseHeuristicResponse, formatWcagForPrompt, type WcagCheckResult, type WcagAuditResult } from '@/lib/audit-engine/pipeline/wcag-checker'
 import type { AuditFinding } from '@/types/database'
 
 /* ── DB helpers (duplicated from index.ts to keep self-contained) ── */
@@ -423,6 +424,122 @@ export const processAuditFn = inngest.createFunction(
           tab: 'responsive',
         })
         return { summary: '', findingsCount: 0 }
+      }
+    })
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2b2: WCAG 2.1 AA Compliance Check (Puppeteer)
+    // Runs comprehensive automated accessibility checks against
+    // all WCAG 2.1 Level AA criteria. Individual failures are
+    // stored as findings; results are injected into the AI
+    // analyzer context so it generates specific fixes, not
+    // "conduct an audit" recommendations.
+    // ──────────────────────────────────────────────────────────
+    const wcagCheck = await step.run('check-wcag-compliance', async () => {
+      try {
+        const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
+        const { automatedResults, heuristicPrompts } = await checkWcagAutomated(crawlResult.crawledUrls, maxUrls)
+
+        // Run AI heuristic analysis for criteria Puppeteer can't check
+        const heuristicResults = new Map<string, WcagCheckResult[]>()
+        for (const [url, prompt] of heuristicPrompts) {
+          try {
+            const Anthropic = (await import('@anthropic-ai/sdk')).default
+            const anthropic = new Anthropic()
+            const msg = await anthropic.messages.create({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 2000,
+              messages: [{ role: 'user', content: prompt }],
+            })
+            const text = msg.content.find(b => b.type === 'text')?.text || ''
+            if (text) heuristicResults.set(url, parseHeuristicResponse(text))
+          } catch {
+            // Heuristic analysis failed — automated results still valid
+          }
+        }
+
+        const wcagResult = buildWcagResults(automatedResults, heuristicResults)
+
+        // Store WCAG findings in audit_findings (category 8 = Accessibility & WCAG)
+        if (wcagResult.totalFindings > 0) {
+          const db = getDb()
+          const { data: existingFindings } = await db
+            .from('audit_findings')
+            .select('sort_order')
+            .eq('audit_id', auditId)
+            .order('sort_order', { ascending: false })
+            .limit(1)
+
+          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+
+          for (const page of wcagResult.pages) {
+            for (const finding of page.findings) {
+              const cls = classifyFinding({
+                title: finding.title,
+                description: finding.description,
+                recommendation: finding.recommendation,
+                severity: finding.severity,
+                categoryIndex: 8, // Accessibility & WCAG Compliance
+              })
+              await db.from('audit_findings').insert({
+                audit_id: auditId,
+                checklist_item_id: null,
+                category_index: 8, // Accessibility & WCAG Compliance
+                finding_type: cls.findingType,
+                fix_type: cls.fixType,
+                severity: finding.severity,
+                title: finding.title,
+                description: `[WCAG ${finding.wcagCriterion}] ${finding.description}`,
+                evidence: finding.evidence || null,
+                page_url: finding.pageUrl || crawlResult.firstPageUrl,
+                recommendation: finding.recommendation,
+                estimated_impact: null,
+                target_element: finding.element || null,
+                screenshot_url: null,
+                sort_order: sortOrder++,
+              } as any)
+            }
+          }
+        }
+
+        // Store WCAG checklist data in audit_pages for the UI panel
+        if (wcagResult.pages.length > 0) {
+          const db = getDb()
+          for (const page of wcagResult.pages) {
+            await db
+              .from('audit_pages')
+              .update({
+                wcag_checklist: JSON.stringify(page.checklist),
+                wcag_score: page.score,
+              } as any)
+              .eq('audit_id', auditId)
+              .eq('url', page.url)
+          }
+        }
+
+        await auditLog(auditId, 'wcag_check_completed', 'success',
+          `WCAG 2.1 AA check: ${wcagResult.totalFindings} findings, score ${wcagResult.overallScore}/100`, {
+            findings_count: wcagResult.totalFindings,
+            pages_checked: wcagResult.pages.length,
+            overall_score: wcagResult.overallScore,
+          })
+
+        return {
+          summary: formatWcagForPrompt(wcagResult),
+          findingsCount: wcagResult.totalFindings,
+          overallScore: wcagResult.overallScore,
+        }
+      } catch (err) {
+        console.error('[inngest] WCAG check failed (non-fatal):', err)
+        await auditLog(auditId, 'wcag_check_failed', 'warning',
+          `WCAG check failed: ${err instanceof Error ? err.message : String(err)}. Continuing with text-based analysis.`)
+        auditLimitations.push({
+          id: 'wcag_check_unavailable',
+          title: 'Automated WCAG compliance check unavailable',
+          description: 'We could not render this website in a browser to run WCAG 2.1 AA compliance checks. The accessibility analysis is based on AI text review only.',
+          tab: 'findings',
+        })
+        return { summary: '', findingsCount: 0, overallScore: 0 }
       }
     })
 
@@ -991,7 +1108,10 @@ RULES FOR RE-AUDIT:
         ? `\n\n${llmProbeResult.summary}`
         : ''
 
-      const fullContext = siteMap + userContext + responsiveContext + llmProbeContext
+      // Append WCAG check results so the AI analyzer has real compliance data
+      const wcagContext = wcagCheck.summary || ''
+
+      const fullContext = siteMap + userContext + responsiveContext + llmProbeContext + wcagContext
 
       await auditLog(auditId, 'site_context_built', 'success',
         `Site context built from ${lines.length} pages${userContext ? ' + user notes' : ''} | depth: ${effectiveDepthMode}`)

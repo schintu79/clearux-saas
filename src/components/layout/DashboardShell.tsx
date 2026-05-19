@@ -737,6 +737,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                     : currentHash === 'pages' ? 'Pages'
                     : currentHash === 'responsive' ? 'Responsive'
                     : currentHash === 'technical_health' ? 'Technical health'
+                    : currentHash === 'wcag' ? 'WCAG compliance'
                     : currentHash === 'ai_xray' ? 'AI Readability'
                     : currentHash === 'intelligence' ? 'Benchmark'
                     : null;
