@@ -21,12 +21,10 @@ import {
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
-  severityColor,
-  severityLabel,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
-import { computeAuditDiff, type FindingDiffItem } from '@/lib/audit-engine/audit-diff';
+import { computeAuditDiff } from '@/lib/audit-engine/audit-diff';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
@@ -124,6 +122,22 @@ export default function TrackPage() {
       .reverse();
   }, [bundle, selection]);
 
+  // All hooks must be above early returns to avoid #310 ("Rendered more hooks than during the previous render")
+  const report = bundle?.report ?? null;
+  const auditFindings = bundle?.findings ?? [];
+  const prior = bundle?.prior ?? null;
+
+  const diff = useMemo(() => {
+    if (!prior?.report || !report || priorFindings.length === 0) return null;
+    return computeAuditDiff(report, prior.report, auditFindings, priorFindings);
+  }, [report, prior, auditFindings, priorFindings]);
+
+  const validatedFixes = useMemo(() => diff?.findings.filter((f) => f.diffStatus === 'fixed') || [], [diff]);
+  const failedFixes = useMemo(
+    () => diff?.findings.filter((f) => f.diffStatus === 'regressed' || f.diffStatus === 'persisted') || [],
+    [diff],
+  );
+
   if (authLoading || loading || !ready) {
     return (
       <div>
@@ -149,7 +163,7 @@ export default function TrackPage() {
     );
   }
 
-  const { report, findings, prior } = bundle;
+  const { findings } = bundle;
   const score = report?.overall_score ?? null;
   const priorScore = prior?.report?.overall_score ?? null;
   const delta = score != null && priorScore != null ? score - priorScore : null;
@@ -157,17 +171,6 @@ export default function TrackPage() {
   const fixed = findings.filter((f) => f.status === 'fixed').length;
   const backlog = findings.filter((f) => f.status === 'backlog').length;
 
-  // Fix validation — compare current findings vs prior to show proof of improvement
-  const diff = useMemo(() => {
-    if (!prior?.report || !report || priorFindings.length === 0) return null;
-    return computeAuditDiff(report, prior.report, findings, priorFindings);
-  }, [report, prior, findings, priorFindings]);
-
-  const validatedFixes = useMemo(() => diff?.findings.filter((f) => f.diffStatus === 'fixed') || [], [diff]);
-  const failedFixes = useMemo(
-    () => diff?.findings.filter((f) => f.diffStatus === 'regressed' || f.diffStatus === 'persisted') || [],
-    [diff],
-  );
   const persistedOnly = failedFixes.filter((f) => f.diffStatus === 'persisted' && f.previous?.status === 'fixed');
   const regressed = failedFixes.filter((f) => f.diffStatus === 'regressed');
 

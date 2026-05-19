@@ -787,8 +787,8 @@ function OverviewInner() {
           titleSize="lg"
         >
           <div className="flex flex-col items-center justify-center">
-            <ScoreRing score={overallScore} size={120} strokeWidth={9} />
-            <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>/100</p>
+            <ScoreRing score={overallScore} size={160} strokeWidth={10} />
+            <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>/100</p>
             <span
               className="text-[11px] font-medium mt-1.5 px-3 py-0.5 rounded-full"
               style={{
