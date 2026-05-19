@@ -37,6 +37,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 type Competitor = {
@@ -340,20 +341,11 @@ export default function IntelligencePage() {
     return (
       <div>
         <OverviewBreadcrumb current="Benchmark" />
-        <div className="flex items-center gap-2.5 mb-6">
-          <span
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
-          >
-            <BarChart3 size={16} />
-          </span>
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-            Benchmark
-          </h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection ? 'No audit for this brand yet.' : 'Pick a brand or run an audit to see how it benchmarks.'}
-          </p>
-        </div>
+        <PageHeader
+          icon={<BarChart3 size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+          title="Benchmark"
+          subtitle={selection ? 'No audit for this brand yet.' : 'Pick a brand or run an audit to see how it benchmarks.'}
+        />
         <EmptyAudit
           title="No benchmarks yet"
           body="Run a Fixpath audit to compare your Brand Health Score against detected competitors and your industry."
@@ -375,19 +367,10 @@ export default function IntelligencePage() {
       <OverviewBreadcrumb current="Benchmark" />
 
       {/* Page heading with icon */}
-      <div className="flex items-center gap-2.5 mb-6">
-        <span
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
-        >
-          <BarChart3 size={16} />
-        </span>
-        <div>
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-            Benchmark
-          </h1>
-        </div>
-      </div>
+      <PageHeader
+        icon={<BarChart3 size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Benchmark"
+      />
 
       {isBrandAudit ? (
         <div

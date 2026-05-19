@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { ArrowRight, FileText, Share2, ExternalLink } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 
 interface ReportRow {
@@ -86,12 +87,11 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Reports</h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Audit reports, exports, and shareable links.
-        </p>
-      </div>
+      <PageHeader
+        icon={<FileText size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Reports"
+        subtitle="Audit reports, exports, and shareable links."
+      />
       {rows.length === 0 ? (
         <div
           className="rounded-xl p-8"

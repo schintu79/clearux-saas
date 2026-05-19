@@ -9,7 +9,8 @@
  *    the Fix page's filter language. An active dropdown turns dark.
  *  - Module groupings stay so users can see where the work concentrates,
  *    but selecting a module short-circuits to that bucket.
- *  - Each row links straight to the corresponding card on Fix.
+ *  - Each finding row is expandable — click to reveal description,
+ *    impact, and a "Fix now" button linking to the Fix workspace.
  */
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
@@ -29,6 +30,7 @@ import {
   FileSearch,
   Eye,
   Lightbulb,
+  Search as SearchIcon,
   X,
 } from 'lucide-react';
 import {
@@ -43,6 +45,8 @@ import {
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
+import FindingText from '@/components/dashboard/v2/FindingText';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
 
@@ -110,6 +114,7 @@ function FindPageInner() {
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // Module filter — chip-driven, with URL hydration on first mount so the
   // category-card deep links from Overview keep working.
@@ -248,6 +253,10 @@ function FindPageInner() {
     [bundle, openFindings],
   );
 
+  const toggleFinding = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   if (authLoading || loading || !ready) {
     return (
       <div>
@@ -264,12 +273,11 @@ function FindPageInner() {
     return (
       <div>
         <OverviewBreadcrumb current="Find" />
-        <div className="mb-6">
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Find</h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection ? 'No audit for this brand yet.' : 'Run an audit to surface issues.'}
-          </p>
-        </div>
+        <PageHeader
+          icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
+          title="Find"
+          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to surface issues.'}
+        />
         <EmptyAudit
           title="No findings yet"
           body="Run your first audit and Fixpath will rank every issue by severity and module."
@@ -283,16 +291,11 @@ function FindPageInner() {
   return (
     <div>
       <OverviewBreadcrumb current="Find" />
-      <div className="mb-5">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Find</h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          What the audit found, grouped by module so you can see where the work sits. Click{' '}
-          <span className="inline-flex items-center gap-0.5 font-medium" style={{ color: 'var(--signal)' }}>
-            <Wrench size={11} /> Fix
-          </span>{' '}
-          on any finding to open it inside the Fix workspace.
-        </p>
-      </div>
+      <PageHeader
+        icon={<SearchIcon size={18} style={{ color: 'var(--ink)' }} />}
+        title="Find"
+        subtitle="All findings from your latest audit, grouped by module."
+      />
 
       {priorityRecs.length > 0 && bundle?.audit && moduleFilter === 'all' && sevFilter === 'all' && (
         <div className="mb-4">
@@ -455,9 +458,22 @@ function FindPageInner() {
                       const host = hostnameOf(f.page_url);
                       const moduleNames = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
                       const multiModule = moduleNames.length > 1;
+                      const isExpanded = !!expanded[f.id];
                       return (
-                        <li key={f.id} style={{ borderBottom: '1px solid var(--rule)' }}>
-                          <div className="px-4 py-3 flex items-start gap-3" data-testid="find-row">
+                        <li
+                          key={f.id}
+                          style={{
+                            borderBottom: '1px solid var(--rule)',
+                            borderLeft: isExpanded ? `3px solid ${severityColor(f.severity)}` : '3px solid transparent',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleFinding(f.id)}
+                            className="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-black/[0.02] transition-colors cursor-pointer"
+                            data-testid="find-row"
+                            aria-expanded={isExpanded}
+                          >
                             <span
                               className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
                               style={{ background: severityColor(f.severity) }}
@@ -494,17 +510,37 @@ function FindPageInner() {
                                 )}
                               </div>
                             </div>
-                            <Link
-                              href={`/dashboard/fix#finding-${f.id}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold flex-shrink-0 transition-all hover:opacity-90"
-                              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                              data-testid="find-fix-link"
-                              aria-label={`Open "${f.title}" in Fix`}
-                            >
-                              <Wrench size={11} />
-                              Fix
-                            </Link>
-                          </div>
+                            <span className="flex-shrink-0 mt-0.5" style={{ color: 'var(--m-muted)' }} aria-hidden>
+                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-4 pb-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>What we found</span>
+                                <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                                  <FindingText text={f.description} />
+                                </div>
+                              </div>
+                              <div className="rounded-lg p-3" style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}>
+                                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1.5 block" style={{ color: 'var(--m-muted)' }}>Why it matters</span>
+                                <div className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ink)' }}>
+                                  <FindingText text={f.estimated_impact || 'Resolving this issue improves your overall site quality.'} />
+                                </div>
+                              </div>
+                              <div className="col-span-full flex justify-end">
+                                <Link
+                                  href={`/dashboard/fix#finding-${f.id}`}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold"
+                                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                                >
+                                  <Wrench size={12} />
+                                  Fix now
+                                </Link>
+                              </div>
+                            </div>
+                          )}
                         </li>
                       );
                     })}

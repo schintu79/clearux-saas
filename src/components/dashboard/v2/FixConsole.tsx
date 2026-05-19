@@ -11,7 +11,7 @@
  *     Lightweight handoff, no deploy controls.
  */
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Copy,
@@ -28,6 +28,7 @@ import {
   Wrench,
   Users,
 } from 'lucide-react';
+import FixPreviewPanel from './FixPreviewPanel';
 import type { AuditFinding } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
@@ -50,7 +51,7 @@ type FixType =
   | 'technical';
 
 
-function inferFixType(finding: AuditFinding): FixType {
+export function inferFixType(finding: AuditFinding): FixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
   if (/json|schema\.org|ld\+json|structured data|jsonld/.test(blob)) return 'schema';
   if (/meta description|og:|open graph|<meta/.test(blob)) return 'meta';
@@ -274,13 +275,20 @@ function SelfServeConsole({
   finding,
   ftpConnections = [],
   onStatusChange,
+  onPatchChange,
 }: {
   finding: AuditFinding;
   ftpConnections?: FtpConnectionForDeploy[];
   onStatusChange?: (status: string) => void;
+  onPatchChange?: (patch: string) => void;
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
+
+  // Report patch changes to parent for live preview
+  useEffect(() => {
+    onPatchChange?.(patch);
+  }, [patch, onPatchChange]);
   const [copied, setCopied] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
@@ -897,7 +905,8 @@ export default function FixConsole({
 }) {
   const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
-  const patch = (finding.recommendation || '').trim();
+  const basePatch = (finding.recommendation || '').trim();
+  const [livePatch, setLivePatch] = useState(basePatch);
 
   return (
     <div>
@@ -906,15 +915,21 @@ export default function FixConsole({
       {activeTab === 'handoff' ? (
         <HandoffPanel
           finding={finding}
-          patch={patch}
+          patch={basePatch}
           fixType={fixType}
         />
       ) : (
-        <SelfServeConsole
-          finding={finding}
-          ftpConnections={ftpConnections}
-          onStatusChange={onStatusChange}
-        />
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 items-start">
+          <SelfServeConsole
+            finding={finding}
+            ftpConnections={ftpConnections}
+            onStatusChange={onStatusChange}
+            onPatchChange={setLivePatch}
+          />
+          <div className="hidden xl:block sticky top-4">
+            <FixPreviewPanel fixType={fixType} finding={finding} patch={livePatch} />
+          </div>
+        </div>
       )}
     </div>
   );

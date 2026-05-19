@@ -23,6 +23,7 @@ import {
   WifiOff,
   Shield,
 } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
@@ -232,16 +233,11 @@ export default function ConnectPage() {
     <div className="max-w-2xl mx-auto py-4 px-4">
       <OverviewBreadcrumb current="Connect site" />
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Server size={18} className="text-muted" />
-            <h1 className="text-lg font-medium text-text">Server connections</h1>
-          </div>
-          <p className="text-muted text-xs">
-            Connect your website via FTP/SFTP to deploy fixes directly from your audit results.
-          </p>
-        </div>
+      <PageHeader
+        icon={<Server size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Server connections"
+        subtitle="Connect your website via FTP/SFTP to deploy fixes directly from your audit results."
+      >
         {!showForm && (
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm(DEFAULT_FORM); setTestResult(null); }}
@@ -250,7 +246,7 @@ export default function ConnectPage() {
             <Plus size={13} /> Add connection
           </button>
         )}
-      </div>
+      </PageHeader>
 
       {/* Provisioning notice — surfaces missing migration / env clearly */}
       {provisioning && (!provisioning.provisioned || !provisioning.configured) && (

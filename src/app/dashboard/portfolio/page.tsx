@@ -18,9 +18,11 @@ import {
   TrendingDown,
   Minus,
   Fingerprint,
+  FolderOpen,
   Globe,
   AlertTriangle,
 } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 
@@ -183,13 +185,11 @@ export default function PortfolioPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Portfolio</h1>
-          <p className="text-[13px] mt-1 max-w-[640px]" style={{ color: 'var(--m-muted)' }}>
-            Which brand or client needs attention first? Ranked by open criticals and lowest score.
-          </p>
-        </div>
+      <PageHeader
+        icon={<FolderOpen size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Portfolio"
+        subtitle="Which brand or client needs attention first? Ranked by open criticals and lowest score."
+      >
         <Link
           href="/dashboard/new-audit"
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90 flex-shrink-0"
@@ -197,7 +197,7 @@ export default function PortfolioPage() {
         >
           <Plus size={13} /> Add site or brand
         </Link>
-      </div>
+      </PageHeader>
 
       {items.length === 0 ? (
         <div

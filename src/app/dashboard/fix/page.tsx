@@ -1,21 +1,14 @@
 'use client';
 
 /**
- * Fix — flat, full-width action workspace.
+ * Fix — structured deploy console.
  *
- * Visual rules (redesign):
- *  - No card-in-card layering. Each finding is a single flat row that
- *    expands inline; the action bar lives flush at the bottom of the
- *    expanded row, not inside a sub-panel.
- *  - Status is a color-coded select dropdown directly on the collapsed
- *    row, so a finding can be moved through the lifecycle without
- *    expanding it.
- *  - Module / severity / status filters render as compact select
- *    dropdowns. An active dropdown turns dark to signal a filter is on.
- *  - Dismiss is an action alongside Status, gated on a reason input.
- *    Dismissed findings collapse to a single strikethrough row.
- *  - Push remains explicitly gated. Nothing is sent to a live site
- *    without user approval and a connected deployment target.
+ * Two-column layout:
+ *  - Main area (left): active finding expanded with full details + FixConsole
+ *  - Sidebar rail (right): compact list of all findings, clickable to select
+ *
+ * The active finding is fully visible and visually highlighted.
+ * Sidebar findings render at ~50% opacity; the active one is fully opaque.
  */
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
@@ -26,11 +19,12 @@ import {
   ArrowRight,
   Search,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
+  ChevronRight,
   ExternalLink,
   Wrench,
   X,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
@@ -44,6 +38,7 @@ import {
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FixConsole from '@/components/dashboard/v2/FixConsole';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -63,26 +58,6 @@ const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2,
 function hostnameOf(url: string | null | undefined): string | null {
   if (!url) return null;
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
-}
-
-function severityCardBg(severity: string): string {
-  const v = severity === 'critical' ? 'var(--severe)'
-    : severity === 'high' ? 'var(--warn)'
-    : severity === 'low' ? 'var(--ok)'
-    : 'var(--signal)';
-  return `color-mix(in srgb, ${v} 3%, var(--card))`;
-}
-
-/** Tiny pill used for module + severity meta on the collapsed row. */
-function MetaChip({ children, color, bg, border }: { children: React.ReactNode; color?: string; bg?: string; border?: string }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium normal-case tracking-normal"
-      style={{ background: bg || 'var(--paper-2)', color: color || 'var(--m-muted)', border: border || '1px solid var(--rule)' }}
-    >
-      {children}
-    </span>
-  );
 }
 
 /** Filter dropdown shared by Status, Severity, Module. Goes dark when active. */
@@ -112,7 +87,7 @@ function FilterDropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none bg-transparent focus-visible:ring-2 focus-visible:ring-signal/30"
+        className="text-[11px] font-medium pl-2.5 pr-6 py-1 rounded-md outline-none cursor-pointer appearance-none bg-transparent focus-visible:ring-2 focus-visible:ring-signal/30"
         style={{ color: isActive ? 'var(--paper)' : 'var(--ink)' }}
         aria-label={label}
       >
@@ -124,55 +99,120 @@ function FilterDropdown({
   );
 }
 
-function FixRow({
+interface FtpConnectionSummary {
+  id: string;
+  label: string;
+  protocol: string;
+  host: string;
+  remote_path: string;
+  brand_identity_id: string | null;
+}
+
+function fixPriority(f: AuditFinding): number {
+  return SEVERITY_RANK[f.severity] || 0;
+}
+
+/* ── Sidebar Finding Item ─────────────────────────────────── */
+
+function SidebarItem({
   group,
-  expanded,
-  onToggle,
-  onStatus,
-  onDismiss,
-  pending,
-  ftpConnections,
+  isActive,
+  onClick,
 }: {
   group: GroupedFinding;
-  expanded: boolean;
-  onToggle: (id: string) => void;
-  onStatus: (id: string, status: FindingStatus) => void;
-  onDismiss: (id: string, reason: string) => void;
-  pending: boolean;
-  ftpConnections: FtpConnectionSummary[];
+  isActive: boolean;
+  onClick: () => void;
 }) {
   const finding = group.primary;
-  const [showDismiss, setShowDismiss] = useState(false);
-  const [dismissReason, setDismissReason] = useState('');
-  const meta = STATUS_META[finding.status] || STATUS_META.open;
-  const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
-  const multiModule = moduleNames.length > 1;
-  const grouped = group.isConsolidated;
-  const host = hostnameOf(finding.page_url);
   const sevColor = severityColor(finding.severity);
-  const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
+  const meta = STATUS_META[finding.status] || STATUS_META.open;
+  const host = hostnameOf(finding.page_url);
 
-  // Dismissed findings collapse to a single muted, strikethrough row.
   if (finding.dismissed) {
     return (
-      <li id={`finding-${finding.id}`} data-testid="fix-card" data-card data-dismissed>
-        <div
-          className="px-4 py-2.5 flex items-center gap-3 opacity-60"
-          style={{ borderTop: '1px solid var(--rule)' }}
-        >
-          <span className="text-[12px] line-through flex-1 truncate" style={{ color: 'var(--m-muted)' }}>
-            {finding.title}
-          </span>
-          <span
-            className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0"
-            style={{ background: 'var(--paper-2)', color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
-          >
-            Dismissed
-          </span>
-        </div>
-      </li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left px-3 py-2 opacity-40"
+        style={{ borderBottom: '1px solid var(--rule)' }}
+      >
+        <span className="text-[11px] line-through truncate block" style={{ color: 'var(--m-muted)' }}>
+          {finding.title}
+        </span>
+      </button>
     );
   }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left px-3 py-2.5 transition-all"
+      style={{
+        borderBottom: '1px solid var(--rule)',
+        borderLeft: isActive ? `3px solid ${sevColor}` : '3px solid transparent',
+        background: isActive ? 'var(--paper)' : 'transparent',
+        opacity: isActive ? 1 : 0.55,
+      }}
+    >
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-[12px] font-medium leading-snug truncate"
+            style={{ color: 'var(--ink)' }}
+          >
+            {finding.title}
+          </p>
+          <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+            <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
+              {severityLabel(finding.severity)}
+            </span>
+            <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
+            <span
+              className="inline-flex items-center gap-1 px-1 py-0.5 rounded text-[9px] font-medium"
+              style={{ background: meta.bg, color: meta.color }}
+            >
+              <span className="w-1 h-1 rounded-full" style={{ background: meta.dot }} />
+              {meta.label}
+            </span>
+            {host && (
+              <>
+                <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
+                <span className="truncate max-w-[100px]" style={{ color: 'var(--m-muted)' }}>{host}</span>
+              </>
+            )}
+          </div>
+        </div>
+        {isActive && <ChevronRight size={12} className="flex-shrink-0 mt-1" style={{ color: 'var(--ink)' }} />}
+      </div>
+    </button>
+  );
+}
+
+/* ── Active Finding Detail ─────────────────────────────────── */
+
+function ActiveFindingDetail({
+  group,
+  pending,
+  ftpConnections,
+  onStatus,
+  onDismiss,
+}: {
+  group: GroupedFinding;
+  pending: boolean;
+  ftpConnections: FtpConnectionSummary[];
+  onStatus: (id: string, status: FindingStatus) => void;
+  onDismiss: (id: string, reason: string) => void;
+}) {
+  const finding = group.primary;
+  const sevColor = severityColor(finding.severity);
+  const meta = STATUS_META[finding.status] || STATUS_META.open;
+  const moduleNames = group.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
+  const host = hostnameOf(finding.page_url);
+  const hasImpact = Boolean(finding.estimated_impact && finding.estimated_impact.trim());
+
+  const [showDismiss, setShowDismiss] = useState(false);
+  const [dismissReason, setDismissReason] = useState('');
 
   const handleConfirmDismiss = () => {
     const r = dismissReason.trim();
@@ -182,61 +222,68 @@ function FixRow({
     setDismissReason('');
   };
 
+  if (finding.dismissed) {
+    return (
+      <div
+        className="rounded-lg p-6 text-center"
+        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+      >
+        <p className="text-[14px] font-medium line-through" style={{ color: 'var(--m-muted)' }}>
+          {finding.title}
+        </p>
+        <p className="text-[12px] mt-2" style={{ color: 'var(--m-muted)' }}>
+          This finding was dismissed.
+          {finding.dismissal_reason && <> Reason: {finding.dismissal_reason}</>}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <li id={`finding-${finding.id}`} data-testid="fix-card" data-card>
-      <div style={{ borderTop: '1px solid var(--rule)' }}>
-        {/* Collapsed header — severity-tinted strip */}
-        <div
-          className="w-full px-4 flex items-center gap-3 transition-colors"
-          style={{ paddingTop: '0.65rem', paddingBottom: '0.65rem', background: severityCardBg(finding.severity), borderLeft: `2px solid ${sevColor}` }}
-        >
-          <button
-            type="button"
-            onClick={() => onToggle(finding.id)}
-            className="flex-1 min-w-0 text-left"
-            aria-expanded={expanded}
-            aria-controls={`fix-body-${finding.id}`}
-          >
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-[13px] font-medium leading-snug truncate tracking-normal" style={{ color: 'var(--ink)' }}>
-                {finding.title}
-              </h3>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--m-muted)', marginTop: '0.35rem' }}>
+    <div id={`finding-${finding.id}`} data-testid="fix-card">
+      {/* Header bar — title, severity, module, status, dismiss */}
+      <div
+        className="rounded-t-lg px-5 py-4"
+        style={{
+          background: 'var(--card)',
+          border: '1px solid var(--rule)',
+          borderLeft: `3px solid ${sevColor}`,
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[16px] font-semibold leading-snug" style={{ color: 'var(--ink)' }}>
+              {finding.title}
+            </h2>
+            <div className="flex items-center gap-2 mt-2 flex-wrap text-[11px]">
               <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
                 {severityLabel(finding.severity)}
               </span>
-              {moduleNames.slice(0, multiModule ? 3 : 1).map((m, i) => {
+              {moduleNames.map((m, i) => {
                 const idx = group.affectedModuleIndices.filter((x) => x >= 0)[i];
                 const tint = idx != null ? MODULE_TINTS[idx] : null;
                 return (
                   <React.Fragment key={`${m}-${i}`}>
-                    <span aria-hidden>·</span>
-                    <MetaChip color="var(--ink)" bg={tint?.bg} border={`1px solid ${tint?.border || 'var(--rule)'}`}>
+                    <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      style={{ background: tint?.bg || 'var(--paper-2)', color: 'var(--ink)', border: `1px solid ${tint?.border || 'var(--rule)'}` }}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: tint?.dot || 'var(--m-muted)' }} aria-hidden />
                       {m}
-                    </MetaChip>
+                    </span>
                   </React.Fragment>
                 );
               })}
-              {multiModule && moduleNames.length > 3 && (
-                <span>+{moduleNames.length - 3}</span>
-              )}
-              {grouped && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span>{group.members.length} similar</span>
-                </>
-              )}
               {finding.page_url && (
                 <>
-                  <span aria-hidden>·</span>
+                  <span style={{ color: 'var(--m-muted)' }} aria-hidden>·</span>
                   <a
                     href={finding.page_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 hover:underline truncate max-w-[280px]"
+                    style={{ color: 'var(--m-muted)' }}
                   >
                     <ExternalLink size={10} />
                     {host || finding.page_url}
@@ -244,69 +291,59 @@ function FixRow({
                 </>
               )}
             </div>
-          </button>
-
-          {/* Status dropdown — editable, also auto-transitions on deploy */}
-          <div
-            className="relative inline-flex rounded-full flex-shrink-0"
-            style={{
-              background: meta.bg,
-              border: `1px solid ${meta.dot}`,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 6px center',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <select
-              value={finding.status}
-              onChange={(e) => { e.stopPropagation(); onStatus(finding.id, e.target.value as FindingStatus); }}
-              onClick={(e) => e.stopPropagation()}
-              disabled={pending}
-              className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full appearance-none cursor-pointer outline-none bg-transparent disabled:opacity-50"
-              style={{ color: meta.color }}
-              aria-label="Finding status"
-            >
-              {STATUS_KEYS.map((sk) => (
-                <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
-              ))}
-            </select>
           </div>
 
-          {/* Dismiss toggle */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setShowDismiss((v) => !v); }}
-            disabled={pending}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] font-medium transition-colors disabled:opacity-50 flex-shrink-0"
-            style={{
-              color: showDismiss ? 'var(--paper)' : 'var(--m-muted)',
-              background: showDismiss ? 'var(--ink)' : 'transparent',
-              border: `1px solid ${showDismiss ? 'var(--ink)' : 'var(--rule)'}`,
-            }}
-            aria-label="Dismiss this finding with a reason"
-          >
-            <X size={11} />
-            Dismiss
-          </button>
+          {/* Toolbar — status + dismiss */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Status dropdown */}
+            <div
+              className="relative inline-flex rounded-full"
+              style={{
+                background: meta.bg,
+                border: `1px solid ${meta.dot}`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+              }}
+            >
+              <select
+                value={finding.status}
+                onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
+                disabled={pending}
+                className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full appearance-none cursor-pointer outline-none bg-transparent disabled:opacity-50"
+                style={{ color: meta.color }}
+                aria-label="Finding status"
+              >
+                {STATUS_KEYS.map((sk) => (
+                  <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
+                ))}
+              </select>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => onToggle(finding.id)}
-            className="text-[var(--m-muted)] flex-shrink-0 p-1"
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-            aria-expanded={expanded}
-          >
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+            {/* Dismiss */}
+            <button
+              type="button"
+              onClick={() => setShowDismiss((v) => !v)}
+              disabled={pending}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10.5px] font-medium transition-colors disabled:opacity-50"
+              style={{
+                color: showDismiss ? 'var(--paper)' : 'var(--m-muted)',
+                background: showDismiss ? 'var(--ink)' : 'transparent',
+                border: `1px solid ${showDismiss ? 'var(--ink)' : 'var(--rule)'}`,
+              }}
+              aria-label="Dismiss this finding"
+            >
+              <X size={11} />
+              Dismiss
+            </button>
+          </div>
         </div>
 
-        {/* Dismiss panel — clear title, reversible */}
+        {/* Dismiss panel */}
         {showDismiss && (
           <div
-            className="mx-4 mb-3 px-4 py-3 rounded-lg"
+            className="mt-3 px-4 py-3 rounded-lg"
             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
-            data-testid="fix-dismiss-row"
           >
             <p className="text-[12.5px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
               Dismiss this finding
@@ -320,7 +357,7 @@ function FixRow({
                 value={dismissReason}
                 onChange={(e) => setDismissReason(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmDismiss(); }}
-                placeholder="e.g. Not relevant to this project, Already addressed..."
+                placeholder="e.g. Not relevant, already addressed..."
                 className="flex-1 px-3 py-1.5 rounded-md text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
                 style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                 autoFocus
@@ -351,96 +388,86 @@ function FixRow({
             </div>
           </div>
         )}
+      </div>
 
-        {expanded && (
-          <div id={`fix-body-${finding.id}`} style={{ background: '#ffffff', borderTop: '1px solid var(--rule)' }}>
-            <div className="px-5 py-5 space-y-4">
-              {/* What we found + Why it matters — side-by-side cards */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: sevColor }}>
-                    What we found
+      {/* Body — issue detail + FixConsole */}
+      <div
+        className="rounded-b-lg"
+        style={{ background: '#ffffff', border: '1px solid var(--rule)', borderTop: 'none' }}
+      >
+        <div className="px-5 py-5 space-y-5">
+          {/* What we found + Why it matters — side-by-side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: sevColor }}>
+                What we found
+              </p>
+              <div className="max-w-prose"><FindingText text={finding.description} /></div>
+            </div>
+            <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--warn)' }}>
+                Why it matters
+              </p>
+              <div className="max-w-prose">
+                {hasImpact ? (
+                  <FindingText text={finding.estimated_impact} />
+                ) : (
+                  <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
+                    Business impact not captured for this finding.
                   </p>
-                  <div className="max-w-prose"><FindingText text={finding.description} /></div>
-                </div>
-                <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--warn)' }}>
-                    Why it matters
-                  </p>
-                  <div className="max-w-prose">
-                    {hasImpact ? (
-                      <FindingText text={finding.estimated_impact} />
-                    ) : (
-                      <p className="text-[12px] leading-[1.65] italic" style={{ color: 'var(--m-muted)' }}>
-                        Business impact not captured for this finding.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Resolve this issue — two-path tabbed console */}
-              <div className="pt-3">
-                <h4 className="flex items-center gap-2 text-[15px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>
-                  <Wrench size={15} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
-                  Resolve this issue
-                </h4>
-                <FixConsole
-                  finding={finding}
-                  pending={pending}
-                  ftpConnections={ftpConnections}
-                  onStatusChange={(status) => onStatus(finding.id, status as FindingStatus)}
-                />
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Affected pages — compact, inside white body */}
-            {group.affectedPages.length > 1 && (
-              <div className="px-5 pb-4 text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages</span>
-                <span className="inline-flex items-center gap-1 flex-wrap">
-                  {group.affectedPages.slice(0, 5).map((p) => {
-                    const h = hostnameOf(p);
-                    return (
-                      <a
-                        key={p}
-                        href={p}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 hover:underline px-1.5 py-0.5 rounded"
-                        style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
-                      >
-                        <ExternalLink size={9} />
-                        {h || p}
-                      </a>
-                    );
-                  })}
-                  {group.affectedPages.length > 5 && (
-                    <span>+{group.affectedPages.length - 5} more</span>
-                  )}
-                </span>
-              </div>
-            )}
+          {/* Resolve — FixConsole with integrated preview panel */}
+          <div className="pt-2">
+            <h4 className="flex items-center gap-2 text-[15px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>
+              <Wrench size={15} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+              Resolve this issue
+            </h4>
+            <FixConsole
+              finding={finding}
+              pending={pending}
+              ftpConnections={ftpConnections}
+              onStatusChange={(status) => onStatus(finding.id, status as FindingStatus)}
+            />
+          </div>
+        </div>
 
+        {/* Affected pages */}
+        {group.affectedPages.length > 1 && (
+          <div className="px-5 pb-4 text-[11px]" style={{ color: 'var(--m-muted)' }}>
+            <span className="font-semibold uppercase tracking-[0.06em] mr-2 text-[10px]">Pages</span>
+            <span className="inline-flex items-center gap-1 flex-wrap">
+              {group.affectedPages.slice(0, 5).map((p) => {
+                const h = hostnameOf(p);
+                return (
+                  <a
+                    key={p}
+                    href={p}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:underline px-1.5 py-0.5 rounded"
+                    style={{ background: 'var(--paper-2)', color: 'var(--ink-2)' }}
+                  >
+                    <ExternalLink size={9} />
+                    {h || p}
+                  </a>
+                );
+              })}
+              {group.affectedPages.length > 5 && (
+                <span>+{group.affectedPages.length - 5} more</span>
+              )}
+            </span>
           </div>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
-function fixPriority(f: AuditFinding): number {
-  return SEVERITY_RANK[f.severity] || 0;
-}
-
-interface FtpConnectionSummary {
-  id: string;
-  label: string;
-  protocol: string;
-  host: string;
-  remote_path: string;
-  brand_identity_id: string | null;
-}
+/* ── Main Page Content ─────────────────────────────────────── */
 
 function FixPageInner() {
   const { user, loading: authLoading } = useAuth();
@@ -449,19 +476,17 @@ function FixPageInner() {
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Record<string, boolean>>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [activeFindingId, setActiveFindingId] = useState<string | null>(null);
 
   const [query, setQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [sevFilter, setSevFilter] = useState<typeof SEVERITIES[number]>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | FindingStatus>('all');
 
-  // Brand-scoped FTP connections for inline deploy
   const [ftpConnections, setFtpConnections] = useState<FtpConnectionSummary[]>([]);
   const [ftpLoaded, setFtpLoaded] = useState(false);
 
-  // Hydrate filters from URL so deep links from Overview & category cards
-  // land on the right slice of the queue.
+  // Hydrate filters from URL
   useEffect(() => {
     const sev = searchParams.get('severity');
     if (sev && (SEVERITIES as readonly string[]).includes(sev)) {
@@ -489,7 +514,7 @@ function FixPageInner() {
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
 
-  // Load site-scoped FTP connections so FixConsole can offer inline deploy
+  // Load FTP connections
   useEffect(() => {
     if (authLoading || !user || !ready) return;
     const siteHost = selection?.kind === 'site' ? selection.host : null;
@@ -497,31 +522,21 @@ function FixPageInner() {
     fetch(url)
       .then(async (res) => {
         if (res.status === 503) { setFtpConnections([]); return; }
-        const data = await res.json().catch(() => ({} as any));
-        setFtpConnections(data?.connections || []);
+        const data = await res.json().catch(() => ({} as Record<string, unknown>));
+        setFtpConnections((data as { connections?: FtpConnectionSummary[] })?.connections || []);
       })
       .catch(() => setFtpConnections([]))
       .finally(() => setFtpLoaded(true));
   }, [authLoading, user, ready, selection]);
 
-  // Auto-expand and scroll to the finding referenced by URL hash —
-  // preserves the /dashboard/fix#finding-<id> deep link from Find.
+  // Deep link via #finding-<id> — auto-select the referenced finding
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const apply = () => {
       const raw = window.location.hash.replace(/^#/, '');
       const m = raw.match(/^finding-(.+)$/);
       if (!m) return;
-      const id = m[1];
-      setExpanded((e) => (e[id] ? e : { ...e, [id]: true }));
-      requestAnimationFrame(() => {
-        const el = document.getElementById(`finding-${id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-      setTimeout(() => {
-        const el = document.getElementById(`finding-${id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 250);
+      setActiveFindingId(m[1]);
     };
     apply();
     window.addEventListener('hashchange', apply);
@@ -530,8 +545,7 @@ function FixPageInner() {
 
   const groups = useMemo<GroupedFinding[]>(() => {
     if (!bundle) return [];
-    // Only show fixable findings in the Fix Console — strategic observations live on the Find tab
-    const fixable = bundle.findings.filter((f) => (f as any).finding_type !== 'strategic');
+    const fixable = bundle.findings.filter((f) => (f as AuditFinding & { finding_type?: string }).finding_type !== 'strategic');
     const grouped = groupFindingsForDisplay(fixable, (f) => moduleIndexForFinding(f));
     return [...grouped].sort((a, b) => fixPriority(b.primary) - fixPriority(a.primary));
   }, [bundle]);
@@ -578,6 +592,18 @@ function FixPageInner() {
     });
   }, [groups, query, moduleFilter, sevFilter, statusFilter]);
 
+  // Auto-select first finding when groups load and nothing is active
+  useEffect(() => {
+    if (filteredGroups.length > 0 && !activeFindingId) {
+      setActiveFindingId(filteredGroups[0].primary.id);
+    }
+  }, [filteredGroups, activeFindingId]);
+
+  const activeGroup = useMemo(
+    () => filteredGroups.find((g) => g.primary.id === activeFindingId) || null,
+    [filteredGroups, activeFindingId],
+  );
+
   const updateLocal = (id: string, patch: Partial<AuditFinding>) => {
     setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patch } : f) } : b);
   };
@@ -610,27 +636,11 @@ function FixPageInner() {
         body: JSON.stringify({ dismiss: true, dismissal_reason: trimmed }),
       });
       if (res.ok) {
-        // Keep the finding in the list so the compact strikethrough row renders;
-        // it is excluded from active counts via the `dismissed` flag.
         updateLocal(id, { dismissed: true, dismissal_reason: trimmed, dismissed_at: new Date().toISOString() });
       }
     } catch {} finally {
       setPending((p) => ({ ...p, [id]: false }));
     }
-  };
-
-  const toggleExpand = (id: string) => {
-    setExpanded((e) => {
-      const willExpand = !e[id];
-      if (willExpand) {
-        // Scroll the card to center of the viewport after expansion renders
-        setTimeout(() => {
-          const el = document.getElementById(`finding-${id}`);
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 80);
-      }
-      return { ...e, [id]: willExpand };
-    });
   };
 
   if (authLoading || loading || !ready) {
@@ -649,12 +659,11 @@ function FixPageInner() {
     return (
       <div>
         <OverviewBreadcrumb current="Fix" />
-        <div className="mb-6">
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection ? 'No audit for this brand yet.' : 'Run an audit to populate your fix queue.'}
-          </p>
-        </div>
+        <PageHeader
+          icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+          title="Fix"
+          subtitle={selection ? 'No audit for this brand yet.' : 'Run an audit to populate your fix queue.'}
+        />
         <EmptyAudit
           title="No fixes ready"
           body="Run your first audit and Fixpath will surface fixes and snippets you can apply."
@@ -668,80 +677,11 @@ function FixPageInner() {
   return (
     <div>
       <OverviewBreadcrumb current="Fix" />
-      <div className="mb-5">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Fix</h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Your action queue. Expand a finding, then choose to fix it yourself and deploy directly, or hand it off to your team.
-        </p>
-      </div>
-
-      {/* Filter rail — Status / Severity / Module as compact dropdowns + search */}
-      <div className="mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 max-w-md min-w-[180px]">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
-            <input
-              type="search"
-              placeholder="Search fixes..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-md text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
-              style={{ background: 'var(--card)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-              aria-label="Search fixes"
-            />
-          </div>
-
-          <FilterDropdown
-            value={statusFilter}
-            onChange={(v) => setStatusFilter(v as 'all' | FindingStatus)}
-            label="Status"
-            options={[
-              { value: 'all', label: `All status (${groups.length})` },
-              ...STATUS_KEYS.map((s) => ({ value: s, label: `${STATUS_META[s].label} (${stats[s] || 0})` })),
-            ]}
-          />
-
-          <FilterDropdown
-            value={sevFilter}
-            onChange={(v) => setSevFilter(v as typeof SEVERITIES[number])}
-            label="Severity"
-            options={[
-              { value: 'all', label: 'All severities' },
-              ...(SEVERITIES.filter((s) => s !== 'all') as Array<'critical' | 'high' | 'medium' | 'low'>).map((s) => ({
-                value: s,
-                label: `${severityLabel(s)} (${sevCounts[s] || 0})`,
-              })),
-            ]}
-          />
-
-          <FilterDropdown
-            value={moduleFilter}
-            onChange={setModuleFilter}
-            label="Module"
-            options={[
-              { value: 'all', label: 'All modules' },
-              ...PHASE1_MODULES.filter((m) => moduleCounts[m]).map((m) => ({
-                value: m,
-                label: `${m} (${moduleCounts[m] || 0})`,
-              })),
-            ]}
-          />
-
-          {hasActiveFilters && (
-            <button
-              onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11.5px] font-medium"
-              style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink-2)' }}
-            >
-              <X size={11} /> Clear
-            </button>
-          )}
-
-          <span className="ml-auto text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
-            {filteredGroups.length} of {groups.length}
-          </span>
-        </div>
-      </div>
+      <PageHeader
+        icon={<Wrench size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Fix"
+        subtitle="Your action queue. Select a finding to resolve, deploy, or hand off to your team."
+      />
 
       {groups.length === 0 ? (
         <div
@@ -763,38 +703,136 @@ function FixPageInner() {
             <ArrowRight size={12} />
           </Link>
         </div>
-      ) : filteredGroups.length === 0 ? (
-        <div
-          className="rounded-lg p-8 text-center"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>No fixes match these filters</p>
-          <button
-            onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            Clear filters
-          </button>
-        </div>
       ) : (
-        <ul
-          className="rounded-lg overflow-hidden"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)', borderTop: 'none' }}
-        >
-          {filteredGroups.map((g) => (
-            <FixRow
-              key={g.primary.id}
-              group={g}
-              expanded={!!expanded[g.primary.id]}
-              onToggle={toggleExpand}
-              onStatus={handleStatus}
-              onDismiss={handleDismiss}
-              pending={!!pending[g.primary.id]}
-              ftpConnections={ftpConnections}
-            />
-          ))}
-        </ul>
+        <div className="flex gap-5 items-start">
+          {/* ── Main area — active finding ──────────────────── */}
+          <div className="flex-1 min-w-0">
+            {activeGroup ? (
+              <ActiveFindingDetail
+                key={activeGroup.primary.id}
+                group={activeGroup}
+                pending={!!pending[activeGroup.primary.id]}
+                ftpConnections={ftpConnections}
+                onStatus={handleStatus}
+                onDismiss={handleDismiss}
+              />
+            ) : (
+              <div
+                className="rounded-lg p-10 text-center"
+                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+              >
+                <Info size={20} style={{ color: 'var(--m-muted)' }} className="mx-auto mb-3" />
+                <p className="text-[14px] font-medium" style={{ color: 'var(--ink)' }}>
+                  {filteredGroups.length === 0 ? 'No findings match your filters' : 'Select a finding from the sidebar'}
+                </p>
+                {filteredGroups.length === 0 && hasActiveFilters && (
+                  <button
+                    onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
+                    className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
+                    style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Sidebar rail — all findings ─────────────────── */}
+          <aside className="w-[280px] flex-shrink-0 sticky top-4">
+            <div
+              className="rounded-lg overflow-hidden"
+              style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+            >
+              {/* Search + filters */}
+              <div className="px-3 py-3 space-y-2" style={{ borderBottom: '1px solid var(--rule)' }}>
+                <div className="relative">
+                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--m-muted)' }} />
+                  <input
+                    type="search"
+                    placeholder="Search..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="w-full pl-7 pr-2.5 py-1.5 rounded-md text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
+                    style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                    aria-label="Search fixes"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <FilterDropdown
+                    value={statusFilter}
+                    onChange={(v) => setStatusFilter(v as 'all' | FindingStatus)}
+                    label="Status"
+                    options={[
+                      { value: 'all', label: `All (${groups.length})` },
+                      ...STATUS_KEYS.map((s) => ({ value: s, label: `${STATUS_META[s].label} (${stats[s] || 0})` })),
+                    ]}
+                  />
+                  <FilterDropdown
+                    value={sevFilter}
+                    onChange={(v) => setSevFilter(v as typeof SEVERITIES[number])}
+                    label="Severity"
+                    options={[
+                      { value: 'all', label: 'All sev.' },
+                      ...(SEVERITIES.filter((s) => s !== 'all') as Array<'critical' | 'high' | 'medium' | 'low'>).map((s) => ({
+                        value: s,
+                        label: `${severityLabel(s)} (${sevCounts[s] || 0})`,
+                      })),
+                    ]}
+                  />
+                  <FilterDropdown
+                    value={moduleFilter}
+                    onChange={setModuleFilter}
+                    label="Module"
+                    options={[
+                      { value: 'all', label: 'All mod.' },
+                      ...PHASE1_MODULES.filter((m) => moduleCounts[m]).map((m) => ({
+                        value: m,
+                        label: `${m} (${moduleCounts[m] || 0})`,
+                      })),
+                    ]}
+                  />
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => { setQuery(''); setModuleFilter('all'); setSevFilter('all'); setStatusFilter('all'); }}
+                      className="p-1 rounded-md"
+                      style={{ color: 'var(--m-muted)', border: '1px solid var(--rule)' }}
+                      aria-label="Clear filters"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Finding list */}
+              <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
+                {filteredGroups.length === 0 ? (
+                  <div className="px-3 py-6 text-center text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                    No findings match
+                  </div>
+                ) : (
+                  filteredGroups.map((g) => (
+                    <SidebarItem
+                      key={g.primary.id}
+                      group={g}
+                      isActive={g.primary.id === activeFindingId}
+                      onClick={() => setActiveFindingId(g.primary.id)}
+                    />
+                  ))
+                )}
+              </div>
+
+              {/* Count footer */}
+              <div
+                className="px-3 py-2 text-[10px]"
+                style={{ borderTop: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+              >
+                {filteredGroups.length} of {groups.length} findings
+              </div>
+            </div>
+          </aside>
+        </div>
       )}
     </div>
   );

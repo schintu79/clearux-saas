@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Lock, User, Building2, CreditCard, Settings as SettingsIcon, Paintbrush, ChevronRight } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
@@ -284,10 +285,11 @@ const SettingsPage: React.FC = () => {
       </Link>
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Settings</h1>
-        <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>Manage your account and preferences</p>
-      </div>
+      <PageHeader
+        icon={<SettingsIcon size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Settings"
+        subtitle="Manage your account and preferences"
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl mb-8" style={{ background: 'var(--paper-2)' }}>

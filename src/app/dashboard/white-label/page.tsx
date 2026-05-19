@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  Palette,
   Paintbrush,
   Upload,
   X,
@@ -12,6 +13,7 @@ import {
   Image as ImageIcon,
   Sparkles,
 } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
@@ -224,12 +226,11 @@ const WhiteLabelPage: React.FC = () => {
       </Link>
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>White label</h1>
-        <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-          Customize reports with your own branding. Settings apply to all future audits.
-        </p>
-      </div>
+      <PageHeader
+        icon={<Palette size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="White label"
+        subtitle="Customize reports with your own branding. Settings apply to all future audits."
+      />
 
       {/* Upgrade prompt for non-eligible users */}
       {!canEdit && (

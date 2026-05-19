@@ -37,6 +37,7 @@ import {
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import {
   buildProviderRows,
@@ -148,16 +149,15 @@ export default function AIReadabilityPage() {
     return (
       <div>
         <OverviewBreadcrumb current="AI Readability" />
-        <div className="mb-6">
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-            AI Readability
-          </h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection
+        <PageHeader
+          icon={<Brain size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+          title="AI Readability"
+          subtitle={
+            selection
               ? 'No audit for this brand yet. Run one to see how AI assistants read this brand.'
-              : 'Pick a brand or run an audit to see how AI reads it.'}
-          </p>
-        </div>
+              : 'Pick a brand or run an audit to see how AI reads it.'
+          }
+        />
         <EmptyAudit
           title="No audit to analyse yet"
           body="Run a Fixpath audit to see how Claude, ChatGPT, Gemini, and Perplexity read your brand — and what to fix so they get it right."
@@ -234,14 +234,11 @@ function AIReadabilityBody({
   return (
     <div>
       <OverviewBreadcrumb current="AI Readability" />
-      <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-          AI Readability
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          How AI assistants read this brand, and what each crawled page exposes to them.
-        </p>
-      </div>
+      <PageHeader
+        icon={<Brain size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="AI Readability"
+        subtitle="How AI assistants read this brand, and what each crawled page exposes to them."
+      />
 
       {/* ── Layer-clarification note ──────────────────────────── */}
       <div

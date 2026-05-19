@@ -11,6 +11,7 @@ import {
   ChevronRight,
   AlertCircle,
 } from 'lucide-react';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import Button from '@/components/ui/Button';
 
@@ -106,20 +107,18 @@ const BrandIdentityPage: React.FC = () => {
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-medium font-sans" style={{ color: 'var(--ink)' }}>Brand identity</h1>
-          <p className="text-[13px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-            Manage brand identities to audit websites against your brand guidelines.
-          </p>
-        </div>
+      <PageHeader
+        icon={<Fingerprint size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />}
+        title="Brand identity"
+        subtitle="Manage brand identities to audit websites against your brand guidelines."
+      >
         <Link href="/dashboard/brand-identity/new">
           <Button variant="primary" size="md">
             <Plus size={14} className="mr-1.5" />
             New Brand
           </Button>
         </Link>
-      </div>
+      </PageHeader>
 
       {errorMsg && (
         <div className="mb-4 flex items-center gap-2 rounded-lg p-3" style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 20%, transparent)' }}>

@@ -29,6 +29,7 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import { computeAuditDiff, type FindingDiffItem } from '@/lib/audit-engine/audit-diff';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
 function hostnameOf(url: string | null): string | null {
@@ -139,12 +140,7 @@ export default function TrackPage() {
     return (
       <div>
         <OverviewBreadcrumb current="Track" />
-        <div className="mb-6">
-          <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking.'}
-          </p>
-        </div>
+        <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle={selection ? 'No audit for this brand yet.' : 'Run your first audit to start tracking.'} />
         <EmptyAudit
           title="No audits to track yet"
           body="Run your first audit to establish a baseline. Fixpath will compare every future audit against it."
@@ -187,12 +183,7 @@ export default function TrackPage() {
   return (
     <div>
       <OverviewBreadcrumb current="Track" />
-      <div className="mb-6">
-        <h1 className="text-[22px] font-sans font-semibold tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>Track</h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Brand Health Score and issue trend for this brand. Re-audit to confirm fixes landed.
-        </p>
-      </div>
+      <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle="Brand Health Score and issue trend for this brand. Re-audit to confirm fixes landed." />
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
         <div
