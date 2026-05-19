@@ -78,24 +78,28 @@ function FilterDropdown({
 }) {
   const isActive = value !== 'all';
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-signal/30"
+    <div
+      className="relative inline-flex rounded-md"
       style={{
         background: isActive ? 'var(--ink)' : 'var(--card)',
-        color: isActive ? 'var(--paper)' : 'var(--ink)',
         border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 6px center',
       }}
-      aria-label={label}
     >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none bg-transparent focus-visible:ring-2 focus-visible:ring-signal/30"
+        style={{ color: isActive ? 'var(--paper)' : 'var(--ink)' }}
+        aria-label={label}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
   );
 }
 

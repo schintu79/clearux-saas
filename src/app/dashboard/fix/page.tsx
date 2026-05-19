@@ -99,24 +99,28 @@ function FilterDropdown({
 }) {
   const isActive = value !== 'all';
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none focus-visible:ring-2 focus-visible:ring-signal/30"
+    <div
+      className="relative inline-flex rounded-md"
       style={{
         background: isActive ? 'var(--ink)' : 'var(--card)',
-        color: isActive ? 'var(--paper)' : 'var(--ink)',
         border: `1px solid ${isActive ? 'var(--ink)' : 'var(--rule)'}`,
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${isActive ? '%23fff' : '%23999'}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 6px center',
       }}
-      aria-label={label}
     >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-[12px] font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer appearance-none bg-transparent focus-visible:ring-2 focus-visible:ring-signal/30"
+        style={{ color: isActive ? 'var(--paper)' : 'var(--ink)' }}
+        aria-label={label}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -243,26 +247,31 @@ function FixRow({
           </button>
 
           {/* Status dropdown — editable, also auto-transitions on deploy */}
-          <select
-            value={finding.status}
-            onChange={(e) => { e.stopPropagation(); onStatus(finding.id, e.target.value as FindingStatus); }}
-            onClick={(e) => e.stopPropagation()}
-            disabled={pending}
-            className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full flex-shrink-0 appearance-none cursor-pointer outline-none disabled:opacity-50"
+          <div
+            className="relative inline-flex rounded-full flex-shrink-0"
             style={{
               background: meta.bg,
-              color: meta.color,
               border: `1px solid ${meta.dot}`,
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'right 6px center',
             }}
-            aria-label="Finding status"
+            onClick={(e) => e.stopPropagation()}
           >
-            {STATUS_KEYS.map((sk) => (
-              <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
-            ))}
-          </select>
+            <select
+              value={finding.status}
+              onChange={(e) => { e.stopPropagation(); onStatus(finding.id, e.target.value as FindingStatus); }}
+              onClick={(e) => e.stopPropagation()}
+              disabled={pending}
+              className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full appearance-none cursor-pointer outline-none bg-transparent disabled:opacity-50"
+              style={{ color: meta.color }}
+              aria-label="Finding status"
+            >
+              {STATUS_KEYS.map((sk) => (
+                <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Dismiss toggle */}
           <button
