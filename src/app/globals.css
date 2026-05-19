@@ -17,16 +17,23 @@ select:focus-visible {
   box-shadow: 0 0 0 2px var(--signal);
 }
 
-/* ── Native <option> reset ───────────────────────────────── */
-/* Prevents dark-themed <select> backgrounds from bleeding into
-   the native OS dropdown, which causes broken checkmark patterns */
+/* ── Native <select> dropdown reset ──────────────────────── */
+/* Force light color-scheme on selects so the native OS dropdown
+   always uses a neutral palette, even when the <select> sits on
+   a dark or tinted wrapper (fixes gold/dark popup on macOS). */
+select {
+  color-scheme: light;
+}
 select option {
-  background: #ffffff;
-  color: #1a1a1a;
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+}
+.dark select {
+  color-scheme: dark;
 }
 .dark select option {
-  background: #1a1a1a;
-  color: #f2f2f2;
+  background: #1a1a1a !important;
+  color: #f2f2f2 !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
