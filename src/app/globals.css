@@ -17,6 +17,18 @@ select:focus-visible {
   box-shadow: 0 0 0 2px var(--signal);
 }
 
+/* ── Native <option> reset ───────────────────────────────── */
+/* Prevents dark-themed <select> backgrounds from bleeding into
+   the native OS dropdown, which causes broken checkmark patterns */
+select option {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+.dark select option {
+  background: #1a1a1a;
+  color: #f2f2f2;
+}
+
 /* ══════════════════════════════════════════════════════════════
    ClearUX — Dual-mode design system
    Light palette (:root) for dashboard/admin
