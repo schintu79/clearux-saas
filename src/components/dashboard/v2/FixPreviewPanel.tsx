@@ -18,7 +18,7 @@ import {
 /* ── Types ──────────────────────────────────────────────────── */
 
 interface FixPreviewPanelProps {
-  fixType: 'copy' | 'heading' | 'meta' | 'schema' | 'accessibility' | 'content' | 'technical'
+  fixType: 'copy' | 'heading' | 'meta' | 'schema' | 'accessibility' | 'content' | 'technical' | 'design'
   finding: {
     title: string
     description: string
@@ -496,10 +496,13 @@ function PreviewCard({
 export default function FixPreviewPanel({ fixType, finding, patch }: FixPreviewPanelProps) {
   const mode = resolveMode(fixType)
 
+  // Design fixes have no preview — handled by DesignFixGuidance in FixConsole
+  if (fixType === 'design') return null
+
   if (!patch.trim()) {
     return (
       <div
-        className="px-4 py-6 rounded-lg text-center text-[12px]"
+        className="mt-8 px-4 py-6 rounded-lg text-center text-[12px]"
         style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
       >
         No preview available — generate or enter a fix first.
@@ -508,7 +511,7 @@ export default function FixPreviewPanel({ fixType, finding, patch }: FixPreviewP
   }
 
   return (
-    <div className="max-h-[480px] overflow-y-auto space-y-0">
+    <div className="mt-8 max-h-[480px] overflow-y-auto space-y-0">
       {mode === 'visual' ? (
         <VisualPreview patch={patch} finding={finding} />
       ) : fixType === 'meta' ? (

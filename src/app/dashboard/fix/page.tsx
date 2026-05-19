@@ -295,30 +295,36 @@ function ActiveFindingDetail({
 
           {/* Toolbar — status + dismiss */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Status dropdown */}
-            <div
-              className="relative inline-flex rounded-full"
-              style={{
-                background: meta.bg,
-                border: `1px solid ${meta.dot}`,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 6px center',
-              }}
-            >
-              <select
-                value={finding.status}
-                onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
-                disabled={pending}
-                className="text-[10px] font-medium pl-2 pr-5 py-0.5 rounded-full appearance-none cursor-pointer outline-none bg-transparent disabled:opacity-50"
-                style={{ color: meta.color }}
-                aria-label="Finding status"
-              >
-                {STATUS_KEYS.map((sk) => (
-                  <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
-                ))}
-              </select>
-            </div>
+            {/* Status dropdown — matches FilterDropdown style */}
+            {(() => {
+              const isActive = finding.status !== 'open';
+              const chevronColor = isActive ? '%23fff' : '%23999';
+              return (
+                <div
+                  className="relative inline-flex rounded-md"
+                  style={{
+                    background: isActive ? meta.dot : 'var(--card)',
+                    border: `1px solid ${isActive ? meta.dot : 'var(--rule)'}`,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='${chevronColor}' stroke-width='1.5'%3E%3Cpath d='M3 4.5L6 7.5l3-3'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 6px center',
+                  }}
+                >
+                  <select
+                    value={finding.status}
+                    onChange={(e) => onStatus(finding.id, e.target.value as FindingStatus)}
+                    disabled={pending}
+                    className="text-[11px] font-medium pl-2.5 pr-6 py-1 rounded-md appearance-none cursor-pointer outline-none bg-transparent disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-signal/30"
+                    style={{ color: isActive ? '#fff' : 'var(--ink)' }}
+                    aria-label="Finding status"
+                  >
+                    {STATUS_KEYS.map((sk) => (
+                      <option key={sk} value={sk}>{STATUS_META[sk].label}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })()}
 
             {/* Dismiss */}
             <button

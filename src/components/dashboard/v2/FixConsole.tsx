@@ -27,6 +27,9 @@ import {
   Server,
   Wrench,
   Users,
+  Palette,
+  ClipboardList,
+  ArrowRight,
 } from 'lucide-react';
 import FixPreviewPanel from './FixPreviewPanel';
 import type { AuditFinding } from '@/types/database';
@@ -48,11 +51,20 @@ type FixType =
   | 'schema'
   | 'accessibility'
   | 'content'
-  | 'technical';
+  | 'technical'
+  | 'design';
 
+/** Fix types that require design assets — cannot be deployed via FTP. */
+const DESIGN_FIX_TYPES = new Set<FixType>(['design']);
+
+/** Fix types where the change is visible on the rendered page. */
+export const VISUAL_FIX_TYPES = new Set<FixType>(['copy', 'heading', 'content']);
 
 export function inferFixType(finding: AuditFinding): FixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
+  // Design-type fixes that require custom assets, not code changes
+  if (/\b(icon|infographic|illustrat|photograph|image|visual|graphic|logo|banner|hero image|design element|custom art|brand.*visual)\b/.test(blob)
+    && /\b(add|create|include|introduce|place|insert|design|produce)\b/.test(blob)) return 'design';
   if (/json|schema\.org|ld\+json|structured data|jsonld/.test(blob)) return 'schema';
   if (/meta description|og:|open graph|<meta/.test(blob)) return 'meta';
   if (/heading|h1|h2|h3|title tag/.test(blob)) return 'heading';
@@ -60,6 +72,89 @@ export function inferFixType(finding: AuditFinding): FixType {
   if (/faq|paragraph|copy|tagline|wording|message|cta|button text/.test(blob)) return 'copy';
   if (/redirect|sitemap|robots|canonical|performance|cache|lazy/.test(blob)) return 'technical';
   return 'content';
+}
+
+/* ── DesignFixGuidance ─────────────────────────────────────── */
+
+function DesignFixGuidance({ finding }: { finding: AuditFinding }) {
+  const [copied, setCopied] = useState(false);
+
+  const brief = [
+    `Finding: ${finding.title}`,
+    finding.description ? `\nDescription: ${finding.description}` : '',
+    finding.recommendation ? `\nRecommendation: ${finding.recommendation}` : '',
+    finding.page_url ? `\nPage: ${finding.page_url}` : '',
+  ].filter(Boolean).join('');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(brief);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const steps = [
+    { icon: ClipboardList, label: 'Share the brief with your design team or freelancer' },
+    { icon: Palette, label: 'They create the required visual assets (icons, images, graphics)' },
+    { icon: Upload, label: 'Upload the new assets to your website via FTP or CMS' },
+    { icon: Check, label: 'Mark this finding as Fixed once the assets are live' },
+  ];
+
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
+        2. Team handoff
+      </p>
+
+      <div
+        className="px-4 py-4 rounded-lg space-y-4"
+        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
+      >
+        <div className="flex items-start gap-2.5">
+          <div
+            className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 mt-0.5"
+            style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)' }}
+          >
+            <Palette size={14} style={{ color: 'var(--signal)' }} />
+          </div>
+          <div>
+            <p className="text-[12.5px] font-semibold" style={{ color: 'var(--ink)' }}>
+              This fix requires design work
+            </p>
+            <p className="text-[11.5px] mt-0.5 leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+              Custom visual assets are needed — icons, images, or graphics that can't be auto-generated.
+              Hand this off to your design team or a freelancer.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2 pl-0.5">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-2.5">
+              <div
+                className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 mt-px text-[10px] font-bold"
+                style={{ background: 'var(--rule)', color: 'var(--m-muted)' }}
+              >
+                {i + 1}
+              </div>
+              <p className="text-[11.5px] leading-snug" style={{ color: 'var(--ink-2)' }}>
+                {step.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold transition-opacity"
+          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+        >
+          {copied ? <Check size={11} /> : <Copy size={11} />}
+          {copied ? 'Copied brief' : 'Copy brief for team'}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function isAiHelperApplicable(fixType: FixType, _recommendation: string): boolean {
@@ -727,7 +822,10 @@ function SelfServeConsole({
         </div>
       )}
 
-      {/* ── Section 2: Deploy to server ─────────────────── */}
+      {/* ── Section 2: Deploy or Team Guidance ────────────── */}
+      {DESIGN_FIX_TYPES.has(fixType) ? (
+        <DesignFixGuidance finding={finding} />
+      ) : (
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
           2. Deploy to server
@@ -884,6 +982,7 @@ function SelfServeConsole({
           </div>
         )}
       </div>
+      )}
     </section>
   );
 }
@@ -919,16 +1018,18 @@ export default function FixConsole({
           fixType={fixType}
         />
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4 items-start">
+        <div className={`grid grid-cols-1 ${DESIGN_FIX_TYPES.has(fixType) ? '' : 'xl:grid-cols-[1fr_340px]'} gap-4 items-start`}>
           <SelfServeConsole
             finding={finding}
             ftpConnections={ftpConnections}
             onStatusChange={onStatusChange}
             onPatchChange={setLivePatch}
           />
-          <div className="hidden xl:block sticky top-4">
-            <FixPreviewPanel fixType={fixType} finding={finding} patch={livePatch} />
-          </div>
+          {!DESIGN_FIX_TYPES.has(fixType) && (
+            <div className="hidden xl:block sticky top-4">
+              <FixPreviewPanel fixType={fixType} finding={finding} patch={livePatch} />
+            </div>
+          )}
         </div>
       )}
     </div>
