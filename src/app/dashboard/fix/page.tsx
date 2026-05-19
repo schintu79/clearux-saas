@@ -367,7 +367,6 @@ function FixRow({
                 </p>
                 <FixConsole
                   finding={finding}
-                  onDeploySuccess={() => onStatus(finding.id, 'fixed')}
                   pending={pending}
                   ftpConnections={ftpConnections}
                 />

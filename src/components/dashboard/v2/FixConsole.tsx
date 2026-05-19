@@ -4,12 +4,11 @@
  * FixConsole — unified Deploy Console for a single finding.
  *
  * Two resolution paths:
- *  1. "Fix it yourself" — editable copy form + AI helper (when applicable)
- *     + inline deploy-to-server console. Successful deploy auto-marks Fixed.
+ *  1. "Fix it yourself" — Generate Fix → Preview → Approve → Deploy.
+ *     Status tracking is fully manual — nothing here auto-changes status.
+ *     Every deployed change is reversible (backup + undo).
  *  2. "Let your team handle it" — read-only recommendation + Copy / Download.
  *     Lightweight handoff, no deploy controls.
- *
- * Status is passive feedback managed by the parent — not a primary action here.
  */
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -174,55 +173,14 @@ function TabBar({
   );
 }
 
-/* ── Status Tracker ──────────────────────────────────────── */
+/* ── Reversibility Notice ────────────────────────────────── */
 
-function StatusTracker({ finding }: { finding: AuditFinding }) {
-  const steps: { key: string; label: string }[] = [
-    { key: 'open', label: 'Open' },
-    { key: 'in_progress', label: 'In progress' },
-    { key: 'fixed', label: 'Fixed' },
-  ];
-  const currentIdx = steps.findIndex((s) => s.key === finding.status);
-
+function ReversibilityNotice() {
   return (
-    <div className="flex items-center gap-0 py-3">
-      {steps.map((step, i) => {
-        const done = i <= currentIdx;
-        const isCurrent = i === currentIdx;
-        return (
-          <React.Fragment key={step.key}>
-            {i > 0 && (
-              <div
-                className="flex-1 h-px mx-1"
-                style={{ background: i <= currentIdx ? 'var(--ink)' : 'var(--rule)' }}
-              />
-            )}
-            <div className="flex items-center gap-1.5">
-              <span
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
-                style={{
-                  background: done ? 'var(--ink)' : 'transparent',
-                  color: done ? 'var(--paper)' : 'var(--m-muted)',
-                  border: done ? 'none' : '1.5px solid var(--rule)',
-                }}
-              >
-                {done && i < currentIdx ? (
-                  <Check size={10} />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              <span
-                className="text-[11px] font-medium"
-                style={{ color: isCurrent ? 'var(--ink)' : done ? 'var(--ink)' : 'var(--m-muted)' }}
-              >
-                {step.label}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      })}
-    </div>
+    <p className="text-[10.5px] flex items-center gap-1.5" style={{ color: 'var(--m-muted)' }}>
+      <RotateCcw size={10} />
+      Every deployed change is reversible. A backup is captured before each deploy.
+    </p>
   );
 }
 
@@ -272,11 +230,8 @@ function HandoffPanel({
 
   return (
     <div className="space-y-4 pt-4">
-      {/* Status tracker */}
-      <StatusTracker finding={finding} />
-
       <p className="text-[12px] leading-[1.6]" style={{ color: 'var(--m-muted)' }}>
-        Share the recommended fix below with your developer or content team. Once they apply it, mark this issue as fixed.
+        Share the recommended fix below with your developer or content team. Update the status manually once the fix is live.
       </p>
 
       {/* Read-only recommendation */}
@@ -331,11 +286,9 @@ function HandoffPanel({
 
 function SelfServeConsole({
   finding,
-  onDeploySuccess,
   ftpConnections = [],
 }: {
   finding: AuditFinding;
-  onDeploySuccess: () => void;
   ftpConnections?: FtpConnectionForDeploy[];
 }) {
   const initialPatch = (finding.recommendation || '').trim();
@@ -352,6 +305,10 @@ function SelfServeConsole({
   const [explainError, setExplainError] = useState<string | null>(null);
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
+
+  // Generate → Approve → Deploy flow
+  const [fixGenerated, setFixGenerated] = useState(!!initialPatch);
+  const [fixApproved, setFixApproved] = useState(false);
 
   // Deploy state
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
@@ -545,13 +502,13 @@ function SelfServeConsole({
       }
       setDeployResult({
         ok: true,
-        msg: data?.hadBackup ? 'Deployed successfully — backup captured.' : 'Deployed successfully.',
+        msg: data?.hadBackup
+          ? 'Deployed successfully — backup captured. You can undo this at any time.'
+          : 'Deployed successfully. Update the status manually when you’re confident the fix is live.',
         deployLogId: data?.deployLogId,
       });
       if (data?.deployLogId) setLastDeployId(data.deployLogId);
       setSurgicalResult(null);
-      // Auto-mark as fixed on successful deploy
-      onDeploySuccess();
     } catch (err: any) {
       setDeployResult({ ok: false, msg: err?.message || 'Network error during deploy.' });
     } finally {
@@ -591,13 +548,28 @@ function SelfServeConsole({
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-3 pt-4">
-      {/* Status tracker */}
-      <StatusTracker finding={finding} />
-
-      {/* ── Step 1: Edit the copy ──────────────────────────── */}
+      {/* ── Step 1: Generate fix ──────────────────────────── */}
+      {!fixGenerated ? (
+        <div className="text-center py-6">
+          <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
+            Generate a code-ready fix based on the finding recommendation.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFixGenerated(true)}
+            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-md text-[12.5px] font-semibold transition-opacity"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Sparkles size={12} />
+            Generate fix
+          </button>
+        </div>
+      ) : (
+        <>
+      {/* ── Step 1: Review the generated fix ──────────────── */}
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
-          1. Review and edit the fix
+          1. Review the fix
         </p>
         <textarea
           id={`patch-${finding.id}`}
@@ -778,7 +750,26 @@ function SelfServeConsole({
         </div>
       )}
 
-      {/* ── Step 2: Deploy to server ───────────────────────── */}
+      {/* ── Step 2: Approve the fix ────────────────────────── */}
+      {!fixApproved ? (
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setFixApproved(true)}
+            disabled={!patch.trim()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Check size={12} />
+            Approve fix
+          </button>
+          <p className="text-[10.5px]" style={{ color: 'var(--m-muted)' }}>
+            Review the snippet above, then approve to unlock deploy.
+          </p>
+        </div>
+      ) : (
+        <>
+      {/* ── Step 3: Deploy to server ───────────────────────── */}
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2" style={{ color: 'var(--signal)' }}>
           2. Deploy to server
@@ -908,9 +899,7 @@ function SelfServeConsole({
                   </button>
                 )}
 
-                <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--m-muted)' }}>
-                  Reads the live file and merges your fix safely.
-                </p>
+                <ReversibilityNotice />
               </div>
             )}
           </div>
@@ -937,6 +926,10 @@ function SelfServeConsole({
           </div>
         )}
       </div>
+        </>
+      )}
+        </>
+      )}
     </section>
   );
 }
@@ -945,13 +938,10 @@ function SelfServeConsole({
 
 export default function FixConsole({
   finding,
-  onDeploySuccess,
   pending,
   ftpConnections = [],
 }: {
   finding: AuditFinding;
-  /** Called after a successful deploy — parent should mark finding as fixed. */
-  onDeploySuccess: () => void;
   pending: boolean;
   /** Site-scoped FTP connections — when present, enables inline deploy. */
   ftpConnections?: FtpConnectionForDeploy[];
@@ -973,7 +963,6 @@ export default function FixConsole({
       ) : (
         <SelfServeConsole
           finding={finding}
-          onDeploySuccess={onDeploySuccess}
           ftpConnections={ftpConnections}
         />
       )}

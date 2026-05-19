@@ -15,12 +15,18 @@ import {
   TrendingDown,
   Minus,
   Clock,
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import {
   loadLatestAuditBundle,
+  severityColor,
+  severityLabel,
   type LatestAuditBundle,
 } from '@/lib/dashboard/latest-audit';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
+import { computeAuditDiff, type FindingDiffItem } from '@/lib/audit-engine/audit-diff';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 
@@ -70,6 +76,7 @@ export default function TrackPage() {
   const { selection, ready } = useBrandSelection();
   const [bundle, setBundle] = useState<LatestAuditBundle | null>(null);
   const [loading, setLoading] = useState(true);
+  const [priorFindings, setPriorFindings] = useState<import('@/types/database').AuditFinding[]>([]);
 
   useEffect(() => {
     if (authLoading || !user || !ready) {
@@ -82,6 +89,19 @@ export default function TrackPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [authLoading, user, ready, selection]);
+
+  // Fetch prior audit findings for diff validation
+  useEffect(() => {
+    if (!bundle?.prior?.audit?.id) { setPriorFindings([]); return; }
+    const { createBrowserSupabase } = require('@/lib/supabase-ssr');
+    const supabase = createBrowserSupabase();
+    supabase
+      .from('audit_findings')
+      .select('*')
+      .eq('audit_id', bundle.prior.audit.id)
+      .then(({ data }: any) => setPriorFindings(data || []))
+      .catch(() => setPriorFindings([]));
+  }, [bundle?.prior?.audit?.id]);
 
   // History returned by loadLatestAuditBundle is already scoped to the
   // selected brand/site (server-side for brand, client-side filter for
@@ -134,6 +154,20 @@ export default function TrackPage() {
   const open = findings.filter((f) => f.status === 'open' || f.status === 'in_progress').length;
   const fixed = findings.filter((f) => f.status === 'fixed').length;
   const backlog = findings.filter((f) => f.status === 'backlog').length;
+
+  // Fix validation — compare current findings vs prior to show proof of improvement
+  const diff = useMemo(() => {
+    if (!prior?.report || !report || priorFindings.length === 0) return null;
+    return computeAuditDiff(report, prior.report, findings, priorFindings);
+  }, [report, prior, findings, priorFindings]);
+
+  const validatedFixes = useMemo(() => diff?.findings.filter((f) => f.diffStatus === 'fixed') || [], [diff]);
+  const failedFixes = useMemo(
+    () => diff?.findings.filter((f) => f.diffStatus === 'regressed' || f.diffStatus === 'persisted') || [],
+    [diff],
+  );
+  const persistedOnly = failedFixes.filter((f) => f.diffStatus === 'persisted' && f.previous?.status === 'fixed');
+  const regressed = failedFixes.filter((f) => f.diffStatus === 'regressed');
 
   const trendPoints = scopedHistory
     .filter((h) => h.report?.overall_score != null)
@@ -228,6 +262,92 @@ export default function TrackPage() {
           </Link>
         </div>
       </div>
+
+      {/* Fix validation — proof of improvement on re-audit */}
+      {diff && (validatedFixes.length > 0 || persistedOnly.length > 0 || regressed.length > 0) && (
+        <div
+          className="rounded-xl p-5 mb-6"
+          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
+        >
+          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
+            Fix validation
+          </p>
+          <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
+            Compared against the previous audit to verify which fixes landed.
+          </p>
+
+          {/* Validated — fixes that resolved */}
+          {validatedFixes.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-1.5 mb-2">
+                <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} />
+                <span className="text-[12px] font-semibold" style={{ color: 'var(--ok)' }}>
+                  {validatedFixes.length} fix{validatedFixes.length !== 1 ? 'es' : ''} validated
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {validatedFixes.map((item, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px]"
+                    style={{ background: 'color-mix(in srgb, var(--ok) 6%, transparent)' }}
+                  >
+                    <CheckCircle2 size={11} style={{ color: 'var(--ok)' }} />
+                    <span className="flex-1 truncate" style={{ color: 'var(--ink)' }}>
+                      {item.previous?.title || 'Resolved issue'}
+                    </span>
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--ok)' }}>Resolved</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Failed — fixes that didn't hold up or regressed */}
+          {(persistedOnly.length > 0 || regressed.length > 0) && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <AlertTriangle size={13} style={{ color: 'var(--warn)' }} />
+                <span className="text-[12px] font-semibold" style={{ color: 'var(--warn)' }}>
+                  {persistedOnly.length + regressed.length} fix{persistedOnly.length + regressed.length !== 1 ? 'es' : ''} need attention
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {[...regressed, ...persistedOnly].map((item, i) => {
+                  const f = item.current || item.previous;
+                  if (!f) return null;
+                  const isRegressed = item.diffStatus === 'regressed';
+                  return (
+                    <li
+                      key={i}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px]"
+                      style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)' }}
+                    >
+                      <AlertTriangle size={11} style={{ color: 'var(--warn)' }} />
+                      <span className="flex-1 truncate" style={{ color: 'var(--ink)' }}>
+                        {f.title}
+                      </span>
+                      <span
+                        className="text-[10px] font-medium uppercase"
+                        style={{ color: isRegressed ? 'var(--severe)' : 'var(--warn)' }}
+                      >
+                        {isRegressed ? 'Regressed' : 'Not resolved'}
+                      </span>
+                      <Link
+                        href={`/dashboard/fix?finding=${f.id}`}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium flex-shrink-0"
+                        style={{ color: 'var(--signal)' }}
+                      >
+                        Fix <ExternalLink size={9} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recent audits */}
       <div
