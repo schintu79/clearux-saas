@@ -247,14 +247,15 @@ function resolveGeminiApiKey(): string | null {
 const GEMINI_SYSTEM_PROMPT =
   'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.'
 
-// Models tried in order. We start with a current stable model, then
-// fall back to widely-available ones if the first 404s on the account's
+// Models tried in order. We start with the current stable model, then
+// fall back to previous generations if the first 404s on the account's
 // API tier. Keeps the probe resilient as Google rotates model names.
+// Updated May 2026: gemini-2.0-flash deprecated (shutdown June 1 2026),
+// gemini-2.5-flash is the current production model.
 const GEMINI_MODEL_FALLBACKS = [
+  'gemini-2.5-flash',
   'gemini-2.0-flash',
-  'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
-  'gemini-pro',
 ]
 
 /**
