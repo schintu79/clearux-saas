@@ -21,6 +21,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Eye,
   ExternalLink,
   Wrench,
   Scale,
@@ -28,7 +29,6 @@ import {
   Accessibility,
   Brain,
   FileSearch,
-  Eye,
   Lightbulb,
   Search as SearchIcon,
   X,
@@ -467,15 +467,12 @@ function FindPageInner() {
                             borderLeft: isExpanded ? `3px solid ${severityColor(f.severity)}` : '3px solid transparent',
                           }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => toggleFinding(f.id)}
-                            className="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-black/[0.02] transition-colors cursor-pointer"
+                          <div
+                            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-black/[0.02] transition-colors"
                             data-testid="find-row"
-                            aria-expanded={isExpanded}
                           >
                             <span
-                              className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                              className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ background: severityColor(f.severity) }}
                               aria-hidden
                             />
@@ -510,10 +507,41 @@ function FindPageInner() {
                                 )}
                               </div>
                             </div>
-                            <span className="flex-shrink-0 mt-0.5" style={{ color: 'var(--m-muted)' }} aria-hidden>
-                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </span>
-                          </button>
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => toggleFinding(f.id)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                                style={{ color: 'var(--ink)', background: isExpanded ? 'var(--paper-2)' : 'transparent', border: '1px solid var(--rule)' }}
+                                aria-expanded={isExpanded}
+                                title={isExpanded ? 'Collapse' : 'View details'}
+                              >
+                                <Eye size={12} strokeWidth={1.75} />
+                                View
+                              </button>
+                              <Link
+                                href={`/dashboard/fix#finding-${f.id}`}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                                style={{ color: 'var(--paper)', background: 'var(--ink)' }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Wrench size={11} strokeWidth={1.75} />
+                                Fix
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => toggleFinding(f.id)}
+                                className="w-7 h-7 rounded-md inline-flex items-center justify-center transition-colors hover:bg-black/[0.04]"
+                                aria-expanded={isExpanded}
+                                aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                              >
+                                {isExpanded
+                                  ? <ChevronUp size={16} strokeWidth={2} style={{ color: 'var(--ink)' }} />
+                                  : <ChevronDown size={16} strokeWidth={2} style={{ color: 'var(--ink)' }} />}
+                              </button>
+                            </div>
+                          </div>
 
                           {isExpanded && (
                             <div className="px-4 pb-4 pt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -532,11 +560,11 @@ function FindPageInner() {
                               <div className="col-span-full flex justify-end">
                                 <Link
                                   href={`/dashboard/fix#finding-${f.id}`}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold"
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-colors hover:opacity-90"
                                   style={{ background: 'var(--ink)', color: 'var(--paper)' }}
                                 >
-                                  <Wrench size={12} />
-                                  Fix now
+                                  <Wrench size={12} strokeWidth={1.75} />
+                                  Open in fix console
                                 </Link>
                               </div>
                             </div>

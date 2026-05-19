@@ -167,6 +167,7 @@ function OverviewInner() {
   const [shareEnabled, setShareEnabled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -898,6 +899,8 @@ function OverviewInner() {
                   Icon: CATEGORY_ICONS[start + relIdx] || Sparkles,
                 }))}
                 href={`/dashboard/find?module=${encodeURIComponent(p.name)}`}
+                expanded={breakdownOpen}
+                onToggle={() => setBreakdownOpen((v) => !v)}
               />
             );
           })}
@@ -1524,6 +1527,8 @@ function CategoryModuleCard({
   findingCount,
   breakdown,
   href,
+  expanded,
+  onToggle,
 }: {
   name: string;
   score: number;
@@ -1532,8 +1537,9 @@ function CategoryModuleCard({
   findingCount: number;
   breakdown: Array<{ name: string; score: number; Icon: React.ElementType }>;
   href: string;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   return (
     <div
       className="rounded-xl overflow-hidden flex flex-col"
@@ -1593,7 +1599,7 @@ function CategoryModuleCard({
         {breakdown.length > 0 && (
           <button
             type="button"
-            onClick={() => setExpanded((v) => !v)}
+            onClick={onToggle}
             className="inline-flex items-center gap-0.5 hover:opacity-80 transition-opacity"
             aria-expanded={expanded}
             aria-label={expanded ? `Hide ${name} breakdown` : `Show ${name} breakdown`}
