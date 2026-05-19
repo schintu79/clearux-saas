@@ -278,6 +278,19 @@ export default function ConnectPage() {
         </div>
       )}
 
+      {/* Brand required notice */}
+      {selection?.kind !== 'brand' && (
+        <div className="mb-5 rounded-xl border border-border bg-off/60 p-4 flex items-start gap-2.5">
+          <AlertCircle size={15} className="text-muted flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-text">
+            <p className="font-medium mb-0.5">Select a brand first</p>
+            <p className="text-muted">
+              FTP connections are saved per brand. Use the brand dropdown in the sidebar to select which brand this connection belongs to.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Connection Form */}
       {showForm && (
         <div className="rounded-xl border border-border bg-card p-5 mb-6">
@@ -444,12 +457,15 @@ export default function ConnectPage() {
                   !form.host ||
                   !form.username ||
                   (!form.password && !editingId) ||
-                  (provisioning ? !provisioning.provisioned || !provisioning.configured : false)
+                  (provisioning ? !provisioning.provisioned || !provisioning.configured : false) ||
+                  selection?.kind !== 'brand'
                 }
                 title={
-                  provisioning && (!provisioning.provisioned || !provisioning.configured)
-                    ? 'Provisioning required — see banner above'
-                    : undefined
+                  selection?.kind !== 'brand'
+                    ? 'Select a brand from the sidebar before saving'
+                    : provisioning && (!provisioning.provisioned || !provisioning.configured)
+                      ? 'Provisioning required — see banner above'
+                      : undefined
                 }
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-brand text-surface hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >

@@ -189,6 +189,8 @@ async function handleSave(body: any, userId: string) {
   const { label, protocol, host, port, username, password, remotePath, brandIdentityId } = body;
   if (!host || !username || !password)
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  if (!brandIdentityId)
+    return NextResponse.json({ error: 'A brand must be selected before saving an FTP connection.' }, { status: 400 });
 
   const db = createServiceSupabase();
   const { data, error } = await db

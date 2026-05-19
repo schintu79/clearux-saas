@@ -420,263 +420,290 @@ export const processAuditFn = inngest.createFunction(
     })
 
     // ──────────────────────────────────────────────────────────
-    // STEP 2c: AI Discovery file probe
-    // Probes for /llms.txt, /.well-known/ai-plugin.json, and
-    // robots.txt AI bot directives. Non-fatal — if probes fail,
-    // the audit continues without AI discovery data.
+    // STEP 2c-2i COMBINED: Run all probe steps in parallel
+    // These are independent: AI discovery, structured data,
+    // page readability, LLM probe, citation audit, fix playbooks,
+    // and multi-model benchmark. Running them in parallel saves
+    // ~40-60s vs sequential execution.
     // ──────────────────────────────────────────────────────────
-    const aiDiscovery = await step.run('probe-ai-discovery', async () => {
-      try {
-        const result = await probeAIDiscovery(auditDetails.productUrl)
-        const summary = formatAIDiscoveryForAnalysis(result)
-        await auditLog(auditId, 'ai_discovery_probed', 'info',
-          `AI discovery: ${result.summary.signalCount}/4 signals found` +
-          `${result.summary.hasLlmsTxt ? ', llms.txt present' : ''}` +
-          `${result.summary.hasAiPlugin ? ', ai-plugin.json present' : ''}` +
-          `${result.summary.aiBotsBlocked ? ', some AI bots blocked' : ''}`)
-        return { summary, result }
-      } catch (err) {
-        console.error('[inngest] AI discovery probe failed (non-fatal):', err)
-        await auditLog(auditId, 'ai_discovery_failed', 'warning',
-          `AI discovery probe failed: ${err instanceof Error ? err.message : String(err)}`)
-        return { summary: '', result: null }
-      }
-    })
+    const probeResults = await step.run('parallel-probes', async () => {
+      await setProgress(auditId, 18)
 
-    // ──────────────────────────────────────────────────────────
-    // STEP 2d: Structured data validation
-    // Validates JSON-LD blocks extracted from head tags.
-    // Generates findings for missing/invalid structured data
-    // and stores them directly as audit_findings.
-    // ──────────────────────────────────────────────────────────
-    const structuredDataResult = await step.run('validate-structured-data', async () => {
-      try {
-        const headTagPages = crawlResult.headTags || []
-        if (headTagPages.length === 0) {
+      // ── AI Discovery probe ──
+      const aiDiscoveryPromise = (async () => {
+        try {
+          const result = await probeAIDiscovery(auditDetails.productUrl)
+          const summary = formatAIDiscoveryForAnalysis(result)
+          await auditLog(auditId, 'ai_discovery_probed', 'info',
+            `AI discovery: ${result.summary.signalCount}/4 signals found`)
+          return { summary, result }
+        } catch (err) {
+          console.error('[inngest] AI discovery probe failed (non-fatal):', err)
+          return { summary: '', result: null }
+        }
+      })()
+
+      // ── Structured data validation ──
+      const structuredDataPromise = (async () => {
+        try {
+          const headTagPages = crawlResult.headTags || []
+          if (headTagPages.length === 0) {
+            return { summary: '', findingsCount: 0, typesFound: [] as string[] }
+          }
+          const result = validateStructuredData(headTagPages)
+          const summary = formatValidationForAnalysis(result)
+          if (result.findings.length > 0) {
+            const db = getDb()
+            const { data: existingFindings } = await db
+              .from('audit_findings')
+              .select('sort_order')
+              .eq('audit_id', auditId)
+              .order('sort_order', { ascending: false })
+              .limit(1)
+            let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
+            for (const finding of result.findings) {
+              await db.from('audit_findings').insert({
+                audit_id: auditId,
+                checklist_item_id: null,
+                category_index: finding.categoryIndex ?? 17,
+                severity: finding.severity,
+                title: finding.title,
+                description: finding.description,
+                evidence: null,
+                page_url: finding.pageUrl || crawlResult.firstPageUrl,
+                recommendation: finding.recommendation,
+                estimated_impact: finding.estimatedImpact || null,
+                target_element: null,
+                sort_order: sortOrder++,
+                status: 'open',
+                dismissed: false,
+              } as any)
+            }
+          }
+          return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
+        } catch (err) {
+          console.error('[inngest] Structured data validation failed (non-fatal):', err)
           return { summary: '', findingsCount: 0, typesFound: [] as string[] }
         }
+      })()
 
-        const result = validateStructuredData(headTagPages)
-        const summary = formatValidationForAnalysis(result)
-
-        // Store structured data findings
-        if (result.findings.length > 0) {
+      // ── Page readability ──
+      const readabilityPromise = (async () => {
+        try {
           const db = getDb()
-          const { data: existingFindings } = await db
-            .from('audit_findings')
-            .select('sort_order')
-            .eq('audit_id', auditId)
-            .order('sort_order', { ascending: false })
-            .limit(1)
+          const headTagMap = new Map<string, HeadTagData>(
+            (crawlResult.headTags || []).map((ht: { url: string; headTags: HeadTagData }) => [ht.url, ht.headTags]),
+          )
+          const pageBlocks = crawlResult.pageContent.split('\n---\n')
+          for (const block of pageBlocks) {
+            const urlMatch = block.match(/^URL: (.+)$/m)
+            const titleMatch = block.match(/^Title: (.+)$/m)
+            const h1Match = block.match(/^H1: (.+)$/m)
+            const metaMatch = block.match(/^Meta Description: (.+)$/m)
+            const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
+            if (!urlMatch) continue
+            const url = urlMatch[1]
+            const readability = calculatePageReadability({
+              url,
+              title: titleMatch?.[1] || null,
+              h1: h1Match?.[1] || null,
+              metaDescription: metaMatch?.[1] || null,
+              contentText: contentMatch?.[1] || null,
+              headTags: headTagMap.get(url) || null,
+            })
+            await db
+              .from('audit_pages')
+              .update({ ai_readability: readability } as any)
+              .eq('audit_id', auditId)
+              .eq('url', url)
+          }
+        } catch (err) {
+          console.error('[inngest] Page readability calculation failed (non-fatal):', err)
+        }
+      })()
 
-          let sortOrder = ((existingFindings?.[0] as any)?.sort_order ?? -1) + 1
-
-          for (const finding of result.findings) {
-            await db.from('audit_findings').insert({
+      // ── LLM Probe ──
+      const llmProbePromise = (async () => {
+        try {
+          const firstPage = crawlResult.pageContent.split('\n---\n')[0] || ''
+          const titleMatch = firstPage.match(/^Title: (.+)$/m)
+          const metaMatch = firstPage.match(/^Meta Description: (.+)$/m)
+          const allContent = crawlResult.pageContent.toLowerCase()
+          const hasPricing = allContent.includes('pricing') || allContent.includes('price') || allContent.includes('/mo') || allContent.includes('per month')
+          let pricingText: string | null = null
+          if (hasPricing) {
+            const pricingIdx = crawlResult.pageContent.toLowerCase().indexOf('pricing')
+            if (pricingIdx >= 0) pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
+          }
+          const groundTruth: SiteGroundTruth = {
+            siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
+            siteDescription: metaMatch?.[1] || null,
+            pricingText,
+            offeringText: firstPage.substring(0, 2000),
+            fullContent: crawlResult.pageContent,
+            pages: crawlResult.crawledUrls.map((url: string) => {
+              const pageBlock = crawlResult.pageContent.split('\n---\n').find((b: string) => b.includes(`URL: ${url}`))
+              const pageTitleMatch = pageBlock?.match(/^Title: (.+)$/m)
+              return { url, title: pageTitleMatch?.[1] || null }
+            }),
+          }
+          let domain = ''
+          try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+          const session = await runLlmProbe(domain, groundTruth)
+          const summary = formatLlmProbeForAnalysis(session)
+          const db = getDb()
+          for (const r of session.results) {
+            await db.from('llm_probe_results').insert({
               audit_id: auditId,
-              checklist_item_id: null,
-              category_index: finding.categoryIndex ?? 17,
-              severity: finding.severity,
-              title: finding.title,
-              description: finding.description,
-              evidence: null,
-              page_url: finding.pageUrl || crawlResult.firstPageUrl,
-              recommendation: finding.recommendation,
-              estimated_impact: finding.estimatedImpact || null,
-              target_element: null,
-              sort_order: sortOrder++,
-              status: 'open',
-              dismissed: false,
+              question: r.question,
+              answer: r.answer,
+              accuracy: r.accuracy,
+              accuracy_note: r.accuracyNote,
+              cited_url: r.citedUrl,
+              model_used: r.modelUsed,
             } as any)
           }
-
-          await auditLog(auditId, 'structured_data_validated', 'info',
-            `Structured data: ${result.totalBlocks} blocks, ${result.typesFound.join(', ') || 'none'}, ${result.findings.length} issue(s)`)
+          await auditLog(auditId, 'llm_probe_completed', 'success',
+            `LLM probe: ${session.accuracySummary.scorePercent}% accuracy`)
+          return { summary, accuracyScore: session.accuracySummary.scorePercent, session }
+        } catch (err) {
+          console.error('[inngest] LLM probe failed (non-fatal):', err)
+          return { summary: '', accuracyScore: 0, session: null }
         }
+      })()
 
-        return { summary, findingsCount: result.findings.length, typesFound: result.typesFound }
-      } catch (err) {
-        console.error('[inngest] Structured data validation failed (non-fatal):', err)
-        return { summary: '', findingsCount: 0, typesFound: [] as string[] }
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2e: Per-page AI readability scoring
-    // Calculates what AI can extract from each page and stores
-    // the readability data as jsonb on audit_pages for the UI.
-    // ──────────────────────────────────────────────────────────
-    await step.run('calculate-page-readability', async () => {
-      try {
-        const db = getDb()
-        const headTagMap = new Map<string, HeadTagData>(
-          (crawlResult.headTags || []).map((ht: { url: string; headTags: HeadTagData }) => [ht.url, ht.headTags]),
-        )
-
-        // Parse crawled pages from the page content
-        const pageBlocks = crawlResult.pageContent.split('\n---\n')
-        for (const block of pageBlocks) {
-          const urlMatch = block.match(/^URL: (.+)$/m)
-          const titleMatch = block.match(/^Title: (.+)$/m)
-          const h1Match = block.match(/^H1: (.+)$/m)
-          const metaMatch = block.match(/^Meta Description: (.+)$/m)
-          const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
-          if (!urlMatch) continue
-
-          const url = urlMatch[1]
-          const readability = calculatePageReadability({
-            url,
-            title: titleMatch?.[1] || null,
-            h1: h1Match?.[1] || null,
-            metaDescription: metaMatch?.[1] || null,
-            contentText: contentMatch?.[1] || null,
-            headTags: headTagMap.get(url) || null,
-          })
-
-          await db
-            .from('audit_pages')
-            .update({ ai_readability: readability } as any)
-            .eq('audit_id', auditId)
-            .eq('url', url)
-        }
-
-        await auditLog(auditId, 'page_readability_calculated', 'info',
-          `AI readability calculated for ${pageBlocks.length} page(s)`)
-      } catch (err) {
-        console.error('[inngest] Page readability calculation failed (non-fatal):', err)
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2f: LLM Probe — Ask AI what it "knows" about this domain
-    // Queries Claude with standardized questions, then grades the
-    // answers against crawled ground truth. This is the core
-    // differentiator: "What does AI actually think about your site?"
-    // ──────────────────────────────────────────────────────────
-    const llmProbeResult = await step.run('llm-probe', async () => {
-      try {
-        // Build ground truth from crawled content
-        const firstPage = crawlResult.pageContent.split('\n---\n')[0] || ''
-        const titleMatch = firstPage.match(/^Title: (.+)$/m)
-        const metaMatch = firstPage.match(/^Meta Description: (.+)$/m)
-
-        // Look for pricing content across all pages
-        const allContent = crawlResult.pageContent.toLowerCase()
-        const hasPricing = allContent.includes('pricing') || allContent.includes('price') || allContent.includes('/mo') || allContent.includes('per month')
-        let pricingText: string | null = null
-        if (hasPricing) {
-          // Extract pricing section (rough heuristic)
-          const pricingIdx = crawlResult.pageContent.toLowerCase().indexOf('pricing')
-          if (pricingIdx >= 0) {
-            pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
+      // ── Citation Audit ──
+      const citationPromise = (async () => {
+        try {
+          const db = getDb()
+          let domain = ''
+          try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+          const pageBlocks = crawlResult.pageContent.split('\n---\n')
+          const pages = pageBlocks.map((block: string) => {
+            const urlMatch = block.match(/^URL: (.+)$/m)
+            const titleMatch = block.match(/^Title: (.+)$/m)
+            const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
+            return {
+              url: urlMatch?.[1] || '',
+              title: titleMatch?.[1] || null,
+              contentSnippet: contentMatch?.[1]?.substring(0, 600) || '',
+            }
+          }).filter((p: { url: string }) => p.url)
+          const result = await runCitationAudit(domain, pages)
+          if (result.citations.length > 0) {
+            const inserts = result.citations.map(c => ({
+              audit_id: auditId,
+              page_url: c.citedUrl || '',
+              cited_text: c.citedText || c.claim,
+              ai_context: c.claim,
+              citation_type: c.citationType,
+              model_used: 'claude-haiku',
+            }))
+            await db.from('ai_citations').insert(inserts as any)
           }
+          await auditLog(auditId, 'citation_audit_completed', 'info',
+            `Citation audit: ${result.citedPages.length} pages cited, citability: ${result.citabilityScore}%`)
+          return result
+        } catch (err) {
+          console.error('[inngest] Citation audit failed (non-fatal):', err)
+          return null
         }
+      })()
 
-        const groundTruth: SiteGroundTruth = {
-          siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
-          siteDescription: metaMatch?.[1] || null,
-          pricingText,
-          offeringText: firstPage.substring(0, 2000),
-          fullContent: crawlResult.pageContent,
-          pages: crawlResult.crawledUrls.map((url: string) => {
-            const pageBlock = crawlResult.pageContent.split('\n---\n').find((b: string) => b.includes(`URL: ${url}`))
-            const pageTitleMatch = pageBlock?.match(/^Title: (.+)$/m)
-            return { url, title: pageTitleMatch?.[1] || null }
-          }),
-        }
-
-        let domain = ''
-        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
-
-        const session = await runLlmProbe(domain, groundTruth)
-        const summary = formatLlmProbeForAnalysis(session)
-
-        // Store probe results in DB
-        const db = getDb()
-        for (const r of session.results) {
-          await db.from('llm_probe_results').insert({
-            audit_id: auditId,
-            question: r.question,
-            answer: r.answer,
-            accuracy: r.accuracy,
-            accuracy_note: r.accuracyNote,
-            cited_url: r.citedUrl,
-            model_used: r.modelUsed,
-          } as any)
-        }
-
-        await auditLog(auditId, 'llm_probe_completed', 'success',
-          `LLM probe: ${session.accuracySummary.scorePercent}% accuracy (${session.accuracySummary.accurate} accurate, ${session.accuracySummary.partial} partial, ${session.accuracySummary.inaccurate} inaccurate, ${session.accuracySummary.hallucinated} hallucinated)`, {
-            accuracy_score: session.accuracySummary.scorePercent,
-            ...session.accuracySummary,
-          })
-
-        return { summary, accuracyScore: session.accuracySummary.scorePercent, session }
-      } catch (err) {
-        console.error('[inngest] LLM probe failed (non-fatal):', err)
-        await auditLog(auditId, 'llm_probe_failed', 'warning',
-          `LLM probe failed: ${err instanceof Error ? err.message : String(err)}`)
-        return { summary: '', accuracyScore: 0, session: null }
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2g: AI Citation Audit (non-fatal)
-    // Asks AI to describe the site and cite sources — shows
-    // which content gets cited vs. ignored.
-    // ──────────────────────────────────────────────────────────
-    const citationResult = await step.run('ai-citation-audit', async () => {
-      try {
-        const db = getDb()
-        let domain = ''
-        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
-
-        // Build page list from crawled content
-        const pageBlocks = crawlResult.pageContent.split('\n---\n')
-        const pages = pageBlocks.map((block: string) => {
-          const urlMatch = block.match(/^URL: (.+)$/m)
-          const titleMatch = block.match(/^Title: (.+)$/m)
-          const contentMatch = block.match(/Content:\n([\s\S]+)$/m)
-          return {
-            url: urlMatch?.[1] || '',
-            title: titleMatch?.[1] || null,
-            contentSnippet: contentMatch?.[1]?.substring(0, 600) || '',
+      // ── Multi-Model Benchmark ──
+      const multiModelPromise = (async () => {
+        try {
+          const db = getDb()
+          let domain = ''
+          try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
+          const pageBlocks = crawlResult.pageContent.split('\n---\n')
+          const firstBlock = pageBlocks[0] || ''
+          const titleMatch = firstBlock.match(/^Title: (.+)$/m)
+          const metaMatch = firstBlock.match(/^Meta Description: (.+)$/m)
+          const contentMatch = firstBlock.match(/Content:\n([\s\S]+)$/m)
+          const firstPageContent = contentMatch?.[1] || firstBlock
+          const allContentLower = crawlResult.pageContent.toLowerCase()
+          let pricingText: string | null = null
+          const pricingIdx = allContentLower.indexOf('pricing')
+          if (pricingIdx >= 0) pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
+          const groundTruth: SiteGroundTruth = {
+            siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
+            siteDescription: metaMatch?.[1] || null,
+            pricingText,
+            offeringText: firstPageContent.substring(0, 2000),
+            fullContent: crawlResult.pageContent.substring(0, 6000),
+            pages: pageBlocks.map((block: string) => {
+              const urlM = block.match(/^URL: (.+)$/m)
+              const titleM = block.match(/^Title: (.+)$/m)
+              return { url: urlM?.[1] || '', title: titleM?.[1] || null }
+            }).filter((p: { url: string }) => p.url),
           }
-        }).filter((p: { url: string }) => p.url)
-
-        const result = await runCitationAudit(domain, pages)
-
-        // Store citations in DB
-        if (result.citations.length > 0) {
-          const inserts = result.citations.map(c => ({
-            audit_id: auditId,
-            page_url: c.citedUrl || '',
-            cited_text: c.citedText || c.claim,
-            ai_context: c.claim,
-            citation_type: c.citationType,
-            model_used: 'claude-haiku',
-          }))
-          await db.from('ai_citations').insert(inserts as any)
+          const comparison = await runMultiModelBenchmark(domain, groundTruth)
+          for (const b of comparison.benchmarks) {
+            await db.from('multi_model_probes').insert({
+              audit_id: auditId,
+              model_id: b.modelId,
+              model_label: b.modelLabel,
+              accuracy_score: b.accuracyScore,
+              accurate_count: b.accurateCount,
+              partial_count: b.partialCount,
+              inaccurate_count: b.inaccurateCount,
+              hallucinated_count: b.hallucinatedCount,
+              no_data_count: b.noDataCount,
+              total_questions: b.totalQuestions,
+              results_json: b.results as any,
+              status: b.status,
+              error_message: b.errorMessage,
+            } as any)
+          }
+          const industry = detectIndustry(
+            auditDetails.productType,
+            crawlResult.pageContent.substring(0, 3000),
+          )
+          await db.from('audits')
+            .update({ detected_industry: industry } as any)
+            .eq('id', auditId)
+          await auditLog(auditId, 'multi_model_benchmark_completed', 'info',
+            `Multi-model benchmark: avg ${comparison.averageAccuracy}% accuracy. Best: ${comparison.bestModel}`)
+          return { comparison, industry }
+        } catch (err) {
+          console.error('[inngest] Multi-model benchmark failed (non-fatal):', err)
+          return { comparison: null, industry: null }
         }
+      })()
 
-        await auditLog(auditId, 'citation_audit_completed', 'info',
-          `Citation audit: ${result.citedPages.length} pages cited, ${result.ignoredPages.length} ignored. Citability: ${result.citabilityScore}%`)
+      // Run all probes in parallel
+      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.all([
+        aiDiscoveryPromise,
+        structuredDataPromise,
+        readabilityPromise,
+        llmProbePromise,
+        citationPromise,
+        multiModelPromise,
+      ])
 
-        return result
-      } catch (err) {
-        console.error('[inngest] Citation audit failed (non-fatal):', err)
-        await auditLog(auditId, 'citation_audit_failed', 'warning',
-          `Citation audit failed: ${err instanceof Error ? err.message : String(err)}`)
-        return null
+      await setProgress(auditId, 25)
+
+      return {
+        aiDiscovery: aiDisc,
+        structuredData: sdResult,
+        llmProbe: llmProbe,
+        citation: citation,
+        multiModel: multiModel,
       }
     })
 
+    // Unpack parallel probe results for downstream use
+    const aiDiscovery = probeResults.aiDiscovery
+    const structuredDataResult = probeResults.structuredData
+    const llmProbeResult = probeResults.llmProbe
+    const citationResult = probeResults.citation
+    const multiModelResult = probeResults.multiModel
+
     // ──────────────────────────────────────────────────────────
-    // STEP 2h: Generate Fix Playbooks (non-fatal)
-    // Creates copy-paste code snippets for JSON-LD, meta tags,
-    // llms.txt etc. based on what's missing.
+    // STEP 2j: Fix Playbooks (fast, depends on probe results)
     // ──────────────────────────────────────────────────────────
-    const playbooks = await step.run('generate-fix-playbooks', async () => {
+    const playbooks = await step.run('fix-playbooks', async () => {
       try {
         const db = getDb()
 
@@ -770,93 +797,6 @@ export const processAuditFn = inngest.createFunction(
         await auditLog(auditId, 'fix_playbooks_failed', 'warning',
           `Fix playbooks failed: ${err instanceof Error ? err.message : String(err)}`)
         return []
-      }
-    })
-
-    // ──────────────────────────────────────────────────────────
-    // STEP 2i: Multi-Model AI Benchmarking (non-fatal)
-    // Probes Claude, GPT-4o, and Gemini about the audited domain
-    // and compares their knowledge/accuracy side by side.
-    // ──────────────────────────────────────────────────────────
-    const multiModelResult = await step.run('multi-model-benchmark', async () => {
-      try {
-        const db = getDb()
-        let domain = ''
-        try { domain = new URL(auditDetails.productUrl).hostname.replace(/^www\./, '') } catch {}
-
-        // Build ground truth from crawl data — full context including
-        // offerings and pricing so the grader has everything it needs
-        const pageBlocks = crawlResult.pageContent.split('\n---\n')
-        const firstBlock = pageBlocks[0] || ''
-        const titleMatch = firstBlock.match(/^Title: (.+)$/m)
-        const metaMatch = firstBlock.match(/^Meta Description: (.+)$/m)
-        const contentMatch = firstBlock.match(/Content:\n([\s\S]+)$/m)
-        const firstPageContent = contentMatch?.[1] || firstBlock
-
-        // Extract pricing text if present
-        const allContentLower = crawlResult.pageContent.toLowerCase()
-        let pricingText: string | null = null
-        const pricingIdx = allContentLower.indexOf('pricing')
-        if (pricingIdx >= 0) {
-          pricingText = crawlResult.pageContent.substring(pricingIdx, pricingIdx + 1500)
-        }
-
-        const groundTruth: SiteGroundTruth = {
-          siteName: titleMatch?.[1]?.split('|')[0]?.split('-')[0]?.trim() || null,
-          siteDescription: metaMatch?.[1] || null,
-          pricingText,
-          offeringText: firstPageContent.substring(0, 2000),
-          fullContent: crawlResult.pageContent.substring(0, 6000),
-          pages: pageBlocks.map((block: string) => {
-            const urlM = block.match(/^URL: (.+)$/m)
-            const titleM = block.match(/^Title: (.+)$/m)
-            return { url: urlM?.[1] || '', title: titleM?.[1] || null }
-          }).filter((p: { url: string }) => p.url),
-        }
-
-        const comparison = await runMultiModelBenchmark(domain, groundTruth)
-
-        // Store individual model benchmarks. We always insert one row
-        // per provider — including skipped/error — so the dashboard
-        // can render an explicit status badge instead of silently
-        // showing "Not yet measured".
-        for (const b of comparison.benchmarks) {
-          await db.from('multi_model_probes').insert({
-            audit_id: auditId,
-            model_id: b.modelId,
-            model_label: b.modelLabel,
-            accuracy_score: b.accuracyScore,
-            accurate_count: b.accurateCount,
-            partial_count: b.partialCount,
-            inaccurate_count: b.inaccurateCount,
-            hallucinated_count: b.hallucinatedCount,
-            no_data_count: b.noDataCount,
-            total_questions: b.totalQuestions,
-            results_json: b.results as any,
-            status: b.status,
-            error_message: b.errorMessage,
-          } as any)
-        }
-
-        // Detect and store industry
-        const industry = detectIndustry(
-          auditDetails.productType,
-          crawlResult.pageContent.substring(0, 3000),
-        )
-        await db.from('audits')
-          .update({ detected_industry: industry } as any)
-          .eq('id', auditId)
-
-        await auditLog(auditId, 'multi_model_benchmark_completed', 'info',
-          `Multi-model benchmark: avg ${comparison.averageAccuracy}% accuracy across ${comparison.benchmarks.length} models. Best: ${comparison.bestModel}`,
-          { averageAccuracy: comparison.averageAccuracy, bestModel: comparison.bestModel })
-
-        return { comparison, industry }
-      } catch (err) {
-        console.error('[inngest] Multi-model benchmark failed (non-fatal):', err)
-        await auditLog(auditId, 'multi_model_benchmark_failed', 'warning',
-          `Multi-model benchmark failed: ${err instanceof Error ? err.message : String(err)}`)
-        return { comparison: null, industry: null }
       }
     })
 
@@ -1422,7 +1362,7 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      const BATCH_SIZE = 4
+      const BATCH_SIZE = 8
       const batches = []
       for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
         batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
@@ -1517,6 +1457,10 @@ RULES FOR RE-AUDIT:
         })
 
         totalFindingsCount = batchResult.newSortOrder
+
+        // Granular progress: 30% → 65% spread across batches
+        const batchProgress = Math.round(30 + ((batchIdx + 1) / batches.length) * 35)
+        await step.run(`progress-batch-${batchIdx + 1}`, async () => { await setProgress(auditId, batchProgress) })
       }
     }
 
