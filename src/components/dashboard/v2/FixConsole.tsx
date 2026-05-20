@@ -197,8 +197,15 @@ function slugify(s: string): string {
 }
 
 /** Map a finding's page_url to a likely server file path. */
-function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string): string {
-  if (!pageUrl) return '';
+function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string, fixType?: UiFixType): string {
+  if (!pageUrl) {
+    // For schema/meta fixes with no page, default to homepage
+    if (fixType === 'schema' || fixType === 'meta') {
+      const root = remoteRoot.replace(/\/+$/, '') || '';
+      return `${root}/index.html`;
+    }
+    return '';
+  }
   let pathname: string;
   try { pathname = new URL(pageUrl).pathname; } catch { return ''; }
   const root = remoteRoot.replace(/\/+$/, '') || '';
@@ -367,6 +374,14 @@ function WhatWillChange({
                 )}
               </ul>
             )
+          ) : uiFixType === 'schema' ? (
+            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Homepage — add the JSON-LD block to your homepage&apos;s {'<head>'} section (usually index.html).
+            </span>
+          ) : uiFixType === 'meta' ? (
+            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Homepage — add or update the meta tag in your homepage&apos;s {'<head>'} section.
+            </span>
           ) : (
             <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
               Site-wide issue — applies to all pages. Enter the remote file path manually below.
@@ -822,7 +837,7 @@ function SelfServeConsole({
     const updates: Record<number, string> = {};
     pages.forEach((pageUrl, idx) => {
       if (deployPaths[idx]) return; // don't overwrite user edits
-      const suggested = suggestRemotePath(pageUrl, root);
+      const suggested = suggestRemotePath(pageUrl, root, fixType);
       if (suggested) updates[idx] = suggested;
     });
     if (Object.keys(updates).length > 0) {

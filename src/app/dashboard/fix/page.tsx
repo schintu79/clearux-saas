@@ -394,19 +394,19 @@ function ActiveFindingDetail({
 
       {/* Body — issue detail + FixConsole */}
       <div
-        className="rounded-b-lg"
-        style={{ background: '#ffffff', border: '1px solid var(--rule)', borderTop: 'none' }}
+        className="rounded-b-lg overflow-hidden"
+        style={{ border: '1px solid var(--rule)', borderTop: 'none' }}
       >
-        <div className="px-5 py-5 space-y-5">
-          {/* What we found + Why it matters — side-by-side */}
+        {/* What we found + Why it matters — light background zone */}
+        <div className="px-5 pt-5 pb-5" style={{ background: 'color-mix(in srgb, var(--rule) 18%, transparent)' }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+            <div className="rounded-lg p-4" style={{ background: '#ffffff', border: '1px solid var(--rule)' }}>
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: sevColor }}>
                 What we found
               </p>
               <div className="max-w-prose"><FindingText text={finding.description} /></div>
             </div>
-            <div className="rounded-lg p-4" style={{ background: 'var(--paper)', border: '1px solid var(--rule)' }}>
+            <div className="rounded-lg p-4" style={{ background: '#ffffff', border: '1px solid var(--rule)' }}>
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2.5" style={{ color: 'var(--warn)' }}>
                 Why it matters
               </p>
@@ -421,10 +421,12 @@ function ActiveFindingDetail({
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Resolve — FixConsole with integrated preview panel */}
-          <div className="pt-2">
-            <h4 className="flex items-center gap-2 text-[18px] font-bold tracking-[-0.01em] mb-4" style={{ color: 'var(--ink)' }}>
+        {/* Resolve — FixConsole with integrated preview panel */}
+        <div className="px-5 py-5" style={{ background: '#ffffff' }}>
+          <div>
+            <h4 className="flex items-center gap-2 text-[18px] font-medium tracking-[-0.01em] mb-4" style={{ color: 'var(--ink)' }}>
               <Wrench size={17} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
               Resolve this issue
             </h4>
