@@ -212,7 +212,10 @@ export function classifyFinding(
   if (DESIGN_FIX_TYPES.has(uiFixType)) return 'requires_design_work';
 
   // Gate 3: HARD GATE — "Can this be applied safely without creating new UI?"
-  if (requiresNewUi(finding)) return 'requires_design_work';
+  // Skip for code-only fix types (schema, meta, technical) — these are never
+  // design work even if the wording mentions "add block" or "add section".
+  const CODE_ONLY_FIX_TYPES = new Set<UiFixType>(['schema', 'meta', 'technical', 'accessibility']);
+  if (!CODE_ONLY_FIX_TYPES.has(uiFixType) && requiresNewUi(finding)) return 'requires_design_work';
 
   // Gate 4: if the DB fix_type is set and NOT in surgical scope → design work
   if (finding.fix_type && !SURGICAL_SCOPE.has(finding.fix_type)) return 'requires_design_work';
