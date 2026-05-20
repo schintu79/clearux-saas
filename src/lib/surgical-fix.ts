@@ -221,7 +221,8 @@ RESPOND WITH ONLY valid JSON, no markdown, no fences:
 
 CRITICAL RULES:
 - "find" must be an EXACT substring from the file (copy-paste, preserve whitespace)
-- Keep "find" as short as possible while still being unique in the file
+- Keep "find" as SHORT as possible — 1-3 lines max. Use just enough to be unique in the file
+- For JSON-LD / <script type="application/ld+json"> blocks: use "find" to match just the opening tag (e.g. '<script type="application/ld+json">') and replace the ENTIRE block including closing </script>
 - "content" is the replacement (for replace) or new code to insert (for insert)${isNonDefault ? `\n- ALL user-visible text in "content" MUST be in ${language} — never English` : ''}
 - If you cannot locate the fix point, return: {"action":"failed","find":"","content":"","explanation":"reason"}`
 }
@@ -241,7 +242,7 @@ export async function callSurgicalAI(prompt: string): Promise<{
   const client = new Anthropic({ apiKey })
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   })
 
@@ -251,13 +252,46 @@ export async function callSurgicalAI(prompt: string): Promise<{
     .join('')
     .trim()
 
+  // Check if the response was truncated (hit max_tokens)
+  const wasTruncated = response.stop_reason === 'max_tokens'
+
   // Parse the JSON response
   let patch: PatchInstruction
   try {
-    // Strip any markdown fences if the model added them
-    const cleaned = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    // Strip markdown fences — handle ```json, ``` , with or without newlines
+    let cleaned = text
+      .replace(/^```\w*\s*\n?/, '')  // opening fence
+      .replace(/\n?\s*```\s*$/, '')   // closing fence
+      .trim()
+
+    // If truncated, try to recover by closing the JSON
+    if (wasTruncated && !cleaned.endsWith('}')) {
+      // Find the last complete key-value pair and close the object
+      const lastExplanation = cleaned.lastIndexOf('"explanation"')
+      if (lastExplanation > 0) {
+        // Truncated after explanation started — trim and close
+        cleaned = cleaned.slice(0, lastExplanation) + '"explanation":"Fix applied."}'
+      } else {
+        // Can't recover — report truncation
+        return {
+          patchedContent: '',
+          explanation: '',
+          failed: true,
+          failReason: 'AI response was truncated (content too large for token limit). Try applying this fix manually.',
+        }
+      }
+    }
+
     patch = JSON.parse(cleaned)
   } catch {
+    if (wasTruncated) {
+      return {
+        patchedContent: '',
+        explanation: '',
+        failed: true,
+        failReason: 'AI response was truncated (content too large). Try applying this fix manually.',
+      }
+    }
     return {
       patchedContent: '',
       explanation: '',
@@ -295,8 +329,26 @@ export function applyPatch(
     return { patchedContent: originalContent, applied: false, warning: 'Empty find string.' }
   }
 
+  // Block-aware replacement: if "find" is just an opening tag (e.g. <script ...>)
+  // and the content includes the closing tag, extend the match to the full block
+  let effectiveFind = find
+  if (action === 'replace') {
+    const findTrim = find.trim()
+    // Match opening <script> tag that AI used as anchor for a full block replace
+    if (findTrim.match(/^<script\b[^>]*>\s*$/i) && content.includes('</script>')) {
+      const startIdx = originalContent.indexOf(find)
+      if (startIdx >= 0) {
+        const closeTag = '</script>'
+        const closeIdx = originalContent.indexOf(closeTag, startIdx)
+        if (closeIdx >= 0) {
+          effectiveFind = originalContent.slice(startIdx, closeIdx + closeTag.length)
+        }
+      }
+    }
+  }
+
   // Check that the find string actually exists in the file
-  const idx = originalContent.indexOf(find)
+  const idx = originalContent.indexOf(effectiveFind)
   if (idx === -1) {
     // Try a fuzzy match — trim whitespace from each line
     const findTrimmed = find.split('\n').map(l => l.trim()).join('\n')
@@ -344,7 +396,7 @@ export function applyPatch(
   // Exact match found — apply the patch
   if (action === 'replace') {
     return {
-      patchedContent: originalContent.slice(0, idx) + content + originalContent.slice(idx + find.length),
+      patchedContent: originalContent.slice(0, idx) + content + originalContent.slice(idx + effectiveFind.length),
       applied: true,
     }
   } else if (action === 'insert_before') {
@@ -354,7 +406,7 @@ export function applyPatch(
     }
   } else {
     // insert_after
-    const afterPos = idx + find.length
+    const afterPos = idx + effectiveFind.length
     return {
       patchedContent: originalContent.slice(0, afterPos) + '\n' + content + originalContent.slice(afterPos),
       applied: true,
