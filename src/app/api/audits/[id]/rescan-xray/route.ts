@@ -50,6 +50,59 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid product URL on audit' }, { status: 400 })
   }
 
+  // ── Cooldown: return cached results if last scan was < 6 hours ago ──
+  // LLM probes are inherently non-deterministic (search-augmented models
+  // like Perplexity fetch live results, grading has natural variance).
+  // Re-probing the same site within hours produces noisy score swings
+  // that look like bugs. Instead, return the stored data and tell the
+  // user when the next scan will be available.
+  const COOLDOWN_HOURS = 6
+  const { data: existingProbes } = await db
+    .from('multi_model_probes')
+    .select('model_id, model_label, accuracy_score, status, error_message, created_at')
+    .eq('audit_id', auditId)
+    .order('created_at', { ascending: false })
+    .limit(4)
+
+  if (existingProbes && existingProbes.length > 0) {
+    const latestCreated = new Date((existingProbes as any[])[0].created_at)
+    const hoursSinceLast = (Date.now() - latestCreated.getTime()) / (1000 * 60 * 60)
+
+    if (hoursSinceLast < COOLDOWN_HOURS) {
+      const cached = existingProbes as any[]
+      const measured = cached.filter((b) => b.status === 'measured')
+      const avgAccuracy = measured.length > 0
+        ? Math.round(measured.reduce((s: number, b: any) => s + (b.accuracy_score ?? 0), 0) / measured.length)
+        : 0
+      const nextScanAt = new Date(latestCreated.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000)
+
+      return NextResponse.json({
+        ok: true,
+        cached: true,
+        lastScannedAt: latestCreated.toISOString(),
+        nextScanAvailableAt: nextScanAt.toISOString(),
+        cooldownHours: COOLDOWN_HOURS,
+        averageAccuracy: avgAccuracy,
+        bestModel: measured.sort((a: any, b: any) => (b.accuracy_score ?? 0) - (a.accuracy_score ?? 0))[0]?.model_id || 'claude',
+        modelsScored: measured.length,
+        providers: cached.map((b: any) => ({
+          modelId: b.model_id,
+          modelLabel: b.model_label,
+          status: b.status,
+          accuracyScore: b.status === 'measured' ? b.accuracy_score : null,
+          errorMessage: b.error_message,
+        })),
+        skippedProviders: cached.filter((b: any) => b.status === 'skipped').map((b: any) => b.model_id),
+        erroredProviders: cached.filter((b: any) => b.status === 'error').map((b: any) => ({
+          modelId: b.model_id,
+          errorMessage: b.error_message,
+        })),
+      })
+    }
+  }
+
+  // ── No cached data or cooldown expired — run fresh probes ──
+
   const { data: pages } = await db
     .from('audit_pages')
     .select('url, title, meta_description, content_text')
@@ -92,10 +145,6 @@ export async function POST(
   }
 
   // Replace existing probe rows for this audit so the latest scan wins.
-  // We always persist one row per provider — including `skipped`
-  // (no API key) and `error` (HTTP/timeout) — so the UI can render
-  // an explicit status badge instead of silently showing "Not yet
-  // measured", which used to look identical to a brand-new audit.
   await db.from('multi_model_probes').delete().eq('audit_id', auditId)
 
   for (const b of comparison.benchmarks) {
@@ -122,6 +171,7 @@ export async function POST(
 
   return NextResponse.json({
     ok: true,
+    cached: false,
     averageAccuracy: comparison.averageAccuracy,
     bestModel: comparison.bestModel,
     modelsScored: measured.length,

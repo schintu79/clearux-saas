@@ -190,18 +190,25 @@ function AIReadabilityBody({
   const audit = bundle.audit!;
   const [rescanning, setRescanning] = useState(false);
   const [rescanError, setRescanError] = useState<string | null>(null);
+  const [rescanInfo, setRescanInfo] = useState<string | null>(null);
   const [rescanOk, setRescanOk] = useState(false);
 
   const handleRescan = async () => {
     if (!audit?.id || rescanning) return;
     setRescanning(true);
     setRescanError(null);
+    setRescanInfo(null);
     setRescanOk(false);
     try {
       const res = await fetch(`/api/audits/${audit.id}/rescan-xray`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setRescanError(typeof data?.error === 'string' ? data.error : 'Re-scan failed');
+      } else if (data.cached) {
+        // Cooldown — show when next scan is available instead of re-probing
+        const nextAt = data.nextScanAvailableAt ? new Date(data.nextScanAvailableAt) : null;
+        const hoursLeft = nextAt ? Math.max(0, Math.ceil((nextAt.getTime() - Date.now()) / (1000 * 60 * 60))) : data.cooldownHours || 6;
+        setRescanInfo(`Scores are locked for ${hoursLeft}h after each scan to ensure consistency. Next re-scan available ${nextAt ? `at ${nextAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : `in ${hoursLeft}h`}.`);
       } else {
         setRescanOk(true);
         onProbesRefreshed();
@@ -317,6 +324,18 @@ function AIReadabilityBody({
             {rescanning ? 'Re-scanning' : 'Re-scan'}
           </button>
         </div>
+
+        {rescanInfo && (
+          <div
+            className="text-[11px] mb-3 px-3 py-2 rounded-md"
+            style={{
+              color: 'var(--ink)',
+              background: 'color-mix(in srgb, var(--ink) 5%, transparent)',
+            }}
+          >
+            {rescanInfo}
+          </div>
+        )}
 
         {(rescanError || rescanOk) && (
           <div
