@@ -324,9 +324,6 @@ export const processAuditFn = inngest.createFunction(
       })
     }
 
-    // Update progress after crawl
-    await step.run('progress-after-crawl', async () => { await setProgress(auditId, 15) })
-
     // ──────────────────────────────────────────────────────────
     // STEP 2b: Responsive design check (Puppeteer)
     // Renders crawled pages at 375, 768, 1024, 1440 viewports
@@ -335,6 +332,7 @@ export const processAuditFn = inngest.createFunction(
     // (Mobile Experience & Responsive Design).
     // ──────────────────────────────────────────────────────────
     const responsiveCheck = await step.run('check-responsive-design', async () => {
+      await setProgress(auditId, 15)
       try {
         const maxUrls = auditDetails.plan === 'free_preview' ? 1 : 3
         const result = await checkResponsiveDesign(crawlResult.crawledUrls, maxUrls)
@@ -1538,7 +1536,7 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      const BATCH_SIZE = 4 // Reduced from 8 to avoid Anthropic API rate limits
+      const BATCH_SIZE = 8 // 8 parallel calls per batch — fast with Anthropic tier-3+ rate limits
       const batches = []
       for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
         batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))
@@ -1657,97 +1655,81 @@ RULES FOR RE-AUDIT:
       }
     }
 
-    // Update progress after analysis
-    await step.run('progress-after-analysis', async () => { await setProgress(auditId, 65) })
-
     // ──────────────────────────────────────────────────────────
-    // Deduplicate findings — remove near-duplicate findings
-    // that were flagged across multiple categories
+    // QUALITY GATES: Dedup + speculative filter + relevance scoring
+    // Combined into one step to eliminate Inngest cold-start overhead
     // ──────────────────────────────────────────────────────────
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Deduplicate findings
-    // Logic lives in: src/lib/audit-engine/pipeline/dedup.ts
-    // ──────────────────────────────────────────────────────────
-    await step.run('deduplicate-findings', async () => {
+    await step.run('quality-gates', async () => {
+      await setProgress(auditId, 65)
       const db = getDb()
-      const { data: allFindings } = await db
+
+      // ── 1. Deduplicate findings ───
+      const { data: dedupFindings } = await db
         .from('audit_findings')
         .select('id, title, description, severity, page_url, sort_order')
         .eq('audit_id', auditId)
         .order('sort_order', { ascending: true })
 
-      if (!allFindings || allFindings.length < 2) return
-
-      const duplicateIds = identifyDuplicates(
-        allFindings.map((f: any) => ({
-          id: f.id,
-          title: f.title || '',
-          description: f.description || '',
-          severity: f.severity || 'medium',
-          page_url: f.page_url || null,
-          sort_order: f.sort_order ?? 0,
-        }))
-      )
-
-      if (duplicateIds.length > 0) {
-        for (const id of duplicateIds) {
-          await db.from('audit_findings').delete().eq('id', id)
+      if (dedupFindings && dedupFindings.length >= 2) {
+        const duplicateIds = identifyDuplicates(
+          dedupFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+            severity: f.severity || 'medium',
+            page_url: f.page_url || null,
+            sort_order: f.sort_order ?? 0,
+          }))
+        )
+        if (duplicateIds.length > 0) {
+          for (const id of duplicateIds) {
+            await db.from('audit_findings').delete().eq('id', id)
+          }
+          await auditLog(auditId, 'findings_deduped', 'info',
+            `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
+          console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${dedupFindings.length} findings`)
         }
-        await auditLog(auditId, 'findings_deduped', 'info',
-          `Removed ${duplicateIds.length} duplicate finding${duplicateIds.length > 1 ? 's' : ''}`)
-        console.log(`[inngest] Dedup: removed ${duplicateIds.length} duplicates from ${allFindings.length} findings`)
       }
-    })
 
-    // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Filter speculative findings
-    // Logic lives in: src/lib/audit-engine/pipeline/speculative-filter.ts
-    // ──────────────────────────────────────────────────────────
-    await step.run('filter-speculative-findings', async () => {
-      const db = getDb()
-      const { data: allFindings } = await db
+      // ── 2. Filter speculative findings ───
+      const { data: specFindings } = await db
         .from('audit_findings')
         .select('id, title, description')
         .eq('audit_id', auditId)
 
-      if (!allFindings || allFindings.length === 0) return
-
-      // Check if head tags were extracted — if so, findings about meta/OG/lang are verifiable
-      const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
-
-      const speculativeIds = identifySpeculativeFindings(
-        allFindings.map((f: any) => ({
-          id: f.id,
-          title: f.title || '',
-          description: f.description || '',
-        })),
-        hasHeadTags,
-      )
-
-      if (speculativeIds.length > 0) {
-        for (const id of speculativeIds) {
-          await db.from('audit_findings').delete().eq('id', id)
-        }
-        await auditLog(auditId, 'speculative_filtered', 'info',
-          `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
-        console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
-
-        // Transparency: if we removed a significant number of findings
-        const totalBefore = (allFindings?.length ?? 0)
-        const removedRatio = totalBefore > 0 ? speculativeIds.length / totalBefore : 0
-        if (speculativeIds.length >= 3 || removedRatio > 0.3) {
-          auditLimitations.push({
-            id: 'heavy_speculation_filtering',
-            title: 'Quality filter applied',
-            description: `Our quality filter removed ${speculativeIds.length} finding${speculativeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
-          })
+      if (specFindings && specFindings.length > 0) {
+        const hasHeadTags = crawlResult.pageContent.includes('Head Tags:')
+        const speculativeIds = identifySpeculativeFindings(
+          specFindings.map((f: any) => ({
+            id: f.id,
+            title: f.title || '',
+            description: f.description || '',
+          })),
+          hasHeadTags,
+        )
+        if (speculativeIds.length > 0) {
+          for (const id of speculativeIds) {
+            await db.from('audit_findings').delete().eq('id', id)
+          }
+          await auditLog(auditId, 'speculative_filtered', 'info',
+            `Removed ${speculativeIds.length} speculative/unverifiable finding${speculativeIds.length > 1 ? 's' : ''}`)
+          console.log(`[inngest] Speculative filter: removed ${speculativeIds.length} findings`)
+          const totalBefore = (specFindings?.length ?? 0)
+          const removedRatio = totalBefore > 0 ? speculativeIds.length / totalBefore : 0
+          if (speculativeIds.length >= 3 || removedRatio > 0.3) {
+            auditLimitations.push({
+              id: 'heavy_speculation_filtering',
+              title: 'Quality filter applied',
+              description: `Our quality filter removed ${speculativeIds.length} finding${speculativeIds.length > 1 ? 's' : ''} that could not be fully verified from the crawled content. We only report issues we can back with evidence from your site. If important areas seem under-reported, a re-audit with more pages may help.`,
+            })
+          }
         }
       }
     })
 
     // ──────────────────────────────────────────────────────────
-    // PROPRIETARY PIPELINE: Score findings by historical relevance
-    // Logic lives in: src/lib/audit-engine/pipeline/relevance-scorer.ts
+    // Score findings by historical relevance (separate step —
+    // involves its own DB reads that depend on dedup/filter above)
     // ──────────────────────────────────────────────────────────
     await step.run('score-relevance', async () => {
       try {
@@ -1794,9 +1776,7 @@ RULES FOR RE-AUDIT:
       }
     })
 
-    // ──────────────────────────────────────────────────────────
-    // Verify findings count (post-dedup + post-filter + post-relevance)
-    // ──────────────────────────────────────────────────────────
+    // Verify findings count + update progress (combined to reduce step overhead)
     await step.run('verify-findings', async () => {
       const db = getDb()
       const { count: findingsCount } = await db
@@ -1810,10 +1790,8 @@ RULES FOR RE-AUDIT:
       } else {
         await auditLog(auditId, 'findings_verified', 'success', `${findingsCount} findings verified`)
       }
+      await setProgress(auditId, 75)
     })
-
-    // Update progress after pipeline quality gates
-    await step.run('progress-after-quality', async () => { await setProgress(auditId, 75) })
 
     // ──────────────────────────────────────────────────────────
     // STEP 8: Capture screenshots — page overviews + highlighted findings

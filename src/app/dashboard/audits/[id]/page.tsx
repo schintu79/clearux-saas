@@ -1993,7 +1993,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-ink hover:bg-paper-2 transition-colors"
               >
                 <Search size={13} className="text-m-muted" />
-                Dig Deeper (find new issues)
+                Deep mode (find new issues)
                 <span className="ml-auto text-[11px] text-m-muted">1 credit</span>
               </Link>
               <button
@@ -2219,7 +2219,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                 href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                 className="flex items-center gap-2 border border-signal/30 text-signal text-[11px] font-semibold tracking-[0.03em] uppercase px-4 py-2 rounded-lg hover:bg-signal/5 transition-colors"
               >
-                <Search size={13} /> Dig deeper
+                <Search size={13} /> Deep mode
               </Link>
               <button
                 onClick={handleShare}
@@ -4504,7 +4504,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                       {!bench && <li>· Industry benchmark position is not available yet.</li>}
                       {recs.length === 0 && <li>· No predictive recommendations were generated.</li>}
                     </ul>
-                    <p className="text-[11px] text-m-muted mt-2">Re-run the audit (or use Dig Deeper) to capture missing sections.</p>
+                    <p className="text-[11px] text-m-muted mt-2">Re-run the audit (or use Deep mode) to capture missing sections.</p>
                   </div>
                 )}
 
@@ -4554,7 +4554,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}&depth=deep`}
                   className="flex items-center justify-center gap-2 text-[13px] font-semibold text-signal bg-signal/5 border border-signal/20 rounded-lg px-4 py-2.5 hover:bg-signal/10 transition-colors whitespace-nowrap"
                 >
-                  <Search size={14} strokeWidth={2} /> Dig deeper
+                  <Search size={14} strokeWidth={2} /> Deep mode
                 </Link>
                 <button
                   onClick={handleShare}
