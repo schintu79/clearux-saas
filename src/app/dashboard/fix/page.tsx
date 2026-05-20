@@ -424,8 +424,8 @@ function ActiveFindingDetail({
 
           {/* Resolve — FixConsole with integrated preview panel */}
           <div className="pt-2">
-            <h4 className="flex items-center gap-2 text-[15px] font-semibold mb-3" style={{ color: 'var(--ink)' }}>
-              <Wrench size={15} strokeWidth={1.75} style={{ color: 'var(--m-muted)' }} />
+            <h4 className="flex items-center gap-2 text-[18px] font-bold tracking-[-0.01em] mb-4" style={{ color: 'var(--ink)' }}>
+              <Wrench size={17} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />
               Resolve this issue
             </h4>
             <FixConsole

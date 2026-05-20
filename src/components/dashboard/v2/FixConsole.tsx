@@ -239,33 +239,28 @@ function FixBadges({ finding, uiFixType }: { finding: AuditFinding; uiFixType: U
   const dbType = finding.fix_type ? FIX_TYPE_META[finding.fix_type] : null;
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {/* Scope badge */}
+    <div className="flex items-center gap-2 flex-wrap text-[10px]">
+      {/* Scope label */}
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-        style={{
-          color: scope.color,
-          background: `color-mix(in srgb, ${scope.color} 10%, transparent)`,
-          border: `1px solid color-mix(in srgb, ${scope.color} 25%, transparent)`,
-        }}
+        className="inline-flex items-center gap-1 font-semibold"
+        style={{ color: scope.color }}
       >
         {scope.icon}
         {scope.label}
       </span>
 
-      {/* DB fix type badge */}
+      {/* DB fix type label */}
       {dbType && (
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
-          style={{
-            color: 'var(--ink)',
-            background: 'var(--paper-2)',
-            border: '1px solid var(--rule)',
-          }}
-        >
-          {dbType.icon}
-          {dbType.label}
-        </span>
+        <>
+          <span style={{ color: 'var(--rule)' }}>|</span>
+          <span
+            className="inline-flex items-center gap-1 font-medium"
+            style={{ color: 'var(--m-muted)' }}
+          >
+            {dbType.icon}
+            {dbType.label}
+          </span>
+        </>
       )}
     </div>
   );
@@ -373,41 +368,24 @@ function WhatWillChange({
               </ul>
             )
           ) : (
-            <span className="text-[11px] italic" style={{ color: 'var(--m-muted)' }}>
-              No specific page captured
+            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Site-wide issue — applies to all pages. Enter the remote file path manually below.
             </span>
           )}
         </div>
 
-        {/* Current vs Proposed */}
-        {(currentValue || proposedValue) && (
-          <div className="grid grid-cols-1 gap-2">
-            {currentValue && (
-              <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--severe)' }}>
-                  Current
-                </span>
-                <div
-                  className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
-                  style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
-                >
-                  {currentValue.length > 200 ? currentValue.slice(0, 200) + '...' : currentValue}
-                </div>
-              </div>
-            )}
-            {proposedValue && (
-              <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--ok)' }}>
-                  Proposed
-                </span>
-                <div
-                  className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
-                  style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 15%, transparent)', color: 'var(--ink-2)' }}
-                >
-                  {proposedValue.length > 200 ? proposedValue.slice(0, 200) + '...' : proposedValue}
-                </div>
-              </div>
-            )}
+        {/* Current value only — Proposed is shown in the editable textarea below, no need to duplicate */}
+        {currentValue && (
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--severe)' }}>
+              Current
+            </span>
+            <div
+              className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+              style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
+            >
+              {currentValue.length > 200 ? currentValue.slice(0, 200) + '...' : currentValue}
+            </div>
           </div>
         )}
 
@@ -523,49 +501,28 @@ function TabBar({
 }) {
   return (
     <div
-      className="flex items-center gap-0"
-      style={{ borderBottom: '1px solid var(--rule)' }}
+      className="inline-flex items-center rounded-lg p-0.5"
+      style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
     >
-      <button
-        type="button"
-        onClick={() => onSwitch('self')}
-        className="relative px-4 py-2.5 text-[12.5px] font-medium transition-colors"
-        style={{
-          color: active === 'self' ? 'var(--ink)' : 'var(--m-muted)',
-          background: 'transparent',
-        }}
-      >
-        <span className="flex items-center gap-1.5">
-          <Wrench size={12} />
-          Fix it yourself
-        </span>
-        {active === 'self' && (
-          <span
-            className="absolute bottom-0 left-0 right-0 h-[2px]"
-            style={{ background: 'var(--ink)' }}
-          />
-        )}
-      </button>
-      <button
-        type="button"
-        onClick={() => onSwitch('handoff')}
-        className="relative px-4 py-2.5 text-[12.5px] font-medium transition-colors"
-        style={{
-          color: active === 'handoff' ? 'var(--ink)' : 'var(--m-muted)',
-          background: 'transparent',
-        }}
-      >
-        <span className="flex items-center gap-1.5">
-          <Users size={12} />
-          Let your team handle it
-        </span>
-        {active === 'handoff' && (
-          <span
-            className="absolute bottom-0 left-0 right-0 h-[2px]"
-            style={{ background: 'var(--ink)' }}
-          />
-        )}
-      </button>
+      {(['self', 'handoff'] as const).map((tab) => {
+        const isActive = active === tab;
+        return (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => onSwitch(tab)}
+            className="flex items-center gap-1.5 px-4 py-2 text-[12.5px] font-semibold rounded-md transition-all"
+            style={{
+              color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+              background: isActive ? 'var(--card)' : 'transparent',
+              boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}
+          >
+            {tab === 'self' ? <Wrench size={12} /> : <Users size={12} />}
+            {tab === 'self' ? 'Fix it yourself' : 'Let your team handle it'}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1546,7 +1503,7 @@ export default function FixConsole({
   const deployable = useMemo(() => isDeployable(finding, fixType), [finding, fixType]);
 
   return (
-    <div>
+    <div className="space-y-4">
       <TabBar active={activeTab} onSwitch={setActiveTab} />
 
       {activeTab === 'handoff' ? (

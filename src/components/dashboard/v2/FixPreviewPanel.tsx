@@ -499,16 +499,21 @@ export default function FixPreviewPanel({ fixType, finding, patch }: FixPreviewP
   // Design fixes have no preview — handled by DesignFixGuidance in FixConsole
   if (fixType === 'design') return null
 
-  if (!patch.trim()) {
-    return (
-      <div
-        className="mt-8 px-4 py-6 rounded-lg text-center text-[12px]"
-        style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
-      >
-        No preview available — generate or enter a fix first.
-      </div>
-    )
-  }
+  if (!patch.trim()) return null
+
+  // Only render the side panel for fix types that provide genuinely useful
+  // visual context beyond what the editable textarea already shows.
+  // Schema → JSON syntax highlighted; Meta → search/social preview;
+  // Accessibility → checklist; Visual copy/heading → browser mockup.
+  // Technical/content/generic → the recommendation IS the fix, no added value
+  // from repeating it in a side panel.
+  const hasMeaningfulPreview =
+    mode === 'visual' ||
+    fixType === 'meta' ||
+    fixType === 'schema' ||
+    fixType === 'accessibility'
+
+  if (!hasMeaningfulPreview) return null
 
   return (
     <div className="mt-8 max-h-[480px] overflow-y-auto space-y-0">
@@ -520,9 +525,7 @@ export default function FixPreviewPanel({ fixType, finding, patch }: FixPreviewP
         <SchemaPreview patch={patch} />
       ) : fixType === 'accessibility' ? (
         <AccessibilityPreview finding={finding} />
-      ) : (
-        <TechnicalPreview finding={finding} patch={patch} />
-      )}
+      ) : null}
     </div>
   )
 }
