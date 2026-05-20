@@ -1135,6 +1135,7 @@ function SelfServeConsole({
           findingDescription: finding.description || '',
           findingCategory: '',
           pageUrl: pages[activePageIdx] || finding.page_url || null,
+          language: pageTargets[activePageIdx]?.lang || pageTargets[0]?.lang || 'Default',
         }),
       });
       const data = await res.json().catch(() => ({} as any));
@@ -1242,7 +1243,7 @@ function SelfServeConsole({
           value={patch}
           onChange={(e) => setPatch(e.target.value)}
           spellCheck
-          rows={Math.min(12, Math.max(3, patch.split('\n').length + 1))}
+          rows={Math.min(12, Math.max(3, (patch || '').split('\n').length + 1))}
           className="w-full px-3 py-2.5 text-[12.5px] leading-[1.6] outline-none focus-visible:ring-2 focus-visible:ring-signal/30 font-mono"
           style={{
             background: '#ffffff',

@@ -41,6 +41,8 @@ export interface SurgicalFixRequest {
   pageUrl: string | null
   /** The recommended fix code */
   recommendation: string
+  /** Page language (e.g. 'Italian', 'English', 'Default') */
+  language?: string
 }
 
 export interface DiffHunk {
@@ -182,6 +184,7 @@ function buildPatchPrompt(
   recommendation: string,
   findingTitle: string,
   findingDescription: string,
+  language?: string,
 ): string {
   const opInstructions = operation === 'insert'
     ? `You need to INSERT new code. Return action "insert_before" or "insert_after" with "find" set to the exact line where the code should go.
@@ -189,6 +192,12 @@ For <head> insertions: insert_before "</head>".
 For <body> insertions: use the semantically correct anchor.`
     : `You need to REPLACE existing code. Return action "replace" with "find" set to the exact broken code and "content" set to the fixed version.
 Only include the minimum lines needed — don't return the whole file.`
+
+  // Language-aware instruction for non-English pages
+  const isNonDefault = language && language !== 'Default' && language.toLowerCase() !== 'english'
+  const languageInstruction = isNonDefault
+    ? `\nLANGUAGE RULE (CRITICAL): The page is in ${language}. ALL text content in "content" (visible copy, headings, CTAs, alt text, meta descriptions, titles) MUST be written in ${language}. Do NOT use English for any user-visible text. Only HTML tags, attributes, and code syntax remain in English.`
+    : ''
 
   return `You are a surgical code patcher. Given a finding and fix, return a JSON patch instruction.
 
@@ -205,7 +214,7 @@ FILE CONTENT:
 ${fileWindow}
 """
 
-${opInstructions}
+${opInstructions}${languageInstruction}
 
 RESPOND WITH ONLY valid JSON, no markdown, no fences:
 {"action":"replace|insert_before|insert_after","find":"exact string from file","content":"new/fixed code","explanation":"one sentence"}
@@ -213,7 +222,7 @@ RESPOND WITH ONLY valid JSON, no markdown, no fences:
 CRITICAL RULES:
 - "find" must be an EXACT substring from the file (copy-paste, preserve whitespace)
 - Keep "find" as short as possible while still being unique in the file
-- "content" is the replacement (for replace) or new code to insert (for insert)
+- "content" is the replacement (for replace) or new code to insert (for insert)${isNonDefault ? `\n- ALL user-visible text in "content" MUST be in ${language} — never English` : ''}
 - If you cannot locate the fix point, return: {"action":"failed","find":"","content":"","explanation":"reason"}`
 }
 
@@ -361,6 +370,7 @@ export function buildPrompt(
   recommendation: string,
   findingTitle: string,
   findingDescription: string,
+  language?: string,
 ): string {
   if (operation === 'create') return ''
 
@@ -368,7 +378,7 @@ export function buildPrompt(
     originalContent, recommendation, findingTitle, operation,
   )
 
-  return buildPatchPrompt(operation, fileWindow, recommendation, findingTitle, findingDescription)
+  return buildPatchPrompt(operation, fileWindow, recommendation, findingTitle, findingDescription, language)
 }
 
 // ── Diff computation ─────────────────────────────────────────

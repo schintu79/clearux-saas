@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       findingTitle,
       findingDescription,
       findingCategory,
+      language,
     } = body
 
     if (!connectionId || !filePath || !recommendation) {
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
       recommendation,
       findingTitle,
       findingDescription,
+      language,
     )
 
     const aiResult = await callSurgicalAI(prompt)
