@@ -156,6 +156,7 @@ async function probeClaude(
         () => client.beta.promptCaching.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 400,
+          temperature: 0,
           system: [{ type: 'text', text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.', cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: q }],
         }),
@@ -222,7 +223,7 @@ async function probeOpenAI(
             { role: 'user', content: q },
           ],
           max_tokens: 400,
-          temperature: 0.3,
+          temperature: 0,
         }),
         signal: AbortSignal.timeout(20_000),
       })
@@ -338,7 +339,7 @@ async function probeGemini(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: q }] }],
-              generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
+              generationConfig: { maxOutputTokens: 400, temperature: 0 },
               systemInstruction: {
                 parts: [{ text: GEMINI_SYSTEM_PROMPT }],
               },
@@ -539,7 +540,7 @@ async function probePerplexity(
             { role: 'user', content: q },
           ],
           max_tokens: 400,
-          temperature: 0.3,
+          temperature: 0,
         }),
         signal: AbortSignal.timeout(20_000),
       })
@@ -613,6 +614,7 @@ Respond with a JSON array:
       () => client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 800,
+        temperature: 0,
         messages: [{ role: 'user', content: gradingPrompt }],
       }),
       `multi-model-grading(${modelLabel})`,

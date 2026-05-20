@@ -152,6 +152,7 @@ export async function runLlmProbe(
           client.beta.promptCaching.messages.create({
             model: modelUsed,
             max_tokens: 500,
+            temperature: 0,
             system: [{ type: 'text', text: `You are a knowledgeable assistant answering questions about websites and companies. Share what you know confidently. Most well-known companies, products, and websites are in your training data — answer based on that knowledge. Provide specific, factual details: names, features, descriptions, pricing tiers if you know them. Only say "I don't know" if the company/website is genuinely obscure and you have no information at all. Never redirect users to "visit the website" — that defeats the purpose. Give a direct, substantive answer.`, cache_control: { type: 'ephemeral' } }],
             messages: [{ role: 'user', content: question }],
           }),
@@ -255,6 +256,7 @@ Respond ONLY with a valid JSON array, no other text.`
       () => client.messages.create({
         model,
         max_tokens: 2000,
+        temperature: 0,
         messages: [{ role: 'user', content: gradingPrompt }],
       }),
       'llm-probe-grading',
