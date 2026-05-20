@@ -16,8 +16,9 @@
  * probes and render one row per question, one column per model.
  */
 
-import React, { useMemo, useState, useRef } from 'react';
-import { MessageSquareQuote, CheckCircle2, AlertTriangle, XCircle, HelpCircle, MinusCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { MessageSquareQuote, CheckCircle2, AlertTriangle, XCircle, HelpCircle, MinusCircle, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import { AI_PLATFORMS, type ProviderKey } from '@/lib/ai-xray/provider-status';
 
@@ -97,25 +98,40 @@ const ACCURACY_META: Record<string, { label: string; tone: string; icon: React.E
   no_data:      { label: 'No data',     tone: '--m-muted',  icon: MinusCircle },
 };
 
-/** Floating tooltip for accuracy badges */
+/** Floating tooltip for accuracy badges — portal-based to escape overflow-hidden */
 function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const tip = ACCURACY_TOOLTIP[accuracyKey];
   if (!tip) return <>{children}</>;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!open || !anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.top + window.scrollY - 8,
+      left: rect.left + rect.width / 2 + window.scrollX,
+    });
+  }, [open]);
+
   return (
     <div
-      ref={ref}
-      className="relative inline-flex"
+      ref={anchorRef}
+      className="inline-flex items-center gap-1"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
       {children}
-      {open && (
+      <Info size={10} className="opacity-40 flex-shrink-0 cursor-help" style={{ color: 'var(--ink)' }} />
+      {open && pos && typeof document !== 'undefined' && createPortal(
         <div
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-[280px] rounded-lg shadow-lg p-3 text-left pointer-events-none"
+          className="fixed z-[9999] w-[280px] rounded-lg shadow-lg p-3 text-left pointer-events-none"
           style={{
+            top: pos.top,
+            left: pos.left,
+            transform: 'translate(-50%, -100%)',
             background: 'var(--card)',
             border: '1px solid var(--rule)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -131,13 +147,14 @@ function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; child
             <span className="font-semibold" style={{ color: 'var(--ink)' }}>Note:</span> {tip.notMean}
           </p>
           <p className="text-[10px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-            <span className="font-semibold" style={{ color: 'var(--ink)' }}>Fix:</span> {tip.fix}
+            <span className="font-semibold" style={{ color: 'var(--ok)' }}>Fix:</span> {tip.fix}
           </p>
           <div
             className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 -mt-1"
             style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
           />
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

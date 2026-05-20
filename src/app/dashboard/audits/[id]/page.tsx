@@ -3469,28 +3469,61 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'ai_xray' && (
             <div className="space-y-6">
 
-              {/* Hero score — matches Benchmark tab pattern */}
+              {/* Hero score + actions — matches Benchmark tab pattern */}
               {(() => {
                 const aiVis = (report.raw_json as any)?.aiVisibilityBreakdown;
                 const xrayScore = aiVis?.overall ?? null;
                 if (xrayScore == null) return null;
                 const scoreTone = xrayScore >= 70 ? 'ok' : xrayScore >= 40 ? 'warn' : 'severe';
                 return (
-                  <div className="rounded-xl border border-rule bg-card p-6 flex flex-col items-center text-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-m-muted mb-2">AI visibility score</span>
-                    <div className="flex items-baseline gap-1.5 mb-3">
-                      <span className={`text-[64px] font-bold leading-none tabular-nums text-${scoreTone}`}>{xrayScore}</span>
-                      <span className="text-[16px] font-medium text-m-muted">/100</span>
+                  <div className="rounded-xl border border-rule bg-card overflow-hidden">
+                    <div className="p-6 flex flex-col items-center text-center">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-m-muted mb-2">AI visibility score</span>
+                      <div className="flex items-baseline gap-1.5 mb-3">
+                        <span className={`text-[64px] font-bold leading-none tabular-nums text-${scoreTone}`}>{xrayScore}</span>
+                        <span className="text-[16px] font-medium text-m-muted">/100</span>
+                      </div>
+                      <span
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                        style={{
+                          color: `var(--${scoreTone})`,
+                          background: `color-mix(in srgb, var(--${scoreTone}) 12%, transparent)`,
+                        }}
+                      >
+                        {xrayScore >= 70 ? 'AI understands your site well' : xrayScore >= 40 ? 'AI has partial knowledge of your site' : 'AI struggles to understand your site'}
+                      </span>
                     </div>
-                    <span
-                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
-                      style={{
-                        color: `var(--${scoreTone})`,
-                        background: `color-mix(in srgb, var(--${scoreTone}) 12%, transparent)`,
-                      }}
-                    >
-                      {xrayScore >= 70 ? 'AI understands your site well' : xrayScore >= 40 ? 'AI has partial knowledge of your site' : 'AI struggles to understand your site'}
-                    </span>
+                    <div className="flex flex-wrap gap-2.5 px-5 py-4 border-t border-rule">
+                      <a
+                        href={`/api/reports/${auditId}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                      >
+                        <Download size={14} strokeWidth={2} /> PDF Report
+                      </a>
+                      <a
+                        href={`/api/reports/${auditId}/docx`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                      >
+                        <Download size={14} strokeWidth={2} /> Word Report
+                      </a>
+                      <Link
+                        href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                      >
+                        <RefreshCw size={14} strokeWidth={2} /> Re-audit
+                      </Link>
+                      <button
+                        onClick={handleShare}
+                        disabled={shareLoading}
+                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {shareCopied ? <><Check size={14} strokeWidth={2} className="text-ok" /> Copied</> : <><Share2 size={14} strokeWidth={2} /> Share</>}
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
