@@ -907,8 +907,8 @@ function OverviewInner() {
         </div>
       )}
 
-      {/* ── Row 3: Issues · Benchmarks · AI Monitoring · AI X-Ray ─ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+      {/* ── Row 3: Issues · Benchmarks · AI Readability ─ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <IssuesByImportance
           severityCounts={severityCounts}
           onCardClick={handleStatCardClick}
@@ -920,13 +920,11 @@ function OverviewInner() {
           onBenchmark={handleBenchmark}
           hidden={hideBenchmarks}
         />
-        <AiMonitoringCard
+        <AIReadabilityCard
           avgAi={avgAi}
           aiBuckets={aiBuckets}
           aiPagesScored={aiPagesScored.length}
           totalPages={auditPages.length}
-        />
-        <AIXRayCard
           probes={modelProbes}
           auditId={latestCompleted?.id || null}
           onRefreshed={handleXRayRefreshed}
@@ -1034,156 +1032,20 @@ function DashboardCard({
   );
 }
 
-/* ── Row 1 — AI monitoring card (clean, responsive, layered click-through) ── */
-function AiMonitoringCard({
+/* ── Row 3 — AI Readability card (merged: page readability + model accuracy) ── */
+function AIReadabilityCard({
   avgAi,
   aiBuckets,
   aiPagesScored,
   totalPages,
+  probes,
+  auditId,
+  onRefreshed,
 }: {
   avgAi: number | null;
   aiBuckets: { green: number; amber: number; red: number };
   aiPagesScored: number;
   totalPages: number;
-}) {
-  const hasData = avgAi != null;
-  const coverageDenom = totalPages || aiPagesScored;
-  const status: { label: string; colorVar: string } = !hasData
-    ? { label: 'Awaiting data', colorVar: '--m-muted' }
-    : (avgAi as number) >= 70
-      ? { label: 'Readable to AI', colorVar: '--ok' }
-      : (avgAi as number) >= 40
-        ? { label: 'Partial readability', colorVar: '--warn' }
-        : { label: 'Hard for AI to read', colorVar: '--severe' };
-  const totalBucket = aiBuckets.green + aiBuckets.amber + aiBuckets.red;
-  const pct = (n: number) => (totalBucket > 0 ? (n / totalBucket) * 100 : 0);
-
-  return (
-    <Link
-      href="/dashboard/ai-readability"
-      className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
-      style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      aria-label="Open AI Readability deep-dive"
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0 flex items-start gap-2">
-          <span
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
-          >
-            <Brain size={14} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI Monitoring</h3>
-            <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              Can AI crawlers parse and extract from your pages?
-            </p>
-          </div>
-        </div>
-        <ChevronRight
-          size={14}
-          className="flex-shrink-0 mt-1 transition-transform group-hover:translate-x-0.5"
-          style={{ color: 'var(--m-muted)' }}
-        />
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {hasData ? (
-          <>
-            <div className="flex items-end gap-3">
-              <div className="flex items-baseline gap-1">
-                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avgAi as number)}`}>
-                  {avgAi}
-                </span>
-                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
-              </div>
-              <span
-                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
-                style={{
-                  color: `var(${status.colorVar})`,
-                  background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
-                }}
-              >
-                {status.label}
-              </span>
-            </div>
-            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-              Avg AI readability
-            </p>
-
-            {/* Stacked coverage bar */}
-            {totalBucket > 0 && (
-              <div className="mt-4">
-                <div
-                  className="h-1.5 w-full rounded-full overflow-hidden flex"
-                  style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
-                >
-                  {aiBuckets.green > 0 && (
-                    <span style={{ width: `${pct(aiBuckets.green)}%`, background: 'var(--ok)' }} />
-                  )}
-                  {aiBuckets.amber > 0 && (
-                    <span style={{ width: `${pct(aiBuckets.amber)}%`, background: 'var(--warn)' }} />
-                  )}
-                  {aiBuckets.red > 0 && (
-                    <span style={{ width: `${pct(aiBuckets.red)}%`, background: 'var(--severe)' }} />
-                  )}
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-                  <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ok)' }} />
-                    <span className="tabular-nums font-semibold">{aiBuckets.green}</span> good
-                  </span>
-                  <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
-                    <span className="tabular-nums font-semibold">{aiBuckets.amber}</span> ok
-                  </span>
-                  <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--severe)' }} />
-                    <span className="tabular-nums font-semibold">{aiBuckets.red}</span> poor
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <p className="text-[10px] mt-auto pt-3" style={{ color: 'var(--m-muted)' }}>
-              Coverage: {aiPagesScored} of {coverageDenom} page{coverageDenom === 1 ? '' : 's'} scored
-            </p>
-          </>
-        ) : (
-          <div className="flex flex-col items-start gap-2 py-2">
-            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-              We check what AI crawlers can actually parse and extract from each page — headings, metadata, structured data, and machine-readable signals.
-            </p>
-            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Run a deeper audit to populate this view.
-            </p>
-            <span
-              className="text-[11px] font-semibold mt-2 inline-flex items-center gap-1 group-hover:underline"
-              style={{ color: 'var(--ink)' }}
-            >
-              Open AI Readability <ChevronRight size={11} />
-            </span>
-          </div>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-/* ── Row 3 — AI X-Ray card (per-platform: Claude, ChatGPT, Gemini, Perplexity) ──
- *
- * Surfaces multi-model probes from /api/audits/intelligence. Per-provider
- * status, error labels (incl. quota/billing), and the coverage-aware
- * average are computed by the shared helper so this card and the full
- * /dashboard/ai-readability section stay in lock-step.
- */
-function AIXRayCard({
-  probes,
-  auditId,
-  onRefreshed,
-}: {
   probes: Array<{ model_id: string; model_label: string; accuracy_score: number; status?: 'measured' | 'skipped' | 'error' | null; error_message?: string | null }>;
   auditId: string | null;
   onRefreshed?: () => void;
@@ -1216,24 +1078,44 @@ function AIXRayCard({
     }
   }, [auditId, refreshing, onRefreshed]);
 
+  const hasPageData = avgAi != null;
+  const coverageDenom = totalPages || aiPagesScored;
+  const totalBucket = aiBuckets.green + aiBuckets.amber + aiBuckets.red;
+  const pct = (n: number) => (totalBucket > 0 ? (n / totalBucket) * 100 : 0);
+
   const rows = buildProviderRows(probes);
   const coverage = summarizeCoverage(rows);
-  const avg = coverage.average;
-  const coverageNote = coverageCaption(coverage);
-  const status: { label: string; colorVar: string } = avg == null
-    ? { label: 'Awaiting data', colorVar: '--m-muted' }
-    : avg >= 70
-      ? { label: 'AI knows you', colorVar: '--ok' }
-      : avg >= 40
-        ? { label: 'Partial visibility', colorVar: '--warn' }
-        : { label: 'Invisible to AI', colorVar: '--severe' };
+  const xrayAvg = coverage.average;
+
+  // Combined score: average of page readability + model accuracy when both exist
+  const combinedScore = hasPageData && xrayAvg != null
+    ? Math.round(((avgAi as number) + xrayAvg) / 2)
+    : hasPageData
+      ? (avgAi as number)
+      : xrayAvg ?? null;
+
+  const hasData = combinedScore != null;
+  const statusLabel = !hasData
+    ? 'Awaiting data'
+    : combinedScore >= 70
+      ? 'Readable to AI'
+      : combinedScore >= 40
+        ? 'Partial readability'
+        : 'Hard for AI to read';
+  const statusColorVar = !hasData
+    ? '--m-muted'
+    : combinedScore >= 70
+      ? '--ok'
+      : combinedScore >= 40
+        ? '--warn'
+        : '--severe';
 
   return (
     <Link
-      href="/dashboard/ai-readability#x-ray"
+      href="/dashboard/ai-readability"
       className="rounded-xl p-4 sm:p-5 flex flex-col h-full transition-all hover:shadow-md hover:-translate-y-0.5 group"
       style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      aria-label="Open AI X-Ray"
+      aria-label="Open AI Readability"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -1242,37 +1124,29 @@ function AIXRayCard({
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'color-mix(in srgb, var(--ink) 6%, transparent)', color: 'var(--ink)' }}
           >
-            <Sparkles size={14} />
+            <Brain size={14} />
           </span>
           <div className="min-w-0">
-            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI X-Ray</h3>
+            <h3 className="text-[15px] font-semibold leading-tight tracking-[-0.005em]" style={{ color: 'var(--ink)' }}>AI Readability</h3>
             <p className="text-[11px] leading-tight mt-1" style={{ color: 'var(--m-muted)' }}>
-              What Claude, ChatGPT, Gemini &amp; Perplexity currently say about you
+              How well AI crawlers and models understand your site
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={!auditId || refreshing}
-            className="p-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ color: 'var(--m-muted)' }}
-            aria-label={refreshing ? 'Re-scanning AI X-Ray' : 'Re-scan AI X-Ray'}
-            title={
-              refreshing
-                ? 'Re-scanning…'
-                : refreshOk
-                  ? 'Re-scan complete'
-                  : refreshError
-                    ? refreshError
-                    : coverage.hasQuotaError
-                      ? `Re-scan AI X-Ray. Note: ${coverage.quotaBlockedProviderLabels.join(', ')} will keep failing until provider quota/billing is restored.`
-                      : 'Re-scan AI X-Ray (probes models only)'
-            }
-          >
-            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-          </button>
+          {probes.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={!auditId || refreshing}
+              className="p-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'var(--m-muted)' }}
+              aria-label={refreshing ? 'Re-scanning AI models' : 'Re-scan AI models'}
+              title={refreshing ? 'Re-scanning...' : 'Re-scan AI model probes'}
+            >
+              <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+          )}
           <ChevronRight
             size={14}
             className="mt-1 transition-transform group-hover:translate-x-0.5"
@@ -1283,123 +1157,122 @@ function AIXRayCard({
 
       {/* Body */}
       <div className="flex-1 min-h-0 flex flex-col">
-        {avg != null ? (
-          <div className="flex items-end gap-3">
-            <div className="flex items-baseline gap-1">
-              <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(avg)}`}>
-                {avg}
+        {hasData ? (
+          <>
+            {/* Hero score — Benchmark style */}
+            <div className="flex items-end gap-3">
+              <div className="flex items-baseline gap-1">
+                <span className={`text-[42px] font-bold leading-none tabular-nums ${scoreColor(combinedScore)}`}>
+                  {combinedScore}
+                </span>
+                <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+              </div>
+              <span
+                className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-1"
+                style={{
+                  color: `var(${statusColorVar})`,
+                  background: `color-mix(in srgb, var(${statusColorVar}) 10%, transparent)`,
+                }}
+              >
+                {statusLabel}
               </span>
-              <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
             </div>
+            <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+              AI readability score
+            </p>
+
+            {/* Two sub-scores side by side */}
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {/* Page readability */}
+              <div className="rounded-lg p-2.5" style={{ background: 'var(--paper)', border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)' }}>
+                <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>Page crawl</p>
+                {hasPageData ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-[20px] font-bold leading-none tabular-nums ${scoreColor(avgAi as number)}`}>{avgAi}</span>
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                  </div>
+                ) : (
+                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>No data</span>
+                )}
+              </div>
+              {/* Model accuracy */}
+              <div className="rounded-lg p-2.5" style={{ background: 'var(--paper)', border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)' }}>
+                <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>AI X-Ray</p>
+                {xrayAvg != null ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-[20px] font-bold leading-none tabular-nums ${scoreColor(xrayAvg)}`}>{xrayAvg}</span>
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                  </div>
+                ) : (
+                  <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>No data</span>
+                )}
+              </div>
+            </div>
+
+            {/* Stacked coverage bar */}
+            {totalBucket > 0 && (
+              <div className="mt-3">
+                <div
+                  className="h-1.5 w-full rounded-full overflow-hidden flex"
+                  style={{ background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
+                >
+                  {aiBuckets.green > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.green)}%`, background: 'var(--ok)' }} />
+                  )}
+                  {aiBuckets.amber > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.amber)}%`, background: 'var(--warn)' }} />
+                  )}
+                  {aiBuckets.red > 0 && (
+                    <span style={{ width: `${pct(aiBuckets.red)}%`, background: 'var(--severe)' }} />
+                  )}
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                  <span className="flex items-center gap-1" style={{ color: 'var(--ok)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--ok)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.green}</span> good
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--warn)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.amber}</span> ok
+                  </span>
+                  <span className="flex items-center gap-1" style={{ color: 'var(--severe)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--severe)' }} />
+                    <span className="tabular-nums font-semibold">{aiBuckets.red}</span> poor
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {(refreshing || refreshError || refreshOk) && (
+              <p
+                className="text-[10px] mt-2"
+                style={{ color: refreshError ? 'var(--severe)' : refreshOk ? 'var(--ok)' : 'var(--m-muted)' }}
+              >
+                {refreshing ? 'Re-scanning model probes...' : refreshError ? refreshError : 'Re-scan complete'}
+              </p>
+            )}
+
+            <p className="text-[10px] mt-auto pt-3" style={{ color: 'var(--m-muted)' }}>
+              {aiPagesScored} of {coverageDenom} page{coverageDenom === 1 ? '' : 's'} scored
+              {xrayAvg != null ? ` · ${coverage.measuredCount} of ${coverage.totalCount} models` : ''}
+            </p>
+          </>
+        ) : (
+          <div className="flex flex-col items-start gap-2 py-2">
+            <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
+              We measure what AI crawlers can extract from your pages and what Claude, ChatGPT, Gemini and Perplexity know about your brand.
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+              Run a deeper audit to populate this view.
+            </p>
             <span
-              className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"
-              style={{
-                color: `var(${status.colorVar})`,
-                background: `color-mix(in srgb, var(${status.colorVar}) 10%, transparent)`,
-              }}
+              className="text-[11px] font-semibold mt-2 inline-flex items-center gap-1 group-hover:underline"
+              style={{ color: 'var(--ink)' }}
             >
-              {status.label}
+              Open AI Readability <ChevronRight size={11} />
             </span>
           </div>
-        ) : (
-          <p className="text-[12px]" style={{ color: 'var(--ink)' }}>
-            We ask each AI model what it knows about your brand and score the answer.
-          </p>
         )}
-
-        {avg != null && (
-          <p className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-1.5" style={{ color: 'var(--m-muted)' }}>
-            Avg accuracy across {coverage.measuredCount} of {coverage.totalCount} models
-          </p>
-        )}
-        {coverageNote && avg != null && (
-          <p className="text-[10px] mt-1" style={{ color: 'var(--m-muted)' }}>
-            {coverageNote}
-          </p>
-        )}
-
-        {/* Per-platform rows */}
-        <ul className="mt-4 space-y-1.5">
-          {rows.map((r) => {
-            const measuredRow = r.score != null;
-            const colorVar = !measuredRow
-              ? '--m-muted'
-              : (r.score as number) >= 70
-                ? '--ok'
-                : (r.score as number) >= 40
-                  ? '--warn'
-                  : '--severe';
-            const iconKey = providerKeyToIcon(r.key);
-            return (
-              <li key={r.key} className="flex items-center gap-2 text-[11px]">
-                <span
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md overflow-hidden flex-shrink-0"
-                  style={{
-                    background: 'var(--paper)',
-                    border: '1px solid color-mix(in srgb, var(--rule) 60%, transparent)',
-                  }}
-                  aria-hidden
-                >
-                  {iconKey ? <AIProviderIcon provider={iconKey} size={20} /> : null}
-                </span>
-                <span className="flex-1 min-w-0 truncate" style={{ color: 'var(--ink)' }}>
-                  {r.label}
-                </span>
-                {measuredRow ? (
-                  <>
-                    <span
-                      className="h-1.5 rounded-full overflow-hidden flex-shrink-0"
-                      style={{ width: 56, background: 'color-mix(in srgb, var(--ink) 5%, transparent)' }}
-                    >
-                      <span
-                        className="block h-full"
-                        style={{ width: `${r.score}%`, background: `var(${colorVar})` }}
-                      />
-                    </span>
-                    <span
-                      className="tabular-nums font-semibold w-7 text-right"
-                      style={{ color: `var(${colorVar})` }}
-                    >
-                      {r.score}
-                    </span>
-                  </>
-                ) : (
-                  <span
-                    className="text-[10px] font-medium"
-                    style={{
-                      color: r.status === 'error' ? 'var(--severe)' : 'var(--m-muted)',
-                    }}
-                    title={r.statusTooltip}
-                  >
-                    {r.statusLabel}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-
-        {(refreshing || refreshError || refreshOk) && (
-          <p
-            className="text-[10px] mt-2"
-            style={{ color: refreshError ? 'var(--severe)' : refreshOk ? 'var(--ok)' : 'var(--m-muted)' }}
-          >
-            {refreshing ? 'Re-scanning model probes…' : refreshError ? refreshError : 'Re-scan complete'}
-          </p>
-        )}
-
-        {coverage.hasQuotaError && !refreshing && (
-          <p className="text-[10px] mt-2" style={{ color: 'var(--warn)' }}>
-            {coverage.quotaBlockedProviderLabels.join(', ')} quota exceeded — Re-scan will keep failing until provider billing is restored.
-          </p>
-        )}
-
-        <span
-          className="text-[11px] font-semibold mt-auto pt-3 inline-flex items-center gap-1 group-hover:underline"
-          style={{ color: 'var(--ink)' }}
-        >
-          {avg != null ? 'Open AI X-Ray' : 'Run an audit to populate'} <ChevronRight size={11} />
-        </span>
       </div>
     </Link>
   );
@@ -2458,12 +2331,11 @@ function InProgressOverview({
         })}
       </div>
 
-      {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Monitoring / AI X-Ray */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4 auto-rows-fr">
+      {/* Skeleton row 3 — mirrors Issues / Benchmarks / AI Readability */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4 auto-rows-fr">
         <SkeletonCard title="Issues by importance" subtitle="Findings will appear here" icon={AlertTriangle} />
         <SkeletonCard title="Benchmark" subtitle="Competitor comparison" icon={BarChart3} />
-        <SkeletonCard title="AI Monitoring" subtitle="AI readability across pages" icon={Brain} />
-        <SkeletonCard title="AI X-Ray" subtitle="What AI models say about you" icon={Sparkles} />
+        <SkeletonCard title="AI Readability" subtitle="How AI reads your site" icon={Brain} />
       </div>
     </div>
   );

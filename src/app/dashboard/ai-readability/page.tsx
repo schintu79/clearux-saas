@@ -10,9 +10,9 @@
  *  2) Per-page AI readability — what AI crawlers can extract from each
  *     crawled page (score, status, extractable signals, missing signals).
  *
- * Lives at /dashboard/ai-readability so the Overview "AI Monitoring" and
- * "AI X-Ray" cards stay inside the new workspace IA instead of dumping
- * users into the legacy audit detail screen.
+ * Lives at /dashboard/ai-readability so the Overview "AI Readability"
+ * card stays inside the new workspace IA instead of dumping users
+ * into the legacy audit detail screen.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -290,12 +290,12 @@ function AIReadabilityBody({
             {avg != null && (
               <div className="flex flex-col items-end">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
+                  <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
                     {avg}
                   </span>
-                  <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100 avg</span>
+                  <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
                 </div>
-                <span className="text-[10px] mt-0.5" style={{ color: 'var(--m-muted)' }}>
+                <span className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-0.5" style={{ color: 'var(--m-muted)' }}>
                   {coverage.measuredCount} of {coverage.totalCount} models measured
                 </span>
               </div>
@@ -410,10 +410,10 @@ function AIReadabilityBody({
                 {r.status === 'measured' && r.score != null ? (
                   <>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[22px] font-bold leading-none tabular-nums" style={{ color: scoreCol }}>
+                      <span className="text-[28px] font-bold leading-none tabular-nums" style={{ color: scoreCol }}>
                         {r.score}
                       </span>
-                      <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                      <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
                     </div>
                     <div
                       className="h-1.5 rounded-full overflow-hidden"
