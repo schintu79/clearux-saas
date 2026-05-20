@@ -3493,35 +3493,39 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         {xrayScore >= 70 ? 'AI understands your site well' : xrayScore >= 40 ? 'AI has partial knowledge of your site' : 'AI struggles to understand your site'}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-2.5 px-5 py-4 border-t border-rule">
+                    <div className="flex flex-wrap items-center gap-2 px-5 py-4 border-t border-rule">
+                      <Link
+                        href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md whitespace-nowrap"
+                        style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+                      >
+                        <RefreshCw size={11} /> Re-scan
+                      </Link>
                       <a
                         href={`/api/reports/${auditId}/pdf`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md whitespace-nowrap"
+                        style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
                       >
-                        <Download size={14} strokeWidth={2} /> PDF Report
+                        <Download size={11} /> PDF Report
                       </a>
                       <a
                         href={`/api/reports/${auditId}/docx`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md whitespace-nowrap"
+                        style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
                       >
-                        <Download size={14} strokeWidth={2} /> Word Report
+                        <Download size={11} /> Word Report
                       </a>
-                      <Link
-                        href={`/dashboard/new-audit?url=${encodeURIComponent(audit.product_url || '')}`}
-                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors whitespace-nowrap"
-                      >
-                        <RefreshCw size={14} strokeWidth={2} /> Re-audit
-                      </Link>
                       <button
                         onClick={handleShare}
                         disabled={shareLoading}
-                        className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink bg-paper border border-rule rounded-lg px-4 py-2.5 hover:bg-paper-2 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md disabled:opacity-50 whitespace-nowrap"
+                        style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
                       >
-                        {shareCopied ? <><Check size={14} strokeWidth={2} className="text-ok" /> Copied</> : <><Share2 size={14} strokeWidth={2} /> Share</>}
+                        {shareCopied ? <><Check size={11} className="text-ok" /> Copied</> : <><Share2 size={11} /> Share</>}
                       </button>
                     </div>
                   </div>

@@ -132,9 +132,9 @@ function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; child
             top: pos.top,
             left: pos.left,
             transform: 'translate(-50%, -100%)',
-            background: 'var(--card)',
+            background: 'var(--paper)',
             border: '1px solid var(--rule)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
           }}
         >
           <p className="text-[11px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
@@ -151,7 +151,7 @@ function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; child
           </p>
           <div
             className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 -mt-1"
-            style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
+            style={{ background: 'var(--paper)', borderRight: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
           />
         </div>,
         document.body,
@@ -353,22 +353,22 @@ export function AIXRayComparison({ probes, topN = 5 }: AIXRayComparisonProps) {
                     </div>
 
                     {result ? (
-                      result.answer ? (
+                      result.answer && !/^\[?\{?"type"\s*:\s*"error"/.test(result.answer) && !/probe failed/i.test(result.answer) ? (
                         <ProbeAnswerBody
                           answer={result.answer}
                           note={result.accuracy_note || null}
                         />
                       ) : (
                         <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
-                          No answer recorded.
-                          {result.accuracy_note ? <><br /><span className="font-semibold" style={{ color: 'var(--ink)' }}>Why: </span>{result.accuracy_note}</> : null}
+                          {result.answer && (/^\[?\{?"type"\s*:\s*"error"/.test(result.answer) || /probe failed/i.test(result.answer))
+                            ? 'This model returned an error. Re-scan may succeed if the issue is transient.'
+                            : 'No answer recorded.'}
+                          {result.accuracy_note && !/^\[?\{?"type"/.test(result.accuracy_note) ? <><br /><span className="font-semibold" style={{ color: 'var(--ink)' }}>Why: </span>{result.accuracy_note}</> : null}
                         </p>
                       )
                     ) : status === 'error' ? (
-                      <p className="text-[11px] leading-snug" style={{ color: 'var(--severe)' }}>
-                        {probe.error_message
-                          ? <>Probe failed: {probe.error_message}</>
-                          : <>Probe failed for this model — re-scan to retry.</>}
+                      <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
+                        This model returned an error when asked about your brand. Re-scan may succeed if the issue is transient.
                       </p>
                     ) : status === 'skipped' ? (
                       <p className="text-[11px] leading-snug" style={{ color: 'var(--m-muted)' }}>
