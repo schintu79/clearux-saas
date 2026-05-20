@@ -71,6 +71,7 @@ import clsx from 'clsx';
 import { matchFindingToCategory } from '@/lib/audit-engine/pipeline/category-keywords';
 import { readSelection, writeSelection } from '@/lib/dashboard/brand-selection';
 import { WcagOverview } from '@/components/dashboard/v2/WcagChecklist';
+import { ACCURACY_TOOLTIP, AccuracyTooltip } from '@/components/dashboard/AIXRayComparison';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -3474,6 +3475,43 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
           {activeTab === 'ai_xray' && (
             <div className="space-y-6">
 
+              {/* Hero score — matches Benchmark tab pattern */}
+              {(() => {
+                const aiVis = (report.raw_json as any)?.aiVisibilityBreakdown;
+                const xrayScore = aiVis?.overall ?? null;
+                if (xrayScore == null) return null;
+                const scoreTone = xrayScore >= 70 ? 'ok' : xrayScore >= 40 ? 'warn' : 'severe';
+                return (
+                  <div className="rounded-xl border border-rule bg-card p-6 flex flex-col items-center text-center">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-m-muted mb-2">AI visibility score</span>
+                    <div className="flex items-baseline gap-1.5 mb-3">
+                      <span className={`text-[64px] font-bold leading-none tabular-nums text-${scoreTone}`}>{xrayScore}</span>
+                      <span className="text-[16px] font-medium text-m-muted">/100</span>
+                    </div>
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 rounded-full"
+                      style={{
+                        color: `var(--${scoreTone})`,
+                        background: `color-mix(in srgb, var(--${scoreTone}) 12%, transparent)`,
+                      }}
+                    >
+                      {xrayScore >= 70 ? 'AI understands your site well' : xrayScore >= 40 ? 'AI has partial knowledge of your site' : 'AI struggles to understand your site'}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Explainer card — what these labels mean */}
+              <div className="rounded-xl border border-rule bg-card p-4 flex items-start gap-3">
+                <Info size={15} className="text-m-muted flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[13px] font-semibold text-ink mb-0.5">How to read this tab</h3>
+                  <p className="text-[12px] text-m-muted leading-relaxed">
+                    Labels like Accurate, Partial, Incorrect, and Unverified reflect two things: the quality of the AI&apos;s answer <em>and</em> the evidence we found on your site to verify it. Hover over any badge for a full explanation of what it means and how to improve it. Changes to your site typically take 2-4 weeks to be reflected in AI model responses.
+                  </p>
+                </div>
+              </div>
+
               {/* What AI bots see — raw text + interpretation */}
               {auditPages.length > 0 && auditPages.some(p => p.content_text) && (
                 <div className="bg-card border border-rule/30 rounded-xl overflow-hidden">
@@ -3853,27 +3891,34 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                         <div key={i} className="px-5 py-4">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <p className="text-[13px] font-medium text-ink">{probe.question}</p>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${accColor}`}>
-                              {accLabel}
-                            </span>
+                            <AccuracyTooltip accuracyKey={probe.accuracy || ''}>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 cursor-help ${accColor}`}>
+                                {accLabel}
+                              </span>
+                            </AccuracyTooltip>
                           </div>
                           <p className="text-[13px] text-ink-2 leading-[1.7]">{probe.answer}</p>
                           {probe.accuracy_note && (
                             <p className="text-[11px] text-m-muted mt-1.5">{probe.accuracy_note}</p>
                           )}
-                          {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial') && (
-                            <div className="mt-2.5 rounded-lg border border-rule bg-card px-3 py-2">
-                              <p className="text-[11px] font-semibold text-ink mb-1 flex items-center gap-1.5">
-                                <Lightbulb size={11} className="text-signal" />
-                                How to fix this
+                          {(probe.accuracy === 'inaccurate' || probe.accuracy === 'hallucinated' || probe.accuracy === 'partial' || probe.accuracy === 'no_data') && (
+                            <div className="mt-2.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-2.5">
+                              <p className="text-[11px] font-semibold text-ink mb-1.5 flex items-center gap-1.5">
+                                <Lightbulb size={11} className="text-emerald-600 dark:text-emerald-400" />
+                                Next step for this question
                               </p>
                               <p className="text-[11px] text-ink-2 leading-relaxed">
                                 {probe.accuracy === 'hallucinated'
-                                  ? 'AI is providing details we could not verify from your website content. Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) so AI models have an authoritative source to reference.'
+                                  ? 'Add explicit, factual content to your homepage and key pages that directly answers this question. Use JSON-LD structured data (Organization, WebSite) so AI models have a verifiable source instead of guessing.'
                                   : probe.accuracy === 'inaccurate'
-                                  ? 'AI has outdated or wrong information. Update your meta description and page content to clearly state the correct answer. Adding structured data (JSON-LD) gives AI models a machine-readable source of truth that takes priority over inferred content.'
-                                  : 'AI has partial knowledge. Expand your content to fully answer this question — add it to your homepage, about page, or FAQ. Structured data and an llms.txt file help AI models find complete, accurate information about your site.'
+                                  ? 'Update your meta descriptions and page content to clearly state the correct answer. Structured data (JSON-LD) gives AI models a machine-readable source of truth that takes priority over inferred or outdated content.'
+                                  : probe.accuracy === 'no_data'
+                                  ? 'This topic has no coverage on your site yet. Add a dedicated section or page that answers this question. Ensure the content is in HTML text (not images or JavaScript-rendered) so AI crawlers can read it.'
+                                  : 'Expand your content to fully answer this question. Add it to your homepage, about page, or FAQ. Structured data and an llms.txt file help AI models find complete, accurate information.'
                                 }
+                              </p>
+                              <p className="text-[10px] text-m-muted mt-1.5">
+                                After making changes, allow 2-4 weeks for AI models to update their knowledge.
                               </p>
                             </div>
                           )}
@@ -3883,6 +3928,78 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                 </div>
               )}
+
+              {/* How to improve AI answer quality — persistent action panel */}
+              {llmProbeResults.length > 0 && (() => {
+                const successful = (llmProbeResults as any[]).filter(p => !p.answer?.startsWith('[Probe failed'));
+                const weakCount = successful.filter(p => ['inaccurate', 'hallucinated', 'partial', 'no_data'].includes(p.accuracy)).length;
+                if (weakCount === 0) return null;
+                const hasInaccurate = successful.some(p => p.accuracy === 'inaccurate');
+                const hasHallucinated = successful.some(p => p.accuracy === 'hallucinated');
+                const hasNoData = successful.some(p => p.accuracy === 'no_data');
+                const hasPartial = successful.some(p => p.accuracy === 'partial');
+
+                const steps: Array<{ priority: number; label: string; detail: string }> = [];
+                if (hasInaccurate) steps.push({
+                  priority: 1,
+                  label: 'Fix incorrect answers first',
+                  detail: 'Update your homepage meta description, about page, and key landing pages so they clearly state the correct information. This is the highest-impact fix because AI models treat page content as their source of truth.',
+                });
+                if (hasHallucinated) steps.push({
+                  priority: 2,
+                  label: 'Add verifiable content for unverified claims',
+                  detail: 'For each unverified answer, add explicit text to a crawlable page that covers the topic. JSON-LD structured data (Organization, WebSite, Product) gives AI a machine-readable source it can cite.',
+                });
+                if (hasNoData) steps.push({
+                  priority: 3,
+                  label: 'Create content for uncovered topics',
+                  detail: 'Add new pages or sections that address the questions AI could not answer. Prioritize your homepage, FAQ, and product/service pages. Make sure the text is in HTML, not hidden in JavaScript or images.',
+                });
+                if (hasPartial) steps.push({
+                  priority: 4,
+                  label: 'Expand partial answers with complete details',
+                  detail: 'For partially answered topics, check which details are missing and add them to your pages. An llms.txt file at your domain root gives AI a structured summary of your entire site.',
+                });
+                steps.push({
+                  priority: 5,
+                  label: 'Add structured data and an llms.txt file',
+                  detail: 'JSON-LD structured data on every key page plus an llms.txt file at your domain root are the two most effective ways to make your site easy for AI to understand. See the Fix playbooks section below for ready-to-use code.',
+                });
+
+                return (
+                  <div className="rounded-xl border-2 border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden">
+                    <div className="px-5 py-4 border-b border-emerald-500/15 flex items-center gap-2">
+                      <Target size={16} className="text-emerald-600 dark:text-emerald-400" />
+                      <h3 className="text-sm font-heading font-semibold text-ink">How to improve AI answer quality</h3>
+                      <span className="ml-auto text-[11px] font-medium text-m-muted">{weakCount} question{weakCount !== 1 ? 's' : ''} to address</span>
+                    </div>
+                    <div className="px-5 py-4">
+                      <p className="text-[12px] text-m-muted leading-relaxed mb-4">
+                        Prioritized steps based on your results. Start with the highest-impact fixes. After making changes, allow <strong className="text-ink">2-4 weeks</strong> for AI models to re-crawl and update their knowledge.
+                      </p>
+                      <ol className="space-y-3">
+                        {steps.map((step, si) => (
+                          <li key={si} className="flex items-start gap-3">
+                            <span
+                              className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold mt-0.5"
+                              style={{
+                                background: 'color-mix(in srgb, var(--ink) 8%, transparent)',
+                                color: 'var(--ink)',
+                              }}
+                            >
+                              {si + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] font-semibold text-ink">{step.label}</p>
+                              <p className="text-[11px] text-m-muted leading-relaxed mt-0.5">{step.detail}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* AI Citation Audit — What gets cited vs. ignored */}
               {aiCitations.length > 0 && (

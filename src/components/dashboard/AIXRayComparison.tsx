@@ -16,7 +16,7 @@
  * probes and render one row per question, one column per model.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { MessageSquareQuote, CheckCircle2, AlertTriangle, XCircle, HelpCircle, MinusCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { AIProviderIcon, providerKeyToIcon } from '@/components/ui/AIProviderIcon';
 import { AI_PLATFORMS, type ProviderKey } from '@/lib/ai-xray/provider-status';
@@ -52,6 +52,40 @@ interface AIXRayComparisonProps {
   topN?: number;
 }
 
+/** Tooltip microcopy for each claim-state — what it means, why, what it doesn't mean, how to fix */
+const ACCURACY_TOOLTIP: Record<string, { meaning: string; why: string; notMean: string; fix: string }> = {
+  accurate: {
+    meaning: 'The AI answer matches your actual site content.',
+    why: 'Your site has clear, well-structured content that AI models can read and reproduce correctly.',
+    notMean: 'This does not mean AI will always get it right — models update their knowledge periodically.',
+    fix: 'Keep content current and well-structured to maintain accuracy.',
+  },
+  partial: {
+    meaning: 'The AI answer is partly right but incomplete or slightly off.',
+    why: 'Your site has some relevant content, but it may be fragmented, buried in subpages, or missing key details.',
+    notMean: 'This does not mean the AI is broken — it means your content could be clearer or more prominent.',
+    fix: 'Add explicit, complete answers to your homepage and key pages. Use structured data (JSON-LD) so AI has a single authoritative source.',
+  },
+  inaccurate: {
+    meaning: 'The AI answer conflicts with what your site actually says.',
+    why: 'The AI model has outdated info, confused your brand with something else, or your site lacks clear signals about this topic.',
+    notMean: 'This does not mean the AI failed to visit your website — AI models learn from training data, not live browsing.',
+    fix: 'Update your meta descriptions, page content, and structured data to clearly state the correct answer. Changes take 2-4 weeks to propagate.',
+  },
+  hallucinated: {
+    meaning: 'The AI provided specific details we could not verify from your site.',
+    why: 'The model may have inferred or fabricated details because your site lacks explicit content about this topic.',
+    notMean: 'This does not mean the information is necessarily wrong — only that we could not confirm it from your crawled pages.',
+    fix: 'Add explicit, factual content that directly answers this question. Structured data and an llms.txt file give AI a verifiable source.',
+  },
+  no_data: {
+    meaning: 'The AI had no information to offer about this topic.',
+    why: 'Your site may be new, niche, or the content for this topic is missing or hidden behind JavaScript rendering.',
+    notMean: 'This does not mean your site is invisible to AI — it means this specific topic has no coverage yet.',
+    fix: 'Add dedicated content for this topic on a crawlable page. Ensure critical text is in the HTML, not loaded via JS.',
+  },
+};
+
 const ACCURACY_META: Record<string, { label: string; tone: string; icon: React.ElementType }> = {
   accurate:     { label: 'Accurate',    tone: '--ok',       icon: CheckCircle2 },
   partial:      { label: 'Partial',     tone: '--warn',     icon: AlertTriangle },
@@ -62,6 +96,52 @@ const ACCURACY_META: Record<string, { label: string; tone: string; icon: React.E
   hallucinated: { label: 'Unverified',  tone: '--warn',     icon: AlertTriangle },
   no_data:      { label: 'No data',     tone: '--m-muted',  icon: MinusCircle },
 };
+
+/** Floating tooltip for accuracy badges */
+function AccuracyTooltip({ accuracyKey, children }: { accuracyKey: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const tip = ACCURACY_TOOLTIP[accuracyKey];
+  if (!tip) return <>{children}</>;
+
+  return (
+    <div
+      ref={ref}
+      className="relative inline-flex"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      {children}
+      {open && (
+        <div
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-[280px] rounded-lg shadow-lg p-3 text-left pointer-events-none"
+          style={{
+            background: 'var(--card)',
+            border: '1px solid var(--rule)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          }}
+        >
+          <p className="text-[11px] font-semibold leading-snug mb-1.5" style={{ color: 'var(--ink)' }}>
+            {tip.meaning}
+          </p>
+          <p className="text-[10px] leading-relaxed mb-1" style={{ color: 'var(--m-muted)' }}>
+            <span className="font-semibold" style={{ color: 'var(--ink)' }}>Why:</span> {tip.why}
+          </p>
+          <p className="text-[10px] leading-relaxed mb-1" style={{ color: 'var(--m-muted)' }}>
+            <span className="font-semibold" style={{ color: 'var(--ink)' }}>Note:</span> {tip.notMean}
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+            <span className="font-semibold" style={{ color: 'var(--ink)' }}>Fix:</span> {tip.fix}
+          </p>
+          <div
+            className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 -mt-1"
+            style={{ background: 'var(--card)', borderRight: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function accuracyMeta(a: ProbeAccuracy) {
   if (typeof a === 'string' && ACCURACY_META[a]) return ACCURACY_META[a];
@@ -240,16 +320,18 @@ export function AIXRayComparison({ probes, topN = 5 }: AIXRayComparisonProps) {
                         {probe.model_label || platform.label}
                       </span>
                       {meta && (
-                        <span
-                          className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded flex-shrink-0"
-                          style={{
-                            color: `var(${tone})`,
-                            background: `color-mix(in srgb, var(${tone}) 10%, transparent)`,
-                          }}
-                        >
-                          <StatusIcon size={9} />
-                          {meta.label}
-                        </span>
+                        <AccuracyTooltip accuracyKey={typeof result?.accuracy === 'string' ? result.accuracy : ''}>
+                          <span
+                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.04em] px-1.5 py-0.5 rounded flex-shrink-0 cursor-help"
+                            style={{
+                              color: `var(${tone})`,
+                              background: `color-mix(in srgb, var(${tone}) 10%, transparent)`,
+                            }}
+                          >
+                            <StatusIcon size={9} />
+                            {meta.label}
+                          </span>
+                        </AccuracyTooltip>
                       )}
                     </div>
 
@@ -291,4 +373,5 @@ export function AIXRayComparison({ probes, topN = 5 }: AIXRayComparisonProps) {
   );
 }
 
+export { ACCURACY_TOOLTIP, AccuracyTooltip };
 export default AIXRayComparison;
