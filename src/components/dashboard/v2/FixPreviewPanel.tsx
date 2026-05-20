@@ -13,6 +13,9 @@ import {
   X,
   FileCode,
   Tag,
+  ArrowRight,
+  TrendingUp,
+  Zap,
 } from 'lucide-react'
 
 /* ── Types ──────────────────────────────────────────────────── */
@@ -25,20 +28,9 @@ interface FixPreviewPanelProps {
     recommendation: string
     page_url?: string | null
     target_element?: string | null
+    evidence?: string | null
   }
   patch: string
-}
-
-type PreviewMode = 'visual' | 'technical'
-
-const VISUAL_TYPES = new Set(['copy', 'heading', 'content'])
-
-function resolveMode(fixType: FixPreviewPanelProps['fixType']): PreviewMode {
-  return VISUAL_TYPES.has(fixType) ? 'visual' : 'technical'
-}
-
-function looksLikeHtml(text: string): boolean {
-  return /<[a-z][\s\S]*>/i.test(text.trim())
 }
 
 function displayUrl(url: string | null | undefined): string {
@@ -51,86 +43,116 @@ function displayUrl(url: string | null | undefined): string {
   }
 }
 
-/* ── Visual Preview ─────────────────────────────────────────── */
+/* ── Impact Preview (copy / heading / content) ─────────────── */
 
-function VisualPreview({ patch, finding }: { patch: string; finding: FixPreviewPanelProps['finding'] }) {
-  const isHtml = looksLikeHtml(patch)
+/**
+ * For visual fix types, show a "Current vs Proposed" comparison
+ * instead of a fake browser chrome mockup.
+ */
+function ImpactPreview({ patch, finding }: { patch: string; finding: FixPreviewPanelProps['finding'] }) {
+  const currentValue = finding.target_element || finding.evidence || null
+  const hasComparison = currentValue && patch.trim()
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Label */}
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-1.5">
         <Eye size={11} style={{ color: 'var(--signal)' }} />
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.06em]"
           style={{ color: 'var(--m-muted)' }}
         >
-          Live preview
+          {hasComparison ? 'Current vs proposed' : 'Impact preview'}
         </span>
       </div>
 
-      {/* Fake browser chrome */}
-      <div
-        className="rounded-lg overflow-hidden"
-        style={{ border: '1px solid var(--rule)' }}
-      >
-        {/* Title bar */}
-        <div
-          className="flex items-center gap-2 px-3 py-2"
-          style={{ background: 'var(--paper-2)', borderBottom: '1px solid var(--rule)' }}
-        >
-          {/* Traffic lights */}
-          <div className="flex items-center gap-1.5">
-            <span className="block w-[8px] h-[8px] rounded-full" style={{ background: '#ff5f57' }} />
-            <span className="block w-[8px] h-[8px] rounded-full" style={{ background: '#febc2e' }} />
-            <span className="block w-[8px] h-[8px] rounded-full" style={{ background: '#28c840' }} />
-          </div>
-          {/* URL bar */}
+      {hasComparison ? (
+        <div className="space-y-2">
+          {/* Current */}
           <div
-            className="flex-1 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono truncate"
-            style={{
-              background: 'var(--paper)',
-              border: '1px solid var(--rule)',
-              color: 'var(--m-muted)',
-            }}
+            className="rounded-md px-3 py-2.5"
+            style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)' }}
           >
-            <Globe size={9} className="flex-shrink-0" />
-            <span className="truncate">{displayUrl(finding.page_url)}</span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <X size={10} style={{ color: 'var(--severe)' }} />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--severe)' }}>
+                Current
+              </span>
+            </div>
+            <p
+              className="text-[12px] leading-[1.55] whitespace-pre-wrap"
+              style={{ color: 'var(--ink-2)' }}
+            >
+              {(currentValue || '').length > 300 ? currentValue!.slice(0, 300) + '...' : currentValue}
+            </p>
+          </div>
+
+          {/* Arrow */}
+          <div className="flex justify-center">
+            <ArrowRight size={14} style={{ color: 'var(--m-muted)', transform: 'rotate(90deg)' }} />
+          </div>
+
+          {/* Proposed */}
+          <div
+            className="rounded-md px-3 py-2.5"
+            style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 15%, transparent)' }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Check size={10} style={{ color: 'var(--ok)' }} />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ok)' }}>
+                Proposed
+              </span>
+            </div>
+            <p
+              className="text-[12px] leading-[1.55] whitespace-pre-wrap"
+              style={{ color: 'var(--ink)' }}
+            >
+              {patch.length > 300 ? patch.slice(0, 300) + '...' : patch}
+            </p>
           </div>
         </div>
+      ) : (
+        /* No current value available — show readability impact instead */
+        <ReadabilityView patch={patch} finding={finding} />
+      )}
+    </div>
+  )
+}
 
-        {/* Page content area */}
+/* ── Readability View (fallback for content without current value) ── */
+
+function ReadabilityView({ patch, finding }: { patch: string; finding: FixPreviewPanelProps['finding'] }) {
+  const wordCount = patch.trim().split(/\s+/).filter(Boolean).length
+  const sentenceCount = patch.split(/[.!?]+/).filter((s) => s.trim().length > 3).length
+  const avgWordsPerSentence = sentenceCount > 0 ? Math.round(wordCount / sentenceCount) : 0
+  const readabilityScore = avgWordsPerSentence <= 15 ? 'Good' : avgWordsPerSentence <= 22 ? 'Moderate' : 'Complex'
+  const readabilityColor = readabilityScore === 'Good' ? 'var(--ok)' : readabilityScore === 'Moderate' ? 'var(--warn)' : 'var(--severe)'
+
+  return (
+    <PreviewCard icon={<TrendingUp size={11} />} label="Readability analysis">
+      <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="text-center">
+            <p className="text-[16px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{wordCount}</p>
+            <p className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>Words</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[16px] font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>{sentenceCount}</p>
+            <p className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>Sentences</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[16px] font-semibold tabular-nums" style={{ color: readabilityColor }}>{avgWordsPerSentence}</p>
+            <p className="text-[9px] uppercase tracking-wide" style={{ color: 'var(--m-muted)' }}>Avg words/sent</p>
+          </div>
+        </div>
         <div
-          className="px-4 py-4 max-h-[280px] overflow-y-auto"
-          style={{ background: '#ffffff' }}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] font-medium"
+          style={{ background: `color-mix(in srgb, ${readabilityColor} 8%, transparent)`, color: readabilityColor }}
         >
-          {isHtml ? (
-            <div
-              className="text-[12px] leading-[1.65] font-sans"
-              style={{ color: 'var(--ink)' }}
-              dangerouslySetInnerHTML={{ __html: patch }}
-            />
-          ) : (
-            <div className="space-y-2">
-              {finding.target_element && (
-                <p
-                  className="text-[10px] font-mono px-1.5 py-0.5 rounded inline-block mb-1"
-                  style={{ background: 'var(--paper-2)', color: 'var(--m-muted)' }}
-                >
-                  {finding.target_element}
-                </p>
-              )}
-              <p
-                className="text-[13px] leading-[1.65] font-sans whitespace-pre-wrap"
-                style={{ color: 'var(--ink)' }}
-              >
-                {patch}
-              </p>
-            </div>
-          )}
+          <Zap size={10} />
+          {readabilityScore} readability
         </div>
       </div>
-    </div>
+    </PreviewCard>
   )
 }
 
@@ -297,13 +319,11 @@ function JsonHighlighted({ code }: { code: string }) {
 }
 
 function highlightJsonLine(line: string): React.ReactNode {
-  // Match JSON keys, string values, numbers, booleans, null
   const parts: React.ReactNode[] = []
   let remaining = line
   let key = 0
 
   while (remaining.length > 0) {
-    // Key pattern: "key":
     const keyMatch = remaining.match(/^(\s*)"([^"]+)"(\s*:)/)
     if (keyMatch) {
       parts.push(<span key={key++}>{keyMatch[1]}</span>)
@@ -313,7 +333,6 @@ function highlightJsonLine(line: string): React.ReactNode {
       continue
     }
 
-    // String value
     const strMatch = remaining.match(/^(\s*)"([^"]*)"/)
     if (strMatch) {
       parts.push(<span key={key++}>{strMatch[1]}</span>)
@@ -322,7 +341,6 @@ function highlightJsonLine(line: string): React.ReactNode {
       continue
     }
 
-    // Number
     const numMatch = remaining.match(/^(\s*)(\d+\.?\d*)/)
     if (numMatch) {
       parts.push(<span key={key++}>{numMatch[1]}</span>)
@@ -331,7 +349,6 @@ function highlightJsonLine(line: string): React.ReactNode {
       continue
     }
 
-    // Boolean / null
     const boolMatch = remaining.match(/^(\s*)(true|false|null)/)
     if (boolMatch) {
       parts.push(<span key={key++}>{boolMatch[1]}</span>)
@@ -340,7 +357,6 @@ function highlightJsonLine(line: string): React.ReactNode {
       continue
     }
 
-    // Default: consume one character
     parts.push(<span key={key++}>{remaining[0]}</span>)
     remaining = remaining.slice(1)
   }
@@ -356,7 +372,6 @@ function parseChecklistItems(recommendation: string): Array<{ label: string; pas
 
   for (const line of lines) {
     if (line.length < 5 || line.length > 200) continue
-    // Lines that look like action items or recommendations
     const isNegative = /missing|lacks|no |without|absent|incorrect|invalid|doesn't|does not|should/i.test(line)
     items.push({
       label: line.replace(/^[-*]\s*/, ''),
@@ -493,38 +508,38 @@ function PreviewCard({
 
 /* ── Main Export ─────────────────────────────────────────────── */
 
+/**
+ * Adaptive understanding panel — replaces the old fake "live preview".
+ *
+ * Renders different views based on fix type:
+ *  - copy/heading/content → Current vs Proposed comparison (or readability view)
+ *  - meta → Search / Social / AI assistant preview
+ *  - schema → Syntax-highlighted JSON with type badge
+ *  - accessibility → WCAG checklist
+ *  - technical → Technical change detail
+ *  - design → null (handled by DesignFixGuidance in FixConsole)
+ */
 export default function FixPreviewPanel({ fixType, finding, patch }: FixPreviewPanelProps) {
-  const mode = resolveMode(fixType)
-
   // Design fixes have no preview — handled by DesignFixGuidance in FixConsole
   if (fixType === 'design') return null
 
   if (!patch.trim()) return null
 
-  // Only render the side panel for fix types that provide genuinely useful
-  // visual context beyond what the editable textarea already shows.
-  // Schema → JSON syntax highlighted; Meta → search/social preview;
-  // Accessibility → checklist; Visual copy/heading → browser mockup.
-  // Technical/content/generic → the recommendation IS the fix, no added value
-  // from repeating it in a side panel.
-  const hasMeaningfulPreview =
-    mode === 'visual' ||
-    fixType === 'meta' ||
-    fixType === 'schema' ||
-    fixType === 'accessibility'
-
-  if (!hasMeaningfulPreview) return null
+  // Every fix type now gets a meaningful, non-fake preview
+  const isVisual = fixType === 'copy' || fixType === 'heading' || fixType === 'content'
 
   return (
     <div className="mt-8 max-h-[480px] overflow-y-auto space-y-0">
-      {mode === 'visual' ? (
-        <VisualPreview patch={patch} finding={finding} />
+      {isVisual ? (
+        <ImpactPreview patch={patch} finding={finding} />
       ) : fixType === 'meta' ? (
         <MetaPreview patch={patch} finding={finding} />
       ) : fixType === 'schema' ? (
         <SchemaPreview patch={patch} />
       ) : fixType === 'accessibility' ? (
         <AccessibilityPreview finding={finding} />
+      ) : fixType === 'technical' ? (
+        <TechnicalPreview finding={finding} patch={patch} />
       ) : null}
     </div>
   )

@@ -77,6 +77,26 @@ type UiFixType =
   | 'technical'
   | 'design';
 
+/**
+ * Fix classification — the 4-way gate that determines what the console
+ * shows for each finding. Every finding MUST be classified before render.
+ *
+ *  fixable_surgical    → Can be deployed via FTP. Purely textual / code changes
+ *                        to EXISTING elements (copy edits, meta tags, schema,
+ *                        alt text, heading text, scripts, technical files).
+ *  fixable_bulk        → Same as surgical but affects multiple pages.
+ *  requires_design_work → Needs new UI sections, visual assets, layout changes,
+ *                        or content that can't be auto-generated. Show guidance
+ *                        and handoff brief, NOT a deploy button.
+ *  strategic_comment   → High-level strategic recommendation with no concrete
+ *                        fix. Show as read-only insight.
+ */
+export type FixClassification =
+  | 'fixable_surgical'
+  | 'fixable_bulk'
+  | 'requires_design_work'
+  | 'strategic_comment';
+
 /** Fix types that require design assets — cannot be deployed via FTP. */
 const DESIGN_FIX_TYPES = new Set<UiFixType>(['design']);
 
@@ -86,20 +106,133 @@ export const VISUAL_FIX_TYPES = new Set<UiFixType>(['copy', 'heading', 'content'
 /** Surgical scope: fix types that CAN be auto-generated and deployed. */
 const SURGICAL_SCOPE = new Set<DbFixType | null>(['html', 'meta', 'schema', 'copy', 'file', 'config']);
 
+/**
+ * Patterns that signal the fix requires creating NEW UI sections or visual
+ * assets — not just editing existing content. These trigger the hard gate:
+ * "Can this be applied safely without creating new UI?"
+ */
+const REQUIRES_NEW_UI_PATTERNS = [
+  // New sections / blocks
+  /\b(add|create|build|introduce|insert|include)\b.*\b(section|block|module|component|widget|panel|area|zone)\b/,
+  /\bnew\s+(section|block|module|component|widget|panel|area)\b/,
+  // FAQ, testimonials, reviews — always new UI
+  /\b(faq\s+section|faq\s+block|faq\s+page|frequently\s+asked|add\s+faq|create\s+faq)\b/,
+  /\b(testimonial|review\s+section|customer\s+stories|social\s+proof\s+section|trust\s+section)\b/,
+  // Visual/imagery creation
+  /\b(add|create|design|produce|commission)\b.*\b(infographic|illustration|photograph|custom\s+image|video|animation|interactive)\b/,
+  // Layout redesign
+  /\b(redesign|restructure|reorganize|rearrange|rebuild|overhaul)\b.*\b(layout|page|section|navigation|header|footer)\b/,
+  /\b(layout\s+change|new\s+layout|different\s+layout)\b/,
+  // New pages
+  /\b(create|build|add)\b.*\b(landing\s+page|new\s+page|dedicated\s+page)\b/,
+  // Visual elements that need design work
+  /\b(icon\s+set|icon\s+system|custom\s+icons|branded\s+icons)\b/,
+  /\b(hero\s+banner|hero\s+image|banner\s+design|feature\s+image)\b/,
+  /\b(brand\s+visual|visual\s+identity|design\s+system)\b/,
+  // Comparison tables, pricing tables (new structured UI)
+  /\b(comparison\s+table|pricing\s+table|feature\s+matrix)\b/,
+  // Call-to-action blocks (not just CTA text changes)
+  /\b(cta\s+section|cta\s+block|call.to.action\s+section)\b/,
+];
+
+/**
+ * Hard gate: "Can this be applied safely without creating new UI?"
+ * Returns true if the recommendation text signals that new UI elements,
+ * visual assets, or layout restructuring is required.
+ */
+function requiresNewUi(finding: AuditFinding): boolean {
+  const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
+  return REQUIRES_NEW_UI_PATTERNS.some((pattern) => pattern.test(blob));
+}
+
+/** Impact category for a finding — what dimension of the site it affects. */
+export type ImpactCategory =
+  | 'ai_visibility'
+  | 'seo'
+  | 'perception'
+  | 'readability'
+  | 'technical'
+  | 'accessibility';
+
+/** Infer the primary impact category from the finding content. */
+export function inferImpact(finding: AuditFinding): ImpactCategory {
+  const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
+  if (/\b(ai\s+visibility|llm|ai\s+bot|ai\s+assistant|machine\s+read|structured\s+data|schema|json-?ld|llms\.txt)\b/.test(blob)) return 'ai_visibility';
+  if (/\b(seo|search\s+engine|rank|index|crawl|sitemap|canonical|meta\s+description|title\s+tag|og:|open\s+graph|robots)\b/.test(blob)) return 'seo';
+  if (/\b(aria|wcag|screen\s+reader|accessib|contrast|alt\s+text|keyboard\s+nav|focus\s+indicator)\b/.test(blob)) return 'accessibility';
+  if (/\b(readab|clarity|comprehensi|plain\s+language|jargon|sentence\s+length|paragraph)\b/.test(blob)) return 'readability';
+  if (/\b(redirect|performance|cache|lazy|speed|load\s+time|minif|compress|cdn|ssl|https|security|header)\b/.test(blob)) return 'technical';
+  return 'perception';
+}
+
+const IMPACT_META: Record<ImpactCategory, { label: string; color: string }> = {
+  ai_visibility: { label: 'AI visibility', color: 'var(--signal)' },
+  seo:           { label: 'SEO', color: 'var(--signal)' },
+  perception:    { label: 'Brand perception', color: 'var(--signal)' },
+  readability:   { label: 'Readability', color: 'var(--signal)' },
+  technical:     { label: 'Technical health', color: 'var(--signal)' },
+  accessibility: { label: 'Accessibility', color: 'var(--signal)' },
+};
+
 export function inferFixType(finding: AuditFinding): UiFixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
   // Schema/structured-data fixes are code, not design — check first to avoid
   // false positives when the recommendation mentions "logo" or "image" fields.
   if (/json|schema\.org|ld\+json|structured data|jsonld/.test(blob)) return 'schema';
   if (/meta description|og:|open graph|<meta/.test(blob)) return 'meta';
-  // Design-type fixes that require custom assets, not code changes
+  // Design-type fixes: new visual assets, imagery, or layout work.
+  // Expanded to catch FAQ sections, testimonials, new UI blocks, etc.
   if (/\b(icon|infographic|illustrat|photograph|image|visual|graphic|logo|banner|hero image|design element|custom art|brand.*visual)\b/.test(blob)
     && /\b(add|create|include|introduce|place|insert|design|produce)\b/.test(blob)) return 'design';
+  // Hard gate: if the recommendation asks to create new sections/blocks, it's design work
+  if (requiresNewUi(finding)) return 'design';
   if (/heading|h1|h2|h3|title tag/.test(blob)) return 'heading';
   if (/alt text|aria|contrast|wcag|screen reader|accessib/.test(blob)) return 'accessibility';
-  if (/faq|paragraph|copy|tagline|wording|message|cta|button text/.test(blob)) return 'copy';
+  // FAQ copy edits (not new sections) — e.g. "update FAQ answer text"
+  if (/\b(paragraph|copy|tagline|wording|message|button text)\b/.test(blob)) return 'copy';
+  if (/\bcta\b/.test(blob) && !/\bsection\b/.test(blob) && !/\bblock\b/.test(blob)) return 'copy';
   if (/redirect|sitemap|robots|canonical|performance|cache|lazy/.test(blob)) return 'technical';
   return 'content';
+}
+
+/**
+ * Classify a finding into one of the 4 fix categories.
+ * This is the HARD GATE — every finding must pass through this before
+ * the console decides what UI to show.
+ */
+export function classifyFinding(
+  finding: AuditFinding,
+  uiFixType: UiFixType,
+  affectedPages: string[],
+): FixClassification {
+  // Gate 1: strategic findings are always comments
+  if (finding.finding_type === 'strategic') return 'strategic_comment';
+
+  // Gate 2: design type (from inferFixType) → requires design work
+  if (DESIGN_FIX_TYPES.has(uiFixType)) return 'requires_design_work';
+
+  // Gate 3: HARD GATE — "Can this be applied safely without creating new UI?"
+  if (requiresNewUi(finding)) return 'requires_design_work';
+
+  // Gate 4: if the DB fix_type is set and NOT in surgical scope → design work
+  if (finding.fix_type && !SURGICAL_SCOPE.has(finding.fix_type)) return 'requires_design_work';
+
+  // Gate 5: content-type fixes are ambiguous — check if they're truly surgical
+  // Content fixes that just say "improve this paragraph" without a concrete
+  // replacement are effectively design work (they need human judgment).
+  if (uiFixType === 'content') {
+    const rec = (finding.recommendation || '').trim();
+    // If there's no concrete recommendation text, or it's very short and vague,
+    // treat it as requiring design work
+    if (!rec || rec.length < 20) return 'requires_design_work';
+    // If the recommendation is just advice ("consider...", "you should...")
+    // without actual replacement content, it's strategic
+    if (/^(consider|you\s+should|we\s+recommend|it\s+would\s+be|try\s+to)\b/i.test(rec)) return 'strategic_comment';
+  }
+
+  // Passed all gates — it's surgical
+  const pageCount = affectedPages.length || (finding.page_url ? 1 : 0);
+  return pageCount > 1 ? 'fixable_bulk' : 'fixable_surgical';
 }
 
 /* ── Fix type metadata (for badges) ─────────────────────── */
@@ -113,9 +246,11 @@ const FIX_TYPE_META: Record<string, { label: string; icon: React.ReactNode; colo
   config:  { label: 'Config',  icon: <Settings size={10} />, color: 'var(--signal)' },
 };
 
-const SCOPE_META = {
-  surgical: { label: 'Surgical fix', color: 'var(--ok)', icon: <Wrench size={10} /> },
-  design:   { label: 'Requires design work', color: 'var(--warn)', icon: <Palette size={10} /> },
+const CLASSIFICATION_META: Record<FixClassification, { label: string; color: string; icon: React.ReactNode }> = {
+  fixable_surgical:     { label: 'Surgical fix', color: 'var(--ok)', icon: <Wrench size={10} /> },
+  fixable_bulk:         { label: 'Bulk fix', color: 'var(--ok)', icon: <Layers size={10} /> },
+  requires_design_work: { label: 'Requires design work', color: 'var(--warn)', icon: <Palette size={10} /> },
+  strategic_comment:    { label: 'Strategic insight', color: 'var(--m-muted)', icon: <ClipboardList size={10} /> },
 };
 
 /* ── Language detection from URL ─────────────────────────── */
@@ -228,21 +363,15 @@ function downloadFile(filename: string, content: string, mime: string) {
 }
 
 /** Determine if the finding is deployable (surgical) or requires design work. */
-function isDeployable(finding: AuditFinding, uiFixType: UiFixType): boolean {
-  // If the DB says it's strategic, never deploy
-  if (finding.finding_type === 'strategic') return false;
-  // If the DB fix_type is set and is in surgical scope
-  if (finding.fix_type && SURGICAL_SCOPE.has(finding.fix_type)) return true;
-  // Fall back to UI inference — design type blocks deploy
-  if (DESIGN_FIX_TYPES.has(uiFixType)) return false;
-  return true;
+function isDeployable(finding: AuditFinding, uiFixType: UiFixType, affectedPages: string[] = []): boolean {
+  const classification = classifyFinding(finding, uiFixType, affectedPages);
+  return classification === 'fixable_surgical' || classification === 'fixable_bulk';
 }
 
 /* ── Scope + Fix Type Badges ─────────────────────────────── */
 
-function FixBadges({ finding, uiFixType }: { finding: AuditFinding; uiFixType: UiFixType }) {
-  const deployable = isDeployable(finding, uiFixType);
-  const scope = deployable ? SCOPE_META.surgical : SCOPE_META.design;
+function FixBadges({ finding, uiFixType, classification }: { finding: AuditFinding; uiFixType: UiFixType; classification: FixClassification }) {
+  const scope = CLASSIFICATION_META[classification];
   const dbType = finding.fix_type ? FIX_TYPE_META[finding.fix_type] : null;
 
   return (
@@ -278,20 +407,39 @@ function FixBadges({ finding, uiFixType }: { finding: AuditFinding; uiFixType: U
 function WhatWillChange({
   finding,
   uiFixType,
+  classification,
+  impact,
   pageTargets,
   langGroups,
 }: {
   finding: AuditFinding;
   uiFixType: UiFixType;
+  classification: FixClassification;
+  impact: ImpactCategory;
   pageTargets: PageTarget[];
   langGroups: Map<string, PageTarget[]>;
 }) {
-  const deployable = isDeployable(finding, uiFixType);
+  const deployable = classification === 'fixable_surgical' || classification === 'fixable_bulk';
+  const classificationMeta = CLASSIFICATION_META[classification];
   const dbType = finding.fix_type;
   const hasMultiplePages = pageTargets.length > 1;
   const hasMultipleLangs = langGroups.size > 1;
   const currentValue = finding.target_element || finding.evidence || null;
-  const proposedValue = finding.recommendation || null;
+  const impactMeta = IMPACT_META[impact];
+
+  // Always resolve an affected page — even if no explicit page_url
+  const resolvedPageLabel = pageTargets.length > 0
+    ? null // will render the list
+    : finding.page_url
+      ? (() => { try { return new URL(finding.page_url).pathname; } catch { return finding.page_url; } })()
+      : null;
+
+  // Detect language from the primary page
+  const primaryLang = pageTargets.length > 0
+    ? pageTargets[0].lang
+    : finding.page_url
+      ? detectLang(finding.page_url)
+      : 'Default';
 
   return (
     <div
@@ -309,8 +457,8 @@ function WhatWillChange({
       </div>
 
       <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
-        {/* Fix type + scope row */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Row 1: Fix type + Scope + Impact */}
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
               Fix type
@@ -323,73 +471,125 @@ function WhatWillChange({
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
               Scope
             </span>
-            <span style={{ color: deployable ? 'var(--ok)' : 'var(--warn)' }}>
-              {deployable ? 'Surgical (auto-deployable)' : 'Requires design work'}
+            <span
+              className="inline-flex items-center gap-1"
+              style={{ color: classificationMeta.color }}
+            >
+              {classificationMeta.icon}
+              {classificationMeta.label}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Impact
+            </span>
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded"
+              style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: impactMeta.color }}
+            >
+              {impactMeta.label}
             </span>
           </div>
         </div>
 
-        {/* Affected pages */}
-        <div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-            Affected {hasMultiplePages ? `pages (${pageTargets.length})` : 'page'}
-          </span>
-          {pageTargets.length > 0 ? (
-            hasMultipleLangs ? (
-              // Group by language
-              <div className="space-y-2">
-                {Array.from(langGroups.entries()).map(([lang, targets]) => (
-                  <div key={lang}>
-                    <span
-                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded mb-1"
-                      style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
-                    >
-                      <Languages size={9} />
-                      {lang}
-                    </span>
-                    <ul className="mt-1 space-y-0.5">
-                      {targets.map((t) => (
-                        <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
-                          {t.path}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+        {/* Row 2: Affected page + Language + Deploy target */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Affected {hasMultiplePages ? `pages (${pageTargets.length})` : 'page'}
+            </span>
+            {pageTargets.length > 0 ? (
+              hasMultipleLangs ? (
+                <div className="space-y-2">
+                  {Array.from(langGroups.entries()).map(([lang, targets]) => (
+                    <div key={lang}>
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded mb-1"
+                        style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
+                      >
+                        <Languages size={9} />
+                        {lang}
+                      </span>
+                      <ul className="mt-1 space-y-0.5">
+                        {targets.map((t) => (
+                          <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
+                            {t.path}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-0.5">
+                  {pageTargets.slice(0, 8).map((t) => (
+                    <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
+                      {t.path}
+                      {pageTargets.length === 1 && t.lang !== 'Default' && (
+                        <span className="ml-2 text-[10px] font-sans" style={{ color: 'var(--m-muted)' }}>({t.lang})</span>
+                      )}
+                    </li>
+                  ))}
+                  {pageTargets.length > 8 && (
+                    <li className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                      +{pageTargets.length - 8} more pages
+                    </li>
+                  )}
+                </ul>
+              )
+            ) : resolvedPageLabel ? (
+              <span className="text-[11px] font-mono" style={{ color: 'var(--ink-2)' }}>
+                {resolvedPageLabel}
+              </span>
+            ) : uiFixType === 'schema' ? (
+              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                Homepage — add the JSON-LD block to your homepage&apos;s {'<head>'} section (usually index.html).
+              </span>
+            ) : uiFixType === 'meta' ? (
+              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                Homepage — add or update the meta tag in your homepage&apos;s {'<head>'} section.
+              </span>
             ) : (
-              <ul className="space-y-0.5">
-                {pageTargets.slice(0, 8).map((t) => (
-                  <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
-                    {t.path}
-                    {pageTargets.length === 1 && t.lang !== 'Default' && (
-                      <span className="ml-2 text-[10px] font-sans" style={{ color: 'var(--m-muted)' }}>({t.lang})</span>
-                    )}
-                  </li>
-                ))}
-                {pageTargets.length > 8 && (
-                  <li className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
-                    +{pageTargets.length - 8} more pages
-                  </li>
-                )}
-              </ul>
-            )
-          ) : uiFixType === 'schema' ? (
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Homepage — add the JSON-LD block to your homepage&apos;s {'<head>'} section (usually index.html).
-            </span>
-          ) : uiFixType === 'meta' ? (
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Homepage — add or update the meta tag in your homepage&apos;s {'<head>'} section.
-            </span>
-          ) : (
-            <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-              Site-wide issue — applies to all pages. Enter the remote file path manually below.
-            </span>
-          )}
+              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                Site-wide issue — applies to all pages. Enter the remote file path manually below.
+              </span>
+            )}
+          </div>
+
+          {/* Language + deploy target column */}
+          <div className="space-y-2">
+            {primaryLang !== 'Default' && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Language
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                  style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
+                >
+                  <Languages size={9} />
+                  {primaryLang}
+                </span>
+              </div>
+            )}
+            {deployable && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Deploy target
+                </span>
+                <span className="text-[11px]" style={{ color: 'var(--ink-2)' }}>
+                  {uiFixType === 'schema' || uiFixType === 'meta'
+                    ? 'HTML <head> section'
+                    : uiFixType === 'technical'
+                      ? 'Server config / root files'
+                      : 'Page HTML body'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Current value only — Proposed is shown in the editable textarea below, no need to duplicate */}
+        {/* Current value */}
         {currentValue && (
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--severe)' }}>
@@ -414,6 +614,34 @@ function WhatWillChange({
             <span>
               This fix affects {pageTargets.length} pages{hasMultipleLangs ? ` in ${langGroups.size} languages` : ''}.
               You can deploy to each page individually, or review all targets before bulk deployment.
+            </span>
+          </div>
+        )}
+
+        {/* Design work gate notice */}
+        {classification === 'requires_design_work' && (
+          <div
+            className="flex items-start gap-2 px-3 py-2 rounded-md text-[11px]"
+            style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', color: 'var(--warn)' }}
+          >
+            <Palette size={11} className="mt-0.5 flex-shrink-0" />
+            <span>
+              This fix cannot be applied without creating new UI elements or visual assets.
+              No deployable fix will be generated — hand this off to your design team.
+            </span>
+          </div>
+        )}
+
+        {/* Strategic comment notice */}
+        {classification === 'strategic_comment' && (
+          <div
+            className="flex items-start gap-2 px-3 py-2 rounded-md text-[11px]"
+            style={{ background: 'color-mix(in srgb, var(--m-muted) 8%, transparent)', color: 'var(--m-muted)' }}
+          >
+            <ClipboardList size={11} className="mt-0.5 flex-shrink-0" />
+            <span>
+              This is a strategic recommendation — no surgical fix is available.
+              Review the insight and consider how it fits your broader strategy.
             </span>
           </div>
         )}
@@ -847,7 +1075,9 @@ function SelfServeConsole({
 
   const hasFtp = ftpConnections.length > 0;
   const fixType = useMemo(() => inferFixType(finding), [finding]);
-  const deployable = useMemo(() => isDeployable(finding, fixType), [finding, fixType]);
+  const classification = useMemo(() => classifyFinding(finding, fixType, pages), [finding, fixType, pages]);
+  const impact = useMemo(() => inferImpact(finding), [finding]);
+  const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
   const aiApplicable = useMemo(
     () => isAiHelperApplicable(fixType, finding.recommendation || ''),
     [fixType, finding.recommendation],
@@ -1041,12 +1271,14 @@ function SelfServeConsole({
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
       {/* ── Badges ─────────────────────────────────────────── */}
-      <FixBadges finding={finding} uiFixType={fixType} />
+      <FixBadges finding={finding} uiFixType={fixType} classification={classification} />
 
       {/* ── What will change (mandatory) ───────────────────── */}
       <WhatWillChange
         finding={finding}
         uiFixType={fixType}
+        classification={classification}
+        impact={impact}
         pageTargets={pageTargets}
         langGroups={langGroups}
       />
@@ -1513,9 +1745,10 @@ export default function FixConsole({
 }) {
   const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
+  const classification = useMemo(() => classifyFinding(finding, fixType, affectedPages), [finding, fixType, affectedPages]);
   const basePatch = (finding.recommendation || '').trim();
   const [livePatch, setLivePatch] = useState(basePatch);
-  const deployable = useMemo(() => isDeployable(finding, fixType), [finding, fixType]);
+  const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
 
   return (
     <div className="space-y-4">
