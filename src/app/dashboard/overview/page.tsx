@@ -2001,10 +2001,10 @@ function BenchmarksSummaryCard({
           <>
             <div className="flex items-end gap-3">
               <div className="flex items-baseline gap-1">
-                <span className={`text-[36px] font-bold leading-none tabular-nums ${scoreColor(overallScore)}`}>
+                <span className={`text-[42px] font-bold leading-none tabular-nums ${scoreColor(overallScore)}`}>
                   {overallScore}
                 </span>
-                <span className="text-[11px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
+                <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
               </div>
               <span
                 className="text-[10px] font-semibold uppercase tracking-[0.06em] px-2 py-0.5 rounded-full mb-0.5"

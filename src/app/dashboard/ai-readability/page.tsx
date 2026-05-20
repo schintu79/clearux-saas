@@ -259,6 +259,7 @@ function AIReadabilityBody({
 
       {/* ── AI X-Ray ─────────────────────────────────────────── */}
       <section id="x-ray" className="rounded-xl p-5 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+        {/* Section heading */}
         <div className="flex items-start gap-2 mb-4">
           <span
             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -274,33 +275,47 @@ function AIReadabilityBody({
               We ask each model what it knows about your brand and grade its answer for accuracy.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={handleRescan}
-              disabled={rescanning}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ color: 'var(--ink)', border: '1px solid var(--rule)' }}
-              aria-label="Re-scan AI X-Ray"
-              title="Re-run model probes only — does not re-crawl your site"
-            >
-              <RefreshCw size={12} className={rescanning ? 'animate-spin' : ''} />
-              {rescanning ? 'Re-scanning' : 'Re-scan'}
-            </button>
-            {avg != null && (
-              <div className="flex flex-col items-end">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
-                    {avg}
-                  </span>
-                  <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
-                </div>
-                <span className="text-[10px] uppercase font-semibold tracking-[0.06em] mt-0.5" style={{ color: 'var(--m-muted)' }}>
-                  {coverage.measuredCount} of {coverage.totalCount} models measured
+        </div>
+
+        {/* Score hero — matches Intelligence page layout */}
+        <div className="flex flex-wrap items-start gap-6 mb-4">
+          {avg != null && (
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                Your score
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[42px] font-bold leading-none tabular-nums" style={{ color: scoreColor(avg) }}>
+                  {avg}
                 </span>
+                <span className="text-[13px] font-medium" style={{ color: 'var(--m-muted)' }}>/100</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {avg != null && (
+            <div className="flex flex-col items-start mt-auto">
+              <span className="text-[10px] uppercase font-semibold tracking-[0.06em]" style={{ color: 'var(--m-muted)' }}>
+                {coverage.measuredCount} of {coverage.totalCount} models measured
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons — matches Intelligence page button style */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={handleRescan}
+            disabled={rescanning}
+            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: 'var(--ink)', background: 'color-mix(in srgb, var(--ink) 6%, transparent)' }}
+            aria-label="Re-scan AI X-Ray"
+            title="Re-run model probes only — does not re-crawl your site"
+          >
+            <RefreshCw size={11} className={rescanning ? 'animate-spin' : ''} />
+            {rescanning ? 'Re-scanning' : 'Re-scan'}
+          </button>
         </div>
 
         {(rescanError || rescanOk) && (
