@@ -11,7 +11,7 @@
  * Sidebar findings render at ~50% opacity; the active one is fully opaque.
  */
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -148,6 +148,7 @@ function SidebarItem({
     <button
       type="button"
       onClick={onClick}
+      data-finding-id={finding.id}
       className="w-full text-left px-3 py-2.5 transition-all"
       style={{
         borderBottom: '1px solid var(--rule)',
@@ -487,6 +488,7 @@ function FixPageInner() {
 
   const [ftpConnections, setFtpConnections] = useState<FtpConnectionSummary[]>([]);
   const [ftpLoaded, setFtpLoaded] = useState(false);
+  const sidebarListRef = useRef<HTMLDivElement>(null);
 
   // Hydrate filters from URL
   useEffect(() => {
@@ -605,6 +607,15 @@ function FixPageInner() {
     () => filteredGroups.find((g) => g.primary.id === activeFindingId) || null,
     [filteredGroups, activeFindingId],
   );
+
+  // Scroll the active sidebar item into view
+  useEffect(() => {
+    if (!activeFindingId || !sidebarListRef.current) return;
+    const el = sidebarListRef.current.querySelector(`[data-finding-id="${activeFindingId}"]`);
+    if (el) {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [activeFindingId]);
 
   const updateLocal = (id: string, patch: Partial<AuditFinding>) => {
     setBundle((b) => b ? { ...b, findings: b.findings.map((f) => f.id === id ? { ...f, ...patch } : f) } : b);
@@ -808,7 +819,7 @@ function FixPageInner() {
               </div>
 
               {/* Finding list */}
-              <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
+              <div ref={sidebarListRef} className="max-h-[calc(100vh-220px)] overflow-y-auto">
                 {filteredGroups.length === 0 ? (
                   <div className="px-3 py-6 text-center text-[11px]" style={{ color: 'var(--m-muted)' }}>
                     No findings match

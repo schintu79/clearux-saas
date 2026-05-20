@@ -232,38 +232,33 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 
-/* ── Coffee cup SVG — subtle steam animation ──────────── */
+/* ── Coffee cup SVG — minimal thin-line, monochrome ──────────── */
 function CoffeeCup() {
   return (
     <svg
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
+      width="40"
+      height="40"
+      viewBox="0 0 40 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
-      className="mx-auto"
+      className="mx-auto opacity-30"
     >
       <style>{`
-        @keyframes steam1 { 0%,100%{opacity:0;transform:translateY(0)} 30%{opacity:.4} 70%{opacity:.2} 100%{transform:translateY(-8px)} }
-        @keyframes steam2 { 0%,100%{opacity:0;transform:translateY(0)} 40%{opacity:.35} 80%{opacity:.15} 100%{transform:translateY(-9px)} }
-        @keyframes steam3 { 0%,100%{opacity:0;transform:translateY(0)} 35%{opacity:.3} 75%{opacity:.1} 100%{transform:translateY(-7px)} }
-        .st1{animation:steam1 2.4s ease-in-out infinite}
-        .st2{animation:steam2 2.8s ease-in-out .4s infinite}
-        .st3{animation:steam3 2.6s ease-in-out .8s infinite}
+        @keyframes steam1 { 0%,100%{opacity:0;transform:translateY(0)} 40%{opacity:.5} 100%{transform:translateY(-6px)} }
+        @keyframes steam2 { 0%,100%{opacity:0;transform:translateY(0)} 45%{opacity:.4} 100%{transform:translateY(-7px)} }
+        .st1{animation:steam1 2.8s ease-in-out infinite}
+        .st2{animation:steam2 3s ease-in-out .6s infinite}
       `}</style>
-      {/* Steam wisps */}
-      <path className="st1" d="M18 16c0-3 2-4 0-7" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <path className="st2" d="M24 14c0-3 -1.5-4.5 .5-7.5" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <path className="st3" d="M30 16c0-3 -2-4 0-7" stroke="var(--m-muted)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      {/* Cup body */}
-      <rect x="10" y="20" width="28" height="20" rx="3" stroke="var(--ink)" strokeWidth="1.5" fill="none" />
+      {/* Steam — two thin wisps */}
+      <path className="st1" d="M15 15c0-2.5 1.5-3.5 0-6" stroke="var(--ink)" strokeWidth="0.75" strokeLinecap="round" fill="none" />
+      <path className="st2" d="M25 15c0-2.5-1.5-3.5 0-6" stroke="var(--ink)" strokeWidth="0.75" strokeLinecap="round" fill="none" />
+      {/* Cup */}
+      <rect x="8" y="17" width="24" height="16" rx="2" stroke="var(--ink)" strokeWidth="0.75" fill="none" />
       {/* Handle */}
-      <path d="M38 24c4 0 6 2 6 6s-2 6-6 6" stroke="var(--ink)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      {/* Coffee surface */}
-      <line x1="14" y1="26" x2="34" y2="26" stroke="var(--ink)" strokeWidth="1" opacity=".25" />
+      <path d="M32 20c3 0 5 1.5 5 4.5s-2 4.5-5 4.5" stroke="var(--ink)" strokeWidth="0.75" fill="none" strokeLinecap="round" />
       {/* Saucer */}
-      <ellipse cx="24" cy="42" rx="18" ry="2.5" stroke="var(--ink)" strokeWidth="1.5" fill="none" />
+      <ellipse cx="20" cy="35" rx="15" ry="2" stroke="var(--ink)" strokeWidth="0.75" fill="none" />
     </svg>
   );
 }
@@ -294,9 +289,9 @@ function AuditProgressLoader({
     const tick = () => {
       setDisplay((cur) => {
         const diff = target - cur;
-        if (Math.abs(diff) < 0.3) return target;
+        if (Math.abs(diff) < 0.5) return target;
         raf = requestAnimationFrame(tick);
-        return cur + diff * 0.08;
+        return cur + diff * 0.15;
       });
     };
     raf = requestAnimationFrame(tick);
@@ -323,17 +318,17 @@ function AuditProgressLoader({
       </span>
 
       {/* Thin progress bar */}
-      <div className="w-full max-w-[320px]">
+      <div className="w-full max-w-[280px]">
         <div
-          className="h-[3px] rounded-full overflow-hidden"
-          style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}
+          className="h-[2px] rounded-full overflow-hidden"
+          style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}
         >
           <div
             className="h-full rounded-full"
             style={{
               width: `${display}%`,
               background: 'var(--ink)',
-              transition: 'width 300ms ease-out',
+              transition: 'width 200ms ease-out',
             }}
           />
         </div>
@@ -344,13 +339,12 @@ function AuditProgressLoader({
         {label}
       </p>
 
-      {/* Deep scan copy */}
+      {/* Scan copy */}
       <p
-        className="text-[13px] leading-[1.65] text-center max-w-md"
+        className="text-[12px] leading-[1.6] text-center max-w-sm"
         style={{ color: 'var(--m-muted)' }}
       >
-        We&rsquo;re deeply scanning your website — not just skimming the surface.
-        This can take a few minutes, so grab a coffee or explore the Fixpath overview while we work.
+        Deep scanning your website. This usually takes 1-3 minutes.
       </p>
 
       {/* Secondary CTA */}
