@@ -112,9 +112,9 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
         <div className={clsx('h-20 flex items-center', collapsed ? 'px-3 justify-center' : 'px-5 justify-between')} style={{ borderBottom: '1px solid var(--rule)' }}>
           <Link href="/admin" className="flex items-center">
             {collapsed ? (
-              <Iconmark size={48} />
+              <Iconmark size={28} />
             ) : (
-              <Logo height={84} />
+              <Logo height={48} />
             )}
           </Link>
           {!collapsed && (
@@ -251,7 +251,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ children }) => {
             {sidebarOpen ? <X size={18} style={{ color: 'var(--ink)' }} /> : <Menu size={18} style={{ color: 'var(--ink)' }} />}
           </button>
           <span className="flex items-center gap-1.5">
-            <Logo height={66} />
+            <Logo height={38} />
             <span className="text-[9px] font-mono uppercase tracking-[0.1em] px-2 py-0.5 rounded-full ml-1" style={{ background: 'var(--severe)', color: '#FFFFFF' }}>
               Admin
             </span>

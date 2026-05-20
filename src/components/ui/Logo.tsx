@@ -19,7 +19,7 @@ export const Iconmark: React.FC<IconmarkProps> = ({
       height={size}
       className={className}
       aria-hidden="true"
-      fill="var(--signal)"
+      fill="var(--ink)"
     >
       <rect x="2.9" y="77.4" width="10.11" height="19.62"/>
       <rect x="13.01" y="68.9" width="14.16" height="8.5"/>
@@ -66,8 +66,8 @@ const Logo: React.FC<LogoProps> = ({
       aria-label="Fixpath"
       role="img"
     >
-      {/* F iconmark */}
-      <g fill="var(--signal)">
+      {/* F iconmark — single color, matches wordmark */}
+      <g fill={textColor}>
         <rect x="2.9" y="77.4" width="10.11" height="19.62"/>
         <rect x="13.01" y="68.9" width="14.16" height="8.5"/>
         <polygon points="2.9 68.9 13.01 68.9 13.01 58.31 35.5 58.31 35.5 49.79 2.9 49.79 2.9 68.9"/>
