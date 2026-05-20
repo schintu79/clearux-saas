@@ -7,7 +7,7 @@ import PageHeader from '@/components/dashboard/v2/PageHeader';
 import { useAuth } from '@/context/AuthContext';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
+import DashCard from '@/components/dashboard/v2/DashCard';
 
 interface ProfileFormData {
   full_name: string;
@@ -111,7 +111,7 @@ const SettingsPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 bg-off rounded animate-pulse" />
-        <Card className="h-96 bg-off animate-pulse" />
+        <DashCard className="h-96 bg-off animate-pulse" />
       </div>
     );
   }
@@ -316,7 +316,7 @@ const SettingsPage: React.FC = () => {
 
       {/* ═══ PROFILE TAB ═══ */}
       {activeTab === 'profile' && (
-        <Card>
+        <DashCard>
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-normal font-sans text-text">Profile Information</h2>
@@ -362,12 +362,12 @@ const SettingsPage: React.FC = () => {
               </Button>
             </form>
           </div>
-        </Card>
+        </DashCard>
       )}
 
       {/* ═══ COMPANY & BILLING TAB ═══ */}
       {activeTab === 'company' && (
-        <Card>
+        <DashCard>
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -452,12 +452,12 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </Card>
+        </DashCard>
       )}
 
       {/* ═══ BRANDING (WHITE LABEL) TAB ═══ */}
       {activeTab === 'branding' && (
-        <Card>
+        <DashCard>
           <div className="space-y-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -491,13 +491,13 @@ const SettingsPage: React.FC = () => {
               <ChevronRight size={16} style={{ color: 'var(--m-muted)' }} />
             </Link>
           </div>
-        </Card>
+        </DashCard>
       )}
 
       {/* ═══ SECURITY TAB ═══ */}
       {activeTab === 'security' && (
         <div className="space-y-6">
-          <Card>
+          <DashCard>
             <div className="space-y-6">
               <div>
                 <h2 className="text-lg font-normal font-sans text-text">Change Password</h2>
@@ -532,10 +532,10 @@ const SettingsPage: React.FC = () => {
                 </Button>
               </form>
             </div>
-          </Card>
+          </DashCard>
 
           {/* Danger Zone */}
-          <Card>
+          <DashCard>
             <div className="space-y-4" style={{ borderTop: '2px solid var(--severe)', marginTop: '-1px', paddingTop: '20px' }}>
               <h2 className="text-lg font-medium" style={{ color: 'var(--severe)' }}>Danger zone</h2>
               <p className="text-sm" style={{ color: 'var(--m-muted)' }}>
@@ -584,7 +584,7 @@ const SettingsPage: React.FC = () => {
                 {deletingAccount ? 'Deleting...' : 'Permanently Delete Account'}
               </Button>
             </div>
-          </Card>
+          </DashCard>
         </div>
       )}
     </div>

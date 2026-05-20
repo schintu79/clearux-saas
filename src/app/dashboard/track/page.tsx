@@ -29,18 +29,10 @@ import { createBrowserSupabase } from '@/lib/supabase-ssr';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
-
-function hostnameOf(url: string | null): string | null {
-  if (!url) return null;
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
-}
-
-function scoreColor(s: number | null): string {
-  if (s == null) return 'var(--m-muted)';
-  if (s >= 70) return 'var(--ok)';
-  if (s >= 40) return 'var(--warn)';
-  return 'var(--severe)';
-}
+import DashCard from '@/components/dashboard/v2/DashCard';
+import SectionHeader from '@/components/dashboard/v2/SectionHeader';
+import ActionLink from '@/components/dashboard/v2/ActionLink';
+import { scoreColor, hostOf } from '@/components/dashboard/v2/score-utils';
 
 function deltaTone(d: number | null): string {
   if (d == null || d === 0) return 'var(--m-muted)';
@@ -115,10 +107,10 @@ export default function TrackPage() {
   const scopedHistory = useMemo(() => {
     if (!bundle?.audit) return [];
     if (selection) return [...bundle.history].reverse();
-    const host = hostnameOf(bundle.audit.product_url);
+    const host = hostOf(bundle.audit.product_url);
     if (!host) return [];
     return bundle.history
-      .filter((h) => hostnameOf(h.audit.product_url) === host)
+      .filter((h) => hostOf(h.audit.product_url) === host)
       .reverse();
   }, [bundle, selection]);
 
@@ -189,21 +181,15 @@ export default function TrackPage() {
       <PageHeader icon={<TrendingUp size={18} strokeWidth={1.75} style={{ color: 'var(--ink)' }} />} title="Track" subtitle="Brand Health Score and issue trend for this brand. Re-audit to confirm fixes landed." />
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-6">
-        <div
-          className="rounded-xl p-5"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <div className="flex items-baseline justify-between mb-3">
-            <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-              Score over time
-            </p>
+        <DashCard padding="lg">
+          <SectionHeader title="Score over time">
             {delta != null && (
               <span className="inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: deltaTone(delta) }}>
                 {delta > 0 ? <TrendingUp size={12} /> : delta < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
                 {delta > 0 ? '+' : ''}{delta} pts vs. previous
               </span>
             )}
-          </div>
+          </SectionHeader>
           {singleAudit ? (
             <div className="py-8 text-center">
               <p className="text-[13px] font-semibold" style={{ color: 'var(--ink)' }}>
@@ -212,14 +198,9 @@ export default function TrackPage() {
               <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
                 One audit so far. Run another to track movement.
               </p>
-              <Link
-                href="/dashboard/new-audit"
-                className="inline-flex items-center gap-1.5 mt-4 px-3 py-2 rounded-lg text-[12px] font-semibold"
-                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-              >
+              <ActionLink href="/dashboard/new-audit" icon={RefreshCw} className="mt-4">
                 Run re-audit
-                <RefreshCw size={11} />
-              </Link>
+              </ActionLink>
             </div>
           ) : (
             <>
@@ -229,15 +210,10 @@ export default function TrackPage() {
               </p>
             </>
           )}
-        </div>
+        </DashCard>
 
-        <div
-          className="rounded-xl p-5 flex flex-col gap-3"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-            Issues
-          </p>
+        <DashCard padding="lg" className="flex flex-col gap-3">
+          <SectionHeader title="Issues" />
           <div className="space-y-2 flex-1">
             <div className="flex items-center justify-between">
               <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>Open</span>
@@ -252,26 +228,16 @@ export default function TrackPage() {
               <span className="text-[15px] font-semibold tabular-nums" style={{ color: 'var(--signal)' }}>{backlog}</span>
             </div>
           </div>
-          <Link
-            href="/dashboard/fix"
-            className="inline-flex items-center gap-1 text-[12px] font-semibold"
-            style={{ color: 'var(--signal)' }}
-          >
+          <ActionLink href="/dashboard/fix" icon={ArrowRight}>
             Open Fix queue
-            <ArrowRight size={11} />
-          </Link>
-        </div>
+          </ActionLink>
+        </DashCard>
       </div>
 
       {/* Fix validation — proof of improvement on re-audit */}
       {diff && (validatedFixes.length > 0 || persistedOnly.length > 0 || regressed.length > 0) && (
-        <div
-          className="rounded-xl p-5 mb-6"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-        >
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase mb-3" style={{ color: 'var(--m-muted)' }}>
-            Fix validation
-          </p>
+        <DashCard padding="lg" className="mb-6">
+          <SectionHeader title="Fix validation" />
           <p className="text-[12px] mb-4" style={{ color: 'var(--m-muted)' }}>
             Compared against the previous audit to verify which fixes landed.
           </p>
@@ -346,27 +312,16 @@ export default function TrackPage() {
               </ul>
             </div>
           )}
-        </div>
+        </DashCard>
       )}
 
       {/* Recent audits */}
-      <div
-        className="rounded-xl p-5"
-        style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
-            Recent audits
-          </p>
-          <Link
-            href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1 text-[12px] font-semibold"
-            style={{ color: 'var(--signal)' }}
-          >
+      <DashCard padding="lg">
+        <SectionHeader title="Recent audits">
+          <ActionLink href="/dashboard/new-audit" icon={RefreshCw}>
             Run re-audit
-            <RefreshCw size={11} />
-          </Link>
-        </div>
+          </ActionLink>
+        </SectionHeader>
         {scopedHistory.length === 0 ? (
           <p className="text-[12px]" style={{ color: 'var(--m-muted)' }}>No audit history yet.</p>
         ) : (
@@ -405,7 +360,7 @@ export default function TrackPage() {
             })}
           </ul>
         )}
-      </div>
+      </DashCard>
     </div>
   );
 }

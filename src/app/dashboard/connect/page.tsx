@@ -24,6 +24,9 @@ import {
   Shield,
 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
+import DashCard from '@/components/dashboard/v2/DashCard';
+import SectionHeader from '@/components/dashboard/v2/SectionHeader';
+import { formatDate } from '@/components/dashboard/v2/score-utils';
 import { useAuth } from '@/context/AuthContext';
 import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
@@ -289,7 +292,7 @@ export default function ConnectPage() {
 
       {/* Connection Form */}
       {showForm && (
-        <div className="rounded-xl border border-border bg-card p-5 mb-6">
+        <DashCard padding="lg" className="mb-6">
           <h2 className="text-sm font-medium text-text mb-4">
             {editingId ? 'Edit connection' : 'New connection'}
           </h2>
@@ -476,12 +479,12 @@ export default function ConnectPage() {
               </button>
             </div>
           </div>
-        </div>
+        </DashCard>
       )}
 
       {/* Saved Connections */}
       {connections.length === 0 && !showForm ? (
-        <div className="text-center py-16 border border-dashed border-border rounded-xl">
+        <DashCard dashed className="text-center py-16">
           <WifiOff size={24} className="text-muted mx-auto mb-3" />
           <h2 className="text-sm font-medium text-text mb-1">No connections yet</h2>
           <p className="text-muted text-xs mb-4 max-w-xs mx-auto">
@@ -493,15 +496,16 @@ export default function ConnectPage() {
           >
             <Plus size={13} /> Add connection
           </button>
-        </div>
+        </DashCard>
       ) : (
         connections.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-xs font-medium text-muted uppercase tracking-wide">Saved connections</h2>
+            <SectionHeader title="Saved connections" />
             {connections.map((conn) => (
-              <div
+              <DashCard
                 key={conn.id}
-                className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-text/10 transition-colors"
+                hover
+                className="flex items-center gap-3"
               >
                 <div className="w-8 h-8 rounded-lg bg-off flex items-center justify-center flex-shrink-0">
                   <Server size={14} className="text-muted" />
@@ -513,7 +517,7 @@ export default function ConnectPage() {
                   </p>
                   {conn.last_connected_at && (
                     <p className="text-[10px] text-muted/60 mt-0.5">
-                      Last connected: {new Date(conn.last_connected_at).toLocaleDateString()}
+                      Last connected: {formatDate(conn.last_connected_at)}
                     </p>
                   )}
                 </div>
@@ -533,14 +537,14 @@ export default function ConnectPage() {
                     <Trash2 size={12} />
                   </button>
                 </div>
-              </div>
+              </DashCard>
             ))}
           </div>
         )
       )}
 
       {/* Security note */}
-      <div className="mt-8 p-4 rounded-xl border border-border bg-off/50">
+      <DashCard className="mt-8">
         <div className="flex items-start gap-2">
           <Shield size={14} className="text-muted flex-shrink-0 mt-0.5" />
           <div>
@@ -551,7 +555,7 @@ export default function ConnectPage() {
             </p>
           </div>
         </div>
-      </div>
+      </DashCard>
     </div>
   );
 }

@@ -21,7 +21,6 @@ import {
   PlusCircle,
   FileSearch,
   AlertTriangle,
-  CheckCircle2,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -35,6 +34,12 @@ import {
   writeSelection,
   selectionFromSidebarId,
 } from '@/lib/dashboard/brand-selection';
+import PageHeader from '@/components/dashboard/v2/PageHeader';
+import SectionHeader from '@/components/dashboard/v2/SectionHeader';
+import DashCard from '@/components/dashboard/v2/DashCard';
+import StatCard from '@/components/dashboard/v2/StatCard';
+import ActionLink from '@/components/dashboard/v2/ActionLink';
+import { scoreColor, formatDate, hostOf } from '@/components/dashboard/v2/score-utils';
 
 interface DashboardStats {
   totalAudits: number;
@@ -57,22 +62,7 @@ interface BrandRow {
   auditCount: number;
 }
 
-function hostOf(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
-}
-
-function formatDate(d: string | null) {
-  if (!d) return '—';
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(d));
-}
-
-function scoreColor(s: number | null): string {
-  if (s == null) return 'var(--m-muted)';
-  if (s >= 70) return 'var(--ok)';
-  if (s >= 40) return 'var(--warn)';
-  return 'var(--severe)';
-}
+/* scoreColor, formatDate, hostOf imported from v2/score-utils */
 
 function DashboardInner() {
   const { user, loading: authLoading } = useAuth();
@@ -210,11 +200,14 @@ function DashboardInner() {
   if (totalBrandsAndSites === 0 && (stats?.totalAudits ?? 0) === 0) {
     return (
       <div className="max-w-5xl mx-auto">
-        <Header />
-        <div
-          className="rounded-2xl p-10 text-center"
-          style={{ background: 'var(--card)', border: '1px dashed var(--rule)' }}
+        <PageHeader
+          icon={<Activity size={18} />}
+          title="Dashboard"
+          subtitle="Everything across your brands and sites. Pick one to open its workspace."
         >
+          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+        </PageHeader>
+        <DashCard dashed className="p-10 text-center">
           <FileSearch size={28} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
           <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--ink)' }}>
             No audits yet
@@ -222,21 +215,21 @@ function DashboardInner() {
           <p className="text-[13px] mb-5" style={{ color: 'var(--m-muted)' }}>
             Run your first audit to see your Brand Health Score and a roadmap of fixes.
           </p>
-          <Link
-            href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            <PlusCircle size={14} /> New audit
-          </Link>
-        </div>
+          <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+        </DashCard>
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto">
-      <Header />
+      <PageHeader
+        icon={<Activity size={18} />}
+        title="Dashboard"
+        subtitle="Everything across your brands and sites. Pick one to open its workspace."
+      >
+        <ActionLink href="/dashboard/new-audit" icon={PlusCircle}>New audit</ActionLink>
+      </PageHeader>
 
       {/* Headline stats — at-a-glance portfolio numbers */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -270,26 +263,21 @@ function DashboardInner() {
       </div>
 
       {/* Portfolio — every brand/site with its latest score */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Your brands & sites</h2>
+      <SectionHeader title="Your brands & sites">
         <Link
           href="/dashboard/audits"
-          className="text-[12px] inline-flex items-center gap-0.5 hover:underline"
-          style={{ color: 'var(--m-muted)' }}
+          className="inline-flex items-center gap-0.5 hover:underline"
         >
           My Audits <ChevronRight size={11} />
         </Link>
-      </div>
+      </SectionHeader>
 
       {totalBrandsAndSites === 0 ? (
-        <div
-          className="rounded-xl p-5 text-[13px]"
-          style={{ background: 'var(--card)', border: '1px dashed var(--rule)', color: 'var(--m-muted)' }}
-        >
+        <DashCard dashed className="p-5 text-[13px]" style={{ color: 'var(--m-muted)' }}>
           You have audits but no brands or sites grouped yet. Run a new audit to get started.
-        </div>
+        </DashCard>
       ) : (
-        <div className="rounded-xl overflow-hidden mb-6" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+        <DashCard padding="none" className="overflow-hidden mb-6">
           <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
             {rows.map((row) => {
               const Icon = row.kind === 'brand' ? Fingerprint : Globe;
@@ -342,23 +330,21 @@ function DashboardInner() {
               );
             })}
           </div>
-        </div>
+        </DashCard>
       )}
 
       {/* Recent activity */}
       {stats?.recentScores && stats.recentScores.length > 0 && (
         <>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Recent audits</h2>
+          <SectionHeader title="Recent audits">
             <Link
               href="/dashboard/audits"
-              className="text-[12px] inline-flex items-center gap-0.5 hover:underline"
-              style={{ color: 'var(--m-muted)' }}
+              className="inline-flex items-center gap-0.5 hover:underline"
             >
               View all <ChevronRight size={11} />
             </Link>
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
+          </SectionHeader>
+          <DashCard padding="none" className="overflow-hidden">
             <div className="divide-y" style={{ borderColor: 'var(--rule)' }}>
               {stats.recentScores.slice().reverse().map((r, i) => {
                 const host = hostOf(r.url);
@@ -382,68 +368,14 @@ function DashboardInner() {
                 );
               })}
             </div>
-          </div>
+          </DashCard>
         </>
       )}
     </div>
   );
 }
 
-function Header() {
-  return (
-    <div className="mb-6 flex items-start justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-medium font-sans tracking-[-0.01em]" style={{ color: 'var(--ink)' }}>
-          Dashboard
-        </h1>
-        <p className="text-[13px] mt-1" style={{ color: 'var(--m-muted)' }}>
-          Everything across your brands and sites. Pick one to open its workspace.
-        </p>
-      </div>
-      <Link
-        href="/dashboard/new-audit"
-        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-all hover:opacity-90"
-        style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-      >
-        <PlusCircle size={13} /> New audit
-      </Link>
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  hint?: string;
-  tone: 'ink' | 'ok' | 'warn' | 'severe' | 'muted';
-}) {
-  const valueColor =
-    tone === 'ok' ? 'var(--ok)' :
-    tone === 'warn' ? 'var(--warn)' :
-    tone === 'severe' ? 'var(--severe)' :
-    tone === 'muted' ? 'var(--m-muted)' : 'var(--ink)';
-  return (
-    <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}>
-      <div className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--m-muted)' }}>
-        <Icon size={12} strokeWidth={1.75} />
-        <span className="text-[11px] uppercase tracking-wide font-medium">{label}</span>
-      </div>
-      <p className="text-2xl font-semibold tabular-nums leading-none" style={{ color: valueColor }}>
-        {value}
-      </p>
-      {hint && (
-        <p className="text-[11px] mt-1.5" style={{ color: 'var(--m-muted)' }}>{hint}</p>
-      )}
-    </div>
-  );
-}
+/* Header and StatCard removed — now using shared v2/PageHeader, v2/StatCard, v2/ActionLink */
 
 function DashboardSkeleton() {
   return (

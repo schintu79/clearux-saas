@@ -47,6 +47,9 @@ import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import PriorityRecommendations, { derivePriorityRecs } from '@/components/dashboard/v2/PriorityRecommendations';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
 import FindingText from '@/components/dashboard/v2/FindingText';
+import DashCard from '@/components/dashboard/v2/DashCard';
+import ActionLink from '@/components/dashboard/v2/ActionLink';
+import { hostOf } from '@/components/dashboard/v2/score-utils';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -56,11 +59,6 @@ const SEVERITIES: Array<'all' | 'critical' | 'high' | 'medium' | 'low'> = ['all'
 
 // Module-aligned icons. Order must match PHASE1_MODULES in latest-audit.ts.
 const MODULE_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
-
-function hostnameOf(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
-}
 
 interface ModuleBucket {
   index: number;
@@ -336,11 +334,7 @@ function FindPageInner() {
       </div>
 
       {totalOpen === 0 ? (
-        <div
-          className="rounded-lg p-8 text-center"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          data-testid="find-empty"
-        >
+        <DashCard className="text-center" padding="lg">
           <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
             {hasActive ? 'No findings match these filters' : 'Nothing is currently hurting your score'}
           </p>
@@ -348,25 +342,15 @@ function FindPageInner() {
             {hasActive ? 'Try clearing the filters or run a re-audit.' : 'Run a re-audit to confirm.'}
           </p>
           {hasActive ? (
-            <button
-              onClick={() => { setModuleFilter('all'); setSevFilter('all'); }}
-              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
-              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-            >
+            <ActionLink onClick={() => { setModuleFilter('all'); setSevFilter('all'); }} icon={ArrowRight} className="mt-4">
               Clear filters
-              <ArrowRight size={12} />
-            </button>
+            </ActionLink>
           ) : (
-            <Link
-              href="/dashboard/new-audit"
-              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-md text-[13px] font-semibold"
-              style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-            >
+            <ActionLink href="/dashboard/new-audit" icon={ArrowRight} className="mt-4">
               Run re-audit
-              <ArrowRight size={12} />
-            </Link>
+            </ActionLink>
           )}
-        </div>
+        </DashCard>
       ) : (
         <div className="space-y-3">
           {visibleBuckets.map((b) => {
@@ -441,7 +425,7 @@ function FindPageInner() {
                   <ul style={{ borderTop: tint ? `1px solid ${tint.border}` : '1px solid var(--rule)', background: 'var(--card)' }}>
                     {b.groups.map((g) => {
                       const f = g.primary;
-                      const host = hostnameOf(f.page_url);
+                      const host = hostOf(f.page_url);
                       const moduleNames = g.affectedModuleIndices.filter((i) => i >= 0).map((i) => PHASE1_MODULES[i]);
                       const multiModule = moduleNames.length > 1;
                       const isExpanded = !!expanded[f.id];
@@ -544,14 +528,9 @@ function FindPageInner() {
                                 </div>
                               </div>
                               <div className="col-span-full flex justify-end">
-                                <Link
-                                  href={`/dashboard/fix#finding-${f.id}`}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-colors hover:opacity-90"
-                                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                                >
-                                  <Wrench size={12} strokeWidth={1.75} />
+                                <ActionLink href={`/dashboard/fix#finding-${f.id}`} icon={Wrench}>
                                   Open in fix console
-                                </Link>
+                                </ActionLink>
                               </div>
                             </div>
                           )}
@@ -586,13 +565,10 @@ function FindPageInner() {
             </div>
           </div>
 
-          <div
-            className="rounded-lg overflow-hidden"
-            style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          >
+          <DashCard padding="none" className="overflow-hidden">
             <ul>
               {strategicFindings.map((f, i) => {
-                const host = hostnameOf(f.page_url);
+                const host = hostOf(f.page_url);
                 return (
                   <li
                     key={f.id}
@@ -644,7 +620,7 @@ function FindPageInner() {
                 );
               })}
             </ul>
-          </div>
+          </DashCard>
         </div>
       )}
     </div>

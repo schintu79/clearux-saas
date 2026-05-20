@@ -11,8 +11,11 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowRight, FileText, Share2, ExternalLink } from 'lucide-react';
+import { ArrowRight, FileText, Share2 } from 'lucide-react';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
+import DashCard from '@/components/dashboard/v2/DashCard';
+import ActionLink from '@/components/dashboard/v2/ActionLink';
+import { scoreColor, formatDate, hostOf } from '@/components/dashboard/v2/score-utils';
 import { createBrowserSupabase } from '@/lib/supabase-ssr';
 
 interface ReportRow {
@@ -22,18 +25,6 @@ interface ReportRow {
   share_enabled: boolean;
   share_token: string | null;
   overall_score: number | null;
-}
-
-function scoreColor(s: number | null): string {
-  if (s == null) return 'var(--m-muted)';
-  if (s >= 70) return 'var(--ok)';
-  if (s >= 40) return 'var(--warn)';
-  return 'var(--severe)';
-}
-
-function host(url: string | null): string {
-  if (!url) return '—';
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
 }
 
 export default function ReportsPage() {
@@ -93,52 +84,46 @@ export default function ReportsPage() {
         subtitle="Audit reports, exports, and shareable links."
       />
       {rows.length === 0 ? (
-        <div
-          className="rounded-xl p-8"
-          style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-          data-testid="reports-empty"
-        >
+        <DashCard padding="none" className="p-8">
           <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>No reports yet</p>
           <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
             Reports appear here once an audit completes. Each one comes with a downloadable PDF and an optional shareable link.
           </p>
-          <Link
-            href="/dashboard/new-audit"
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg text-[13px] font-semibold"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            Run an audit
-            <ArrowRight size={12} />
-          </Link>
-        </div>
+          <div className="mt-4">
+            <ActionLink href="/dashboard/new-audit" icon={ArrowRight}>
+              Run an audit
+            </ActionLink>
+          </div>
+        </DashCard>
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.id}>
-              <Link
-                href={`/dashboard/audits/${r.id}`}
-                className="rounded-xl p-4 flex items-center gap-4 transition-all hover:shadow-sm"
-                style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
-              >
-                <FileText size={16} style={{ color: 'var(--m-muted)' }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
-                    {host(r.product_url)}
-                  </p>
-                  <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                    {r.completed_at ? new Date(r.completed_at).toLocaleDateString() : '—'}
-                    {r.share_enabled && (
-                      <span className="ml-2 inline-flex items-center gap-0.5" style={{ color: 'var(--signal)' }}>
-                        <Share2 size={9} /> Shared
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <span className="text-[16px] font-semibold tabular-nums" style={{ color: scoreColor(r.overall_score) }}>
-                  {r.overall_score ?? '—'}
-                </span>
-                <ArrowRight size={13} style={{ color: 'var(--m-muted)' }} />
-              </Link>
+              <DashCard padding="none">
+                <Link
+                  href={`/dashboard/audits/${r.id}`}
+                  className="p-4 flex items-center gap-4 transition-all hover:opacity-90"
+                >
+                  <FileText size={16} style={{ color: 'var(--m-muted)' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                      {hostOf(r.product_url) ?? '—'}
+                    </p>
+                    <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                      {formatDate(r.completed_at)}
+                      {r.share_enabled && (
+                        <span className="ml-2 inline-flex items-center gap-0.5" style={{ color: 'var(--signal)' }}>
+                          <Share2 size={9} /> Shared
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <span className="text-[16px] font-semibold tabular-nums" style={{ color: scoreColor(r.overall_score) }}>
+                    {r.overall_score ?? '—'}
+                  </span>
+                  <ArrowRight size={13} style={{ color: 'var(--m-muted)' }} />
+                </Link>
+              </DashCard>
             </li>
           ))}
         </ul>
