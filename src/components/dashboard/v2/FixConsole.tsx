@@ -9,6 +9,16 @@
  *     Every deployed change is reversible (backup + undo).
  *  2. "Let your team handle it" — read-only recommendation + Copy / Download.
  *     Lightweight handoff, no deploy controls.
+ *
+ * Scope boundary:
+ *  - SURGICAL (deployable): copy edits, typos, HTML strings, schema, meta tags,
+ *    scripts, semantic HTML, new files in the FTP root.
+ *  - DESIGN WORK (not deployable): new sections, FAQ blocks, testimonials,
+ *    visuals, imagery, layout redesign.
+ *
+ * Strategic findings (finding_type === 'strategic') never appear in the Fix
+ * Console — they're filtered at the page level. This component only handles
+ * findings where finding_type === 'fixable'.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -31,9 +41,19 @@ import {
   ClipboardList,
   ArrowRight,
   FileText,
+  Globe,
+  Code,
+  Tag,
+  FileCode,
+  PenLine,
+  FilePlus,
+  Settings,
+  Layers,
+  Languages,
+  Eye,
 } from 'lucide-react';
 import FixPreviewPanel from './FixPreviewPanel';
-import type { AuditFinding } from '@/types/database';
+import type { AuditFinding, FixType as DbFixType } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
 
@@ -45,7 +65,9 @@ export interface FtpConnectionForDeploy {
   remote_path: string;
 }
 
-type FixType =
+/* ── Fix type classification (UI-level) ─────────────────── */
+
+type UiFixType =
   | 'copy'
   | 'heading'
   | 'meta'
@@ -56,12 +78,15 @@ type FixType =
   | 'design';
 
 /** Fix types that require design assets — cannot be deployed via FTP. */
-const DESIGN_FIX_TYPES = new Set<FixType>(['design']);
+const DESIGN_FIX_TYPES = new Set<UiFixType>(['design']);
 
 /** Fix types where the change is visible on the rendered page. */
-export const VISUAL_FIX_TYPES = new Set<FixType>(['copy', 'heading', 'content']);
+export const VISUAL_FIX_TYPES = new Set<UiFixType>(['copy', 'heading', 'content']);
 
-export function inferFixType(finding: AuditFinding): FixType {
+/** Surgical scope: fix types that CAN be auto-generated and deployed. */
+const SURGICAL_SCOPE = new Set<DbFixType | null>(['html', 'meta', 'schema', 'copy', 'file', 'config']);
+
+export function inferFixType(finding: AuditFinding): UiFixType {
   const blob = `${finding.title} ${finding.description} ${finding.recommendation || ''}`.toLowerCase();
   // Schema/structured-data fixes are code, not design — check first to avoid
   // false positives when the recommendation mentions "logo" or "image" fields.
@@ -75,6 +100,333 @@ export function inferFixType(finding: AuditFinding): FixType {
   if (/faq|paragraph|copy|tagline|wording|message|cta|button text/.test(blob)) return 'copy';
   if (/redirect|sitemap|robots|canonical|performance|cache|lazy/.test(blob)) return 'technical';
   return 'content';
+}
+
+/* ── Fix type metadata (for badges) ─────────────────────── */
+
+const FIX_TYPE_META: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  html:    { label: 'HTML',    icon: <Code size={10} />,     color: 'var(--signal)' },
+  meta:    { label: 'Meta',    icon: <Tag size={10} />,      color: 'var(--signal)' },
+  schema:  { label: 'Schema',  icon: <FileCode size={10} />, color: 'var(--signal)' },
+  copy:    { label: 'Copy',    icon: <PenLine size={10} />,  color: 'var(--signal)' },
+  file:    { label: 'File',    icon: <FilePlus size={10} />, color: 'var(--signal)' },
+  config:  { label: 'Config',  icon: <Settings size={10} />, color: 'var(--signal)' },
+};
+
+const SCOPE_META = {
+  surgical: { label: 'Surgical fix', color: 'var(--ok)', icon: <Wrench size={10} /> },
+  design:   { label: 'Requires design work', color: 'var(--warn)', icon: <Palette size={10} /> },
+};
+
+/* ── Language detection from URL ─────────────────────────── */
+
+const LANG_PATTERNS: [RegExp, string][] = [
+  [/\/it(\/|$)/i, 'Italian'],
+  [/\/en(\/|$)/i, 'English'],
+  [/\/de(\/|$)/i, 'German'],
+  [/\/fr(\/|$)/i, 'French'],
+  [/\/es(\/|$)/i, 'Spanish'],
+  [/\/pt(\/|$)/i, 'Portuguese'],
+  [/\/nl(\/|$)/i, 'Dutch'],
+  [/\/ja(\/|$)/i, 'Japanese'],
+  [/\/zh(\/|$)/i, 'Chinese'],
+  [/\/ko(\/|$)/i, 'Korean'],
+  [/\/ru(\/|$)/i, 'Russian'],
+  [/\/ar(\/|$)/i, 'Arabic'],
+  [/\/pl(\/|$)/i, 'Polish'],
+  [/\/sv(\/|$)/i, 'Swedish'],
+  [/\/da(\/|$)/i, 'Danish'],
+  [/\/fi(\/|$)/i, 'Finnish'],
+  [/\/no(\/|$)/i, 'Norwegian'],
+  [/\/cs(\/|$)/i, 'Czech'],
+  [/\/ro(\/|$)/i, 'Romanian'],
+  [/\/hu(\/|$)/i, 'Hungarian'],
+];
+
+function detectLang(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    for (const [re, name] of LANG_PATTERNS) {
+      if (re.test(pathname)) return name;
+    }
+  } catch {}
+  return 'Default';
+}
+
+interface PageTarget {
+  url: string;
+  lang: string;
+  path: string;
+}
+
+function buildPageTargets(pages: string[]): PageTarget[] {
+  return pages.map((url) => {
+    let path: string;
+    try { path = new URL(url).pathname; } catch { path = url; }
+    return { url, lang: detectLang(url), path };
+  });
+}
+
+/** Group page targets by language. */
+function groupByLang(targets: PageTarget[]): Map<string, PageTarget[]> {
+  const map = new Map<string, PageTarget[]>();
+  for (const t of targets) {
+    const group = map.get(t.lang) || [];
+    group.push(t);
+    map.set(t.lang, group);
+  }
+  return map;
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+
+function isAiHelperApplicable(fixType: UiFixType, _recommendation: string): boolean {
+  // AI Suggest is strictly for rewriting phrases or headings — nothing else.
+  return fixType === 'copy' || fixType === 'heading';
+}
+
+function looksLikeJson(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (!(t.startsWith('{') || t.startsWith('['))) return false;
+  try { JSON.parse(t); return true; } catch { return false; }
+}
+
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'fix';
+}
+
+/** Map a finding's page_url to a likely server file path. */
+function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string): string {
+  if (!pageUrl) return '';
+  let pathname: string;
+  try { pathname = new URL(pageUrl).pathname; } catch { return ''; }
+  const root = remoteRoot.replace(/\/+$/, '') || '';
+  if (/\.\w{2,5}$/.test(pathname)) return `${root}${pathname}`;
+  const clean = pathname.replace(/\/+$/, '') || '';
+  if (!clean || clean === '/') return `${root}/index.html`;
+  return `${root}${clean}/index.html`;
+}
+
+function downloadFile(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+/** Determine if the finding is deployable (surgical) or requires design work. */
+function isDeployable(finding: AuditFinding, uiFixType: UiFixType): boolean {
+  // If the DB says it's strategic, never deploy
+  if (finding.finding_type === 'strategic') return false;
+  // If the DB fix_type is set and is in surgical scope
+  if (finding.fix_type && SURGICAL_SCOPE.has(finding.fix_type)) return true;
+  // Fall back to UI inference — design type blocks deploy
+  if (DESIGN_FIX_TYPES.has(uiFixType)) return false;
+  return true;
+}
+
+/* ── Scope + Fix Type Badges ─────────────────────────────── */
+
+function FixBadges({ finding, uiFixType }: { finding: AuditFinding; uiFixType: UiFixType }) {
+  const deployable = isDeployable(finding, uiFixType);
+  const scope = deployable ? SCOPE_META.surgical : SCOPE_META.design;
+  const dbType = finding.fix_type ? FIX_TYPE_META[finding.fix_type] : null;
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {/* Scope badge */}
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+        style={{
+          color: scope.color,
+          background: `color-mix(in srgb, ${scope.color} 10%, transparent)`,
+          border: `1px solid color-mix(in srgb, ${scope.color} 25%, transparent)`,
+        }}
+      >
+        {scope.icon}
+        {scope.label}
+      </span>
+
+      {/* DB fix type badge */}
+      {dbType && (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+          style={{
+            color: 'var(--ink)',
+            background: 'var(--paper-2)',
+            border: '1px solid var(--rule)',
+          }}
+        >
+          {dbType.icon}
+          {dbType.label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ── "What will change" Panel (mandatory) ────────────────── */
+
+function WhatWillChange({
+  finding,
+  uiFixType,
+  pageTargets,
+  langGroups,
+}: {
+  finding: AuditFinding;
+  uiFixType: UiFixType;
+  pageTargets: PageTarget[];
+  langGroups: Map<string, PageTarget[]>;
+}) {
+  const deployable = isDeployable(finding, uiFixType);
+  const dbType = finding.fix_type;
+  const hasMultiplePages = pageTargets.length > 1;
+  const hasMultipleLangs = langGroups.size > 1;
+  const currentValue = finding.target_element || finding.evidence || null;
+  const proposedValue = finding.recommendation || null;
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden mb-4"
+      style={{ border: '1px solid var(--rule)' }}
+    >
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}
+      >
+        <Eye size={12} style={{ color: 'var(--ink)' }} />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
+          What will change
+        </span>
+      </div>
+
+      <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
+        {/* Fix type + scope row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Fix type
+            </span>
+            <span style={{ color: 'var(--ink)' }}>
+              {dbType ? FIX_TYPE_META[dbType]?.label || dbType : uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+              Scope
+            </span>
+            <span style={{ color: deployable ? 'var(--ok)' : 'var(--warn)' }}>
+              {deployable ? 'Surgical (auto-deployable)' : 'Requires design work'}
+            </span>
+          </div>
+        </div>
+
+        {/* Affected pages */}
+        <div>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+            Affected {hasMultiplePages ? `pages (${pageTargets.length})` : 'page'}
+          </span>
+          {pageTargets.length > 0 ? (
+            hasMultipleLangs ? (
+              // Group by language
+              <div className="space-y-2">
+                {Array.from(langGroups.entries()).map(([lang, targets]) => (
+                  <div key={lang}>
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded mb-1"
+                      style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
+                    >
+                      <Languages size={9} />
+                      {lang}
+                    </span>
+                    <ul className="mt-1 space-y-0.5">
+                      {targets.map((t) => (
+                        <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
+                          {t.path}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-0.5">
+                {pageTargets.slice(0, 8).map((t) => (
+                  <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
+                    {t.path}
+                    {pageTargets.length === 1 && t.lang !== 'Default' && (
+                      <span className="ml-2 text-[10px] font-sans" style={{ color: 'var(--m-muted)' }}>({t.lang})</span>
+                    )}
+                  </li>
+                ))}
+                {pageTargets.length > 8 && (
+                  <li className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                    +{pageTargets.length - 8} more pages
+                  </li>
+                )}
+              </ul>
+            )
+          ) : (
+            <span className="text-[11px] italic" style={{ color: 'var(--m-muted)' }}>
+              No specific page captured
+            </span>
+          )}
+        </div>
+
+        {/* Current vs Proposed */}
+        {(currentValue || proposedValue) && (
+          <div className="grid grid-cols-1 gap-2">
+            {currentValue && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--severe)' }}>
+                  Current
+                </span>
+                <div
+                  className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+                  style={{ background: 'color-mix(in srgb, var(--severe) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--severe) 15%, transparent)', color: 'var(--ink-2)' }}
+                >
+                  {currentValue.length > 200 ? currentValue.slice(0, 200) + '...' : currentValue}
+                </div>
+              </div>
+            )}
+            {proposedValue && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--ok)' }}>
+                  Proposed
+                </span>
+                <div
+                  className="px-2.5 py-1.5 rounded text-[11px] font-mono leading-relaxed whitespace-pre-wrap max-h-[80px] overflow-y-auto"
+                  style={{ background: 'color-mix(in srgb, var(--ok) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 15%, transparent)', color: 'var(--ink-2)' }}
+                >
+                  {proposedValue.length > 200 ? proposedValue.slice(0, 200) + '...' : proposedValue}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bulk action info */}
+        {hasMultiplePages && deployable && (
+          <div
+            className="flex items-start gap-2 px-3 py-2 rounded-md text-[11px]"
+            style={{ background: 'color-mix(in srgb, var(--signal) 6%, transparent)', color: 'var(--signal)' }}
+          >
+            <Layers size={11} className="mt-0.5 flex-shrink-0" />
+            <span>
+              This fix affects {pageTargets.length} pages{hasMultipleLangs ? ` in ${langGroups.size} languages` : ''}.
+              You can deploy to each page individually, or review all targets before bulk deployment.
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /* ── DesignFixGuidance ─────────────────────────────────────── */
@@ -160,46 +512,6 @@ function DesignFixGuidance({ finding }: { finding: AuditFinding }) {
   );
 }
 
-function isAiHelperApplicable(fixType: FixType, _recommendation: string): boolean {
-  // AI Suggest is strictly for rewriting phrases or headings — nothing else.
-  return fixType === 'copy' || fixType === 'heading';
-}
-
-function looksLikeJson(text: string): boolean {
-  const t = text.trim();
-  if (!t) return false;
-  if (!(t.startsWith('{') || t.startsWith('['))) return false;
-  try { JSON.parse(t); return true; } catch { return false; }
-}
-
-function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'fix';
-}
-
-/** Map a finding's page_url to a likely server file path. */
-function suggestRemotePath(pageUrl: string | null | undefined, remoteRoot: string): string {
-  if (!pageUrl) return '';
-  let pathname: string;
-  try { pathname = new URL(pageUrl).pathname; } catch { return ''; }
-  const root = remoteRoot.replace(/\/+$/, '') || '';
-  if (/\.\w{2,5}$/.test(pathname)) return `${root}${pathname}`;
-  const clean = pathname.replace(/\/+$/, '') || '';
-  if (!clean || clean === '/') return `${root}/index.html`;
-  return `${root}${clean}/index.html`;
-}
-
-function downloadFile(filename: string, content: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
 /* ── Tab Bar (shared between both panels) ────────────────── */
 
 function TabBar({
@@ -278,7 +590,7 @@ function HandoffPanel({
 }: {
   finding: AuditFinding;
   patch: string;
-  fixType: FixType;
+  fixType: UiFixType;
 }) {
   const [copied, setCopied] = useState(false);
   const isJson = fixType === 'schema' || looksLikeJson(patch);
@@ -367,6 +679,86 @@ function HandoffPanel({
   );
 }
 
+/* ── Bulk Deploy Review Step ─────────────────────────────── */
+
+function BulkDeployReview({
+  pages,
+  deployPaths,
+  deployResults,
+  onConfirm,
+  onCancel,
+}: {
+  pages: string[];
+  deployPaths: Record<number, string>;
+  deployResults: Record<number, { ok: boolean; msg: string }>;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const pending = pages.filter((_, i) => !deployResults[i]?.ok);
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden"
+      style={{ border: '1px solid var(--signal)' }}
+    >
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', borderBottom: '1px solid var(--signal)' }}
+      >
+        <Layers size={12} style={{ color: 'var(--signal)' }} />
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--signal)' }}>
+          Review bulk deployment — {pending.length} page{pending.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      <div className="px-4 py-3 space-y-2" style={{ background: '#ffffff' }}>
+        <p className="text-[11.5px]" style={{ color: 'var(--ink-2)' }}>
+          The surgical fix will be generated and deployed to each of these pages:
+        </p>
+        <ul className="space-y-1">
+          {pages.map((pageUrl, idx) => {
+            const done = deployResults[idx]?.ok;
+            const path = deployPaths[idx] || '(no path set)';
+            return (
+              <li key={idx} className="flex items-center gap-2 text-[11px]">
+                {done ? (
+                  <Check size={10} style={{ color: 'var(--ok)' }} />
+                ) : (
+                  <FileText size={10} style={{ color: 'var(--m-muted)' }} />
+                )}
+                <span className="font-mono truncate flex-1" style={{ color: done ? 'var(--m-muted)' : 'var(--ink)' }}>
+                  {path}
+                </span>
+                <span className="text-[10px]" style={{ color: 'var(--m-muted)' }}>
+                  {detectLang(pageUrl) !== 'Default' ? detectLang(pageUrl) : ''}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex items-center gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold"
+            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+          >
+            <Sparkles size={11} />
+            Generate and deploy to {pending.length} page{pending.length === 1 ? '' : 's'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3 py-1.5 rounded-md text-[11.5px] font-medium"
+            style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Self-Serve Console (edit + AI + deploy) ──────────────── */
 
 function SelfServeConsole({
@@ -401,11 +793,16 @@ function SelfServeConsole({
   const [explainError, setExplainError] = useState<string | null>(null);
   const lastPatchRef = useRef<string>(initialPatch);
   const [hasRefined, setHasRefined] = useState(false);
+  const [showBulkReview, setShowBulkReview] = useState(false);
 
   // Multi-page support: determine actual pages to deploy
   const pages = affectedPages.length > 1 ? affectedPages : [finding.page_url || ''];
   const hasMultiplePages = pages.length > 1;
   const [activePageIdx, setActivePageIdx] = useState(0);
+
+  // Language + target analysis
+  const pageTargets = useMemo(() => buildPageTargets(pages.filter(Boolean)), [pages]);
+  const langGroups = useMemo(() => groupByLang(pageTargets), [pageTargets]);
 
   // Deploy state — per-page maps keyed by page index
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
@@ -478,6 +875,7 @@ function SelfServeConsole({
 
   const hasFtp = ftpConnections.length > 0;
   const fixType = useMemo(() => inferFixType(finding), [finding]);
+  const deployable = useMemo(() => isDeployable(finding, fixType), [finding, fixType]);
   const aiApplicable = useMemo(
     () => isAiHelperApplicable(fixType, finding.recommendation || ''),
     [fixType, finding.recommendation],
@@ -629,8 +1027,6 @@ function SelfServeConsole({
         deployLogId: data?.deployLogId,
       });
       if (data?.deployLogId) setLastDeployId(data.deployLogId);
-      // Don't clear surgicalResult — the diff preview hides itself via deployResult.ok,
-      // and we need to keep surgicalResult truthy so "Generate surgical fix" button stays hidden.
       // Auto-set finding status to "fixed" after successful deploy
       onStatusChange?.('fixed');
     } catch (err: any) {
@@ -672,6 +1068,17 @@ function SelfServeConsole({
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
+      {/* ── Badges ─────────────────────────────────────────── */}
+      <FixBadges finding={finding} uiFixType={fixType} />
+
+      {/* ── What will change (mandatory) ───────────────────── */}
+      <WhatWillChange
+        finding={finding}
+        uiFixType={fixType}
+        pageTargets={pageTargets}
+        langGroups={langGroups}
+      />
+
       {/* ── Section 1: Review the fix ─────────────────────── */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2.5" style={{ color: 'var(--ink)' }}>
@@ -857,7 +1264,7 @@ function SelfServeConsole({
       )}
 
       {/* ── Section 2: Deploy or Team Guidance ────────────── */}
-      {DESIGN_FIX_TYPES.has(fixType) ? (
+      {!deployable ? (
         <DesignFixGuidance finding={finding} />
       ) : (
       <div>
@@ -871,12 +1278,13 @@ function SelfServeConsole({
         </p>
 
         {/* Page tabs — shown when finding affects 2+ pages */}
-        {hasMultiplePages && (
+        {hasMultiplePages && !showBulkReview && (
           <div className="flex items-center gap-0 mb-2.5 overflow-x-auto" style={{ borderBottom: '1px solid var(--rule)' }}>
             {pages.map((pageUrl, idx) => {
               const isActive = idx === activePageIdx;
               const pageDeployResult = deployResults[idx];
               const isDone = pageDeployResult?.ok === true;
+              const lang = detectLang(pageUrl);
               let label: string;
               try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
               if (label.length > 30) label = '...' + label.slice(-27);
@@ -898,13 +1306,33 @@ function SelfServeConsole({
                     <FileText size={10} />
                   )}
                   {label}
+                  {lang !== 'Default' && (
+                    <span className="text-[9px] px-1 py-px rounded" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)' }}>
+                      {lang}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
         )}
 
-        {hasFtp ? (
+        {/* Bulk deploy review */}
+        {showBulkReview && (
+          <BulkDeployReview
+            pages={pages}
+            deployPaths={deployPaths}
+            deployResults={deployResults}
+            onConfirm={() => {
+              setShowBulkReview(false);
+              // Start surgical fix for current page
+              handleSurgicalFix();
+            }}
+            onCancel={() => setShowBulkReview(false)}
+          />
+        )}
+
+        {!showBulkReview && hasFtp ? (
           <div
             className="px-3 py-3 rounded-lg space-y-2.5"
             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
@@ -1034,6 +1462,20 @@ function SelfServeConsole({
                   {surgicalLoading ? 'Generating fix...' : 'Generate surgical fix'}
                 </button>
 
+                {/* Bulk deploy button for multi-page */}
+                {hasMultiplePages && !surgicalLoading && (
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkReview(true)}
+                    disabled={!canDeploy}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                    style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                  >
+                    <Layers size={11} />
+                    Review all {pages.length} pages
+                  </button>
+                )}
+
                 {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
                   <button
                     type="button"
@@ -1051,7 +1493,7 @@ function SelfServeConsole({
               </div>
             )}
           </div>
-        ) : (
+        ) : !showBulkReview ? (
           <div
             className="px-4 py-4 rounded-lg text-center"
             style={{ background: 'var(--paper-2)', border: '1px solid var(--rule)' }}
@@ -1072,7 +1514,7 @@ function SelfServeConsole({
               Connect server
             </Link>
           </div>
-        )}
+        ) : null}
       </div>
       )}
     </section>
@@ -1101,6 +1543,7 @@ export default function FixConsole({
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const basePatch = (finding.recommendation || '').trim();
   const [livePatch, setLivePatch] = useState(basePatch);
+  const deployable = useMemo(() => isDeployable(finding, fixType), [finding, fixType]);
 
   return (
     <div>
@@ -1113,7 +1556,7 @@ export default function FixConsole({
           fixType={fixType}
         />
       ) : (
-        <div className={`grid grid-cols-1 ${DESIGN_FIX_TYPES.has(fixType) ? '' : 'xl:grid-cols-[1fr_340px]'} gap-4 items-start`}>
+        <div className={`grid grid-cols-1 ${deployable ? 'xl:grid-cols-[1fr_340px]' : ''} gap-4 items-start`}>
           <SelfServeConsole
             finding={finding}
             ftpConnections={ftpConnections}
@@ -1121,7 +1564,7 @@ export default function FixConsole({
             onPatchChange={setLivePatch}
             affectedPages={affectedPages}
           />
-          {!DESIGN_FIX_TYPES.has(fixType) && (
+          {deployable && (
             <div className="hidden xl:block sticky top-4">
               <FixPreviewPanel fixType={fixType} finding={finding} patch={livePatch} />
             </div>

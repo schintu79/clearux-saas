@@ -39,7 +39,7 @@ import { useBrandSelection } from '@/lib/dashboard/useBrandSelection';
 import EmptyAudit from '@/components/dashboard/v2/EmptyAudit';
 import OverviewBreadcrumb from '@/components/dashboard/OverviewBreadcrumb';
 import PageHeader from '@/components/dashboard/v2/PageHeader';
-import FixConsole from '@/components/dashboard/v2/FixConsole';
+import FixConsole, { inferFixType } from '@/components/dashboard/v2/FixConsole';
 import FindingText from '@/components/dashboard/v2/FindingText';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findings-presentation';
@@ -100,6 +100,17 @@ function fixPriority(f: AuditFinding): number {
 
 /* ── Sidebar Finding Item ─────────────────────────────────── */
 
+const FIX_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
+  html:    { bg: 'color-mix(in srgb, #3b82f6 12%, transparent)', color: '#3b82f6' },
+  meta:    { bg: 'color-mix(in srgb, #8b5cf6 12%, transparent)', color: '#8b5cf6' },
+  schema:  { bg: 'color-mix(in srgb, #06b6d4 12%, transparent)', color: '#06b6d4' },
+  copy:    { bg: 'color-mix(in srgb, #10b981 12%, transparent)', color: '#10b981' },
+  file:    { bg: 'color-mix(in srgb, #f59e0b 12%, transparent)', color: '#f59e0b' },
+  config:  { bg: 'color-mix(in srgb, #6366f1 12%, transparent)', color: '#6366f1' },
+  heading: { bg: 'color-mix(in srgb, #10b981 12%, transparent)', color: '#10b981' },
+  design:  { bg: 'color-mix(in srgb, #ef4444 12%, transparent)', color: '#ef4444' },
+};
+
 function SidebarItem({
   group,
   isActive,
@@ -113,6 +124,10 @@ function SidebarItem({
   const sevColor = severityColor(finding.severity);
   const meta = STATUS_META[finding.status] || STATUS_META.open;
   const host = hostnameOf(finding.page_url);
+  const fixType = inferFixType(finding);
+  const dbFix = (finding as AuditFinding & { fix_type?: string | null }).fix_type;
+  const badgeLabel = dbFix || fixType;
+  const badgeStyle = FIX_TYPE_COLORS[badgeLabel] || FIX_TYPE_COLORS.design;
 
   if (finding.dismissed) {
     return (
@@ -149,7 +164,7 @@ function SidebarItem({
           >
             {finding.title}
           </p>
-          <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap text-[10px]">
             <span className="font-semibold uppercase tracking-[0.04em]" style={{ color: sevColor }}>
               {severityLabel(finding.severity)}
             </span>
@@ -160,6 +175,12 @@ function SidebarItem({
             >
               <span className="w-1 h-1 rounded-full" style={{ background: meta.dot }} />
               {meta.label}
+            </span>
+            <span
+              className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-[0.04em]"
+              style={{ background: badgeStyle.bg, color: badgeStyle.color }}
+            >
+              {badgeLabel}
             </span>
             {host && (
               <>
