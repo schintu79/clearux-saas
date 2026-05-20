@@ -52,7 +52,7 @@ import {
   Languages,
   Eye,
 } from 'lucide-react';
-import FixPreviewPanel from './FixPreviewPanel';
+// FixPreviewPanel removed — search/social/assistant previews were causing confusion
 import type { AuditFinding, FixType as DbFixType } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
@@ -371,40 +371,6 @@ function isDeployable(finding: AuditFinding, uiFixType: UiFixType, affectedPages
   return classification === 'fixable_surgical' || classification === 'fixable_bulk';
 }
 
-/* ── Scope + Fix Type Badges ─────────────────────────────── */
-
-function FixBadges({ finding, uiFixType, classification }: { finding: AuditFinding; uiFixType: UiFixType; classification: FixClassification }) {
-  const scope = CLASSIFICATION_META[classification];
-  const dbType = finding.fix_type ? FIX_TYPE_META[finding.fix_type] : null;
-
-  return (
-    <div className="flex items-center gap-2 flex-wrap text-[10px]">
-      {/* Scope label */}
-      <span
-        className="inline-flex items-center gap-1 font-semibold"
-        style={{ color: scope.color }}
-      >
-        {scope.icon}
-        {scope.label}
-      </span>
-
-      {/* DB fix type label */}
-      {dbType && (
-        <>
-          <span style={{ color: 'var(--rule)' }}>|</span>
-          <span
-            className="inline-flex items-center gap-1 font-medium"
-            style={{ color: 'var(--m-muted)' }}
-          >
-            {dbType.icon}
-            {dbType.label}
-          </span>
-        </>
-      )}
-    </div>
-  );
-}
-
 /* ── "What will change" Panel (mandatory) ────────────────── */
 
 function WhatWillChange({
@@ -434,8 +400,8 @@ function WhatWillChange({
   const resolvedPageLabel = pageTargets.length > 0
     ? null // will render the list
     : finding.page_url
-      ? (() => { try { return new URL(finding.page_url).pathname; } catch { return finding.page_url; } })()
-      : null;
+      ? (() => { try { const p = new URL(finding.page_url).pathname; return p || '/'; } catch { return finding.page_url; } })()
+      : '/';
 
   // Detect language from the primary page
   const primaryLang = pageTargets.length > 0
@@ -460,13 +426,14 @@ function WhatWillChange({
       </div>
 
       <div className="px-4 py-3 space-y-3 text-[12px]" style={{ background: '#ffffff' }}>
-        {/* Row 1: Fix type + Scope + Impact */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Uniform 3-column grid for all metadata */}
+        <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+          {/* Row 1 */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
               Fix type
             </span>
-            <span style={{ color: 'var(--ink)' }}>
+            <span className="text-[12px]" style={{ color: 'var(--ink)' }}>
               {dbType ? FIX_TYPE_META[dbType]?.label || dbType : uiFixType.charAt(0).toUpperCase() + uiFixType.slice(1)}
             </span>
           </div>
@@ -475,7 +442,7 @@ function WhatWillChange({
               Scope
             </span>
             <span
-              className="inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-[12px]"
               style={{ color: classificationMeta.color }}
             >
               {classificationMeta.icon}
@@ -493,10 +460,8 @@ function WhatWillChange({
               {impactMeta.label}
             </span>
           </div>
-        </div>
 
-        {/* Row 2: Affected page + Language + Deploy target */}
-        <div className="grid grid-cols-2 gap-3">
+          {/* Row 2 */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
               Affected {hasMultiplePages ? `pages (${pageTargets.length})` : 'page'}
@@ -527,7 +492,7 @@ function WhatWillChange({
                 <ul className="space-y-0.5">
                   {pageTargets.slice(0, 8).map((t) => (
                     <li key={t.url} className="text-[11px] font-mono truncate" style={{ color: 'var(--ink-2)' }}>
-                      {t.path}
+                      {t.path || '/'}
                       {pageTargets.length === 1 && t.lang !== 'Default' && (
                         <span className="ml-2 text-[10px] font-sans" style={{ color: 'var(--m-muted)' }}>({t.lang})</span>
                       )}
@@ -540,56 +505,40 @@ function WhatWillChange({
                   )}
                 </ul>
               )
-            ) : resolvedPageLabel ? (
+            ) : (
               <span className="text-[11px] font-mono" style={{ color: 'var(--ink-2)' }}>
                 {resolvedPageLabel}
               </span>
-            ) : uiFixType === 'schema' ? (
-              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                Homepage — add the JSON-LD block to your homepage&apos;s {'<head>'} section (usually index.html).
-              </span>
-            ) : uiFixType === 'meta' ? (
-              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                Homepage — add or update the meta tag in your homepage&apos;s {'<head>'} section.
-              </span>
-            ) : (
-              <span className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
-                Site-wide issue — applies to all pages. Enter the remote file path manually below.
-              </span>
             )}
           </div>
-
-          {/* Language + deploy target column */}
-          <div className="space-y-2">
-            {primaryLang !== 'Default' && (
-              <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-                  Language
-                </span>
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                  style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
-                >
-                  <Languages size={9} />
-                  {primaryLang}
-                </span>
-              </div>
-            )}
-            {deployable && (
-              <div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
-                  Deploy target
-                </span>
-                <span className="text-[11px]" style={{ color: 'var(--ink-2)' }}>
-                  {uiFixType === 'schema' || uiFixType === 'meta'
-                    ? 'HTML <head> section'
-                    : uiFixType === 'technical'
-                      ? 'Server config / root files'
-                      : 'Page HTML body'}
-                </span>
-              </div>
-            )}
-          </div>
+          {deployable && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Deploy target
+              </span>
+              <span className="text-[12px]" style={{ color: 'var(--ink-2)' }}>
+                {uiFixType === 'schema' || uiFixType === 'meta'
+                  ? 'HTML <head> section'
+                  : uiFixType === 'technical'
+                    ? 'Server config / root files'
+                    : 'Page HTML body'}
+              </span>
+            </div>
+          )}
+          {primaryLang !== 'Default' && (
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] block mb-1" style={{ color: 'var(--m-muted)' }}>
+                Language
+              </span>
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                style={{ background: 'color-mix(in srgb, var(--signal) 8%, transparent)', color: 'var(--signal)' }}
+              >
+                <Languages size={9} />
+                {primaryLang}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Current value */}
@@ -1273,9 +1222,6 @@ function SelfServeConsole({
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
-      {/* ── Badges ─────────────────────────────────────────── */}
-      <FixBadges finding={finding} uiFixType={fixType} classification={classification} />
-
       {/* ── What will change (mandatory) ───────────────────── */}
       <WhatWillChange
         finding={finding}
@@ -1750,7 +1696,7 @@ export default function FixConsole({
   const fixType = useMemo(() => inferFixType(finding), [finding]);
   const classification = useMemo(() => classifyFinding(finding, fixType, affectedPages), [finding, fixType, affectedPages]);
   const basePatch = (finding.recommendation || '').trim();
-  const [livePatch, setLivePatch] = useState(basePatch);
+  // livePatch state removed — preview panel no longer used
   const deployable = useMemo(() => classification === 'fixable_surgical' || classification === 'fixable_bulk', [classification]);
 
   return (
@@ -1764,20 +1710,12 @@ export default function FixConsole({
           fixType={fixType}
         />
       ) : (
-        <div className={`grid grid-cols-1 ${deployable ? 'xl:grid-cols-[1fr_340px]' : ''} gap-4 items-start`}>
-          <SelfServeConsole
-            finding={finding}
-            ftpConnections={ftpConnections}
-            onStatusChange={onStatusChange}
-            onPatchChange={setLivePatch}
-            affectedPages={affectedPages}
-          />
-          {deployable && (
-            <div className="hidden xl:block sticky top-4">
-              <FixPreviewPanel fixType={fixType} finding={finding} patch={livePatch} />
-            </div>
-          )}
-        </div>
+        <SelfServeConsole
+          finding={finding}
+          ftpConnections={ftpConnections}
+          onStatusChange={onStatusChange}
+          affectedPages={affectedPages}
+        />
       )}
     </div>
   );
