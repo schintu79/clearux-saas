@@ -87,6 +87,36 @@ function getClient(): Anthropic {
   return _anthropic
 }
 
+/** Retry an async function with exponential backoff (for rate limit resilience) */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  maxRetries: number = 2,
+  baseDelayMs: number = 2000,
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      const isRateLimit = err instanceof Error && (
+        err.message.includes('rate') ||
+        err.message.includes('429') ||
+        err.message.includes('overloaded') ||
+        err.message.includes('529')
+      )
+      const isTimeout = err instanceof Error && err.message.includes('Timeout')
+      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  throw lastError
+}
+
 /* ── Model probers ─────────────────────────────────────────── */
 
 /**
@@ -122,12 +152,15 @@ async function probeClaude(
 
   for (const q of questions) {
     try {
-      const resp = await client.beta.promptCaching.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
-        system: [{ type: 'text', text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.', cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: q }],
-      })
+      const resp = await withRetry(
+        () => client.beta.promptCaching.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 400,
+          system: [{ type: 'text', text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.', cache_control: { type: 'ephemeral' } }],
+          messages: [{ role: 'user', content: q }],
+        }),
+        `multi-model-claude(${q.substring(0, 40)})`,
+      )
       const answer = resp.content
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map((b) => b.text)
@@ -576,11 +609,14 @@ Respond with a JSON array:
 [{"accuracy": "accurate|partial|inaccurate|hallucinated|no_data", "note": "1 sentence why"}]`
 
   try {
-    const resp = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
-      messages: [{ role: 'user', content: gradingPrompt }],
-    })
+    const resp = await withRetry(
+      () => client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: gradingPrompt }],
+      }),
+      `multi-model-grading(${modelLabel})`,
+    )
 
     const text = resp.content
       .filter((b): b is Anthropic.TextBlock => b.type === 'text')

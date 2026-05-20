@@ -664,7 +664,9 @@ export const processAuditFn = inngest.createFunction(
       })()
 
       // ── LLM Probe ──
-      const llmProbePromise = (async () => {
+      // NOTE: This is a function, NOT an IIFE — deferred to avoid concurrent
+      // Anthropic API pressure. Called sequentially after lightweight probes.
+      const runLlmProbeStep = async () => {
         try {
           const firstPage = crawlResult.pageContent.split('\n---\n')[0] || ''
           const titleMatch = firstPage.match(/^Title: (.+)$/m)
@@ -711,10 +713,10 @@ export const processAuditFn = inngest.createFunction(
           console.error('[inngest] LLM probe failed (non-fatal):', err)
           return { summary: '', accuracyScore: 0, session: null }
         }
-      })()
+      }
 
       // ── Citation Audit ──
-      const citationPromise = (async () => {
+      const runCitationStep = async () => {
         try {
           const db = getDb()
           let domain = ''
@@ -749,10 +751,10 @@ export const processAuditFn = inngest.createFunction(
           console.error('[inngest] Citation audit failed (non-fatal):', err)
           return null
         }
-      })()
+      }
 
       // ── Multi-Model Benchmark ──
-      const multiModelPromise = (async () => {
+      const runMultiModelStep = async () => {
         try {
           const db = getDb()
           let domain = ''
@@ -811,17 +813,26 @@ export const processAuditFn = inngest.createFunction(
           console.error('[inngest] Multi-model benchmark failed (non-fatal):', err)
           return { comparison: null, industry: null }
         }
-      })()
+      }
 
-      // Run all probes in parallel
-      const [aiDisc, sdResult, , llmProbe, citation, multiModel] = await Promise.all([
+      // ── Execution order: lightweight probes first, then API-heavy ones sequentially ──
+      // This prevents 30+ concurrent Anthropic API calls from hitting rate limits.
+
+      // Phase 1: Run lightweight probes in parallel (no Anthropic API calls)
+      const [aiDisc, sdResult] = await Promise.all([
         aiDiscoveryPromise,
         structuredDataPromise,
         readabilityPromise,
-        llmProbePromise,
-        citationPromise,
-        multiModelPromise,
       ])
+
+      // Phase 2: Run LLM probe (5+1 Anthropic API calls)
+      const llmProbe = await runLlmProbeStep()
+
+      // Phase 3: Run citation audit (mostly HTTP fetches, 1 Anthropic call)
+      const citation = await runCitationStep()
+
+      // Phase 4: Run multi-model benchmark LAST (12+ API calls across providers + 4 grading)
+      const multiModel = await runMultiModelStep()
 
       await setProgress(auditId, 25)
 
@@ -1527,7 +1538,7 @@ RULES FOR RE-AUDIT:
         }
       }
 
-      const BATCH_SIZE = 8
+      const BATCH_SIZE = 4 // Reduced from 8 to avoid Anthropic API rate limits
       const batches = []
       for (let i = 0; i < categoriesToAnalyze.length; i += BATCH_SIZE) {
         batches.push(categoriesToAnalyze.slice(i, i + BATCH_SIZE))

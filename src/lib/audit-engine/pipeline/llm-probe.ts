@@ -101,6 +101,36 @@ function getClient(): Anthropic {
   return _anthropic
 }
 
+/** Retry an async function with exponential backoff (for rate limit resilience) */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  maxRetries: number = 2,
+  baseDelayMs: number = 2000,
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      const isRateLimit = err instanceof Error && (
+        err.message.includes('rate') ||
+        err.message.includes('429') ||
+        err.message.includes('overloaded') ||
+        err.message.includes('529')
+      )
+      const isTimeout = err instanceof Error && err.message.includes('Timeout')
+      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  throw lastError
+}
+
 /**
  * Run the full LLM probe session: ask questions, then grade answers.
  * Uses Claude Haiku for speed and cost efficiency.
@@ -117,17 +147,20 @@ export async function runLlmProbe(
   const askPromises = PROBE_QUESTIONS.map(async (q) => {
     const question = q.question.replace('{domain}', domain)
     try {
-      const resp = await Promise.race([
-        client.beta.promptCaching.messages.create({
-          model: modelUsed,
-          max_tokens: 500,
-          system: [{ type: 'text', text: `You are a knowledgeable assistant answering questions about websites and companies. Share what you know confidently. Most well-known companies, products, and websites are in your training data — answer based on that knowledge. Provide specific, factual details: names, features, descriptions, pricing tiers if you know them. Only say "I don't know" if the company/website is genuinely obscure and you have no information at all. Never redirect users to "visit the website" — that defeats the purpose. Give a direct, substantive answer.`, cache_control: { type: 'ephemeral' } }],
-          messages: [{ role: 'user', content: question }],
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Probe timeout')), timeoutMs / PROBE_QUESTIONS.length),
-        ),
-      ])
+      const resp = await withRetry(
+        () => Promise.race([
+          client.beta.promptCaching.messages.create({
+            model: modelUsed,
+            max_tokens: 500,
+            system: [{ type: 'text', text: `You are a knowledgeable assistant answering questions about websites and companies. Share what you know confidently. Most well-known companies, products, and websites are in your training data — answer based on that knowledge. Provide specific, factual details: names, features, descriptions, pricing tiers if you know them. Only say "I don't know" if the company/website is genuinely obscure and you have no information at all. Never redirect users to "visit the website" — that defeats the purpose. Give a direct, substantive answer.`, cache_control: { type: 'ephemeral' } }],
+            messages: [{ role: 'user', content: question }],
+          }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Probe timeout')), timeoutMs / PROBE_QUESTIONS.length),
+          ),
+        ]),
+        `llm-probe(${q.id})`,
+      )
       const answer = resp.content
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map((b) => b.text)
@@ -218,11 +251,14 @@ For each answer, respond with a JSON array where each item has:
 Respond ONLY with a valid JSON array, no other text.`
 
   try {
-    const resp = await client.messages.create({
-      model,
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: gradingPrompt }],
-    })
+    const resp = await withRetry(
+      () => client.messages.create({
+        model,
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: gradingPrompt }],
+      }),
+      'llm-probe-grading',
+    )
 
     const text = resp.content
       .filter((b): b is Anthropic.TextBlock => b.type === 'text')

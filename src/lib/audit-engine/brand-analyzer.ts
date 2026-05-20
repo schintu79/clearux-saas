@@ -23,6 +23,36 @@ function getAnthropicClient(): Anthropic {
   return _anthropic
 }
 
+/** Retry an async function with exponential backoff (for rate limit resilience) */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  maxRetries: number = 2,
+  baseDelayMs: number = 2000,
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      const isRateLimit = err instanceof Error && (
+        err.message.includes('rate') ||
+        err.message.includes('429') ||
+        err.message.includes('overloaded') ||
+        err.message.includes('529')
+      )
+      const isTimeout = err instanceof Error && err.message.includes('Timeout')
+      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  throw lastError
+}
+
 // ── Types ──────────────────────────────────────────────────────
 
 export interface BrandFinding {
@@ -250,12 +280,15 @@ ${languageInstruction}
 Analyze this brand category and return the JSON now.`
 
   try {
-    const response = await client.beta.promptCaching.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 3000,
-      system: [{ type: 'text', text: brandSystemInstructions, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: brandUserPrompt }],
-    })
+    const response = await withRetry(
+      () => client.beta.promptCaching.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
+        system: [{ type: 'text', text: brandSystemInstructions, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: brandUserPrompt }],
+      }),
+      `brandAnalyze(${category.name})`,
+    )
 
     const text = response.content.find((b) => b.type === 'text')?.text || '{}'
 
@@ -372,11 +405,14 @@ Respond with ONLY valid JSON:
 Write as a professional brand consultant. Be direct, specific, and actionable. Reference actual scores and findings. The tone should be honest but constructive — highlight strengths before weaknesses.${languageInstruction}`
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const response = await withRetry(
+      () => client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      'brandExecutiveSummary',
+    )
 
     const text = response.content.find((b) => b.type === 'text')?.text || '{}'
     const jsonStr = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()

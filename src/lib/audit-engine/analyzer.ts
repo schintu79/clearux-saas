@@ -27,6 +27,36 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ])
 }
 
+/** Retry an async function with exponential backoff (for rate limit resilience) */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  maxRetries: number = 2,
+  baseDelayMs: number = 2000,
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      const isRateLimit = err instanceof Error && (
+        err.message.includes('rate') ||
+        err.message.includes('429') ||
+        err.message.includes('overloaded') ||
+        err.message.includes('529')
+      )
+      const isTimeout = err instanceof Error && err.message.includes('Timeout')
+      if (attempt < maxRetries && (isRateLimit || isTimeout)) {
+        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000
+        console.warn(`[${label}] Attempt ${attempt + 1} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${Math.round(delay)}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  throw lastError
+}
+
 export interface AnalysisFinding {
   severity: FindingSeverity
   title: string
@@ -813,15 +843,22 @@ Analyze this category and return the JSON array now.`
     // 2-24 will hit the 5-minute cache and pay only 10% of the input cost for
     // that prefix.  The variable user message (category + page content) is
     // never cached since it changes every call.
-    const message = await withTimeout(
-      anthropic.beta.promptCaching.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
-        temperature: 0,
-        system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: userPrompt }],
-      }),
-      45_000,
+    //
+    // withRetry: retries up to 2 times on rate limits or timeouts with
+    // exponential backoff, preventing silent empty results from transient
+    // API pressure.
+    const message = await withRetry(
+      () => withTimeout(
+        anthropic.beta.promptCaching.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 3000,
+          temperature: 0,
+          system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
+          messages: [{ role: 'user', content: userPrompt }],
+        }),
+        45_000,
+        `analyzeCategory(${category})`,
+      ),
       `analyzeCategory(${category})`,
     )
 
@@ -1256,16 +1293,24 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
 
   try {
     const anthropic = getAnthropicClient()
-    const message = await withTimeout(
-      anthropic.beta.promptCaching.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4096,
-        temperature: 0,
-        system: [{ type: 'text', text: 'You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.', cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      60_000,
+    // withRetry: retries up to 2 times on rate limits or timeouts before
+    // falling back to the score-75 default. This prevents transient API
+    // pressure from producing meaningless flat scores.
+    const message = await withRetry(
+      () => withTimeout(
+        anthropic.beta.promptCaching.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4096,
+          temperature: 0,
+          system: [{ type: 'text', text: 'You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.', cache_control: { type: 'ephemeral' } }],
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        60_000,
+        'generateReport',
+      ),
       'generateReport',
+      2,  // max retries
+      3000, // 3s base delay — report is the final step, more time available
     )
 
     const responseText = message.content
