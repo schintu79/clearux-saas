@@ -567,17 +567,16 @@ export async function analyzeCategory(
     ? `\nAVAILABLE PAGE URLs (use ONLY these exact URLs for the "pageUrl" field):\n${availableUrls.map((u, i) => `  [${i + 1}] ${u}`).join('\n')}\n`
     : ''
 
-  const prompt = `You are a senior UX strategist at a world-class design consultancy (think IDEO, Pentagram, or Nielsen Norman Group). You are conducting a deep, human-centered UX audit for a paying client. This is NOT a basic checklist scan — it is the kind of audit that agencies charge $5,000–$15,000 for.
-${languageInstruction}
-CATEGORY: ${displayCategoryName}
-${focusBlock}${pageUrlIndex}
-EVALUATION CRITERIA:
-${itemsToCheck}
+  // ── Prompt caching strategy ───────────────────────────────────
+  // The static instruction block (~4 000 words) is identical across all 24
+  // category calls within one audit.  Moving it to a `system` message with
+  // cache_control means calls 2-24 get a cache *read* hit (~90 % cheaper
+  // on input tokens) while only call #1 pays the 25 % write premium.
+  //
+  // Variable parts (category name, checklist, page content, language,
+  // re-audit context) stay in the `user` message.
 
-WEBSITE CONTENT (text extracted from MULTIPLE PAGES — each page starts with "URL:" followed by the page address):
----
-${pageContent.substring(0, 10000)}
----
+  const systemInstructions = `You are a senior UX strategist at a world-class design consultancy (think IDEO, Pentagram, or Nielsen Norman Group). You are conducting a deep, human-centered UX audit for a paying client. This is NOT a basic checklist scan — it is the kind of audit that agencies charge $5,000–$15,000 for.
 
 YOUR APPROACH — DEEP ANALYSIS, NOT SURFACE SCANNING:
 You must think like a senior consultant, not an automated checker. Your job is to find REAL issues that actually impact users, conversions, and business outcomes. The kind of insights that make a client say "I never thought of that."
@@ -770,7 +769,21 @@ QUANTITY GUIDELINES (HARD LIMITS):
 - NEVER repeat the same finding with slight rewording. Each finding must address a DISTINCT issue.
 - A 25-page site with strong design should produce 15-25 total findings across all categories, not 50+.
 
-${pageContent.includes('PREVIOUS FINDINGS') ? `RE-AUDIT CONSISTENCY:
+Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
+
+  // Variable part — category-specific content that changes per call
+  const userPrompt = `${languageInstruction}
+CATEGORY: ${displayCategoryName}
+${focusBlock}${pageUrlIndex}
+EVALUATION CRITERIA:
+${itemsToCheck}
+
+WEBSITE CONTENT (text extracted from MULTIPLE PAGES — each page starts with "URL:" followed by the page address):
+---
+${pageContent.substring(0, 10000)}
+---
+${pageContent.includes('PREVIOUS FINDINGS') ? `
+RE-AUDIT CONSISTENCY:
 A PREVIOUS AUDIT BASELINE is provided above. You MUST be consistent:
 - Do NOT invent new issues for content that hasn't changed since the previous audit.
 - Do NOT assign a different severity to the same unchanged issue.
@@ -787,19 +800,26 @@ However, you MUST respect these rules:
 3. Do NOT find issues for the sake of finding issues. Every new finding must be genuinely impactful — the kind of thing a $200/hour consultant would flag. If there are no new real issues to find, return fewer findings. Quality over quantity.
 4. New findings should explore DEEPER layers of analysis — things the first audit couldn't cover, subtle interaction patterns, advanced accessibility edge cases, nuanced content strategy gaps. Not surface-level issues that should have been caught the first time.` : ''}
 ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: Every single field in the JSON response (title, description, recommendation, estimatedImpact) MUST be written in ${getLanguageLabel(language)}. The JSON keys stay in English, but ALL values must be in ${getLanguageLabel(language)}. Do NOT write any finding text in English.\n` : ''}
-Return ONLY a valid JSON array. No markdown, no explanation, no code fences.`
+Analyze this category and return the JSON array now.`
 
   try {
     const anthropic = getAnthropicClient()
     // Haiku 4.5 — excellent at structured analysis tasks (issue identification,
     // severity classification, actionable recommendations). Sonnet is reserved
     // for the final report generation where writing quality matters more.
+    //
+    // Prompt caching: the static system instructions (~4 000 words) are cached
+    // with cache_control.  Within one audit's 24 parallel category calls, calls
+    // 2-24 will hit the 5-minute cache and pay only 10% of the input cost for
+    // that prefix.  The variable user message (category + page content) is
+    // never cached since it changes every call.
     const message = await withTimeout(
-      anthropic.messages.create({
+      anthropic.beta.promptCaching.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 3000,
         temperature: 0,
-        messages: [{ role: 'user', content: prompt }],
+        system: [{ type: 'text', text: systemInstructions, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: userPrompt }],
       }),
       45_000,
       `analyzeCategory(${category})`,
@@ -1237,10 +1257,11 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
   try {
     const anthropic = getAnthropicClient()
     const message = await withTimeout(
-      anthropic.messages.create({
+      anthropic.beta.promptCaching.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
         temperature: 0,
+        system: [{ type: 'text', text: 'You are a senior UX strategist at a premium consultancy writing the executive summary for a human-centered digital audit. This report costs real money — the client expects the quality of a $10,000 consulting engagement.', cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: prompt }],
       }),
       60_000,

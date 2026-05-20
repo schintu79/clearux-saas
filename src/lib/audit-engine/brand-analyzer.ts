@@ -157,16 +157,11 @@ export async function analyzeBrandCategory(
     ? `\n\nIMPORTANT: Write ALL output (summary, titles, descriptions, recommendations) in the language with code "${language}". Only the JSON keys must stay in English.`
     : ''
 
-  const prompt = `You are an expert brand strategist conducting a professional brand identity audit for "${brandName}".
-
-## Category: ${category.name}
-${category.description}
-
-## Analysis Instructions
-${category.analysisPrompt}
-
-## Brand Materials
-${brandContext}
+  // ── Prompt caching — static brand audit instructions ──────────
+  // The scoring guide, evidence rules, opinion filter, and self-check are
+  // identical across all 9 brand category calls.  Caching them in the
+  // system message means calls 2-9 get ~90 % cheaper input tokens.
+  const brandSystemInstructions = `You are an expert brand strategist conducting a professional brand identity audit.
 
 ## Output Format
 Respond with ONLY valid JSON (no markdown fences):
@@ -239,13 +234,27 @@ Before returning your findings, review each one against these gates:
 5. Would a paying client consider this finding worth their time and money to fix? If no → DELETE.
 
 ## QUANTITY GUIDELINES
-Find 2-5 findings per category. Fewer, better findings beat many shallow ones. It's OK to report only 1-2 findings if the materials are genuinely strong in this category. NEVER pad with speculative or opinion-based findings.${languageInstruction}`
+Find 2-5 findings per category. Fewer, better findings beat many shallow ones. It's OK to report only 1-2 findings if the materials are genuinely strong in this category. NEVER pad with speculative or opinion-based findings.`
+
+  const brandUserPrompt = `Brand: "${brandName}"
+
+## Category: ${category.name}
+${category.description}
+
+## Analysis Instructions
+${category.analysisPrompt}
+
+## Brand Materials
+${brandContext}
+${languageInstruction}
+Analyze this brand category and return the JSON now.`
 
   try {
-    const response = await client.messages.create({
+    const response = await client.beta.promptCaching.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
+      system: [{ type: 'text', text: brandSystemInstructions, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: brandUserPrompt }],
     })
 
     const text = response.content.find((b) => b.type === 'text')?.text || '{}'

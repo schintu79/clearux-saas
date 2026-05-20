@@ -122,10 +122,10 @@ async function probeClaude(
 
   for (const q of questions) {
     try {
-      const resp = await client.messages.create({
+      const resp = await client.beta.promptCaching.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 400,
-        system: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.',
+        system: [{ type: 'text', text: 'You are answering questions about websites and companies. Share what you know confidently — most well-known products and companies are in your training data. Provide specific details: names, features, pricing tiers. Only say "I don\'t know" if the company is genuinely obscure. Never redirect users to "visit the website." Give a direct, substantive answer.', cache_control: { type: 'ephemeral' } }],
         messages: [{ role: 'user', content: q }],
       })
       const answer = resp.content

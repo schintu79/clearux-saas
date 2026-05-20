@@ -118,10 +118,10 @@ export async function runLlmProbe(
     const question = q.question.replace('{domain}', domain)
     try {
       const resp = await Promise.race([
-        client.messages.create({
+        client.beta.promptCaching.messages.create({
           model: modelUsed,
           max_tokens: 500,
-          system: `You are a knowledgeable assistant answering questions about websites and companies. Share what you know confidently. Most well-known companies, products, and websites are in your training data — answer based on that knowledge. Provide specific, factual details: names, features, descriptions, pricing tiers if you know them. Only say "I don't know" if the company/website is genuinely obscure and you have no information at all. Never redirect users to "visit the website" — that defeats the purpose. Give a direct, substantive answer.`,
+          system: [{ type: 'text', text: `You are a knowledgeable assistant answering questions about websites and companies. Share what you know confidently. Most well-known companies, products, and websites are in your training data — answer based on that knowledge. Provide specific, factual details: names, features, descriptions, pricing tiers if you know them. Only say "I don't know" if the company/website is genuinely obscure and you have no information at all. Never redirect users to "visit the website" — that defeats the purpose. Give a direct, substantive answer.`, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: question }],
         }),
         new Promise<never>((_, reject) =>
