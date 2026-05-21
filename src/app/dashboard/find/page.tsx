@@ -280,17 +280,17 @@ function FindPageInner() {
         subtitle="All findings from your latest audit, grouped by module."
       />
 
-      {/* Tab navigation — Priority recommendations vs Strategic observations */}
-      <div className="flex items-center gap-0 mb-4" style={{ borderBottom: '1px solid var(--rule)' }}>
+      {/* Tab navigation */}
+      <div className="flex items-center gap-0 mb-5" style={{ borderBottom: '2px solid var(--rule)' }}>
         {[
-          { key: 'priority' as const, label: 'Priority recommendations', count: totalAll },
+          { key: 'priority' as const, label: 'Fixes & recommendations', count: totalAll },
           { key: 'strategic' as const, label: 'Strategic observations', count: strategicFindings.length },
         ].map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className="px-3 py-2 text-[12.5px] font-medium transition-colors relative"
+            className="px-4 py-2.5 text-[13px] font-semibold transition-colors relative -mb-[2px]"
             style={{
               color: activeTab === tab.key ? 'var(--ink)' : 'var(--m-muted)',
               background: 'transparent',
@@ -299,13 +299,16 @@ function FindPageInner() {
           >
             {tab.label}
             {tab.count > 0 && (
-              <span className="ml-1.5 text-[10px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
+              <span
+                className="ml-1.5 text-[11px] tabular-nums font-medium"
+                style={{ color: activeTab === tab.key ? 'var(--ink-2)' : 'var(--m-muted)' }}
+              >
                 {tab.count}
               </span>
             )}
             {activeTab === tab.key && (
               <span
-                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full"
                 style={{ background: 'var(--ink)' }}
               />
             )}
