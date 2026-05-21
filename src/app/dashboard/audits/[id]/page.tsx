@@ -1183,7 +1183,7 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
   const [audit, setAudit] = useState<AuditWithReport | null>(null);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [auditPages, setAuditPages] = useState<Array<{ url: string; title: string | null; status_code: number | null; load_time_ms: number | null; screenshot_url: string | null; is_mobile_friendly: boolean | null; viewport_meta: string | null; content_text: string | null; ai_readability: any | null; technical_audit: any | null }>>([]);
-  const [siblingCount, setSiblingCount] = useState(0); // other audits for same domain
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -1304,18 +1304,6 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
 
         if (auditError) throw auditError;
         if (!auditData) throw new Error('Audit not found');
-
-        // Check if this audit has siblings (other audits for the same domain)
-        try {
-          const domain = new URL(auditData.product_url).hostname.replace(/^www\./, '');
-          const { count } = await supabase
-            .from('audits')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .neq('id', auditId)
-            .ilike('product_url', `%${domain}%`);
-          setSiblingCount(count || 0);
-        } catch { setSiblingCount(0); }
 
         let reportData = null;
         if (auditData.status === 'completed') {
@@ -1915,13 +1903,13 @@ const AuditDetailInner = ({ params }: { params: Promise<{ id: string }> }) => {
         </div>
       )}
 
-      {/* Back — if audit belongs to a domain group (siblings), go to dedicated domain page; otherwise back to Overview */}
+      {/* Back — always return to the dashboard Overview */}
       <Link
-        href={siblingCount > 0 ? `/dashboard/audits/site/${encodeURIComponent(formatUrl(audit.product_url || ''))}` : '/dashboard/overview'}
+        href="/dashboard/overview"
         className="inline-flex items-center gap-1.5 text-sm text-m-muted hover:text-ink transition-colors mb-6"
       >
         <ArrowLeft size={16} />
-        {siblingCount > 0 ? `Back to ${formatUrl(audit.product_url || '')} Audits` : 'Back to Overview'}
+        Back to Overview
       </Link>
 
       {/* ── Header ─────────────────────────────────────────── */}
