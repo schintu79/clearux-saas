@@ -23,6 +23,12 @@ Last updated: 2026-05-21
 - **Already-fixed handling**: If a page already has the correct value, it's marked as success with the "already correct" message — no unnecessary writes
 - **Files**: `src/components/dashboard/v2/FixConsole.tsx`
 
+### All-pages expansion and auto-path for batch fixes
+- **Problem**: For `scope: 'all-pages'` patterns (e.g. html lang attribute), the Fix Console only showed 1 affected page because `groupFindingsForDisplay()` collects `affectedPages` from findings sharing the same signature — but the finding is typically stored on only 1 page. The remote file path field was also left empty, requiring manual user input, which defeats the purpose of one-click fixes.
+- **Fix**: Added `allCrawledPages` prop to FixConsole, derived from all unique `page_url` values across every finding in the audit bundle. When `detectBatchPattern()` returns `scope: 'all-pages'`, the page list expands to all crawled pages instead of just the finding's affected pages. Remote file paths are auto-suggested from the page URLs using the FTP connection's `remote_path` root.
+- **Prop threading**: `allCrawledPages` is computed in `FixPageInner` via `useMemo` over `bundle.findings`, passed through `ActiveFindingDetail` to `FixConsole`.
+- **Files**: `src/app/dashboard/fix/page.tsx`, `src/components/dashboard/v2/FixConsole.tsx`
+
 ### `batch-replace` operation type added to DiffPreview
 - **Fix**: Added `'batch-replace'` to `SurgicalOperation` type union and `OP_META` record in DiffPreview to prevent TypeScript error
 - **Files**: `src/components/dashboard/v2/DiffPreview.tsx`

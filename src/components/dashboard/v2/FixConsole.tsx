@@ -920,12 +920,14 @@ function SelfServeConsole({
   onStatusChange,
   onPatchChange,
   affectedPages = [],
+  allCrawledPages = [],
 }: {
   finding: AuditFinding;
   ftpConnections?: FtpConnectionForDeploy[];
   onStatusChange?: (status: string) => void;
   onPatchChange?: (patch: string) => void;
   affectedPages?: string[];
+  allCrawledPages?: string[];
 }) {
   const initialPatch = (finding.recommendation || '').trim();
   const [patch, setPatch] = useState<string>(initialPatch);
@@ -948,8 +950,24 @@ function SelfServeConsole({
   const [hasRefined, setHasRefined] = useState(false);
   const [showBulkReview, setShowBulkReview] = useState(false);
 
-  // Multi-page support: determine actual pages to deploy
-  const pages = affectedPages.length > 1 ? affectedPages : [finding.page_url || ''];
+  // Multi-page support: determine actual pages to deploy.
+  // For batch-capable patterns (scope:'all-pages'), expand to ALL crawled pages
+  // even if the finding only references one page — e.g. lang attribute fix
+  // affects every HTML file on the site, not just the page that was flagged.
+  const _batchCheck = useMemo(() => detectBatchPattern({
+    title: finding.title || '',
+    description: finding.description || '',
+    recommendation: (finding.recommendation || '').trim(),
+  }), [finding.title, finding.description, finding.recommendation]);
+
+  const pages = useMemo(() => {
+    // If batch pattern says "all-pages" and we have crawled pages, use those
+    if (_batchCheck?.scope === 'all-pages' && allCrawledPages.length > 1) {
+      return allCrawledPages;
+    }
+    return affectedPages.length > 1 ? affectedPages : [finding.page_url || ''];
+  }, [_batchCheck, allCrawledPages, affectedPages, finding.page_url]);
+
   const hasMultiplePages = pages.length > 1;
   const [activePageIdx, setActivePageIdx] = useState(0);
 
@@ -1029,7 +1047,8 @@ function SelfServeConsole({
     [ftpConnections, deployConnectionId],
   );
 
-  // Auto-suggest deploy paths — one per affected page
+  // Auto-suggest deploy paths — one per affected page.
+  // Runs when connection changes OR when pages expand (batch pattern detection).
   React.useEffect(() => {
     const root = selectedConn?.remote_path || '';
     if (!root && !selectedConn) return;
@@ -1042,7 +1061,7 @@ function SelfServeConsole({
     if (Object.keys(updates).length > 0) {
       setDeployPaths((prev) => ({ ...prev, ...updates }));
     }
-  }, [selectedConn]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedConn, pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasFtp = ftpConnections.length > 0;
   const fixType = useMemo(() => inferFixType(finding), [finding]);
@@ -1879,6 +1898,7 @@ export default function FixConsole({
   ftpConnections = [],
   onStatusChange,
   affectedPages = [],
+  allCrawledPages = [],
 }: {
   finding: AuditFinding;
   pending: boolean;
@@ -1888,6 +1908,8 @@ export default function FixConsole({
   onStatusChange?: (status: string) => void;
   /** All page URLs affected by this grouped finding. */
   affectedPages?: string[];
+  /** All unique pages from the entire audit — used for batch patterns with scope:'all-pages'. */
+  allCrawledPages?: string[];
 }) {
   const [activeTab, setActiveTab] = useState<'self' | 'handoff'>('self');
   const fixType = useMemo(() => inferFixType(finding), [finding]);
@@ -1912,6 +1934,7 @@ export default function FixConsole({
           ftpConnections={ftpConnections}
           onStatusChange={onStatusChange}
           affectedPages={affectedPages}
+          allCrawledPages={allCrawledPages}
         />
       )}
     </div>

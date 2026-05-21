@@ -203,12 +203,14 @@ function ActiveFindingDetail({
   group,
   pending,
   ftpConnections,
+  allCrawledPages,
   onStatus,
   onDismiss,
 }: {
   group: GroupedFinding;
   pending: boolean;
   ftpConnections: FtpConnectionSummary[];
+  allCrawledPages: string[];
   onStatus: (id: string, status: FindingStatus) => void;
   onDismiss: (id: string, reason: string) => void;
 }) {
@@ -435,6 +437,7 @@ function ActiveFindingDetail({
               pending={pending}
               ftpConnections={ftpConnections}
               affectedPages={group.affectedPages}
+              allCrawledPages={allCrawledPages}
               onStatusChange={(status) => onStatus(finding.id, status as FindingStatus)}
             />
           </div>
@@ -554,6 +557,17 @@ function FixPageInner() {
     const fixable = bundle.findings.filter((f) => (f as AuditFinding & { finding_type?: string }).finding_type !== 'strategic');
     const grouped = groupFindingsForDisplay(fixable, (f) => moduleIndexForFinding(f));
     return [...grouped].sort((a, b) => fixPriority(b.primary) - fixPriority(a.primary));
+  }, [bundle]);
+
+  // All unique crawled pages across the entire audit — used for batch fixes
+  // that target every page (e.g. lang attribute, viewport meta)
+  const allCrawledPages = useMemo(() => {
+    if (!bundle) return [];
+    const urls = new Set<string>();
+    for (const f of bundle.findings) {
+      if (f.page_url) urls.add(f.page_url);
+    }
+    return Array.from(urls);
   }, [bundle]);
 
   const stats = useMemo(() => {
@@ -728,6 +742,7 @@ function FixPageInner() {
                 group={activeGroup}
                 pending={!!pending[activeGroup.primary.id]}
                 ftpConnections={ftpConnections}
+                allCrawledPages={allCrawledPages}
                 onStatus={handleStatus}
                 onDismiss={handleDismiss}
               />
