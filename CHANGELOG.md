@@ -6,6 +6,15 @@ Last updated: 2026-05-21
 
 ---
 
+## Surgical Fix Engine
+
+### Multilingual lang attribute fix broken on batch deploy
+- **Bug**: The deterministic `html-lang-attribute` pattern extracted a single target language from the recommendation text and applied it to ALL pages. On multilingual sites where Italian pages need `lang='it'` and English pages need `lang='en-US'`, it would incorrectly set every page to `lang='it'` (the first match).
+- **Fix**: Made the `DeterministicFix.apply` interface accept an optional `pageUrl` parameter. The lang attribute pattern now parses all language-to-page mappings from the recommendation text, matches the current page URL to find the correct target lang, and falls back to URL pattern inference (e.g. `-eng` suffix implies English). The `pageUrl` is threaded from the API route through `tryDeterministicFix` and `checkAlreadyFixed`.
+- **Files**: `src/lib/surgical-fix.ts`, `src/app/api/surgical-fix/route.ts`
+
+---
+
 ## State Synchronization (AuditBundleContext)
 
 ### Cross-page stale data after mutations

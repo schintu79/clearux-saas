@@ -93,7 +93,7 @@ export interface DeterministicFix {
   /** Does this finding + recommendation match this pattern? */
   detect: (finding: { title: string; description: string; recommendation: string }) => boolean
   /** Given file content, return { find, replace } or null if already correct */
-  apply: (content: string, finding: { title: string; description: string; recommendation: string }) => {
+  apply: (content: string, finding: { title: string; description: string; recommendation: string }, pageUrl?: string) => {
     find: string
     replace: string
     explanation: string
@@ -117,23 +117,68 @@ export const DETERMINISTIC_PATTERNS: DeterministicFix[] = [
       return (t.includes('lang=') || t.includes('lang attribute') || t.includes('language') || t.includes('language identification'))
         && (t.includes('html') || t.includes('page'))
     },
-    apply: (content, { title, description, recommendation }) => {
-      // Extract what the lang SHOULD be from the finding text
+    apply: (content, { title, description, recommendation }, pageUrl) => {
       const allText = `${title} ${description} ${recommendation}`
-      const targetLangMatch = allText.match(/lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
-        || allText.match(/correct.*?to\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
-        || allText.match(/should\s+be\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
 
       // Extract the current lang from the file
       const currentLangMatch = content.match(/<html[^>]*\slang=["']([^"']+)["']/i)
       if (!currentLangMatch) return null // No lang attribute found
 
       const currentLang = currentLangMatch[1]
-      let targetLang = targetLangMatch?.[1] || null
 
-      // If we can't determine target from text, infer from common patterns
+      // ── Multilingual-aware: use the page URL to determine the correct lang ──
+      // The recommendation may mention multiple languages (e.g. Italian pages
+      // need lang='it', English pages need lang='en-US'). We parse ALL
+      // language→page mappings from the recommendation and match the current
+      // pageUrl to find the correct target lang for THIS specific page.
+      let targetLang: string | null = null
+
+      if (pageUrl) {
+        // Extract page-to-language mappings from the recommendation.
+        // Pattern: "pages (/path, /path2) must have lang='xx'"
+        // or "Italian pages (/path, /path2) must have lang='it'"
+        const pageLangMappings = recommendation.matchAll(
+          /(?:pages?\s*\(([^)]+)\).*?lang=["']([a-z]{2}(?:-[A-Z]{2})?)["'])|(?:lang=["']([a-z]{2}(?:-[A-Z]{2})?)["'].*?pages?\s*\(([^)]+)\))/gi
+        )
+
+        let pageUrlPath: string
+        try { pageUrlPath = new URL(pageUrl).pathname } catch { pageUrlPath = pageUrl }
+
+        for (const m of pageLangMappings) {
+          const paths = (m[1] || m[4] || '').split(',').map((p: string) => p.trim())
+          const lang = m[2] || m[3]
+          if (lang && paths.some((p: string) => {
+            // Match by path: "/about-page.html" matches "/about-page.html"
+            // Also match "/" for homepage
+            return p === pageUrlPath || pageUrlPath.endsWith(p) || p.endsWith(pageUrlPath)
+          })) {
+            targetLang = lang
+            break
+          }
+        }
+
+        // Fallback: infer from URL patterns (e.g. "-eng" suffix → English)
+        if (!targetLang) {
+          const pathLower = pageUrlPath.toLowerCase()
+          if (pathLower.includes('-eng') || pathLower.includes('/en/') || pathLower.includes('/en-')) {
+            // Try to find the English lang from the recommendation
+            const enMatch = recommendation.match(/(?:english|en-us|en-gb).*?lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
+              || recommendation.match(/lang=["']([a-z]{2}-[A-Z]{2})["']/i) // e.g. en-US
+            targetLang = enMatch?.[1] || 'en-US'
+          }
+        }
+      }
+
+      // If page-aware matching didn't resolve, fall back to single-language extraction
       if (!targetLang) {
-        // If description mentions "Italian" and current is "en-US", target is "it"
+        const targetLangMatch = allText.match(/lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
+          || allText.match(/correct.*?to\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
+          || allText.match(/should\s+be\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
+        targetLang = targetLangMatch?.[1] || null
+      }
+
+      // If we still can't determine target, infer from language names in text
+      if (!targetLang) {
         const descLower = `${title} ${description}`.toLowerCase()
         if (descLower.includes('italian')) targetLang = 'it'
         else if (descLower.includes('german')) targetLang = 'de'
@@ -232,6 +277,7 @@ export const DETERMINISTIC_PATTERNS: DeterministicFix[] = [
 export function tryDeterministicFix(
   content: string,
   finding: { title: string; description: string; recommendation: string },
+  pageUrl?: string,
 ): {
   pattern: DeterministicFix
   find: string
@@ -240,7 +286,7 @@ export function tryDeterministicFix(
 } | null {
   for (const pattern of DETERMINISTIC_PATTERNS) {
     if (!pattern.detect(finding)) continue
-    const result = pattern.apply(content, finding)
+    const result = pattern.apply(content, finding, pageUrl)
     if (result) return { pattern, ...result }
     // Pattern matched but file already correct — return special signal
     // (caller should check for null and handle "already fixed")
@@ -270,10 +316,11 @@ export function detectBatchPattern(
 export function checkAlreadyFixed(
   content: string,
   finding: { title: string; description: string; recommendation: string },
+  pageUrl?: string,
 ): string | null {
   for (const pattern of DETERMINISTIC_PATTERNS) {
     if (!pattern.detect(finding)) continue
-    const result = pattern.apply(content, finding)
+    const result = pattern.apply(content, finding, pageUrl)
     if (result === null) {
       // Pattern matched but nothing to fix — already correct
       return `This page already has the correct value. No change needed.`

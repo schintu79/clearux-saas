@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       findingTitle,
       findingDescription,
       findingCategory,
+      pageUrl,
       language,
     } = body
 
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the file already has the correct value
-    const alreadyFixed = checkAlreadyFixed(originalContent, findingMeta)
+    const alreadyFixed = checkAlreadyFixed(originalContent, findingMeta, pageUrl || undefined)
     if (alreadyFixed) {
       const result: SurgicalFixResult = {
         operation,
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try deterministic pattern match
-    const deterministicResult = tryDeterministicFix(originalContent, findingMeta)
+    const deterministicResult = tryDeterministicFix(originalContent, findingMeta, pageUrl || undefined)
     if (deterministicResult) {
       const { find, replace, explanation } = deterministicResult
       const patchedContent = originalContent.replace(find, replace)
