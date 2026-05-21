@@ -34,6 +34,12 @@ Last updated: 2026-05-21
 - **Fix**: (1) Hide the remote file path input when a batch pattern is detected — replaced with a "Paths auto-resolved from N crawled page URLs" message. (2) `canDeploy` and `canBatchDeploy` no longer require pre-filled paths when a batch pattern is active. (3) `handleBatchFix` auto-resolves paths from page URLs + the FTP connection's `remote_path` root via `suggestRemotePath()`. (4) `handleSurgicalFix` and `handleSurgicalDeploy` also auto-resolve paths when the field is empty.
 - **Files**: `src/components/dashboard/v2/FixConsole.tsx`
 
+### Redesign page tabs and clarify batch vs single fix flow
+- **Problem**: Page tabs were flat underlined text buttons that didn't clearly communicate these are separate pages. The two deploy buttons ("Generate surgical fix" vs "Fix all pages") were confusing — unclear which to use first.
+- **Page tabs redesign**: Replaced flat tab-bar with a grid of numbered card-style buttons. Each page shows: a numbered circle (or green check when deployed), the pathname in monospace, and a language badge if non-default. Active page has a bold border and shadow. Section headed by a Globe icon and "Affected pages" label with count badge.
+- **Button hierarchy for batch patterns**: "Fix all pages" is now the primary (dark) button, positioned first. "Preview single page fix" is secondary (outlined). Added inline explanation text clarifying each button's purpose.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
 ### `batch-replace` operation type added to DiffPreview
 - **Fix**: Added `'batch-replace'` to `SurgicalOperation` type union and `OP_META` record in DiffPreview to prevent TypeScript error
 - **Files**: `src/components/dashboard/v2/DiffPreview.tsx`

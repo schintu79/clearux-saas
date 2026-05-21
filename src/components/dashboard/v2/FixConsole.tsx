@@ -1571,41 +1571,57 @@ function SelfServeConsole({
 
         {/* Page tabs — shown when finding affects 2+ pages */}
         {hasMultiplePages && !showBulkReview && (
-          <div className="flex items-center gap-0 mb-2.5 overflow-x-auto" style={{ borderBottom: '1px solid var(--rule)' }}>
-            {pages.map((pageUrl, idx) => {
-              const isActive = idx === activePageIdx;
-              const pageDeployResult = deployResults[idx];
-              const isDone = pageDeployResult?.ok === true;
-              const lang = detectLang(pageUrl);
-              let label: string;
-              try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
-              if (label.length > 30) label = '...' + label.slice(-27);
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setActivePageIdx(idx)}
-                  className="relative flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium whitespace-nowrap transition-colors flex-shrink-0"
-                  style={{
-                    color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-                    borderBottom: isActive ? '2px solid var(--ink)' : '2px solid transparent',
-                    marginBottom: '-1px',
-                  }}
-                >
-                  {isDone ? (
-                    <Check size={10} style={{ color: 'var(--ok)' }} />
-                  ) : (
-                    <FileText size={10} />
-                  )}
-                  {label}
-                  {lang !== 'Default' && (
-                    <span className="text-[9px] px-1 py-px rounded" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)' }}>
-                      {lang}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Globe size={11} style={{ color: 'var(--ink)' }} />
+              <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
+                Affected pages
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)', color: 'var(--ink)' }}>
+                {pages.length}
+              </span>
+            </div>
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(180px, 1fr))` }}>
+              {pages.map((pageUrl, idx) => {
+                const isActive = idx === activePageIdx;
+                const pageDeployResult = deployResults[idx];
+                const isDone = pageDeployResult?.ok === true;
+                const lang = detectLang(pageUrl);
+                let label: string;
+                try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
+                if (label.length > 28) label = '...' + label.slice(-25);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActivePageIdx(idx)}
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-md text-[11px] font-medium whitespace-nowrap transition-all text-left"
+                    style={{
+                      background: isActive ? '#ffffff' : 'transparent',
+                      border: isActive ? '1.5px solid var(--ink)' : '1px solid var(--rule)',
+                      color: isActive ? 'var(--ink)' : 'var(--m-muted)',
+                      boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    }}
+                  >
+                    {isDone ? (
+                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }}>
+                        <Check size={9} style={{ color: '#fff' }} />
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0 text-[9px] font-bold" style={{ background: isActive ? 'var(--ink)' : 'var(--rule)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                        {idx + 1}
+                      </span>
+                    )}
+                    <code className="text-[10.5px] truncate">{label}</code>
+                    {lang !== 'Default' && (
+                      <span className="text-[9px] px-1 py-px rounded flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)' }}>
+                        {lang}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -1819,45 +1835,68 @@ function SelfServeConsole({
 
             {/* Deploy actions — hidden after successful surgical deploy */}
             {!surgicalResult && !deployResult?.ok && (
-              <div className="flex items-center gap-2 pt-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleSurgicalFix}
-                  disabled={surgicalLoading || deploying || restoring || !canDeploy}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
-                  style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-                >
-                  {surgicalLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                  {surgicalLoading ? 'Generating fix...' : 'Generate surgical fix'}
-                </button>
+              <div className="flex flex-col gap-2 pt-1">
+                {/* Batch pattern: "Fix all pages" is primary, preview is secondary */}
+                {batchPattern ? (
+                  <>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {!batchFixRunning && (
+                        <button
+                          type="button"
+                          onClick={handleBatchFix}
+                          disabled={!canBatchDeploy || deploying || restoring || surgicalLoading}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
+                          style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                          title={`Deterministic fix: ${batchPattern.patternName} — applies to all ${pages.length} pages`}
+                        >
+                          {batchFixRunning ? <Loader2 size={12} className="animate-spin" /> : <Layers size={12} />}
+                          Fix all {pages.length} pages
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleSurgicalFix}
+                        disabled={surgicalLoading || deploying || restoring || !canDeploy || batchFixRunning}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium disabled:opacity-50 transition-opacity"
+                        style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      >
+                        {surgicalLoading ? <Loader2 size={11} className="animate-spin" /> : <Eye size={11} />}
+                        {surgicalLoading ? 'Generating...' : 'Preview single page fix'}
+                      </button>
+                    </div>
+                    <p className="text-[10.5px] leading-[1.5]" style={{ color: 'var(--m-muted)' }}>
+                      <strong style={{ color: 'var(--ink)' }}>Fix all pages</strong> applies the fix to every page automatically.{' '}
+                      <strong style={{ color: 'var(--ink)' }}>Preview</strong> lets you inspect the change on the selected page before deploying.
+                    </p>
+                  </>
+                ) : (
+                  /* Non-batch: "Generate surgical fix" is primary */
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleSurgicalFix}
+                      disabled={surgicalLoading || deploying || restoring || !canDeploy}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
+                      style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+                    >
+                      {surgicalLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                      {surgicalLoading ? 'Generating fix...' : 'Generate surgical fix'}
+                    </button>
 
-                {/* Batch fix button — deterministic patterns that apply to all pages */}
-                {batchPattern && !surgicalLoading && !batchFixRunning && (
-                  <button
-                    type="button"
-                    onClick={handleBatchFix}
-                    disabled={!canBatchDeploy || deploying || restoring}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
-                    style={{ background: 'var(--ok)', color: '#fff' }}
-                    title={`Deterministic fix: ${batchPattern.patternName} — applies to all ${pages.length} pages`}
-                  >
-                    <Layers size={12} />
-                    Fix all {pages.length} pages
-                  </button>
-                )}
-
-                {/* Bulk review button for multi-page (non-batch) */}
-                {hasMultiplePages && !batchPattern && !surgicalLoading && !batchFixRunning && (
-                  <button
-                    type="button"
-                    onClick={() => setShowBulkReview(true)}
-                    disabled={!canDeploy}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium disabled:opacity-50"
-                    style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-                  >
-                    <Layers size={11} />
-                    Review all {pages.length} pages
-                  </button>
+                    {/* Bulk review button for multi-page (non-batch) */}
+                    {hasMultiplePages && !surgicalLoading && !batchFixRunning && (
+                      <button
+                        type="button"
+                        onClick={() => setShowBulkReview(true)}
+                        disabled={!canDeploy}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium disabled:opacity-50"
+                        style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                      >
+                        <Layers size={11} />
+                        Review all {pages.length} pages
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
