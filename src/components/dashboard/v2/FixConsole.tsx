@@ -1571,17 +1571,14 @@ function SelfServeConsole({
 
         {/* Page tabs — shown when finding affects 2+ pages */}
         {hasMultiplePages && !showBulkReview && (
-          <div className="mb-3">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Globe size={11} style={{ color: 'var(--ink)' }} />
-              <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--ink)' }}>
-                Affected pages
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'color-mix(in srgb, var(--ink) 8%, transparent)', color: 'var(--ink)' }}>
-                {pages.length}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Globe size={13} style={{ color: 'var(--m-muted)' }} />
+              <span className="text-[12px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                {pages.length} affected pages
               </span>
             </div>
-            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(180px, 1fr))` }}>
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(200px, 1fr))` }}>
               {pages.map((pageUrl, idx) => {
                 const isActive = idx === activePageIdx;
                 const pageDeployResult = deployResults[idx];
@@ -1589,30 +1586,30 @@ function SelfServeConsole({
                 const lang = detectLang(pageUrl);
                 let label: string;
                 try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
-                if (label.length > 28) label = '...' + label.slice(-25);
+                if (label.length > 30) label = '...' + label.slice(-27);
                 return (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActivePageIdx(idx)}
-                    className="flex items-center gap-2 px-2.5 py-2 rounded-md text-[11px] font-medium whitespace-nowrap transition-all text-left"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all text-left"
                     style={{
-                      background: isActive ? '#ffffff' : 'transparent',
+                      background: isActive ? '#ffffff' : 'var(--paper-2)',
                       border: isActive ? '1.5px solid var(--ink)' : '1px solid var(--rule)',
                       color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-                      boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                      boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                     }}
                   >
                     {isDone ? (
-                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }}>
-                        <Check size={9} style={{ color: '#fff' }} />
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }}>
+                        <Check size={10} style={{ color: '#fff' }} />
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0 text-[9px] font-bold" style={{ background: isActive ? 'var(--ink)' : 'var(--rule)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 text-[10px] font-bold" style={{ background: isActive ? 'var(--ink)' : 'var(--rule)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
                         {idx + 1}
                       </span>
                     )}
-                    <code className="text-[10.5px] truncate">{label}</code>
+                    <code className="text-[11.5px] truncate">{label}</code>
                     {lang !== 'Default' && (
                       <span className="text-[9px] px-1 py-px rounded flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)' }}>
                         {lang}
