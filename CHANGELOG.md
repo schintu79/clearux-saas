@@ -6,6 +6,15 @@ Last updated: 2026-05-21
 
 ---
 
+## FixConsole
+
+### Fixed findings still showing fix action buttons
+- **Bug**: Findings with `status === 'fixed'` in the database still showed "Generate surgical fix" / "Fix all pages" buttons instead of the post-deploy UI (undo + edit). This happened because `deployResults` is ephemeral React state that resets when switching between findings.
+- **Fix**: Added `isAlreadyFixed` flag derived from `finding.status === 'fixed'`. Updated the three conditional blocks controlling UI visibility: diff preview, deploy actions, and post-deploy actions all now respect the persisted status. The "Edit page" button also calls `onStatusChange?.('in_progress')` to revert the finding status when the user wants to re-edit.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
 ## Code Quality UI
 
 ### Code Quality section on Technical Health tab

@@ -985,6 +985,10 @@ function SelfServeConsole({
   const [deploying, setDeploying] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
+  // If finding was previously deployed and marked "fixed" in DB, treat it as already deployed.
+  // Deploy state is ephemeral (local React state) so it resets on re-render / finding switch.
+  const isAlreadyFixed = finding.status === 'fixed';
+
   // Convenience accessors for the active page
   const deployPath = deployPaths[activePageIdx] || '';
   const setDeployPath = (val: string) => setDeployPaths((prev) => ({ ...prev, [activePageIdx]: val }));
@@ -1814,7 +1818,7 @@ function SelfServeConsole({
             )}
 
             {/* Surgical diff preview */}
-            {surgicalResult && !deployResult?.ok && (
+            {surgicalResult && !deployResult?.ok && !isAlreadyFixed && (
               <DiffPreview
                 filePath={deployPath.trim()}
                 operation={surgicalResult.operation}
@@ -1830,8 +1834,8 @@ function SelfServeConsole({
               />
             )}
 
-            {/* Deploy actions — hidden after successful deploy */}
-            {!surgicalResult && !deployResult?.ok && (
+            {/* Deploy actions — hidden after successful deploy or if finding already fixed */}
+            {!surgicalResult && !deployResult?.ok && !isAlreadyFixed && (
               <div className="flex flex-col gap-2 pt-1">
                 {/* Batch pattern: "Fix all pages" is primary, preview is secondary */}
                 {batchPattern ? (
@@ -1900,8 +1904,8 @@ function SelfServeConsole({
               </div>
             )}
 
-            {/* Post-deploy actions — undo + edit, shown after successful deploy */}
-            {deployResult?.ok && (
+            {/* Post-deploy actions — undo + edit, shown after successful deploy OR if finding is already fixed */}
+            {(deployResult?.ok || isAlreadyFixed) && (
               <div className="flex flex-col gap-2 pt-1">
                 <div
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-[11.5px]"
@@ -1931,6 +1935,11 @@ function SelfServeConsole({
                       // Clear deploy result to re-enable the fix flow for further tweaking
                       setDeployResult(null);
                       setSurgicalResult(null);
+                      // If finding was pre-loaded as "fixed", revert status to in_progress
+                      // so the deploy UI unlocks and isAlreadyFixed becomes false
+                      if (finding.status === 'fixed') {
+                        onStatusChange?.('in_progress');
+                      }
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium"
                     style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
