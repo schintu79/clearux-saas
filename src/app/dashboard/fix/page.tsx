@@ -525,13 +525,16 @@ function FixPageInner() {
       .finally(() => setFtpLoaded(true));
   }, [authLoading, user, ready, selection]);
 
-  // Deep link via #finding-<id> — auto-select the referenced finding
+  // Deep link via #finding-<id> — auto-select the referenced finding.
+  // Sets deepLinkHonoured ref so the auto-select effect doesn't
+  // immediately overwrite with filteredGroups[0].
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const apply = () => {
       const raw = window.location.hash.replace(/^#/, '');
       const m = raw.match(/^finding-(.+)$/);
       if (!m) return;
+      deepLinkHonoured.current = true;
       setActiveFindingId(m[1]);
     };
     apply();
@@ -620,14 +623,28 @@ function FixPageInner() {
     });
   }, [groups, query, moduleFilter, sevFilter, statusFilter]);
 
+  // Track whether the hash deep-link has been honoured this session.
+  // We use a ref so it persists across renders without triggering effects.
+  const deepLinkHonoured = React.useRef(false);
+
   // Auto-select first finding when groups load and nothing is active,
-  // or when the active finding is no longer visible due to filter changes
+  // or when the active finding is no longer visible due to filter changes.
+  // CRITICAL: skip if a deep-link hash just set activeFindingId — otherwise
+  // we immediately overwrite the hash target with filteredGroups[0].
   useEffect(() => {
     if (filteredGroups.length === 0) return;
     const stillVisible = activeFindingId && filteredGroups.some((g) => g.primary.id === activeFindingId);
-    if (!stillVisible) {
-      setActiveFindingId(filteredGroups[0].primary.id);
+    if (stillVisible) {
+      deepLinkHonoured.current = false; // clear — we found it
+      return;
     }
+    // If a deep-link was set but bundle just loaded, give it one cycle
+    // to see if the target appears in the new filteredGroups
+    if (deepLinkHonoured.current) {
+      deepLinkHonoured.current = false;
+      return;
+    }
+    setActiveFindingId(filteredGroups[0].primary.id);
   }, [filteredGroups, activeFindingId]);
 
   const activeGroup = useMemo(

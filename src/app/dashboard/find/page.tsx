@@ -56,6 +56,17 @@ import { groupFindingsForDisplay, type GroupedFinding } from '@/lib/audit-findin
 const SEVERITY_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 const SEVERITIES: Array<'all' | 'critical' | 'high' | 'medium' | 'low'> = ['all', 'critical', 'high', 'medium', 'low'];
 
+/** Compact label shown before the View CTA — tells the user if the issue is fixable in console or needs design work. */
+function fixTypeLabel(finding: any): { text: string; console: boolean } | null {
+  const ft = finding.finding_type;
+  const fxt = finding.fix_type;
+  if (ft === 'strategic') return { text: 'Design', console: false };
+  if (!fxt) return null;
+  if (['meta', 'html', 'schema', 'file', 'config'].includes(fxt)) return { text: 'Console', console: true };
+  if (fxt === 'copy') return { text: 'Copy', console: true };
+  return null;
+}
+
 // Module-aligned icons. Order must match PHASE1_MODULES in latest-audit.ts.
 const MODULE_ICONS: React.ElementType[] = [Scale, Heart, Accessibility, Brain, FileSearch, Eye];
 
@@ -98,6 +109,7 @@ function FindPageInner() {
   const loading = authLoading || bundleLoading || !ready;
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'priority' | 'strategic'>('priority');
 
   // Module filter — chip-driven, with URL hydration on first mount so the
   // category-card deep links from Overview keep working.
@@ -268,7 +280,40 @@ function FindPageInner() {
         subtitle="All findings from your latest audit, grouped by module."
       />
 
-      {priorityRecs.length > 0 && bundle?.audit && moduleFilter === 'all' && sevFilter === 'all' && (
+      {/* Tab navigation — Priority recommendations vs Strategic observations */}
+      <div className="flex items-center gap-0 mb-4" style={{ borderBottom: '1px solid var(--rule)' }}>
+        {[
+          { key: 'priority' as const, label: 'Priority recommendations', count: totalAll },
+          { key: 'strategic' as const, label: 'Strategic observations', count: strategicFindings.length },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className="px-3 py-2 text-[12.5px] font-medium transition-colors relative"
+            style={{
+              color: activeTab === tab.key ? 'var(--ink)' : 'var(--m-muted)',
+              background: 'transparent',
+              border: 'none',
+            }}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className="ml-1.5 text-[10px] tabular-nums" style={{ color: 'var(--m-muted)' }}>
+                {tab.count}
+              </span>
+            )}
+            {activeTab === tab.key && (
+              <span
+                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                style={{ background: 'var(--ink)' }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'priority' && priorityRecs.length > 0 && bundle?.audit && moduleFilter === 'all' && sevFilter === 'all' && (
         <div className="mb-4">
           <PriorityRecommendations
             recs={priorityRecs}
@@ -279,7 +324,7 @@ function FindPageInner() {
       )}
 
       {/* Filter rail — Severity + Module as compact dropdowns, aligned with Fix */}
-      <div className="mb-4">
+      {activeTab === 'priority' && <div className="mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <FilterDropdown
             value={sevFilter}
@@ -318,9 +363,9 @@ function FindPageInner() {
             {totalOpen} of {totalAll} findings
           </span>
         </div>
-      </div>
+      </div>}
 
-      {totalOpen === 0 ? (
+      {activeTab === 'priority' && (totalOpen === 0 ? (
         <DashCard className="text-center" padding="lg">
           <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
             {hasActive ? 'No findings match these filters' : 'Nothing is currently hurting your score'}
@@ -466,6 +511,20 @@ function FindPageInner() {
                             </div>
                             {/* Action buttons */}
                             <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {(() => {
+                                const label = fixTypeLabel(f);
+                                return label ? (
+                                  <span
+                                    className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                                    style={{
+                                      color: label.console ? 'var(--ink-2)' : 'var(--m-muted)',
+                                      background: label.console ? 'color-mix(in srgb, var(--signal) 10%, transparent)' : 'var(--paper-2)',
+                                    }}
+                                  >
+                                    {label.text}
+                                  </span>
+                                ) : null;
+                              })()}
                               <button
                                 type="button"
                                 onClick={() => toggleFinding(f.id)}
@@ -530,28 +589,24 @@ function FindPageInner() {
             );
           })}
         </div>
+      ))}
+
+      {/* ── Strategic observations tab ───────────────────────────── */}
+      {activeTab === 'strategic' && strategicFindings.length === 0 && (
+        <DashCard className="text-center" padding="lg">
+          <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
+            No strategic observations
+          </p>
+          <p className="text-[12px] mt-1.5" style={{ color: 'var(--m-muted)' }}>
+            This audit found no broader design or strategy issues. All findings are actionable in the Fix console.
+          </p>
+        </DashCard>
       )}
-
-      {/* ── Strategic observations ─────────────────────────────── */}
-      {strategicFindings.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span
-              className="w-7 h-7 rounded-md flex items-center justify-center"
-              style={{ background: 'color-mix(in srgb, var(--signal) 12%, transparent)' }}
-            >
-              <Lightbulb size={14} style={{ color: 'var(--signal)' }} />
-            </span>
-            <div>
-              <h2 className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>
-                Strategic observations
-              </h2>
-              <p className="text-[11.5px]" style={{ color: 'var(--m-muted)' }}>
-                Broader insights that require strategy, redesign, or judgment — not console-fixable.
-              </p>
-            </div>
-          </div>
-
+      {activeTab === 'strategic' && strategicFindings.length > 0 && (
+        <div>
+          <p className="text-[12px] mb-3" style={{ color: 'var(--m-muted)' }}>
+            Broader insights that require strategy, redesign, or judgment — not console-fixable.
+          </p>
           <DashCard padding="none" className="overflow-hidden">
             <ul>
               {strategicFindings.map((f, i) => {
