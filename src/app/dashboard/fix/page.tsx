@@ -627,6 +627,10 @@ function FixPageInner() {
   // We use a ref so it persists across renders without triggering effects.
   const deepLinkHonoured = React.useRef(false);
 
+  // Track status changes so we don't reset the active finding when a deploy
+  // causes the finding to move or the bundle to re-fetch.
+  const statusChangeInFlight = React.useRef(false);
+
   // Auto-select first finding when groups load and nothing is active,
   // or when the active finding is no longer visible due to filter changes.
   // CRITICAL: skip if a deep-link hash just set activeFindingId — otherwise
@@ -644,8 +648,20 @@ function FixPageInner() {
       deepLinkHonoured.current = false;
       return;
     }
+    // If we just changed a finding's status (e.g., deployed → fixed), the
+    // finding might temporarily disappear from filteredGroups while the
+    // bundle re-fetches. Check the FULL groups list — if the finding exists
+    // there (just filtered out by status), stay put instead of jumping.
+    if (statusChangeInFlight.current && activeFindingId) {
+      const existsInAll = groups.some((g) => g.primary.id === activeFindingId);
+      if (existsInAll) {
+        statusChangeInFlight.current = false;
+        return;
+      }
+    }
+    statusChangeInFlight.current = false;
     setActiveFindingId(filteredGroups[0].primary.id);
-  }, [filteredGroups, activeFindingId]);
+  }, [filteredGroups, activeFindingId, groups]);
 
   const activeGroup = useMemo(
     () => filteredGroups.find((g) => g.primary.id === activeFindingId) || null,
@@ -663,6 +679,7 @@ function FixPageInner() {
 
   const handleStatus = async (id: string, status: FindingStatus) => {
     const prev = bundle?.findings.find((f) => f.id === id)?.status;
+    statusChangeInFlight.current = true;
     setPending((p) => ({ ...p, [id]: true }));
     // Optimistic update via shared context — all consumers see it instantly
     updateFindingLocally(id, { status });
@@ -692,6 +709,7 @@ function FixPageInner() {
   };
 
   const handleDismiss = async (id: string, reason: string) => {
+    statusChangeInFlight.current = true;
     setPending((p) => ({ ...p, [id]: true }));
     const trimmed = reason.trim() || 'Dismissed from Fix queue';
     try {
