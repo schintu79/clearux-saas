@@ -672,6 +672,12 @@ function OverviewInner() {
             )}
           </button>
           <Link
+            href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
+            className="inline-flex items-center gap-1.5 bg-card border border-border text-text text-xs font-medium px-3 py-2 rounded-lg hover:bg-surface-alt transition-colors"
+          >
+            <Search size={12} /> Dig deeper
+          </Link>
+          <Link
             href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}` : '/dashboard/new-audit'}
             className="inline-flex items-center gap-1.5 bg-brand text-surface text-xs font-medium px-3.5 py-2 rounded-lg transition-all hover:brightness-110"
           >
@@ -695,15 +701,6 @@ function OverviewInner() {
                 className="absolute right-0 top-10 z-50 w-60 rounded-xl py-1.5 shadow-lg"
                 style={{ background: 'var(--card)', border: '1px solid var(--rule)' }}
               >
-                <Link
-                  href={productUrl ? `/dashboard/new-audit?url=${encodeURIComponent(productUrl)}&depth=deep` : '/dashboard/new-audit?depth=deep'}
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs hover:bg-black/[0.04] transition-colors"
-                  style={{ color: 'var(--ink)' }}
-                >
-                  <Search size={13} className="text-m-muted" />
-                  Dig deeper (full re-audit)
-                </Link>
                 <a
                   href={`/api/reports/${audit.id}/pdf`}
                   target="_blank"
