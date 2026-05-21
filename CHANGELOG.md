@@ -6,6 +6,19 @@ Last updated: 2026-05-21
 
 ---
 
+## Code Quality Checker
+
+### HTML & CSS syntax validation engine
+- **Feature**: Built a zero-dependency code quality checker that scans raw HTML for structural and CSS syntax issues. Two entry points: `runCodeQualityChecks()` for audit-time full-page scans, and `validateHtmlCss()` for pre-deploy patched file validation.
+- **HTML checks**: Unclosed/mismatched tags (stack-based parser), unexpected closing tags, duplicate IDs, unquoted attributes, deprecated tags (`<font>`, `<center>`, `<marquee>`), images missing width/height (CLS risk), missing DOCTYPE.
+- **CSS checks**: Unclosed braces (comment/string-aware), missing semicolons (heuristic), invalid hex colors, malformed values (e.g. `: px` without number, space between number and unit).
+- **Audit integration**: Runs during the crawl step alongside `runTechnicalChecks()`. Results stored in `audit_pages.code_quality` (jsonb) per page. Issues are capped at 25 per category and deduplicated by rule+line.
+- **Pre-deploy integration**: `validatePatch()` in surgical-fix.ts now runs code quality checks on patched HTML before deploy. Only surfaces NEW errors not present in the original file — avoids flagging pre-existing issues.
+- **Rating**: `good` (0 errors), `needs_improvement` (1-3 errors), `poor` (4+).
+- **Files**: `src/lib/pipeline/code-quality-checker.ts` (new), `src/lib/audit-engine/index.ts`, `src/lib/surgical-fix.ts`
+
+---
+
 ## Surgical Fix Engine
 
 ### Two-tier deterministic + AI fix architecture

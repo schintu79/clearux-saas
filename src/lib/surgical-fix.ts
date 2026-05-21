@@ -33,6 +33,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { diffLines, type Change } from 'diff'
+import { validateHtmlCss } from '@/lib/pipeline/code-quality-checker'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -765,6 +766,22 @@ export function validatePatch(
     }
     if (original.includes('<body') && !patched.includes('<body')) {
       warnings.push('Patched file is missing <body> tag.')
+    }
+
+    // Run code quality checks on the patched HTML — catch syntax issues before deploy
+    try {
+      const cq = validateHtmlCss(patched)
+      // Only surface NEW errors not present in the original
+      if (cq.errors.length > 0) {
+        const origCq = validateHtmlCss(original)
+        const origErrs = new Set(origCq.errors.map((e) => e.message))
+        const newErrors = cq.errors.filter((e) => !origErrs.has(e.message))
+        for (const err of newErrors.slice(0, 3)) {
+          warnings.push(`Code quality: ${err.message}`)
+        }
+      }
+    } catch {
+      // Non-fatal — validation continues without code quality checks
     }
   }
 

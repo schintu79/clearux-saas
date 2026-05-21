@@ -11,6 +11,7 @@ import { captureAuditScreenshots } from './screenshots'
 import { extractAllBrandFiles } from './brand-file-extractor'
 import { checkResponsiveDesign } from './responsive-checker'
 import { runTechnicalChecks, formatTechnicalAuditForPrompt, type TechnicalCheckResult } from '@/lib/pipeline/technical-checks'
+import { runCodeQualityChecks, type CodeQualityResult } from '@/lib/pipeline/code-quality-checker'
 import type { AuditFinding } from '@/types/database'
 
 type Supabase = ReturnType<typeof createServiceSupabase>
@@ -152,6 +153,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
     // persisted alongside the page record and surfaced in the "Technical
     // health" tab. Failures are non-fatal per page.
     const technicalAuditByUrl = new Map<string, TechnicalCheckResult>()
+    const codeQualityByUrl = new Map<string, CodeQualityResult>()
     for (const page of crawledPages) {
       try {
         const result = runTechnicalChecks({
@@ -164,11 +166,18 @@ async function _processAuditInner(auditId: string): Promise<void> {
       } catch (techErr) {
         console.error(`[audit-engine] Technical checks failed for ${page.url}:`, techErr)
       }
+      try {
+        const cqResult = runCodeQualityChecks(page.url, page.rawHtml ?? null)
+        codeQualityByUrl.set(page.url, cqResult)
+      } catch (cqErr) {
+        console.error(`[audit-engine] Code quality checks failed for ${page.url}:`, cqErr)
+      }
     }
 
     // Store pages
     for (const page of crawledPages) {
       const technicalAudit = technicalAuditByUrl.get(page.url) ?? null
+      const codeQuality = codeQualityByUrl.get(page.url) ?? null
       await db.from('audit_pages').insert({
         audit_id: auditId,
         url: page.url,
@@ -185,6 +194,7 @@ async function _processAuditInner(auditId: string): Promise<void> {
         is_mobile_friendly: null,
         viewport_meta: null,
         technical_audit: technicalAudit,
+        code_quality: codeQuality,
         crawled_at: page.crawledAt,
       } as any)
     }
