@@ -1578,7 +1578,7 @@ function SelfServeConsole({
                 {pages.length} affected pages
               </span>
             </div>
-            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(200px, 1fr))` }}>
+            <div className="flex flex-wrap gap-1.5">
               {pages.map((pageUrl, idx) => {
                 const isActive = idx === activePageIdx;
                 const pageDeployResult = deployResults[idx];
@@ -1586,30 +1586,30 @@ function SelfServeConsole({
                 const lang = detectLang(pageUrl);
                 let label: string;
                 try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
-                if (label.length > 30) label = '...' + label.slice(-27);
+                if (label.length > 28) label = '...' + label.slice(-25);
                 return (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActivePageIdx(idx)}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all text-left"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-all text-left"
                     style={{
-                      background: isActive ? '#ffffff' : 'var(--paper-2)',
+                      background: isActive ? '#ffffff' : 'transparent',
                       border: isActive ? '1.5px solid var(--ink)' : '1px solid var(--rule)',
                       color: isActive ? 'var(--ink)' : 'var(--m-muted)',
-                      boxShadow: isActive ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                      boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                     }}
                   >
                     {isDone ? (
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }}>
-                        <Check size={10} style={{ color: '#fff' }} />
+                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }}>
+                        <Check size={8} style={{ color: '#fff' }} />
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 text-[10px] font-bold" style={{ background: isActive ? 'var(--ink)' : 'var(--rule)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
+                      <span className="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0 text-[9px] font-bold" style={{ background: isActive ? 'var(--ink)' : 'var(--rule)', color: isActive ? 'var(--paper)' : 'var(--m-muted)' }}>
                         {idx + 1}
                       </span>
                     )}
-                    <code className="text-[11.5px] truncate">{label}</code>
+                    <code className="text-[10.5px] truncate">{label}</code>
                     {lang !== 'Default' && (
                       <span className="text-[9px] px-1 py-px rounded flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--signal) 10%, transparent)', color: 'var(--signal)' }}>
                         {lang}
