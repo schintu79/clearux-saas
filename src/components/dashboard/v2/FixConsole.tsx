@@ -1156,7 +1156,8 @@ function SelfServeConsole({
   };
 
   const handleSurgicalFix = async () => {
-    if (!deployConnectionId || !deployPath.trim() || !patch.trim()) return;
+    const resolvedPath = deployPath.trim() || suggestRemotePath(pages[activePageIdx], selectedConn?.remote_path || '', fixType);
+    if (!deployConnectionId || !resolvedPath || !patch.trim()) return;
     setSurgicalLoading(true);
     setSurgicalError(null);
     setSurgicalResult(null);
@@ -1166,7 +1167,7 @@ function SelfServeConsole({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           connectionId: deployConnectionId,
-          filePath: deployPath.trim(),
+          filePath: resolvedPath,
           recommendation: patch,
           findingId: finding.id,
           findingTitle: finding.title,
@@ -1190,7 +1191,8 @@ function SelfServeConsole({
   };
 
   const handleSurgicalDeploy = async (finalContent: string) => {
-    if (!deployConnectionId || !deployPath.trim()) return;
+    const resolvedDeployPath = deployPath.trim() || suggestRemotePath(pages[activePageIdx], selectedConn?.remote_path || '', fixType);
+    if (!deployConnectionId || !resolvedDeployPath) return;
     setDeploying(true);
     setDeployResult(null);
     try {
@@ -1200,7 +1202,7 @@ function SelfServeConsole({
         body: JSON.stringify({
           action: 'write',
           connectionId: deployConnectionId,
-          filePath: deployPath.trim(),
+          filePath: resolvedDeployPath,
           content: finalContent,
           auditId: finding.audit_id,
           findingId: finding.id,
@@ -1265,10 +1267,13 @@ function SelfServeConsole({
     const results: Record<number, { ok: boolean; msg: string; patchedContent?: string }> = {};
     setBatchFixProgress({ current: 0, total, results });
 
+    // Auto-resolve remote paths from page URLs when not manually set
+    const connRoot = selectedConn?.remote_path || '';
+
     for (let idx = 0; idx < total; idx++) {
-      const pagePath = deployPaths[idx];
+      const pagePath = deployPaths[idx] || suggestRemotePath(pages[idx], connRoot, fixType);
       if (!pagePath) {
-        results[idx] = { ok: false, msg: 'No remote path set for this page.' };
+        results[idx] = { ok: false, msg: 'Could not resolve remote path for this page.' };
         setBatchFixProgress({ current: idx + 1, total, results: { ...results } });
         continue;
       }
@@ -1347,8 +1352,12 @@ function SelfServeConsole({
     setBatchFixRunning(false);
   };
 
-  const canDeploy = hasFtp && deployConnectionId && deployPath.trim() && patch.trim();
-  const canBatchDeploy = hasFtp && deployConnectionId && patch.trim() && Object.keys(deployPaths).length === pages.length && Object.values(deployPaths).every((p) => p.trim());
+  const canDeploy = hasFtp && deployConnectionId && (batchPattern || deployPath.trim()) && patch.trim();
+  const canBatchDeploy = hasFtp && deployConnectionId && patch.trim() && (
+    batchPattern
+      ? pages.length > 0  // batch patterns auto-resolve paths from page URLs
+      : Object.keys(deployPaths).length === pages.length && Object.values(deployPaths).every((p) => p.trim())
+  );
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
@@ -1645,25 +1654,31 @@ function SelfServeConsole({
               </div>
             )}
 
-            {/* Remote file path */}
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
-                Remote file path
-              </label>
-              <input
-                type="text"
-                value={deployPath}
-                onChange={(e) => setDeployPath(e.target.value)}
-                placeholder="/path/to/file.html"
-                className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
-                style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
-              />
-              {(pages[activePageIdx] || finding.page_url) && deployPath && (
-                <p className="mt-1 text-[10px]" style={{ color: 'var(--signal)' }}>
-                  Suggested from crawled page: {pages[activePageIdx] || finding.page_url}
-                </p>
-              )}
-            </div>
+            {/* Remote file path — hidden for batch patterns (paths auto-resolved from page URLs) */}
+            {!batchPattern ? (
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.06em] mb-1" style={{ color: 'var(--m-muted)' }}>
+                  Remote file path
+                </label>
+                <input
+                  type="text"
+                  value={deployPath}
+                  onChange={(e) => setDeployPath(e.target.value)}
+                  placeholder="/path/to/file.html"
+                  className="w-full px-2.5 py-1.5 text-[12px] font-mono outline-none focus-visible:ring-2 focus-visible:ring-signal/30 rounded-md"
+                  style={{ background: '#ffffff', border: '1px solid var(--rule)', color: 'var(--ink)' }}
+                />
+                {(pages[activePageIdx] || finding.page_url) && deployPath && (
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--signal)' }}>
+                    Suggested from crawled page: {pages[activePageIdx] || finding.page_url}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-[11px]" style={{ color: 'var(--m-muted)' }}>
+                Paths auto-resolved from {pages.length} crawled page URLs.
+              </p>
+            )}
 
             {/* Deploy result */}
             {deployResult && (

@@ -29,6 +29,11 @@ Last updated: 2026-05-21
 - **Prop threading**: `allCrawledPages` is computed in `FixPageInner` via `useMemo` over `bundle.findings`, passed through `ActiveFindingDetail` to `FixConsole`.
 - **Files**: `src/app/dashboard/fix/page.tsx`, `src/components/dashboard/v2/FixConsole.tsx`
 
+### Batch fix UX — hide path field, auto-resolve, enable buttons
+- **Problem**: For batch patterns (e.g. html lang fix affecting all pages), the "Generate surgical fix" and "Fix all pages" buttons were disabled because `canDeploy` and `canBatchDeploy` required a manually-filled remote file path. The remote file path input was empty and the user had no way to know what to enter.
+- **Fix**: (1) Hide the remote file path input when a batch pattern is detected — replaced with a "Paths auto-resolved from N crawled page URLs" message. (2) `canDeploy` and `canBatchDeploy` no longer require pre-filled paths when a batch pattern is active. (3) `handleBatchFix` auto-resolves paths from page URLs + the FTP connection's `remote_path` root via `suggestRemotePath()`. (4) `handleSurgicalFix` and `handleSurgicalDeploy` also auto-resolve paths when the field is empty.
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
 ### `batch-replace` operation type added to DiffPreview
 - **Fix**: Added `'batch-replace'` to `SurgicalOperation` type union and `OP_META` record in DiffPreview to prevent TypeScript error
 - **Files**: `src/components/dashboard/v2/DiffPreview.tsx`
