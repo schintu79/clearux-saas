@@ -567,7 +567,8 @@ function OverviewInner() {
   if (categoryScores.length > 0) {
     pillarScores = PILLAR_NAMES.map((name, i) => {
       const [start, end] = PILLAR_RANGES[i];
-      const cats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+      // Filter by positional index AND skip unanalyzed categories (score = -1)
+      const cats = categoryScores.filter((c, idx) => idx >= start && idx < end && c.score >= 0);
       return {
         name,
         score: cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : -1,
@@ -867,7 +868,7 @@ function OverviewInner() {
             const pillarIdx = PILLAR_NAMES.indexOf(p.name);
             if (pillarIdx < 0) return null;
             const [start, end] = PILLAR_RANGES[pillarIdx];
-            const pillarCats = categoryScores.filter((_, idx) => idx >= start && idx < end);
+            const pillarCats = categoryScores.filter((c, idx) => idx >= start && idx < end && c.score >= 0);
             const tint = MODULE_TINTS[pillarIdx] || MODULE_TINTS[0];
             const PIcon = PILLAR_ICONS[pillarIdx] || Scale;
             const findingCount = findingsByPillarName[p.name]?.length || 0;
@@ -1809,7 +1810,7 @@ function CheckpointHealthCard({
         </div>
       ) : (
         <div className="max-h-[520px] overflow-y-auto divide-y" style={{ borderColor: 'var(--rule)' }}>
-          {(categoryScores.length > 0 ? categoryScores : pillarScores.map(p => ({ name: p.name, score: p.score, summary: '' }))).map((cat) => {
+          {(categoryScores.length > 0 ? categoryScores.filter(c => c.score >= 0) : pillarScores.map(p => ({ name: p.name, score: p.score, summary: '' }))).map((cat) => {
             const checkpoints = CHECKPOINT_LABELS[cat.name] || ['Check 1', 'Check 2', 'Check 3', 'Check 4'];
             const catFindings = findingsByCategory[cat.name] || [];
             const failCount = Math.min(catFindings.length, checkpoints.length);

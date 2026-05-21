@@ -98,8 +98,9 @@ async function recalculateFromFindings(
     // Improvement ratio: what fraction of the total penalty has been addressed
     const improvementRatio = totalPenalty > 0 ? 1 - (openPenalty / totalPenalty) : 0
 
-    // Apply improvement to each category score
+    // Apply improvement to each category score (skip unanalyzed = -1)
     const updatedCategoryScores = baselineScores.map(cat => {
+      if (cat.score < 0) return cat // preserve unanalyzed sentinel
       const headroom = 100 - cat.score
       // The improvement fills a proportional amount of the headroom
       const gain = Math.round(headroom * improvementRatio)
@@ -109,13 +110,14 @@ async function recalculateFromFindings(
       }
     })
 
-    // 4. Recalculate overall + pillar scores
-    const newOverallScore = updatedCategoryScores.length > 0
-      ? Math.round(updatedCategoryScores.reduce((s, c) => s + c.score, 0) / updatedCategoryScores.length)
+    // 4. Recalculate overall + pillar scores (skip unanalyzed = -1)
+    const analyzedScores = updatedCategoryScores.filter(c => c.score >= 0)
+    const newOverallScore = analyzedScores.length > 0
+      ? Math.round(analyzedScores.reduce((s, c) => s + c.score, 0) / analyzedScores.length)
       : (report as any).overall_score
 
     const pillarAvg = (start: number, end: number) => {
-      const cats = updatedCategoryScores.slice(start, Math.min(end, updatedCategoryScores.length))
+      const cats = updatedCategoryScores.slice(start, Math.min(end, updatedCategoryScores.length)).filter(c => c.score >= 0)
       return cats.length > 0 ? Math.round(cats.reduce((s, c) => s + c.score, 0) / cats.length) : 50
     }
 

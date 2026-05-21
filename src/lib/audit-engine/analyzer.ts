@@ -1107,6 +1107,7 @@ export async function generateReport(
     // Use name-based lookup (not positional slicing) to handle gap-filled categories correctly
     const pillarAvg = (start: number, end: number) => {
       const cats = categoryScores.filter((c) => {
+        if (c.score < 0) return false // skip unanalyzed categories
         const idx = allCategoryNames.indexOf(c.name)
         return idx >= start && idx < end
       })
@@ -1379,28 +1380,36 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
         }))
       : []
 
-    // Map AI scores back to the full category array by matching names
+    // Map AI scores back to the FULL 24-category array preserving global indices.
+    // Unanalyzed categories get score = -1 so the frontend can filter them out.
+    // This ensures positional indices in the stored array always match global
+    // category indices (0-3 = Foundation, 4-7 = Human Experience, ..., 20-23 = Brand Consistency).
     const allCategoryNames = getCategoryNames(language)
     const categoryScores: CategoryScore[] = []
+    let analyzedCount = 0 // tracks position in the AI response
     for (let gi = 0; gi < allCategoryNames.length; gi++) {
-      if (!wasAnalyzed(gi)) continue // skip unanalyzed categories
       const globalName = allCategoryNames[gi]
+      if (!wasAnalyzed(gi)) {
+        // Placeholder for unanalyzed category — preserves positional index
+        categoryScores.push({ name: globalName, score: -1, summary: '' })
+        continue
+      }
       // Find the matching AI score by name (fuzzy match by position if names differ)
-      const aiIdx = categoryScores.length // position in the analyzed subset
       const matched = aiCategoryScores.find((c: any) =>
         c.name.toLowerCase() === globalName.toLowerCase()
-      ) || aiCategoryScores[aiIdx] // fallback to positional match
+      ) || aiCategoryScores[analyzedCount] // fallback to positional match
       categoryScores.push({
         name: globalName,
         score: matched ? clampScore(matched.score) : 70,
         summary: matched?.summary || '',
       })
+      analyzedCount++
     }
 
     // If AI returned nothing useful, use defaults for analyzed categories
-    if (categoryScores.length === 0) {
-      for (let gi = 0; gi < allCategoryNames.length; gi++) {
-        if (wasAnalyzed(gi)) categoryScores.push({ name: allCategoryNames[gi], score: 70, summary: '' })
+    if (categoryScores.filter(c => c.score >= 0).length === 0) {
+      for (let gi = 0; gi < categoryScores.length; gi++) {
+        if (wasAnalyzed(gi)) categoryScores[gi] = { name: allCategoryNames[gi], score: 70, summary: '' }
       }
     }
 
@@ -1410,6 +1419,7 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     // Pillar averages use the categoryScores which only contain analyzed categories
     const pillarAvg = (start: number, end: number) => {
       const cats = categoryScores.filter((c) => {
+        if (c.score < 0) return false // skip unanalyzed categories
         const idx = allCategoryNames.indexOf(c.name)
         return idx >= start && idx < end
       })
@@ -1422,8 +1432,8 @@ ${language !== 'en' ? `\nFINAL REMINDER — LANGUAGE: The executiveSummary, topR
     const calculatedFuture = pillarAvg(12, 16)      // Future Readiness
     // SEO (16-19) and Brand (20-23) feed into overall but don't have dedicated legacy score columns
 
-    // Overall = average of ALL analyzed category scores
-    const allScores = categoryScores.map(c => c.score)
+    // Overall = average of ALL analyzed category scores (skip unanalyzed = -1)
+    const allScores = categoryScores.filter(c => c.score >= 0).map(c => c.score)
     const calculatedOverall = allScores.length > 0
       ? Math.round(allScores.reduce((s, v) => s + v, 0) / allScores.length)
       : 50

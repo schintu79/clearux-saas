@@ -67,7 +67,7 @@ export function identifyStarvedCategories(
     const cat = categoryScores[i]
     const count = findingsPerCategory[cat.name] ?? 0
 
-    if (cat.score < scoreThreshold && count === 0) {
+    if (cat.score >= 0 && cat.score < scoreThreshold && count === 0) {
       starved.push({
         categoryName: cat.name,
         categoryIndex: i,
