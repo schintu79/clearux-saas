@@ -6,7 +6,7 @@ import {
   Eye, Sparkles, Lock, Zap, Scale, Heart, Accessibility, Brain, Search,
   AlertTriangle, CheckCircle2, Target, Map, Type, MousePointerClick,
   Shield, Smartphone, Gauge, Globe, FileSearch, LinkIcon, Share2,
-  MessageSquare, Lightbulb, ChevronDown, FileCode, Info,
+  MessageSquare, Lightbulb, ChevronDown, FileCode, Info, Download,
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -97,8 +97,8 @@ function CheckpointHealth({ categoryScores, findings }: {
   }
 
   return (
-    <div className="border border-[var(--rule)] overflow-hidden" style={{ background: 'var(--card, var(--paper))' }}>
-      <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--rule)', background: 'color-mix(in srgb, var(--paper-2, #EAE3D4) 40%, transparent)' }}>
+    <div className="border border-[var(--rule)] overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--rule)', background: '#F7F8F9' }}>
         <div className="flex items-center gap-2">
           <h3 className="text-[11px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>
             {categoryScores.length * 4}-Checkpoint health
@@ -168,7 +168,7 @@ function FindingCard({ finding, categoryScores }: { finding: AuditFinding; categ
     ? categoryScores[finding.category_index].name
     : null;
   return (
-    <div className="border overflow-hidden" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+    <div className="border overflow-hidden" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
       <div className="px-4 py-3 flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
           <span className={`w-2 h-2 rounded-full inline-block ${sev.dot}`} />
@@ -248,7 +248,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
     return (
       <>
         <Navbar />
-        <main className="min-h-[60vh] flex flex-col items-center justify-center gap-3" style={{ background: 'var(--paper)' }}>
+        <main className="min-h-[60vh] flex flex-col items-center justify-center gap-3" style={{ background: '#FFFFFF' }}>
           <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--signal)', borderTopColor: 'transparent' }} />
           <p className="text-sm" style={{ color: 'var(--m-muted)' }}>Loading shared report...</p>
         </main>
@@ -262,13 +262,13 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
     return (
       <>
         <Navbar />
-        <main className="min-h-[60vh] flex items-center justify-center px-4" style={{ background: 'var(--paper)' }}>
+        <main className="min-h-[60vh] flex items-center justify-center px-4" style={{ background: '#FFFFFF' }}>
           <div className="text-center max-w-md">
             <Lock size={40} className="mx-auto mb-4" style={{ color: 'var(--m-muted)' }} />
             <h1 className="font-sans font-medium text-2xl mb-2" style={{ color: 'var(--ink)' }}>Link unavailable</h1>
             <p className="text-sm mb-2" style={{ color: 'var(--m-muted)' }}>{error || 'This shared audit link is invalid or has been revoked.'}</p>
             <p className="text-xs mb-6" style={{ color: 'var(--m-muted)' }}>The owner may have turned sharing off, or the link expired. Ask them for a fresh one.</p>
-            <Link href="/" className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+            <Link href="/" className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110" style={{ background: 'var(--ink)', color: '#FFFFFF' }}>
               Run your own audit
             </Link>
           </div>
@@ -283,7 +283,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
     return (
       <>
         <Navbar />
-        <main className="min-h-[60vh] flex items-center justify-center" style={{ background: 'var(--paper)' }}>
+        <main className="min-h-[60vh] flex items-center justify-center" style={{ background: '#FFFFFF' }}>
           <div className="text-center py-16 max-w-md mx-auto">
             <Lock size={32} className="mx-auto mb-3" style={{ color: 'var(--m-muted)' }} />
             <h2 className="font-sans font-medium text-lg mb-2" style={{ color: 'var(--ink)' }}>Audit didn&apos;t complete</h2>
@@ -301,7 +301,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
     return (
       <>
         <Navbar />
-        <main className="min-h-[60vh] flex items-center justify-center" style={{ background: 'var(--paper)' }}>
+        <main className="min-h-[60vh] flex items-center justify-center" style={{ background: '#FFFFFF' }}>
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: 'var(--signal)', borderTopColor: 'transparent' }} />
             <p className="text-sm" style={{ color: 'var(--m-muted)' }}>This audit is still being analysed.</p>
@@ -376,7 +376,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
   return (
     <>
       <Navbar />
-      <main className="min-h-[60vh] print:min-h-0" style={{ background: 'var(--paper)' }}>
+      <main className="min-h-[60vh] print:min-h-0" style={{ background: '#FFFFFF' }}>
         <div className="max-w-4xl mx-auto py-8 sm:py-10 px-4 print:py-4 print:px-2">
 
           {/* ── Shared badge ──────────────────────────────── */}
@@ -391,10 +391,20 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                 <span>{auditDate}</span>
               </>
             )}
+            <a
+              href={`/api/shared/${token}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors hover:brightness-95 print:hidden"
+              style={{ background: 'var(--ink)', color: '#FFFFFF' }}
+            >
+              <Download size={12} />
+              Download PDF
+            </a>
           </div>
 
           {/* ── Hero Score Card ────────────────────────────── */}
-          <div className="border overflow-hidden mb-6" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+          <div className="border overflow-hidden mb-6" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
             <div className="p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 <div className="flex-shrink-0">
@@ -452,13 +462,13 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
 
           {/* ── Top Priority Recommendations ───────────────── */}
           {topRecs.length > 0 && (
-            <div className="mb-6 border overflow-hidden" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+            <div className="mb-6 border overflow-hidden" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
               <div
                 className="flex items-center gap-3 px-5 py-4 border-b"
                 style={{ borderColor: 'color-mix(in srgb, var(--rule) 40%, transparent)', background: 'color-mix(in srgb, var(--signal) 4%, transparent)' }}
               >
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--signal)' }}>
-                  <Zap size={13} style={{ color: 'var(--paper)' }} />
+                  <Zap size={13} style={{ color: '#FFFFFF' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Top priority recommendations</p>
@@ -472,7 +482,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
                 {topRecs.map((rec, i) => (
                   <div key={i} className="flex gap-4 items-start px-5 py-4">
                     <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold" style={{ background: 'var(--signal)', color: 'var(--paper)' }}>
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold" style={{ background: 'var(--signal)', color: '#FFFFFF' }}>
                         {i + 1}
                       </span>
                       <span className="text-[9px] font-semibold tracking-[0.04em] uppercase" style={{ color: 'var(--m-muted)' }}>Priority</span>
@@ -492,7 +502,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
 
           {/* ── Executive Summary ──────────────────────────── */}
           {report.executive_summary && (
-            <div className="border overflow-hidden mb-6" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+            <div className="border overflow-hidden mb-6" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
               <div className="px-5 py-4 border-b" style={{ borderColor: 'color-mix(in srgb, var(--rule) 40%, transparent)' }}>
                 <h2 className="font-sans font-medium text-[15px]" style={{ color: 'var(--ink)' }}>Executive summary</h2>
               </div>
@@ -572,7 +582,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
 
           {/* ── AI Visibility Breakdown ────────────────────── */}
           {aiVis && (
-            <div className="border p-5 mb-6" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+            <div className="border p-5 mb-6" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
               <div className="flex items-center gap-2 mb-4">
                 <Brain size={16} style={{ color: 'var(--signal)' }} />
                 <h3 className="text-sm font-sans font-semibold" style={{ color: 'var(--ink)' }}>AI visibility breakdown</h3>
@@ -609,7 +619,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           {findings.filter(f => !f.dismissed).length > 0 && (
             <div className="mb-6">
               {/* Severity summary bar */}
-              <div className="border overflow-hidden mb-4" style={{ borderColor: 'var(--rule)', background: 'var(--card, var(--paper))' }}>
+              <div className="border overflow-hidden mb-4" style={{ borderColor: 'var(--rule)', background: '#FFFFFF' }}>
                 <div className="px-4 py-3 border-b flex items-center gap-2 flex-wrap" style={{ borderColor: 'color-mix(in srgb, var(--rule) 40%, transparent)' }}>
                   <FileSearch size={14} style={{ color: 'var(--signal)' }} />
                   <h3 className="text-sm font-medium" style={{ color: 'var(--ink)' }}>All findings</h3>
@@ -666,7 +676,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
           )}
 
           {/* ── AI transparency note ──────────────────────── */}
-          <div className="mb-6 px-4 py-3 rounded-xl" style={{ background: 'color-mix(in srgb, var(--paper-2, #EAE3D4) 40%, transparent)', border: '1px solid color-mix(in srgb, var(--rule) 15%, transparent)' }}>
+          <div className="mb-6 px-4 py-3 rounded-xl" style={{ background: '#F7F8F9', border: '1px solid color-mix(in srgb, var(--rule) 15%, transparent)' }}>
             <p className="text-[11px] leading-relaxed" style={{ color: 'color-mix(in srgb, var(--m-muted) 70%, transparent)' }}>
               <span className="font-medium" style={{ color: 'var(--m-muted)' }}>About this audit</span> — This report was generated by AI analysing publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review.
             </p>
@@ -677,7 +687,7 @@ export default function SharedAuditPage({ params }: { params: Promise<{ token: s
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--ink)' }}>Audit your own site with the same engine</p>
             <p className="text-xs mb-1" style={{ color: 'var(--m-muted)' }}>Human experience + AI readability + brand consistency + conversion evidence - in one pass.</p>
             <p className="text-xs mb-5" style={{ color: 'var(--m-muted)' }}>96 checkpoints, 6 pillars, client-ready PDF. First audit is free.</p>
-            <Link href="/register" className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5" style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
+            <Link href="/register" className="inline-flex items-center gap-2 text-[15px] font-medium px-6 py-3 min-h-[48px] rounded-xl transition-all hover:brightness-110 hover:-translate-y-0.5" style={{ background: 'var(--ink)', color: '#FFFFFF' }}>
               <Sparkles size={16} />
               Get your free audit
             </Link>
