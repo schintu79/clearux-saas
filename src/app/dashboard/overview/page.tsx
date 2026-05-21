@@ -2423,47 +2423,100 @@ function FailedAuditOverview({
           border: '1px solid color-mix(in srgb, var(--severe) 22%, transparent)',
         }}
       >
-        <div className="flex items-start gap-3">
-          <span
-            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)', color: 'var(--severe)' }}
-          >
-            <AlertTriangle size={18} />
-          </span>
-          <div>
-            <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
-              The last audit failed
-            </h2>
-            <p className="text-[13px] mt-1.5 max-w-[520px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
-              We were not able to finish auditing {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'your website'}.
-              You can retry the audit, or open the previous run to see the error details.
-            </p>
-            {audit.crawl_error && (
-              <p
-                className="text-[11px] mt-2 px-2.5 py-1.5 rounded-md font-mono"
-                style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}
+        {audit.crawl_error?.startsWith('BLOCKED:') ? (
+          /* ── Blocked by anti-bot protection ── */
+          <>
+            <div className="flex items-start gap-3">
+              <span
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'color-mix(in srgb, var(--warn) 12%, transparent)', color: 'var(--warn)' }}
               >
-                {audit.crawl_error.slice(0, 200)}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={retryHref}
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
-            style={{ background: 'var(--ink)', color: 'var(--paper)' }}
-          >
-            <RefreshCw size={13} />
-            Retry audit
-          </Link>
-          <Link
-            href={`/dashboard/audits/${audit.id}`}
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
-          >
-            View details <ChevronRight size={12} />
-          </Link>
-        </div>
+                <Shield size={18} />
+              </span>
+              <div>
+                <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+                  This site blocked our crawler
+                </h2>
+                <p className="text-[13px] mt-1.5 max-w-[560px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'This website'} uses
+                  anti-bot protection that prevents automated tools from accessing its content.
+                  This is not an error on our end — it means the site&apos;s security is working as intended.
+                </p>
+                <div
+                  className="mt-3 px-3 py-2.5 rounded-lg text-[12px] leading-relaxed"
+                  style={{ background: 'color-mix(in srgb, var(--warn) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--warn) 15%, transparent)' }}
+                >
+                  <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>Your credit has been refunded</p>
+                  <p style={{ color: 'var(--m-muted)' }}>
+                    No charge was applied for this audit. To audit this site, ask the site owner to whitelist
+                    the Fixpath crawler user-agent, or try again later if the protection is temporary.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={retryHref}
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              >
+                <RefreshCw size={13} />
+                Try again
+              </Link>
+              <a
+                href="mailto:support@fixpath.ai?subject=Blocked%20site%20audit%20request"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+              >
+                Contact support
+              </a>
+            </div>
+          </>
+        ) : (
+          /* ── Generic audit failure ── */
+          <>
+            <div className="flex items-start gap-3">
+              <span
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'color-mix(in srgb, var(--severe) 12%, transparent)', color: 'var(--severe)' }}
+              >
+                <AlertTriangle size={18} />
+              </span>
+              <div>
+                <h2 className="text-[18px] font-sans font-semibold" style={{ color: 'var(--ink)' }}>
+                  The last audit failed
+                </h2>
+                <p className="text-[13px] mt-1.5 max-w-[520px] leading-relaxed" style={{ color: 'var(--m-muted)' }}>
+                  We were not able to finish auditing {domain ? <span className="font-medium" style={{ color: 'var(--ink)' }}>{domain}</span> : 'your website'}.
+                  You can retry the audit, or open the previous run to see the error details.
+                </p>
+                {audit.crawl_error && (
+                  <p
+                    className="text-[11px] mt-2 px-2.5 py-1.5 rounded-md font-mono"
+                    style={{ background: 'color-mix(in srgb, var(--severe) 8%, transparent)', color: 'var(--severe)' }}
+                  >
+                    {audit.crawl_error.slice(0, 200)}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={retryHref}
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-3.5 py-2 rounded-lg"
+                style={{ background: 'var(--ink)', color: 'var(--paper)' }}
+              >
+                <RefreshCw size={13} />
+                Retry audit
+              </Link>
+              <Link
+                href={`/dashboard/audits/${audit.id}`}
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-2 rounded-lg bg-card border border-border text-text hover:bg-surface-alt transition-colors"
+              >
+                View details <ChevronRight size={12} />
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

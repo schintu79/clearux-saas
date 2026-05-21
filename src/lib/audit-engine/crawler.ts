@@ -63,6 +63,14 @@ export interface CrawledPage {
   /** Wall-clock time spent fetching the page in milliseconds. Null when not measured. */
   loadTimeMs: number | null
   crawledAt: string
+  /**
+   * True when the site actively blocked our crawl (Cloudflare challenge,
+   * anti-bot wall, CAPTCHA, etc.). When set, the audit should be marked
+   * as blocked rather than failed, and the user's credit refunded.
+   */
+  blockedByBot?: boolean
+  /** Human-readable description of the blocking mechanism detected */
+  blockReason?: string
 }
 
 /* ── HTML parsing helpers ──────────────────────────────────── */
@@ -315,37 +323,59 @@ function extractLinks(html: string, pageUrl: string): { links: URL[]; count: num
 
 /* ── Bot-detection checks ──────────────────────────────────── */
 
-/** Detect if the response is a Cloudflare/bot-challenge page */
-function isBlockedResponse(html: string, statusCode: number | null): boolean {
-  if (statusCode === 403 || statusCode === 503 || statusCode === 429) return true
+/** Map of anti-bot patterns to human-readable descriptions */
+const BLOCKED_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /challenge-platform/i, label: 'Cloudflare challenge' },
+  { pattern: /cf-browser-verification/i, label: 'Cloudflare browser verification' },
+  { pattern: /cloudflare/i, label: 'Cloudflare protection' },
+  { pattern: /just a moment/i, label: 'Cloudflare waiting page' },
+  { pattern: /checking your browser/i, label: 'Browser verification wall' },
+  { pattern: /enable javascript/i, label: 'JavaScript-required gate' },
+  { pattern: /please enable cookies/i, label: 'Cookie-required gate' },
+  { pattern: /access denied/i, label: 'Access denied page' },
+  { pattern: /attention required/i, label: 'Cloudflare attention page' },
+  { pattern: /ddos-guard/i, label: 'DDoS-Guard protection' },
+  { pattern: /sucuri/i, label: 'Sucuri WAF protection' },
+  { pattern: /incapsula/i, label: 'Imperva/Incapsula protection' },
+  { pattern: /bot detection/i, label: 'Bot detection system' },
+  { pattern: /are you a robot/i, label: 'Robot verification' },
+  { pattern: /captcha/i, label: 'CAPTCHA challenge' },
+  { pattern: /akamai/i, label: 'Akamai Bot Manager' },
+  { pattern: /perimeterx/i, label: 'PerimeterX protection' },
+  { pattern: /datadome/i, label: 'DataDome protection' },
+]
 
-  const blockedPatterns = [
-    /challenge-platform/i,
-    /cf-browser-verification/i,
-    /cloudflare/i,
-    /just a moment/i,
-    /checking your browser/i,
-    /enable javascript/i,
-    /please enable cookies/i,
-    /access denied/i,
-    /attention required/i,
-    /ddos-guard/i,
-    /sucuri/i,
-    /incapsula/i,
-    /bot detection/i,
-    /are you a robot/i,
-    /captcha/i,
-  ]
+/** Status code descriptions for blocked responses */
+const BLOCKED_STATUS_REASONS: Record<number, string> = {
+  403: 'HTTP 403 Forbidden — the server rejected our request',
+  429: 'HTTP 429 Too Many Requests — rate limiting in effect',
+  503: 'HTTP 503 Service Unavailable — possible bot challenge page',
+}
+
+/**
+ * Detect if the response is a Cloudflare/bot-challenge page.
+ * Returns `null` if not blocked, or a human-readable reason string.
+ */
+function detectBlockReason(html: string, statusCode: number | null): string | null {
+  // Check status codes first
+  if (statusCode && BLOCKED_STATUS_REASONS[statusCode]) {
+    return BLOCKED_STATUS_REASONS[statusCode]
+  }
 
   // Only flag if content is suspiciously short AND matches a pattern
   const textContent = extractTextContent(html)
   if (textContent.length < 500) {
-    for (const pattern of blockedPatterns) {
-      if (pattern.test(html) || pattern.test(textContent)) return true
+    for (const { pattern, label } of BLOCKED_PATTERNS) {
+      if (pattern.test(html) || pattern.test(textContent)) return label
     }
   }
 
-  return false
+  return null
+}
+
+/** Backwards-compatible boolean wrapper */
+function isBlockedResponse(html: string, statusCode: number | null): boolean {
+  return detectBlockReason(html, statusCode) !== null
 }
 
 /* ── Strategy 1: Direct fetch with realistic headers ───────── */
@@ -390,9 +420,23 @@ async function directFetch(url: string, timeoutMs: number = 20000): Promise<Craw
     const loadTimeMs = Date.now() - fetchStart
 
     // Check if we got blocked
-    if (!response.ok || isBlockedResponse(html, response.status)) {
-      console.warn(`[crawler] Direct fetch blocked for ${url} (status ${response.status})`)
-      return null // Signal to try fallback
+    const blockReason = detectBlockReason(html, response.status)
+    if (!response.ok || blockReason) {
+      console.warn(`[crawler] Direct fetch blocked for ${url} (status ${response.status}, reason: ${blockReason || 'non-ok status'})`)
+      // Return a page stub with the block flag so the caller knows WHY it failed
+      return {
+        url,
+        title: null,
+        h1: null,
+        metaDescription: null,
+        contentText: null,
+        linksFound: 0,
+        statusCode: response.status,
+        loadTimeMs: Date.now() - fetchStart,
+        crawledAt: new Date().toISOString(),
+        blockedByBot: !!blockReason,
+        blockReason: blockReason || `HTTP ${response.status}`,
+      }
     }
 
     const title = extractTitle(html)
@@ -599,12 +643,16 @@ async function googleCacheFetch(url: string): Promise<CrawledPage | null> {
 /* ── Multi-strategy fetch ──────────────────────────────────── */
 
 async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
+  // Track whether any strategy detected bot blocking
+  let lastBlockedPage: CrawledPage | null = null
+
   // Strategy 1: Direct fetch
   let page = await directFetch(url)
   if (page && page.contentText && page.contentText.length >= 100) {
     console.log(`[crawler] Direct fetch succeeded for ${url} (${page.contentText.length} chars)`)
     return page
   }
+  if (page?.blockedByBot) lastBlockedPage = page
 
   // Strategy 2: Jina Reader (handles JS rendering + bot protection)
   page = await jinaFetch(url)
@@ -621,6 +669,12 @@ async function fetchPageRobust(url: string): Promise<CrawledPage | null> {
   }
 
   console.error(`[crawler] All strategies failed for ${url}`)
+
+  // If we detected bot blocking during direct fetch, propagate that info
+  if (lastBlockedPage) {
+    console.warn(`[crawler] Site appears blocked by anti-bot protection: ${lastBlockedPage.blockReason}`)
+    return lastBlockedPage
+  }
 
   return {
     url,

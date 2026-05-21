@@ -90,6 +90,22 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   // value is hydrated from localStorage on mount in the effect below.
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
 
+  // Track whether the last setSelectedSiteId call was from an internal UI
+  // action (sidebar click, route sync) vs. an external source (subscription
+  // from another component calling writeSelection). Only internal changes
+  // should write back to the persistent store — otherwise we clobber
+  // selections set by the new-audit page's persistAuditSelection().
+  const internalChangeRef = useRef(false);
+
+  // Wrapper: call this instead of raw setSelectedSiteId when the change
+  // originates from a user action inside this shell (sidebar dropdown,
+  // route-sync effect). It flags the change as "internal" so the
+  // write-back effect knows to mirror it to the persistent store.
+  const selectSiteInternal = (id: string | null) => {
+    internalChangeRef.current = true;
+    setSelectedSiteId(id);
+  };
+
   // Hydrate selection from localStorage on first render AND subscribe to
   // external changes so the shell's selectedSiteId mirrors the persistent
   // store. Without the subscription, callers like `/dashboard/page.tsx`
@@ -109,6 +125,8 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     if (id) setSelectedSiteId(id);
     const unsub = subscribeSelection((next) => {
       const nextId = sidebarIdFromSelection(next);
+      // External change — do NOT flag as internal so the write-back
+      // effect won't clobber what was just written to the store.
       setSelectedSiteId((prev) => (nextId === prev ? prev : nextId));
     });
     return unsub;
@@ -199,28 +217,28 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
     if (pathname?.startsWith('/dashboard/audits/')) {
       const auditId = pathname.split('/')[3];
       const match = sites.find(s => s.kind === 'site' && s.auditId === auditId);
-      if (match) setSelectedSiteId(match.id);
+      if (match) selectSiteInternal(match.id);
     } else if (pathname?.startsWith('/dashboard/brand-identity/')) {
       const brandId = pathname.split('/')[3];
       const match = sites.find(s => s.kind === 'brand' && s.id === `brand:${brandId}`);
-      if (match) setSelectedSiteId(match.id);
+      if (match) selectSiteInternal(match.id);
     }
   }, [pathname, sites]);
 
-  // Mirror every selection change into the persistent brand-selection store
-  // so Overview / Find / Fix / Track scope their queries to the same brand.
-  // Skip the write when the derived selection already matches the persisted
-  // store — that avoids two race conditions:
-  //   1. On first mount we'd otherwise write `null` before the hydrate
-  //      effect populates `selectedSiteId` from localStorage, briefly
-  //      clobbering the persisted selection and causing the body of
-  //      `/dashboard/overview` (which reads the store) to fetch the
-  //      user's globally-most-recent audit instead of the selected one
-  //      — that is the divergence reported in the bug.
-  //   2. The subscribe-driven mirror (above) re-enters this effect with
-  //      the same value; without the guard, it would re-dispatch the
-  //      change event in a loop.
+  // Mirror INTERNAL selection changes into the persistent brand-selection
+  // store so Overview / Find / Fix / Track scope their queries to the same
+  // brand. Only writes when the change came from a user action inside this
+  // shell (sidebar dropdown click, route sync) — NOT from an external
+  // subscription event. This prevents the race where:
+  //   - new-audit page writes { kind:'site', host:'newsite.com' } to store
+  //   - the subscription syncs selectedSiteId to the new value
+  //   - but this effect would re-write the OLD stale value back to the store
+  //     before the subscription fires, clobbering the new selection
   useEffect(() => {
+    // Only write back when the change was triggered internally
+    if (!internalChangeRef.current) return;
+    internalChangeRef.current = false;
+
     const next = selectionFromSidebarId(selectedSiteId);
     const current = readSelection();
     const sameSite = next?.kind === 'site' && current?.kind === 'site' && next.host === current.host;
@@ -495,7 +513,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
                           role="option"
                           aria-selected={selected}
                           onClick={() => {
-                            setSelectedSiteId(s.id);
+                            selectSiteInternal(s.id);
                             setBrandMenuOpen(false);
                             writeSelection(selectionFromSidebarId(s.id));
                             router.push('/dashboard/overview');

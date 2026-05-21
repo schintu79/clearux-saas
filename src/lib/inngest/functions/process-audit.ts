@@ -219,8 +219,21 @@ export const processAuditFn = inngest.createFunction(
       const crawledPages = await crawlPages(auditDetails.productUrl, maxPages)
 
       if (crawledPages.length === 0 || !crawledPages[0].contentText) {
-        const hint = crawledPages[0]?.statusCode
-          ? `HTTP ${crawledPages[0].statusCode}`
+        // Check if the site was blocked by anti-bot protection
+        const homePage = crawledPages[0]
+        if (homePage?.blockedByBot) {
+          throw new Error(
+            `BLOCKED: ${auditDetails.productUrl} is protected by anti-bot technology (${homePage.blockReason || 'unknown protection'}). ` +
+            `This website uses security measures that prevent automated tools from accessing its content. ` +
+            `This is not a bug — it means the site's security is working as intended. ` +
+            `Your credit has been refunded automatically. ` +
+            `To audit this site, ask the site owner to whitelist the Fixpath crawler user-agent, ` +
+            `or try again later if the protection is temporary.`
+          )
+        }
+
+        const hint = homePage?.statusCode
+          ? `HTTP ${homePage.statusCode}`
           : 'no response after trying multiple fetch strategies'
         throw new Error(
           `Failed to crawl ${auditDetails.productUrl} — ${hint}. ` +
