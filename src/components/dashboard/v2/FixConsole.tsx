@@ -1919,7 +1919,7 @@ function SelfServeConsole({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {(lastDeployId || deployResult.deployLogId) && (
+                  {(lastDeployId || deployResult?.deployLogId) && (
                     <button
                       type="button"
                       onClick={handleRollback}
