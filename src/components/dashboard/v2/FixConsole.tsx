@@ -1833,7 +1833,7 @@ function SelfServeConsole({
               />
             )}
 
-            {/* Deploy actions — hidden after successful surgical deploy */}
+            {/* Deploy actions — hidden after successful deploy */}
             {!surgicalResult && !deployResult?.ok && (
               <div className="flex flex-col gap-2 pt-1">
                 {/* Batch pattern: "Fix all pages" is primary, preview is secondary */}
@@ -1899,20 +1899,49 @@ function SelfServeConsole({
                   </div>
                 )}
 
-                {(lastDeployId || (deployResult?.ok && deployResult.deployLogId)) && (
+                <ReversibilityNotice />
+              </div>
+            )}
+
+            {/* Post-deploy actions — undo + edit, shown after successful deploy */}
+            {deployResult?.ok && (
+              <div className="flex flex-col gap-2 pt-1">
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-[11.5px]"
+                  style={{ background: 'color-mix(in srgb, var(--ok) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--ok) 20%, transparent)' }}
+                >
+                  <Check size={12} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
+                  <span style={{ color: 'var(--ink)' }}>
+                    Fix deployed successfully.
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(lastDeployId || deployResult.deployLogId) && (
+                    <button
+                      type="button"
+                      onClick={handleRollback}
+                      disabled={restoring}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
+                      style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+                    >
+                      {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                      {restoring ? 'Restoring...' : 'Undo deploy'}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={handleRollback}
-                    disabled={restoring}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11.5px] font-semibold disabled:opacity-50"
-                    style={{ background: 'transparent', border: '1px solid var(--warn)', color: 'var(--warn)' }}
+                    onClick={() => {
+                      // Clear deploy result to re-enable the fix flow for further tweaking
+                      setDeployResult(null);
+                      setSurgicalResult(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-medium"
+                    style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--ink)' }}
                   >
-                    {restoring ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
-                    {restoring ? 'Restoring...' : 'Undo deploy'}
+                    <PenLine size={11} />
+                    Edit page
                   </button>
-                )}
-
-                <ReversibilityNotice />
+                </div>
               </div>
             )}
           </div>
