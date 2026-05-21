@@ -980,6 +980,18 @@ function SelfServeConsole({
   const [deployConnectionId, setDeployConnectionId] = useState<string>(
     ftpConnections.length === 1 ? ftpConnections[0].id : '',
   );
+
+  // Sync deployConnectionId when ftpConnections arrives after initial mount.
+  // useState only captures the initial value — if ftpConnections was still
+  // loading when FixConsole mounted, deployConnectionId stays '' and the
+  // deploy buttons remain disabled until the user manually picks a connection.
+  React.useEffect(() => {
+    if (deployConnectionId) return; // already selected
+    if (ftpConnections.length === 1) {
+      setDeployConnectionId(ftpConnections[0].id);
+    }
+  }, [ftpConnections, deployConnectionId]);
+
   const [deployPaths, setDeployPaths] = useState<Record<number, string>>({});
   const [deployResults, setDeployResults] = useState<Record<number, { ok: boolean; msg: string; deployLogId?: string }>>({});
   const [lastDeployIds, setLastDeployIds] = useState<Record<number, string>>({});
