@@ -33,6 +33,7 @@ const OP_META: Record<SurgicalOperation, { label: string; icon: React.ReactNode;
   replace: { label: 'Replace', icon: <RefreshCw size={10} />, color: 'var(--signal)' },
   insert: { label: 'Insert', icon: <PlusCircle size={10} />, color: 'var(--ok)' },
   create: { label: 'New file', icon: <FilePlus size={10} />, color: 'var(--signal)' },
+  'batch-replace': { label: 'Batch Replace', icon: <RefreshCw size={10} />, color: 'var(--signal)' },
 }
 
 const CONFIDENCE_COLORS: Record<string, string> = {

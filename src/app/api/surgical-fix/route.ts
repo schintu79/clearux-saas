@@ -19,6 +19,8 @@ import {
   applyPatch,
   computeDiff,
   validatePatch,
+  tryDeterministicFix,
+  checkAlreadyFixed,
   type SurgicalFixRequest,
   type SurgicalFixResult,
 } from '@/lib/surgical-fix'
@@ -120,7 +122,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ── Build and call AI ───────────────────────────────────
+    // ── Tier 1: Try deterministic fix (no AI, instant) ─────
+    const findingMeta = {
+      title: findingTitle || '',
+      description: findingDescription || '',
+      recommendation: recommendation || '',
+    }
+
+    // Check if the file already has the correct value
+    const alreadyFixed = checkAlreadyFixed(originalContent, findingMeta)
+    if (alreadyFixed) {
+      const result: SurgicalFixResult = {
+        operation,
+        originalContent,
+        patchedContent: originalContent,
+        changes: [],
+        confidence: 'high',
+        aiExplanation: alreadyFixed,
+        warning: alreadyFixed,
+      }
+      return NextResponse.json(result)
+    }
+
+    // Try deterministic pattern match
+    const deterministicResult = tryDeterministicFix(originalContent, findingMeta)
+    if (deterministicResult) {
+      const { find, replace, explanation } = deterministicResult
+      const patchedContent = originalContent.replace(find, replace)
+      const changes = computeDiff(originalContent, patchedContent)
+      const result: SurgicalFixResult = {
+        operation: changes.length > 0 ? 'replace' : operation,
+        originalContent,
+        patchedContent,
+        changes,
+        confidence: 'high',
+        aiExplanation: explanation,
+      }
+      return NextResponse.json(result)
+    }
+
+    // ── Tier 2: Build and call AI ───────────────────────────
     const prompt = buildPrompt(
       operation,
       originalContent,

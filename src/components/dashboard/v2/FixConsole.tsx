@@ -56,6 +56,7 @@ import {
 import type { AuditFinding, FixType as DbFixType } from '@/types/database';
 import DiffPreview from './DiffPreview';
 import type { SurgicalFixResult } from '@/lib/surgical-fix';
+import { detectBatchPattern } from '@/lib/surgical-fix';
 
 export interface FtpConnectionForDeploy {
   id: string;
@@ -988,6 +989,24 @@ function SelfServeConsole({
   const setSurgicalError = (val: string | null) =>
     val ? setSurgicalErrors((prev) => ({ ...prev, [activePageIdx]: val })) : setSurgicalErrors((prev) => { const n = { ...prev }; delete n[activePageIdx]; return n; });
 
+  // Batch fix detection — deterministic patterns that apply to all pages
+  const batchPattern = useMemo(() => {
+    if (!hasMultiplePages) return null;
+    return detectBatchPattern({
+      title: finding.title || '',
+      description: finding.description || '',
+      recommendation: patch,
+    });
+  }, [finding.title, finding.description, patch, hasMultiplePages]);
+
+  // Batch fix state
+  const [batchFixRunning, setBatchFixRunning] = useState(false);
+  const [batchFixProgress, setBatchFixProgress] = useState<{
+    current: number;
+    total: number;
+    results: Record<number, { ok: boolean; msg: string; patchedContent?: string }>
+  } | null>(null);
+
   // Load most recent deploy log for this finding (so Undo works across page reloads)
   React.useEffect(() => {
     if (!finding.id || ftpConnections.length === 0) return;
@@ -1219,7 +1238,98 @@ function SelfServeConsole({
     }
   };
 
+  // ── Batch fix: generate + deploy across all pages ─────────
+  const handleBatchFix = async () => {
+    if (!deployConnectionId || !patch.trim() || batchFixRunning) return;
+    setBatchFixRunning(true);
+    const total = pages.length;
+    const results: Record<number, { ok: boolean; msg: string; patchedContent?: string }> = {};
+    setBatchFixProgress({ current: 0, total, results });
+
+    for (let idx = 0; idx < total; idx++) {
+      const pagePath = deployPaths[idx];
+      if (!pagePath) {
+        results[idx] = { ok: false, msg: 'No remote path set for this page.' };
+        setBatchFixProgress({ current: idx + 1, total, results: { ...results } });
+        continue;
+      }
+
+      try {
+        // Step 1: Generate surgical fix
+        const fixRes = await fetch('/api/surgical-fix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            connectionId: deployConnectionId,
+            filePath: pagePath.trim(),
+            recommendation: patch,
+            findingId: finding.id,
+            findingTitle: finding.title,
+            findingDescription: finding.description || '',
+            findingCategory: '',
+            pageUrl: pages[idx] || finding.page_url || null,
+            language: pageTargets[idx]?.lang || pageTargets[0]?.lang || 'Default',
+          }),
+        });
+        const fixData = await fixRes.json().catch(() => ({} as any));
+        if (!fixRes.ok) {
+          results[idx] = { ok: false, msg: fixData?.error || `Fix failed (${fixRes.status})` };
+          setBatchFixProgress({ current: idx + 1, total, results: { ...results } });
+          continue;
+        }
+
+        // Check if already fixed or no changes
+        const sr = fixData as SurgicalFixResult;
+        if (sr.warning && sr.changes.length === 0) {
+          results[idx] = { ok: true, msg: sr.warning || 'Already correct.' };
+          setBatchFixProgress({ current: idx + 1, total, results: { ...results } });
+          // Store result so page tab shows check
+          setDeployResults((prev) => ({ ...prev, [idx]: { ok: true, msg: sr.warning || 'Already correct.' } }));
+          continue;
+        }
+
+        // Step 2: Deploy the patched content
+        const deployRes = await fetch('/api/ftp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'write',
+            connectionId: deployConnectionId,
+            filePath: pagePath.trim(),
+            content: sr.patchedContent,
+            auditId: finding.audit_id,
+            findingId: finding.id,
+            createBackup: true,
+          }),
+        });
+        const deployData = await deployRes.json().catch(() => ({} as any));
+        if (!deployRes.ok) {
+          results[idx] = { ok: false, msg: deployData?.error || `Deploy failed (${deployRes.status})` };
+        } else {
+          results[idx] = { ok: true, msg: 'Fixed and deployed.', patchedContent: sr.patchedContent };
+          setDeployResults((prev) => ({
+            ...prev,
+            [idx]: { ok: true, msg: 'Deployed successfully.', deployLogId: deployData?.deployLogId },
+          }));
+          if (deployData?.deployLogId) {
+            setLastDeployIds((prev) => ({ ...prev, [idx]: deployData.deployLogId }));
+          }
+        }
+      } catch (err: any) {
+        results[idx] = { ok: false, msg: err?.message || 'Network error.' };
+      }
+      setBatchFixProgress({ current: idx + 1, total, results: { ...results } });
+    }
+
+    // Mark finding as fixed if all pages succeeded
+    const allOk = Object.values(results).every((r) => r.ok);
+    if (allOk) onStatusChange?.('fixed');
+
+    setBatchFixRunning(false);
+  };
+
   const canDeploy = hasFtp && deployConnectionId && deployPath.trim() && patch.trim();
+  const canBatchDeploy = hasFtp && deployConnectionId && patch.trim() && Object.keys(deployPaths).length === pages.length && Object.values(deployPaths).every((p) => p.trim());
 
   return (
     <section aria-label="Self-serve deploy console" className="text-[12px] space-y-5 pt-4">
@@ -1585,6 +1695,77 @@ function SelfServeConsole({
               </div>
             )}
 
+            {/* Batch fix progress */}
+            {(batchFixRunning || batchFixProgress) && batchFixProgress && (
+              <div
+                className="rounded-lg overflow-hidden"
+                style={{ border: '1px solid var(--rule)', background: 'var(--paper-2)' }}
+              >
+                <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid var(--rule)' }}>
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--ink)' }}>
+                    {batchFixRunning ? 'Fixing all pages...' : 'Batch fix complete'}
+                  </span>
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--m-muted)' }}>
+                    {batchFixProgress.current}/{batchFixProgress.total}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="h-1" style={{ background: 'var(--rule)' }}>
+                  <div
+                    className="h-full transition-all duration-300"
+                    style={{
+                      width: `${(batchFixProgress.current / batchFixProgress.total) * 100}%`,
+                      background: 'var(--ok)',
+                    }}
+                  />
+                </div>
+                {/* Per-page results */}
+                <div className="px-3 py-2 space-y-1">
+                  {pages.map((pageUrl, idx) => {
+                    const result = batchFixProgress.results[idx];
+                    let label: string;
+                    try { label = new URL(pageUrl).pathname; } catch { label = pageUrl; }
+                    if (label.length > 40) label = '...' + label.slice(-37);
+                    return (
+                      <div key={idx} className="flex items-center gap-2 text-[11px]">
+                        {result ? (
+                          result.ok ? (
+                            <Check size={10} style={{ color: 'var(--ok)' }} className="flex-shrink-0" />
+                          ) : (
+                            <AlertCircle size={10} style={{ color: 'var(--warn)' }} className="flex-shrink-0" />
+                          )
+                        ) : idx < batchFixProgress.current ? (
+                          <Loader2 size={10} className="animate-spin flex-shrink-0" style={{ color: 'var(--signal)' }} />
+                        ) : (
+                          <span className="w-[10px] h-[10px] flex-shrink-0 rounded-full" style={{ background: 'var(--rule)' }} />
+                        )}
+                        <span className="font-mono" style={{ color: result ? (result.ok ? 'var(--ink)' : 'var(--warn)') : 'var(--m-muted)' }}>
+                          {label}
+                        </span>
+                        {result && (
+                          <span className="ml-auto text-[10px]" style={{ color: result.ok ? 'var(--ok)' : 'var(--warn)' }}>
+                            {result.msg.length > 50 ? result.msg.slice(0, 47) + '...' : result.msg}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {!batchFixRunning && batchFixProgress && (
+                  <div className="px-3 py-2" style={{ borderTop: '1px solid var(--rule)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setBatchFixProgress(null)}
+                      className="text-[11px] font-medium px-2.5 py-1 rounded-md"
+                      style={{ background: 'transparent', border: '1px solid var(--rule)', color: 'var(--m-muted)' }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Surgical diff preview */}
             {surgicalResult && !deployResult?.ok && (
               <DiffPreview
@@ -1616,8 +1797,23 @@ function SelfServeConsole({
                   {surgicalLoading ? 'Generating fix...' : 'Generate surgical fix'}
                 </button>
 
-                {/* Bulk deploy button for multi-page */}
-                {hasMultiplePages && !surgicalLoading && (
+                {/* Batch fix button — deterministic patterns that apply to all pages */}
+                {batchPattern && !surgicalLoading && !batchFixRunning && (
+                  <button
+                    type="button"
+                    onClick={handleBatchFix}
+                    disabled={!canBatchDeploy || deploying || restoring}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold disabled:opacity-50 transition-opacity"
+                    style={{ background: 'var(--ok)', color: '#fff' }}
+                    title={`Deterministic fix: ${batchPattern.patternName} — applies to all ${pages.length} pages`}
+                  >
+                    <Layers size={12} />
+                    Fix all {pages.length} pages
+                  </button>
+                )}
+
+                {/* Bulk review button for multi-page (non-batch) */}
+                {hasMultiplePages && !batchPattern && !surgicalLoading && !batchFixRunning && (
                   <button
                     type="button"
                     onClick={() => setShowBulkReview(true)}

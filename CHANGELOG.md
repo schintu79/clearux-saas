@@ -1,0 +1,334 @@
+# Fixpath Changelog
+
+Structured record of every bug fix, feature, and architectural change. Organized by system area, each entry includes the root cause, what was changed, and which files were touched.
+
+Last updated: 2026-05-21
+
+---
+
+## Surgical Fix Engine
+
+### Two-tier deterministic + AI fix architecture
+- **Feature**: Built a two-tier surgical fix system: Tier 1 (deterministic patterns, no AI, instant, batch-capable) and Tier 2 (AI-assisted Haiku patches, 2-4s)
+- **Architecture**: `DETERMINISTIC_PATTERNS` registry of known fix patterns. Each pattern has: `name`, `detect(finding)` → boolean, `apply(content, finding)` → `{find, replace, explanation}`, and `scope` (`single-page` | `all-pages`). Engine tries every pattern before falling back to AI
+- **Patterns implemented**: (1) `html-lang-attribute` — extracts current lang from `<html>` tag, determines target lang from finding text, swaps the attribute. Scope: `all-pages`. (2) `missing-viewport-meta` — inserts viewport meta tag after `<meta charset>`. Scope: `all-pages`. (3) `meta-charset` — adds `<meta charset="utf-8">` as first child of `<head>`. Scope: `all-pages`
+- **No-op detection**: `checkAlreadyFixed()` catches when file already has the correct value. Returns human-readable message instead of crashing. Also catches in `applyPatch()` when `find.trim() === content.trim()`
+- **Batch detection**: `detectBatchPattern()` returns pattern name + scope for UI to decide whether to show "Fix all pages" button
+- **API integration**: `route.ts` tries Tier 1 (checkAlreadyFixed → tryDeterministicFix) before Tier 2 (buildPrompt → callSurgicalAI → applyPatch)
+- **Files**: `src/lib/surgical-fix.ts`, `src/app/api/surgical-fix/route.ts`
+
+### Multi-page batch fix UI
+- **Feature**: When a deterministic pattern has `scope: 'all-pages'`, FixConsole shows a "Fix all pages" button that generates fixes and deploys across all crawled pages sequentially
+- **How it works**: `handleBatchFix()` iterates through all pages, calls `/api/surgical-fix` for each (which hits the deterministic Tier 1 path), then deploys via `/api/ftp` with backup. Shows real-time progress bar with per-page status (pending → loading → success/error). Auto-marks finding as "fixed" when all pages succeed
+- **Already-fixed handling**: If a page already has the correct value, it's marked as success with the "already correct" message — no unnecessary writes
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+### `batch-replace` operation type added to DiffPreview
+- **Fix**: Added `'batch-replace'` to `SurgicalOperation` type union and `OP_META` record in DiffPreview to prevent TypeScript error
+- **Files**: `src/components/dashboard/v2/DiffPreview.tsx`
+
+### JSON-LD structured data patches failing — `ac76afc`
+- **Bug**: Hitting "Surgical fix" on schema/JSON-LD findings returned "AI returned invalid JSON" error
+- **Root cause**: Three compounding issues: (1) `max_tokens: 2048` too small for JSON-LD replacements — response truncated mid-JSON; (2) markdown fence stripping regex `^```(?:json)?\n?` didn't match all Haiku output variants; (3) AI was copying entire `<script>` blocks into the `find` field, making responses huge
+- **Fix**: Increased `max_tokens` to 4096. Improved fence regex to handle whitespace variants. Added truncation detection via `stop_reason === 'max_tokens'` with recovery logic. Added block-aware replacement: when `find` matches just a `<script>` opening tag, engine auto-extends match to `</script>`. Updated prompt to tell AI to keep `find` to 1-3 lines max
+- **Files**: `src/lib/surgical-fix.ts`
+
+### `i.split is not a function` crash — `669f6c6`
+- **Bug**: Runtime crash when opening surgical fix for some findings
+- **Root cause**: `patch` state could be null/undefined when `finding.recommendation` wasn't a string. Code called `patch.split('\n')` without null check
+- **Fix**: Changed `patch.split('\n')` to `(patch || '').split('\n')`
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx` (line ~1245)
+
+### Italian page showing English recommendation — `669f6c6`
+- **Bug**: Surgical fix for Italian pages generated English replacement text
+- **Root cause**: `surgical-fix.ts` had zero language awareness — `buildPatchPrompt()` never received page language
+- **Fix**: Full pipeline: FixConsole detects language via URL TLD patterns (`detectLang()`) → passes `language` field in API call → `/api/surgical-fix/route.ts` extracts and forwards to `buildPrompt()` → `buildPatchPrompt()` adds `LANGUAGE RULE (CRITICAL)` instruction telling AI all visible text must be in target language
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`, `src/lib/surgical-fix.ts`, `src/app/api/surgical-fix/route.ts`
+
+### Surgical fix 524 timeout — `463cdae`
+- **Bug**: Surgical fix requests timing out at 524 on Vercel
+- **Root cause**: Original engine used Sonnet to rewrite the entire file (30-60s). Way too slow for serverless
+- **Fix**: Rewrote engine to use Haiku with JSON patch mode. AI returns a tiny `{action, find, content}` patch instruction. Engine applies it via string replacement. Typical response: 2-4 seconds
+- **Files**: `src/lib/surgical-fix.ts`
+
+### Schema/JSON-LD findings misclassified as "requires design work" — `985f799`
+- **Bug**: Code-only fixes like adding JSON-LD were blocked by the `requiresNewUi` gate
+- **Root cause**: Classification logic didn't distinguish code/schema fixes from visual design changes
+- **Fix**: Skip `requiresNewUi` gate for code-only fix types (schema, meta, script)
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
+## Audit Pipeline Performance
+
+### Deep mode audit taking too long — `c410c9e`
+- **Bug**: Deep mode audits felt slow — user reported "taking ages"
+- **Root cause**: `BATCH_SIZE=4` meant 6 serial waves of AI calls (24 categories / 4). Multiple tiny Inngest steps each added cold-start overhead (~1-2s per checkpoint)
+- **Fix**: Increased `BATCH_SIZE` from 4 to 8 (3 serial waves instead of 6). Merged quality-gate Inngest steps: `deduplicate-findings` + `filter-speculative-findings` + `progress-after-analysis` → single `quality-gates` step. Merged `verify-findings` + `progress-after-quality` into one step. Folded `progress-after-crawl` into `check-responsive-design` step
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+### Audit rate limiting / 429 errors — `b12e6a9`
+- **Bug**: Audits failing with Anthropic rate limit errors on concurrent calls
+- **Root cause**: Too many parallel AI calls hitting Anthropic's per-minute token limits
+- **Fix**: Reduced concurrency, added exponential retry logic, sequentialized LLM probes
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+### Prompt caching — `84ecc81`
+- **Feature**: Wire Anthropic prompt caching into analyzer calls
+- **What**: High-impact API calls (analyzer, probes) now use prompt caching to reduce token costs and latency
+- **Files**: `src/lib/audit-engine/analyzer.ts`, various probe files
+
+### Audit progress stuck at 0% — `350897d`
+- **Bug**: Progress bar never updated during audit
+- **Root cause**: `progress_percent` field wasn't being set in Inngest pipeline steps
+- **Fix**: Added `setProgress()` calls at each pipeline stage
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+---
+
+## AI X-Ray & Benchmark
+
+### AI X-Ray score instability — `de3ebab` + `5a8ae6c`
+- **Bug**: AI X-Ray scores fluctuated on every page load
+- **Root cause**: LLM probe and grading calls used default temperature (non-zero), producing different scores each time
+- **Fix**: Set `temperature: 0` on all probe and grading API calls. Added 6-hour cooldown preventing re-scans from overwriting stable scores
+- **Files**: `src/lib/audit-engine/llm-probes.ts`, AI X-Ray components
+
+### Gemini probe failing — `53f2edf`
+- **Bug**: Gemini probes returning errors, breaking multi-model benchmarking
+- **Root cause**: Model name `gemini-pro` was deprecated; needed `gemini-2.5-flash`
+- **Fix**: Updated model name to `gemini-2.5-flash`
+- **Files**: `src/lib/audit-engine/llm-probes.ts`
+
+### Accuracy grading labeling correct answers as "Fabricated" — commit in `c8a44fa`
+- **Bug**: AI X-Ray accuracy badges showing "Fabricated" for answers that were actually correct
+- **Root cause**: Grading methodology was too strict — any deviation from ground truth was marked as fabrication
+- **Fix**: Revised grading to distinguish genuine fabrication from paraphrasing/approximation
+- **Files**: `src/lib/audit-engine/llm-probes.ts`
+
+### Benchmark scores inconsistent on reload — `68f5aca`
+- **Bug**: Benchmark page showing different scores each time
+- **Root cause**: Legacy audits had unstored scores recalculated from stale data
+- **Fix**: Stabilize legacy scores and snapshot at report time
+- **Files**: `src/lib/inngest/functions/process-audit.ts`, benchmark components
+
+---
+
+## FTP / Deploy System
+
+### FTP connection dropping between operations — `a0bff53`
+- **Bug**: FTP operations failing intermittently after initial connection worked
+- **Root cause**: FTP client was connecting/disconnecting per operation, no connection reuse
+- **Fix**: Added connection pooling to FTP client factory
+- **Files**: `src/lib/ftp-client.ts`
+
+### FTP client factory returning Promise instead of client — related to `5c69cc4`
+- **Bug**: Deploy operations crashing on `client.connect is not a function`
+- **Root cause**: `createFtpClient()` was async but callers weren't awaiting it
+- **Fix**: Fixed factory to properly return resolved client
+- **Files**: `src/lib/ftp-client.ts`
+
+### FTP connections not scoped to brand — `213fa3c` + `2602490`
+- **Bug**: FTP connections from one brand/site visible on another
+- **Root cause**: Queries didn't filter by brand or domain
+- **Fix**: Enforce per-brand scoping via `brand_id` filter; scope to site domain when brand isn't available. Return empty list instead of all connections when `brandId` is missing
+- **Files**: `src/app/api/ftp/route.ts`, FTP-related components
+
+### Deploy history lost on reload — `0573881`
+- **Bug**: Undo/rollback button disappeared after page refresh
+- **Root cause**: Deploy history was only in React state, not persisted
+- **Fix**: Load deploy history from DB so undo button persists across reloads
+- **Files**: Deploy console components, API routes
+
+---
+
+## Fix Console (FixConsole.tsx)
+
+### What Will Change card cleanup — `e8e3a81`
+- **Bug**: Card had redundant badges, misaligned metadata, broken affected page display, confusing preview panel
+- **Fix**: Removed duplicate "Surgical fix" and "html" labels. Aligned metadata into clean grid columns. Fixed affected page to show correctly. Removed preview section panel (search/social/assistant previews)
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+### Fix Console full refactor — `7ddc936`
+- **Feature**: Strict surgical-fix system with scope boundaries
+- **What**: Refactored into two-path deploy console: surgical (code changes via AI patch) vs. strategic (design recommendations). Added fix classification into categories before rendering. Mandatory "What will change" card with metadata and impact fields
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+### Multi-page deploy tabs — `f8a206c`
+- **Feature**: When a finding affects 2+ pages, show tabs for each page instead of a single deploy target
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+### Active finding not scrolling into view — `409283b`
+- **Bug**: Selecting a finding in sidebar didn't scroll it into viewport
+- **Fix**: Added `scrollIntoView()` call when active finding changes
+- **Files**: `src/components/dashboard/v2/FixConsole.tsx`
+
+---
+
+## Dashboard UI
+
+### Native select dropdowns dark/unreadable — `242946f` + `60dcb5f` + `c82e361`
+- **Bug**: Dropdown menus had dark backgrounds in dark mode, making text invisible
+- **Root cause**: Native `<select>` and `<option>` elements inherit dark theme colors but can't be fully styled
+- **Fix**: First tried `color-scheme: light` force, then reset option backgrounds globally, finally replaced all native selects with custom `CustomSelect` component
+- **Files**: `src/components/ui/CustomSelect.tsx`, globals.css, various pages
+
+### Score ring and sticky bar inconsistencies — `30e4060`
+- **Bug**: Score ring too small on overview card; Track page had React hooks ordering error
+- **Fix**: Enlarged score ring, fixed hooks ordering
+- **Files**: Audit detail page, Track page
+
+### Tab navigation redesign — across multiple commits
+- **Feature**: Redesigned from basic tab buttons to a proper editorial-style navigation menu
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+### "Dig deeper" renamed to "Deep mode" — `c410c9e`
+- **Change**: All UI instances (action strip, bottom bar, three-dot menu, help text) renamed from "Dig deeper" / "Dig Deeper" to "Deep mode"
+- **Files**: `src/app/dashboard/audits/[id]/page.tsx`
+
+---
+
+## Audit Engine / Analyzer
+
+### Speculative findings slipping through — multiple commits
+- **Bug**: Findings like "cannot verify from crawled content" appearing in results
+- **Root cause**: Analyzer prompt not strict enough; speculative filter had gaps
+- **Fix**: Hardened analyzer prompt with explicit quality rules. Strengthened speculative filter patterns in `pipeline/speculative-filter.ts`
+- **Files**: `src/lib/audit-engine/analyzer.ts`, `src/lib/proprietary-pipeline/speculative-filter.ts`
+
+### Crawler only scanning 1 page — `130` era commits
+- **Bug**: Multi-page audits only analyzing homepage
+- **Root cause**: Crawler was returning after first page instead of following internal links
+- **Fix**: Updated crawler to follow links and scan multiple pages
+- **Files**: `src/lib/audit-engine/crawler.ts`
+
+### Score-to-findings gap — `255` era
+- **Bug**: Categories could score low (e.g. 40/100) but have zero findings
+- **Root cause**: Analyzer could rate a category poorly without generating specific findings
+- **Fix**: Enforce minimum findings for low-scoring categories
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+### Duplicate findings in Deep Mode — `28` era
+- **Bug**: Deep mode producing near-identical findings
+- **Root cause**: Dedup logic used exact title matching only
+- **Fix**: Tightened dedup with fuzzy matching, cosine similarity on descriptions
+- **Files**: `src/lib/proprietary-pipeline/dedup.ts`
+
+---
+
+## WCAG Compliance
+
+### WCAG 2.1 AA checker — `685453d`
+- **Feature**: Built full WCAG conformance checker engine and dashboard tab
+- **What**: Checks color contrast, keyboard navigation, ARIA labels, form labels, landmarks, heading hierarchy, focus indicators, touch targets. Results shown in dedicated dashboard tab with pass/fail/warning checklist
+- **Files**: `src/lib/proprietary-pipeline/wcag-checker.ts`, `src/components/dashboard/v2/WcagChecklist.tsx`, process-audit.ts
+
+---
+
+## Responsive Checker
+
+### Responsive design checks — `156-159` era
+- **Feature**: Puppeteer-based layout checks at 4 viewport sizes (mobile, tablet, desktop, wide)
+- **What**: Checks for horizontal overflow, text readability, tap target sizes, image scaling, layout shifts. Results fed into analyzer prompt for better responsive findings
+- **Files**: `src/lib/audit-engine/responsive-checker.ts`, process-audit.ts, analyzer.ts
+
+---
+
+## Reports (PDF / DOCX)
+
+### PDF generation broken — `90` era
+- **Bug**: PDF route crashing after HTML template migration
+- **Fix**: Reverted to PDFKit with template colors for reliable generation
+- **Files**: `src/app/api/reports/[id]/pdf/route.ts`
+
+### CATEGORY_KEYWORDS mismatch — `149`
+- **Bug**: Report categories not matching finding categories
+- **Root cause**: Index array in render-website-report.ts was out of sync with analyzer categories
+- **Fix**: Aligned keyword arrays
+- **Files**: `src/lib/reports/render-website-report.ts`
+
+---
+
+## Authentication & Security
+
+### Auth bypass in detect-competitors — `152`
+- **Bug**: GET `/api/audits/detect-competitors` accessible without auth
+- **Fix**: Added auth check at top of handler
+- **Files**: `src/app/api/audits/detect-competitors/route.ts`
+
+### Middleware using deprecated getSession — `148`
+- **Bug**: Auth middleware using deprecated `getSession()` which doesn't validate tokens
+- **Fix**: Switched to `getUser()` which validates the JWT
+- **Files**: `src/middleware.ts`
+
+---
+
+## Payments
+
+### Stripe webhook silently losing data — `154`
+- **Bug**: Webhook handler swallowing errors, losing payment confirmations
+- **Fix**: Added proper error handling and logging to webhook
+- **Files**: `src/app/api/webhooks/stripe/route.ts`
+
+---
+
+## Brand Audits
+
+### All categories scoring 82 — `73`
+- **Bug**: Every brand audit category returned exactly 82/100
+- **Root cause**: Scoring logic had a default fallback that was always triggered
+- **Fix**: Fixed scoring to use actual analysis results
+- **Files**: Brand audit analyzer
+
+### Brand audit emails saying "Website Audit" — `77` + `83`
+- **Bug**: Completion emails not type-aware
+- **Fix**: Made email templates check audit type and use "Brand Identity Audit" when appropriate
+- **Files**: Email templates, process-audit.ts
+
+---
+
+## Infrastructure
+
+### Inngest failure swallowing — `153`
+- **Bug**: Pipeline step failures not surfaced, audits stuck silently
+- **Fix**: Added proper error propagation and logging in Inngest step wrappers
+- **Files**: `src/lib/inngest/functions/process-audit.ts`
+
+### Re-audits ignoring user-selected modules — `91`
+- **Bug**: Re-running audit with different modules (SEO/Brand) still analyzed original modules
+- **Fix**: Read module selection from form params, not from previous audit
+- **Files**: New audit flow, process-audit.ts
+
+---
+
+## Design System / Marketing
+
+### Rebrand ClearUX → Fixpath — `e631fba`
+- **Change**: Full rebrand across all pages, components, emails, and metadata
+- **Files**: ~50+ files across the codebase
+
+### v2 marketing redesign — commits `93-109`
+- **Feature**: Complete redesign of all marketing pages with editorial/Vercel aesthetic
+- **What**: New font system (DM Sans), CSS variable tokens, component primitives, page-by-page rebuild of homepage, about, pricing, how-it-works, FAQ, contact, login, register, legal pages
+- **Files**: All marketing page files, globals.css, tailwind.config
+
+### Dashboard redesign — commits `111-117`
+- **Feature**: Redesign of dashboard shell, admin shell, all dashboard pages
+- **Files**: DashboardShell, AdminShell, all dashboard page components
+
+---
+
+## File Index (most frequently modified)
+
+| File | Area | Description |
+|------|------|-------------|
+| `src/lib/surgical-fix.ts` | Fix engine | AI patch generation, diff computation, validation |
+| `src/lib/inngest/functions/process-audit.ts` | Pipeline | Main audit orchestrator (crawl → analyze → quality gates → report) |
+| `src/components/dashboard/v2/FixConsole.tsx` | Fix UI | Two-path deploy console for surgical and strategic fixes |
+| `src/app/dashboard/audits/[id]/page.tsx` | Audit detail | Overview, tabs, findings, action strips |
+| `src/lib/audit-engine/analyzer.ts` | Analyzer | 24-category AI analysis with language support |
+| `src/lib/audit-engine/crawler.ts` | Crawler | Multi-page crawl, head extraction, language detection |
+| `src/lib/ftp-client.ts` | Deploy | FTP/SFTP client factory with connection pooling |
+| `src/lib/proprietary-pipeline/` | Quality gates | Dedup, speculative filter, relevance scorer, pattern learner |
+| `src/app/api/surgical-fix/route.ts` | API | Surgical fix endpoint |
+| `src/lib/audit-engine/llm-probes.ts` | AI X-Ray | Multi-model probing (Claude, GPT, Gemini) |

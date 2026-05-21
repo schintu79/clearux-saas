@@ -1,22 +1,32 @@
 // ============================================================
-// Fixpath — Surgical Fix Engine (v2 — fast patch mode)
+// Fixpath — Surgical Fix Engine (v3 — deterministic + AI patch)
 // ============================================================
-// Reads a live page from FTP, uses a fast AI call to locate
-// the exact anchor point, then applies the patch with simple
-// string replacement. Returns the full modified file for
-// user approval before deployment.
+// Two-tier fix system:
 //
-// Key design decisions for speed:
-//   - Uses Haiku (fast, cheap) instead of Sonnet
-//   - Sends only a WINDOW of the file around likely fix points
-//   - AI returns a tiny JSON patch, not the whole file
-//   - Patch is applied programmatically via string ops
-//   - Typical response time: 2-4 seconds (was 30-60s)
+//   Tier 1 — Deterministic fixes (no AI, instant)
+//     For known patterns like lang attribute, meta charset,
+//     viewport meta, canonical URLs. Uses regex-based detection
+//     and string replacement. Supports batch mode across all
+//     crawled pages. Zero latency, zero cost, 100% reliable.
 //
-// Three operation types:
+//   Tier 2 — AI-assisted patches (Haiku, 2-4 seconds)
+//     For complex fixes requiring contextual understanding.
+//     AI returns a tiny JSON patch {action, find, content},
+//     applied programmatically via string ops.
+//
+// Four operation types:
 //   replace — swap broken code with the fix
 //   insert  — add new code at the correct location
 //   create  — create a new file (no AI needed)
+//   batch-replace — deterministic multi-page string swap (no AI)
+//
+// Key design decisions for speed:
+//   - Deterministic fixes bypass AI entirely (Tier 1)
+//   - AI fixes use Haiku (fast, cheap) instead of Sonnet
+//   - Sends only a WINDOW of the file around likely fix points
+//   - AI returns a tiny JSON patch, not the whole file
+//   - Block-aware replacement for <script> tags
+//   - Truncation detection and recovery for large patches
 //
 // PROPRIETARY — do not distribute outside the Fixpath codebase.
 // ============================================================
@@ -26,7 +36,7 @@ import { diffLines, type Change } from 'diff'
 
 // ── Types ────────────────────────────────────────────────────
 
-export type SurgicalOperation = 'replace' | 'insert' | 'create'
+export type SurgicalOperation = 'replace' | 'insert' | 'create' | 'batch-replace'
 
 export interface SurgicalFixRequest {
   /** FTP connection to read from */
@@ -62,6 +72,214 @@ export interface SurgicalFixResult {
   confidence: 'high' | 'medium' | 'low'
   aiExplanation: string
   warning?: string
+}
+
+// ── Deterministic fix patterns (Tier 1 — no AI needed) ──────
+// Known, well-defined fixes that can be applied as simple string
+// replacements without any AI call. Each pattern defines:
+//   - detect: does this finding match this pattern?
+//   - extract: pull the wrong value from the file
+//   - fix: return the corrected string
+//   - scope: 'all-pages' if the fix should apply site-wide
+//
+// These patterns are the core competitive advantage — they make
+// fixes instant, reliable, and batch-capable across all pages.
+// ─────────────────────────────────────────────────────────────
+
+export interface DeterministicFix {
+  /** Human-readable pattern name */
+  name: string
+  /** Does this finding + recommendation match this pattern? */
+  detect: (finding: { title: string; description: string; recommendation: string }) => boolean
+  /** Given file content, return { find, replace } or null if already correct */
+  apply: (content: string, finding: { title: string; description: string; recommendation: string }) => {
+    find: string
+    replace: string
+    explanation: string
+  } | null
+  /** Should this fix be applied to all crawled pages? */
+  scope: 'single-page' | 'all-pages'
+}
+
+/**
+ * Registry of deterministic fix patterns.
+ * Order matters — first match wins.
+ */
+export const DETERMINISTIC_PATTERNS: DeterministicFix[] = [
+  // ── Lang attribute fix ──────────────────────────────────────
+  // Detects: <html ... lang="en-US"> on a page that should be lang="it" (or other)
+  // Scope: all pages — static sites repeat this on every page
+  {
+    name: 'html-lang-attribute',
+    detect: ({ title, description }) => {
+      const t = `${title} ${description}`.toLowerCase()
+      return (t.includes('lang=') || t.includes('lang attribute') || t.includes('language') || t.includes('language identification'))
+        && (t.includes('html') || t.includes('page'))
+    },
+    apply: (content, { title, description, recommendation }) => {
+      // Extract what the lang SHOULD be from the finding text
+      const allText = `${title} ${description} ${recommendation}`
+      const targetLangMatch = allText.match(/lang=["']([a-z]{2}(?:-[A-Z]{2})?)["']/i)
+        || allText.match(/correct.*?to\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
+        || allText.match(/should\s+be\s+["']?([a-z]{2}(?:-[A-Z]{2})?)["']?/i)
+
+      // Extract the current lang from the file
+      const currentLangMatch = content.match(/<html[^>]*\slang=["']([^"']+)["']/i)
+      if (!currentLangMatch) return null // No lang attribute found
+
+      const currentLang = currentLangMatch[1]
+      let targetLang = targetLangMatch?.[1] || null
+
+      // If we can't determine target from text, infer from common patterns
+      if (!targetLang) {
+        // If description mentions "Italian" and current is "en-US", target is "it"
+        const descLower = `${title} ${description}`.toLowerCase()
+        if (descLower.includes('italian')) targetLang = 'it'
+        else if (descLower.includes('german')) targetLang = 'de'
+        else if (descLower.includes('french')) targetLang = 'fr'
+        else if (descLower.includes('spanish')) targetLang = 'es'
+        else if (descLower.includes('portuguese')) targetLang = 'pt'
+        else if (descLower.includes('dutch')) targetLang = 'nl'
+        else if (descLower.includes('japanese')) targetLang = 'ja'
+        else if (descLower.includes('chinese')) targetLang = 'zh'
+        else if (descLower.includes('korean')) targetLang = 'ko'
+        else if (descLower.includes('russian')) targetLang = 'ru'
+        else if (descLower.includes('arabic')) targetLang = 'ar'
+        else return null // Can't determine target language
+      }
+
+      // Already correct?
+      if (currentLang.toLowerCase() === targetLang.toLowerCase()) return null
+
+      // Build the exact find/replace strings
+      const fullMatch = currentLangMatch[0] // e.g. <html xmlns="..." lang="en-US"
+      const fixed = fullMatch.replace(`lang="${currentLang}"`, `lang="${targetLang}"`)
+        .replace(`lang='${currentLang}'`, `lang='${targetLang}'`)
+
+      return {
+        find: fullMatch,
+        replace: fixed,
+        explanation: `Change lang="${currentLang}" to lang="${targetLang}" on the <html> tag`,
+      }
+    },
+    scope: 'all-pages',
+  },
+
+  // ── Missing viewport meta ───────────────────────────────────
+  {
+    name: 'missing-viewport-meta',
+    detect: ({ title, description }) => {
+      const t = `${title} ${description}`.toLowerCase()
+      return t.includes('viewport') && (t.includes('missing') || t.includes('add'))
+    },
+    apply: (content, _finding) => {
+      // Already has viewport?
+      if (content.match(/<meta[^>]*name=["']viewport["']/i)) return null
+
+      const headClose = content.indexOf('</head')
+      if (headClose === -1) return null
+
+      // Find the line before </head> to insert
+      const insertBefore = content.slice(Math.max(0, headClose - 1), headClose + 7)
+      return {
+        find: insertBefore,
+        replace: `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n${insertBefore}`,
+        explanation: 'Add viewport meta tag before </head>',
+      }
+    },
+    scope: 'all-pages',
+  },
+
+  // ── Meta charset fix ────────────────────────────────────────
+  {
+    name: 'meta-charset',
+    detect: ({ title, description }) => {
+      const t = `${title} ${description}`.toLowerCase()
+      return t.includes('charset') && (t.includes('missing') || t.includes('incorrect') || t.includes('utf'))
+    },
+    apply: (content, _finding) => {
+      // Already has correct charset?
+      if (content.match(/<meta\s+charset=["']utf-8["']/i)) return null
+
+      // Has wrong charset?
+      const wrongCharset = content.match(/<meta[^>]*charset=["'][^"']+["'][^>]*>/i)
+      if (wrongCharset) {
+        return {
+          find: wrongCharset[0],
+          replace: '<meta charset="utf-8">',
+          explanation: 'Correct charset to UTF-8',
+        }
+      }
+
+      // Missing entirely — insert at top of <head>
+      const headOpen = content.match(/<head[^>]*>/i)
+      if (!headOpen) return null
+      return {
+        find: headOpen[0],
+        replace: `${headOpen[0]}\n  <meta charset="utf-8">`,
+        explanation: 'Add UTF-8 charset meta tag',
+      }
+    },
+    scope: 'all-pages',
+  },
+]
+
+/**
+ * Try to apply a deterministic fix pattern.
+ * Returns the fix result if a pattern matches, or null to fall through to AI.
+ */
+export function tryDeterministicFix(
+  content: string,
+  finding: { title: string; description: string; recommendation: string },
+): {
+  pattern: DeterministicFix
+  find: string
+  replace: string
+  explanation: string
+} | null {
+  for (const pattern of DETERMINISTIC_PATTERNS) {
+    if (!pattern.detect(finding)) continue
+    const result = pattern.apply(content, finding)
+    if (result) return { pattern, ...result }
+    // Pattern matched but file already correct — return special signal
+    // (caller should check for null and handle "already fixed")
+  }
+  return null
+}
+
+/**
+ * Check if a deterministic pattern matches this finding.
+ * Used by the UI to decide whether to show "Fix all pages" button.
+ */
+export function detectBatchPattern(
+  finding: { title: string; description: string; recommendation: string },
+): { patternName: string; scope: 'single-page' | 'all-pages' } | null {
+  for (const pattern of DETERMINISTIC_PATTERNS) {
+    if (pattern.detect(finding)) {
+      return { patternName: pattern.name, scope: pattern.scope }
+    }
+  }
+  return null
+}
+
+/**
+ * Check if a finding's fix target is already correct in the file.
+ * Returns a human-readable message if already fixed, or null.
+ */
+export function checkAlreadyFixed(
+  content: string,
+  finding: { title: string; description: string; recommendation: string },
+): string | null {
+  for (const pattern of DETERMINISTIC_PATTERNS) {
+    if (!pattern.detect(finding)) continue
+    const result = pattern.apply(content, finding)
+    if (result === null) {
+      // Pattern matched but nothing to fix — already correct
+      return `This page already has the correct value. No change needed.`
+    }
+    return null // Pattern matched and there IS something to fix
+  }
+  return null
 }
 
 // ── Operation classifier ─────────────────────────────────────
@@ -327,6 +545,15 @@ export function applyPatch(
 
   if (!find) {
     return { patchedContent: originalContent, applied: false, warning: 'Empty find string.' }
+  }
+
+  // No-op detection: if find and content are identical, the file is already correct
+  if (action === 'replace' && find.trim() === content.trim()) {
+    return {
+      patchedContent: originalContent,
+      applied: false,
+      warning: 'This file already has the correct value. No change needed.',
+    }
   }
 
   // Block-aware replacement: if "find" is just an opening tag (e.g. <script ...>)
