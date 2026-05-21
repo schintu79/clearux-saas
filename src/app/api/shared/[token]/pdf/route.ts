@@ -1,7 +1,7 @@
 // ============================================================
-// ClearUX API — GET /api/shared/:token/pdf
+// Fixpath API — GET /api/shared/:token/pdf
 // Public PDF download for shared audits (no auth required)
-// A4 format, mirrors the shared audit page content
+// A4 format — mirrors the shared audit page design exactly
 // ============================================================
 
 export const runtime = 'nodejs'
@@ -13,66 +13,54 @@ import { createServiceSupabase } from '@/lib/supabase-server'
 import { CHECKPOINT_LABELS } from '@/lib/audit-checkpoints'
 import type { AuditFinding } from '@/types/database'
 
-/* ── Colors ──────────────────────────────────────────────── */
+/* ── Colors (resolved CSS variables from the shared page) ── */
 const C = {
   white: '#FFFFFF',
-  bg: '#F7F8F9',
-  text: '#111111',
-  textBody: '#3D3D3D',
-  textSec: '#5C5C5C',
-  textTert: '#8A8A8A',
-  border: '#D4D4D4',
-  borderLight: '#E9EAEC',
-  scoreGreen: '#16A34A',
-  scoreYellow: '#CA8A04',
-  scoreRed: '#DC2626',
-  sevCritical: '#DC2626',
-  sevHigh: '#EA580C',
-  sevMedium: '#CA8A04',
-  sevLow: '#2563EB',
-  sevCriticalBg: '#FEF2F2',
-  sevHighBg: '#FFF7ED',
-  sevMediumBg: '#FEFCE8',
-  sevLowBg: '#EFF6FF',
+  offWhite: '#F7F8F9',
+  ink: '#14130F',
+  muted: '#6B6759',
+  rule: '#D4CCB8',
+  ruleLight: '#E2DDD0',
   signal: '#5E6B2F',
-  // Pillar colors
-  pillar: [
-    { color: '#3B82F6', bg: '#EFF6FF' },   // Foundation
-    { color: '#EC4899', bg: '#FDF2F8' },   // Human Experience
-    { color: '#8B5CF6', bg: '#F5F3FF' },   // Inclusive Design
-    { color: '#F59E0B', bg: '#FFFBEB' },   // Future Readiness
-    { color: '#10B981', bg: '#ECFDF5' },   // SEO Structure & Rules
-    { color: '#06B6D4', bg: '#ECFEFF' },   // Brand Consistency
-  ],
+  severe: '#8B3A2C',
+  warn: '#9A7A2C',
+  ok: '#3F6B3F',
 }
+
+/* Severity config matching the shared page exactly */
+const SEV: Record<string, { label: string; color: string; bgHex: string }> = {
+  critical: { label: 'Critical', color: C.severe, bgHex: '#F5EDEB' },
+  high:     { label: 'High',     color: C.warn,   bgHex: '#F5F1E8' },
+  medium:   { label: 'Medium',   color: C.signal, bgHex: '#EFF0E9' },
+  low:      { label: 'Low',      color: C.ok,     bgHex: '#EBF0EB' },
+}
+
+/* Module tints matching the shared page's MODULE_TINTS */
+const MODULE_TINTS = [
+  { dot: '#3B82F6', bg: '#F6F9FE', border: '#DCE7FB' }, // Foundation
+  { dot: '#EC4899', bg: '#FEF6FA', border: '#FADCEA' }, // Human Experience
+  { dot: '#8B5CF6', bg: '#F9F7FE', border: '#E4DBFB' }, // Inclusive Design
+  { dot: '#F59E0B', bg: '#FEFBF3', border: '#FBEAC2' }, // Future Readiness
+  { dot: '#10B981', bg: '#F3FDF9', border: '#CCEEDE' }, // SEO Structure & Rules
+  { dot: '#06B6D4', bg: '#F2FDFE', border: '#C5EDF3' }, // Brand Consistency
+]
 
 const PILLAR_NAMES = ['Foundation', 'Human Experience', 'Inclusive Design', 'Future Readiness', 'SEO Structure & Rules', 'Brand Consistency']
 const PILLAR_RANGES: [number, number][] = [[0, 4], [4, 8], [8, 12], [12, 16], [16, 20], [20, 24]]
 
 function scoreColor(s: number): string {
-  if (s >= 70) return C.scoreGreen
-  if (s >= 40) return C.scoreYellow
-  return C.scoreRed
+  if (s >= 70) return C.ok
+  if (s >= 40) return C.warn
+  return C.severe
 }
 
-function sevColor(sev: string): string {
-  switch (sev) {
-    case 'critical': return C.sevCritical
-    case 'high': return C.sevHigh
-    case 'medium': return C.sevMedium
-    case 'low': return C.sevLow
-    default: return C.textSec
-  }
-}
-
-function sevLabel(sev: string): string {
-  switch (sev) {
-    case 'critical': return 'Critical'
-    case 'high': return 'High'
-    case 'medium': return 'Medium'
-    case 'low': return 'Low'
-    default: return sev
-  }
+/* Mix a hex color with white at a given percentage (for tinted backgrounds) */
+function mixWithWhite(hex: string, pct: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const mix = (c: number) => Math.round(c * pct / 100 + 255 * (1 - pct / 100))
+  return `#${mix(r).toString(16).padStart(2, '0')}${mix(g).toString(16).padStart(2, '0')}${mix(b).toString(16).padStart(2, '0')}`
 }
 
 /* ── Main route ───────────────────────────────────────────── */
@@ -86,7 +74,6 @@ export async function GET(
 
     const db = createServiceSupabase()
 
-    // Fetch audit by share token (no auth — public)
     const { data: audit, error: auditErr } = await db
       .from('audits')
       .select('*')
@@ -149,7 +136,6 @@ export async function GET(
           continue
         }
       }
-      // Fallback: keyword match
       const text = `${f.title} ${f.description}`.toLowerCase()
       let matched = false
       for (let pi = 0; pi < PILLAR_NAMES.length; pi++) {
@@ -171,7 +157,6 @@ export async function GET(
       return { name, avg, start, end, cats }
     })
 
-    // AI Visibility
     const aiVis = rawJson?.aiVisibilityBreakdown
 
     // ── Build PDF ─────────────────────────────────────────
@@ -179,283 +164,451 @@ export async function GET(
       size: 'A4',
       margins: { top: 56, bottom: 56, left: 56, right: 56 },
       info: {
-        Title: `ClearUX Audit — ${domain}`,
-        Author: 'ClearUX',
-        Subject: `UX audit report for ${domain}`,
+        Title: `Fixpath Audit — ${domain}`,
+        Author: 'Fixpath.ai',
+        Subject: `Website audit report for ${domain}`,
       },
     })
     const chunks: Buffer[] = []
     doc.on('data', (chunk: Buffer) => chunks.push(chunk))
 
-    const pageW = 595.28 // A4 width in points
+    const pageW = 595.28
     const leftM = 56
     const contentW = pageW - 112
-    const pageBottom = 841.89 - 56 - 20 // A4 height minus margins
-
-    let pageNum = 0
+    const pageBottom = 841.89 - 56 - 20
 
     const ensureSpace = (needed: number) => {
       if (doc.y > pageBottom - needed) {
         doc.addPage()
-        pageNum++
-        drawHeader()
+        drawPageHeader()
       }
     }
 
-    const drawHeader = () => {
+    /* Thin header on every page: "Fixpath Audit — domain" left, date right */
+    const drawPageHeader = () => {
       doc.save()
-      doc.fontSize(7).font('Helvetica').fillColor(C.textTert)
-        .text(`ClearUX Audit — ${domain}`, leftM, 20, { width: contentW / 2 })
-      doc.fontSize(7).font('Helvetica').fillColor(C.textTert)
+      doc.fontSize(7).font('Helvetica').fillColor(C.muted)
+        .text(`Fixpath Audit — ${domain}`, leftM, 20, { width: contentW / 2 })
+      doc.fontSize(7).font('Helvetica').fillColor(C.muted)
         .text(dateStr, leftM + contentW / 2, 20, { width: contentW / 2, align: 'right' })
-      doc.moveTo(leftM, 35).lineTo(leftM + contentW, 35).strokeColor(C.borderLight).lineWidth(0.5).stroke()
+      doc.moveTo(leftM, 34).lineTo(leftM + contentW, 34).strokeColor(C.ruleLight).lineWidth(0.5).stroke()
       doc.restore()
       doc.y = 56
     }
 
-    const sectionHead = (title: string, fontSize: number = 16) => {
-      ensureSpace(40)
-      const sy = doc.y
-      doc.rect(leftM, sy, 3, 18).fill(C.text)
-      doc.fontSize(fontSize).font('Helvetica-Bold').fillColor(C.text)
-        .text(title, leftM + 12, sy + 1, { width: contentW - 12 })
-      doc.moveDown(0.4)
+    /* Card-style bordered box (matches the shared page's border cards) */
+    const drawCardBorder = (x: number, y: number, w: number, h: number, opts?: { radius?: number }) => {
+      const r = opts?.radius ?? 0
+      if (r > 0) {
+        doc.roundedRect(x, y, w, h, r).strokeColor(C.rule).lineWidth(0.75).stroke()
+      } else {
+        doc.rect(x, y, w, h).strokeColor(C.rule).lineWidth(0.75).stroke()
+      }
+    }
+
+    /* Draw a score ring approximation (circle arc + number in center) */
+    const drawScoreRing = (cx: number, cy: number, radius: number, score: number) => {
+      // Background ring (light gray)
+      doc.save()
+      doc.circle(cx, cy, radius).lineWidth(5).strokeColor('#E8E5DE').stroke()
+      // Score arc
+      const color = scoreColor(score)
+      const startAngle = -Math.PI / 2
+      const endAngle = startAngle + (2 * Math.PI * score / 100)
+
+      // Draw arc by creating a path
+      doc.save()
+      doc.strokeColor(color).lineWidth(5)
+      // PDFKit doesn't have native arc, so we approximate with small line segments
+      const segments = Math.max(2, Math.ceil(score / 2))
+      const step = (endAngle - startAngle) / segments
+      doc.moveTo(cx + radius * Math.cos(startAngle), cy + radius * Math.sin(startAngle))
+      for (let i = 1; i <= segments; i++) {
+        const angle = startAngle + step * i
+        doc.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle))
+      }
+      doc.stroke()
+      doc.restore()
+
+      // Score number centered
+      doc.fontSize(28).font('Helvetica-Bold').fillColor(scoreColor(score))
+      const scoreText = `${score}`
+      const tw = doc.widthOfString(scoreText)
+      doc.text(scoreText, cx - tw / 2, cy - 12, { lineBreak: false })
+      // "/100" label
+      doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+      const subText = '/100'
+      const stw = doc.widthOfString(subText)
+      doc.text(subText, cx - stw / 2, cy + 16, { lineBreak: false })
+      doc.restore()
     }
 
     // ═══════════════════════════════════════════════════════
-    // PAGE 1 — HERO SCORE
+    // PAGE 1
     // ═══════════════════════════════════════════════════════
 
-    drawHeader()
+    drawPageHeader()
 
-    // Shared badge
-    doc.fontSize(8).font('Helvetica').fillColor(C.textTert)
-      .text(`Shared audit report  |  ${domain}  |  ${dateStr}`, leftM, doc.y + 4, { width: contentW })
-    doc.moveDown(1.5)
+    // ── Shared badge ──────────────────────────────────────
+    doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+      .text(`Shared audit report  |  `, leftM, doc.y + 2, { continued: true })
+    doc.font('Helvetica-Bold').fillColor(C.ink)
+      .text(domain, { continued: true })
+    doc.font('Helvetica').fillColor(C.muted)
+      .text(`  |  ${dateStr}`)
+    doc.moveDown(1)
 
-    // Score
-    const scoreY = doc.y
-    doc.fontSize(60).font('Helvetica-Bold').fillColor(scoreColor(overall))
-      .text(`${overall}`, leftM, scoreY, { width: 120 })
-    doc.fontSize(12).font('Helvetica').fillColor(C.textTert)
-      .text('/100', leftM + 85, scoreY + 40)
+    // ── Hero Score Card ─────────────────────────────────────
+    const heroY = doc.y
+    const heroH = 120
+    doc.rect(leftM, heroY, contentW, heroH).fill(C.white)
+    drawCardBorder(leftM, heroY, contentW, heroH)
 
-    // Domain and meta next to score
-    doc.fontSize(18).font('Helvetica-Bold').fillColor(C.text)
-      .text(domain, leftM + 140, scoreY, { width: contentW - 140 })
-    doc.fontSize(9).font('Helvetica').fillColor(C.textSec)
-      .text(`${activeFindings.length} findings  ·  ${PILLAR_NAMES.length} modules`, leftM + 140, scoreY + 24, { width: contentW - 140 })
+    // Score ring on the left
+    const ringCx = leftM + 60
+    const ringCy = heroY + heroH / 2
+    drawScoreRing(ringCx, ringCy, 36, overall)
 
-    // Severity counts
-    const sevY = scoreY + 42
-    let sevX = leftM + 140
-    if (severityCounts.critical > 0) {
-      doc.fontSize(8).font('Helvetica-Bold').fillColor(C.sevCritical)
-        .text(`${severityCounts.critical} critical`, sevX, sevY)
-      sevX += 60
-    }
-    if (severityCounts.high > 0) {
-      doc.fontSize(8).font('Helvetica-Bold').fillColor(C.sevHigh)
-        .text(`${severityCounts.high} high`, sevX, sevY)
-      sevX += 45
-    }
-    if ((severityCounts.medium + severityCounts.low) > 0) {
-      doc.fontSize(8).font('Helvetica').fillColor(C.textSec)
-        .text(`${severityCounts.medium + severityCounts.low} more`, sevX, sevY)
-    }
+    // Domain + meta on the right
+    const metaX = leftM + 128
+    doc.fontSize(16).font('Helvetica-Bold').fillColor(C.ink)
+      .text(domain, metaX, heroY + 18, { width: contentW - 140 })
+    doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+      .text(`${activeFindings.length} findings  ·  ${PILLAR_NAMES.length} modules`, metaX, heroY + 38, { width: contentW - 140 })
 
-    doc.y = scoreY + 70
-
-    // Pillar mini-scores row
-    doc.moveDown(0.5)
-    const colW = contentW / pillarScores.length
-    const pillarY = doc.y
+    // Pillar mini-scores
+    let miniY = heroY + 54
+    let miniX = metaX
     for (let i = 0; i < pillarScores.length; i++) {
       const p = pillarScores[i]
-      const x = leftM + i * colW
-      doc.rect(x + 2, pillarY, 6, 6).fill(C.pillar[i].color)
-      doc.fontSize(7).font('Helvetica').fillColor(C.textSec)
-        .text(p.name, x + 12, pillarY - 1, { width: colW - 30 })
-      doc.fontSize(8).font('Helvetica-Bold').fillColor(scoreColor(p.avg))
-        .text(`${p.avg}`, x + colW - 22, pillarY - 1, { width: 20, align: 'right' })
+      if (p.cats.length === 0) continue
+      // Wrap to next row if needed
+      const itemW = doc.fontSize(7).font('Helvetica').widthOfString(p.name) + 28
+      if (miniX + itemW > leftM + contentW - 10) {
+        miniX = metaX
+        miniY += 12
+      }
+      doc.circle(miniX + 3, miniY + 3, 3).fill(MODULE_TINTS[i].dot)
+      doc.fontSize(7).font('Helvetica').fillColor(C.muted)
+        .text(p.name, miniX + 9, miniY - 1, { width: 100, lineBreak: false })
+      const nameW = doc.widthOfString(p.name)
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(scoreColor(p.avg))
+        .text(`${p.avg}`, miniX + 10 + nameW + 2, miniY - 1, { width: 20, lineBreak: false })
+      miniX += itemW + 4
     }
-    doc.y = pillarY + 18
-    doc.moveDown(1)
 
-    // Separator
-    doc.moveTo(leftM, doc.y).lineTo(leftM + contentW, doc.y).strokeColor(C.borderLight).lineWidth(0.5).stroke()
-    doc.moveDown(1)
+    // Severity counts
+    const sevRowY = miniY + 16
+    let sevX = metaX
+    if (severityCounts.critical > 0) {
+      doc.circle(sevX + 3, sevRowY + 3, 2.5).fill(C.severe)
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.severe)
+        .text(`${severityCounts.critical} critical`, sevX + 9, sevRowY - 1, { width: 60, lineBreak: false })
+      sevX += 65
+    }
+    if (severityCounts.high > 0) {
+      doc.circle(sevX + 3, sevRowY + 3, 2.5).fill(C.warn)
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.warn)
+        .text(`${severityCounts.high} high`, sevX + 9, sevRowY - 1, { width: 50, lineBreak: false })
+      sevX += 50
+    }
+    if ((severityCounts.medium + severityCounts.low) > 0) {
+      doc.fontSize(7.5).font('Helvetica').fillColor(C.muted)
+        .text(`${severityCounts.medium + severityCounts.low} more`, sevX + 4, sevRowY - 1, { width: 50, lineBreak: false })
+    }
 
-    // ═══════════════════════════════════════════════════════
-    // TOP PRIORITY RECOMMENDATIONS
-    // ═══════════════════════════════════════════════════════
+    doc.y = heroY + heroH + 14
 
+    // ── Top Priority Recommendations ────────────────────────
     if (topRecs.length > 0) {
-      sectionHead('Top priority recommendations', 14)
+      ensureSpace(60 + topRecs.length * 40)
+      const recsStartY = doc.y
 
+      // Measure total height for the card
+      let recsH = 44 // header height
+      const recHeights: number[] = []
+      for (const rec of topRecs) {
+        const h = doc.fontSize(9.5).font('Helvetica').heightOfString(rec, { width: contentW - 60 })
+        const rowH = Math.max(28, h + 14)
+        recHeights.push(rowH)
+        recsH += rowH
+      }
+
+      // Card background + border
+      doc.rect(leftM, recsStartY, contentW, recsH).fill(C.white)
+      drawCardBorder(leftM, recsStartY, contentW, recsH)
+
+      // Header bar with signal tint
+      const signalTintBg = mixWithWhite(C.signal, 4)
+      doc.rect(leftM + 0.5, recsStartY + 0.5, contentW - 1, 43).fill(signalTintBg)
+      // Header border bottom
+      doc.moveTo(leftM, recsStartY + 44).lineTo(leftM + contentW, recsStartY + 44)
+        .strokeColor(C.ruleLight).lineWidth(0.5).stroke()
+
+      // Zap icon placeholder (green square)
+      doc.roundedRect(leftM + 14, recsStartY + 10, 22, 22, 4).fill(C.signal)
+      doc.fontSize(11).font('Helvetica-Bold').fillColor(C.white)
+        .text('!', leftM + 22, recsStartY + 14, { width: 8, align: 'center', lineBreak: false })
+
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(C.ink)
+        .text('Top priority recommendations', leftM + 44, recsStartY + 10, { width: contentW - 100 })
+      doc.fontSize(7.5).font('Helvetica').fillColor(C.muted)
+        .text('Ranked by business impact, fix effort, and evidence strength.', leftM + 44, recsStartY + 24, { width: contentW - 100 })
+
+      // Actions badge
+      doc.fontSize(7).font('Helvetica-Bold').fillColor(C.signal)
+        .text(`${topRecs.length} actions`, leftM + contentW - 60, recsStartY + 16, { width: 50, align: 'right' })
+
+      // Recommendation rows
+      let recY = recsStartY + 44
       for (let i = 0; i < topRecs.length; i++) {
-        ensureSpace(50)
-        const recY = doc.y
-        const textH = doc.fontSize(9.5).font('Helvetica').heightOfString(topRecs[i], { width: contentW - 45 })
-        const boxH = Math.max(30, textH + 16)
-        doc.rect(leftM, recY, contentW, boxH).fill(C.bg)
-        doc.fontSize(11).font('Helvetica-Bold').fillColor(C.signal)
-          .text(`${i + 1}`, leftM + 10, recY + 8)
-        doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
-          .text(topRecs[i], leftM + 32, recY + 8, { width: contentW - 48 })
-        doc.y = recY + boxH + 4
+        if (i > 0) {
+          doc.moveTo(leftM + 10, recY).lineTo(leftM + contentW - 10, recY)
+            .strokeColor(C.ruleLight).lineWidth(0.3).stroke()
+        }
+
+        // Number circle
+        doc.circle(leftM + 22, recY + recHeights[i] / 2, 10).fill(C.signal)
+        doc.fontSize(9).font('Helvetica-Bold').fillColor(C.white)
+          .text(`${i + 1}`, leftM + 15, recY + recHeights[i] / 2 - 5, { width: 14, align: 'center', lineBreak: false })
+        doc.fontSize(6).font('Helvetica-Bold').fillColor(C.muted)
+          .text('Priority', leftM + 12, recY + recHeights[i] / 2 + 8, { width: 20, align: 'center', lineBreak: false })
+
+        // Lightbulb label
+        doc.fontSize(7).font('Helvetica-Bold').fillColor(C.signal)
+          .text('RECOMMENDED FIX', leftM + 44, recY + 6)
+        // Recommendation text
+        doc.fontSize(9.5).font('Helvetica').fillColor(C.ink)
+          .text(topRecs[i], leftM + 44, recY + 18, { width: contentW - 60 })
+
+        recY += recHeights[i]
       }
-      doc.moveDown(0.8)
+
+      doc.y = recsStartY + recsH + 14
     }
 
-    // ═══════════════════════════════════════════════════════
-    // EXECUTIVE SUMMARY
-    // ═══════════════════════════════════════════════════════
-
+    // ── Executive Summary ────────────────────────────────────
     if (r.executive_summary) {
-      sectionHead('Executive summary', 14)
       const summaryText = r.executive_summary || ''
-      for (const para of summaryText.split('\n').filter((s: string) => s.trim())) {
-        ensureSpace(30)
-        doc.fontSize(9.5).font('Helvetica').fillColor(C.textBody)
-          .text(para.trim(), leftM, undefined, { width: contentW, lineGap: 2 })
-        doc.moveDown(0.4)
-      }
-      doc.moveDown(0.8)
+      const summaryH = doc.fontSize(9.5).font('Helvetica').heightOfString(summaryText, { width: contentW - 28, lineGap: 2 })
+      const cardH = 44 + summaryH + 14
+
+      ensureSpace(Math.min(cardH, 200))
+      const esY = doc.y
+
+      doc.rect(leftM, esY, contentW, cardH).fill(C.white)
+      drawCardBorder(leftM, esY, contentW, cardH)
+
+      // Header
+      doc.moveTo(leftM, esY + 36).lineTo(leftM + contentW, esY + 36)
+        .strokeColor(C.ruleLight).lineWidth(0.5).stroke()
+      doc.fontSize(11).font('Helvetica-Bold').fillColor(C.ink)
+        .text('Executive summary', leftM + 14, esY + 12, { width: contentW - 28 })
+
+      // Body
+      doc.fontSize(9.5).font('Helvetica').fillColor(C.muted)
+        .text(summaryText, leftM + 14, esY + 44, { width: contentW - 28, lineGap: 2 })
+
+      doc.y = esY + cardH + 14
     }
 
-    // ═══════════════════════════════════════════════════════
-    // MODULE GRID (score breakdown by pillar)
-    // ═══════════════════════════════════════════════════════
-
+    // ── Module Grid (2-column, matching shared page) ─────────
     if (categoryScores.length > 0) {
-      sectionHead('Score breakdown', 14)
-      doc.fontSize(8.5).font('Helvetica').fillColor(C.textSec)
-        .text('Scores across 6 pillars and 24 categories, rated 0 to 100.', leftM)
-      doc.moveDown(0.8)
+      const colGap = 12
+      const colWidth = (contentW - colGap) / 2
 
-      for (const pillar of pillarScores) {
-        if (pillar.cats.length === 0) continue
-        ensureSpace(50 + pillar.cats.length * 20)
+      // Render pillars in pairs (2 per row) to match the 2x3 grid
+      for (let row = 0; row < 3; row++) {
+        const leftIdx = row * 2
+        const rightIdx = row * 2 + 1
 
-        // Pillar header bar
-        const phy = doc.y
-        doc.rect(leftM, phy, contentW, 34).fill(C.pillar[PILLAR_NAMES.indexOf(pillar.name)]?.bg || C.bg)
-        doc.fontSize(11).font('Helvetica-Bold').fillColor(C.pillar[PILLAR_NAMES.indexOf(pillar.name)]?.color || C.text)
-          .text(pillar.name, leftM + 10, phy + 5, { width: contentW - 70 })
-        const pFindings = findingsByPillar[pillar.name] || []
-        if (pFindings.length > 0) {
-          doc.fontSize(7.5).font('Helvetica').fillColor(C.textSec)
-            .text(`${pFindings.length} finding${pFindings.length !== 1 ? 's' : ''}`, leftM + 10, phy + 20)
+        // Measure heights for both columns
+        const measurePillarH = (pillar: typeof pillarScores[0], idx: number): number => {
+          if (pillar.cats.length === 0) return 0
+          return 48 + 6 + pillar.cats.length * 18 + 12
         }
-        doc.fontSize(18).font('Helvetica-Bold').fillColor(scoreColor(pillar.avg))
-          .text(`${pillar.avg}`, leftM + contentW - 55, phy + 7, { width: 45, align: 'right' })
-        doc.y = phy + 38
 
-        // Category rows
-        for (const cat of pillar.cats) {
-          if (doc.y > pageBottom - 18) { doc.addPage(); pageNum++; drawHeader() }
-          const cy = doc.y
-          doc.fontSize(8.5).font('Helvetica').fillColor(C.textBody)
-            .text(cat.name, leftM + 14, cy + 2, { width: 180 })
-          // Progress bar
-          const barX = leftM + 210
-          const barW = contentW - 270
-          const barH = 4
-          doc.rect(barX, cy + 5, barW, barH).fill(C.borderLight)
-          const pillarColor = C.pillar[PILLAR_NAMES.indexOf(pillar.name)]?.color || C.scoreGreen
-          doc.rect(barX, cy + 5, Math.max(1, (cat.score / 100) * barW), barH).fill(pillarColor)
-          doc.fontSize(9).font('Helvetica-Bold').fillColor(scoreColor(cat.score))
-            .text(`${cat.score}`, leftM + contentW - 30, cy + 1, { width: 28, align: 'right' })
-          doc.y = cy + 16
+        const leftH = leftIdx < pillarScores.length ? measurePillarH(pillarScores[leftIdx], leftIdx) : 0
+        const rightH = rightIdx < pillarScores.length ? measurePillarH(pillarScores[rightIdx], rightIdx) : 0
+        const rowH = Math.max(leftH, rightH)
+
+        if (rowH === 0) continue
+        ensureSpace(rowH + 8)
+
+        const rowY = doc.y
+
+        // Draw each pillar card
+        for (const side of [0, 1] as const) {
+          const pIdx = row * 2 + side
+          if (pIdx >= pillarScores.length) continue
+          const pillar = pillarScores[pIdx]
+          if (pillar.cats.length === 0) continue
+
+          const tint = MODULE_TINTS[pIdx]
+          const x = leftM + side * (colWidth + colGap)
+          const h = measurePillarH(pillar, pIdx)
+          const pFindings = findingsByPillar[pillar.name] || []
+
+          // Card background + border
+          doc.roundedRect(x, rowY, colWidth, h, 6).fill(tint.bg)
+          doc.roundedRect(x, rowY, colWidth, h, 6).strokeColor(tint.border).lineWidth(0.75).stroke()
+
+          // Icon placeholder (tinted square)
+          const iconBg = mixWithWhite(tint.dot, 8)
+          doc.roundedRect(x + 14, rowY + 12, 24, 24, 5).fill(iconBg)
+          // Small dot for icon representation
+          doc.circle(x + 26, rowY + 24, 4).fill(tint.dot)
+
+          // Pillar name
+          doc.fontSize(10).font('Helvetica-Bold').fillColor(C.ink)
+            .text(pillar.name, x + 46, rowY + 14, { width: colWidth - 100 })
+          if (pFindings.length > 0) {
+            doc.fontSize(7.5).font('Helvetica').fillColor(C.muted)
+              .text(`${pFindings.length} finding${pFindings.length !== 1 ? 's' : ''}`, x + 46, rowY + 28, { width: colWidth - 100 })
+          }
+
+          // Score on right
+          doc.fontSize(18).font('Helvetica-Bold').fillColor(scoreColor(pillar.avg))
+            .text(`${pillar.avg}`, x + colWidth - 46, rowY + 14, { width: 32, align: 'right', lineBreak: false })
+          doc.fontSize(7).font('Helvetica').fillColor(C.muted)
+            .text('/100', x + colWidth - 40, rowY + 34, { width: 26, align: 'right', lineBreak: false })
+
+          // Category separator
+          doc.moveTo(x + 4, rowY + 48).lineTo(x + colWidth - 4, rowY + 48)
+            .strokeColor(tint.border).lineWidth(0.5).stroke()
+
+          // Category rows with progress bars
+          let catY = rowY + 54
+          for (const cat of pillar.cats) {
+            // Category name
+            doc.fontSize(8.5).font('Helvetica').fillColor(C.ink)
+              .text(cat.name, x + 14, catY, { width: colWidth - 76, lineBreak: false })
+
+            // Progress bar
+            const barX = x + colWidth - 56
+            const barW = 32
+            doc.rect(barX, catY + 4, barW, 3).fill(mixWithWhite(tint.dot, 8))
+            doc.rect(barX, catY + 4, Math.max(1, (cat.score / 100) * barW), 3).fillOpacity(0.55).fill(tint.dot)
+            doc.fillOpacity(1)
+
+            // Score
+            doc.fontSize(8.5).font('Helvetica-Bold').fillColor(scoreColor(cat.score))
+              .text(`${cat.score}`, x + colWidth - 20, catY, { width: 16, align: 'right', lineBreak: false })
+
+            catY += 18
+          }
         }
-        doc.moveDown(0.6)
+
+        doc.y = rowY + rowH + 10
       }
+      doc.moveDown(0.3)
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CHECKPOINT HEALTH
-    // ═══════════════════════════════════════════════════════
-
+    // ── Checkpoint Health ─────────────────────────────────────
     if (categoryScores.length > 0) {
       ensureSpace(60)
-      sectionHead(`${categoryScores.length * 4}-Checkpoint health`, 14)
+
+      // Card header
+      const cpHeaderY = doc.y
+      doc.rect(leftM, cpHeaderY, contentW, 30).fill(C.offWhite)
+      drawCardBorder(leftM, cpHeaderY, contentW, 30)
+      doc.fontSize(8).font('Helvetica-Bold').fillColor(C.muted)
+        .text(`${categoryScores.length * 4}-CHECKPOINT HEALTH`, leftM + 14, cpHeaderY + 9, { width: contentW / 2, characterSpacing: 0.3 })
+      doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+        .text(`${activeFindings.length} issues · ${categoryScores.length} categories`, leftM + contentW - 180, cpHeaderY + 9, { width: 166, align: 'right' })
+      doc.y = cpHeaderY + 30
+
+      // Build findings-by-category map (same logic as shared page)
+      const findingsByCategory: Record<string, AuditFinding[]> = {}
+      for (const cat of categoryScores) findingsByCategory[cat.name] = []
+      for (const f of activeFindings) {
+        let matched = false
+        for (const cat of categoryScores) {
+          const words = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
+          const text = `${f.title} ${f.description}`.toLowerCase()
+          if (words.some(w => text.includes(w))) {
+            findingsByCategory[cat.name].push(f)
+            matched = true
+            break
+          }
+        }
+        if (!matched && categoryScores.length > 0) {
+          const catIdx = Math.min(Math.floor(f.sort_order / Math.max(1, activeFindings.length / categoryScores.length)), categoryScores.length - 1)
+          findingsByCategory[categoryScores[catIdx].name]?.push(f)
+        }
+      }
 
       for (let catIdx = 0; catIdx < categoryScores.length; catIdx++) {
         const cat = categoryScores[catIdx]
         const checkpoints = CHECKPOINT_LABELS[cat.name] || ['Check 1', 'Check 2', 'Check 3', 'Check 4']
-
-        // Count findings for this category
-        const catFindings: AuditFinding[] = []
-        for (const f of activeFindings) {
-          if ((f as any).category_index === catIdx) catFindings.push(f)
-        }
-        // Also match by keyword
-        if (catFindings.length === 0) {
-          const words = cat.name.toLowerCase().split(/[&,\s]+/).filter(w => w.length > 3)
-          for (const f of activeFindings) {
-            const text = `${f.title} ${f.description}`.toLowerCase()
-            if (words.some(w => text.includes(w)) && !catFindings.includes(f)) {
-              catFindings.push(f)
-              if (catFindings.length >= checkpoints.length) break
-            }
-          }
-        }
+        const catFindings = findingsByCategory[cat.name] || []
         const failCount = Math.min(catFindings.length, checkpoints.length)
-
-        ensureSpace(20 + checkpoints.length * 14)
-
-        // Category header
-        const chY = doc.y
-        doc.fontSize(8).font('Helvetica-Bold').fillColor(scoreColor(cat.score))
-          .text(`${cat.score}`, leftM, chY + 1, { width: 22, align: 'right' })
-        doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.text)
-          .text(cat.name, leftM + 28, chY + 1, { width: contentW - 100 })
         const passCount = checkpoints.length - failCount
+
+        ensureSpace(18 + checkpoints.length * 16)
+
+        // Category row
+        const chY = doc.y
+        doc.moveTo(leftM, chY).lineTo(leftM + contentW, chY)
+          .strokeColor(C.ruleLight).lineWidth(0.5).stroke()
+        doc.fontSize(8).font('Helvetica-Bold').fillColor(scoreColor(cat.score))
+          .text(`${cat.score}`, leftM + 6, chY + 4, { width: 18, align: 'right' })
+        doc.fontSize(8.5).font('Helvetica-Bold').fillColor(C.ink)
+          .text(cat.name, leftM + 30, chY + 4, { width: contentW - 120 })
         if (passCount > 0) {
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.scoreGreen)
-            .text(`${passCount} pass`, leftM + contentW - 70, chY + 1)
+          doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.ok)
+            .text(`${passCount} pass`, leftM + contentW - 80, chY + 4, { width: 34 })
         }
         if (failCount > 0) {
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(C.sevCritical)
-            .text(`${failCount} fail`, leftM + contentW - 30, chY + 1)
+          doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.severe)
+            .text(`${failCount} fail`, leftM + contentW - 40, chY + 4, { width: 34 })
         }
-        doc.y = chY + 14
+        doc.y = chY + 18
 
-        // Checkpoints
+        // Checkpoint rows
         for (let i = 0; i < checkpoints.length; i++) {
-          if (doc.y > pageBottom - 14) { doc.addPage(); pageNum++; drawHeader() }
+          if (doc.y > pageBottom - 14) { doc.addPage(); drawPageHeader() }
           const hasFinding = i < failCount
+          const finding = hasFinding ? catFindings[i] : null
           const cpY = doc.y
-          doc.rect(leftM + 10, cpY, contentW - 10, 12).fill(hasFinding ? '#FEF2F2' : '#F0FDF4')
+          const bgColor = hasFinding ? mixWithWhite(C.severe, 5) : mixWithWhite(C.ok, 5)
+          const textColor = hasFinding ? C.severe : C.ok
+          doc.roundedRect(leftM + 14, cpY, contentW - 28, 14, 3).fill(bgColor)
+          // Marker
           const marker = hasFinding ? '!' : '✓'
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(hasFinding ? C.sevCritical : C.scoreGreen)
-            .text(marker, leftM + 14, cpY + 2, { width: 10 })
-          doc.fontSize(7.5).font('Helvetica').fillColor(hasFinding ? C.sevCritical : C.scoreGreen)
-            .text(checkpoints[i], leftM + 28, cpY + 2, { width: contentW - 80 })
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(hasFinding ? C.sevCritical : C.scoreGreen)
-            .text(hasFinding ? 'Fail' : 'Pass', leftM + contentW - 35, cpY + 2, { width: 30, align: 'right' })
-          doc.y = cpY + 13
+          doc.fontSize(7).font('Helvetica-Bold').fillColor(textColor)
+            .text(marker, leftM + 18, cpY + 3, { width: 10, lineBreak: false })
+          // Checkpoint label
+          doc.fontSize(7.5).font('Helvetica-Bold').fillColor(textColor)
+            .text(checkpoints[i], leftM + 32, cpY + 3, { width: contentW - 100 })
+          // Pass/Fail label
+          doc.fontSize(7).font('Helvetica-Bold').fillColor(textColor)
+            .text(hasFinding ? 'Fail' : 'Pass', leftM + contentW - 44, cpY + 3, { width: 26, align: 'right' })
+          doc.y = cpY + 16
         }
-        doc.moveDown(0.3)
+        doc.moveDown(0.2)
       }
+      doc.moveDown(0.6)
     }
 
-    // ═══════════════════════════════════════════════════════
-    // AI VISIBILITY BREAKDOWN
-    // ═══════════════════════════════════════════════════════
-
+    // ── AI Visibility Breakdown ──────────────────────────────
     if (aiVis) {
-      ensureSpace(100)
-      sectionHead('AI visibility breakdown', 14)
+      ensureSpace(110)
 
-      const aiOverall = aiVis.overall || 0
-      doc.fontSize(9).font('Helvetica').fillColor(C.textSec)
-        .text('Composite AI visibility score:', leftM)
-      doc.fontSize(20).font('Helvetica-Bold').fillColor(scoreColor(aiOverall))
-        .text(`${aiOverall}`, leftM + 180, doc.y - 14, { continued: true })
-      doc.fontSize(9).font('Helvetica').fillColor(C.textTert).text('/100')
-      doc.moveDown(0.6)
+      const aiStartY = doc.y
+      // Measure total height
+      const aiH = 36 + 4 * 30 + 10
+      doc.rect(leftM, aiStartY, contentW, aiH).fill(C.white)
+      drawCardBorder(leftM, aiStartY, contentW, aiH)
+
+      // Header
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(C.ink)
+        .text('AI visibility breakdown', leftM + 28, aiStartY + 10, { width: contentW - 80 })
+      // Overall score
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(C.ink)
+        .text(`${aiVis.overall}`, leftM + contentW - 50, aiStartY + 8, { width: 30, align: 'right', continued: true, lineBreak: false })
+      doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+        .text('/100', { lineBreak: false })
 
       const bars = [
         { label: 'LLM knowledge accuracy', value: aiVis.llmAccuracy, desc: 'How accurately AI describes your site' },
@@ -464,138 +617,156 @@ export async function GET(
         { label: 'Crawl infrastructure', value: aiVis.crawlInfrastructure, desc: 'robots.txt, llms.txt, ai-plugin.json' },
       ]
 
+      let barY = aiStartY + 36
       for (const bar of bars) {
-        ensureSpace(30)
-        const barY = doc.y
-        doc.fontSize(8).font('Helvetica').fillColor(C.textSec)
-          .text(bar.label, leftM, barY)
-        doc.fontSize(8).font('Helvetica-Bold').fillColor(C.text)
-          .text(`${bar.value}`, leftM + contentW - 25, barY, { width: 25, align: 'right' })
-        // Bar
-        const bY = barY + 12
-        doc.rect(leftM, bY, contentW, 4).fill(C.borderLight)
-        doc.rect(leftM, bY, Math.max(1, (bar.value / 100) * contentW), 4).fill(scoreColor(bar.value))
-        doc.fontSize(7).font('Helvetica').fillColor(C.textTert)
-          .text(bar.desc, leftM, bY + 6)
-        doc.y = bY + 18
+        doc.fontSize(7.5).font('Helvetica').fillColor(C.muted)
+          .text(bar.label, leftM + 14, barY)
+        doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.ink)
+          .text(`${bar.value}`, leftM + contentW - 30, barY, { width: 16, align: 'right' })
+        // Bar track
+        const bY = barY + 11
+        doc.rect(leftM + 14, bY, contentW - 28, 4).fill(mixWithWhite(C.rule, 20))
+        doc.rect(leftM + 14, bY, Math.max(1, (bar.value / 100) * (contentW - 28)), 4).fill(scoreColor(bar.value))
+        // Description
+        doc.fontSize(7).font('Helvetica').fillColor(mixWithWhite(C.muted, 60))
+          .text(bar.desc, leftM + 14, bY + 6)
+        barY += 28
       }
-      doc.moveDown(0.8)
+
+      doc.y = aiStartY + aiH + 14
     }
 
-    // ═══════════════════════════════════════════════════════
-    // ALL FINDINGS (grouped by pillar)
-    // ═══════════════════════════════════════════════════════
-
+    // ── All Findings ─────────────────────────────────────────
     if (activeFindings.length > 0) {
-      sectionHead('All findings', 14)
+      ensureSpace(70)
 
-      // Severity summary
-      const sumY = doc.y
-      doc.rect(leftM, sumY, contentW, 24).fill(C.bg)
-      const sevItems = [
-        { label: 'Critical', count: severityCounts.critical, color: C.sevCritical },
-        { label: 'High', count: severityCounts.high, color: C.sevHigh },
-        { label: 'Medium', count: severityCounts.medium, color: C.sevMedium },
-        { label: 'Low', count: severityCounts.low, color: C.sevLow },
-      ]
+      // Severity summary card
+      const sumStartY = doc.y
+      const sumH = 50
+      doc.rect(leftM, sumStartY, contentW, sumH).fill(C.white)
+      drawCardBorder(leftM, sumStartY, contentW, sumH)
+
+      // Header row
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(C.ink)
+        .text('All findings', leftM + 24, sumStartY + 8, { width: contentW - 100 })
+      doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+        .text(`${activeFindings.length} active`, leftM + contentW - 80, sumStartY + 10, { width: 66, align: 'right' })
+
+      // Separator
+      doc.moveTo(leftM, sumStartY + 26).lineTo(leftM + contentW, sumStartY + 26)
+        .strokeColor(C.ruleLight).lineWidth(0.5).stroke()
+
+      // Severity cells (4 columns)
       const sevColW = contentW / 4
-      for (let i = 0; i < sevItems.length; i++) {
-        const si = sevItems[i]
+      const sevKeys = ['critical', 'high', 'medium', 'low'] as const
+      for (let i = 0; i < sevKeys.length; i++) {
+        const sev = sevKeys[i]
+        const cfg = SEV[sev]
+        const count = severityCounts[sev]
         const sx = leftM + i * sevColW
-        doc.fontSize(13).font('Helvetica-Bold').fillColor(si.count > 0 ? si.color : C.textTert)
-          .text(`${si.count}`, sx + 8, sumY + 2, { width: 25 })
-        doc.fontSize(7).font('Helvetica-Bold').fillColor(si.count > 0 ? si.color : C.textTert)
-          .text(si.label.toUpperCase(), sx + 36, sumY + 6)
+        if (i > 0) {
+          doc.moveTo(sx, sumStartY + 28).lineTo(sx, sumStartY + sumH - 4)
+            .strokeColor(C.ruleLight).lineWidth(0.3).stroke()
+        }
+        // Dot + label
+        doc.circle(sx + 10, sumStartY + 32, 2).fill(cfg.color)
+        doc.fontSize(7).font('Helvetica-Bold').fillColor(cfg.color)
+          .text(cfg.label.toUpperCase(), sx + 16, sumStartY + 29, { width: 50, characterSpacing: 0.3 })
+        // Count
+        doc.fontSize(15).font('Helvetica-Bold').fillColor(count > 0 ? cfg.color : C.muted)
+          .text(`${count}`, sx + 10, sumStartY + 36, { width: 30, lineBreak: false })
       }
-      doc.y = sumY + 30
 
-      // Findings by pillar
+      doc.y = sumStartY + sumH + 10
+
+      // Findings grouped by pillar
       for (let pi = 0; pi < PILLAR_NAMES.length; pi++) {
         const pillarName = PILLAR_NAMES[pi]
         const pFindings = findingsByPillar[pillarName]
         if (!pFindings || pFindings.length === 0) continue
 
         ensureSpace(40)
-        const phY = doc.y
-        doc.rect(leftM, phY, 4, 14).fill(C.pillar[pi].color)
-        doc.fontSize(10).font('Helvetica-Bold').fillColor(C.text)
-          .text(pillarName, leftM + 10, phY, { width: contentW - 80 })
-        doc.fontSize(8).font('Helvetica').fillColor(C.textSec)
-          .text(`${pFindings.length} finding${pFindings.length !== 1 ? 's' : ''}`, leftM + contentW - 70, phY + 2)
-        doc.y = phY + 20
 
+        // Pillar header
+        const phY = doc.y
+        doc.circle(leftM + 6, phY + 5, 3.5).fill(MODULE_TINTS[pi].dot)
+        doc.fontSize(9.5).font('Helvetica-Bold').fillColor(C.ink)
+          .text(pillarName, leftM + 16, phY, { width: contentW - 80 })
+        doc.fontSize(8).font('Helvetica').fillColor(C.muted)
+          .text(`${pFindings.length} finding${pFindings.length !== 1 ? 's' : ''}`, leftM + contentW - 80, phY + 1, { width: 66, align: 'right' })
+        doc.y = phY + 18
+
+        // Individual finding cards
         for (const finding of pFindings) {
-          // Measure needed space
+          const sev = SEV[finding.severity] || SEV.medium
           const titleH = doc.fontSize(9.5).font('Helvetica-Bold').heightOfString(finding.title || '', { width: contentW - 30 })
           const descH = finding.description ? doc.fontSize(8.5).font('Helvetica').heightOfString(finding.description, { width: contentW - 30 }) : 0
-          const recH = finding.recommendation ? doc.fontSize(8).font('Helvetica').heightOfString(finding.recommendation, { width: contentW - 40 }) : 0
-          const totalH = 18 + titleH + (descH > 0 ? descH + 4 : 0) + (recH > 0 ? recH + 16 : 0) + 8
-          ensureSpace(Math.min(totalH, 150))
+          const recH = finding.recommendation ? doc.fontSize(8).font('Helvetica').heightOfString(finding.recommendation, { width: contentW - 44 }) : 0
+          const cardH = 16 + titleH + (descH > 0 ? descH + 4 : 0) + (recH > 0 ? recH + 22 : 0) + 10
+          ensureSpace(Math.min(cardH, 150))
 
           const fy = doc.y
+          doc.rect(leftM, fy, contentW, cardH).fill(C.white)
+          drawCardBorder(leftM, fy, contentW, cardH)
 
-          // Severity + category
-          doc.rect(leftM + 4, fy + 2, 5, 5).fill(sevColor(finding.severity))
-          doc.fontSize(7).font('Helvetica-Bold').fillColor(sevColor(finding.severity))
-            .text(sevLabel(finding.severity).toUpperCase(), leftM + 14, fy + 1)
+          let curY = fy + 8
 
+          // Severity dot + label + category
+          doc.circle(leftM + 12, curY + 2, 3).fill(sev.color)
+          doc.fontSize(7).font('Helvetica-Bold').fillColor(sev.color)
+            .text(sev.label.toUpperCase(), leftM + 20, curY - 1, { width: 50, characterSpacing: 0.3 })
           const catName = finding.category_index != null && categoryScores[finding.category_index]
             ? categoryScores[finding.category_index].name
             : null
           if (catName) {
-            doc.fontSize(7).font('Helvetica').fillColor(C.textSec)
-              .text(catName, leftM + 60, fy + 1, { width: contentW - 60 })
+            doc.fontSize(7).font('Helvetica').fillColor(C.muted)
+              .text(catName.toUpperCase(), leftM + 70, curY - 1, { width: contentW - 80, characterSpacing: 0.2 })
           }
-          doc.y = fy + 12
+          curY += 12
 
           // Title
-          doc.fontSize(9.5).font('Helvetica-Bold').fillColor(C.text)
-            .text(finding.title || 'Untitled', leftM + 4, undefined, { width: contentW - 12 })
+          doc.fontSize(9.5).font('Helvetica-Bold').fillColor(C.ink)
+            .text(finding.title || 'Untitled', leftM + 12, curY, { width: contentW - 24 })
+          curY = doc.y + 2
 
           // Description
           if (finding.description) {
-            doc.fontSize(8.5).font('Helvetica').fillColor(C.textSec)
-              .text(finding.description, leftM + 4, undefined, { width: contentW - 12, lineGap: 1 })
+            doc.fontSize(8.5).font('Helvetica').fillColor(C.muted)
+              .text(finding.description, leftM + 12, curY, { width: contentW - 24, lineGap: 1 })
+            curY = doc.y + 2
           }
 
-          // Recommendation
+          // Recommendation (signal-tinted box, matching shared page)
           if (finding.recommendation) {
-            doc.moveDown(0.2)
-            const recBoxY = doc.y
-            const measuredRecH = doc.fontSize(8).font('Helvetica').heightOfString(finding.recommendation, { width: contentW - 40 })
-            doc.rect(leftM + 8, recBoxY, contentW - 16, measuredRecH + 10).fill('#F0FDF4')
-            doc.fontSize(7).font('Helvetica-Bold').fillColor(C.signal)
-              .text('Recommendation:', leftM + 14, recBoxY + 3)
-            doc.fontSize(8).font('Helvetica').fillColor(C.textBody)
-              .text(finding.recommendation, leftM + 14, recBoxY + 12, { width: contentW - 36 })
-            doc.y = recBoxY + measuredRecH + 14
+            curY += 2
+            const recBoxBg = mixWithWhite(C.signal, 5)
+            const measuredRecH = doc.fontSize(8).font('Helvetica').heightOfString(finding.recommendation, { width: contentW - 44 })
+            doc.roundedRect(leftM + 12, curY, contentW - 24, measuredRecH + 14, 4).fill(recBoxBg)
+            doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.signal)
+              .text('Recommendation:', leftM + 20, curY + 4)
+            doc.fontSize(8).font('Helvetica').fillColor(C.ink)
+              .text(finding.recommendation, leftM + 20, curY + 14, { width: contentW - 44 })
           }
 
-          doc.moveDown(0.4)
-          // Thin separator
-          doc.moveTo(leftM + 10, doc.y).lineTo(leftM + contentW - 10, doc.y)
-            .strokeColor(C.borderLight).lineWidth(0.3).stroke()
-          doc.moveDown(0.4)
+          doc.y = fy + cardH + 4
         }
         doc.moveDown(0.4)
       }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // AI TRANSPARENCY NOTE
-    // ═══════════════════════════════════════════════════════
-
+    // ── AI Transparency Note ────────────────────────────────
     ensureSpace(50)
     doc.moveDown(0.5)
     const noteY = doc.y
-    doc.rect(leftM, noteY, contentW, 40).fill(C.bg)
-    doc.fontSize(7.5).font('Helvetica-Bold').fillColor(C.textSec)
-      .text('About this audit', leftM + 10, noteY + 6)
-    doc.fontSize(7).font('Helvetica').fillColor(C.textTert)
-      .text(
-        'This report was generated by AI analysing publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review.',
-        leftM + 10, noteY + 18, { width: contentW - 20, lineGap: 1 }
-      )
+    const noteText = 'This report was generated by AI analysing publicly visible page content across up to 6 modules and 24 categories. It cannot test JavaScript interactions, real load times, or content behind authentication. For accessibility compliance and security-critical findings, we recommend pairing these results with manual review.'
+    const noteTextH = doc.fontSize(7.5).font('Helvetica').heightOfString(noteText, { width: contentW - 28, lineGap: 1 })
+    const noteH = 18 + noteTextH + 10
+    doc.roundedRect(leftM, noteY, contentW, noteH, 6).fill(C.offWhite)
+    doc.roundedRect(leftM, noteY, contentW, noteH, 6).strokeColor(mixWithWhite(C.rule, 15)).lineWidth(0.5).stroke()
+    doc.fontSize(8).font('Helvetica-Bold').fillColor(C.muted)
+      .text('About this audit', leftM + 14, noteY + 8)
+    doc.fontSize(7.5).font('Helvetica').fillColor(mixWithWhite(C.muted, 30))
+      .text(noteText, leftM + 14, noteY + 20, { width: contentW - 28, lineGap: 1 })
 
     // ── Finalize ──────────────────────────────────────────
     doc.end()
@@ -608,7 +779,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="clearux-audit-${domain}.pdf"`,
+        'Content-Disposition': `attachment; filename="fixpath-audit-${domain}.pdf"`,
         'Content-Length': String(pdfBuffer.length),
       },
     })
