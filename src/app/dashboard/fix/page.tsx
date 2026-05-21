@@ -612,9 +612,12 @@ function FixPageInner() {
     });
   }, [groups, query, moduleFilter, sevFilter, statusFilter]);
 
-  // Auto-select first finding when groups load and nothing is active
+  // Auto-select first finding when groups load and nothing is active,
+  // or when the active finding is no longer visible due to filter changes
   useEffect(() => {
-    if (filteredGroups.length > 0 && !activeFindingId) {
+    if (filteredGroups.length === 0) return;
+    const stillVisible = activeFindingId && filteredGroups.some((g) => g.primary.id === activeFindingId);
+    if (!stillVisible) {
       setActiveFindingId(filteredGroups[0].primary.id);
     }
   }, [filteredGroups, activeFindingId]);
